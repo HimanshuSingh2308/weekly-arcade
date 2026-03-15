@@ -493,6 +493,68 @@
       text-decoration: none;
     }
 
+    /* PWA Update Banner */
+    .pwa-update-banner {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      border-radius: 12px;
+      padding: 0.8rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 2000;
+      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+      transition: transform 0.3s ease-out;
+      max-width: 90%;
+    }
+
+    .pwa-update-banner.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .pwa-update-icon {
+      font-size: 1.5rem;
+    }
+
+    .pwa-update-text {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .pwa-update-btn {
+      background: white;
+      color: var(--accent);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.2s;
+    }
+
+    .pwa-update-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .pwa-update-dismiss {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.2rem;
+      line-height: 1;
+    }
+
+    .pwa-update-dismiss:hover {
+      color: white;
+    }
+
     /* iOS Install Banner */
     .ios-install-banner {
       position: fixed;
@@ -732,6 +794,14 @@
     <button class="ios-install-close" onclick="dismissIOSBanner()">&times;</button>
   </div>
 
+  <!-- PWA Update Banner -->
+  <div class="pwa-update-banner" id="pwaUpdateBanner">
+    <span class="pwa-update-icon">🚀</span>
+    <span class="pwa-update-text">New version available!</span>
+    <button class="pwa-update-btn" id="pwaUpdateBtn">Update</button>
+    <button class="pwa-update-dismiss" id="pwaUpdateDismiss">&times;</button>
+  </div>
+
   <!-- Auth Modal -->
   <div class="auth-modal-overlay" id="authModal">
     <div class="auth-modal">
@@ -764,14 +834,75 @@
   <script src="/js/sync.js"></script>
 
   <script>
-    // Register Service Worker
+    // Register Service Worker with Update Detection
+    let newWorker;
+    const updateBanner = document.getElementById('pwaUpdateBanner');
+    const updateBtn = document.getElementById('pwaUpdateBtn');
+    const updateDismiss = document.getElementById('pwaUpdateDismiss');
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('SW registered'))
-          .catch(err => console.log('SW registration failed'));
+          .then(reg => {
+            console.log('SW registered');
+
+            // Check for updates immediately
+            reg.update();
+
+            // Check for updates periodically (every 60 minutes)
+            setInterval(() => reg.update(), 60 * 60 * 1000);
+
+            // Detect waiting service worker (new version available)
+            if (reg.waiting) {
+              newWorker = reg.waiting;
+              showUpdateBanner();
+            }
+
+            // Detect new service worker installing
+            reg.addEventListener('updatefound', () => {
+              newWorker = reg.installing;
+
+              newWorker.addEventListener('statechange', () => {
+                // New service worker is installed and waiting
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateBanner();
+                }
+              });
+            });
+          })
+          .catch(err => console.log('SW registration failed:', err));
+
+        // Reload page when new service worker takes over
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
       });
     }
+
+    function showUpdateBanner() {
+      updateBanner.classList.add('show');
+    }
+
+    function hideUpdateBanner() {
+      updateBanner.classList.remove('show');
+    }
+
+    // Update button click - tell service worker to skip waiting
+    updateBtn.addEventListener('click', () => {
+      if (newWorker) {
+        newWorker.postMessage({ type: 'SKIP_WAITING' });
+      }
+      hideUpdateBanner();
+    });
+
+    // Dismiss button - hide banner (will show again on next page load if not updated)
+    updateDismiss.addEventListener('click', () => {
+      hideUpdateBanner();
+    });
 
     // iOS PWA Install Banner
     function isIOS() {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'weekly-arcade-v4';
+const CACHE_NAME = 'weekly-arcade-v5';
 const ASSETS = [
   '/',
   '/index.html',
@@ -6,17 +6,18 @@ const ASSETS = [
   '/games/wordle/',
   '/games/wordle/index.html',
   '/games/memory-match/',
-  '/games/memory-match/index.html'
+  '/games/memory-match/index.html',
+  '/games/chaos-kitchen/',
+  '/games/chaos-kitchen/index.html'
 ];
 
-// Install - cache assets
+// Install - cache assets (don't skipWaiting automatically, let user decide)
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
     })
   );
-  self.skipWaiting();
 });
 
 // Activate - clean old caches
@@ -29,6 +30,13 @@ self.addEventListener('activate', (e) => {
     })
   );
   self.clients.claim();
+});
+
+// Listen for skip waiting message from client
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Fetch - serve from cache, fallback to network

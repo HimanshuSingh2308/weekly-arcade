@@ -438,20 +438,23 @@
 
     /* Side Panel */
     .side-panel {
-      width: 220px;
+      width: 200px;
       background: var(--bg-secondary);
       border-left: 2px solid var(--border);
       display: flex;
       flex-direction: column;
-      padding: 15px;
-      gap: 15px;
+      padding: 10px;
+      gap: 10px;
+      max-height: calc(100vh - 105px);
+      overflow-y: auto;
     }
 
     .panel-section {
       background: var(--bg-card);
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 10px;
+      padding: 10px;
       border: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
     .panel-title {
@@ -496,24 +499,25 @@
     .plate-container {
       background: #f5f5f5;
       border-radius: 50%;
-      width: 100%;
-      aspect-ratio: 1;
+      width: 90px;
+      height: 90px;
+      margin: 0 auto;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      padding: 15px;
-      border: 4px solid #ddd;
-      box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+      gap: 3px;
+      padding: 8px;
+      border: 3px solid #ddd;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .plate-item {
-      font-size: 1.6rem;
+      font-size: 1.2rem;
     }
 
     .plate-item.completed-dish {
-      font-size: 2.5rem;
+      font-size: 2rem;
       animation: dishReady 0.5s ease;
     }
 
@@ -524,16 +528,16 @@
     }
 
     .dish-name {
-      font-size: 0.7rem;
+      font-size: 0.55rem;
       font-weight: 700;
       color: var(--success);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
     .plate-empty {
       color: #999;
-      font-size: 0.75rem;
+      font-size: 0.55rem;
       text-align: center;
     }
 
@@ -559,16 +563,16 @@
     .orders-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      max-height: 200px;
+      gap: 6px;
+      max-height: 150px;
       overflow-y: auto;
     }
 
     .order-card {
       background: var(--bg-secondary);
       border: 2px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
+      border-radius: 8px;
+      padding: 6px 8px;
       transition: all 0.2s;
     }
 
@@ -588,20 +592,20 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     .order-name {
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
     }
 
     .order-timer {
       background: var(--warning);
       color: #000;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 0.65rem;
       font-weight: 700;
     }
 
@@ -612,8 +616,9 @@
 
     .order-items {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       flex-wrap: wrap;
+      font-size: 0.7rem;
     }
 
     .order-item {
@@ -838,8 +843,22 @@
     /* Responsive */
     @media (max-width: 700px) {
       .side-panel {
-        width: 180px;
-        padding: 10px;
+        width: 160px;
+        padding: 8px;
+        gap: 8px;
+      }
+
+      .plate-container {
+        width: 70px;
+        height: 70px;
+        padding: 6px;
+      }
+
+      .plate-item { font-size: 1rem; }
+      .plate-item.completed-dish { font-size: 1.6rem; }
+
+      .orders-list {
+        max-height: 120px;
       }
 
       .stations-top {
@@ -847,11 +866,11 @@
       }
 
       .station {
-        width: 80px;
-        height: 80px;
+        width: 70px;
+        height: 70px;
       }
 
-      .station-icon { font-size: 2rem; }
+      .station-icon { font-size: 1.8rem; }
 
       .ingredient-shelf {
         padding: 8px 12px;
@@ -859,9 +878,9 @@
       }
 
       .ingredient {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
+        width: 45px;
+        height: 45px;
+        font-size: 1.4rem;
       }
 
       .chef {
@@ -880,17 +899,48 @@
         flex-direction: row;
         flex-wrap: wrap;
         height: auto;
-        padding: 10px;
-        gap: 10px;
+        max-height: none;
+        padding: 8px;
+        gap: 8px;
       }
 
       .panel-section {
         flex: 1;
-        min-width: 150px;
+        min-width: 140px;
+        padding: 8px;
+      }
+
+      .plate-container {
+        width: 60px;
+        height: 60px;
+      }
+
+      .orders-list {
+        max-height: 100px;
       }
 
       .kitchen-area {
-        height: 60vh;
+        height: 55vh;
+      }
+    }
+
+    @media (max-height: 700px) {
+      .orders-list {
+        max-height: 100px;
+      }
+
+      .plate-container {
+        width: 70px;
+        height: 70px;
+      }
+
+      .panel-section {
+        padding: 8px;
+      }
+
+      .panel-title {
+        margin-bottom: 6px;
+        font-size: 0.65rem;
       }
     }
   </style>
