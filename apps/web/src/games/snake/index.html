@@ -215,55 +215,6 @@
       font-size: 0.85rem;
     }
 
-    .controls-hint kbd {
-      background: var(--bg-secondary);
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      margin: 0 0.25rem;
-      border: 1px solid var(--border);
-    }
-
-    /* Mobile Controls */
-    .mobile-controls {
-      display: none;
-      position: fixed;
-      bottom: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 50;
-    }
-
-    .dpad {
-      display: grid;
-      grid-template-columns: repeat(3, 60px);
-      grid-template-rows: repeat(3, 60px);
-      gap: 4px;
-    }
-
-    .dpad-btn {
-      background: var(--bg-secondary);
-      border: 2px solid var(--accent);
-      border-radius: 12px;
-      color: var(--accent);
-      font-size: 1.5rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-    }
-
-    .dpad-btn:active {
-      background: var(--accent);
-      color: #000;
-    }
-
-    .dpad-btn.up { grid-column: 2; grid-row: 1; }
-    .dpad-btn.left { grid-column: 1; grid-row: 2; }
-    .dpad-btn.right { grid-column: 3; grid-row: 2; }
-    .dpad-btn.down { grid-column: 2; grid-row: 3; }
 
     /* Pause indicator */
     .pause-indicator {
@@ -356,10 +307,8 @@
 
     /* Responsive */
     @media (max-width: 600px) {
-      .mobile-controls { display: block; }
-
       .game-container {
-        height: calc(100vh - 340px);
+        height: calc(100vh - 140px);
         padding: 0.5rem;
       }
 
@@ -368,17 +317,6 @@
 
       .header { padding: 0.5rem 1rem; }
       .title { font-size: 1.2rem; }
-    }
-
-    @media (max-height: 700px) and (max-width: 600px) {
-      .dpad-btn {
-        width: 50px;
-        height: 50px;
-      }
-      .dpad {
-        grid-template-columns: repeat(3, 50px);
-        grid-template-rows: repeat(3, 50px);
-      }
     }
   </style>
 </head>
@@ -414,16 +352,6 @@
     <canvas id="gameCanvas"></canvas>
   </div>
 
-  <!-- Mobile D-Pad -->
-  <div class="mobile-controls">
-    <div class="dpad">
-      <button class="dpad-btn up" onclick="setDirection('up')">▲</button>
-      <button class="dpad-btn left" onclick="setDirection('left')">◀</button>
-      <button class="dpad-btn right" onclick="setDirection('right')">▶</button>
-      <button class="dpad-btn down" onclick="setDirection('down')">▼</button>
-    </div>
-  </div>
-
   <div class="pause-indicator" id="pauseIndicator">PAUSED</div>
 
   <!-- Start Screen -->
@@ -433,9 +361,7 @@
       <h2 class="overlay-title">Snake</h2>
       <p class="overlay-subtitle">Eat food, grow longer, don't crash!</p>
       <button class="play-btn" onclick="startGame()">Play</button>
-      <p class="controls-hint">
-        Use <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or swipe to move
-      </p>
+      <p class="controls-hint">Swipe or use arrow keys to move</p>
     </div>
   </div>
 

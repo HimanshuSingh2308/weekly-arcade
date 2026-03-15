@@ -634,6 +634,41 @@
       100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
     }
 
+    /* Served Banner */
+    .served-banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: linear-gradient(135deg, var(--success), #22c55e);
+      padding: 1.5rem 3rem;
+      border-radius: 20px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: white;
+      z-index: 150;
+      box-shadow: 0 10px 40px rgba(74, 222, 128, 0.5);
+      opacity: 0;
+      transition: none;
+    }
+
+    .served-banner.show {
+      animation: served-pop 1.2s ease-out forwards;
+    }
+
+    .served-banner.fail {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.5);
+    }
+
+    @keyframes served-pop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      40% { transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+
     /* Chaos Effects */
     .kitchen-area.chaos-butter {
       animation: shake 0.3s ease-in-out infinite;
@@ -881,6 +916,7 @@
   </div>
 
   <div class="chaos-banner" id="chaosBanner">CHAOS EVENT!</div>
+  <div class="served-banner" id="servedBanner">🍽️ ORDER SERVED!</div>
 
   <div class="game-container">
     <div class="kitchen-area" id="kitchenArea">
@@ -909,7 +945,7 @@
             <div class="station-progress-fill"></div>
           </div>
         </div>
-        <div class="station stove" id="stoveStation" onclick="useStation('cook')">
+        <div class="station stove" id="cookStation" onclick="useStation('cook')">
           <div class="station-icon">&#x1F373;</div>
           <div class="station-label">Cook</div>
           <div class="station-progress" id="cookProgress">
@@ -1338,7 +1374,17 @@
     }
 
     function deliverPlate() {
-      if (!isPlaying || currentPlate.length === 0) return;
+      if (!isPlaying) return;
+
+      // Add held item to plate before serving
+      if (heldItem) {
+        addToPlate(heldItem);
+        heldItem = null;
+        heldEmoji = null;
+        chefHeldEl.style.display = 'none';
+      }
+
+      if (currentPlate.length === 0) return;
 
       let matchedOrder = null;
       let matchScore = 0;
@@ -1379,10 +1425,12 @@
 
         chefFace.innerHTML = '🤩';
         showFloatingScore(totalPoints, true);
+        showServedBanner(true, matchedOrder.name);
         playSound('success');
 
         if (ordersCompleted % 5 === 0) {
           level++;
+          submitScore(true); // Submit on level up
         }
 
         setTimeout(() => { if (isPlaying) chefFace.innerHTML = '😊'; }, 1000);
@@ -1393,6 +1441,7 @@
 
         chefFace.innerHTML = '😰';
         showFloatingScore(penalty, false);
+        showServedBanner(false);
         playSound('fail');
 
         setTimeout(() => { if (isPlaying) chefFace.innerHTML = '😊'; }, 1000);
@@ -1473,6 +1522,27 @@
       setTimeout(() => el.remove(), 1000);
     }
 
+    function showServedBanner(success, orderName) {
+      const banner = document.getElementById('servedBanner');
+      banner.className = 'served-banner';
+
+      if (success) {
+        banner.textContent = `🍽️ ${orderName} SERVED!`;
+        banner.classList.remove('fail');
+      } else {
+        banner.textContent = '❌ WRONG ORDER!';
+        banner.classList.add('fail');
+      }
+
+      // Force reflow to restart animation
+      void banner.offsetWidth;
+      banner.classList.add('show');
+
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 1200);
+    }
+
     // ============ SOUND ============
     function playSound(type) {
       try {
@@ -1533,7 +1603,10 @@
           window.authManager.onAuthStateChanged(user => {
             currentUser = user;
             updateAuthUI();
-            if (user) loadCloudState();
+            if (user) {
+              loadCloudState();
+              syncGuestScores(); // Sync any pending guest scores
+            }
           });
         }
       }, 100);
@@ -1556,20 +1629,75 @@
       }
     }
 
-    async function submitScore() {
+    async function submitScore(isLevelUp = false) {
+      const scoreData = {
+        score: score,
+        level: level,
+        metadata: {
+          ordersCompleted,
+          chaosSurvived,
+          multiplier,
+          isLevelUp
+        }
+      };
+
+      // If signed in, submit directly
+      if (currentUser && window.apiClient) {
+        try {
+          await window.apiClient.submitScore('chaos-kitchen', scoreData);
+          console.log('Score submitted to server');
+        } catch (e) {
+          console.error('Failed to submit score:', e);
+          saveGuestScore(scoreData);
+        }
+      } else {
+        // Save for later sync
+        saveGuestScore(scoreData);
+        console.log('Score saved locally (guest mode)');
+      }
+    }
+
+    function saveGuestScore(scoreData) {
+      const pendingScores = JSON.parse(localStorage.getItem('chaos-kitchen-pending-scores') || '[]');
+
+      // Only keep higher scores at same level
+      const existingIdx = pendingScores.findIndex(s => s.level === scoreData.level);
+      if (existingIdx >= 0) {
+        if (scoreData.score > pendingScores[existingIdx].score) {
+          pendingScores[existingIdx] = { ...scoreData, timestamp: Date.now() };
+        }
+      } else {
+        pendingScores.push({ ...scoreData, timestamp: Date.now() });
+      }
+
+      // Keep only last 10 scores
+      const trimmed = pendingScores.slice(-10);
+      localStorage.setItem('chaos-kitchen-pending-scores', JSON.stringify(trimmed));
+    }
+
+    async function syncGuestScores() {
       if (!currentUser || !window.apiClient) return;
+
+      const pendingScores = JSON.parse(localStorage.getItem('chaos-kitchen-pending-scores') || '[]');
+      if (pendingScores.length === 0) return;
+
+      console.log(`Syncing ${pendingScores.length} pending Chaos Kitchen scores...`);
+
+      // Submit the best score only
+      const bestScore = pendingScores.reduce((best, curr) =>
+        curr.score > best.score ? curr : best
+      , pendingScores[0]);
+
       try {
         await window.apiClient.submitScore('chaos-kitchen', {
-          score: score,
-          level: level,
-          metadata: {
-            ordersCompleted,
-            chaosSurvived,
-            multiplier
-          }
+          score: bestScore.score,
+          level: bestScore.level,
+          metadata: bestScore.metadata
         });
+        console.log('Guest scores synced successfully');
+        localStorage.removeItem('chaos-kitchen-pending-scores');
       } catch (e) {
-        console.error('Failed to submit score:', e);
+        console.error('Failed to sync guest scores:', e);
       }
     }
 

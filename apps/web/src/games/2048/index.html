@@ -243,80 +243,6 @@
       color: white;
     }
 
-    /* Mobile D-Pad */
-    .mobile-controls {
-      display: none;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-
-    .dpad {
-      display: grid;
-      grid-template-columns: repeat(3, 60px);
-      grid-template-rows: repeat(3, 60px);
-      gap: 5px;
-    }
-
-    .dpad-btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 1.5rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.1s;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .dpad-btn:active {
-      background: var(--accent);
-      border-color: var(--accent);
-      transform: scale(0.95);
-    }
-
-    .dpad-btn.empty {
-      background: transparent;
-      border: none;
-    }
-
-    /* Instructions */
-    .instructions {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .instructions h3 {
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-      color: var(--accent);
-    }
-
-    .instructions p {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-
-    .keyboard-hints {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .key {
-      background: var(--bg-secondary);
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
 
     /* Game Over / Win Overlay */
     .game-overlay {
@@ -493,25 +419,11 @@
 
     /* Responsive */
     @media (max-width: 500px) {
-      .mobile-controls {
-        display: flex;
-      }
-
-      .keyboard-hints {
-        display: none;
-      }
-
       .tile-2, .tile-4 { font-size: 1.5rem; }
       .tile-8, .tile-16, .tile-32, .tile-64 { font-size: 1.4rem; }
       .tile-128, .tile-256, .tile-512 { font-size: 1.2rem; }
       .tile-1024, .tile-2048 { font-size: 1rem; }
       .tile-4096, .tile-8192, .tile-super { font-size: 0.9rem; }
-    }
-
-    @media (min-width: 501px) {
-      .mobile-controls {
-        display: none !important;
-      }
     }
   </style>
 </head>
@@ -577,33 +489,6 @@
       <button class="btn btn-primary" onclick="newGame()">
         <span>🔄</span> New Game
       </button>
-    </div>
-
-    <!-- Mobile D-Pad -->
-    <div class="mobile-controls">
-      <div class="dpad">
-        <div class="dpad-btn empty"></div>
-        <button class="dpad-btn" onclick="move('up')">↑</button>
-        <div class="dpad-btn empty"></div>
-        <button class="dpad-btn" onclick="move('left')">←</button>
-        <div class="dpad-btn empty"></div>
-        <button class="dpad-btn" onclick="move('right')">→</button>
-        <div class="dpad-btn empty"></div>
-        <button class="dpad-btn" onclick="move('down')">↓</button>
-        <div class="dpad-btn empty"></div>
-      </div>
-    </div>
-
-    <!-- Instructions -->
-    <div class="instructions">
-      <h3>How to Play</h3>
-      <p>Swipe or use arrow keys to move tiles. When two tiles with the same number touch, they merge into one! Reach 2048 to win!</p>
-      <div class="keyboard-hints">
-        <span class="key">↑ Up</span>
-        <span class="key">↓ Down</span>
-        <span class="key">← Left</span>
-        <span class="key">→ Right</span>
-      </div>
     </div>
 
     <!-- Leaderboard Preview -->
@@ -835,8 +720,14 @@
               tile.c = next.c;
 
               score += merged.value;
+              const prevHighest = highestTile;
               highestTile = Math.max(highestTile, merged.value);
               moved = true;
+
+              // Check for milestone (256, 512, 1024, 2048, etc.)
+              if (highestTile > prevHighest && highestTile >= 256 && isPowerOfTwo(highestTile)) {
+                submitMilestoneScore(highestTile);
+              }
 
               // Check for win
               if (merged.value === WINNING_TILE && !won) {
@@ -1123,6 +1014,7 @@
                 <img class="user-avatar" src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" alt="User">
               `;
               loadCloudState();
+              syncGuestScores(); // Sync any pending guest scores
             } else {
               userSection.innerHTML = `
                 <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
@@ -1139,22 +1031,86 @@
       }
     }
 
-    async function submitScore() {
+    function isPowerOfTwo(n) {
+      return n > 0 && (n & (n - 1)) === 0;
+    }
+
+    function submitMilestoneScore(milestone) {
+      console.log(`Milestone reached: ${milestone}`);
+      submitScore(true);
+    }
+
+    async function submitScore(isMilestone = false) {
+      const scoreData = {
+        score: score,
+        level: Math.floor(Math.log2(highestTile || 2)),
+        metadata: {
+          highestTile,
+          moves,
+          isMilestone
+        }
+      };
+
+      // If signed in, submit directly
+      if (window.apiClient && window.authManager?.currentUser) {
+        try {
+          await window.apiClient.submitScore('2048', scoreData);
+          console.log('Score submitted to server');
+          loadLeaderboard();
+        } catch (error) {
+          console.error('Failed to submit score:', error);
+          // Save locally as backup
+          saveGuestScore(scoreData);
+        }
+      } else {
+        // Save for later sync
+        saveGuestScore(scoreData);
+        console.log('Score saved locally (guest mode)');
+      }
+    }
+
+    function saveGuestScore(scoreData) {
+      const pendingScores = JSON.parse(localStorage.getItem('2048-pending-scores') || '[]');
+
+      // Only keep the best score to avoid spam
+      const existingIdx = pendingScores.findIndex(s => s.metadata?.highestTile === scoreData.metadata?.highestTile);
+      if (existingIdx >= 0) {
+        if (scoreData.score > pendingScores[existingIdx].score) {
+          pendingScores[existingIdx] = { ...scoreData, timestamp: Date.now() };
+        }
+      } else {
+        pendingScores.push({ ...scoreData, timestamp: Date.now() });
+      }
+
+      // Keep only last 10 scores
+      const trimmed = pendingScores.slice(-10);
+      localStorage.setItem('2048-pending-scores', JSON.stringify(trimmed));
+    }
+
+    async function syncGuestScores() {
       if (!window.apiClient || !window.authManager?.currentUser) return;
+
+      const pendingScores = JSON.parse(localStorage.getItem('2048-pending-scores') || '[]');
+      if (pendingScores.length === 0) return;
+
+      console.log(`Syncing ${pendingScores.length} pending scores...`);
+
+      // Submit the best score only
+      const bestScore = pendingScores.reduce((best, curr) =>
+        curr.score > best.score ? curr : best
+      , pendingScores[0]);
 
       try {
         await window.apiClient.submitScore('2048', {
-          score: score,
-          level: Math.floor(Math.log2(highestTile || 2)),
-          metadata: {
-            highestTile,
-            moves
-          }
+          score: bestScore.score,
+          level: bestScore.level,
+          metadata: bestScore.metadata
         });
-        console.log('Score submitted');
+        console.log('Guest scores synced successfully');
+        localStorage.removeItem('2048-pending-scores');
         loadLeaderboard();
       } catch (error) {
-        console.error('Failed to submit score:', error);
+        console.error('Failed to sync guest scores:', error);
       }
     }
 
