@@ -40,17 +40,14 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Create Cloud Run source
+      - name: Prepare Docker context
         run: |
-          mkdir -p deploy-api
-          cp -r apps/api/dist/* deploy-api/
+          mkdir -p apps/api/dist/node_modules/@weekly-arcade/shared/dist
+          cp -r packages/shared/dist/* apps/api/dist/node_modules/@weekly-arcade/shared/dist/
+          cp packages/shared/package.json apps/api/dist/node_modules/@weekly-arcade/shared/
 
-          # Copy shared package to node_modules (preserve dist folder structure)
-          mkdir -p deploy-api/node_modules/@weekly-arcade/shared/dist
-          cp -r packages/shared/dist/* deploy-api/node_modules/@weekly-arcade/shared/dist/
-          cp packages/shared/package.json deploy-api/node_modules/@weekly-arcade/shared/
-
-          cat > deploy-api/package.json << 'PKGJSON'
+          # Create package.json for the container
+          cat > apps/api/package.json << 'PKGJSON'
           {
             "name": "weekly-arcade-api",
             "version": "1.0.0",
@@ -76,10 +73,15 @@ jobs:
           }
           PKGJSON
 
+      - name: Build and push Docker image
+        run: |
+          cd apps/api
+          gcloud builds submit --tag gcr.io/loyal-curve-425715-h6/weekly-arcade-api:${{ github.sha }}
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy weekly-arcade-api \
-            --source=deploy-api \
+            --image=gcr.io/loyal-curve-425715-h6/weekly-arcade-api:${{ github.sha }} \
             --region=us-central1 \
             --allow-unauthenticated \
             --memory=256Mi \
