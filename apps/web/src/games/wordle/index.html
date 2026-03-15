@@ -3348,10 +3348,13 @@
         await window.apiClient.submitScore('wordle', {
           score: scoreData.score,
           level: wordLength - MIN_LENGTH + 1,
-          attempts: scoreData.attempts,
-          hintsUsed: scoreData.hintsUsed,
-          streakMultiplier: scoreData.streakMultiplier,
-          dailyWord: targetWord
+          guessCount: scoreData.attempts,
+          timeMs: scoreData.timeMs || 0,
+          metadata: {
+            hintsUsed: scoreData.hintsUsed || 0,
+            perfectGame: scoreData.attempts === 1,
+            streakBonus: Math.floor((scoreData.streakMultiplier - 1) * 50)
+          }
         });
         console.log('Score submitted to leaderboard');
       } catch (error) {
