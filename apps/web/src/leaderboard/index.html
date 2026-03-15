@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboards | Weekly Arcade</title>
+
+  <!-- SEO -->
+  <meta name="description" content="See who's topping the charts! View global leaderboards for all Weekly Arcade games.">
+  <link rel="canonical" href="https://weekly-arcade.web.app/leaderboard/">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#e94560">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+      --gold: #ffd700;
+      --silver: #c0c0c0;
+      --bronze: #cd7f32;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon {
+      font-size: 1.8rem;
+    }
+
+    .nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav a:hover, .nav a.active {
+      color: var(--accent);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .auth-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .auth-btn:hover {
+      background: var(--accent-hover);
+      transform: scale(1.05);
+    }
+
+    .user-menu {
+      position: relative;
+      display: none;
+    }
+
+    .user-menu.signed-in {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dropdown-arrow {
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+    }
+
+    .user-menu.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-width: 180px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s;
+      z-index: 100;
+    }
+
+    .user-menu.open .user-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .dropdown-item:hover {
+      background: var(--bg-secondary);
+    }
+
+    .dropdown-item:first-child {
+      border-radius: 8px 8px 0 0;
+    }
+
+    .dropdown-item:last-child {
+      border-radius: 0 0 8px 8px;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.25rem 0;
+    }
+
+    .dropdown-item.sign-out {
+      color: var(--accent);
+    }
+
+    /* Page Title */
+    .page-header {
+      text-align: center;
+      padding: 3rem 2rem 2rem;
+      background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .page-header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Game Tabs */
+    .game-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .game-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .game-tab:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .game-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .game-tab .game-icon {
+      font-size: 1.2rem;
+    }
+
+    /* Period Filter */
+    .period-filter {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      background: var(--bg-card);
+      padding: 0.25rem;
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .period-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .period-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .period-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Your Rank Card */
+    .your-rank-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .your-rank-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .your-rank-position {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .your-rank-info h3 {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .your-rank-info p {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .your-rank-score {
+      text-align: right;
+    }
+
+    .your-rank-score .score-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .your-rank-score .score-label {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+    }
+
+    .sign-in-prompt {
+      background: var(--bg-card);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .sign-in-prompt p {
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .sign-in-prompt .auth-btn {
+      padding: 0.6rem 1.5rem;
+    }
+
+    /* Leaderboard Table */
+    .leaderboard-table {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .leaderboard-header {
+      display: grid;
+      grid-template-columns: 60px 1fr 120px;
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 120px;
+      padding: 0.875rem 1.25rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    .leaderboard-row:last-child {
+      border-bottom: none;
+    }
+
+    .leaderboard-row:hover {
+      background: rgba(233, 69, 96, 0.05);
+    }
+
+    .leaderboard-row.current-user {
+      background: rgba(233, 69, 96, 0.1);
+      border-left: 3px solid var(--accent);
+    }
+
+    .rank {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .rank.gold { color: var(--gold); }
+    .rank.silver { color: var(--silver); }
+    .rank.bronze { color: var(--bronze); }
+
+    .rank-medal {
+      font-size: 1.3rem;
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .player-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .player-name {
+      font-weight: 600;
+    }
+
+    .player-level {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .score {
+      text-align: right;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* Auth Modal */
+    .auth-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .auth-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .auth-modal {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+      position: relative;
+    }
+
+    .auth-modal-overlay.show .auth-modal {
+      transform: scale(1);
+    }
+
+    .auth-modal h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-modal p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .auth-modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: white;
+      color: #333;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .google-btn:hover {
+      background: #f5f5f5;
+      transform: scale(1.02);
+    }
+
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header {
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .header-right {
+        order: 2;
+      }
+
+      .user-name {
+        display: none;
+      }
+
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      .game-tabs {
+        justify-content: center;
+      }
+
+      .leaderboard-header,
+      .leaderboard-row {
+        grid-template-columns: 50px 1fr 80px;
+        padding: 0.75rem 1rem;
+      }
+
+      .player-avatar {
+        width: 32px;
+        height: 32px;
+      }
+
+      .player-level {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">
+      <span class="logo-icon">🎮</span>
+      Weekly Arcade
+    </a>
+    <nav class="nav">
+      <a href="/">Games</a>
+      <a href="/leaderboard/" class="active">Leaderboards</a>
+      <a href="/#about">About</a>
+    </nav>
+    <div class="header-right">
+      <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
+      <div class="user-menu" id="userMenu" onclick="toggleUserMenu()">
+        <img class="user-avatar" id="userAvatar" src="" alt="User">
+        <span class="user-name" id="userName"></span>
+        <span class="dropdown-arrow">▼</span>
+        <div class="user-dropdown">
+          <a href="#" class="dropdown-item" onclick="showProfile(event)">
+            <span>👤</span> My Profile
+          </a>
+          <a href="/leaderboard/" class="dropdown-item">
+            <span>🏆</span> Leaderboards
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item sign-out" onclick="handleSignOut(event)">
+            <span>🚪</span> Sign Out
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="page-header">
+    <h1>🏆 Leaderboards</h1>
+    <p>See who's topping the charts!</p>
+  </section>
+
+  <main class="container">
+    <!-- Game Tabs -->
+    <div class="game-tabs">
+      <button class="game-tab active" data-game="wordle" onclick="selectGame('wordle')">
+        <span class="game-icon">🔤</span>
+        Wordle
+      </button>
+      <button class="game-tab" data-game="snake" onclick="selectGame('snake')" disabled style="opacity: 0.5;">
+        <span class="game-icon">🐍</span>
+        Snake
+      </button>
+      <button class="game-tab" data-game="2048" onclick="selectGame('2048')" disabled style="opacity: 0.5;">
+        <span class="game-icon">🔢</span>
+        2048
+      </button>
+    </div>
+
+    <!-- Period Filter -->
+    <div class="period-filter">
+      <button class="period-btn active" data-period="daily" onclick="selectPeriod('daily')">Today</button>
+      <button class="period-btn" data-period="weekly" onclick="selectPeriod('weekly')">This Week</button>
+      <button class="period-btn" data-period="monthly" onclick="selectPeriod('monthly')">This Month</button>
+      <button class="period-btn" data-period="allTime" onclick="selectPeriod('allTime')">All Time</button>
+    </div>
+
+    <!-- Your Rank (shown when signed in) -->
+    <div class="your-rank-card" id="yourRankCard" style="display: none;">
+      <div class="your-rank-left">
+        <div class="your-rank-position" id="yourRankPosition">#--</div>
+        <div class="your-rank-info">
+          <h3>Your Rank</h3>
+          <p id="yourRankSubtitle">Keep playing to climb!</p>
+        </div>
+      </div>
+      <div class="your-rank-score">
+        <div class="score-value" id="yourScore">--</div>
+        <div class="score-label">points</div>
+      </div>
+    </div>
+
+    <!-- Sign In Prompt (shown when not signed in) -->
+    <div class="sign-in-prompt" id="signInPrompt">
+      <p>Sign in to see your rank and compete on the leaderboard!</p>
+      <button class="auth-btn" onclick="showAuthModal()">Sign In to Compete</button>
+    </div>
+
+    <!-- Leaderboard Table -->
+    <div class="leaderboard-table" id="leaderboardTable">
+      <div class="leaderboard-header">
+        <div>Rank</div>
+        <div>Player</div>
+        <div style="text-align: right;">Score</div>
+      </div>
+      <div id="leaderboardContent">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading leaderboard...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p><strong>Weekly Arcade</strong> - New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">Built with ❤️ | <a href="/">Back to Games</a></p>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="auth-modal-overlay" id="authModal">
+    <div class="auth-modal">
+      <button class="auth-modal-close" onclick="hideAuthModal()">&times;</button>
+      <h2>Join the Competition</h2>
+      <p>Sign in to submit scores and compete!</p>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+
+  <!-- API & Auth Scripts -->
+  <script src="/js/api-client.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    // State
+    let currentGame = 'wordle';
+    let currentPeriod = 'daily';
+    let currentUser = null;
+
+    // Auth UI Functions
+    function showAuthModal() {
+      document.getElementById('authModal').classList.add('show');
+    }
+
+    function hideAuthModal() {
+      document.getElementById('authModal').classList.remove('show');
+    }
+
+    function toggleUserMenu() {
+      document.getElementById('userMenu').classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const userMenu = document.getElementById('userMenu');
+      if (!userMenu.contains(e.target)) {
+        userMenu.classList.remove('open');
+      }
+    });
+
+    document.getElementById('authModal').addEventListener('click', (e) => {
+      if (e.target.id === 'authModal') {
+        hideAuthModal();
+      }
+    });
+
+    async function signInWithGoogle() {
+      try {
+        await window.authManager.signInWithGoogle();
+        hideAuthModal();
+      } catch (error) {
+        console.error('Sign in failed:', error);
+        alert('Sign in failed. Please try again.');
+      }
+    }
+
+    function handleSignOut(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.authManager.signOut();
+      document.getElementById('userMenu').classList.remove('open');
+    }
+
+    function showProfile(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      alert('Profile page coming soon!');
+    }
+
+    // Update UI based on auth state
+    function updateAuthUI(user) {
+      currentUser = user;
+      const signInBtn = document.getElementById('signInBtn');
+      const userMenu = document.getElementById('userMenu');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+      const signInPrompt = document.getElementById('signInPrompt');
+      const yourRankCard = document.getElementById('yourRankCard');
+
+      if (user) {
+        signInBtn.style.display = 'none';
+        userMenu.classList.add('signed-in');
+        userAvatar.src = user.photoURL || 'https://via.placeholder.com/36?text=' + (user.displayName?.[0] || 'U');
+        userName.textContent = user.displayName || user.email?.split('@')[0] || 'Player';
+        signInPrompt.style.display = 'none';
+        yourRankCard.style.display = 'flex';
+        loadUserRank();
+      } else {
+        signInBtn.style.display = 'block';
+        userMenu.classList.remove('signed-in');
+        signInPrompt.style.display = 'block';
+        yourRankCard.style.display = 'none';
+      }
+    }
+
+    // Game & Period Selection
+    function selectGame(game) {
+      currentGame = game;
+      document.querySelectorAll('.game-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.game === game);
+      });
+      loadLeaderboard();
+      if (currentUser) loadUserRank();
+    }
+
+    function selectPeriod(period) {
+      currentPeriod = period;
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+      });
+      loadLeaderboard();
+      if (currentUser) loadUserRank();
+    }
+
+    // Load Leaderboard Data
+    async function loadLeaderboard() {
+      const content = document.getElementById('leaderboardContent');
+      content.innerHTML = `
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading leaderboard...</p>
+        </div>
+      `;
+
+      try {
+        const data = await window.apiClient.getLeaderboard(currentGame, currentPeriod, 50);
+
+        if (!data || data.length === 0) {
+          content.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🏆</div>
+              <h3>No scores yet!</h3>
+              <p>Be the first to set a high score.</p>
+            </div>
+          `;
+          return;
+        }
+
+        content.innerHTML = data.map((entry, index) => {
+          const rank = index + 1;
+          const isCurrentUser = currentUser && entry.oderId === currentUser.uid;
+          const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+          return `
+            <div class="leaderboard-row ${isCurrentUser ? 'current-user' : ''}">
+              <div class="rank ${rankClass}">
+                ${rank <= 3 ? `<span class="rank-medal">${medal}</span>` : medal}
+              </div>
+              <div class="player-info">
+                <img class="player-avatar" src="${entry.avatarUrl || `https://via.placeholder.com/40?text=${(entry.displayName?.[0] || 'P')}`}" alt="${entry.displayName}" onerror="this.src='https://via.placeholder.com/40?text=P'">
+                <div>
+                  <div class="player-name">${entry.displayName || 'Player'}</div>
+                  <div class="player-level">Level ${entry.level || 1}</div>
+                </div>
+              </div>
+              <div class="score">${entry.score?.toLocaleString() || 0}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Failed to load leaderboard:', error);
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">😕</div>
+            <h3>Couldn't load leaderboard</h3>
+            <p>Please try again later.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Load User's Rank
+    async function loadUserRank() {
+      if (!currentUser) return;
+
+      try {
+        const rankData = await window.apiClient.getMyRank(currentGame, currentPeriod);
+
+        const positionEl = document.getElementById('yourRankPosition');
+        const scoreEl = document.getElementById('yourScore');
+        const subtitleEl = document.getElementById('yourRankSubtitle');
+
+        if (rankData && rankData.rank) {
+          positionEl.textContent = `#${rankData.rank}`;
+          scoreEl.textContent = rankData.score?.toLocaleString() || '0';
+
+          if (rankData.rank <= 3) {
+            subtitleEl.textContent = "You're on the podium! 🎉";
+          } else if (rankData.rank <= 10) {
+            subtitleEl.textContent = "Top 10! Amazing!";
+          } else {
+            subtitleEl.textContent = "Keep playing to climb!";
+          }
+        } else {
+          positionEl.textContent = '--';
+          scoreEl.textContent = '0';
+          subtitleEl.textContent = "Play a game to get ranked!";
+        }
+      } catch (error) {
+        console.error('Failed to load user rank:', error);
+      }
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      const checkAuth = setInterval(() => {
+        if (window.authManager?.isInitialized) {
+          clearInterval(checkAuth);
+          window.authManager.onAuthStateChanged(updateAuthUI);
+          loadLeaderboard();
+        }
+      }, 100);
+    });
+  </script>
+</body>
+</html>
