@@ -1262,19 +1262,25 @@
 
     function gameTick() {
       timeRemaining--;
-      updateDisplay();
 
+      // Check if game should end BEFORE processing order expirations
+      // This ensures the displayed score matches the final score
+      if (timeRemaining <= 0) {
+        updateDisplay();
+        endGame();
+        return;
+      }
+
+      // Process order expirations only if game is still active
       orders.forEach(order => {
         order.timeLeft--;
         if (order.timeLeft <= 0) {
           expireOrder(order);
         }
       });
-      renderOrders();
 
-      if (timeRemaining <= 0) {
-        endGame();
-      }
+      updateDisplay();
+      renderOrders();
     }
 
     function endGame() {

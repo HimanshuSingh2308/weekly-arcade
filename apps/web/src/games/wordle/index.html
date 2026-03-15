@@ -6,13 +6,13 @@
   <title>Wordle | Weekly Arcade - Free Daily Word Game</title>
 
   <!-- SEO -->
-  <meta name="description" content="Play Wordle free online. Guess the 5-letter word in 6 tries. A new word every day! No download required.">
+  <meta name="description" content="Play Wordle free online. Guess words from 3-7 letters with progressive difficulty. A new word every day! No download required.">
   <meta name="keywords" content="wordle, word game, puzzle game, daily word game, free wordle, browser game, guess the word">
   <link rel="canonical" href="https://weekly-arcade.web.app/games/wordle/">
 
   <!-- Open Graph -->
   <meta property="og:title" content="Wordle | Weekly Arcade">
-  <meta property="og:description" content="Guess the 5-letter word in 6 tries. Play free daily!">
+  <meta property="og:description" content="Guess words from 3-7 letters with progressive difficulty. Play free daily!">
   <meta property="og:type" content="website">
 
   <style>
@@ -721,19 +721,27 @@
 
     .modal-close {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: none;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: rgba(255,255,255,0.1);
       border: none;
       color: #888;
       font-size: 1.5rem;
       cursor: pointer;
-      padding: 0;
+      padding: 0.5rem 0.75rem;
       line-height: 1;
+      border-radius: 4px;
+      transition: all 0.2s;
+      z-index: 10;
     }
 
     .modal-close:hover {
       color: #fff;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .modal-close:active {
+      transform: scale(0.95);
     }
 
     /* Help Modal */
@@ -1159,8 +1167,9 @@
       <p>Guess the <strong>WORDLE</strong> in 6 tries.</p>
 
       <div class="rule">
-        <p>Each guess must be a valid 5-letter word. Press ENTER to submit.</p>
+        <p>Each guess must be a valid word matching the current level (3-7 letters). Press ENTER to submit.</p>
         <p>After each guess, the color of the tiles will change to show how close your guess was to the word.</p>
+        <p><strong>Progressive difficulty:</strong> Start with 3-letter words and level up to longer words!</p>
       </div>
 
       <div class="rule">

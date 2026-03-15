@@ -137,10 +137,11 @@
 
     /* Canvas */
     #gameCanvas {
+      box-sizing: content-box; /* Override to prevent border affecting canvas size */
       border: 2px solid var(--accent);
       border-radius: 8px;
       background: var(--bg-card);
-      max-width: 100%;
+      max-width: calc(100% - 4px); /* Account for border */
       touch-action: none;
     }
 
@@ -459,30 +460,60 @@
 
     function resizeCanvas() {
       const container = document.querySelector('.game-container');
-      const maxSize = Math.min(container.clientWidth - 20, container.clientHeight - 20, 500);
+      const containerWidth = container.clientWidth || 320;
+      const containerHeight = container.clientHeight || 320;
+      const maxSize = Math.min(containerWidth - 24, containerHeight - 24, 500);
 
-      canvas.width = Math.floor(maxSize / GRID_SIZE) * GRID_SIZE;
-      canvas.height = Math.floor(maxSize / GRID_SIZE) * GRID_SIZE;
+      // Ensure minimum playable size (at least 10x10 grid)
+      const size = Math.max(Math.floor(maxSize / GRID_SIZE) * GRID_SIZE, GRID_SIZE * 10);
 
-      gridWidth = canvas.width / GRID_SIZE;
-      gridHeight = canvas.height / GRID_SIZE;
+      canvas.width = size;
+      canvas.height = size;
+
+      gridWidth = Math.floor(canvas.width / GRID_SIZE);
+      gridHeight = Math.floor(canvas.height / GRID_SIZE);
+
+      // Validate grid dimensions
+      if (gridWidth < 10) gridWidth = 10;
+      if (gridHeight < 10) gridHeight = 10;
 
       if (isPlaying && !isGameOver) {
+        // Check if snake is still within bounds after resize
+        const outOfBounds = snake.some(seg =>
+          seg.x < 0 || seg.x >= gridWidth || seg.y < 0 || seg.y >= gridHeight
+        );
+        if (outOfBounds) {
+          gameOver();
+          return;
+        }
         draw();
       }
     }
 
     // ============ GAME LOGIC ============
     function startGame() {
+      // Ensure canvas is properly sized before starting
+      resizeCanvas();
+
+      // Validate grid dimensions
+      if (!gridWidth || !gridHeight || gridWidth < 10 || gridHeight < 10) {
+        console.error('Invalid grid size:', gridWidth, gridHeight);
+        return;
+      }
+
       // Hide overlays
       document.getElementById('startOverlay').classList.add('hidden');
       document.getElementById('gameOverOverlay').classList.add('hidden');
 
+      // Calculate safe starting position (center of grid)
+      const startX = Math.floor(gridWidth / 2);
+      const startY = Math.floor(gridHeight / 2);
+
       // Reset state
       snake = [
-        { x: Math.floor(gridWidth / 2), y: Math.floor(gridHeight / 2) },
-        { x: Math.floor(gridWidth / 2) - 1, y: Math.floor(gridHeight / 2) },
-        { x: Math.floor(gridWidth / 2) - 2, y: Math.floor(gridHeight / 2) }
+        { x: startX, y: startY },
+        { x: startX - 1, y: startY },
+        { x: startX - 2, y: startY }
       ];
       direction = 'right';
       nextDirection = 'right';

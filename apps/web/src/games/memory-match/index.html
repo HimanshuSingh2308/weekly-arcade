@@ -1303,15 +1303,17 @@
       };
 
       // Check if user is signed in
-      if (window.apiClient && window.authManager?.currentUser) {
+      if (window.apiClient && currentUser) {
         try {
           await window.apiClient.submitScore('memory-match', scoreData);
+          console.log('Score submitted to leaderboard');
         } catch (error) {
           console.error('Failed to submit score:', error);
           saveGuestScore(scoreData);
         }
       } else {
         saveGuestScore(scoreData);
+        console.log('Score saved locally (guest mode)');
       }
     }
 
@@ -1336,7 +1338,7 @@
 
     // Sync guest scores when user signs in
     async function syncGuestScores() {
-      if (!window.apiClient || !window.authManager?.currentUser) return;
+      if (!window.apiClient || !currentUser) return;
 
       const pendingScores = JSON.parse(localStorage.getItem('memory-match-pending-scores') || '[]');
       if (pendingScores.length === 0) return;
@@ -1355,15 +1357,28 @@
       }
     }
 
-    // Listen for auth state changes
-    document.addEventListener('authStateChanged', (e) => {
-      if (e.detail?.user) {
-        syncGuestScores();
-      }
-    });
+    // Auth state management
+    let currentUser = null;
+
+    function initAuth() {
+      const checkAuth = setInterval(() => {
+        if (window.authManager?.isInitialized) {
+          clearInterval(checkAuth);
+          window.authManager.onAuthStateChanged(user => {
+            currentUser = user;
+            if (user) {
+              syncGuestScores();
+            }
+          });
+        }
+      }, 100);
+    }
 
     // Initialize
-    document.addEventListener('DOMContentLoaded', initMenu);
+    document.addEventListener('DOMContentLoaded', () => {
+      initMenu();
+      initAuth();
+    });
   </script>
 </body>
 </html>

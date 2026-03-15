@@ -557,6 +557,7 @@
     let continueAfterWin = false;
     let previousState = null;
     let tileId = 0;
+    let currentUser = null;
 
     // DOM Elements
     const tilesContainer = document.getElementById('tilesContainer');
@@ -663,6 +664,9 @@
         isNew: true,
         merged: false
       };
+
+      // Update highest tile when new tile is added
+      highestTile = Math.max(highestTile, value);
 
       return grid[r][c];
     }
@@ -1008,6 +1012,7 @@
         if (window.authManager?.isInitialized) {
           clearInterval(checkAuth);
           window.authManager.onAuthStateChanged((user) => {
+            currentUser = user;
             const userSection = document.getElementById('userSection');
             if (user) {
               userSection.innerHTML = `
@@ -1052,7 +1057,7 @@
       };
 
       // If signed in, submit directly
-      if (window.apiClient && window.authManager?.currentUser) {
+      if (window.apiClient && currentUser) {
         try {
           await window.apiClient.submitScore('2048', scoreData);
           console.log('Score submitted to server');
@@ -1088,7 +1093,7 @@
     }
 
     async function syncGuestScores() {
-      if (!window.apiClient || !window.authManager?.currentUser) return;
+      if (!window.apiClient || !currentUser) return;
 
       const pendingScores = JSON.parse(localStorage.getItem('2048-pending-scores') || '[]');
       if (pendingScores.length === 0) return;
@@ -1115,7 +1120,7 @@
     }
 
     async function saveCloudState() {
-      if (!window.apiClient || !window.authManager?.currentUser) return;
+      if (!window.apiClient || !currentUser) return;
 
       try {
         const state = {
@@ -1138,7 +1143,7 @@
     }
 
     async function loadCloudState() {
-      if (!window.apiClient || !window.authManager?.currentUser) return;
+      if (!window.apiClient || !currentUser) return;
 
       try {
         const state = await window.apiClient.getGameState('2048');

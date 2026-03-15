@@ -1,7 +1,8 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
 import { UsersService } from '../users/users.service';
-import { LeaderboardEntry, LeaderboardPeriod, ScoreRecord } from '@weekly-arcade/shared';
+import { AuthService } from '../auth/auth.service';
+import { LeaderboardEntry, LeaderboardPeriod, ScoreRecord, User } from '@weekly-arcade/shared';
 import { SubmitScoreDto } from './dto';
 
 @Injectable()
@@ -13,7 +14,8 @@ export class LeaderboardService {
 
   constructor(
     private readonly firebaseService: FirebaseService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService
   ) {}
 
   private getDateKey(period: LeaderboardPeriod, date: Date = new Date()): string {
@@ -48,8 +50,19 @@ export class LeaderboardService {
   ): Promise<{ scoreId: string; rank: number; xpEarned: number }> {
     const now = new Date();
 
-    // Get user info
-    const user = await this.usersService.getProfile(uid);
+    // Get user info, or create a basic profile if user doesn't exist yet
+    let user: User;
+    try {
+      user = await this.usersService.getProfile(uid);
+    } catch (error) {
+      // User doesn't exist - create a basic profile
+      this.logger.warn(`User ${uid} not found, creating basic profile for score submission`);
+      user = await this.authService.createOrUpdateUser(uid, {
+        email: `${uid}@unknown.com`,
+        displayName: 'Player',
+        avatarUrl: null,
+      });
+    }
 
     // Create score record
     const scoreRecord: Omit<ScoreRecord, 'id'> = {
@@ -168,6 +181,16 @@ export class LeaderboardService {
 
       // Sort by score descending
       entries.sort((a, b) => b.score - a.score);
+
+      // Deduplicate by user ID (keep highest score entry)
+      const seenUsers = new Set<string>();
+      entries = entries.filter((entry) => {
+        if (!entry.odId || seenUsers.has(entry.odId)) {
+          return false;
+        }
+        seenUsers.add(entry.odId);
+        return true;
+      });
 
       // Update ranks and keep top 100
       entries = entries.slice(0, 100).map((entry, index) => ({

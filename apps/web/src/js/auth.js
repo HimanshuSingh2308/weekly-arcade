@@ -54,16 +54,27 @@ class AuthManager {
           const token = await user.getIdToken();
           window.apiClient?.setToken(token);
 
-          // Register/update user on backend
-          try {
-            await window.apiClient?.register({
-              email: user.email,
-              displayName: user.displayName || user.email?.split('@')[0] || 'Player',
-              avatarUrl: user.photoURL,
-            });
-          } catch (error) {
-            console.error('Failed to register user on backend:', error);
-          }
+          // Register/update user on backend with retry
+          const registerUser = async (retries = 3) => {
+            try {
+              await window.apiClient?.register({
+                email: user.email,
+                displayName: user.displayName || user.email?.split('@')[0] || 'Player',
+                avatarUrl: user.photoURL,
+              });
+              console.log('User registered on backend');
+            } catch (error) {
+              console.error('Failed to register user on backend:', error);
+              if (retries > 0) {
+                // Retry after a short delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return registerUser(retries - 1);
+              }
+            }
+          };
+
+          // Register in background (don't block auth state notification)
+          registerUser();
         } else {
           window.apiClient?.clearToken();
         }
