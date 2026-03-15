@@ -1,14 +1,9 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import * as express from 'express';
 import { AppModule } from './app/app.module';
 
-const expressApp = express();
-let nestAppInitialized = false;
-
-async function createNestApp() {
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
 
   app.enableCors({
     origin: [
@@ -16,6 +11,7 @@ async function createNestApp() {
       'http://localhost:5000',
       'https://weekly-arcade.web.app',
       'https://weekly-arcade.firebaseapp.com',
+      'https://himanshuSingh2308.github.io',
     ],
     credentials: true,
   });
@@ -30,29 +26,10 @@ async function createNestApp() {
     })
   );
 
-  await app.init();
-  nestAppInitialized = true;
-
-  return app;
+  // Cloud Functions Gen2/Cloud Run uses PORT env var
+  const port = process.env.PORT || 8080;
+  await app.listen(port, '0.0.0.0');
+  Logger.log(`🚀 API running on port ${port}`);
 }
 
-// For Cloud Functions deployment
-export const api = async (req: express.Request, res: express.Response) => {
-  if (!nestAppInitialized) {
-    await createNestApp();
-  }
-  expressApp(req, res);
-};
-
-// For local development
-async function bootstrap() {
-  const app = await createNestApp();
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  Logger.log(`🚀 API running on: http://localhost:${port}/api`);
-}
-
-// Run locally if not in Cloud Functions environment
-if (process.env.K_SERVICE === undefined) {
-  bootstrap();
-}
+bootstrap();

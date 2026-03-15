@@ -37,29 +37,48 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Create Cloud Function source
+      - name: Create Cloud Run source
         run: |
           mkdir -p deploy-api
           cp -r apps/api/dist/* deploy-api/
-          echo '{"name":"weekly-arcade-api","version":"1.0.0","main":"main.js","engines":{"node":">=20"},"dependencies":{"@nestjs/common":"^10.0.0","@nestjs/core":"^10.0.0","@nestjs/platform-express":"^10.0.0","express":"^4.18.2","firebase-admin":"^12.0.0","reflect-metadata":"^0.1.13","rxjs":"^7.8.1","class-validator":"^0.14.0","class-transformer":"^0.5.1"}}' > deploy-api/package.json
+          cat > deploy-api/package.json << 'PKGJSON'
+          {
+            "name": "weekly-arcade-api",
+            "version": "1.0.0",
+            "main": "main.js",
+            "scripts": {
+              "start": "node main.js"
+            },
+            "engines": {
+              "node": ">=20"
+            },
+            "dependencies": {
+              "@nestjs/common": "^10.0.0",
+              "@nestjs/core": "^10.0.0",
+              "@nestjs/platform-express": "^10.0.0",
+              "express": "^4.18.2",
+              "firebase-admin": "^12.0.0",
+              "reflect-metadata": "^0.1.13",
+              "rxjs": "^7.8.1",
+              "class-validator": "^0.14.0",
+              "class-transformer": "^0.5.1"
+            }
+          }
+          PKGJSON
 
-      - name: Deploy to Cloud Functions
+      - name: Deploy to Cloud Run
         run: |
-          gcloud functions deploy weekly-arcade-api \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region=us-central1 \
+          gcloud run deploy weekly-arcade-api \
             --source=deploy-api \
-            --entry-point=api \
-            --trigger-http \
+            --region=us-central1 \
             --allow-unauthenticated \
-            --memory=256MB \
+            --memory=256Mi \
             --timeout=60s \
             --min-instances=0 \
             --max-instances=10 \
             --set-env-vars="NODE_ENV=production,FIREBASE_PROJECT_ID=loyal-curve-425715-h6"
 
-      - name: Output Function URL
+      - name: Output Service URL
         run: |
-          echo "Function deployed to:"
-          gcloud functions describe weekly-arcade-api --region=us-central1 --format='value(serviceConfig.uri)'
+          echo "Service deployed to:"
+          gcloud run services describe weekly-arcade-api --region=us-central1 --format='value(status.url)'
