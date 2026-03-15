@@ -1,10 +1,12 @@
-const CACHE_NAME = 'weekly-arcade-v3';
+const CACHE_NAME = 'weekly-arcade-v4';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/games/wordle/',
-  '/games/wordle/index.html'
+  '/games/wordle/index.html',
+  '/games/memory-match/',
+  '/games/memory-match/index.html'
 ];
 
 // Install - cache assets
