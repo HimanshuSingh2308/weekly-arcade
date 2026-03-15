@@ -15,6 +15,15 @@ module.exports = {
       '@weekly-arcade/game-wordle': join(__dirname, '../../packages/game-wordle/src/index.ts'),
     },
   },
+  // Ensure @weekly-arcade packages are bundled, not treated as external
+  externals: (context, request, callback) => {
+    // Bundle @weekly-arcade packages
+    if (request.startsWith('@weekly-arcade/')) {
+      return callback();
+    }
+    // Let NxAppWebpackPlugin handle other externals
+    callback(null, undefined);
+  },
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
@@ -26,6 +35,7 @@ module.exports = {
       outputHashing: 'none',
       generatePackageJson: false,
       sourceMap: true,
+      externalDependencies: 'none', // Bundle all dependencies
     }),
   ],
 };
