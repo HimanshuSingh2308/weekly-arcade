@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build shared packages
+        run: npx nx build shared
+
       - name: Build API
         run: npx nx build api
 
@@ -41,6 +44,12 @@ jobs:
         run: |
           mkdir -p deploy-api
           cp -r apps/api/dist/* deploy-api/
+
+          # Copy shared package to node_modules
+          mkdir -p deploy-api/node_modules/@weekly-arcade/shared
+          cp -r packages/shared/dist/* deploy-api/node_modules/@weekly-arcade/shared/
+          cp packages/shared/package.json deploy-api/node_modules/@weekly-arcade/shared/
+
           cat > deploy-api/package.json << 'PKGJSON'
           {
             "name": "weekly-arcade-api",
@@ -61,7 +70,8 @@ jobs:
               "reflect-metadata": "^0.1.13",
               "rxjs": "^7.8.1",
               "class-validator": "^0.14.0",
-              "class-transformer": "^0.5.1"
+              "class-transformer": "^0.5.1",
+              "tslib": "^2.3.0"
             }
           }
           PKGJSON
