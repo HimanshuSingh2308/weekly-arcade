@@ -30,9 +30,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Weekly Arcade">
-  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
-  <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
   <meta name="msapplication-TileColor" content="#e94560">
+  <meta name="msapplication-TileImage" content="/icons/icon-192.png">
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -488,6 +493,67 @@
       text-decoration: none;
     }
 
+    /* iOS Install Banner */
+    .ios-install-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 1rem;
+      display: none;
+      align-items: center;
+      gap: 1rem;
+      z-index: 1000;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .ios-install-banner.show {
+      display: flex;
+    }
+
+    .ios-install-icon {
+      font-size: 2.5rem;
+    }
+
+    .ios-install-content {
+      flex: 1;
+    }
+
+    .ios-install-title {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .ios-install-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .ios-install-text span {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin: 0 0.2rem;
+    }
+
+    .ios-install-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .header {
@@ -654,6 +720,18 @@
     <p style="margin-top: 0.5rem;">Built with ❤️ | <a href="#">Follow us on Twitter</a></p>
   </footer>
 
+  <!-- iOS Install Banner -->
+  <div class="ios-install-banner" id="iosInstallBanner">
+    <div class="ios-install-icon">🎮</div>
+    <div class="ios-install-content">
+      <div class="ios-install-title">Install Weekly Arcade</div>
+      <div class="ios-install-text">
+        Tap <span>⬆️ Share</span> then <span>➕ Add to Home Screen</span>
+      </div>
+    </div>
+    <button class="ios-install-close" onclick="dismissIOSBanner()">&times;</button>
+  </div>
+
   <!-- Auth Modal -->
   <div class="auth-modal-overlay" id="authModal">
     <div class="auth-modal">
@@ -694,6 +772,33 @@
           .catch(err => console.log('SW registration failed'));
       });
     }
+
+    // iOS PWA Install Banner
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    function isInStandaloneMode() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true;
+    }
+
+    function showIOSInstallBanner() {
+      // Only show on iOS Safari, not in standalone mode, and if not dismissed
+      if (isIOS() && !isInStandaloneMode() && !localStorage.getItem('ios-banner-dismissed')) {
+        setTimeout(() => {
+          document.getElementById('iosInstallBanner').classList.add('show');
+        }, 3000); // Show after 3 seconds
+      }
+    }
+
+    function dismissIOSBanner() {
+      document.getElementById('iosInstallBanner').classList.remove('show');
+      localStorage.setItem('ios-banner-dismissed', 'true');
+    }
+
+    // Show iOS banner on load
+    window.addEventListener('load', showIOSInstallBanner);
 
     // Auth UI Functions
     function showAuthModal() {
