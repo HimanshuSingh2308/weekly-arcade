@@ -922,7 +922,132 @@
 
       .board.len-7 .tile { width: 32px; height: 32px; font-size: 0.9rem; }
     }
+
+    /* Auth Button Styles */
+    .auth-btn {
+      background: linear-gradient(135deg, #4285f4, #356ac3);
+      border: none;
+      color: #fff;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .auth-btn:hover {
+      background: linear-gradient(135deg, #5a9bf4, #4a7fd4);
+    }
+
+    .auth-btn.signed-in {
+      background: linear-gradient(135deg, #538d4e, #3d6b3a);
+    }
+
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+
+    /* Auth Modal */
+    .auth-modal {
+      max-width: 320px;
+    }
+
+    .auth-modal h2 {
+      margin-bottom: 1rem;
+    }
+
+    .auth-modal p {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .google-btn {
+      background: #fff;
+      color: #333;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .google-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .auth-benefits {
+      text-align: left;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+    }
+
+    .auth-benefits h4 {
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .auth-benefits ul {
+      list-style: none;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    .auth-benefits li {
+      padding: 0.3rem 0;
+    }
+
+    .auth-benefits li::before {
+      content: '✓ ';
+      color: #538d4e;
+    }
+
+    .cloud-sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(83, 141, 78, 0.2);
+      color: #538d4e;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      margin-left: 0.5rem;
+    }
+
+    .cloud-sync-badge.syncing {
+      color: #b59f3b;
+      background: rgba(181, 159, 59, 0.2);
+    }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+
+  <!-- API Client -->
+  <script src="../../js/api-client.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/sync.js"></script>
 </head>
 <body>
   <header class="header">
@@ -935,6 +1060,9 @@
       </div>
     </div>
     <div class="header-buttons">
+      <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
+        Sign In
+      </button>
       <button class="hint-btn" id="hintBtn" onclick="useHint()">
         💡 Hint <span class="hint-count" id="hintCount">3</span>
       </button>
@@ -1067,6 +1195,32 @@
       </div>
 
       <p style="text-align: center; margin-top: 1.5rem;"><strong>A new word is available each day!</strong></p>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal auth-modal">
+      <button class="modal-close" onclick="hideAuthModal()">×</button>
+      <h2>🎮 Sign In</h2>
+      <p>Save your progress, compete on leaderboards, and earn achievements!</p>
+
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+
+      <div class="auth-benefits">
+        <h4>Benefits of signing in:</h4>
+        <ul>
+          <li>Cloud save - play on any device</li>
+          <li>Compete on global leaderboards</li>
+          <li>Unlock and track achievements</li>
+          <li>Keep your streak across devices</li>
+        </ul>
+      </div>
+
+      <button class="secondary" onclick="hideAuthModal()" style="margin-top: 1rem;">Maybe Later</button>
     </div>
   </div>
 
@@ -3061,6 +3215,201 @@
 
     // Initialize sound button state
     updateSoundButton();
+
+    // ============================================
+    // CLOUD SYNC INTEGRATION
+    // ============================================
+
+    let currentUser = null;
+
+    function initCloudSync() {
+      // Use the global authManager from auth.js
+      if (window.authManager) {
+        window.authManager.onAuthStateChanged(handleAuthStateChanged);
+      }
+    }
+
+    function handleAuthStateChanged(user) {
+      currentUser = user;
+      updateAuthButton();
+
+      if (user) {
+        // Load cloud state after sign in
+        loadCloudState();
+      }
+    }
+
+    function updateAuthButton() {
+      const btn = document.getElementById('authBtn');
+      if (!btn) return;
+
+      if (currentUser) {
+        const name = currentUser.displayName || 'User';
+        const photo = currentUser.photoURL;
+        if (photo) {
+          btn.innerHTML = `<img src="${photo}" class="user-avatar" alt="${name}"> ${name.split(' ')[0]}`;
+        } else {
+          btn.innerHTML = `👤 ${name.split(' ')[0]}`;
+        }
+        btn.classList.add('signed-in');
+      } else {
+        btn.innerHTML = 'Sign In';
+        btn.classList.remove('signed-in');
+      }
+    }
+
+    function handleAuthClick() {
+      if (currentUser) {
+        // Show user menu or sign out
+        if (confirm('Sign out?')) {
+          window.authManager?.signOut();
+        }
+      } else {
+        showAuthModal();
+      }
+    }
+
+    function showAuthModal() {
+      document.getElementById('authModal').classList.add('show');
+    }
+
+    function hideAuthModal() {
+      document.getElementById('authModal').classList.remove('show');
+    }
+
+    async function signInWithGoogle() {
+      try {
+        await window.authManager?.signInWithGoogle();
+        hideAuthModal();
+        showMessage('Signed in! Your progress will sync to the cloud.');
+      } catch (error) {
+        console.error('Sign in error:', error);
+        showMessage('Sign in failed. Please try again.');
+      }
+    }
+
+    // Cloud State Management
+    async function loadCloudState() {
+      if (!currentUser || !window.apiClient) return;
+
+      try {
+        const cloudState = await window.apiClient.getGameState('wordle');
+        if (cloudState && cloudState.data) {
+          // Merge cloud state with local (prefer higher values)
+          const localStats = JSON.parse(localStorage.getItem('wordle-stats') || '{}');
+          const cloudStats = cloudState.data.stats || {};
+
+          // Use cloud if it has better stats
+          if ((cloudStats.played || 0) > (localStats.played || 0)) {
+            localStorage.setItem('wordle-stats', JSON.stringify(cloudStats));
+            stats = cloudStats;
+          }
+
+          // Sync level
+          if ((cloudState.data.level || 1) > (parseInt(localStorage.getItem('wordle-level')) || 1)) {
+            localStorage.setItem('wordle-level', cloudState.data.level);
+          }
+
+          // Sync XP
+          if ((cloudState.data.totalXP || 0) > (parseInt(localStorage.getItem('wordle-total-xp')) || 0)) {
+            localStorage.setItem('wordle-total-xp', cloudState.data.totalXP);
+          }
+
+          console.log('Cloud state loaded');
+        }
+      } catch (error) {
+        console.log('Could not load cloud state:', error.message);
+      }
+    }
+
+    async function saveCloudState() {
+      if (!currentUser || !window.apiClient) return;
+
+      try {
+        const state = {
+          stats: stats,
+          level: parseInt(localStorage.getItem('wordle-level')) || 1,
+          totalXP: parseInt(localStorage.getItem('wordle-total-xp')) || 0,
+          lastPlayed: new Date().toISOString()
+        };
+
+        await window.apiClient.saveGameState('wordle', state);
+        console.log('Cloud state saved');
+      } catch (error) {
+        console.log('Could not save cloud state:', error.message);
+      }
+    }
+
+    // Submit score to leaderboard
+    async function submitScoreToCloud(scoreData, won) {
+      if (!currentUser || !window.apiClient || !won) return;
+
+      try {
+        await window.apiClient.submitScore('wordle', {
+          score: scoreData.score,
+          level: wordLength - MIN_LENGTH + 1,
+          attempts: scoreData.attempts,
+          hintsUsed: scoreData.hintsUsed,
+          streakMultiplier: scoreData.streakMultiplier,
+          dailyWord: targetWord
+        });
+        console.log('Score submitted to leaderboard');
+      } catch (error) {
+        console.log('Could not submit score:', error.message);
+      }
+    }
+
+    // Sync achievement unlock
+    async function syncAchievementToCloud(achievementId) {
+      if (!currentUser || !window.apiClient) return;
+
+      try {
+        await window.apiClient.unlockAchievement(achievementId, 'wordle');
+        console.log('Achievement synced:', achievementId);
+      } catch (error) {
+        console.log('Could not sync achievement:', error.message);
+      }
+    }
+
+    // Patch the original checkGameEnd to include cloud sync
+    const originalCheckGameEnd = checkGameEnd;
+    checkGameEnd = function(guess) {
+      originalCheckGameEnd(guess);
+
+      // After game ends, sync to cloud
+      if (gameOver) {
+        const won = guess === targetWord;
+        if (won) {
+          const scoreData = calculateScore();
+          submitScoreToCloud(scoreData, won);
+        }
+        saveCloudState();
+      }
+    };
+
+    // Patch achievement checking to sync to cloud
+    const originalCheckAchievements = typeof checkAchievements === 'function' ? checkAchievements : null;
+    if (originalCheckAchievements) {
+      checkAchievements = function(scoreData, won, gameTime) {
+        const achievements = originalCheckAchievements(scoreData, won, gameTime);
+
+        // Sync each new achievement to cloud
+        if (achievements && achievements.length > 0) {
+          achievements.forEach(ach => {
+            syncAchievementToCloud(ach.id);
+          });
+        }
+
+        return achievements;
+      };
+    }
+
+    // Initialize cloud sync when page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCloudSync);
+    } else {
+      setTimeout(initCloudSync, 100); // Small delay to ensure auth.js is ready
+    }
 
     init();
   </script>
