@@ -53,6 +53,13 @@ export class FirebaseService implements OnModuleInit {
     return this._firestore.doc(path);
   }
 
+  // Run a Firestore transaction
+  async runTransaction<T>(
+    updateFunction: (transaction: FirebaseFirestore.Transaction) => Promise<T>
+  ): Promise<T> {
+    return this._firestore.runTransaction(updateFunction);
+  }
+
   // Verify Firebase ID token
   async verifyIdToken(token: string): Promise<admin.auth.DecodedIdToken> {
     return this._auth.verifyIdToken(token);
