@@ -5,6 +5,13 @@ import { AuthService } from '../auth/auth.service';
 import { LeaderboardEntry, LeaderboardPeriod, ScoreRecord, User } from '@weekly-arcade/shared';
 import { SubmitScoreDto } from './dto';
 
+// Helper to remove undefined values (Firestore doesn't accept undefined)
+function removeUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  ) as T;
+}
+
 @Injectable()
 export class LeaderboardService {
   private readonly logger = new Logger(LeaderboardService.name);
@@ -64,25 +71,22 @@ export class LeaderboardService {
       });
     }
 
-    // Create score record
-    const scoreRecord: Omit<ScoreRecord, 'id'> = {
-      odId: '', // Will be set after creation
+    // Create score record (remove undefined values for Firestore)
+    const scoreRecord = removeUndefined({
+      odId: uid,
       odName: user.displayName,
-      odAvatarUrl: user.avatarUrl,
+      odAvatarUrl: user.avatarUrl ?? null,
       gameId,
       score: submitDto.score,
-      guessCount: submitDto.guessCount,
-      level: submitDto.level,
-      timeMs: submitDto.timeMs,
-      metadata: submitDto.metadata,
+      guessCount: submitDto.guessCount ?? null,
+      level: submitDto.level ?? null,
+      timeMs: submitDto.timeMs ?? null,
+      metadata: submitDto.metadata ?? null,
       createdAt: now,
-    };
+    });
 
     // Save to scores collection
-    const scoreRef = await this.firebaseService.collection(this.scoresCollection).add({
-      ...scoreRecord,
-      odId: uid,
-    });
+    const scoreRef = await this.firebaseService.collection(this.scoresCollection).add(scoreRecord);
 
     // Update leaderboards for all periods
     const periods: LeaderboardPeriod[] = ['daily', 'weekly', 'monthly', 'allTime'];

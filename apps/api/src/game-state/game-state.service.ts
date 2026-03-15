@@ -3,6 +3,13 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { GameState } from '@weekly-arcade/shared';
 import { SaveGameStateDto } from './dto';
 
+// Helper to remove undefined values (Firestore doesn't accept undefined)
+function removeUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  ) as T;
+}
+
 @Injectable()
 export class GameStateService {
   private readonly logger = new Logger(GameStateService.name);
@@ -36,31 +43,31 @@ export class GameStateService {
     const existingDoc = await ref.get();
     const now = new Date();
 
-    const gameState: GameState = {
+    const gameState: GameState = removeUndefined({
       gameId,
-      currentLevel: saveDto.currentLevel,
-      currentStreak: saveDto.currentStreak,
+      currentLevel: saveDto.currentLevel ?? 1,
+      currentStreak: saveDto.currentStreak ?? 0,
       bestStreak: Math.max(
-        saveDto.bestStreak,
-        saveDto.currentStreak,
+        saveDto.bestStreak ?? 0,
+        saveDto.currentStreak ?? 0,
         existingDoc.exists ? (existingDoc.data() as GameState).bestStreak : 0
       ),
-      gamesPlayed: saveDto.gamesPlayed,
-      gamesWon: saveDto.gamesWon,
+      gamesPlayed: saveDto.gamesPlayed ?? 0,
+      gamesWon: saveDto.gamesWon ?? 0,
       guessDistribution: saveDto.guessDistribution || {},
       lastPlayedDate: saveDto.lastPlayedDate || now.toISOString().split('T')[0],
-      currentGameProgress: saveDto.currentGameProgress,
-      additionalData: saveDto.additionalData,
+      currentGameProgress: saveDto.currentGameProgress ?? null,
+      additionalData: saveDto.additionalData ?? null,
       updatedAt: now,
-    };
+    });
 
     if (!existingDoc.exists) {
-      await ref.set({
+      await ref.set(removeUndefined({
         ...gameState,
         createdAt: now,
-      });
+      }));
     } else {
-      await ref.update(gameState);
+      await ref.update(removeUndefined(gameState));
     }
 
     this.logger.log(`Saved game state for user ${uid}, game ${gameId}`);
