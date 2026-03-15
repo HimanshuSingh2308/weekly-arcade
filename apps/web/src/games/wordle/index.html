@@ -3327,10 +3327,17 @@
 
       try {
         const state = {
-          stats: stats,
-          level: parseInt(localStorage.getItem('wordle-level')) || 1,
-          totalXP: parseInt(localStorage.getItem('wordle-total-xp')) || 0,
-          lastPlayed: new Date().toISOString()
+          currentLevel: parseInt(localStorage.getItem('wordle-level')) || 1,
+          currentStreak: stats.streak || 0,
+          bestStreak: stats.maxStreak || 0,
+          gamesPlayed: stats.played || 0,
+          gamesWon: stats.won || 0,
+          guessDistribution: stats.distribution || {},
+          lastPlayedDate: new Date().toISOString(),
+          additionalData: {
+            totalXP: parseInt(localStorage.getItem('wordle-total-xp')) || 0,
+            hintsRemaining: hintsRemaining
+          }
         };
 
         await window.apiClient.saveGameState('wordle', state);

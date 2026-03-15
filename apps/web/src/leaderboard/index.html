@@ -885,7 +885,10 @@
 
         content.innerHTML = data.map((entry, index) => {
           const rank = index + 1;
-          const isCurrentUser = currentUser && entry.oderId === currentUser.uid;
+          const odId = entry.odId || entry.userId;
+          const displayName = entry.odName || entry.displayName || 'Player';
+          const avatarUrl = entry.odAvatarUrl || entry.avatarUrl;
+          const isCurrentUser = currentUser && odId === currentUser.uid;
           const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
           const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
 
@@ -895,9 +898,9 @@
                 ${rank <= 3 ? `<span class="rank-medal">${medal}</span>` : medal}
               </div>
               <div class="player-info">
-                <img class="player-avatar" src="${entry.avatarUrl || `https://via.placeholder.com/40?text=${(entry.displayName?.[0] || 'P')}`}" alt="${entry.displayName}" onerror="this.src='https://via.placeholder.com/40?text=P'">
+                <img class="player-avatar" src="${avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e94560&color=fff`}" alt="${displayName}" onerror="this.src='https://ui-avatars.com/api/?name=P&background=e94560&color=fff'">
                 <div>
-                  <div class="player-name">${entry.displayName || 'Player'}</div>
+                  <div class="player-name">${displayName}</div>
                   <div class="player-level">Level ${entry.level || 1}</div>
                 </div>
               </div>

@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | Weekly Arcade</title>
+
+  <!-- SEO -->
+  <meta name="description" content="View your Weekly Arcade profile, stats, achievements, and game history.">
+  <link rel="canonical" href="https://weekly-arcade.web.app/profile/">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#e94560">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+      --success: #4ade80;
+      --warning: #fbbf24;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon { font-size: 1.8rem; }
+
+    .nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav a:hover, .nav a.active { color: var(--accent); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .auth-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .auth-btn:hover {
+      background: var(--accent-hover);
+      transform: scale(1.05);
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Sign In Required */
+    .sign-in-required {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .sign-in-required .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .sign-in-required h2 {
+      margin-bottom: 0.5rem;
+    }
+
+    .sign-in-required p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Profile Header */
+    .profile-header {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 4px solid var(--accent);
+      object-fit: cover;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .profile-email {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .profile-joined {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Level Progress */
+    .level-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .level-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .level-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .level-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .level-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .xp-info {
+      text-align: right;
+    }
+
+    .xp-current {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .xp-needed {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .level-progress {
+      height: 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .level-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      border-radius: 6px;
+      transition: width 0.5s ease;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .stat-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Achievements Section */
+    .section-title {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .achievements-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+
+    .achievement-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .achievement-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .achievement-card.locked {
+      opacity: 0.4;
+    }
+
+    .achievement-card.locked .achievement-icon {
+      filter: grayscale(100%);
+    }
+
+    .achievement-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .achievement-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .achievement-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .achievement-date {
+      font-size: 0.7rem;
+      color: var(--accent);
+      margin-top: 0.5rem;
+    }
+
+    /* Recent Games */
+    .recent-games-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .game-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+    }
+
+    .game-history-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .game-history-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .game-history-icon {
+      font-size: 1.5rem;
+    }
+
+    .game-history-info h4 {
+      font-size: 0.95rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .game-history-info p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .game-history-score {
+      text-align: right;
+    }
+
+    .game-history-score .score-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .game-history-score .score-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .game-result {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .game-result.win {
+      background: rgba(74, 222, 128, 0.2);
+      color: var(--success);
+    }
+
+    .game-result.loss {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Settings Button */
+    .settings-section {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .settings-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .settings-btn:hover {
+      border-color: var(--accent);
+      background: var(--bg-secondary);
+    }
+
+    .settings-btn.danger {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .settings-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* Auth Modal */
+    .auth-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .auth-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .auth-modal {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+      position: relative;
+    }
+
+    .auth-modal-overlay.show .auth-modal {
+      transform: scale(1);
+    }
+
+    .auth-modal h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-modal p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .auth-modal-close:hover { color: var(--text-primary); }
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: white;
+      color: #333;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .google-btn:hover {
+      background: #f5f5f5;
+      transform: scale(1.02);
+    }
+
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header {
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .header-right { order: 2; }
+
+      .container { padding: 1rem; }
+
+      .profile-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+      }
+
+      .profile-avatar {
+        width: 80px;
+        height: 80px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .achievements-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .game-history-item {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+      }
+
+      .game-history-left {
+        flex-direction: column;
+      }
+
+      .game-history-score {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">
+      <span class="logo-icon">🎮</span>
+      Weekly Arcade
+    </a>
+    <nav class="nav">
+      <a href="/">Games</a>
+      <a href="/leaderboard/">Leaderboards</a>
+      <a href="/profile/" class="active">Profile</a>
+    </nav>
+    <div class="header-right">
+      <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
+    </div>
+  </header>
+
+  <!-- Sign In Required (shown when not logged in) -->
+  <div class="sign-in-required" id="signInRequired" style="display: none;">
+    <div class="icon">👤</div>
+    <h2>Sign In Required</h2>
+    <p>Sign in to view your profile, stats, and achievements</p>
+    <button class="auth-btn" onclick="showAuthModal()">Sign In with Google</button>
+  </div>
+
+  <!-- Profile Content (shown when logged in) -->
+  <main class="container" id="profileContent" style="display: none;">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <img class="profile-avatar" id="profileAvatar" src="" alt="Profile">
+      <div class="profile-info">
+        <h1 class="profile-name" id="profileName">Loading...</h1>
+        <p class="profile-email" id="profileEmail"></p>
+        <p class="profile-joined" id="profileJoined"></p>
+      </div>
+    </div>
+
+    <!-- Level Progress -->
+    <div class="level-section">
+      <div class="level-header">
+        <div class="level-badge">
+          <span class="level-number" id="levelNumber">1</span>
+          <div>
+            <div class="level-label">LEVEL</div>
+          </div>
+        </div>
+        <div class="xp-info">
+          <div class="xp-current" id="xpCurrent">0 XP</div>
+          <div class="xp-needed" id="xpNeeded">0 XP to next level</div>
+        </div>
+      </div>
+      <div class="level-progress">
+        <div class="level-progress-bar" id="levelProgressBar" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🎮</div>
+        <div class="stat-value" id="statGamesPlayed">0</div>
+        <div class="stat-label">Games Played</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-value" id="statWins">0</div>
+        <div class="stat-label">Wins</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-value" id="statStreak">0</div>
+        <div class="stat-label">Best Streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-value" id="statTotalScore">0</div>
+        <div class="stat-label">Total Score</div>
+      </div>
+    </div>
+
+    <!-- Achievements -->
+    <div class="achievements-section">
+      <h2 class="section-title">🏅 Achievements</h2>
+      <div class="achievements-grid" id="achievementsGrid">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading achievements...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Games -->
+    <div class="recent-games-section">
+      <h2 class="section-title">📊 Recent Games</h2>
+      <div id="recentGames">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading recent games...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings-section">
+      <button class="settings-btn" onclick="handleSignOut()">
+        <span>🚪</span> Sign Out
+      </button>
+      <button class="settings-btn danger" onclick="confirmDeleteAccount()">
+        <span>🗑️</span> Delete Account
+      </button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p><strong>Weekly Arcade</strong> - New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">Built with ❤️ | <a href="/">Back to Games</a></p>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="auth-modal-overlay" id="authModal">
+    <div class="auth-modal">
+      <button class="auth-modal-close" onclick="hideAuthModal()">&times;</button>
+      <h2>Welcome to Weekly Arcade</h2>
+      <p>Sign in to track your progress and achievements</p>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+
+  <!-- API & Auth Scripts -->
+  <script src="/js/api-client.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    // State
+    let currentUser = null;
+
+    // Auth UI Functions
+    function showAuthModal() {
+      document.getElementById('authModal').classList.add('show');
+    }
+
+    function hideAuthModal() {
+      document.getElementById('authModal').classList.remove('show');
+    }
+
+    document.getElementById('authModal').addEventListener('click', (e) => {
+      if (e.target.id === 'authModal') hideAuthModal();
+    });
+
+    async function signInWithGoogle() {
+      try {
+        await window.authManager.signInWithGoogle();
+        hideAuthModal();
+      } catch (error) {
+        console.error('Sign in failed:', error);
+        alert('Sign in failed. Please try again.');
+      }
+    }
+
+    function handleSignOut() {
+      if (confirm('Are you sure you want to sign out?')) {
+        window.authManager.signOut();
+      }
+    }
+
+    async function confirmDeleteAccount() {
+      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        if (confirm('This will permanently delete all your data, scores, and achievements. Continue?')) {
+          try {
+            await window.apiClient.deleteAccount();
+            await window.authManager.signOut();
+            alert('Account deleted successfully.');
+            window.location.href = '/';
+          } catch (error) {
+            console.error('Failed to delete account:', error);
+            alert('Failed to delete account. Please try again.');
+          }
+        }
+      }
+    }
+
+    // Update UI based on auth state
+    function updateAuthUI(user) {
+      currentUser = user;
+      const signInBtn = document.getElementById('signInBtn');
+      const signInRequired = document.getElementById('signInRequired');
+      const profileContent = document.getElementById('profileContent');
+
+      if (user) {
+        signInBtn.style.display = 'none';
+        signInRequired.style.display = 'none';
+        profileContent.style.display = 'block';
+        loadProfile();
+      } else {
+        signInBtn.style.display = 'block';
+        signInRequired.style.display = 'block';
+        profileContent.style.display = 'none';
+      }
+    }
+
+    // Load Profile Data
+    async function loadProfile() {
+      if (!currentUser) return;
+
+      // Set basic info from Firebase Auth
+      document.getElementById('profileAvatar').src = currentUser.photoURL ||
+        `https://via.placeholder.com/100?text=${currentUser.displayName?.[0] || 'U'}`;
+      document.getElementById('profileName').textContent = currentUser.displayName || 'Player';
+      document.getElementById('profileEmail').textContent = currentUser.email || '';
+
+      // Load profile from API
+      try {
+        const profile = await window.apiClient.getProfile();
+
+        // Update with API data
+        if (profile.createdAt) {
+          const joinDate = new Date(profile.createdAt).toLocaleDateString('en-US', {
+            month: 'long',
+            year: 'numeric'
+          });
+          document.getElementById('profileJoined').textContent = `Joined ${joinDate}`;
+        }
+
+        // Level & XP
+        const level = profile.level || 1;
+        const totalXp = profile.totalXp || 0;
+        const xpForCurrentLevel = getXpForLevel(level);
+        const xpForNextLevel = getXpForLevel(level + 1);
+        const xpProgress = totalXp - xpForCurrentLevel;
+        const xpNeeded = xpForNextLevel - xpForCurrentLevel;
+        const progressPercent = Math.min(100, (xpProgress / xpNeeded) * 100);
+
+        document.getElementById('levelNumber').textContent = level;
+        document.getElementById('xpCurrent').textContent = `${totalXp.toLocaleString()} XP`;
+        document.getElementById('xpNeeded').textContent = `${(xpNeeded - xpProgress).toLocaleString()} XP to level ${level + 1}`;
+        document.getElementById('levelProgressBar').style.width = `${progressPercent}%`;
+
+        // Stats
+        const stats = profile.stats || {};
+        document.getElementById('statGamesPlayed').textContent = (stats.gamesPlayed || 0).toLocaleString();
+        document.getElementById('statWins').textContent = (stats.wins || 0).toLocaleString();
+        document.getElementById('statStreak').textContent = stats.bestStreak || 0;
+        document.getElementById('statTotalScore').textContent = (stats.totalScore || 0).toLocaleString();
+
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+      }
+
+      // Load achievements
+      loadAchievements();
+
+      // Load recent games
+      loadRecentGames();
+    }
+
+    function getXpForLevel(level) {
+      // XP curve: each level requires more XP
+      return Math.floor(100 * Math.pow(level, 1.5));
+    }
+
+    // Load Achievements
+    async function loadAchievements() {
+      const grid = document.getElementById('achievementsGrid');
+
+      try {
+        // Get all achievements and user's unlocked ones
+        const [allAchievements, userAchievements] = await Promise.all([
+          window.apiClient.getAllAchievements().catch(() => []),
+          window.apiClient.getMyAchievements().catch(() => [])
+        ]);
+
+        const unlockedIds = new Set(userAchievements.map(a => a.achievementId || a.id));
+
+        // Define default achievements if API returns empty
+        const achievements = allAchievements.length > 0 ? allAchievements : [
+          { id: 'first_win', name: 'First Victory', description: 'Win your first game', icon: '🏆' },
+          { id: 'streak_3', name: 'On Fire', description: 'Get a 3-day streak', icon: '🔥' },
+          { id: 'streak_7', name: 'Week Warrior', description: 'Get a 7-day streak', icon: '⚔️' },
+          { id: 'perfect_game', name: 'Perfect', description: 'Win in 1 guess', icon: '💎' },
+          { id: 'level_5', name: 'Rising Star', description: 'Reach level 5', icon: '⭐' },
+          { id: 'level_10', name: 'Expert', description: 'Reach level 10', icon: '🌟' },
+          { id: 'score_1000', name: 'High Scorer', description: 'Score 1000+ points', icon: '🎯' },
+          { id: 'games_10', name: 'Dedicated', description: 'Play 10 games', icon: '🎮' },
+        ];
+
+        if (achievements.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🏅</div>
+              <p>No achievements available yet</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = achievements.map(achievement => {
+          const isUnlocked = unlockedIds.has(achievement.id);
+          const userAch = userAchievements.find(a => (a.achievementId || a.id) === achievement.id);
+          const unlockedDate = userAch?.unlockedAt ?
+            new Date(userAch.unlockedAt).toLocaleDateString() : '';
+
+          return `
+            <div class="achievement-card ${isUnlocked ? '' : 'locked'}">
+              <div class="achievement-icon">${achievement.icon || '🏅'}</div>
+              <div class="achievement-name">${achievement.name}</div>
+              <div class="achievement-desc">${achievement.description}</div>
+              ${isUnlocked ? `<div class="achievement-date">Unlocked ${unlockedDate}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Failed to load achievements:', error);
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">😕</div>
+            <p>Could not load achievements</p>
+          </div>
+        `;
+      }
+    }
+
+    // Load Recent Games
+    async function loadRecentGames() {
+      const container = document.getElementById('recentGames');
+
+      try {
+        const gameStates = await window.apiClient.getAllGameStates().catch(() => []);
+
+        if (!gameStates || gameStates.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🎮</div>
+              <p>No games played yet. Start playing to see your history!</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Sort by most recent
+        const sortedGames = gameStates.sort((a, b) =>
+          new Date(b.updatedAt || b.lastPlayed || 0) - new Date(a.updatedAt || a.lastPlayed || 0)
+        ).slice(0, 5);
+
+        const gameIcons = {
+          wordle: '🔤',
+          snake: '🐍',
+          '2048': '🔢',
+          memory: '🃏'
+        };
+
+        container.innerHTML = sortedGames.map(game => {
+          const date = new Date(game.updatedAt || game.lastPlayed).toLocaleDateString();
+          const icon = gameIcons[game.gameId] || '🎮';
+          const gameName = game.gameId.charAt(0).toUpperCase() + game.gameId.slice(1);
+          const won = game.state?.won || game.won;
+          const score = game.state?.score || game.score || 0;
+
+          return `
+            <div class="game-history-item">
+              <div class="game-history-left">
+                <div class="game-history-icon">${icon}</div>
+                <div class="game-history-info">
+                  <h4>${gameName}</h4>
+                  <p>${date} ${won !== undefined ? `<span class="game-result ${won ? 'win' : 'loss'}">${won ? 'Won' : 'Lost'}</span>` : ''}</p>
+                </div>
+              </div>
+              <div class="game-history-score">
+                <div class="score-value">${score.toLocaleString()}</div>
+                <div class="score-label">points</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Failed to load recent games:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">😕</div>
+            <p>Could not load game history</p>
+          </div>
+        `;
+      }
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      const checkAuth = setInterval(() => {
+        if (window.authManager?.isInitialized) {
+          clearInterval(checkAuth);
+          window.authManager.onAuthStateChanged(updateAuthUI);
+        }
+      }, 100);
+    });
+  </script>
+</body>
+</html>
