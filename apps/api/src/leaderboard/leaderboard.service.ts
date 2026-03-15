@@ -98,9 +98,16 @@ export class LeaderboardService {
     // Base XP from score
     let xp = Math.floor(submitDto.score * 0.1);
 
-    // Bonus for fewer guesses
-    const guessBonus = Math.max(0, (7 - submitDto.guessCount) * 10);
-    xp += guessBonus;
+    // Bonus for fewer guesses (Wordle-specific, only if guessCount provided)
+    if (submitDto.guessCount !== undefined && submitDto.guessCount > 0) {
+      const guessBonus = Math.max(0, (7 - submitDto.guessCount) * 10);
+      xp += guessBonus;
+    }
+
+    // Level bonus (for games like Snake, 2048, Chaos Kitchen)
+    if (submitDto.level !== undefined && submitDto.level > 1) {
+      xp += submitDto.level * 5;
+    }
 
     // Perfect game bonus
     if (submitDto.metadata?.perfectGame) {
@@ -112,7 +119,7 @@ export class LeaderboardService {
       xp += submitDto.metadata.streakBonus;
     }
 
-    return Math.floor(xp);
+    return Math.floor(Math.max(10, xp)); // Minimum 10 XP
   }
 
   private async updateLeaderboard(
@@ -245,5 +252,29 @@ export class LeaderboardService {
     const entry = (data.entries || []).find((e) => e.odId === uid);
 
     return entry?.rank || 0;
+  }
+
+  async getUserRankWithScore(
+    uid: string,
+    gameId: string,
+    period: LeaderboardPeriod
+  ): Promise<{ rank: number; score: number }> {
+    const dateKey = this.getDateKey(period);
+    const leaderboardId = `${gameId}_${period}_${dateKey}`;
+    const doc = await this.firebaseService
+      .doc(`${this.leaderboardsCollection}/${leaderboardId}`)
+      .get();
+
+    if (!doc.exists) {
+      return { rank: 0, score: 0 };
+    }
+
+    const data = doc.data() as { entries: LeaderboardEntry[] };
+    const entry = (data.entries || []).find((e) => e.odId === uid);
+
+    return {
+      rank: entry?.rank || 0,
+      score: entry?.score || 0,
+    };
   }
 }

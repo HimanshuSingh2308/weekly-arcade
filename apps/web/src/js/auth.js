@@ -180,6 +180,13 @@ class AuthManager {
   }
 
   /**
+   * Get current user (alias for compatibility)
+   */
+  get currentUser() {
+    return this.user;
+  }
+
+  /**
    * Get current user's ID token
    */
   async getIdToken() {

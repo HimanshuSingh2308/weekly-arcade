@@ -8,6 +8,15 @@
     "emitDecoratorMetadata": true,
     "target": "es2021"
   },
-  "include": ["src/**/*.ts", "../../packages/shared/src/**/*.ts", "../../packages/game-wordle/src/**/*.ts"],
-  "exclude": []
+  "include": [
+    "src/**/*.ts",
+    "../../packages/shared/src/**/*.ts",
+    "../../packages/game-wordle/src/**/*.ts"
+  ],
+  "exclude": [],
+  "references": [
+    {
+      "path": "../../packages/shared/tsconfig.lib.json"
+    }
+  ]
 }

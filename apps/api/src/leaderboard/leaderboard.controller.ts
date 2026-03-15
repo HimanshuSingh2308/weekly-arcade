@@ -66,8 +66,8 @@ export class LeaderboardController {
     @CurrentUser() authUser: AuthUser,
     @Param('gameId') gameId: string,
     @Param('period') period: LeaderboardPeriod
-  ): Promise<{ rank: number }> {
-    const rank = await this.leaderboardService.getUserRank(authUser.uid, gameId, period);
-    return { rank };
+  ): Promise<{ rank: number; score: number }> {
+    const result = await this.leaderboardService.getUserRankWithScore(authUser.uid, gameId, period);
+    return result;
   }
 }
