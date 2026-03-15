@@ -1,9 +1,9 @@
 // Types
-export * from './lib/types/user.types';
-export * from './lib/types/game-state.types';
-export * from './lib/types/leaderboard.types';
-export * from './lib/types/achievement.types';
+export * from './lib/types/user.types.js';
+export * from './lib/types/game-state.types.js';
+export * from './lib/types/leaderboard.types.js';
+export * from './lib/types/achievement.types.js';
 
 // Constants
-export * from './lib/constants/achievements';
-export * from './lib/constants/scoring';
+export * from './lib/constants/achievements.js';
+export * from './lib/constants/scoring.js';

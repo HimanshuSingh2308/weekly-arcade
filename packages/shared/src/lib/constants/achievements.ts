@@ -1,4 +1,4 @@
-import { Achievement } from '../types/achievement.types';
+import { Achievement } from '../types/achievement.types.js';
 
 export const ACHIEVEMENTS: Record<string, Achievement> = {
   first_word: {
