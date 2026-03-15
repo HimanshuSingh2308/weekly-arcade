@@ -45,9 +45,9 @@ jobs:
           mkdir -p deploy-api
           cp -r apps/api/dist/* deploy-api/
 
-          # Copy shared package to node_modules
-          mkdir -p deploy-api/node_modules/@weekly-arcade/shared
-          cp -r packages/shared/dist/* deploy-api/node_modules/@weekly-arcade/shared/
+          # Copy shared package to node_modules (preserve dist folder structure)
+          mkdir -p deploy-api/node_modules/@weekly-arcade/shared/dist
+          cp -r packages/shared/dist/* deploy-api/node_modules/@weekly-arcade/shared/dist/
           cp packages/shared/package.json deploy-api/node_modules/@weekly-arcade/shared/
 
           cat > deploy-api/package.json << 'PKGJSON'
