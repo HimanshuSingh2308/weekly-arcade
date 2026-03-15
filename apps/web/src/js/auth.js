@@ -5,12 +5,12 @@
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC4k5oA9kJN7Y1Lk8mG2H3n4Q5r6S7t8U9v", // Replace with actual key
-  authDomain: "weekly-arcade.firebaseapp.com",
+  apiKey: "AIzaSyAFA4KwOaQpa0A-v2auCulStCrOgScrz-g",
+  authDomain: "loyal-curve-425715-h6.firebaseapp.com",
   projectId: "loyal-curve-425715-h6",
-  storageBucket: "loyal-curve-425715-h6.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abc123def456"
+  storageBucket: "loyal-curve-425715-h6.firebasestorage.app",
+  messagingSenderId: "5171085645",
+  appId: "1:5171085645:web:b01fbc558d626f649e3704"
 };
 
 class AuthManager {

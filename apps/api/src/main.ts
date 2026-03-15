@@ -9,8 +9,11 @@ async function bootstrap() {
     origin: [
       'http://localhost:4200',
       'http://localhost:5000',
+      'http://localhost:8080',
       'https://weekly-arcade.web.app',
       'https://weekly-arcade.firebaseapp.com',
+      'https://loyal-curve-425715-h6.web.app',
+      'https://loyal-curve-425715-h6.firebaseapp.com',
       'https://himanshuSingh2308.github.io',
     ],
     credentials: true,
