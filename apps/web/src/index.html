@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Arcade | New Free Browser Games Every Week</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Play free browser games with new releases every week. No downloads, no sign-ups. Wordle, Snake, 2048, and more arcade classics.">
+  <meta name="keywords" content="free browser games, online games, web games, wordle, snake game, 2048, arcade games, puzzle games, no download games">
+  <meta name="author" content="Weekly Arcade">
+  <link rel="canonical" href="https://weekly-arcade.web.app/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weekly-arcade.web.app/">
+  <meta property="og:title" content="Weekly Arcade | New Free Browser Games Every Week">
+  <meta property="og:description" content="Play free browser games with new releases every week. No downloads required.">
+  <meta property="og:image" content="https://weekly-arcade.web.app/og-image.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Weekly Arcade | Free Browser Games">
+  <meta name="twitter:description" content="New games every week. Play instantly in your browser.">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#e94560">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Weekly Arcade">
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon {
+      font-size: 1.8rem;
+    }
+
+    .nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 4rem 2rem 3rem;
+      background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span {
+      color: var(--accent);
+    }
+
+    .hero p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto 2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Games Grid */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .game-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(233, 69, 96, 0.2);
+    }
+
+    .game-thumb {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+    }
+
+    .game-info {
+      padding: 1rem;
+    }
+
+    .game-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .game-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .game-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .tag.new {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Coming Soon */
+    .coming-soon {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .coming-soon .game-thumb::after {
+      content: 'COMING SOON';
+      position: absolute;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .game-thumb {
+      position: relative;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+
+      .hero p {
+        font-size: 1rem;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">
+      <span class="logo-icon">🎮</span>
+      Weekly Arcade
+    </a>
+    <nav class="nav">
+      <a href="/">Games</a>
+      <a href="#new">New This Week</a>
+      <a href="#about">About</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>New <span>Free Games</span> Every Week</h1>
+    <p>Play instantly in your browser. No downloads. No sign-ups. Just pure fun.</p>
+    <span class="badge">🎉 New Game This Week: Wordle</span>
+  </section>
+
+  <main class="container">
+    <h2 class="section-title" id="new">🔥 All Games</h2>
+
+    <div class="games-grid">
+      <!-- Wordle -->
+      <a href="games/wordle/" class="game-card">
+        <div class="game-thumb">🔤</div>
+        <div class="game-info">
+          <div class="game-title">Wordle</div>
+          <div class="game-desc">Guess the 5-letter word in 6 tries. A new word every day!</div>
+          <div class="game-tags">
+            <span class="tag new">NEW</span>
+            <span class="tag">Puzzle</span>
+            <span class="tag">Daily</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Snake - Coming Soon -->
+      <div class="game-card coming-soon">
+        <div class="game-thumb">🐍</div>
+        <div class="game-info">
+          <div class="game-title">Snake</div>
+          <div class="game-desc">Classic snake game. Eat, grow, don't hit the walls!</div>
+          <div class="game-tags">
+            <span class="tag">Coming Week 2</span>
+            <span class="tag">Arcade</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2048 - Coming Soon -->
+      <div class="game-card coming-soon">
+        <div class="game-thumb">🔢</div>
+        <div class="game-info">
+          <div class="game-title">2048</div>
+          <div class="game-desc">Slide tiles and merge numbers to reach 2048.</div>
+          <div class="game-tags">
+            <span class="tag">Coming Week 3</span>
+            <span class="tag">Puzzle</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Match - Coming Soon -->
+      <div class="game-card coming-soon">
+        <div class="game-thumb">🃏</div>
+        <div class="game-info">
+          <div class="game-title">Memory Match</div>
+          <div class="game-desc">Flip cards and find matching pairs. Test your memory!</div>
+          <div class="game-tags">
+            <span class="tag">Coming Week 4</span>
+            <span class="tag">Casual</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer" id="about">
+    <p><strong>Weekly Arcade</strong> - New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">Built with ❤️ | <a href="#">Follow us on Twitter</a></p>
+  </footer>
+
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.log('SW registration failed'));
+      });
+    }
+  </script>
+</body>
+</html>

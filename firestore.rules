@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Users can update their own data (but not create/delete via client)
+      allow update: if request.auth != null && request.auth.uid == userId;
+
+      // Game states subcollection
+      match /gameStates/{gameId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Leaderboards are publicly readable
+    match /leaderboards/{leaderboardId} {
+      allow read: if true;
+      // Only backend can write (via Admin SDK)
+      allow write: if false;
+    }
+
+    // Scores are publicly readable
+    match /scores/{scoreId} {
+      allow read: if true;
+      // Only backend can write (via Admin SDK)
+      allow write: if false;
+    }
+
+    // Achievements are readable by the owner
+    match /achievements/{achievementId} {
+      allow read: if request.auth != null &&
+        resource.data.odId == request.auth.uid;
+      // Only backend can write (via Admin SDK)
+      allow write: if false;
+    }
+  }
+}

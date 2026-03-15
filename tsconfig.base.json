@@ -16,6 +16,11 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@org/source"]
+    "customConditions": ["@weekly-arcade/source"],
+    "baseUrl": ".",
+    "paths": {
+      "@weekly-arcade/shared": ["packages/shared/src/index.ts"],
+      "@weekly-arcade/game-wordle": ["packages/game-wordle/src/index.ts"]
+    }
   }
 }
