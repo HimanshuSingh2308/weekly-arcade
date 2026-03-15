@@ -1,0 +1,12 @@
+# Ignore everything except what we need for deployment
+node_modules/
+src/
+*.ts
+*.spec.ts
+tsconfig*.json
+webpack.config.js
+jest.config.ts
+.eslintrc.json
+
+# Do NOT ignore dist - we need the built files
+!dist/

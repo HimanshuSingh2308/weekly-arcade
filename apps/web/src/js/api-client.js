@@ -134,7 +134,21 @@ class ApiClient {
   }
 
   // Leaderboard endpoints
+  /**
+   * Submit a score to the leaderboard
+   * @param {string} gameId - Game identifier (e.g., 'wordle', 'snake', '2048', 'chaos-kitchen')
+   * @param {Object} scoreData - Score data object
+   * @param {number} scoreData.score - The score value (required)
+   * @param {number} [scoreData.level] - Current level (optional)
+   * @param {number} [scoreData.guessCount] - Number of guesses/attempts (optional)
+   * @param {number} [scoreData.timeMs] - Time in milliseconds (optional)
+   * @param {Object} [scoreData.metadata] - Additional game-specific data (optional)
+   */
   async submitScore(gameId, scoreData) {
+    if (typeof scoreData !== 'object' || typeof scoreData.score !== 'number') {
+      console.error('submitScore: scoreData must be an object with a score property');
+      throw new Error('Invalid scoreData format');
+    }
     return this.request(`/leaderboard/${gameId}/submit`, {
       method: 'POST',
       body: JSON.stringify(scoreData),

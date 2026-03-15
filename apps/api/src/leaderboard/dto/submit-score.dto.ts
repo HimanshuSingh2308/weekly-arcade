@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, Min, Max, IsObject } from 'class-validator';
+import { IsString, IsNumber, IsOptional, Min, IsObject } from 'class-validator';
 
 export class SubmitScoreDto {
   @IsNumber()
@@ -6,17 +6,19 @@ export class SubmitScoreDto {
   score: number;
 
   @IsNumber()
+  @IsOptional()
   @Min(1)
-  @Max(6)
-  guessCount: number;
+  guessCount?: number;
 
   @IsNumber()
+  @IsOptional()
   @Min(1)
-  level: number;
+  level?: number;
 
   @IsNumber()
+  @IsOptional()
   @Min(0)
-  timeMs: number;
+  timeMs?: number;
 
   @IsString()
   @IsOptional()
@@ -24,9 +26,5 @@ export class SubmitScoreDto {
 
   @IsObject()
   @IsOptional()
-  metadata?: {
-    hintsUsed?: number;
-    perfectGame?: boolean;
-    streakBonus?: number;
-  };
+  metadata?: Record<string, any>;
 }

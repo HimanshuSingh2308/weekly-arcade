@@ -651,7 +651,7 @@
         <span class="user-name" id="userName"></span>
         <span class="dropdown-arrow">▼</span>
         <div class="user-dropdown">
-          <a href="#" class="dropdown-item" onclick="showProfile(event)">
+          <a href="/profile/" class="dropdown-item">
             <span>👤</span> My Profile
           </a>
           <a href="/leaderboard/" class="dropdown-item">
@@ -678,13 +678,17 @@
         <span class="game-icon">🔤</span>
         Wordle
       </button>
-      <button class="game-tab" data-game="snake" onclick="selectGame('snake')" disabled style="opacity: 0.5;">
+      <button class="game-tab" data-game="snake" onclick="selectGame('snake')">
         <span class="game-icon">🐍</span>
         Snake
       </button>
-      <button class="game-tab" data-game="2048" onclick="selectGame('2048')" disabled style="opacity: 0.5;">
+      <button class="game-tab" data-game="2048" onclick="selectGame('2048')">
         <span class="game-icon">🔢</span>
         2048
+      </button>
+      <button class="game-tab" data-game="chaos-kitchen" onclick="selectGame('chaos-kitchen')">
+        <span class="game-icon">👨‍🍳</span>
+        Chaos Kitchen
       </button>
     </div>
 

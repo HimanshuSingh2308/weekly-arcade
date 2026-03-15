@@ -11,8 +11,8 @@ module.exports = {
   },
   resolve: {
     alias: {
-      '@weekly-arcade/shared': join(__dirname, '../../packages/shared/src/index.ts'),
-      '@weekly-arcade/game-wordle': join(__dirname, '../../packages/game-wordle/src/index.ts'),
+      '@weekly-arcade/shared$': join(__dirname, '../../packages/shared/src/index.ts'),
+      '@weekly-arcade/game-wordle$': join(__dirname, '../../packages/game-wordle/src/index.ts'),
     },
   },
   plugins: [
@@ -26,6 +26,19 @@ module.exports = {
       outputHashing: 'none',
       generatePackageJson: false,
       sourceMap: true,
+      externalDependencies: [
+        // List external packages but NOT our workspace packages
+        'firebase-admin',
+        'firebase-functions',
+        '@nestjs/common',
+        '@nestjs/core',
+        '@nestjs/platform-express',
+        'class-validator',
+        'class-transformer',
+        'reflect-metadata',
+        'rxjs',
+        'express',
+      ],
     }),
   ],
 };
