@@ -245,14 +245,271 @@
       text-decoration: none;
     }
 
+    /* Auth Button & User Menu */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .auth-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .auth-btn:hover {
+      background: var(--accent-hover);
+      transform: scale(1.05);
+    }
+
+    .user-menu {
+      position: relative;
+      display: none;
+    }
+
+    .user-menu.signed-in {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dropdown-arrow {
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+    }
+
+    .user-menu.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-width: 180px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s;
+      z-index: 100;
+    }
+
+    .user-menu.open .user-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .dropdown-item:hover {
+      background: var(--bg-secondary);
+    }
+
+    .dropdown-item:first-child {
+      border-radius: 8px 8px 0 0;
+    }
+
+    .dropdown-item:last-child {
+      border-radius: 0 0 8px 8px;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.25rem 0;
+    }
+
+    .dropdown-item.sign-out {
+      color: var(--accent);
+    }
+
+    /* Auth Modal */
+    .auth-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .auth-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .auth-modal {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+
+    .auth-modal-overlay.show .auth-modal {
+      transform: scale(1);
+    }
+
+    .auth-modal h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-modal p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-benefits {
+      text-align: left;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+    }
+
+    .auth-benefits li {
+      list-style: none;
+      padding: 0.4rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .auth-benefits li::before {
+      content: '✓ ';
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: white;
+      color: #333;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .google-btn:hover {
+      background: #f5f5f5;
+      transform: scale(1.02);
+    }
+
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .auth-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .auth-modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .auth-modal {
+      position: relative;
+    }
+
+    .auth-skip {
+      margin-top: 1rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .auth-skip a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
     /* Responsive */
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       .header {
-        flex-direction: column;
+        flex-wrap: wrap;
         gap: 1rem;
         padding: 1rem;
       }
 
+      .nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .header-right {
+        order: 2;
+      }
+
+      .user-name {
+        display: none;
+      }
+    }
+
+    @media (max-width: 600px) {
       .hero h1 {
         font-size: 1.8rem;
       }
@@ -268,6 +525,10 @@
       .games-grid {
         grid-template-columns: 1fr;
       }
+
+      .auth-modal {
+        padding: 1.5rem;
+      }
     }
   </style>
 </head>
@@ -282,6 +543,26 @@
       <a href="#new">New This Week</a>
       <a href="#about">About</a>
     </nav>
+    <div class="header-right">
+      <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
+      <div class="user-menu" id="userMenu" onclick="toggleUserMenu()">
+        <img class="user-avatar" id="userAvatar" src="" alt="User">
+        <span class="user-name" id="userName"></span>
+        <span class="dropdown-arrow">▼</span>
+        <div class="user-dropdown">
+          <a href="#" class="dropdown-item" onclick="showProfile(event)">
+            <span>👤</span> My Profile
+          </a>
+          <a href="#" class="dropdown-item" onclick="showLeaderboards(event)">
+            <span>🏆</span> Leaderboards
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item sign-out" onclick="handleSignOut(event)">
+            <span>🚪</span> Sign Out
+          </a>
+        </div>
+      </div>
+    </div>
   </header>
 
   <section class="hero">
@@ -354,6 +635,37 @@
     <p style="margin-top: 0.5rem;">Built with ❤️ | <a href="#">Follow us on Twitter</a></p>
   </footer>
 
+  <!-- Auth Modal -->
+  <div class="auth-modal-overlay" id="authModal">
+    <div class="auth-modal">
+      <button class="auth-modal-close" onclick="hideAuthModal()">&times;</button>
+      <h2>Welcome to Weekly Arcade</h2>
+      <p>Sign in to unlock all features</p>
+      <ul class="auth-benefits">
+        <li>Save your progress across devices</li>
+        <li>Compete on global leaderboards</li>
+        <li>Earn achievements and XP</li>
+        <li>Challenge your friends</li>
+      </ul>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+      <p class="auth-skip">
+        <a href="#" onclick="hideAuthModal(); return false;">Maybe later</a> - You can still play as guest
+      </p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+
+  <!-- API & Auth Scripts -->
+  <script src="/js/api-client.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/sync.js"></script>
+
   <script>
     // Register Service Worker
     if ('serviceWorker' in navigator) {
@@ -363,6 +675,94 @@
           .catch(err => console.log('SW registration failed'));
       });
     }
+
+    // Auth UI Functions
+    function showAuthModal() {
+      document.getElementById('authModal').classList.add('show');
+    }
+
+    function hideAuthModal() {
+      document.getElementById('authModal').classList.remove('show');
+    }
+
+    function toggleUserMenu() {
+      document.getElementById('userMenu').classList.toggle('open');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const userMenu = document.getElementById('userMenu');
+      if (!userMenu.contains(e.target)) {
+        userMenu.classList.remove('open');
+      }
+    });
+
+    // Close modal on overlay click
+    document.getElementById('authModal').addEventListener('click', (e) => {
+      if (e.target.id === 'authModal') {
+        hideAuthModal();
+      }
+    });
+
+    async function signInWithGoogle() {
+      try {
+        await window.authManager.signInWithGoogle();
+        hideAuthModal();
+      } catch (error) {
+        console.error('Sign in failed:', error);
+        alert('Sign in failed. Please try again.');
+      }
+    }
+
+    function handleSignOut(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.authManager.signOut();
+      document.getElementById('userMenu').classList.remove('open');
+    }
+
+    function showProfile(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // TODO: Navigate to profile page
+      alert('Profile page coming soon!');
+    }
+
+    function showLeaderboards(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // TODO: Navigate to leaderboards page
+      alert('Leaderboards page coming soon!');
+    }
+
+    // Update UI based on auth state
+    function updateAuthUI(user) {
+      const signInBtn = document.getElementById('signInBtn');
+      const userMenu = document.getElementById('userMenu');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+
+      if (user) {
+        signInBtn.style.display = 'none';
+        userMenu.classList.add('signed-in');
+        userAvatar.src = user.photoURL || 'https://via.placeholder.com/36?text=' + (user.displayName?.[0] || 'U');
+        userName.textContent = user.displayName || user.email?.split('@')[0] || 'Player';
+      } else {
+        signInBtn.style.display = 'block';
+        userMenu.classList.remove('signed-in');
+      }
+    }
+
+    // Listen for auth state changes
+    window.addEventListener('load', () => {
+      // Wait for authManager to initialize
+      const checkAuth = setInterval(() => {
+        if (window.authManager?.isInitialized) {
+          clearInterval(checkAuth);
+          window.authManager.onAuthStateChanged(updateAuthUI);
+        }
+      }, 100);
+    });
   </script>
 </body>
 </html>
