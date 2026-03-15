@@ -512,6 +512,25 @@
       font-size: 1.6rem;
     }
 
+    .plate-item.completed-dish {
+      font-size: 2.5rem;
+      animation: dishReady 0.5s ease;
+    }
+
+    @keyframes dishReady {
+      0% { transform: scale(0.5); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .dish-name {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
     .plate-empty {
       color: #999;
       font-size: 0.75rem;
@@ -1087,10 +1106,17 @@
     ];
 
     const EMOJI_MAP = {
+      // Raw ingredients
       'tomato': '🍅', 'lettuce': '🥬', 'meat': '🥩',
       'cheese': '🧀', 'bread': '🍞', 'egg': '🥚',
-      'chopped_tomato': '🥗', 'chopped_lettuce': '🥗', 'chopped_meat': '🥓',
-      'cooked_meat': '🍖', 'cooked_egg': '🍳', 'mixed_egg': '🥣'
+      // Chopped items
+      'chopped_tomato': '🫑', 'chopped_lettuce': '🥗', 'chopped_meat': '🥓',
+      // Cooked items
+      'cooked_meat': '🍖', 'cooked_egg': '🍳',
+      // Mixed items
+      'mixed_egg': '🥣', 'mixed_cheese': '🧀',
+      // Cooked after mixed
+      'cooked_mixed_egg': '🍳'
     };
 
     const STATION_ICONS = { chop: '🔪', cook: '🍳', mix: '🥣' };
@@ -1253,13 +1279,43 @@
       playSound('place');
     }
 
+    function getCompletedDish() {
+      // Check if current plate matches a completed recipe
+      for (const [name, recipe] of Object.entries(RECIPES)) {
+        // Check if all required stations have been used
+        const hasAllStations = recipe.stations.every(s => plateStations.includes(s));
+        if (!hasAllStations) continue;
+
+        // Check if ingredients match (ignoring processing prefixes)
+        const plateIngredients = currentPlate.map(i =>
+          i.replace('chopped_', '').replace('cooked_', '').replace('mixed_', '')
+        ).sort();
+        const recipeIngredients = [...recipe.ingredients].sort();
+
+        if (plateIngredients.length === recipeIngredients.length &&
+            plateIngredients.every((ing, idx) => ing === recipeIngredients[idx])) {
+          return { name, icon: recipe.icon };
+        }
+      }
+      return null;
+    }
+
     function renderPlate() {
       if (currentPlate.length === 0) {
         plateContainer.innerHTML = '<div class="plate-empty">Click ingredients to add</div>';
       } else {
-        plateContainer.innerHTML = currentPlate.map(item =>
-          `<span class="plate-item">${EMOJI_MAP[item] || '❓'}</span>`
-        ).join('');
+        // Check if plate matches a completed dish
+        const completedDish = getCompletedDish();
+        if (completedDish) {
+          plateContainer.innerHTML = `
+            <span class="plate-item completed-dish">${completedDish.icon}</span>
+            <span class="dish-name">${completedDish.name}</span>
+          `;
+        } else {
+          plateContainer.innerHTML = currentPlate.map(item =>
+            `<span class="plate-item">${EMOJI_MAP[item] || '❓'}</span>`
+          ).join('');
+        }
       }
     }
 
@@ -1319,11 +1375,11 @@
             if (stationType === 'chop' && ['tomato', 'lettuce', 'meat'].includes(item)) {
               return 'chopped_' + item;
             }
-            if (stationType === 'cook' && ['meat', 'egg', 'chopped_meat'].includes(item)) {
-              return 'cooked_' + item.replace('chopped_', '');
+            if (stationType === 'cook' && ['meat', 'egg', 'chopped_meat', 'mixed_egg'].includes(item)) {
+              return 'cooked_' + item.replace('chopped_', '').replace('mixed_', '');
             }
-            if (stationType === 'mix' && item === 'egg') {
-              return 'mixed_egg';
+            if (stationType === 'mix' && ['egg', 'cheese'].includes(item)) {
+              return 'mixed_' + item;
             }
             return item;
           });
