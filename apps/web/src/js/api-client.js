@@ -4,8 +4,8 @@
  */
 
 const API_BASE_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:3000/api'
-  : 'https://us-central1-loyal-curve-425715-h6.cloudfunctions.net/api/api';
+  ? 'http://localhost:8080/api'
+  : 'https://weekly-arcade-api-5171085645.us-central1.run.app/api';
 
 class ApiClient {
   constructor() {
