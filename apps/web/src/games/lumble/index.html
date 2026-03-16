@@ -551,7 +551,9 @@
     /* Mobile */
     @media (max-width: 768px) {
       .leaderboard-section { display: none; }
-      .controls-hint { font-size: 0.7rem; padding: 0.4rem 0.8rem; }
+      .controls-hint {
+        display: none !important; /* Hide keyboard hints on mobile */
+      }
     }
 
     /* Touch controls for mobile - Gesture based */
@@ -571,16 +573,18 @@
       position: absolute;
       left: 0;
       bottom: 0;
-      width: 45%;
-      height: 50%;
+      width: 50%;
+      height: 60%;
+      z-index: 10;
     }
 
     .camera-zone {
       position: absolute;
       right: 0;
-      bottom: 0;
-      width: 55%;
+      top: 0;
+      width: 50%;
       height: 100%;
+      z-index: 5;
     }
 
     .joystick-base {
@@ -902,7 +906,7 @@
 
     // Touch gesture state
     const touchState = {
-      joystick: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 },
+      joystick: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, inputX: 0, inputY: 0 },
       camera: { active: false, startX: 0, lastX: 0 }
     };
 
@@ -2177,20 +2181,28 @@
     }
 
     function updatePlayer(delta) {
-      // Horizontal movement
+      // Horizontal movement - use analog joystick if active, otherwise keys
       let moveX = 0, moveZ = 0;
-      if (keys.w) moveZ -= 1;
-      if (keys.s) moveZ += 1;
-      if (keys.a) moveX -= 1;
-      if (keys.d) moveX += 1;
 
-      const isMoving = moveX !== 0 || moveZ !== 0;
+      if (touchState.joystick.active) {
+        // Use analog joystick values (smooth input)
+        moveX = touchState.joystick.inputX;
+        moveZ = touchState.joystick.inputY;
+      } else {
+        // Use keyboard input
+        if (keys.w) moveZ -= 1;
+        if (keys.s) moveZ += 1;
+        if (keys.a) moveX -= 1;
+        if (keys.d) moveX += 1;
 
-      // Normalize diagonal movement
-      if (moveX !== 0 && moveZ !== 0) {
-        moveX *= 0.707;
-        moveZ *= 0.707;
+        // Normalize diagonal movement for keyboard
+        if (moveX !== 0 && moveZ !== 0) {
+          moveX *= 0.707;
+          moveZ *= 0.707;
+        }
       }
+
+      const isMoving = Math.abs(moveX) > 0.1 || Math.abs(moveZ) > 0.1;
 
       // Apply movement relative to camera orbit angle (so controls follow camera rotation)
       const sin = Math.sin(cameraOrbitAngle);
@@ -2685,15 +2697,21 @@
         const normalizedX = dx / maxRadius;
         const normalizedY = dy / maxRadius;
 
-        // Set movement keys based on joystick position
-        keys.a = normalizedX < -0.3;
-        keys.d = normalizedX > 0.3;
-        keys.w = normalizedY < -0.3;
-        keys.s = normalizedY > 0.3;
+        // Store analog input values for smooth movement
+        touchState.joystick.inputX = normalizedX;
+        touchState.joystick.inputY = normalizedY;
+
+        // Also set movement keys for compatibility
+        keys.a = normalizedX < -0.2;
+        keys.d = normalizedX > 0.2;
+        keys.w = normalizedY < -0.2;
+        keys.s = normalizedY > 0.2;
       });
 
       const endJoystick = () => {
         touchState.joystick.active = false;
+        touchState.joystick.inputX = 0;
+        touchState.joystick.inputY = 0;
         joystickBase.style.display = 'none';
         joystickThumb.style.display = 'none';
         keys.w = false;
