@@ -784,11 +784,11 @@
     let mouseDown = false;
 
     // Constants
-    const GRAVITY = -25;
-    const JUMP_FORCE = 12;
-    const MOVE_SPEED = 8;
-    const LATCH_SPEED = 15;
-    const LATCH_RANGE = 20;
+    const GRAVITY = -30;
+    const JUMP_FORCE = 14;
+    const MOVE_SPEED = 14;
+    const LATCH_SPEED = 20;
+    const LATCH_RANGE = 25;
 
     // Auth
     let currentUser = null;
@@ -2002,7 +2002,7 @@
         // Smooth acceleration for better feel
         const targetVx = rotatedX * MOVE_SPEED;
         const targetVz = rotatedZ * MOVE_SPEED;
-        const accel = playerState.onGround ? 0.2 : 0.08;
+        const accel = playerState.onGround ? 0.3 : 0.12;
 
         playerState.vx += (targetVx - playerState.vx) * accel;
         playerState.vz += (targetVz - playerState.vz) * accel;
