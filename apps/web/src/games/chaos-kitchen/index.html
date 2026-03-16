@@ -638,8 +638,19 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 150px;
+      min-height: 130px;
+      max-height: 160px;
       overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    .orders-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .orders-list::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
     }
 
     .order-card {
@@ -648,6 +659,7 @@
       border-radius: 8px;
       padding: 6px 8px;
       transition: all 0.2s;
+      flex-shrink: 0;
     }
 
     .order-card.urgent {
@@ -932,7 +944,8 @@
       .plate-item.completed-dish { font-size: 1.6rem; }
 
       .orders-list {
-        max-height: 120px;
+        min-height: 120px;
+        max-height: 140px;
       }
 
       .stations-top {
@@ -1000,7 +1013,8 @@
 
     @media (max-height: 700px) {
       .orders-list {
-        max-height: 100px;
+        min-height: 110px;
+        max-height: 130px;
       }
 
       .plate-container {

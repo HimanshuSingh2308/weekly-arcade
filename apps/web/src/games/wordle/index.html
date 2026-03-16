@@ -1000,57 +1000,80 @@
     /* Mobile 375px - Fix header overflow */
     @media (max-width: 380px) {
       .header {
-        flex-wrap: wrap;
-        gap: 0.3rem;
-        padding: 0.4rem 0.5rem;
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        padding: 0.5rem;
+        justify-content: space-between;
       }
 
       .back-btn {
-        font-size: 0.8rem;
+        font-size: 1rem;
+        padding: 0.3rem;
+        min-width: auto;
+      }
+
+      /* Hide "Back" text on mobile */
+      .back-btn::after {
+        content: none;
       }
 
       .title-container {
-        order: -1;
-        width: 100%;
-        margin-bottom: 0.2rem;
+        flex: 1;
+        min-width: 0;
       }
 
       .title {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
       }
 
       .badges-row {
-        gap: 0.3rem;
-      }
-
-      .level-badge {
-        font-size: 0.55rem;
-        padding: 0.1rem 0.3rem;
-      }
-
-      .streak-badge {
-        font-size: 0.55rem;
-        padding: 0.1rem 0.3rem;
-      }
-
-      .header-buttons {
         gap: 0.2rem;
       }
 
-      .auth-btn {
-        font-size: 0.65rem;
-        padding: 0.3rem 0.5rem;
+      .level-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.25rem;
       }
 
+      .streak-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.25rem;
+      }
+
+      .header-buttons {
+        gap: 0.15rem;
+        flex-shrink: 0;
+      }
+
+      /* Hide auth text on mobile */
+      .auth-btn {
+        font-size: 0;
+        padding: 0.3rem;
+        min-width: 28px;
+      }
+      .auth-btn::before {
+        content: '👤';
+        font-size: 0.9rem;
+      }
+
+      /* Hide hint text on mobile */
       .hint-btn {
-        padding: 0.25rem 0.4rem;
+        padding: 0.3rem;
+        font-size: 0;
+      }
+      .hint-btn::before {
+        content: '💡';
+        font-size: 0.9rem;
+      }
+      .hint-count {
         font-size: 0.6rem;
+        margin-left: 2px;
       }
 
       .sound-btn, .help-btn {
-        width: 26px;
-        height: 26px;
-        font-size: 0.8rem;
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
       }
 
       /* Ensure keyboard fits */
