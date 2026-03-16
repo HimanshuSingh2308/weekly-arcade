@@ -1111,7 +1111,9 @@
 
       // Character body group - offset so feet are at y=0
       const characterBody = new THREE.Group();
-      characterBody.position.y = -0.15; // Lower character so feet touch ground
+      // Offset so feet touch ground: legPivot(0.3) + shoe(-0.35) + shoeHalfHeight(-0.05) = -0.1
+      // So we need characterBody.y = 0.1 to put feet at player y=0
+      characterBody.position.y = 0.1;
       player.add(characterBody);
 
       // Materials
