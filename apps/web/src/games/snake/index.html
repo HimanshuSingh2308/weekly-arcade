@@ -89,14 +89,23 @@
 
     .icon-btn {
       background: none;
-      border: none;
+      border: 2px solid var(--border);
       color: var(--text-secondary);
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       cursor: pointer;
-      padding: 0.25rem;
+      padding: 0.4rem;
+      border-radius: 8px;
+      min-width: 36px;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .icon-btn:hover { color: var(--text-primary); }
+    .icon-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--accent);
+    }
 
     /* Stats Bar */
     .stats-bar {

@@ -464,6 +464,7 @@
       text-align: center;
       max-width: 90%;
       width: 350px;
+      position: relative;
     }
 
     .modal h2 {
@@ -931,6 +932,89 @@
       .board.len-7 .tile { width: 32px; height: 32px; font-size: 0.9rem; }
     }
 
+    /* Mobile 375px - Fix header overflow */
+    @media (max-width: 380px) {
+      .header {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        padding: 0.4rem 0.5rem;
+      }
+
+      .back-btn {
+        font-size: 0.8rem;
+      }
+
+      .title-container {
+        order: -1;
+        width: 100%;
+        margin-bottom: 0.2rem;
+      }
+
+      .title {
+        font-size: 1.3rem;
+      }
+
+      .badges-row {
+        gap: 0.3rem;
+      }
+
+      .level-badge {
+        font-size: 0.55rem;
+        padding: 0.1rem 0.3rem;
+      }
+
+      .streak-badge {
+        font-size: 0.55rem;
+        padding: 0.1rem 0.3rem;
+      }
+
+      .header-buttons {
+        gap: 0.2rem;
+      }
+
+      .auth-btn {
+        font-size: 0.65rem;
+        padding: 0.3rem 0.5rem;
+      }
+
+      .hint-btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.6rem;
+      }
+
+      .sound-btn, .help-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 0.8rem;
+      }
+
+      /* Ensure keyboard fits */
+      .keyboard {
+        padding: 0 2px;
+      }
+
+      .keyboard-row {
+        gap: 2px;
+        margin-bottom: 4px;
+      }
+
+      .key {
+        width: calc((100vw - 20px) / 10 - 3px);
+        min-width: 24px;
+        max-width: 32px;
+        height: 42px;
+        font-size: 0.65rem;
+        padding: 0;
+      }
+
+      .key.wide {
+        width: calc((100vw - 20px) / 10 * 1.5);
+        min-width: 36px;
+        max-width: 48px;
+        font-size: 0.55rem;
+      }
+    }
+
     /* Auth Button Styles */
     .auth-btn {
       background: linear-gradient(135deg, #4285f4, #356ac3);
@@ -1130,6 +1214,7 @@
 
   <div class="modal-overlay" id="modal">
     <div class="modal">
+      <button class="modal-close" onclick="hideGameModal()">×</button>
       <h2 id="modal-title">🎉 You Won!</h2>
       <p id="modal-subtitle">Great job!</p>
       <div class="word" id="modal-word"></div>
@@ -3295,6 +3380,10 @@
 
     function hideHelp() {
       document.getElementById('helpModal').classList.remove('show');
+    }
+
+    function hideGameModal() {
+      document.getElementById('modal').classList.remove('show');
     }
 
     // Show help on first visit

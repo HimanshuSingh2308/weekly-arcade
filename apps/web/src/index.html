@@ -68,6 +68,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
     }
 
     .logo {
@@ -97,6 +98,28 @@
     }
 
     .nav a:hover {
+      color: var(--accent);
+    }
+
+    .nav a.active {
+      color: var(--accent);
+    }
+
+    /* Mobile Menu Button */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      font-size: 1.3rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .mobile-menu-btn:hover {
+      border-color: var(--accent);
       color: var(--accent);
     }
 
@@ -619,20 +642,42 @@
     /* Responsive */
     @media (max-width: 768px) {
       .header {
-        flex-wrap: wrap;
-        gap: 1rem;
-        padding: 1rem;
+        padding: 0.8rem 1rem;
+      }
+
+      .mobile-menu-btn {
+        display: block;
       }
 
       .nav {
-        order: 3;
-        width: 100%;
-        justify-content: center;
-        gap: 1rem;
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        flex-direction: column;
+        padding: 1rem;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+
+      .nav.open {
+        display: flex;
+      }
+
+      .nav a {
+        padding: 0.8rem 1rem;
+        border-radius: 6px;
+      }
+
+      .nav a:hover {
+        background: rgba(233, 69, 96, 0.1);
       }
 
       .header-right {
-        order: 2;
+        margin-left: auto;
       }
 
       .user-name {
@@ -669,10 +714,11 @@
       <span class="logo-icon">🎮</span>
       Weekly Arcade
     </a>
-    <nav class="nav">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
+    <nav class="nav" id="mobileNav">
       <a href="/" class="active">Games</a>
       <a href="/leaderboard/">Leaderboards</a>
-      <a href="#about">About</a>
+      <a href="#about" onclick="closeMobileMenu()">About</a>
     </nav>
     <div class="header-right">
       <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
@@ -698,7 +744,7 @@
 
   <section class="hero">
     <h1>New <span>Free Games</span> Every Week</h1>
-    <p>Play instantly in your browser. No downloads required. Sign in to compete on leaderboards!</p>
+    <p>Play instantly in your browser. No downloads required. Sign in optional for leaderboards.</p>
     <span class="badge">🎉 New Game This Week: Chaos Kitchen</span>
   </section>
 
@@ -769,7 +815,7 @@
           <div class="game-title">Memory Match</div>
           <div class="game-desc">Flip cards and find matching pairs. Test your memory!</div>
           <div class="game-tags">
-            <span class="tag new-tag">New</span>
+            <span class="tag new">NEW</span>
             <span class="tag">Casual</span>
           </div>
         </div>
@@ -942,6 +988,21 @@
 
     function toggleUserMenu() {
       document.getElementById('userMenu').classList.toggle('open');
+    }
+
+    // Mobile menu
+    function toggleMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.toggle('open');
+      btn.textContent = nav.classList.contains('open') ? '✕' : '☰';
+    }
+
+    function closeMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.remove('open');
+      btn.textContent = '☰';
     }
 
     // Close dropdown when clicking outside
