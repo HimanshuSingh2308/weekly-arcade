@@ -787,7 +787,7 @@
 
   <!-- Controls Hint -->
   <div class="controls-hint" id="controlsHint" style="display: none;">
-    <kbd>WASD</kbd> Move &nbsp;|&nbsp; <kbd>Q/E</kbd> Rotate Camera &nbsp;|&nbsp; <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>Click</kbd> Latch &nbsp;|&nbsp; <kbd>R</kbd> Restart
+    <kbd>WASD</kbd> Move &nbsp;|&nbsp; <kbd>Q/E</kbd> Camera &nbsp;|&nbsp; <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>Shift/F</kbd> Latch &nbsp;|&nbsp; <kbd>R</kbd> Restart
   </div>
 
   <!-- Touch Controls - Gesture Based -->
@@ -2334,6 +2334,14 @@
         }
       });
 
+      // Ground floor collision (simple y=0 check for the terrain)
+      if (playerState.y < 0 && playerState.vy <= 0) {
+        playerState.y = 0;
+        playerState.vy = 0;
+        playerState.onGround = true;
+        playerState.canDoubleJump = true;
+      }
+
       // Fall reset
       if (playerState.y < -10) {
         playerState.x = 0;
@@ -2567,6 +2575,12 @@
           keys.space = true;
           jump();
         }
+        // Latch with Shift or F key
+        if (e.key === 'Shift' || e.key.toLowerCase() === 'f') {
+          e.preventDefault();
+          keys.shift = true;
+          tryLatchNearest();
+        }
         if (e.key.toLowerCase() === 'r') restartGame();
         if (e.key === 'Escape') returnToMenu();
       });
@@ -2583,6 +2597,11 @@
         if (e.key === 'ArrowLeft') keys.a = false;
         if (e.key === 'ArrowRight') keys.d = false;
         if (e.key === ' ') keys.space = false;
+        // Release latch
+        if (e.key === 'Shift' || e.key.toLowerCase() === 'f') {
+          keys.shift = false;
+          releaseLatch();
+        }
       });
 
       // Mouse for latching
