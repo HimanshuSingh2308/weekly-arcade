@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Lumble | Weekly Arcade</title>
+  <meta name="description" content="Play Lumble - A 3D collect-a-thon platformer! Use your Latch to swing, collect Sparks, and explore!">
+  <meta name="theme-color" content="#e94560">
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+      --spark-gold: #ffd700;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(26, 26, 46, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .back-btn {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 1.5rem;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover { color: var(--accent); }
+
+    .game-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+    }
+
+    .sign-in-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Game Container */
+    #gameContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #gameCanvas {
+      display: block;
+    }
+
+    /* HUD */
+    .hud {
+      position: fixed;
+      top: 60px;
+      left: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 50;
+    }
+
+    .hud-item {
+      background: rgba(22, 33, 62, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .hud-icon { font-size: 1.2rem; }
+    .hud-value {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--spark-gold);
+    }
+    .hud-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Controls hint */
+    .controls-hint {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(22, 33, 62, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      z-index: 50;
+      text-align: center;
+    }
+
+    .controls-hint kbd {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1rem 0.4rem;
+      margin: 0 0.2rem;
+      font-family: inherit;
+      color: var(--text-primary);
+    }
+
+    /* Menu Screen */
+    .menu-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .menu-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .menu-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .menu-header .back-btn {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 1rem;
+      padding: 0.3rem 0.6rem;
+    }
+
+    .menu-header .logo {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .menu-title {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--spark-gold), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .menu-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+
+    .menu-lumble {
+      font-size: 5rem;
+      margin-bottom: 1.5rem;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    .biome-select {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 500px;
+    }
+
+    .biome-btn {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .biome-btn:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .biome-btn.selected {
+      border-color: var(--spark-gold);
+      background: rgba(255, 215, 0, 0.1);
+    }
+
+    .biome-btn.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .biome-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    .biome-name { font-weight: 700; font-size: 0.9rem; }
+    .biome-sparks { font-size: 0.75rem; color: var(--spark-gold); }
+
+    .play-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 700;
+      padding: 1rem 3rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+    }
+
+    .play-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 30px rgba(233, 69, 96, 0.6);
+    }
+
+    /* Results Modal */
+    .results-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .results-modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .results-content {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 90%;
+      width: 400px;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+
+    .results-modal.show .results-content {
+      transform: scale(1);
+    }
+
+    .results-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .results-title { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .results-subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+
+    .results-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-box {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--spark-gold);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .final-score {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .final-score-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .final-score-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .results-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .results-buttons .btn {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: white;
+    }
+
+    /* Leaderboard */
+    .leaderboard-section {
+      position: fixed;
+      top: 60px;
+      right: 1rem;
+      width: 220px;
+      background: rgba(22, 33, 62, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      z-index: 50;
+    }
+
+    .leaderboard-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+      font-size: 0.8rem;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      padding: 0.3rem 0;
+      gap: 0.5rem;
+    }
+
+    .lb-rank { width: 20px; font-weight: 700; }
+    .lb-rank.gold { color: #ffd700; }
+    .lb-rank.silver { color: #c0c0c0; }
+    .lb-rank.bronze { color: #cd7f32; }
+    .lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-score { color: var(--spark-gold); font-weight: 600; }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .leaderboard-section { display: none; }
+      .controls-hint { font-size: 0.7rem; padding: 0.4rem 0.8rem; }
+    }
+
+    /* Touch controls for mobile */
+    .touch-controls {
+      position: fixed;
+      bottom: 80px;
+      left: 0;
+      right: 0;
+      display: none;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 50;
+    }
+
+    @media (max-width: 768px) {
+      .touch-controls { display: flex; }
+    }
+
+    .touch-dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-template-rows: repeat(3, 50px);
+      gap: 4px;
+    }
+
+    .touch-btn {
+      background: rgba(22, 33, 62, 0.8);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .touch-btn:active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .touch-btn.jump {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+    }
+
+    .touch-btn.latch {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      background: rgba(233, 69, 96, 0.3);
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu Screen -->
+  <div class="menu-screen" id="menuScreen">
+    <div class="menu-header">
+      <a href="/" class="back-btn">&larr; Back</a>
+      <a href="/" class="logo">Weekly Arcade</a>
+    </div>
+    <div class="menu-lumble">🫧</div>
+    <h1 class="menu-title">Lumble</h1>
+    <p class="menu-subtitle">Latch, Swing, Collect!</p>
+
+    <div class="biome-select" id="biomeSelect">
+      <button class="biome-btn selected" data-biome="garden">
+        <span class="biome-icon">🌱</span>
+        <span class="biome-name">Garden Patch</span>
+        <span class="biome-sparks">50 Sparks</span>
+      </button>
+      <button class="biome-btn locked" data-biome="tidepool">
+        <span class="biome-icon">🌊</span>
+        <span class="biome-name">Tide Pool</span>
+        <span class="biome-sparks">🔒 Locked</span>
+      </button>
+      <button class="biome-btn locked" data-biome="clocktower">
+        <span class="biome-icon">⏰</span>
+        <span class="biome-name">Clock Tower</span>
+        <span class="biome-sparks">🔒 Locked</span>
+      </button>
+    </div>
+
+    <button class="play-btn" id="playBtn">▶ Start Game</button>
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="gameHeader" style="display: none;">
+    <a href="/" class="back-btn">←</a>
+    <div class="game-title">
+      <span>🫧</span>
+      <span>Lumble</span>
+    </div>
+    <div class="user-section" id="userSection">
+      <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
+    </div>
+  </header>
+
+  <!-- HUD -->
+  <div class="hud" id="gameHud" style="display: none;">
+    <div class="hud-item">
+      <span class="hud-icon">✨</span>
+      <span class="hud-value" id="sparkCount">0</span>
+      <span class="hud-label">/ 50</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-icon">⏱️</span>
+      <span class="hud-value" id="timeDisplay">0:00</span>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard-section" id="leaderboardSection" style="display: none;">
+    <div class="leaderboard-title">🏆 Top Players</div>
+    <ul class="leaderboard-list" id="leaderboardList">
+      <li class="leaderboard-item">
+        <span class="lb-name">Loading...</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Controls Hint -->
+  <div class="controls-hint" id="controlsHint" style="display: none;">
+    <kbd>WASD</kbd> Move &nbsp;|&nbsp; <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>Click</kbd> Latch &nbsp;|&nbsp; <kbd>R</kbd> Restart
+  </div>
+
+  <!-- Touch Controls -->
+  <div class="touch-controls" id="touchControls">
+    <div class="touch-dpad">
+      <div></div>
+      <button class="touch-btn" id="touchUp">↑</button>
+      <div></div>
+      <button class="touch-btn" id="touchLeft">←</button>
+      <div></div>
+      <button class="touch-btn" id="touchRight">→</button>
+      <div></div>
+      <button class="touch-btn" id="touchDown">↓</button>
+      <div></div>
+    </div>
+    <div style="display: flex; gap: 1rem; align-items: flex-end;">
+      <button class="touch-btn latch" id="touchLatch">🎯</button>
+      <button class="touch-btn jump" id="touchJump">⬆</button>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="results-modal" id="resultsModal">
+    <div class="results-content">
+      <div class="results-icon" id="resultsIcon">🎉</div>
+      <h2 class="results-title" id="resultsTitle">Biome Complete!</h2>
+      <p class="results-subtitle" id="resultsSubtitle">You collected all the Sparks!</p>
+
+      <div class="results-stats">
+        <div class="stat-box">
+          <div class="stat-value" id="resultSparks">50</div>
+          <div class="stat-label">Sparks</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="resultTime">2:34</div>
+          <div class="stat-label">Time</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="resultStars">⭐⭐⭐</div>
+          <div class="stat-label">Rating</div>
+        </div>
+      </div>
+
+      <div class="final-score">
+        <div class="final-score-label">Final Score</div>
+        <div class="final-score-value" id="finalScore">9,500</div>
+      </div>
+
+      <div class="results-buttons">
+        <button class="btn btn-secondary" onclick="returnToMenu()">Menu</button>
+        <button class="btn btn-primary" onclick="restartGame()">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Container -->
+  <div id="gameContainer"></div>
+
+  <!-- Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="/js/api-client.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    // ============================================
+    // LUMBLE - 3D Web Platformer
+    // ============================================
+
+    // Game state
+    const gameState = {
+      playing: false,
+      paused: false,
+      biome: 'garden',
+      sparksCollected: 0,
+      totalSparks: 50,
+      startTime: 0,
+      elapsedTime: 0,
+      score: 0
+    };
+
+    // Three.js variables
+    let scene, camera, renderer;
+    let player, playerVelocity;
+    let platforms = [];
+    let sparks = [];
+    let latchLine = null;
+    let latchTarget = null;
+    let isLatching = false;
+    let latchPoint = null;
+
+    // Player state
+    const playerState = {
+      x: 0, y: 2, z: 0,
+      vx: 0, vy: 0, vz: 0,
+      onGround: false,
+      canDoubleJump: true
+    };
+
+    // Input state
+    const keys = {
+      w: false, a: false, s: false, d: false,
+      space: false, shift: false
+    };
+    let mousePos = { x: 0, y: 0 };
+    let mouseDown = false;
+
+    // Constants
+    const GRAVITY = -25;
+    const JUMP_FORCE = 12;
+    const MOVE_SPEED = 8;
+    const LATCH_SPEED = 15;
+    const LATCH_RANGE = 20;
+
+    // Auth
+    let currentUser = null;
+
+    // ============================================
+    // THREE.JS SETUP
+    // ============================================
+
+    function initThreeJS() {
+      // Scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x87CEEB); // Sky blue
+      scene.fog = new THREE.Fog(0x87CEEB, 30, 80);
+
+      // Camera
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 8, 15);
+      camera.lookAt(0, 0, 0);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(10, 20, 10);
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 2048;
+      directionalLight.shadow.mapSize.height = 2048;
+      directionalLight.shadow.camera.near = 0.5;
+      directionalLight.shadow.camera.far = 50;
+      directionalLight.shadow.camera.left = -30;
+      directionalLight.shadow.camera.right = 30;
+      directionalLight.shadow.camera.top = 30;
+      directionalLight.shadow.camera.bottom = -30;
+      scene.add(directionalLight);
+
+      // Create player (Lumble - a cute blob)
+      createPlayer();
+
+      // Create level
+      createLevel();
+
+      // Handle resize
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function createPlayer() {
+      // Main body - soft blob shape
+      const bodyGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+      const bodyMaterial = new THREE.MeshStandardMaterial({
+        color: 0x7EC8E3,
+        roughness: 0.3,
+        metalness: 0.1
+      });
+      player = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      player.castShadow = true;
+      player.position.set(0, 2, 0);
+
+      // Eyes
+      const eyeGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+      const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+      const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+
+      const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), eyeWhiteMaterial);
+      eyeWhiteL.position.set(-0.15, 0.15, 0.4);
+      player.add(eyeWhiteL);
+
+      const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), eyeWhiteMaterial);
+      eyeWhiteR.position.set(0.15, 0.15, 0.4);
+      player.add(eyeWhiteR);
+
+      const eyeL = new THREE.Mesh(eyeGeometry, eyeMaterial);
+      eyeL.position.set(-0.15, 0.15, 0.48);
+      player.add(eyeL);
+
+      const eyeR = new THREE.Mesh(eyeGeometry, eyeMaterial);
+      eyeR.position.set(0.15, 0.15, 0.48);
+      player.add(eyeR);
+
+      scene.add(player);
+
+      // Latch line (tongue/grapple visual)
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFF69B4, linewidth: 3 });
+      const lineGeometry = new THREE.BufferGeometry();
+      latchLine = new THREE.Line(lineGeometry, lineMaterial);
+      latchLine.visible = false;
+      scene.add(latchLine);
+    }
+
+    function createLevel() {
+      // Clear existing
+      platforms.forEach(p => scene.remove(p));
+      sparks.forEach(s => scene.remove(s));
+      platforms = [];
+      sparks = [];
+
+      // Ground
+      const groundGeometry = new THREE.BoxGeometry(100, 1, 100);
+      const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x4a7c4e });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.position.set(0, -0.5, 0);
+      ground.receiveShadow = true;
+      ground.userData.type = 'platform';
+      scene.add(ground);
+      platforms.push(ground);
+
+      // Garden biome - create platforms and sparks
+      const biomeColors = {
+        garden: { platform: 0x8B4513, accent: 0x228B22 },
+        tidepool: { platform: 0x4682B4, accent: 0x00CED1 },
+        clocktower: { platform: 0x8B7355, accent: 0xDAA520 }
+      };
+
+      const colors = biomeColors[gameState.biome] || biomeColors.garden;
+
+      // Platform material
+      const platformMaterial = new THREE.MeshStandardMaterial({
+        color: colors.platform,
+        roughness: 0.8
+      });
+
+      // Create platforms in a semi-random but playable layout
+      const platformData = [
+        // Starting area
+        { x: 0, y: 0.5, z: 0, w: 6, h: 1, d: 6 },
+        // First jump series
+        { x: 5, y: 2, z: -3, w: 3, h: 0.5, d: 3 },
+        { x: 10, y: 4, z: -2, w: 2, h: 0.5, d: 2 },
+        { x: 8, y: 6, z: 2, w: 3, h: 0.5, d: 3 },
+        // Latch targets (tall pillars)
+        { x: 15, y: 5, z: 0, w: 1, h: 10, d: 1, latchable: true },
+        { x: 20, y: 6, z: -5, w: 1, h: 12, d: 1, latchable: true },
+        { x: 25, y: 4, z: 3, w: 1, h: 8, d: 1, latchable: true },
+        // More platforms
+        { x: 18, y: 3, z: 5, w: 4, h: 0.5, d: 2 },
+        { x: -5, y: 3, z: 5, w: 3, h: 0.5, d: 3 },
+        { x: -10, y: 5, z: 0, w: 2, h: 0.5, d: 4 },
+        { x: -8, y: 8, z: -5, w: 3, h: 0.5, d: 3 },
+        // Floating islands
+        { x: 0, y: 10, z: -10, w: 4, h: 1, d: 4 },
+        { x: 12, y: 12, z: -8, w: 3, h: 0.5, d: 3 },
+        { x: -12, y: 10, z: -8, w: 3, h: 0.5, d: 3 },
+        // Latch chain area
+        { x: 30, y: 8, z: 0, w: 1, h: 16, d: 1, latchable: true },
+        { x: 35, y: 10, z: -3, w: 1, h: 20, d: 1, latchable: true },
+        { x: 40, y: 7, z: 2, w: 4, h: 0.5, d: 4 },
+      ];
+
+      platformData.forEach((p, i) => {
+        const geometry = new THREE.BoxGeometry(p.w, p.h, p.d);
+        const material = p.latchable
+          ? new THREE.MeshStandardMaterial({ color: colors.accent, roughness: 0.5 })
+          : platformMaterial;
+        const platform = new THREE.Mesh(geometry, material);
+        platform.position.set(p.x, p.y, p.z);
+        platform.castShadow = true;
+        platform.receiveShadow = true;
+        platform.userData.type = 'platform';
+        platform.userData.latchable = p.latchable || false;
+        scene.add(platform);
+        platforms.push(platform);
+      });
+
+      // Create Sparks
+      createSparks();
+
+      // Decorations - trees, flowers, etc.
+      createDecorations();
+    }
+
+    function createSparks() {
+      const sparkGeometry = new THREE.OctahedronGeometry(0.3, 0);
+      const sparkMaterial = new THREE.MeshStandardMaterial({
+        color: 0xFFD700,
+        emissive: 0xFFD700,
+        emissiveIntensity: 0.5,
+        roughness: 0.2,
+        metalness: 0.8
+      });
+
+      // Spark positions - distributed around the level
+      const sparkPositions = [
+        // Easy sparks on ground level
+        { x: 3, y: 1.5, z: 2 }, { x: -2, y: 1.5, z: 3 }, { x: 4, y: 1.5, z: -2 },
+        // On first platforms
+        { x: 5, y: 3.5, z: -3 }, { x: 10, y: 5.5, z: -2 }, { x: 8, y: 7.5, z: 2 },
+        // Near latch pillars
+        { x: 15, y: 11, z: 0 }, { x: 20, y: 13, z: -5 }, { x: 25, y: 9, z: 3 },
+        // Scattered around
+        { x: 18, y: 4.5, z: 5 }, { x: -5, y: 4.5, z: 5 }, { x: -10, y: 6.5, z: 0 },
+        { x: -8, y: 9.5, z: -5 }, { x: 0, y: 12, z: -10 }, { x: 12, y: 13.5, z: -8 },
+        { x: -12, y: 11.5, z: -8 },
+        // High difficulty
+        { x: 30, y: 17, z: 0 }, { x: 35, y: 21, z: -3 }, { x: 40, y: 8.5, z: 2 },
+        // More sparks to reach 50
+        { x: 7, y: 2, z: 5 }, { x: -3, y: 2, z: -4 }, { x: 13, y: 3, z: 4 },
+        { x: -7, y: 4, z: -2 }, { x: 22, y: 5, z: 1 }, { x: -15, y: 3, z: 3 },
+        { x: 28, y: 6, z: -2 }, { x: 16, y: 8, z: -6 }, { x: -4, y: 7, z: 8 },
+        { x: 9, y: 9, z: -4 }, { x: -11, y: 6, z: 5 }, { x: 33, y: 12, z: 1 },
+        { x: 2, y: 5, z: -8 }, { x: -9, y: 9, z: -1 }, { x: 19, y: 7, z: -3 },
+        { x: 6, y: 4, z: 7 }, { x: -6, y: 5, z: -6 }, { x: 14, y: 10, z: 2 },
+        { x: -2, y: 8, z: -5 }, { x: 24, y: 6, z: -1 }, { x: 11, y: 6, z: 6 },
+        { x: -13, y: 7, z: -4 }, { x: 37, y: 9, z: 0 }, { x: 4, y: 11, z: -7 },
+        { x: 21, y: 4, z: 6 }, { x: -8, y: 3, z: 7 }, { x: 31, y: 5, z: 3 },
+        { x: 1, y: 6, z: 4 }, { x: 17, y: 15, z: -1 }, { x: -5, y: 11, z: -3 },
+      ];
+
+      sparkPositions.slice(0, gameState.totalSparks).forEach((pos, i) => {
+        const spark = new THREE.Mesh(sparkGeometry, sparkMaterial.clone());
+        spark.position.set(pos.x, pos.y, pos.z);
+        spark.userData.type = 'spark';
+        spark.userData.collected = false;
+        spark.userData.id = i;
+        scene.add(spark);
+        sparks.push(spark);
+      });
+    }
+
+    function createDecorations() {
+      // Simple low-poly trees
+      const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.3, 2, 6);
+      const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+      const leavesGeometry = new THREE.ConeGeometry(1.5, 3, 6);
+      const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+
+      const treePositions = [
+        { x: -8, z: 8 }, { x: 12, z: 10 }, { x: -15, z: -5 },
+        { x: 25, z: 8 }, { x: -20, z: 0 }, { x: 8, z: -12 }
+      ];
+
+      treePositions.forEach(pos => {
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+        trunk.position.set(pos.x, 1, pos.z);
+        trunk.castShadow = true;
+        scene.add(trunk);
+
+        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+        leaves.position.set(pos.x, 3.5, pos.z);
+        leaves.castShadow = true;
+        scene.add(leaves);
+      });
+
+      // Flowers
+      const flowerColors = [0xFF69B4, 0xFF6347, 0xFFD700, 0x9370DB];
+      for (let i = 0; i < 20; i++) {
+        const flowerGeometry = new THREE.SphereGeometry(0.2, 6, 6);
+        const flowerMaterial = new THREE.MeshStandardMaterial({
+          color: flowerColors[i % flowerColors.length]
+        });
+        const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
+        flower.position.set(
+          (Math.random() - 0.5) * 40,
+          0.2,
+          (Math.random() - 0.5) * 40
+        );
+        scene.add(flower);
+      }
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // ============================================
+    // GAME LOGIC
+    // ============================================
+
+    function startGame() {
+      // Reset state
+      gameState.playing = true;
+      gameState.sparksCollected = 0;
+      gameState.startTime = Date.now();
+      gameState.elapsedTime = 0;
+      gameState.score = 0;
+
+      playerState.x = 0;
+      playerState.y = 2;
+      playerState.z = 0;
+      playerState.vx = 0;
+      playerState.vy = 0;
+      playerState.vz = 0;
+      playerState.onGround = false;
+      playerState.canDoubleJump = true;
+
+      // Reset sparks
+      sparks.forEach(s => {
+        s.visible = true;
+        s.userData.collected = false;
+      });
+
+      // Update UI
+      document.getElementById('sparkCount').textContent = '0';
+      document.getElementById('timeDisplay').textContent = '0:00';
+
+      // Show game UI
+      document.getElementById('menuScreen').classList.add('hidden');
+      document.getElementById('gameHeader').style.display = 'flex';
+      document.getElementById('gameHud').style.display = 'flex';
+      document.getElementById('leaderboardSection').style.display = 'block';
+      document.getElementById('controlsHint').style.display = 'block';
+
+      // Load leaderboard
+      loadLeaderboard();
+
+      // Start game loop
+      if (!renderer) initThreeJS();
+      animate();
+    }
+
+    function animate() {
+      if (!gameState.playing) return;
+      requestAnimationFrame(animate);
+
+      const delta = 1 / 60;
+
+      // Update timer
+      gameState.elapsedTime = (Date.now() - gameState.startTime) / 1000;
+      updateTimerDisplay();
+
+      // Update player physics
+      updatePlayer(delta);
+
+      // Update sparks (rotation animation)
+      updateSparks(delta);
+
+      // Update latch visual
+      updateLatch();
+
+      // Update camera to follow player
+      updateCamera();
+
+      // Render
+      renderer.render(scene, camera);
+    }
+
+    function updatePlayer(delta) {
+      // Horizontal movement
+      let moveX = 0, moveZ = 0;
+      if (keys.w) moveZ -= 1;
+      if (keys.s) moveZ += 1;
+      if (keys.a) moveX -= 1;
+      if (keys.d) moveX += 1;
+
+      // Normalize diagonal movement
+      if (moveX !== 0 && moveZ !== 0) {
+        moveX *= 0.707;
+        moveZ *= 0.707;
+      }
+
+      // Apply movement relative to camera
+      const cameraAngle = Math.atan2(camera.position.x - player.position.x, camera.position.z - player.position.z);
+      const sin = Math.sin(cameraAngle);
+      const cos = Math.cos(cameraAngle);
+      const rotatedX = moveX * cos - moveZ * sin;
+      const rotatedZ = moveX * sin + moveZ * cos;
+
+      if (!isLatching) {
+        playerState.vx = rotatedX * MOVE_SPEED;
+        playerState.vz = rotatedZ * MOVE_SPEED;
+
+        // Apply gravity
+        playerState.vy += GRAVITY * delta;
+      } else {
+        // Latching physics - swing towards latch point
+        if (latchPoint) {
+          const dx = latchPoint.x - playerState.x;
+          const dy = latchPoint.y - playerState.y;
+          const dz = latchPoint.z - playerState.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          if (dist > 1) {
+            playerState.vx += (dx / dist) * LATCH_SPEED * delta;
+            playerState.vy += (dy / dist) * LATCH_SPEED * delta;
+            playerState.vz += (dz / dist) * LATCH_SPEED * delta;
+          }
+
+          // Damping
+          playerState.vx *= 0.98;
+          playerState.vy *= 0.98;
+          playerState.vz *= 0.98;
+        }
+      }
+
+      // Update position
+      playerState.x += playerState.vx * delta;
+      playerState.y += playerState.vy * delta;
+      playerState.z += playerState.vz * delta;
+
+      // Ground collision
+      playerState.onGround = false;
+      platforms.forEach(platform => {
+        const box = new THREE.Box3().setFromObject(platform);
+        const playerBottom = playerState.y - 0.5;
+        const playerTop = playerState.y + 0.5;
+
+        // Check if player is above platform
+        if (playerState.x > box.min.x - 0.5 && playerState.x < box.max.x + 0.5 &&
+            playerState.z > box.min.z - 0.5 && playerState.z < box.max.z + 0.5) {
+
+          // Landing on top
+          if (playerBottom <= box.max.y && playerBottom >= box.max.y - 0.5 && playerState.vy <= 0) {
+            playerState.y = box.max.y + 0.5;
+            playerState.vy = 0;
+            playerState.onGround = true;
+            playerState.canDoubleJump = true;
+          }
+
+          // Hitting from below
+          if (playerTop >= box.min.y && playerTop <= box.min.y + 0.3 && playerState.vy > 0) {
+            playerState.vy = 0;
+          }
+        }
+      });
+
+      // Fall reset
+      if (playerState.y < -10) {
+        playerState.x = 0;
+        playerState.y = 5;
+        playerState.z = 0;
+        playerState.vx = 0;
+        playerState.vy = 0;
+        playerState.vz = 0;
+      }
+
+      // Update mesh position
+      player.position.set(playerState.x, playerState.y, playerState.z);
+
+      // Squash and stretch based on velocity
+      const squash = 1 - Math.abs(playerState.vy) * 0.02;
+      const stretch = 1 + Math.abs(playerState.vy) * 0.02;
+      player.scale.set(stretch, squash, stretch);
+
+      // Check spark collection
+      checkSparkCollection();
+    }
+
+    function updateSparks(delta) {
+      sparks.forEach(spark => {
+        if (!spark.userData.collected) {
+          spark.rotation.y += delta * 2;
+          spark.position.y += Math.sin(Date.now() * 0.003 + spark.userData.id) * 0.002;
+        }
+      });
+    }
+
+    function updateLatch() {
+      if (isLatching && latchPoint) {
+        const points = [
+          new THREE.Vector3(playerState.x, playerState.y, playerState.z),
+          new THREE.Vector3(latchPoint.x, latchPoint.y, latchPoint.z)
+        ];
+        latchLine.geometry.setFromPoints(points);
+        latchLine.visible = true;
+      } else {
+        latchLine.visible = false;
+      }
+    }
+
+    function updateCamera() {
+      // Third-person camera following player
+      const targetX = playerState.x;
+      const targetY = playerState.y + 5;
+      const targetZ = playerState.z + 12;
+
+      camera.position.x += (targetX - camera.position.x) * 0.05;
+      camera.position.y += (targetY - camera.position.y) * 0.05;
+      camera.position.z += (targetZ - camera.position.z) * 0.05;
+
+      camera.lookAt(playerState.x, playerState.y, playerState.z);
+    }
+
+    function checkSparkCollection() {
+      sparks.forEach(spark => {
+        if (!spark.userData.collected) {
+          const dx = spark.position.x - playerState.x;
+          const dy = spark.position.y - playerState.y;
+          const dz = spark.position.z - playerState.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          if (dist < 1.2) {
+            collectSpark(spark);
+          }
+        }
+      });
+    }
+
+    function collectSpark(spark) {
+      spark.userData.collected = true;
+      spark.visible = false;
+      gameState.sparksCollected++;
+
+      document.getElementById('sparkCount').textContent = gameState.sparksCollected;
+
+      // Play collection sound (simple beep)
+      playCollectSound();
+
+      // Check milestone submissions (every 10 sparks)
+      if (gameState.sparksCollected % 10 === 0) {
+        submitMilestoneScore();
+      }
+
+      // Check completion
+      if (gameState.sparksCollected >= gameState.totalSparks) {
+        completeLevel();
+      }
+    }
+
+    function playCollectSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.frequency.value = 800 + gameState.sparksCollected * 20;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.2);
+      } catch (e) {}
+    }
+
+    function completeLevel() {
+      gameState.playing = false;
+
+      // Calculate score
+      const timeBonus = Math.max(0, 10000 - Math.floor(gameState.elapsedTime));
+      const sparkScore = gameState.sparksCollected * 100;
+      gameState.score = sparkScore + timeBonus;
+
+      // Determine star rating
+      let stars = '⭐';
+      if (gameState.sparksCollected >= 35) stars = '⭐⭐';
+      if (gameState.sparksCollected >= 50) stars = '⭐⭐⭐';
+
+      // Update results modal
+      document.getElementById('resultsIcon').textContent = '🎉';
+      document.getElementById('resultsTitle').textContent = 'Biome Complete!';
+      document.getElementById('resultsSubtitle').textContent = 'Amazing work, Lumble!';
+      document.getElementById('resultSparks').textContent = gameState.sparksCollected;
+      document.getElementById('resultTime').textContent = formatTime(gameState.elapsedTime);
+      document.getElementById('resultStars').textContent = stars;
+      document.getElementById('finalScore').textContent = gameState.score.toLocaleString();
+
+      document.getElementById('resultsModal').classList.add('show');
+
+      // Submit final score
+      submitScore();
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timeDisplay').textContent = formatTime(gameState.elapsedTime);
+    }
+
+    // ============================================
+    // INPUT HANDLING
+    // ============================================
+
+    function setupInputHandlers() {
+      // Keyboard
+      document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'w') keys.w = true;
+        if (e.key.toLowerCase() === 'a') keys.a = true;
+        if (e.key.toLowerCase() === 's') keys.s = true;
+        if (e.key.toLowerCase() === 'd') keys.d = true;
+        if (e.key === ' ') {
+          e.preventDefault();
+          keys.space = true;
+          jump();
+        }
+        if (e.key.toLowerCase() === 'r') restartGame();
+        if (e.key === 'Escape') returnToMenu();
+      });
+
+      document.addEventListener('keyup', (e) => {
+        if (e.key.toLowerCase() === 'w') keys.w = false;
+        if (e.key.toLowerCase() === 'a') keys.a = false;
+        if (e.key.toLowerCase() === 's') keys.s = false;
+        if (e.key.toLowerCase() === 'd') keys.d = false;
+        if (e.key === ' ') keys.space = false;
+      });
+
+      // Mouse for latching
+      document.addEventListener('mousemove', (e) => {
+        mousePos.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mousePos.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      });
+
+      document.addEventListener('mousedown', (e) => {
+        if (e.button === 0 && gameState.playing) {
+          tryLatch();
+        }
+      });
+
+      document.addEventListener('mouseup', (e) => {
+        if (e.button === 0) {
+          releaseLatch();
+        }
+      });
+
+      // Touch controls
+      setupTouchControls();
+    }
+
+    function setupTouchControls() {
+      const touchUp = document.getElementById('touchUp');
+      const touchDown = document.getElementById('touchDown');
+      const touchLeft = document.getElementById('touchLeft');
+      const touchRight = document.getElementById('touchRight');
+      const touchJump = document.getElementById('touchJump');
+      const touchLatch = document.getElementById('touchLatch');
+
+      // Movement buttons
+      touchUp.addEventListener('touchstart', (e) => { e.preventDefault(); keys.w = true; });
+      touchUp.addEventListener('touchend', () => keys.w = false);
+      touchDown.addEventListener('touchstart', (e) => { e.preventDefault(); keys.s = true; });
+      touchDown.addEventListener('touchend', () => keys.s = false);
+      touchLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.a = true; });
+      touchLeft.addEventListener('touchend', () => keys.a = false);
+      touchRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.d = true; });
+      touchRight.addEventListener('touchend', () => keys.d = false);
+
+      // Jump
+      touchJump.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        jump();
+      });
+
+      // Latch - find nearest latchable and latch to it
+      touchLatch.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        tryLatchNearest();
+      });
+      touchLatch.addEventListener('touchend', () => releaseLatch());
+    }
+
+    function jump() {
+      if (!gameState.playing) return;
+
+      if (playerState.onGround) {
+        playerState.vy = JUMP_FORCE;
+        playerState.onGround = false;
+      } else if (playerState.canDoubleJump) {
+        playerState.vy = JUMP_FORCE * 0.8;
+        playerState.canDoubleJump = false;
+      }
+    }
+
+    function tryLatch() {
+      if (!gameState.playing) return;
+
+      // Raycast from camera through mouse position
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(mousePos.x, mousePos.y), camera);
+
+      // Find latchable targets
+      const latchables = platforms.filter(p => p.userData.latchable);
+      const intersects = raycaster.intersectObjects(latchables);
+
+      if (intersects.length > 0) {
+        const hit = intersects[0];
+        const dist = player.position.distanceTo(hit.point);
+
+        if (dist <= LATCH_RANGE) {
+          isLatching = true;
+          latchPoint = hit.point.clone();
+          latchTarget = hit.object;
+        }
+      }
+    }
+
+    function tryLatchNearest() {
+      if (!gameState.playing) return;
+
+      // Find nearest latchable within range
+      let nearest = null;
+      let nearestDist = LATCH_RANGE;
+
+      platforms.forEach(p => {
+        if (p.userData.latchable) {
+          const dist = player.position.distanceTo(p.position);
+          if (dist < nearestDist) {
+            nearestDist = dist;
+            nearest = p;
+          }
+        }
+      });
+
+      if (nearest) {
+        isLatching = true;
+        latchPoint = nearest.position.clone();
+        latchTarget = nearest;
+      }
+    }
+
+    function releaseLatch() {
+      if (isLatching) {
+        // Give a boost when releasing
+        const dx = latchPoint.x - playerState.x;
+        const dy = latchPoint.y - playerState.y;
+        const dz = latchPoint.z - playerState.z;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (dist > 0) {
+          playerState.vx += (dx / dist) * 5;
+          playerState.vy += 8; // Always boost up a bit
+          playerState.vz += (dz / dist) * 5;
+        }
+      }
+
+      isLatching = false;
+      latchPoint = null;
+      latchTarget = null;
+    }
+
+    // ============================================
+    // LEADERBOARD & SCORING
+    // ============================================
+
+    async function submitScore() {
+      console.log('[Lumble] submitScore called:', {
+        score: gameState.score,
+        sparks: gameState.sparksCollected,
+        time: gameState.elapsedTime,
+        hasApiClient: !!window.apiClient,
+        hasCurrentUser: !!currentUser
+      });
+
+      const scoreData = {
+        score: gameState.score,
+        level: gameState.sparksCollected,
+        metadata: {
+          biome: gameState.biome,
+          sparksCollected: gameState.sparksCollected,
+          totalSparks: gameState.totalSparks,
+          timeSeconds: Math.floor(gameState.elapsedTime),
+          completionPercent: Math.round((gameState.sparksCollected / gameState.totalSparks) * 100)
+        }
+      };
+
+      if (window.apiClient && currentUser) {
+        try {
+          console.log('[Lumble] Submitting score to API...');
+          const result = await window.apiClient.submitScore('lumble', scoreData);
+          console.log('[Lumble] Score submitted successfully:', result);
+          loadLeaderboard();
+        } catch (error) {
+          console.error('[Lumble] Failed to submit score:', error);
+          saveGuestScore(scoreData);
+        }
+      } else {
+        saveGuestScore(scoreData);
+        console.log('[Lumble] Score saved locally (not signed in)');
+      }
+    }
+
+    async function submitMilestoneScore() {
+      // Submit intermediate score at milestones
+      if (!window.apiClient || !currentUser) return;
+
+      const scoreData = {
+        score: gameState.sparksCollected * 100,
+        level: gameState.sparksCollected,
+        metadata: {
+          biome: gameState.biome,
+          sparksCollected: gameState.sparksCollected,
+          timeSeconds: Math.floor(gameState.elapsedTime),
+          isMilestone: true
+        }
+      };
+
+      try {
+        await window.apiClient.submitScore('lumble', scoreData);
+        console.log('[Lumble] Milestone score submitted:', gameState.sparksCollected);
+      } catch (error) {
+        console.error('[Lumble] Failed to submit milestone:', error);
+      }
+    }
+
+    function saveGuestScore(scoreData) {
+      const pendingScores = JSON.parse(localStorage.getItem('lumble-pending-scores') || '[]');
+      pendingScores.push({ ...scoreData, timestamp: Date.now() });
+      const trimmed = pendingScores.slice(-10);
+      localStorage.setItem('lumble-pending-scores', JSON.stringify(trimmed));
+    }
+
+    async function syncGuestScores() {
+      if (!window.apiClient || !currentUser) return;
+
+      const pendingScores = JSON.parse(localStorage.getItem('lumble-pending-scores') || '[]');
+      if (pendingScores.length === 0) return;
+
+      const bestScore = pendingScores.reduce((best, curr) =>
+        curr.score > best.score ? curr : best, pendingScores[0]);
+
+      try {
+        await window.apiClient.submitScore('lumble', bestScore);
+        localStorage.removeItem('lumble-pending-scores');
+        console.log('[Lumble] Guest scores synced');
+        loadLeaderboard();
+      } catch (error) {
+        console.error('[Lumble] Failed to sync guest scores:', error);
+      }
+    }
+
+    async function loadLeaderboard() {
+      const list = document.getElementById('leaderboardList');
+
+      if (!window.apiClient) {
+        list.innerHTML = '<li class="leaderboard-item"><span class="lb-name">Sign in to see leaderboard</span></li>';
+        return;
+      }
+
+      try {
+        const entries = await window.apiClient.getLeaderboard('lumble', 'daily', 5);
+
+        if (!entries?.length) {
+          list.innerHTML = '<li class="leaderboard-item"><span class="lb-name">No scores yet!</span></li>';
+          return;
+        }
+
+        list.innerHTML = entries.map((entry, i) => {
+          const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+          const displayName = entry.odName || entry.displayName || 'Player';
+          return `
+            <li class="leaderboard-item">
+              <span class="lb-rank ${rankClass}">${i + 1}</span>
+              <span class="lb-name">${displayName}</span>
+              <span class="lb-score">${entry.score.toLocaleString()}</span>
+            </li>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('[Lumble] Failed to load leaderboard:', error);
+        list.innerHTML = '<li class="leaderboard-item"><span class="lb-name">Failed to load</span></li>';
+      }
+    }
+
+    // ============================================
+    // AUTH
+    // ============================================
+
+    function initAuth() {
+      const checkAuth = setInterval(() => {
+        if (window.authManager?.isInitialized) {
+          clearInterval(checkAuth);
+          window.authManager.onAuthStateChanged(user => {
+            currentUser = user;
+            const userSection = document.getElementById('userSection');
+            if (user) {
+              userSection.innerHTML = `
+                <img class="user-avatar" src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" alt="User">
+              `;
+              syncGuestScores();
+            } else {
+              userSection.innerHTML = `
+                <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
+              `;
+            }
+          });
+        }
+      }, 100);
+    }
+
+    function promptSignIn() {
+      if (window.authManager) {
+        window.authManager.signInWithGoogle();
+      }
+    }
+
+    // ============================================
+    // MENU & UI
+    // ============================================
+
+    function initMenu() {
+      // Biome selection
+      document.querySelectorAll('.biome-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.classList.contains('locked')) return;
+          document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          gameState.biome = btn.dataset.biome;
+        });
+      });
+
+      // Play button
+      document.getElementById('playBtn').addEventListener('click', startGame);
+    }
+
+    function returnToMenu() {
+      gameState.playing = false;
+      document.getElementById('menuScreen').classList.remove('hidden');
+      document.getElementById('gameHeader').style.display = 'none';
+      document.getElementById('gameHud').style.display = 'none';
+      document.getElementById('leaderboardSection').style.display = 'none';
+      document.getElementById('controlsHint').style.display = 'none';
+      document.getElementById('resultsModal').classList.remove('show');
+    }
+
+    function restartGame() {
+      document.getElementById('resultsModal').classList.remove('show');
+      startGame();
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initMenu();
+      initAuth();
+      setupInputHandlers();
+    });
+  </script>
+</body>
+</html>
