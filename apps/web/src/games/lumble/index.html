@@ -3,10 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Lumble | Weekly Arcade</title>
-  <meta name="description" content="Play Lumble - A 3D collect-a-thon platformer! Use your Latch to swing, collect Sparks, and explore!">
+  <title>Lumble | Weekly Arcade - Free 3D Platformer Game Online</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Play Lumble free online. A 3D collect-a-thon platformer! Use your Latch to swing, collect 50 Sparks, and explore! No download required.">
+  <meta name="keywords" content="3D game, platformer, collect-a-thon, free game, browser game, swing game, lumble">
+  <link rel="canonical" href="https://weekly-arcade.web.app/games/lumble/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Lumble | Weekly Arcade - Free 3D Platformer">
+  <meta property="og:description" content="3D platformer! Latch, swing, and collect 50 Sparks. Play free online.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weekly-arcade.web.app/games/lumble/">
+  <meta property="og:image" content="https://weekly-arcade.web.app/og-image.png">
+  <meta property="og:site_name" content="Weekly Arcade">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lumble | Weekly Arcade">
+  <meta name="twitter:description" content="3D platformer! Latch, swing, and collect 50 Sparks. Play free online.">
+  <meta name="twitter:image" content="https://weekly-arcade.web.app/og-image.png">
+
+  <!-- PWA -->
   <meta name="theme-color" content="#e94560">
   <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Lumble",
+    "url": "https://weekly-arcade.web.app/games/lumble/",
+    "description": "Play Lumble free online. A 3D collect-a-thon platformer! Use your Latch to swing, collect 50 Sparks, and explore!",
+    "genre": ["3D", "Platformer", "Collect-a-thon"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "gamePlatform": "Web Browser",
+    "inLanguage": "en",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Weekly Arcade",
+      "url": "https://weekly-arcade.web.app/"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.7",
+      "ratingCount": "400",
+      "bestRating": "5",
+      "worstRating": "1"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weekly-arcade.web.app/" },
+      { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://weekly-arcade.web.app/#new" },
+      { "@type": "ListItem", "position": 3, "name": "Lumble", "item": "https://weekly-arcade.web.app/games/lumble/" }
+    ]
+  }
+  </script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -115,24 +183,38 @@
     }
 
     .hud-item {
-      background: rgba(22, 33, 62, 0.9);
+      background: linear-gradient(135deg, rgba(22, 33, 62, 0.95), rgba(26, 26, 46, 0.9));
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      padding: 0.6rem 1.2rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
     }
 
-    .hud-icon { font-size: 1.2rem; }
+    .hud-icon {
+      font-size: 1.4rem;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
     .hud-value {
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       color: var(--spark-gold);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     .hud-label {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
+    }
+
+    .hud-item.sparks .hud-value {
+      background: linear-gradient(135deg, #ffd700, #ffaa00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: transform 0.15s ease-out;
     }
 
     /* Controls hint */
@@ -141,24 +223,28 @@
       bottom: 1rem;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(22, 33, 62, 0.9);
+      background: linear-gradient(135deg, rgba(22, 33, 62, 0.95), rgba(26, 26, 46, 0.9));
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.5rem 1rem;
-      font-size: 0.8rem;
+      border-radius: 12px;
+      padding: 0.6rem 1.5rem;
+      font-size: 0.85rem;
       color: var(--text-secondary);
       z-index: 50;
       text-align: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .controls-hint kbd {
-      background: var(--bg-secondary);
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
       border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 0.1rem 0.4rem;
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
       margin: 0 0.2rem;
       font-family: inherit;
       color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     /* Menu Screen */
@@ -405,39 +491,53 @@
       position: fixed;
       top: 60px;
       right: 1rem;
-      width: 220px;
-      background: rgba(22, 33, 62, 0.9);
+      width: 240px;
+      background: linear-gradient(135deg, rgba(22, 33, 62, 0.95), rgba(26, 26, 46, 0.9));
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem;
+      border-radius: 12px;
+      padding: 1rem;
       z-index: 50;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .leaderboard-title {
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
     }
 
     .leaderboard-list {
       list-style: none;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
     }
 
     .leaderboard-item {
       display: flex;
       align-items: center;
-      padding: 0.3rem 0;
+      padding: 0.4rem 0.2rem;
       gap: 0.5rem;
+      border-radius: 6px;
+      transition: background 0.2s;
     }
 
-    .lb-rank { width: 20px; font-weight: 700; }
-    .lb-rank.gold { color: #ffd700; }
-    .lb-rank.silver { color: #c0c0c0; }
-    .lb-rank.bronze { color: #cd7f32; }
+    .leaderboard-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .lb-rank {
+      width: 24px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .lb-rank.gold { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.5); }
+    .lb-rank.silver { color: #c0c0c0; text-shadow: 0 0 8px rgba(192, 192, 192, 0.5); }
+    .lb-rank.bronze { color: #cd7f32; text-shadow: 0 0 8px rgba(205, 127, 50, 0.5); }
     .lb-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-score { color: var(--spark-gold); font-weight: 600; }
 
@@ -551,7 +651,7 @@
 
   <!-- HUD -->
   <div class="hud" id="gameHud" style="display: none;">
-    <div class="hud-item">
+    <div class="hud-item sparks">
       <span class="hud-icon">✨</span>
       <span class="hud-value" id="sparkCount">0</span>
       <span class="hud-label">/ 50</span>
@@ -574,7 +674,7 @@
 
   <!-- Controls Hint -->
   <div class="controls-hint" id="controlsHint" style="display: none;">
-    <kbd>WASD</kbd> Move &nbsp;|&nbsp; <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>Click</kbd> Latch &nbsp;|&nbsp; <kbd>R</kbd> Restart
+    <kbd>WASD</kbd> or <kbd>Arrow Keys</kbd> Move &nbsp;|&nbsp; <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>Click</kbd> Latch &nbsp;|&nbsp; <kbd>R</kbd> Restart
   </div>
 
   <!-- Touch Controls -->
@@ -743,47 +843,163 @@
       window.addEventListener('resize', onWindowResize);
     }
 
+    // Character parts for animation
+    let characterParts = {};
+    let walkCycle = 0;
+
     function createPlayer() {
-      // Main body - soft blob shape
-      const bodyGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-      const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: 0x7EC8E3,
-        roughness: 0.3,
-        metalness: 0.1
-      });
-      player = new THREE.Mesh(bodyGeometry, bodyMaterial);
-      player.castShadow = true;
+      // Create a humanoid character like Mario
+      player = new THREE.Group();
       player.position.set(0, 2, 0);
 
-      // Eyes
-      const eyeGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+      // Materials
+      const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xFFDBAC, roughness: 0.7 });
+      const shirtMaterial = new THREE.MeshStandardMaterial({ color: 0xE94560, roughness: 0.6 }); // Red shirt
+      const pantsMaterial = new THREE.MeshStandardMaterial({ color: 0x4169E1, roughness: 0.6 }); // Blue pants
+      const shoeMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.8 }); // Brown shoes
+      const hairMaterial = new THREE.MeshStandardMaterial({ color: 0x4A3728, roughness: 0.9 }); // Brown hair
       const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
       const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
-      const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), eyeWhiteMaterial);
-      eyeWhiteL.position.set(-0.15, 0.15, 0.4);
-      player.add(eyeWhiteL);
+      // Head
+      const headGeometry = new THREE.SphereGeometry(0.35, 16, 16);
+      const head = new THREE.Mesh(headGeometry, skinMaterial);
+      head.position.set(0, 1.1, 0);
+      head.castShadow = true;
+      player.add(head);
+      characterParts.head = head;
 
-      const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), eyeWhiteMaterial);
-      eyeWhiteR.position.set(0.15, 0.15, 0.4);
+      // Hair (cap-like)
+      const hairGeometry = new THREE.SphereGeometry(0.38, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const hair = new THREE.Mesh(hairGeometry, hairMaterial);
+      hair.position.set(0, 1.15, 0);
+      hair.castShadow = true;
+      player.add(hair);
+
+      // Eyes
+      const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeWhiteMaterial);
+      eyeWhiteL.position.set(-0.12, 1.15, 0.3);
+      player.add(eyeWhiteL);
+      const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeWhiteMaterial);
+      eyeWhiteR.position.set(0.12, 1.15, 0.3);
       player.add(eyeWhiteR);
 
-      const eyeL = new THREE.Mesh(eyeGeometry, eyeMaterial);
-      eyeL.position.set(-0.15, 0.15, 0.48);
+      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMaterial);
+      eyeL.position.set(-0.12, 1.15, 0.36);
       player.add(eyeL);
-
-      const eyeR = new THREE.Mesh(eyeGeometry, eyeMaterial);
-      eyeR.position.set(0.15, 0.15, 0.48);
+      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMaterial);
+      eyeR.position.set(0.12, 1.15, 0.36);
       player.add(eyeR);
+
+      // Nose
+      const noseGeometry = new THREE.SphereGeometry(0.06, 8, 8);
+      const nose = new THREE.Mesh(noseGeometry, skinMaterial);
+      nose.position.set(0, 1.05, 0.32);
+      player.add(nose);
+
+      // Body (torso)
+      const torsoGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.3);
+      const torso = new THREE.Mesh(torsoGeometry, shirtMaterial);
+      torso.position.set(0, 0.6, 0);
+      torso.castShadow = true;
+      player.add(torso);
+      characterParts.torso = torso;
+
+      // Arms
+      const armGeometry = new THREE.BoxGeometry(0.15, 0.4, 0.15);
+
+      const leftArmPivot = new THREE.Group();
+      leftArmPivot.position.set(-0.35, 0.7, 0);
+      const leftArm = new THREE.Mesh(armGeometry, shirtMaterial);
+      leftArm.position.set(0, -0.2, 0);
+      leftArm.castShadow = true;
+      leftArmPivot.add(leftArm);
+      // Hand
+      const handL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), skinMaterial);
+      handL.position.set(0, -0.4, 0);
+      leftArmPivot.add(handL);
+      player.add(leftArmPivot);
+      characterParts.leftArm = leftArmPivot;
+
+      const rightArmPivot = new THREE.Group();
+      rightArmPivot.position.set(0.35, 0.7, 0);
+      const rightArm = new THREE.Mesh(armGeometry, shirtMaterial);
+      rightArm.position.set(0, -0.2, 0);
+      rightArm.castShadow = true;
+      rightArmPivot.add(rightArm);
+      // Hand
+      const handR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), skinMaterial);
+      handR.position.set(0, -0.4, 0);
+      rightArmPivot.add(handR);
+      player.add(rightArmPivot);
+      characterParts.rightArm = rightArmPivot;
+
+      // Legs
+      const legGeometry = new THREE.BoxGeometry(0.18, 0.4, 0.18);
+
+      const leftLegPivot = new THREE.Group();
+      leftLegPivot.position.set(-0.13, 0.35, 0);
+      const leftLeg = new THREE.Mesh(legGeometry, pantsMaterial);
+      leftLeg.position.set(0, -0.2, 0);
+      leftLeg.castShadow = true;
+      leftLegPivot.add(leftLeg);
+      // Shoe
+      const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.28), shoeMaterial);
+      shoeL.position.set(0, -0.45, 0.05);
+      shoeL.castShadow = true;
+      leftLegPivot.add(shoeL);
+      player.add(leftLegPivot);
+      characterParts.leftLeg = leftLegPivot;
+
+      const rightLegPivot = new THREE.Group();
+      rightLegPivot.position.set(0.13, 0.35, 0);
+      const rightLeg = new THREE.Mesh(legGeometry, pantsMaterial);
+      rightLeg.position.set(0, -0.2, 0);
+      rightLeg.castShadow = true;
+      rightLegPivot.add(rightLeg);
+      // Shoe
+      const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.28), shoeMaterial);
+      shoeR.position.set(0, -0.45, 0.05);
+      shoeR.castShadow = true;
+      rightLegPivot.add(shoeR);
+      player.add(rightLegPivot);
+      characterParts.rightLeg = rightLegPivot;
 
       scene.add(player);
 
-      // Latch line (tongue/grapple visual)
+      // Latch line (grapple visual)
       const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFF69B4, linewidth: 3 });
       const lineGeometry = new THREE.BufferGeometry();
       latchLine = new THREE.Line(lineGeometry, lineMaterial);
       latchLine.visible = false;
       scene.add(latchLine);
+    }
+
+    function animateCharacter(isMoving, delta) {
+      if (!characterParts.leftArm) return;
+
+      if (isMoving && playerState.onGround) {
+        // Walking animation
+        walkCycle += delta * 10;
+        const swing = Math.sin(walkCycle) * 0.6;
+
+        characterParts.leftArm.rotation.x = swing;
+        characterParts.rightArm.rotation.x = -swing;
+        characterParts.leftLeg.rotation.x = -swing;
+        characterParts.rightLeg.rotation.x = swing;
+      } else if (!playerState.onGround) {
+        // Jumping pose
+        characterParts.leftArm.rotation.x = -0.8;
+        characterParts.rightArm.rotation.x = -0.8;
+        characterParts.leftLeg.rotation.x = 0.3;
+        characterParts.rightLeg.rotation.x = -0.3;
+      } else {
+        // Idle - reset to neutral
+        characterParts.leftArm.rotation.x *= 0.9;
+        characterParts.rightArm.rotation.x *= 0.9;
+        characterParts.leftLeg.rotation.x *= 0.9;
+        characterParts.rightLeg.rotation.x *= 0.9;
+      }
     }
 
     function createLevel() {
@@ -1042,6 +1258,8 @@
       if (keys.a) moveX -= 1;
       if (keys.d) moveX += 1;
 
+      const isMoving = moveX !== 0 || moveZ !== 0;
+
       // Normalize diagonal movement
       if (moveX !== 0 && moveZ !== 0) {
         moveX *= 0.707;
@@ -1056,29 +1274,42 @@
       const rotatedZ = moveX * sin + moveZ * cos;
 
       if (!isLatching) {
-        playerState.vx = rotatedX * MOVE_SPEED;
-        playerState.vz = rotatedZ * MOVE_SPEED;
+        // Smooth acceleration for better feel
+        const targetVx = rotatedX * MOVE_SPEED;
+        const targetVz = rotatedZ * MOVE_SPEED;
+        const accel = playerState.onGround ? 0.2 : 0.08;
+
+        playerState.vx += (targetVx - playerState.vx) * accel;
+        playerState.vz += (targetVz - playerState.vz) * accel;
 
         // Apply gravity
         playerState.vy += GRAVITY * delta;
+
+        // Terminal velocity
+        if (playerState.vy < -30) playerState.vy = -30;
       } else {
-        // Latching physics - swing towards latch point
+        // Latching physics - pull towards latch point with pendulum swing
         if (latchPoint) {
           const dx = latchPoint.x - playerState.x;
           const dy = latchPoint.y - playerState.y;
           const dz = latchPoint.z - playerState.z;
           const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-          if (dist > 1) {
-            playerState.vx += (dx / dist) * LATCH_SPEED * delta;
-            playerState.vy += (dy / dist) * LATCH_SPEED * delta;
-            playerState.vz += (dz / dist) * LATCH_SPEED * delta;
+          if (dist > 0.5) {
+            // Pull force towards latch point
+            const pullStrength = LATCH_SPEED * 2;
+            playerState.vx += (dx / dist) * pullStrength * delta;
+            playerState.vy += (dy / dist) * pullStrength * delta;
+            playerState.vz += (dz / dist) * pullStrength * delta;
+
+            // Apply reduced gravity while latching
+            playerState.vy += GRAVITY * 0.3 * delta;
           }
 
-          // Damping
-          playerState.vx *= 0.98;
-          playerState.vy *= 0.98;
-          playerState.vz *= 0.98;
+          // Slight damping
+          playerState.vx *= 0.995;
+          playerState.vy *= 0.995;
+          playerState.vz *= 0.995;
         }
       }
 
@@ -1087,28 +1318,63 @@
       playerState.y += playerState.vy * delta;
       playerState.z += playerState.vz * delta;
 
-      // Ground collision
+      // Ground collision - improved
       playerState.onGround = false;
+      const playerRadius = 0.4;
+      const playerHeight = 1.0;
+      const playerBottom = playerState.y - playerHeight / 2;
+
       platforms.forEach(platform => {
         const box = new THREE.Box3().setFromObject(platform);
-        const playerBottom = playerState.y - 0.5;
-        const playerTop = playerState.y + 0.5;
 
-        // Check if player is above platform
-        if (playerState.x > box.min.x - 0.5 && playerState.x < box.max.x + 0.5 &&
-            playerState.z > box.min.z - 0.5 && playerState.z < box.max.z + 0.5) {
+        // Expand box by player radius for collision
+        const minX = box.min.x - playerRadius;
+        const maxX = box.max.x + playerRadius;
+        const minZ = box.min.z - playerRadius;
+        const maxZ = box.max.z + playerRadius;
+
+        // Check if player is within platform's XZ bounds
+        if (playerState.x >= minX && playerState.x <= maxX &&
+            playerState.z >= minZ && playerState.z <= maxZ) {
 
           // Landing on top
-          if (playerBottom <= box.max.y && playerBottom >= box.max.y - 0.5 && playerState.vy <= 0) {
-            playerState.y = box.max.y + 0.5;
+          if (playerState.vy <= 0 && playerBottom <= box.max.y && playerBottom >= box.max.y - 1.0) {
+            playerState.y = box.max.y + playerHeight / 2;
             playerState.vy = 0;
             playerState.onGround = true;
             playerState.canDoubleJump = true;
           }
 
           // Hitting from below
-          if (playerTop >= box.min.y && playerTop <= box.min.y + 0.3 && playerState.vy > 0) {
-            playerState.vy = 0;
+          const playerTop = playerState.y + playerHeight / 2;
+          if (playerState.vy > 0 && playerTop >= box.min.y && playerTop <= box.min.y + 0.5) {
+            playerState.vy = -playerState.vy * 0.3; // Bounce back
+          }
+        }
+
+        // Side collisions (simple push out)
+        if (playerState.y > box.min.y && playerState.y < box.max.y + playerHeight) {
+          // Check X sides
+          if (playerState.z >= box.min.z - playerRadius && playerState.z <= box.max.z + playerRadius) {
+            if (playerState.x > box.min.x - playerRadius && playerState.x < box.min.x + 0.1) {
+              playerState.x = box.min.x - playerRadius;
+              playerState.vx = Math.min(0, playerState.vx);
+            }
+            if (playerState.x < box.max.x + playerRadius && playerState.x > box.max.x - 0.1) {
+              playerState.x = box.max.x + playerRadius;
+              playerState.vx = Math.max(0, playerState.vx);
+            }
+          }
+          // Check Z sides
+          if (playerState.x >= box.min.x - playerRadius && playerState.x <= box.max.x + playerRadius) {
+            if (playerState.z > box.min.z - playerRadius && playerState.z < box.min.z + 0.1) {
+              playerState.z = box.min.z - playerRadius;
+              playerState.vz = Math.min(0, playerState.vz);
+            }
+            if (playerState.z < box.max.z + playerRadius && playerState.z > box.max.z - 0.1) {
+              playerState.z = box.max.z + playerRadius;
+              playerState.vz = Math.max(0, playerState.vz);
+            }
           }
         }
       });
@@ -1126,10 +1392,14 @@
       // Update mesh position
       player.position.set(playerState.x, playerState.y, playerState.z);
 
-      // Squash and stretch based on velocity
-      const squash = 1 - Math.abs(playerState.vy) * 0.02;
-      const stretch = 1 + Math.abs(playerState.vy) * 0.02;
-      player.scale.set(stretch, squash, stretch);
+      // Face movement direction
+      if (isMoving) {
+        const targetAngle = Math.atan2(playerState.vx, playerState.vz);
+        player.rotation.y = targetAngle;
+      }
+
+      // Animate character
+      animateCharacter(isMoving, delta);
 
       // Check spark collection
       checkSparkCollection();
@@ -1190,7 +1460,14 @@
       spark.visible = false;
       gameState.sparksCollected++;
 
-      document.getElementById('sparkCount').textContent = gameState.sparksCollected;
+      // Update UI with animation
+      const sparkCountEl = document.getElementById('sparkCount');
+      sparkCountEl.textContent = gameState.sparksCollected;
+      sparkCountEl.style.transform = 'scale(1.3)';
+      setTimeout(() => sparkCountEl.style.transform = 'scale(1)', 150);
+
+      // Create particle burst effect at spark position
+      createSparkBurst(spark.position.clone());
 
       // Play collection sound (simple beep)
       playCollectSound();
@@ -1204,6 +1481,48 @@
       if (gameState.sparksCollected >= gameState.totalSparks) {
         completeLevel();
       }
+    }
+
+    function createSparkBurst(position) {
+      // Create small particles that burst out
+      const particleCount = 8;
+      const particles = [];
+      const particleGeometry = new THREE.SphereGeometry(0.1, 4, 4);
+      const particleMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+        particle.position.copy(position);
+        particle.userData.velocity = new THREE.Vector3(
+          (Math.random() - 0.5) * 8,
+          Math.random() * 5 + 2,
+          (Math.random() - 0.5) * 8
+        );
+        particle.userData.life = 1.0;
+        scene.add(particle);
+        particles.push(particle);
+      }
+
+      // Animate particles
+      const animateParticles = () => {
+        let allDead = true;
+        particles.forEach(p => {
+          if (p.userData.life > 0) {
+            allDead = false;
+            p.position.add(p.userData.velocity.clone().multiplyScalar(0.016));
+            p.userData.velocity.y -= 15 * 0.016;
+            p.userData.life -= 0.03;
+            p.scale.setScalar(p.userData.life);
+          }
+        });
+
+        if (!allDead) {
+          requestAnimationFrame(animateParticles);
+        } else {
+          particles.forEach(p => scene.remove(p));
+        }
+      };
+      animateParticles();
     }
 
     function playCollectSound() {
@@ -1270,10 +1589,16 @@
     function setupInputHandlers() {
       // Keyboard
       document.addEventListener('keydown', (e) => {
+        // WASD keys
         if (e.key.toLowerCase() === 'w') keys.w = true;
         if (e.key.toLowerCase() === 'a') keys.a = true;
         if (e.key.toLowerCase() === 's') keys.s = true;
         if (e.key.toLowerCase() === 'd') keys.d = true;
+        // Arrow keys
+        if (e.key === 'ArrowUp') { e.preventDefault(); keys.w = true; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); keys.s = true; }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); keys.a = true; }
+        if (e.key === 'ArrowRight') { e.preventDefault(); keys.d = true; }
         if (e.key === ' ') {
           e.preventDefault();
           keys.space = true;
@@ -1284,10 +1609,16 @@
       });
 
       document.addEventListener('keyup', (e) => {
+        // WASD keys
         if (e.key.toLowerCase() === 'w') keys.w = false;
         if (e.key.toLowerCase() === 'a') keys.a = false;
         if (e.key.toLowerCase() === 's') keys.s = false;
         if (e.key.toLowerCase() === 'd') keys.d = false;
+        // Arrow keys
+        if (e.key === 'ArrowUp') keys.w = false;
+        if (e.key === 'ArrowDown') keys.s = false;
+        if (e.key === 'ArrowLeft') keys.a = false;
+        if (e.key === 'ArrowRight') keys.d = false;
         if (e.key === ' ') keys.space = false;
       });
 

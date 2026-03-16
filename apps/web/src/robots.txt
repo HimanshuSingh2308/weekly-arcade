@@ -1,0 +1,11 @@
+# Weekly Arcade - robots.txt
+# https://weekly-arcade.web.app
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://weekly-arcade.web.app/sitemap.xml
+
+# Crawl-delay (optional, be nice to crawlers)
+Crawl-delay: 1
