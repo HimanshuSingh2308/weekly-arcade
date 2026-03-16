@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>2048 | Weekly Arcade - Free Puzzle Game Online</title>
 
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
   <!-- SEO -->
   <meta name="description" content="Play 2048 free online. Slide tiles and merge numbers to reach 2048! Classic puzzle game, no download required.">
   <meta name="keywords" content="2048, puzzle game, number game, tile game, free 2048, browser game, math game">
@@ -493,15 +498,65 @@
       .tile-1024, .tile-2048 { font-size: 1rem; }
       .tile-4096, .tile-8192, .tile-super { font-size: 0.9rem; }
     }
+
+    /* More Games Section */
+    .more-games {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .more-games-title {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .more-games-grid {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .more-game-link {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .more-game-link:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .more-game-link span:first-child {
+      font-size: 1.2rem;
+    }
+
+    @media (max-width: 600px) {
+      .more-games { padding: 1rem; margin-top: 1rem; }
+      .more-game-link { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+    }
   </style>
 </head>
 <body>
   <header class="header">
     <a href="/" class="back-btn">←</a>
-    <div class="game-title">
+    <h1 class="game-title">
       <span>🔢</span>
       <span>2048</span>
-    </div>
+    </h1>
     <div class="user-section" id="userSection">
       <button class="sign-in-btn" id="signInBtn" onclick="promptSignIn()">Sign In</button>
     </div>
@@ -1264,5 +1319,28 @@
     // Start
     init();
   </script>
+
+  <!-- More Games Section -->
+  <section class="more-games">
+    <h2 class="more-games-title">More Games to Play</h2>
+    <div class="more-games-grid">
+      <a href="/games/wordle/" class="more-game-link">
+        <span>🔤</span>
+        <span>Wordle</span>
+      </a>
+      <a href="/games/snake/" class="more-game-link">
+        <span>🐍</span>
+        <span>Snake</span>
+      </a>
+      <a href="/games/chaos-kitchen/" class="more-game-link">
+        <span>👨‍🍳</span>
+        <span>Chaos Kitchen</span>
+      </a>
+      <a href="/games/memory-match/" class="more-game-link">
+        <span>🃏</span>
+        <span>Memory Match</span>
+      </a>
+    </div>
+  </section>
 </body>
 </html>

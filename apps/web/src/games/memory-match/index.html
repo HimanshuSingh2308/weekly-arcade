@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Memory Match | Weekly Arcade - Free Brain Training Game</title>
 
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
   <!-- SEO -->
   <meta name="description" content="Play Memory Match free online. Test your memory by matching pairs of cards. Multiple difficulty modes, power-ups, and daily challenges!">
   <meta name="keywords" content="memory game, matching game, brain training, puzzle game, free game, browser game, card matching">
@@ -708,6 +713,56 @@
     .game-board.frozen .card:not(.matched) .card-back {
       background: linear-gradient(135deg, #0ea5e9, #0284c7);
       border-color: #38bdf8;
+    }
+
+    /* More Games Section */
+    .more-games {
+      background: var(--bg-secondary);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 1.5rem;
+      margin-top: auto;
+    }
+
+    .more-games-title {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .more-games-grid {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .more-game-link {
+      background: var(--bg-primary);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .more-game-link:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .more-game-link span:first-child {
+      font-size: 1.2rem;
+    }
+
+    @media (max-width: 600px) {
+      .more-games { padding: 1rem; }
+      .more-game-link { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -1558,5 +1613,28 @@
       initAuth();
     });
   </script>
+
+  <!-- More Games Section -->
+  <section class="more-games">
+    <h2 class="more-games-title">More Games to Play</h2>
+    <div class="more-games-grid">
+      <a href="/games/wordle/" class="more-game-link">
+        <span>🔤</span>
+        <span>Wordle</span>
+      </a>
+      <a href="/games/snake/" class="more-game-link">
+        <span>🐍</span>
+        <span>Snake</span>
+      </a>
+      <a href="/games/2048/" class="more-game-link">
+        <span>🔢</span>
+        <span>2048</span>
+      </a>
+      <a href="/games/chaos-kitchen/" class="more-game-link">
+        <span>👨‍🍳</span>
+        <span>Chaos Kitchen</span>
+      </a>
+    </div>
+  </section>
 </body>
 </html>
