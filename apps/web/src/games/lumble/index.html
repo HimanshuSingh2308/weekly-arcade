@@ -988,7 +988,7 @@
 
       // Character body group - offset so feet are at y=0
       const characterBody = new THREE.Group();
-      characterBody.position.y = 0.1; // Offset to put feet on ground
+      characterBody.position.y = -0.15; // Lower character so feet touch ground
       player.add(characterBody);
 
       // Materials
@@ -2106,8 +2106,8 @@
       // Ground collision - improved
       playerState.onGround = false;
       const playerRadius = 0.3;
-      const playerHeight = 0.2; // Character feet offset
-      const playerBottom = playerState.y - playerHeight;
+      const playerFeetOffset = 0.05; // Small offset for feet touching ground
+      const playerBottom = playerState.y - playerFeetOffset;
 
       platforms.forEach(platform => {
         const box = new THREE.Box3().setFromObject(platform);
@@ -2124,7 +2124,7 @@
 
           // Landing on top
           if (playerState.vy <= 0 && playerBottom <= box.max.y && playerBottom >= box.max.y - 1.0) {
-            playerState.y = box.max.y + playerHeight;
+            playerState.y = box.max.y + playerFeetOffset;
             playerState.vy = 0;
             playerState.onGround = true;
             playerState.canDoubleJump = true;
