@@ -652,9 +652,9 @@
   <!-- HUD -->
   <div class="hud" id="gameHud" style="display: none;">
     <div class="hud-item sparks">
-      <span class="hud-icon">✨</span>
+      <span class="hud-icon">🪙</span>
       <span class="hud-value" id="sparkCount">0</span>
-      <span class="hud-label">/ 50</span>
+      <span class="hud-label">/ 50 Coins</span>
     </div>
     <div class="hud-item">
       <span class="hud-icon">⏱️</span>
@@ -986,6 +986,11 @@
       player = new THREE.Group();
       player.position.set(0, 2, 0);
 
+      // Character body group - offset so feet are at y=0
+      const characterBody = new THREE.Group();
+      characterBody.position.y = 0.1; // Offset to put feet on ground
+      player.add(characterBody);
+
       // Materials
       const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xFFDBAC, roughness: 0.7 });
       const shirtMaterial = new THREE.MeshStandardMaterial({ color: 0xE94560, roughness: 0.6 }); // Red shirt
@@ -996,107 +1001,107 @@
       const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
       // Head
-      const headGeometry = new THREE.SphereGeometry(0.35, 16, 16);
+      const headGeometry = new THREE.SphereGeometry(0.3, 16, 16);
       const head = new THREE.Mesh(headGeometry, skinMaterial);
-      head.position.set(0, 1.1, 0);
+      head.position.set(0, 0.95, 0);
       head.castShadow = true;
-      player.add(head);
+      characterBody.add(head);
       characterParts.head = head;
 
       // Hair (cap-like)
-      const hairGeometry = new THREE.SphereGeometry(0.38, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const hairGeometry = new THREE.SphereGeometry(0.32, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
       const hair = new THREE.Mesh(hairGeometry, hairMaterial);
-      hair.position.set(0, 1.15, 0);
+      hair.position.set(0, 1.0, 0);
       hair.castShadow = true;
-      player.add(hair);
+      characterBody.add(hair);
 
       // Eyes
-      const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeWhiteMaterial);
-      eyeWhiteL.position.set(-0.12, 1.15, 0.3);
-      player.add(eyeWhiteL);
-      const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeWhiteMaterial);
-      eyeWhiteR.position.set(0.12, 1.15, 0.3);
-      player.add(eyeWhiteR);
+      const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), eyeWhiteMaterial);
+      eyeWhiteL.position.set(-0.1, 1.0, 0.25);
+      characterBody.add(eyeWhiteL);
+      const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), eyeWhiteMaterial);
+      eyeWhiteR.position.set(0.1, 1.0, 0.25);
+      characterBody.add(eyeWhiteR);
 
-      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMaterial);
-      eyeL.position.set(-0.12, 1.15, 0.36);
-      player.add(eyeL);
-      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMaterial);
-      eyeR.position.set(0.12, 1.15, 0.36);
-      player.add(eyeR);
+      const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), eyeMaterial);
+      eyeL.position.set(-0.1, 1.0, 0.3);
+      characterBody.add(eyeL);
+      const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), eyeMaterial);
+      eyeR.position.set(0.1, 1.0, 0.3);
+      characterBody.add(eyeR);
 
       // Nose
-      const noseGeometry = new THREE.SphereGeometry(0.06, 8, 8);
+      const noseGeometry = new THREE.SphereGeometry(0.05, 8, 8);
       const nose = new THREE.Mesh(noseGeometry, skinMaterial);
-      nose.position.set(0, 1.05, 0.32);
-      player.add(nose);
+      nose.position.set(0, 0.9, 0.27);
+      characterBody.add(nose);
 
       // Body (torso)
-      const torsoGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.3);
+      const torsoGeometry = new THREE.BoxGeometry(0.4, 0.4, 0.25);
       const torso = new THREE.Mesh(torsoGeometry, shirtMaterial);
-      torso.position.set(0, 0.6, 0);
+      torso.position.set(0, 0.5, 0);
       torso.castShadow = true;
-      player.add(torso);
+      characterBody.add(torso);
       characterParts.torso = torso;
 
       // Arms
-      const armGeometry = new THREE.BoxGeometry(0.15, 0.4, 0.15);
+      const armGeometry = new THREE.BoxGeometry(0.12, 0.35, 0.12);
 
       const leftArmPivot = new THREE.Group();
-      leftArmPivot.position.set(-0.35, 0.7, 0);
+      leftArmPivot.position.set(-0.28, 0.6, 0);
       const leftArm = new THREE.Mesh(armGeometry, shirtMaterial);
-      leftArm.position.set(0, -0.2, 0);
+      leftArm.position.set(0, -0.17, 0);
       leftArm.castShadow = true;
       leftArmPivot.add(leftArm);
       // Hand
-      const handL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), skinMaterial);
-      handL.position.set(0, -0.4, 0);
+      const handL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), skinMaterial);
+      handL.position.set(0, -0.35, 0);
       leftArmPivot.add(handL);
-      player.add(leftArmPivot);
+      characterBody.add(leftArmPivot);
       characterParts.leftArm = leftArmPivot;
 
       const rightArmPivot = new THREE.Group();
-      rightArmPivot.position.set(0.35, 0.7, 0);
+      rightArmPivot.position.set(0.28, 0.6, 0);
       const rightArm = new THREE.Mesh(armGeometry, shirtMaterial);
-      rightArm.position.set(0, -0.2, 0);
+      rightArm.position.set(0, -0.17, 0);
       rightArm.castShadow = true;
       rightArmPivot.add(rightArm);
       // Hand
-      const handR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), skinMaterial);
-      handR.position.set(0, -0.4, 0);
+      const handR = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), skinMaterial);
+      handR.position.set(0, -0.35, 0);
       rightArmPivot.add(handR);
-      player.add(rightArmPivot);
+      characterBody.add(rightArmPivot);
       characterParts.rightArm = rightArmPivot;
 
       // Legs
-      const legGeometry = new THREE.BoxGeometry(0.18, 0.4, 0.18);
+      const legGeometry = new THREE.BoxGeometry(0.14, 0.3, 0.14);
 
       const leftLegPivot = new THREE.Group();
-      leftLegPivot.position.set(-0.13, 0.35, 0);
+      leftLegPivot.position.set(-0.1, 0.3, 0);
       const leftLeg = new THREE.Mesh(legGeometry, pantsMaterial);
-      leftLeg.position.set(0, -0.2, 0);
+      leftLeg.position.set(0, -0.15, 0);
       leftLeg.castShadow = true;
       leftLegPivot.add(leftLeg);
       // Shoe
-      const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.28), shoeMaterial);
-      shoeL.position.set(0, -0.45, 0.05);
+      const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.22), shoeMaterial);
+      shoeL.position.set(0, -0.35, 0.03);
       shoeL.castShadow = true;
       leftLegPivot.add(shoeL);
-      player.add(leftLegPivot);
+      characterBody.add(leftLegPivot);
       characterParts.leftLeg = leftLegPivot;
 
       const rightLegPivot = new THREE.Group();
-      rightLegPivot.position.set(0.13, 0.35, 0);
+      rightLegPivot.position.set(0.1, 0.3, 0);
       const rightLeg = new THREE.Mesh(legGeometry, pantsMaterial);
-      rightLeg.position.set(0, -0.2, 0);
+      rightLeg.position.set(0, -0.15, 0);
       rightLeg.castShadow = true;
       rightLegPivot.add(rightLeg);
       // Shoe
-      const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.28), shoeMaterial);
-      shoeR.position.set(0, -0.45, 0.05);
+      const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.22), shoeMaterial);
+      shoeR.position.set(0, -0.35, 0.03);
       shoeR.castShadow = true;
       rightLegPivot.add(shoeR);
-      player.add(rightLegPivot);
+      characterBody.add(rightLegPivot);
       characterParts.rightLeg = rightLegPivot;
 
       scene.add(player);
@@ -1518,51 +1523,106 @@
     }
 
     function createSparks() {
-      const sparkGeometry = new THREE.OctahedronGeometry(0.3, 0);
-      const sparkMaterial = new THREE.MeshStandardMaterial({
-        color: 0xFFD700,
-        emissive: 0xFFD700,
-        emissiveIntensity: 0.5,
-        roughness: 0.2,
-        metalness: 0.8
-      });
-
-      // Spark positions - distributed around the level
-      const sparkPositions = [
-        // Easy sparks on ground level
-        { x: 3, y: 1.5, z: 2 }, { x: -2, y: 1.5, z: 3 }, { x: 4, y: 1.5, z: -2 },
+      // Create coin collectibles instead of sparks
+      // Coin positions - distributed around the level
+      const coinPositions = [
+        // Easy coins on ground level
+        { x: 3, y: 1.2, z: 2 }, { x: -2, y: 1.2, z: 3 }, { x: 4, y: 1.2, z: -2 },
         // On first platforms
-        { x: 5, y: 3.5, z: -3 }, { x: 10, y: 5.5, z: -2 }, { x: 8, y: 7.5, z: 2 },
+        { x: 5, y: 3.2, z: -3 }, { x: 10, y: 5.2, z: -2 }, { x: 8, y: 7.2, z: 2 },
         // Near latch pillars
         { x: 15, y: 11, z: 0 }, { x: 20, y: 13, z: -5 }, { x: 25, y: 9, z: 3 },
         // Scattered around
-        { x: 18, y: 4.5, z: 5 }, { x: -5, y: 4.5, z: 5 }, { x: -10, y: 6.5, z: 0 },
-        { x: -8, y: 9.5, z: -5 }, { x: 0, y: 12, z: -10 }, { x: 12, y: 13.5, z: -8 },
-        { x: -12, y: 11.5, z: -8 },
+        { x: 18, y: 4.2, z: 5 }, { x: -5, y: 4.2, z: 5 }, { x: -10, y: 6.2, z: 0 },
+        { x: -8, y: 9.2, z: -5 }, { x: 0, y: 12, z: -10 }, { x: 12, y: 13.2, z: -8 },
+        { x: -12, y: 11.2, z: -8 },
         // High difficulty
-        { x: 30, y: 17, z: 0 }, { x: 35, y: 21, z: -3 }, { x: 40, y: 8.5, z: 2 },
-        // More sparks to reach 50
-        { x: 7, y: 2, z: 5 }, { x: -3, y: 2, z: -4 }, { x: 13, y: 3, z: 4 },
-        { x: -7, y: 4, z: -2 }, { x: 22, y: 5, z: 1 }, { x: -15, y: 3, z: 3 },
-        { x: 28, y: 6, z: -2 }, { x: 16, y: 8, z: -6 }, { x: -4, y: 7, z: 8 },
-        { x: 9, y: 9, z: -4 }, { x: -11, y: 6, z: 5 }, { x: 33, y: 12, z: 1 },
-        { x: 2, y: 5, z: -8 }, { x: -9, y: 9, z: -1 }, { x: 19, y: 7, z: -3 },
-        { x: 6, y: 4, z: 7 }, { x: -6, y: 5, z: -6 }, { x: 14, y: 10, z: 2 },
-        { x: -2, y: 8, z: -5 }, { x: 24, y: 6, z: -1 }, { x: 11, y: 6, z: 6 },
-        { x: -13, y: 7, z: -4 }, { x: 37, y: 9, z: 0 }, { x: 4, y: 11, z: -7 },
-        { x: 21, y: 4, z: 6 }, { x: -8, y: 3, z: 7 }, { x: 31, y: 5, z: 3 },
-        { x: 1, y: 6, z: 4 }, { x: 17, y: 15, z: -1 }, { x: -5, y: 11, z: -3 },
+        { x: 30, y: 17, z: 0 }, { x: 35, y: 21, z: -3 }, { x: 40, y: 8.2, z: 2 },
+        // More coins to reach 50
+        { x: 7, y: 1.5, z: 5 }, { x: -3, y: 1.5, z: -4 }, { x: 13, y: 2.5, z: 4 },
+        { x: -7, y: 3.5, z: -2 }, { x: 22, y: 4.5, z: 1 }, { x: -15, y: 2.5, z: 3 },
+        { x: 28, y: 5.5, z: -2 }, { x: 16, y: 7.5, z: -6 }, { x: -4, y: 6.5, z: 8 },
+        { x: 9, y: 8.5, z: -4 }, { x: -11, y: 5.5, z: 5 }, { x: 33, y: 11.5, z: 1 },
+        { x: 2, y: 4.5, z: -8 }, { x: -9, y: 8.5, z: -1 }, { x: 19, y: 6.5, z: -3 },
+        { x: 6, y: 3.5, z: 7 }, { x: -6, y: 4.5, z: -6 }, { x: 14, y: 9.5, z: 2 },
+        { x: -2, y: 7.5, z: -5 }, { x: 24, y: 5.5, z: -1 }, { x: 11, y: 5.5, z: 6 },
+        { x: -13, y: 6.5, z: -4 }, { x: 37, y: 8.5, z: 0 }, { x: 4, y: 10.5, z: -7 },
+        { x: 21, y: 3.5, z: 6 }, { x: -8, y: 2.5, z: 7 }, { x: 31, y: 4.5, z: 3 },
+        { x: 1, y: 5.5, z: 4 }, { x: 17, y: 14.5, z: -1 }, { x: -5, y: 10.5, z: -3 },
       ];
 
-      sparkPositions.slice(0, gameState.totalSparks).forEach((pos, i) => {
-        const spark = new THREE.Mesh(sparkGeometry, sparkMaterial.clone());
-        spark.position.set(pos.x, pos.y, pos.z);
-        spark.userData.type = 'spark';
-        spark.userData.collected = false;
-        spark.userData.id = i;
-        scene.add(spark);
-        sparks.push(spark);
+      coinPositions.slice(0, gameState.totalSparks).forEach((pos, i) => {
+        const coin = createCoin();
+        coin.position.set(pos.x, pos.y, pos.z);
+        coin.userData.type = 'spark';
+        coin.userData.collected = false;
+        coin.userData.id = i;
+        scene.add(coin);
+        sparks.push(coin);
       });
+    }
+
+    function createCoin() {
+      const coinGroup = new THREE.Group();
+
+      // Main coin body - cylinder
+      const coinGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 24);
+      const coinMat = new THREE.MeshStandardMaterial({
+        color: 0xFFD700,
+        emissive: 0xFFAA00,
+        emissiveIntensity: 0.3,
+        roughness: 0.3,
+        metalness: 0.9
+      });
+      const coinBody = new THREE.Mesh(coinGeo, coinMat);
+      coinBody.rotation.x = Math.PI / 2; // Stand upright
+      coinGroup.add(coinBody);
+
+      // Inner ring detail
+      const ringGeo = new THREE.TorusGeometry(0.22, 0.03, 8, 24);
+      const ringMat = new THREE.MeshStandardMaterial({
+        color: 0xDAA520,
+        roughness: 0.4,
+        metalness: 0.9
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.z = 0.03;
+      coinGroup.add(ring);
+
+      // Star emblem in center
+      const starShape = new THREE.Shape();
+      const outerRadius = 0.12;
+      const innerRadius = 0.05;
+      for (let i = 0; i < 5; i++) {
+        const outerAngle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+        const innerAngle = outerAngle + Math.PI / 5;
+        if (i === 0) {
+          starShape.moveTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
+        } else {
+          starShape.lineTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
+        }
+        starShape.lineTo(Math.cos(innerAngle) * innerRadius, Math.sin(innerAngle) * innerRadius);
+      }
+      starShape.closePath();
+
+      const starGeo = new THREE.ShapeGeometry(starShape);
+      const starMat = new THREE.MeshStandardMaterial({
+        color: 0xFFF8DC,
+        emissive: 0xFFD700,
+        emissiveIntensity: 0.5,
+        side: THREE.DoubleSide
+      });
+      const star = new THREE.Mesh(starGeo, starMat);
+      star.position.z = 0.045;
+      coinGroup.add(star);
+
+      // Back star
+      const starBack = new THREE.Mesh(starGeo, starMat);
+      starBack.position.z = -0.045;
+      starBack.rotation.y = Math.PI;
+      coinGroup.add(starBack);
+
+      return coinGroup;
     }
 
     function createDecorations() {
@@ -2045,9 +2105,9 @@
 
       // Ground collision - improved
       playerState.onGround = false;
-      const playerRadius = 0.4;
-      const playerHeight = 1.0;
-      const playerBottom = playerState.y - playerHeight / 2;
+      const playerRadius = 0.3;
+      const playerHeight = 0.2; // Character feet offset
+      const playerBottom = playerState.y - playerHeight;
 
       platforms.forEach(platform => {
         const box = new THREE.Box3().setFromObject(platform);
@@ -2064,21 +2124,21 @@
 
           // Landing on top
           if (playerState.vy <= 0 && playerBottom <= box.max.y && playerBottom >= box.max.y - 1.0) {
-            playerState.y = box.max.y + playerHeight / 2;
+            playerState.y = box.max.y + playerHeight;
             playerState.vy = 0;
             playerState.onGround = true;
             playerState.canDoubleJump = true;
           }
 
           // Hitting from below
-          const playerTop = playerState.y + playerHeight / 2;
+          const playerTop = playerState.y + 1.3; // Head height
           if (playerState.vy > 0 && playerTop >= box.min.y && playerTop <= box.min.y + 0.5) {
             playerState.vy = -playerState.vy * 0.3; // Bounce back
           }
         }
 
         // Side collisions (simple push out)
-        if (playerState.y > box.min.y && playerState.y < box.max.y + playerHeight) {
+        if (playerState.y > box.min.y && playerState.y < box.max.y + 1.3) {
           // Check X sides
           if (playerState.z >= box.min.z - playerRadius && playerState.z <= box.max.z + playerRadius) {
             if (playerState.x > box.min.x - playerRadius && playerState.x < box.min.x + 0.1) {
@@ -2131,10 +2191,12 @@
     }
 
     function updateSparks(delta) {
-      sparks.forEach(spark => {
-        if (!spark.userData.collected) {
-          spark.rotation.y += delta * 2;
-          spark.position.y += Math.sin(Date.now() * 0.003 + spark.userData.id) * 0.002;
+      sparks.forEach(coin => {
+        if (!coin.userData.collected) {
+          // Spin the coin
+          coin.rotation.y += delta * 3;
+          // Gentle bobbing motion
+          coin.position.y += Math.sin(Date.now() * 0.004 + coin.userData.id) * 0.003;
         }
       });
     }
