@@ -1166,14 +1166,14 @@
       }
 
       try {
-        const data = await window.apiClient.getLeaderboard('2048', 'daily', 5);
+        const entries = await window.apiClient.getLeaderboard('2048', 'daily', 5);
 
-        if (!data?.entries?.length) {
+        if (!entries?.length) {
           list.innerHTML = '<li class="leaderboard-item"><span class="lb-name" style="text-align:center;width:100%">No scores yet. Be the first!</span></li>';
           return;
         }
 
-        list.innerHTML = data.entries.map((entry, i) => {
+        list.innerHTML = entries.map((entry, i) => {
           const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
           const displayName = entry.odName || entry.displayName || 'Player';
           const avatarUrl = entry.odAvatarUrl || entry.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
