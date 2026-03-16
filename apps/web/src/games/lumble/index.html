@@ -797,43 +797,64 @@
     // THREE.JS SETUP
     // ============================================
 
+    // Environment objects for animation
+    let clouds = [];
+    let grassBlades = [];
+    let butterflies = [];
+    let waterMesh = null;
+
     function initThreeJS() {
       // Scene
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x87CEEB); // Sky blue
-      scene.fog = new THREE.Fog(0x87CEEB, 30, 80);
+
+      // Create gradient sky
+      createSky();
+
+      // Fog for depth
+      scene.fog = new THREE.FogExp2(0xC8E6FF, 0.012);
 
       // Camera
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
       camera.position.set(0, 8, 15);
       camera.lookAt(0, 0, 0);
 
-      // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      // Renderer with better settings
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      renderer.outputEncoding = THREE.sRGBEncoding;
       document.getElementById('gameContainer').appendChild(renderer.domElement);
 
-      // Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
+      // Hemisphere light - sky/ground ambient
+      const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x4a7c4e, 0.6);
+      hemiLight.position.set(0, 50, 0);
+      scene.add(hemiLight);
 
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(10, 20, 10);
-      directionalLight.castShadow = true;
-      directionalLight.shadow.mapSize.width = 2048;
-      directionalLight.shadow.mapSize.height = 2048;
-      directionalLight.shadow.camera.near = 0.5;
-      directionalLight.shadow.camera.far = 50;
-      directionalLight.shadow.camera.left = -30;
-      directionalLight.shadow.camera.right = 30;
-      directionalLight.shadow.camera.top = 30;
-      directionalLight.shadow.camera.bottom = -30;
-      scene.add(directionalLight);
+      // Main sunlight
+      const sunLight = new THREE.DirectionalLight(0xFFF5E1, 1.0);
+      sunLight.position.set(30, 50, 20);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.width = 4096;
+      sunLight.shadow.mapSize.height = 4096;
+      sunLight.shadow.camera.near = 0.5;
+      sunLight.shadow.camera.far = 150;
+      sunLight.shadow.camera.left = -60;
+      sunLight.shadow.camera.right = 60;
+      sunLight.shadow.camera.top = 60;
+      sunLight.shadow.camera.bottom = -60;
+      sunLight.shadow.bias = -0.0001;
+      scene.add(sunLight);
 
-      // Create player (Lumble - a cute blob)
+      // Fill light from opposite side
+      const fillLight = new THREE.DirectionalLight(0x8BB8E8, 0.3);
+      fillLight.position.set(-20, 30, -10);
+      scene.add(fillLight);
+
+      // Create player
       createPlayer();
 
       // Create level
@@ -841,6 +862,119 @@
 
       // Handle resize
       window.addEventListener('resize', onWindowResize);
+    }
+
+    function createSky() {
+      // Create a large sphere for the sky dome with gradient
+      const skyGeo = new THREE.SphereGeometry(200, 32, 32);
+
+      // Custom shader for sky gradient
+      const skyMat = new THREE.ShaderMaterial({
+        uniforms: {
+          topColor: { value: new THREE.Color(0x4A90D9) },    // Deep blue
+          middleColor: { value: new THREE.Color(0x87CEEB) }, // Sky blue
+          bottomColor: { value: new THREE.Color(0xC8E6FF) }, // Light blue/white
+          offset: { value: 20 },
+          exponent: { value: 0.6 }
+        },
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 topColor;
+          uniform vec3 middleColor;
+          uniform vec3 bottomColor;
+          uniform float offset;
+          uniform float exponent;
+          varying vec3 vWorldPosition;
+          void main() {
+            float h = normalize(vWorldPosition + offset).y;
+            float t = max(pow(max(h, 0.0), exponent), 0.0);
+            vec3 color;
+            if (h > 0.3) {
+              color = mix(middleColor, topColor, (h - 0.3) / 0.7);
+            } else {
+              color = mix(bottomColor, middleColor, h / 0.3);
+            }
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `,
+        side: THREE.BackSide
+      });
+
+      const sky = new THREE.Mesh(skyGeo, skyMat);
+      scene.add(sky);
+
+      // Add sun disc
+      const sunGeo = new THREE.CircleGeometry(8, 32);
+      const sunMat = new THREE.MeshBasicMaterial({
+        color: 0xFFFAE0,
+        transparent: true,
+        opacity: 0.9
+      });
+      const sun = new THREE.Mesh(sunGeo, sunMat);
+      sun.position.set(30, 60, -80);
+      sun.lookAt(0, 0, 0);
+      scene.add(sun);
+
+      // Sun glow
+      const glowGeo = new THREE.CircleGeometry(15, 32);
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: 0xFFFAE0,
+        transparent: true,
+        opacity: 0.3
+      });
+      const glow = new THREE.Mesh(glowGeo, glowMat);
+      glow.position.set(30, 60, -79);
+      glow.lookAt(0, 0, 0);
+      scene.add(glow);
+
+      // Create clouds
+      createClouds();
+    }
+
+    function createClouds() {
+      const cloudMaterial = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        transparent: true,
+        opacity: 0.85,
+        roughness: 1,
+        metalness: 0
+      });
+
+      for (let i = 0; i < 15; i++) {
+        const cloudGroup = new THREE.Group();
+
+        // Each cloud is made of multiple spheres
+        const numPuffs = 4 + Math.floor(Math.random() * 4);
+        for (let j = 0; j < numPuffs; j++) {
+          const size = 2 + Math.random() * 3;
+          const puffGeo = new THREE.SphereGeometry(size, 8, 8);
+          const puff = new THREE.Mesh(puffGeo, cloudMaterial);
+          puff.position.set(
+            (Math.random() - 0.5) * 8,
+            (Math.random() - 0.5) * 2,
+            (Math.random() - 0.5) * 4
+          );
+          puff.scale.y = 0.6;
+          cloudGroup.add(puff);
+        }
+
+        cloudGroup.position.set(
+          (Math.random() - 0.5) * 200,
+          40 + Math.random() * 30,
+          -50 + (Math.random() - 0.5) * 100
+        );
+        cloudGroup.userData.speed = 0.02 + Math.random() * 0.03;
+
+        scene.add(cloudGroup);
+        clouds.push(cloudGroup);
+      }
     }
 
     // Character parts for animation
@@ -1008,72 +1142,89 @@
       sparks.forEach(s => scene.remove(s));
       platforms = [];
       sparks = [];
+      grassBlades = [];
 
-      // Ground
-      const groundGeometry = new THREE.BoxGeometry(100, 1, 100);
-      const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x4a7c4e });
-      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-      ground.position.set(0, -0.5, 0);
-      ground.receiveShadow = true;
-      ground.userData.type = 'platform';
-      scene.add(ground);
-      platforms.push(ground);
+      // Create realistic terrain
+      createTerrain();
+
+      // Create distant mountains
+      createMountains();
 
       // Garden biome - create platforms and sparks
       const biomeColors = {
-        garden: { platform: 0x8B4513, accent: 0x228B22 },
-        tidepool: { platform: 0x4682B4, accent: 0x00CED1 },
-        clocktower: { platform: 0x8B7355, accent: 0xDAA520 }
+        garden: { platform: 0x6B4423, accent: 0x228B22, wood: 0x8B5A2B },
+        tidepool: { platform: 0x4682B4, accent: 0x00CED1, wood: 0x5D8AA8 },
+        clocktower: { platform: 0x8B7355, accent: 0xDAA520, wood: 0x9C7653 }
       };
 
       const colors = biomeColors[gameState.biome] || biomeColors.garden;
 
-      // Platform material
+      // Platform materials with more detail
       const platformMaterial = new THREE.MeshStandardMaterial({
         color: colors.platform,
-        roughness: 0.8
+        roughness: 0.9,
+        metalness: 0.0
       });
 
-      // Create platforms in a semi-random but playable layout
+      const woodMaterial = new THREE.MeshStandardMaterial({
+        color: colors.wood,
+        roughness: 0.85,
+        metalness: 0.0
+      });
+
+      // Create platforms with more realistic appearance
       const platformData = [
-        // Starting area
-        { x: 0, y: 0.5, z: 0, w: 6, h: 1, d: 6 },
-        // First jump series
-        { x: 5, y: 2, z: -3, w: 3, h: 0.5, d: 3 },
-        { x: 10, y: 4, z: -2, w: 2, h: 0.5, d: 2 },
-        { x: 8, y: 6, z: 2, w: 3, h: 0.5, d: 3 },
-        // Latch targets (tall pillars)
-        { x: 15, y: 5, z: 0, w: 1, h: 10, d: 1, latchable: true },
-        { x: 20, y: 6, z: -5, w: 1, h: 12, d: 1, latchable: true },
-        { x: 25, y: 4, z: 3, w: 1, h: 8, d: 1, latchable: true },
+        // Starting area - stone platform
+        { x: 0, y: 0.5, z: 0, w: 6, h: 1, d: 6, type: 'stone' },
+        // First jump series - wooden platforms
+        { x: 5, y: 2, z: -3, w: 3, h: 0.5, d: 3, type: 'wood' },
+        { x: 10, y: 4, z: -2, w: 2, h: 0.5, d: 2, type: 'wood' },
+        { x: 8, y: 6, z: 2, w: 3, h: 0.5, d: 3, type: 'wood' },
+        // Latch targets (tree trunks)
+        { x: 15, y: 5, z: 0, w: 1.2, h: 10, d: 1.2, latchable: true },
+        { x: 20, y: 6, z: -5, w: 1.2, h: 12, d: 1.2, latchable: true },
+        { x: 25, y: 4, z: 3, w: 1.2, h: 8, d: 1.2, latchable: true },
         // More platforms
-        { x: 18, y: 3, z: 5, w: 4, h: 0.5, d: 2 },
-        { x: -5, y: 3, z: 5, w: 3, h: 0.5, d: 3 },
-        { x: -10, y: 5, z: 0, w: 2, h: 0.5, d: 4 },
-        { x: -8, y: 8, z: -5, w: 3, h: 0.5, d: 3 },
-        // Floating islands
-        { x: 0, y: 10, z: -10, w: 4, h: 1, d: 4 },
-        { x: 12, y: 12, z: -8, w: 3, h: 0.5, d: 3 },
-        { x: -12, y: 10, z: -8, w: 3, h: 0.5, d: 3 },
+        { x: 18, y: 3, z: 5, w: 4, h: 0.5, d: 2, type: 'wood' },
+        { x: -5, y: 3, z: 5, w: 3, h: 0.5, d: 3, type: 'stone' },
+        { x: -10, y: 5, z: 0, w: 2, h: 0.5, d: 4, type: 'wood' },
+        { x: -8, y: 8, z: -5, w: 3, h: 0.5, d: 3, type: 'wood' },
+        // Floating islands with grass tops
+        { x: 0, y: 10, z: -10, w: 5, h: 1.5, d: 5, type: 'island' },
+        { x: 12, y: 12, z: -8, w: 4, h: 1.2, d: 4, type: 'island' },
+        { x: -12, y: 10, z: -8, w: 4, h: 1.2, d: 4, type: 'island' },
         // Latch chain area
-        { x: 30, y: 8, z: 0, w: 1, h: 16, d: 1, latchable: true },
-        { x: 35, y: 10, z: -3, w: 1, h: 20, d: 1, latchable: true },
-        { x: 40, y: 7, z: 2, w: 4, h: 0.5, d: 4 },
+        { x: 30, y: 8, z: 0, w: 1.2, h: 16, d: 1.2, latchable: true },
+        { x: 35, y: 10, z: -3, w: 1.2, h: 20, d: 1.2, latchable: true },
+        { x: 40, y: 7, z: 2, w: 5, h: 1.2, d: 5, type: 'island' },
       ];
 
       platformData.forEach((p, i) => {
-        const geometry = new THREE.BoxGeometry(p.w, p.h, p.d);
-        const material = p.latchable
-          ? new THREE.MeshStandardMaterial({ color: colors.accent, roughness: 0.5 })
-          : platformMaterial;
-        const platform = new THREE.Mesh(geometry, material);
-        platform.position.set(p.x, p.y, p.z);
-        platform.castShadow = true;
-        platform.receiveShadow = true;
-        platform.userData.type = 'platform';
-        platform.userData.latchable = p.latchable || false;
-        scene.add(platform);
-        platforms.push(platform);
+        if (p.latchable) {
+          // Create tree trunk for latchable
+          createTreeTrunk(p.x, p.y, p.z, p.h, colors);
+        } else if (p.type === 'island') {
+          // Create floating island
+          createFloatingIsland(p.x, p.y, p.z, p.w, p.h, p.d);
+        } else {
+          // Regular platform
+          const geometry = new THREE.BoxGeometry(p.w, p.h, p.d);
+          const material = p.type === 'wood' ? woodMaterial.clone() : platformMaterial.clone();
+          const platform = new THREE.Mesh(geometry, material);
+          platform.position.set(p.x, p.y, p.z);
+          platform.castShadow = true;
+          platform.receiveShadow = true;
+          platform.userData.type = 'platform';
+          platform.userData.latchable = false;
+
+          // Add edge detail for wood platforms
+          if (p.type === 'wood') {
+            addPlatformDetails(platform, p.w, p.h, p.d);
+          }
+
+          scene.add(platform);
+          platforms.push(platform);
+        }
       });
 
       // Create Sparks
@@ -1081,6 +1232,289 @@
 
       // Decorations - trees, flowers, etc.
       createDecorations();
+
+      // Create water feature
+      createWater();
+
+      // Create butterflies
+      createButterflies();
+    }
+
+    function createTerrain() {
+      // Main ground with slight variation
+      const groundSize = 120;
+      const groundGeo = new THREE.PlaneGeometry(groundSize, groundSize, 50, 50);
+
+      // Add slight height variation to vertices
+      const positions = groundGeo.attributes.position;
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const y = positions.getY(i);
+        // Gentle rolling hills
+        const height = Math.sin(x * 0.05) * 0.3 + Math.cos(y * 0.05) * 0.3 + Math.random() * 0.1;
+        positions.setZ(i, height);
+      }
+      groundGeo.computeVertexNormals();
+
+      // Grass material
+      const grassMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3D8C40,
+        roughness: 0.9,
+        metalness: 0.0
+      });
+
+      const ground = new THREE.Mesh(groundGeo, grassMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = 0;
+      ground.receiveShadow = true;
+      ground.userData.type = 'platform';
+      scene.add(ground);
+      platforms.push(ground);
+
+      // Add grass patches for visual interest
+      createGrassPatches();
+    }
+
+    function createGrassPatches() {
+      const grassColors = [0x4A9F4D, 0x3D8C40, 0x5AAF5D, 0x2E7D32];
+
+      for (let i = 0; i < 200; i++) {
+        const x = (Math.random() - 0.5) * 80;
+        const z = (Math.random() - 0.5) * 80;
+
+        // Skip areas where platforms are
+        if (Math.abs(x) < 5 && Math.abs(z) < 5) continue;
+
+        // Grass blade
+        const height = 0.3 + Math.random() * 0.4;
+        const bladeGeo = new THREE.ConeGeometry(0.05, height, 4);
+        const bladeMat = new THREE.MeshStandardMaterial({
+          color: grassColors[Math.floor(Math.random() * grassColors.length)],
+          roughness: 0.9
+        });
+        const blade = new THREE.Mesh(bladeGeo, bladeMat);
+        blade.position.set(x, height / 2, z);
+        blade.rotation.z = (Math.random() - 0.5) * 0.3;
+        blade.userData.baseRotation = blade.rotation.z;
+        scene.add(blade);
+        grassBlades.push(blade);
+      }
+    }
+
+    function createMountains() {
+      const mountainMaterial = new THREE.MeshStandardMaterial({
+        color: 0x6B8E9F,
+        roughness: 0.9,
+        metalness: 0.1
+      });
+
+      const snowMaterial = new THREE.MeshStandardMaterial({
+        color: 0xF5F5F5,
+        roughness: 0.8
+      });
+
+      // Create several mountains in the distance
+      const mountainPositions = [
+        { x: -80, z: -100, scale: 1.5, height: 40 },
+        { x: -40, z: -110, scale: 1.2, height: 35 },
+        { x: 0, z: -120, scale: 1.8, height: 50 },
+        { x: 50, z: -105, scale: 1.3, height: 38 },
+        { x: 90, z: -100, scale: 1.4, height: 42 },
+      ];
+
+      mountainPositions.forEach(m => {
+        // Main mountain body
+        const mountainGeo = new THREE.ConeGeometry(m.height * 0.8, m.height, 8);
+        const mountain = new THREE.Mesh(mountainGeo, mountainMaterial);
+        mountain.position.set(m.x, m.height / 2 - 5, m.z);
+        mountain.scale.setScalar(m.scale);
+        scene.add(mountain);
+
+        // Snow cap
+        const snowGeo = new THREE.ConeGeometry(m.height * 0.25, m.height * 0.3, 8);
+        const snowCap = new THREE.Mesh(snowGeo, snowMaterial);
+        snowCap.position.set(m.x, m.height * m.scale - 5, m.z);
+        scene.add(snowCap);
+      });
+    }
+
+    function createTreeTrunk(x, y, z, height, colors) {
+      // Tree trunk group
+      const trunkGroup = new THREE.Group();
+
+      // Main trunk - cylinder
+      const trunkGeo = new THREE.CylinderGeometry(0.4, 0.6, height, 8);
+      const trunkMat = new THREE.MeshStandardMaterial({
+        color: 0x5D4E37,
+        roughness: 0.95
+      });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = height / 2;
+      trunk.castShadow = true;
+      trunk.receiveShadow = true;
+      trunk.userData.type = 'platform';
+      trunk.userData.latchable = true;
+      trunkGroup.add(trunk);
+      platforms.push(trunk);
+
+      // Add foliage at top
+      const foliageMat = new THREE.MeshStandardMaterial({
+        color: 0x2D5A27,
+        roughness: 0.8
+      });
+
+      for (let i = 0; i < 3; i++) {
+        const foliageGeo = new THREE.SphereGeometry(2 + Math.random(), 8, 8);
+        const foliage = new THREE.Mesh(foliageGeo, foliageMat);
+        foliage.position.set(
+          (Math.random() - 0.5) * 2,
+          height + 1 + i * 0.5,
+          (Math.random() - 0.5) * 2
+        );
+        foliage.castShadow = true;
+        trunkGroup.add(foliage);
+      }
+
+      trunkGroup.position.set(x, 0, z);
+      scene.add(trunkGroup);
+    }
+
+    function createFloatingIsland(x, y, z, w, h, d) {
+      const islandGroup = new THREE.Group();
+
+      // Top grass layer
+      const topGeo = new THREE.BoxGeometry(w, h * 0.3, d);
+      const topMat = new THREE.MeshStandardMaterial({
+        color: 0x4A9F4D,
+        roughness: 0.9
+      });
+      const top = new THREE.Mesh(topGeo, topMat);
+      top.position.y = h / 2;
+      top.castShadow = true;
+      top.receiveShadow = true;
+      top.userData.type = 'platform';
+      islandGroup.add(top);
+      platforms.push(top);
+
+      // Dirt/rock bottom (tapered)
+      const bottomGeo = new THREE.CylinderGeometry(w * 0.3, w * 0.15, h * 1.5, 8);
+      const bottomMat = new THREE.MeshStandardMaterial({
+        color: 0x8B6914,
+        roughness: 0.95
+      });
+      const bottom = new THREE.Mesh(bottomGeo, bottomMat);
+      bottom.position.y = -h * 0.5;
+      bottom.castShadow = true;
+      islandGroup.add(bottom);
+
+      // Add small grass tufts on top
+      for (let i = 0; i < 5; i++) {
+        const grassGeo = new THREE.ConeGeometry(0.15, 0.4, 4);
+        const grassMat = new THREE.MeshStandardMaterial({ color: 0x3D8C40 });
+        const grass = new THREE.Mesh(grassGeo, grassMat);
+        grass.position.set(
+          (Math.random() - 0.5) * (w - 1),
+          h * 0.5 + 0.2,
+          (Math.random() - 0.5) * (d - 1)
+        );
+        islandGroup.add(grass);
+      }
+
+      islandGroup.position.set(x, y, z);
+      scene.add(islandGroup);
+    }
+
+    function addPlatformDetails(platform, w, h, d) {
+      // Add subtle edge bevels/planks visual
+      const edgeMat = new THREE.MeshStandardMaterial({
+        color: 0x4A3520,
+        roughness: 0.9
+      });
+
+      // Edge strips
+      const edgeGeo = new THREE.BoxGeometry(w + 0.1, 0.05, 0.1);
+      const frontEdge = new THREE.Mesh(edgeGeo, edgeMat);
+      frontEdge.position.set(0, h / 2, d / 2);
+      platform.add(frontEdge);
+
+      const backEdge = new THREE.Mesh(edgeGeo, edgeMat);
+      backEdge.position.set(0, h / 2, -d / 2);
+      platform.add(backEdge);
+    }
+
+    function createWater() {
+      // Small pond
+      const waterGeo = new THREE.CircleGeometry(6, 32);
+      const waterMat = new THREE.MeshStandardMaterial({
+        color: 0x4A90D9,
+        transparent: true,
+        opacity: 0.7,
+        roughness: 0.1,
+        metalness: 0.3
+      });
+      waterMesh = new THREE.Mesh(waterGeo, waterMat);
+      waterMesh.rotation.x = -Math.PI / 2;
+      waterMesh.position.set(-20, 0.05, 15);
+      waterMesh.receiveShadow = true;
+      scene.add(waterMesh);
+
+      // Water edge - rocks
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const radius = 5.5 + Math.random() * 1;
+        const rockGeo = new THREE.DodecahedronGeometry(0.4 + Math.random() * 0.3, 0);
+        const rockMat = new THREE.MeshStandardMaterial({
+          color: 0x808080,
+          roughness: 0.9
+        });
+        const rock = new THREE.Mesh(rockGeo, rockMat);
+        rock.position.set(
+          -20 + Math.cos(angle) * radius,
+          0.2,
+          15 + Math.sin(angle) * radius
+        );
+        rock.rotation.set(Math.random(), Math.random(), Math.random());
+        rock.castShadow = true;
+        scene.add(rock);
+      }
+    }
+
+    function createButterflies() {
+      const butterflyColors = [0xFF69B4, 0xFFD700, 0x87CEEB, 0xFFA500];
+
+      for (let i = 0; i < 8; i++) {
+        const butterfly = new THREE.Group();
+
+        const wingMat = new THREE.MeshBasicMaterial({
+          color: butterflyColors[i % butterflyColors.length],
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.8
+        });
+
+        // Wings
+        const wingGeo = new THREE.CircleGeometry(0.15, 8);
+        const leftWing = new THREE.Mesh(wingGeo, wingMat);
+        leftWing.position.x = -0.1;
+        butterfly.add(leftWing);
+
+        const rightWing = new THREE.Mesh(wingGeo, wingMat);
+        rightWing.position.x = 0.1;
+        butterfly.add(rightWing);
+
+        butterfly.position.set(
+          (Math.random() - 0.5) * 40,
+          2 + Math.random() * 5,
+          (Math.random() - 0.5) * 40
+        );
+        butterfly.userData.phase = Math.random() * Math.PI * 2;
+        butterfly.userData.speed = 0.5 + Math.random() * 0.5;
+        butterfly.userData.radius = 2 + Math.random() * 3;
+        butterfly.userData.basePos = butterfly.position.clone();
+
+        scene.add(butterfly);
+        butterflies.push(butterfly);
+      }
     }
 
     function createSparks() {
@@ -1132,43 +1566,288 @@
     }
 
     function createDecorations() {
-      // Simple low-poly trees
-      const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.3, 2, 6);
-      const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-      const leavesGeometry = new THREE.ConeGeometry(1.5, 3, 6);
-      const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
-
+      // Create realistic trees
       const treePositions = [
-        { x: -8, z: 8 }, { x: 12, z: 10 }, { x: -15, z: -5 },
-        { x: 25, z: 8 }, { x: -20, z: 0 }, { x: 8, z: -12 }
+        { x: -8, z: 8, type: 'oak' },
+        { x: 12, z: 10, type: 'pine' },
+        { x: -15, z: -5, type: 'oak' },
+        { x: 25, z: 12, type: 'pine' },
+        { x: -25, z: 0, type: 'oak' },
+        { x: 8, z: -15, type: 'pine' },
+        { x: -30, z: -12, type: 'oak' },
+        { x: 35, z: -10, type: 'pine' },
+        { x: -35, z: 20, type: 'oak' },
+        { x: 30, z: 18, type: 'pine' },
       ];
 
       treePositions.forEach(pos => {
-        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-        trunk.position.set(pos.x, 1, pos.z);
-        trunk.castShadow = true;
-        scene.add(trunk);
-
-        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
-        leaves.position.set(pos.x, 3.5, pos.z);
-        leaves.castShadow = true;
-        scene.add(leaves);
+        if (pos.type === 'oak') {
+          createOakTree(pos.x, pos.z);
+        } else {
+          createPineTree(pos.x, pos.z);
+        }
       });
 
-      // Flowers
-      const flowerColors = [0xFF69B4, 0xFF6347, 0xFFD700, 0x9370DB];
-      for (let i = 0; i < 20; i++) {
-        const flowerGeometry = new THREE.SphereGeometry(0.2, 6, 6);
-        const flowerMaterial = new THREE.MeshStandardMaterial({
-          color: flowerColors[i % flowerColors.length]
-        });
-        const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
-        flower.position.set(
-          (Math.random() - 0.5) * 40,
-          0.2,
-          (Math.random() - 0.5) * 40
+      // Create bushes
+      for (let i = 0; i < 30; i++) {
+        const x = (Math.random() - 0.5) * 60;
+        const z = (Math.random() - 0.5) * 60;
+
+        // Skip near starting area
+        if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+
+        createBush(x, z);
+      }
+
+      // Create flower patches
+      createFlowerPatches();
+
+      // Create rocks
+      createRocks();
+
+      // Create mushrooms
+      createMushrooms();
+    }
+
+    function createOakTree(x, z) {
+      const treeGroup = new THREE.Group();
+
+      // Trunk
+      const trunkGeo = new THREE.CylinderGeometry(0.25, 0.4, 3, 8);
+      const trunkMat = new THREE.MeshStandardMaterial({
+        color: 0x5D4E37,
+        roughness: 0.95
+      });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 1.5;
+      trunk.castShadow = true;
+      treeGroup.add(trunk);
+
+      // Foliage - multiple spheres for oak shape
+      const foliageMat = new THREE.MeshStandardMaterial({
+        color: 0x2D5A27,
+        roughness: 0.85
+      });
+
+      const foliagePositions = [
+        { x: 0, y: 4, z: 0, s: 2 },
+        { x: 1, y: 3.5, z: 0.5, s: 1.5 },
+        { x: -1, y: 3.5, z: -0.3, s: 1.5 },
+        { x: 0, y: 3.2, z: 1, s: 1.3 },
+        { x: 0.5, y: 4.5, z: -0.5, s: 1.2 },
+      ];
+
+      foliagePositions.forEach(f => {
+        const foliageGeo = new THREE.SphereGeometry(f.s, 8, 8);
+        const foliage = new THREE.Mesh(foliageGeo, foliageMat);
+        foliage.position.set(f.x, f.y, f.z);
+        foliage.castShadow = true;
+        treeGroup.add(foliage);
+      });
+
+      treeGroup.position.set(x, 0, z);
+      scene.add(treeGroup);
+    }
+
+    function createPineTree(x, z) {
+      const treeGroup = new THREE.Group();
+
+      // Trunk
+      const trunkGeo = new THREE.CylinderGeometry(0.15, 0.25, 2.5, 6);
+      const trunkMat = new THREE.MeshStandardMaterial({
+        color: 0x4A3828,
+        roughness: 0.95
+      });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 1.25;
+      trunk.castShadow = true;
+      treeGroup.add(trunk);
+
+      // Pine foliage - stacked cones
+      const pineMat = new THREE.MeshStandardMaterial({
+        color: 0x1B4D3E,
+        roughness: 0.9
+      });
+
+      const layers = [
+        { y: 2.5, r: 1.8, h: 2 },
+        { y: 3.8, r: 1.4, h: 1.8 },
+        { y: 4.9, r: 1, h: 1.5 },
+        { y: 5.8, r: 0.6, h: 1.2 },
+      ];
+
+      layers.forEach(l => {
+        const coneGeo = new THREE.ConeGeometry(l.r, l.h, 8);
+        const cone = new THREE.Mesh(coneGeo, pineMat);
+        cone.position.y = l.y;
+        cone.castShadow = true;
+        treeGroup.add(cone);
+      });
+
+      treeGroup.position.set(x, 0, z);
+      scene.add(treeGroup);
+    }
+
+    function createBush(x, z) {
+      const bushGroup = new THREE.Group();
+
+      const bushMat = new THREE.MeshStandardMaterial({
+        color: 0x3D6B35,
+        roughness: 0.9
+      });
+
+      // Multiple spheres for bush
+      const numSpheres = 3 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < numSpheres; i++) {
+        const size = 0.3 + Math.random() * 0.4;
+        const bushGeo = new THREE.SphereGeometry(size, 6, 6);
+        const sphere = new THREE.Mesh(bushGeo, bushMat);
+        sphere.position.set(
+          (Math.random() - 0.5) * 0.6,
+          size * 0.8,
+          (Math.random() - 0.5) * 0.6
         );
-        scene.add(flower);
+        sphere.castShadow = true;
+        bushGroup.add(sphere);
+      }
+
+      bushGroup.position.set(x, 0, z);
+      scene.add(bushGroup);
+    }
+
+    function createFlowerPatches() {
+      const flowerTypes = [
+        { color: 0xFF6B9D, petalColor: 0xFFB6C1 }, // Pink
+        { color: 0xFFD93D, petalColor: 0xFFF59D }, // Yellow
+        { color: 0x9D4EDD, petalColor: 0xC77DFF }, // Purple
+        { color: 0xFF6B6B, petalColor: 0xFFADAD }, // Red
+        { color: 0x74C0FC, petalColor: 0xA5D8FF }, // Blue
+      ];
+
+      for (let i = 0; i < 50; i++) {
+        const x = (Math.random() - 0.5) * 50;
+        const z = (Math.random() - 0.5) * 50;
+
+        // Skip near center and water
+        if (Math.abs(x) < 6 && Math.abs(z) < 6) continue;
+        if (Math.abs(x + 20) < 7 && Math.abs(z - 15) < 7) continue;
+
+        const flowerType = flowerTypes[Math.floor(Math.random() * flowerTypes.length)];
+        createFlower(x, z, flowerType);
+      }
+    }
+
+    function createFlower(x, z, type) {
+      const flowerGroup = new THREE.Group();
+
+      // Stem
+      const stemGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 4);
+      const stemMat = new THREE.MeshStandardMaterial({ color: 0x4A7C4E });
+      const stem = new THREE.Mesh(stemGeo, stemMat);
+      stem.position.y = 0.2;
+      flowerGroup.add(stem);
+
+      // Center
+      const centerGeo = new THREE.SphereGeometry(0.08, 6, 6);
+      const centerMat = new THREE.MeshStandardMaterial({ color: type.color });
+      const center = new THREE.Mesh(centerGeo, centerMat);
+      center.position.y = 0.4;
+      flowerGroup.add(center);
+
+      // Petals
+      const petalGeo = new THREE.CircleGeometry(0.1, 6);
+      const petalMat = new THREE.MeshStandardMaterial({
+        color: type.petalColor,
+        side: THREE.DoubleSide
+      });
+
+      for (let i = 0; i < 5; i++) {
+        const petal = new THREE.Mesh(petalGeo, petalMat);
+        const angle = (i / 5) * Math.PI * 2;
+        petal.position.set(
+          Math.cos(angle) * 0.08,
+          0.4,
+          Math.sin(angle) * 0.08
+        );
+        petal.rotation.x = Math.PI / 2;
+        petal.rotation.z = angle;
+        flowerGroup.add(petal);
+      }
+
+      flowerGroup.position.set(x, 0, z);
+      scene.add(flowerGroup);
+    }
+
+    function createRocks() {
+      const rockMat = new THREE.MeshStandardMaterial({
+        color: 0x808080,
+        roughness: 0.95
+      });
+
+      for (let i = 0; i < 25; i++) {
+        const x = (Math.random() - 0.5) * 60;
+        const z = (Math.random() - 0.5) * 60;
+
+        // Skip center
+        if (Math.abs(x) < 5 && Math.abs(z) < 5) continue;
+
+        const size = 0.2 + Math.random() * 0.5;
+        const rockGeo = new THREE.DodecahedronGeometry(size, 0);
+        const rock = new THREE.Mesh(rockGeo, rockMat);
+        rock.position.set(x, size * 0.4, z);
+        rock.rotation.set(Math.random(), Math.random(), Math.random());
+        rock.scale.y = 0.6 + Math.random() * 0.4;
+        rock.castShadow = true;
+        rock.receiveShadow = true;
+        scene.add(rock);
+      }
+    }
+
+    function createMushrooms() {
+      const mushroomColors = [0xFF6B6B, 0xFFD93D, 0xC77DFF, 0x74C0FC];
+
+      for (let i = 0; i < 15; i++) {
+        const x = (Math.random() - 0.5) * 50;
+        const z = (Math.random() - 0.5) * 50;
+
+        // Skip center
+        if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+
+        const mushroom = new THREE.Group();
+
+        // Stem
+        const stemGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.2, 6);
+        const stemMat = new THREE.MeshStandardMaterial({ color: 0xF5F5DC });
+        const stem = new THREE.Mesh(stemGeo, stemMat);
+        stem.position.y = 0.1;
+        mushroom.add(stem);
+
+        // Cap
+        const capGeo = new THREE.SphereGeometry(0.15, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+        const capMat = new THREE.MeshStandardMaterial({
+          color: mushroomColors[Math.floor(Math.random() * mushroomColors.length)]
+        });
+        const cap = new THREE.Mesh(capGeo, capMat);
+        cap.position.y = 0.2;
+        mushroom.add(cap);
+
+        // White spots on cap
+        for (let j = 0; j < 4; j++) {
+          const spotGeo = new THREE.SphereGeometry(0.03, 4, 4);
+          const spotMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+          const spot = new THREE.Mesh(spotGeo, spotMat);
+          const spotAngle = (j / 4) * Math.PI * 2;
+          spot.position.set(
+            Math.cos(spotAngle) * 0.08,
+            0.25,
+            Math.sin(spotAngle) * 0.08
+          );
+          mushroom.add(spot);
+        }
+
+        mushroom.position.set(x, 0, z);
+        mushroom.scale.setScalar(0.8 + Math.random() * 0.4);
+        scene.add(mushroom);
       }
     }
 
@@ -1229,6 +1908,7 @@
       requestAnimationFrame(animate);
 
       const delta = 1 / 60;
+      const time = Date.now() * 0.001;
 
       // Update timer
       gameState.elapsedTime = (Date.now() - gameState.startTime) / 1000;
@@ -1246,8 +1926,53 @@
       // Update camera to follow player
       updateCamera();
 
+      // Update environment animations
+      updateEnvironment(time, delta);
+
       // Render
       renderer.render(scene, camera);
+    }
+
+    function updateEnvironment(time, delta) {
+      // Animate clouds
+      clouds.forEach(cloud => {
+        cloud.position.x += cloud.userData.speed;
+        if (cloud.position.x > 120) {
+          cloud.position.x = -120;
+        }
+      });
+
+      // Animate grass swaying
+      grassBlades.forEach((blade, i) => {
+        const sway = Math.sin(time * 2 + i * 0.5) * 0.1;
+        blade.rotation.z = blade.userData.baseRotation + sway;
+      });
+
+      // Animate butterflies
+      butterflies.forEach(butterfly => {
+        const phase = butterfly.userData.phase;
+        const speed = butterfly.userData.speed;
+        const radius = butterfly.userData.radius;
+        const base = butterfly.userData.basePos;
+
+        // Circular flight path
+        butterfly.position.x = base.x + Math.cos(time * speed + phase) * radius;
+        butterfly.position.z = base.z + Math.sin(time * speed + phase) * radius;
+        butterfly.position.y = base.y + Math.sin(time * speed * 2 + phase) * 0.5;
+
+        // Wing flapping
+        const wingAngle = Math.sin(time * 15) * 0.5;
+        if (butterfly.children[0]) butterfly.children[0].rotation.y = wingAngle;
+        if (butterfly.children[1]) butterfly.children[1].rotation.y = -wingAngle;
+
+        // Face direction of travel
+        butterfly.rotation.y = time * speed + phase + Math.PI / 2;
+      });
+
+      // Animate water ripples
+      if (waterMesh) {
+        waterMesh.material.opacity = 0.6 + Math.sin(time * 2) * 0.1;
+      }
     }
 
     function updatePlayer(delta) {
