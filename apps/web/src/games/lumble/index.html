@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Lumble | Weekly Arcade - Free 3D Platformer Game Online</title>
 
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
   <!-- SEO -->
   <meta name="description" content="Play Lumble free online. A 3D collect-a-thon platformer! Use your Latch to swing, collect 50 Sparks, and explore! No download required.">
   <meta name="keywords" content="3D game, platformer, collect-a-thon, free game, browser game, swing game, lumble">
@@ -851,10 +857,10 @@
     };
 
     // Constants
-    const GRAVITY = -30;
-    const JUMP_FORCE = 14;
-    const MOVE_SPEED = 14;
-    const LATCH_SPEED = 20;
+    const GRAVITY = -28;
+    const JUMP_FORCE = 12;
+    const MOVE_SPEED = 8;
+    const LATCH_SPEED = 12;
     const LATCH_RANGE = 25;
 
     // Auth
@@ -2134,12 +2140,11 @@
         moveZ *= 0.707;
       }
 
-      // Apply movement relative to camera
-      const cameraAngle = Math.atan2(camera.position.x - player.position.x, camera.position.z - player.position.z);
-      const sin = Math.sin(cameraAngle);
-      const cos = Math.cos(cameraAngle);
-      const rotatedX = moveX * cos - moveZ * sin;
-      const rotatedZ = moveX * sin + moveZ * cos;
+      // Apply movement relative to camera orbit angle (so controls follow camera rotation)
+      const sin = Math.sin(cameraOrbitAngle);
+      const cos = Math.cos(cameraOrbitAngle);
+      const rotatedX = moveX * cos + moveZ * sin;
+      const rotatedZ = -moveX * sin + moveZ * cos;
 
       if (!isLatching) {
         // Smooth acceleration for better feel (frame-rate independent)
