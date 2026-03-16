@@ -38,6 +38,8 @@ class ApiClient {
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
+    } else if (options.method && options.method !== 'GET') {
+      console.warn(`[ApiClient] No auth token set for ${options.method} ${endpoint}`);
     }
 
     try {
@@ -48,6 +50,7 @@ class ApiClient {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: response.statusText }));
+        console.error(`[ApiClient] Request failed: ${options.method || 'GET'} ${endpoint}`, { status: response.status, error });
         throw new Error(error.message || `API Error: ${response.status}`);
       }
 
@@ -58,7 +61,7 @@ class ApiClient {
 
       return response.json();
     } catch (error) {
-      console.error(`API request failed: ${endpoint}`, error);
+      console.error(`[ApiClient] Request exception: ${endpoint}`, error);
       throw error;
     }
   }
@@ -146,13 +149,16 @@ class ApiClient {
    */
   async submitScore(gameId, scoreData) {
     if (typeof scoreData !== 'object' || typeof scoreData.score !== 'number') {
-      console.error('submitScore: scoreData must be an object with a score property');
+      console.error('[ApiClient] submitScore: scoreData must be an object with a score property');
       throw new Error('Invalid scoreData format');
     }
-    return this.request(`/leaderboard/${gameId}/submit`, {
+    console.log(`[ApiClient] Submitting score for ${gameId}:`, { score: scoreData.score, hasToken: !!this.token });
+    const result = await this.request(`/leaderboard/${gameId}/submit`, {
       method: 'POST',
       body: JSON.stringify(scoreData),
     });
+    console.log(`[ApiClient] Score submitted for ${gameId}:`, result);
+    return result;
   }
 
   async getLeaderboard(gameId, period = 'daily', limit = 50) {

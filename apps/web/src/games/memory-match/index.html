@@ -1287,7 +1287,10 @@
 
     // Submit score
     async function submitScore(won) {
-      if (gameState.mode === 'zen') return;
+      if (gameState.mode === 'zen') {
+        console.log('[Memory Match] Skipping score submit (zen mode)');
+        return;
+      }
 
       const scoreData = {
         score: gameState.score,
@@ -1302,18 +1305,20 @@
         }
       };
 
+      console.log('[Memory Match] Attempting score submit:', { score: gameState.score, mode: gameState.mode, currentUser: !!currentUser, apiClient: !!window.apiClient });
+
       // Check if user is signed in
       if (window.apiClient && currentUser) {
         try {
-          await window.apiClient.submitScore('memory-match', scoreData);
-          console.log('Score submitted to leaderboard');
+          const result = await window.apiClient.submitScore('memory-match', scoreData);
+          console.log('[Memory Match] Score submitted successfully:', result);
         } catch (error) {
-          console.error('Failed to submit score:', error);
+          console.error('[Memory Match] Failed to submit score:', error);
           saveGuestScore(scoreData);
         }
       } else {
         saveGuestScore(scoreData);
-        console.log('Score saved locally (guest mode)');
+        console.log('[Memory Match] Score saved locally (guest mode)');
       }
     }
 

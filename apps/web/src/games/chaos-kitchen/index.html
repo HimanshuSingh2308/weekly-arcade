@@ -1754,19 +1754,21 @@
         }
       };
 
+      console.log('[Chaos Kitchen] Attempting score submit:', { score, level, currentUser: !!currentUser, apiClient: !!window.apiClient });
+
       // If signed in, submit directly
       if (currentUser && window.apiClient) {
         try {
-          await window.apiClient.submitScore('chaos-kitchen', scoreData);
-          console.log('Score submitted to server');
+          const result = await window.apiClient.submitScore('chaos-kitchen', scoreData);
+          console.log('[Chaos Kitchen] Score submitted successfully:', result);
         } catch (e) {
-          console.error('Failed to submit score:', e);
+          console.error('[Chaos Kitchen] Failed to submit score:', e);
           saveGuestScore(scoreData);
         }
       } else {
         // Save for later sync
         saveGuestScore(scoreData);
-        console.log('Score saved locally (guest mode)');
+        console.log('[Chaos Kitchen] Score saved locally (guest mode)');
       }
     }
 
