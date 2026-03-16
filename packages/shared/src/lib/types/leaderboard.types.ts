@@ -1,21 +1,26 @@
-export type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'all-time';
+export type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'allTime';
 
 export interface LeaderboardEntry {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
+  odId: string;
+  odName: string;
+  odAvatarUrl: string | null;
   score: number;
   rank: number;
-  level: number;
-  metadata: ScoreMetadata;
-  submittedAt: Date;
+  level?: number;
+  updatedAt: Date;
 }
 
-export interface ScoreMetadata {
-  attempts: number;
-  hintsUsed: number;
-  timeSeconds: number;
-  streakMultiplier: number;
+export interface ScoreRecord {
+  odId: string;
+  odName: string;
+  odAvatarUrl: string | null;
+  gameId: string;
+  score: number;
+  guessCount?: number | null;
+  level?: number | null;
+  timeMs?: number | null;
+  metadata?: Record<string, any> | null;
+  createdAt: Date;
 }
 
 export interface Leaderboard {
@@ -23,24 +28,20 @@ export interface Leaderboard {
   period: LeaderboardPeriod;
   dateKey: string;
   entries: LeaderboardEntry[];
-  createdAt: Date;
-  expiresAt: Date | null;
+  updatedAt: Date;
 }
 
 export interface SubmitScoreDto {
   score: number;
-  level: number;
-  attempts: number;
-  hintsUsed: number;
-  timeSeconds: number;
-  streakMultiplier: number;
-  dailyWordHash?: string;
+  guessCount?: number;
+  level?: number;
+  timeMs?: number;
+  wordHash?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface UserRank {
   rank: number;
-  totalPlayers: number;
-  percentile: number;
   score: number;
 }
 
