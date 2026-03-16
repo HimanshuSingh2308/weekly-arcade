@@ -547,35 +547,78 @@
       .controls-hint { font-size: 0.7rem; padding: 0.4rem 0.8rem; }
     }
 
-    /* Touch controls for mobile */
-    .touch-controls {
+    /* Touch controls for mobile - Gesture based */
+    .touch-overlay {
       position: fixed;
-      bottom: 80px;
-      left: 0;
-      right: 0;
+      inset: 0;
       display: none;
-      justify-content: space-between;
-      padding: 0 1rem;
+      z-index: 40;
+      touch-action: none;
+    }
+
+    @media (max-width: 768px) {
+      .touch-overlay.active { display: block; }
+    }
+
+    .joystick-zone {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 45%;
+      height: 50%;
+    }
+
+    .camera-zone {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 55%;
+      height: 100%;
+    }
+
+    .joystick-base {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      background: rgba(255,255,255,0.15);
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: none;
+    }
+
+    .joystick-thumb {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(233, 69, 96, 0.8);
+      border: 3px solid white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+
+    .touch-buttons {
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      display: none;
+      flex-direction: column;
+      gap: 15px;
       z-index: 50;
     }
 
     @media (max-width: 768px) {
-      .touch-controls { display: flex; }
-    }
-
-    .touch-dpad {
-      display: grid;
-      grid-template-columns: repeat(3, 50px);
-      grid-template-rows: repeat(3, 50px);
-      gap: 4px;
+      .touch-buttons { display: flex; }
     }
 
     .touch-btn {
-      background: rgba(22, 33, 62, 0.8);
-      border: 2px solid var(--border);
-      border-radius: 8px;
+      width: 70px;
+      height: 70px;
+      background: rgba(22, 33, 62, 0.85);
+      border: 3px solid var(--border);
+      border-radius: 50%;
       color: var(--text-primary);
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -586,22 +629,35 @@
     .touch-btn:active {
       background: var(--accent);
       border-color: var(--accent);
+      transform: scale(0.95);
     }
 
     .touch-btn.jump {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      font-size: 1.5rem;
+      background: rgba(100, 200, 100, 0.3);
+      border-color: #4CAF50;
     }
 
     .touch-btn.latch {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      font-size: 1.5rem;
       background: rgba(233, 69, 96, 0.3);
       border-color: var(--accent);
+    }
+
+    .gesture-hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.8);
+      display: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .gesture-hint.active { display: block; }
     }
   </style>
 </head>
@@ -674,27 +730,26 @@
 
   <!-- Controls Hint -->
   <div class="controls-hint" id="controlsHint" style="display: none;">
-    <kbd>WASD</kbd> or <kbd>Arrow Keys</kbd> Move &nbsp;|&nbsp; <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>Click</kbd> Latch &nbsp;|&nbsp; <kbd>R</kbd> Restart
+    <kbd>WASD</kbd> Move &nbsp;|&nbsp; <kbd>Q/E</kbd> Rotate Camera &nbsp;|&nbsp; <kbd>Space</kbd> Jump &nbsp;|&nbsp; <kbd>Click</kbd> Latch &nbsp;|&nbsp; <kbd>R</kbd> Restart
   </div>
 
-  <!-- Touch Controls -->
-  <div class="touch-controls" id="touchControls">
-    <div class="touch-dpad">
-      <div></div>
-      <button class="touch-btn" id="touchUp">↑</button>
-      <div></div>
-      <button class="touch-btn" id="touchLeft">←</button>
-      <div></div>
-      <button class="touch-btn" id="touchRight">→</button>
-      <div></div>
-      <button class="touch-btn" id="touchDown">↓</button>
-      <div></div>
+  <!-- Touch Controls - Gesture Based -->
+  <div class="touch-overlay" id="touchOverlay">
+    <div class="joystick-zone" id="joystickZone">
+      <div class="joystick-base" id="joystickBase"></div>
+      <div class="joystick-thumb" id="joystickThumb"></div>
     </div>
-    <div style="display: flex; gap: 1rem; align-items: flex-end;">
-      <button class="touch-btn latch" id="touchLatch">🎯</button>
-      <button class="touch-btn jump" id="touchJump">⬆</button>
-    </div>
+    <div class="camera-zone" id="cameraZone"></div>
   </div>
+
+  <!-- Touch Action Buttons -->
+  <div class="touch-buttons" id="touchButtons">
+    <button class="touch-btn jump" id="touchJump">⬆</button>
+    <button class="touch-btn latch" id="touchLatch">🎯</button>
+  </div>
+
+  <!-- Gesture Hint -->
+  <div class="gesture-hint" id="gestureHint">Left: Move | Right: Look | Buttons: Jump/Latch</div>
 
   <!-- Results Modal -->
   <div class="results-modal" id="resultsModal">
@@ -782,6 +837,17 @@
     };
     let mousePos = { x: 0, y: 0 };
     let mouseDown = false;
+    let lastFrameTime = 0;
+
+    // Camera orbit
+    let cameraOrbitAngle = 0;
+    let cameraTargetOrbitAngle = 0;
+
+    // Touch gesture state
+    const touchState = {
+      joystick: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0 },
+      camera: { active: false, startX: 0, lastX: 0 }
+    };
 
     // Constants
     const GRAVITY = -30;
@@ -1955,6 +2021,15 @@
       document.getElementById('leaderboardSection').style.display = 'block';
       document.getElementById('controlsHint').style.display = 'block';
 
+      // Activate touch controls on mobile
+      document.getElementById('touchOverlay').classList.add('active');
+      document.getElementById('gestureHint').classList.add('active');
+
+      // Reset camera angle
+      cameraOrbitAngle = 0;
+      cameraTargetOrbitAngle = 0;
+      lastFrameTime = 0;
+
       // Load leaderboard
       loadLeaderboard();
 
@@ -1963,12 +2038,19 @@
       animate();
     }
 
-    function animate() {
+    function animate(currentTime) {
       if (!gameState.playing) return;
       requestAnimationFrame(animate);
 
-      const delta = 1 / 60;
-      const time = Date.now() * 0.001;
+      // Calculate actual delta time (capped to prevent huge jumps)
+      if (!lastFrameTime) lastFrameTime = currentTime;
+      let delta = (currentTime - lastFrameTime) / 1000;
+      lastFrameTime = currentTime;
+
+      // Cap delta to prevent physics explosions on tab switch or lag
+      delta = Math.min(delta, 1/30);
+
+      const time = currentTime * 0.001;
 
       // Update timer
       gameState.elapsedTime = (Date.now() - gameState.startTime) / 1000;
@@ -2059,13 +2141,15 @@
       const rotatedZ = moveX * sin + moveZ * cos;
 
       if (!isLatching) {
-        // Smooth acceleration for better feel
+        // Smooth acceleration for better feel (frame-rate independent)
         const targetVx = rotatedX * MOVE_SPEED;
         const targetVz = rotatedZ * MOVE_SPEED;
-        const accel = playerState.onGround ? 0.3 : 0.12;
+        // Use exponential decay for frame-rate independent smoothing
+        const accelBase = playerState.onGround ? 12 : 5;
+        const smoothing = 1 - Math.exp(-accelBase * delta);
 
-        playerState.vx += (targetVx - playerState.vx) * accel;
-        playerState.vz += (targetVz - playerState.vz) * accel;
+        playerState.vx += (targetVx - playerState.vx) * smoothing;
+        playerState.vz += (targetVz - playerState.vz) * smoothing;
 
         // Apply gravity
         playerState.vy += GRAVITY * delta;
@@ -2098,16 +2182,18 @@
         }
       }
 
+      // Store old position for collision resolution
+      const oldY = playerState.y;
+
       // Update position
       playerState.x += playerState.vx * delta;
       playerState.y += playerState.vy * delta;
       playerState.z += playerState.vz * delta;
 
-      // Ground collision - improved
+      // Ground collision - improved with sweep test
       playerState.onGround = false;
-      const playerRadius = 0.3;
-      const playerFeetOffset = 0.05; // Small offset for feet touching ground
-      const playerBottom = playerState.y - playerFeetOffset;
+      const playerRadius = 0.4;
+      const playerHeight = 1.5;
 
       platforms.forEach(platform => {
         const box = new THREE.Box3().setFromObject(platform);
@@ -2119,45 +2205,71 @@
         const maxZ = box.max.z + playerRadius;
 
         // Check if player is within platform's XZ bounds
-        if (playerState.x >= minX && playerState.x <= maxX &&
-            playerState.z >= minZ && playerState.z <= maxZ) {
+        const inXZBounds = playerState.x >= minX && playerState.x <= maxX &&
+                          playerState.z >= minZ && playerState.z <= maxZ;
 
-          // Landing on top
-          if (playerState.vy <= 0 && playerBottom <= box.max.y && playerBottom >= box.max.y - 1.0) {
-            playerState.y = box.max.y + playerFeetOffset;
+        if (inXZBounds) {
+          // Landing on top - check if we passed through the surface
+          const platformTop = box.max.y;
+          const playerFeet = playerState.y;
+          const oldFeet = oldY;
+
+          // If falling and feet crossed the platform surface
+          if (playerState.vy <= 0 && oldFeet >= platformTop && playerFeet <= platformTop + 0.5) {
+            playerState.y = platformTop;
+            playerState.vy = 0;
+            playerState.onGround = true;
+            playerState.canDoubleJump = true;
+          }
+          // Also check if we're standing on top (for when already landed)
+          else if (Math.abs(playerFeet - platformTop) < 0.15 && playerState.vy <= 0) {
+            playerState.y = platformTop;
             playerState.vy = 0;
             playerState.onGround = true;
             playerState.canDoubleJump = true;
           }
 
           // Hitting from below
-          const playerTop = playerState.y + 1.3; // Head height
+          const playerTop = playerState.y + playerHeight;
           if (playerState.vy > 0 && playerTop >= box.min.y && playerTop <= box.min.y + 0.5) {
-            playerState.vy = -playerState.vy * 0.3; // Bounce back
+            playerState.vy = -playerState.vy * 0.3;
+          }
+
+          // Inside platform - push up (safety net)
+          if (playerFeet < platformTop && playerFeet > box.min.y && playerTop > box.min.y) {
+            playerState.y = platformTop;
+            playerState.vy = 0;
+            playerState.onGround = true;
+            playerState.canDoubleJump = true;
           }
         }
 
-        // Side collisions (simple push out)
-        if (playerState.y > box.min.y && playerState.y < box.max.y + 1.3) {
+        // Side collisions
+        const playerTop = playerState.y + playerHeight;
+        if (playerState.y < box.max.y && playerTop > box.min.y) {
           // Check X sides
           if (playerState.z >= box.min.z - playerRadius && playerState.z <= box.max.z + playerRadius) {
-            if (playerState.x > box.min.x - playerRadius && playerState.x < box.min.x + 0.1) {
-              playerState.x = box.min.x - playerRadius;
+            // Hitting left side
+            if (playerState.x > minX && playerState.x < box.min.x + 0.2) {
+              playerState.x = minX;
               playerState.vx = Math.min(0, playerState.vx);
             }
-            if (playerState.x < box.max.x + playerRadius && playerState.x > box.max.x - 0.1) {
-              playerState.x = box.max.x + playerRadius;
+            // Hitting right side
+            if (playerState.x < maxX && playerState.x > box.max.x - 0.2) {
+              playerState.x = maxX;
               playerState.vx = Math.max(0, playerState.vx);
             }
           }
           // Check Z sides
           if (playerState.x >= box.min.x - playerRadius && playerState.x <= box.max.x + playerRadius) {
-            if (playerState.z > box.min.z - playerRadius && playerState.z < box.min.z + 0.1) {
-              playerState.z = box.min.z - playerRadius;
+            // Hitting front
+            if (playerState.z > minZ && playerState.z < box.min.z + 0.2) {
+              playerState.z = minZ;
               playerState.vz = Math.min(0, playerState.vz);
             }
-            if (playerState.z < box.max.z + playerRadius && playerState.z > box.max.z - 0.1) {
-              playerState.z = box.max.z + playerRadius;
+            // Hitting back
+            if (playerState.z < maxZ && playerState.z > box.max.z - 0.2) {
+              playerState.z = maxZ;
               playerState.vz = Math.max(0, playerState.vz);
             }
           }
@@ -2215,16 +2327,22 @@
     }
 
     function updateCamera() {
-      // Third-person camera following player
-      const targetX = playerState.x;
-      const targetY = playerState.y + 5;
-      const targetZ = playerState.z + 12;
+      // Smooth camera orbit angle
+      cameraOrbitAngle += (cameraTargetOrbitAngle - cameraOrbitAngle) * 0.08;
 
-      camera.position.x += (targetX - camera.position.x) * 0.05;
-      camera.position.y += (targetY - camera.position.y) * 0.05;
-      camera.position.z += (targetZ - camera.position.z) * 0.05;
+      // Third-person camera following player with orbit
+      const cameraDistance = 12;
+      const cameraHeight = 5;
 
-      camera.lookAt(playerState.x, playerState.y, playerState.z);
+      const targetX = playerState.x + Math.sin(cameraOrbitAngle) * cameraDistance;
+      const targetY = playerState.y + cameraHeight;
+      const targetZ = playerState.z + Math.cos(cameraOrbitAngle) * cameraDistance;
+
+      camera.position.x += (targetX - camera.position.x) * 0.08;
+      camera.position.y += (targetY - camera.position.y) * 0.08;
+      camera.position.z += (targetZ - camera.position.z) * 0.08;
+
+      camera.lookAt(playerState.x, playerState.y + 1, playerState.z);
     }
 
     function checkSparkCollection() {
@@ -2432,35 +2550,132 @@
     }
 
     function setupTouchControls() {
-      const touchUp = document.getElementById('touchUp');
-      const touchDown = document.getElementById('touchDown');
-      const touchLeft = document.getElementById('touchLeft');
-      const touchRight = document.getElementById('touchRight');
+      const touchOverlay = document.getElementById('touchOverlay');
+      const joystickZone = document.getElementById('joystickZone');
+      const joystickBase = document.getElementById('joystickBase');
+      const joystickThumb = document.getElementById('joystickThumb');
+      const cameraZone = document.getElementById('cameraZone');
       const touchJump = document.getElementById('touchJump');
       const touchLatch = document.getElementById('touchLatch');
+      const gestureHint = document.getElementById('gestureHint');
 
-      // Movement buttons
-      touchUp.addEventListener('touchstart', (e) => { e.preventDefault(); keys.w = true; });
-      touchUp.addEventListener('touchend', () => keys.w = false);
-      touchDown.addEventListener('touchstart', (e) => { e.preventDefault(); keys.s = true; });
-      touchDown.addEventListener('touchend', () => keys.s = false);
-      touchLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.a = true; });
-      touchLeft.addEventListener('touchend', () => keys.a = false);
-      touchRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.d = true; });
-      touchRight.addEventListener('touchend', () => keys.d = false);
+      // Virtual Joystick for movement
+      joystickZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchState.joystick.active = true;
+        touchState.joystick.startX = touch.clientX;
+        touchState.joystick.startY = touch.clientY;
+        touchState.joystick.currentX = touch.clientX;
+        touchState.joystick.currentY = touch.clientY;
 
-      // Jump
+        // Show joystick at touch position
+        joystickBase.style.display = 'block';
+        joystickThumb.style.display = 'block';
+        joystickBase.style.left = (touch.clientX - 60) + 'px';
+        joystickBase.style.top = (touch.clientY - 60) + 'px';
+        joystickThumb.style.left = touch.clientX + 'px';
+        joystickThumb.style.top = touch.clientY + 'px';
+
+        // Hide hint after first use
+        gestureHint.classList.remove('active');
+      });
+
+      joystickZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!touchState.joystick.active) return;
+
+        const touch = e.touches[0];
+        touchState.joystick.currentX = touch.clientX;
+        touchState.joystick.currentY = touch.clientY;
+
+        // Calculate joystick offset (clamped to max radius)
+        const maxRadius = 50;
+        let dx = touch.clientX - touchState.joystick.startX;
+        let dy = touch.clientY - touchState.joystick.startY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > maxRadius) {
+          dx = (dx / dist) * maxRadius;
+          dy = (dy / dist) * maxRadius;
+        }
+
+        // Update thumb position
+        joystickThumb.style.left = (touchState.joystick.startX + dx) + 'px';
+        joystickThumb.style.top = (touchState.joystick.startY + dy) + 'px';
+
+        // Convert to movement input (normalize to -1 to 1)
+        const normalizedX = dx / maxRadius;
+        const normalizedY = dy / maxRadius;
+
+        // Set movement keys based on joystick position
+        keys.a = normalizedX < -0.3;
+        keys.d = normalizedX > 0.3;
+        keys.w = normalizedY < -0.3;
+        keys.s = normalizedY > 0.3;
+      });
+
+      const endJoystick = () => {
+        touchState.joystick.active = false;
+        joystickBase.style.display = 'none';
+        joystickThumb.style.display = 'none';
+        keys.w = false;
+        keys.a = false;
+        keys.s = false;
+        keys.d = false;
+      };
+
+      joystickZone.addEventListener('touchend', endJoystick);
+      joystickZone.addEventListener('touchcancel', endJoystick);
+
+      // Camera rotation zone
+      cameraZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchState.camera.active = true;
+        touchState.camera.startX = touch.clientX;
+        touchState.camera.lastX = touch.clientX;
+      });
+
+      cameraZone.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!touchState.camera.active) return;
+
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchState.camera.lastX;
+        touchState.camera.lastX = touch.clientX;
+
+        // Rotate camera based on horizontal swipe
+        cameraTargetOrbitAngle -= deltaX * 0.008;
+      });
+
+      cameraZone.addEventListener('touchend', () => {
+        touchState.camera.active = false;
+      });
+
+      // Jump button
       touchJump.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         jump();
       });
 
-      // Latch - find nearest latchable and latch to it
+      // Latch button
       touchLatch.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         tryLatchNearest();
       });
-      touchLatch.addEventListener('touchend', () => releaseLatch());
+      touchLatch.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        releaseLatch();
+      });
+
+      // Also allow keyboard camera rotation with Q/E
+      document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'q') cameraTargetOrbitAngle += 0.1;
+        if (e.key.toLowerCase() === 'e') cameraTargetOrbitAngle -= 0.1;
+      });
     }
 
     function jump() {
@@ -2724,6 +2939,8 @@
       document.getElementById('leaderboardSection').style.display = 'none';
       document.getElementById('controlsHint').style.display = 'none';
       document.getElementById('resultsModal').classList.remove('show');
+      document.getElementById('touchOverlay').classList.remove('active');
+      document.getElementById('gestureHint').classList.remove('active');
     }
 
     function restartGame() {
