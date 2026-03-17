@@ -341,11 +341,14 @@
 
     .game-thumb {
       height: 160px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
       background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+      overflow: hidden;
+    }
+
+    .game-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .game-info {
@@ -900,7 +903,7 @@
     <div class="games-grid">
       <!-- Fieldstone (NEW) -->
       <a href="/games/fieldstone/" class="game-card">
-        <div class="game-thumb">🏰</div>
+        <div class="game-thumb"><img src="/images/thumbnails/fieldstone.svg" alt="Fieldstone"></div>
         <div class="game-info">
           <div class="game-title">Fieldstone</div>
           <div class="game-desc">Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!</div>
@@ -914,7 +917,7 @@
 
       <!-- Wordle -->
       <a href="games/wordle/" class="game-card">
-        <div class="game-thumb">🔤</div>
+        <div class="game-thumb"><img src="/images/thumbnails/wordle.svg" alt="Wordle"></div>
         <div class="game-info">
           <div class="game-title">Wordle</div>
           <div class="game-desc">Guess the 5-letter word in 6 tries. A new word every day!</div>
@@ -927,7 +930,7 @@
 
       <!-- Snake -->
       <a href="games/snake/" class="game-card">
-        <div class="game-thumb">🐍</div>
+        <div class="game-thumb"><img src="/images/thumbnails/snake.svg" alt="Snake"></div>
         <div class="game-info">
           <div class="game-title">Snake</div>
           <div class="game-desc">Classic snake game. Eat, grow, don't hit the walls!</div>
@@ -940,7 +943,7 @@
 
       <!-- 2048 -->
       <a href="games/2048/" class="game-card">
-        <div class="game-thumb">🔢</div>
+        <div class="game-thumb"><img src="/images/thumbnails/2048.svg" alt="2048"></div>
         <div class="game-info">
           <div class="game-title">2048</div>
           <div class="game-desc">Slide tiles and merge numbers to reach 2048.</div>
@@ -953,7 +956,7 @@
 
       <!-- Chaos Kitchen -->
       <a href="games/chaos-kitchen/" class="game-card">
-        <div class="game-thumb">👨‍🍳</div>
+        <div class="game-thumb"><img src="/images/thumbnails/chaos-kitchen.svg" alt="Chaos Kitchen"></div>
         <div class="game-info">
           <div class="game-title">Chaos Kitchen</div>
           <div class="game-desc">Run a chaotic kitchen! Fulfill orders and survive chaos events!</div>
@@ -966,7 +969,7 @@
 
       <!-- Memory Match -->
       <a href="/games/memory-match/" class="game-card">
-        <div class="game-thumb">🃏</div>
+        <div class="game-thumb"><img src="/images/thumbnails/memory-match.svg" alt="Memory Match"></div>
         <div class="game-info">
           <div class="game-title">Memory Match</div>
           <div class="game-desc">Flip cards and find matching pairs. Test your memory!</div>
@@ -978,7 +981,7 @@
 
       <!-- Lumble -->
       <a href="/games/lumble/" class="game-card">
-        <div class="game-thumb">🫧</div>
+        <div class="game-thumb"><img src="/images/thumbnails/lumble.svg" alt="Lumble"></div>
         <div class="game-info">
           <div class="game-title">Lumble</div>
           <div class="game-desc">3D platformer! Latch, swing, and collect 50 Sparks!</div>
