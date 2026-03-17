@@ -220,14 +220,19 @@
       display: block;
     }
 
-    /* Mobile: reduce header/stats padding */
+    /* Mobile: full screen game */
     @media (max-width: 600px) {
       .header { padding: 0.5rem; }
       .stats-bar { padding: 0.5rem; gap: 1rem; }
       .stat-value { font-size: 1.2rem; }
       .game-container {
-        padding: 0.25rem;
-        height: calc(100vh - 110px);
+        padding: 0;
+        height: calc(100vh - 100px);
+      }
+      #gameCanvas {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
       }
     }
 

@@ -190,6 +190,17 @@
       border: 1px solid var(--border);
     }
 
+    @media (max-width: 768px) {
+      .game-container {
+        min-height: calc(100vh - 50px);
+        padding-top: 50px;
+        padding-bottom: 0;
+      }
+      #gameCanvas {
+        border: none;
+      }
+    }
+
     /* HUD Overlay */
     .hud {
       position: fixed;
@@ -1694,16 +1705,26 @@
 
     // Responsive canvas sizing
     function resizeCanvas() {
-      const maxW = Math.min(800, window.innerWidth - 20);
-      const maxH = Math.min(600, window.innerHeight - 150);
-      const aspect = 800 / 600;
+      const isMobile = window.innerWidth <= 768;
+      const headerHeight = 50;
 
-      if (maxW / maxH > aspect) {
-        canvas.height = maxH;
-        canvas.width = maxH * aspect;
+      if (isMobile) {
+        // Full screen on mobile
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - headerHeight;
       } else {
-        canvas.width = maxW;
-        canvas.height = maxW / aspect;
+        // Desktop: maintain aspect ratio with max size
+        const maxW = Math.min(800, window.innerWidth - 20);
+        const maxH = Math.min(600, window.innerHeight - 150);
+        const aspect = 800 / 600;
+
+        if (maxW / maxH > aspect) {
+          canvas.height = maxH;
+          canvas.width = maxH * aspect;
+        } else {
+          canvas.width = maxW;
+          canvas.height = maxW / aspect;
+        }
       }
     }
     resizeCanvas();
