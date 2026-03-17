@@ -1480,28 +1480,34 @@
 
     // Move piece
     function movePiece(dx) {
+      if (!gameState.currentPiece) return;
+
       const newX = gameState.pieceX + dx;
       if (canPlace(newX, gameState.pieceY, gameState.currentPiece.shape)) {
         gameState.pieceX = newX;
-        playSound('move');
+        try { playSound('move'); } catch(e) {}
         renderBoard();
       }
     }
 
     // Rotate piece
     function rotatePiece() {
+      if (!gameState.currentPiece) return;
+
       const shape = gameState.currentPiece.shape;
       const rotated = shape[0].map((_, i) => shape.map(row => row[i]).reverse());
 
       if (canPlace(gameState.pieceX, gameState.pieceY, rotated)) {
         gameState.currentPiece.shape = rotated;
-        playSound('rotate');
+        try { playSound('rotate'); } catch(e) {}
         renderBoard();
       }
     }
 
     // Drop piece one row
     function dropPiece() {
+      if (!gameState.currentPiece) return false;
+
       if (canPlace(gameState.pieceX, gameState.pieceY + 1, gameState.currentPiece.shape)) {
         gameState.pieceY++;
         renderBoard();
@@ -1514,79 +1520,53 @@
 
     // Hard drop
     function hardDrop() {
-      playSound('hardDrop');
-      while (dropPiece()) {}
+      if (!gameState.currentPiece) return;
+      try { playSound('hardDrop'); } catch(e) {}
+      while (gameState.currentPiece && dropPiece()) {}
     }
 
     // Lock piece in place
     function lockPiece() {
-      playSound('lock');
+      if (!gameState.currentPiece) return;
+
+      try {
+        playSound('lock');
+      } catch(e) {}
+
       const shape = gameState.currentPiece.shape;
 
-      // Screen shake
-      const board = document.getElementById('gameBoard');
-      board.classList.add('board-shake');
-      setTimeout(() => board.classList.remove('board-shake'), 150);
-
-      // Track placed cells for animation
-      const placedCells = [];
-
+      // Place piece on board
       for (let row = 0; row < shape.length; row++) {
         for (let col = 0; col < shape[row].length; col++) {
           if (shape[row][col]) {
             const boardY = gameState.pieceY + row;
             const boardX = gameState.pieceX + col;
-            if (boardY >= 0) {
+            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
               gameState.board[boardY][boardX] = shape[row][col];
-              placedCells.push({ row: boardY, col: boardX });
             }
           }
         }
       }
 
-      // Animate placed cells
-      setTimeout(() => {
-        placedCells.forEach(({ row, col }) => {
-          const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-          if (cell) {
-            cell.classList.add('just-placed');
-            setTimeout(() => cell.classList.remove('just-placed'), 200);
-          }
-        });
-      }, 10);
+      // Clear current piece
+      gameState.currentPiece = null;
 
       gameState.tilesPlaced++;
       updateWaveProgress();
+      renderBoard();
 
       // Check for completed rows
       const clearedCount = checkRows();
 
-      // If rows were cleared, wait for animation before spawning next piece
-      if (clearedCount > 0) {
-        // Pause the drop interval during row clear
-        clearInterval(gameState.dropInterval);
-
-        setTimeout(() => {
-          if (gameState.tilesPlaced >= TILES_PER_ROUND) {
-            startAttackPhase();
-          } else {
-            spawnPiece();
-            // Restart drop interval
-            gameState.dropInterval = setInterval(() => {
-              if (!gameState.gameOver && gameState.currentPiece) {
-                dropPiece();
-              }
-            }, 1000);
-          }
-        }, 350);
-      } else {
-        // No rows cleared, continue immediately
+      // Continue game after short delay
+      setTimeout(() => {
         if (gameState.tilesPlaced >= TILES_PER_ROUND) {
           startAttackPhase();
         } else {
           spawnPiece();
+          renderBoard();
         }
-      }
+      }, clearedCount > 0 ? 350 : 50);
     }
 
     // Check and harvest completed rows, returns count
