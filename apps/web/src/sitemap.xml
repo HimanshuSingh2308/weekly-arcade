@@ -80,6 +80,14 @@
     <priority>0.5</priority>
   </url>
 
+  <!-- About -->
+  <url>
+    <loc>https://weeklyarcade.games/about/</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- Legal Pages -->
   <url>
     <loc>https://weeklyarcade.games/privacy/</loc>

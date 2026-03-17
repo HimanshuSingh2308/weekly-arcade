@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | Weekly Arcade</title>
+
+  <!-- SEO -->
+  <meta name="description" content="About Weekly Arcade - Free browser games with new releases every week. Learn about our mission, games, and team.">
+  <link rel="canonical" href="https://weeklyarcade.games/about/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="About | Weekly Arcade">
+  <meta property="og:description" content="Learn about Weekly Arcade - Free browser games with new releases every week.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weeklyarcade.games/about/">
+  <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#e94560">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+      --gold: #ffd700;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon { font-size: 1.8rem; }
+
+    .nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav a:hover, .nav a.active { color: var(--accent); }
+
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 3rem 0;
+    }
+
+    .hero-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    /* Content Cards */
+    .content-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h2 .icon { font-size: 1.5rem; }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    strong {
+      color: var(--text-primary);
+    }
+
+    /* Games Grid */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .game-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .game-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      text-decoration: none;
+    }
+
+    .game-card .game-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .game-card .game-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* Stats */
+    .stats-row {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .feature {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: var(--text-primary);
+    }
+
+    .feature-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* CTA */
+    .cta {
+      text-align: center;
+      padding: 2rem 0;
+    }
+
+    .cta-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: white;
+      padding: 1rem 2.5rem;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .cta-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(233, 69, 96, 0.4);
+      text-decoration: none;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      .header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .hero-icon {
+        font-size: 4rem;
+      }
+
+      .content-card {
+        padding: 1.5rem;
+      }
+
+      .stats-row {
+        gap: 1rem;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+      }
+
+      .footer-links {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">
+      <span class="logo-icon">🎮</span>
+      Weekly Arcade
+    </a>
+    <nav class="nav">
+      <a href="/">Games</a>
+      <a href="/leaderboard/">Leaderboard</a>
+      <a href="/about/" class="active">About</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <div class="hero-icon">🎮</div>
+      <h1 class="page-title">About Weekly Arcade</h1>
+      <p class="tagline">Free browser games, new releases every week</p>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">🎯</span> Our Mission</h2>
+      <p>Weekly Arcade is dedicated to bringing you high-quality, free browser games that you can play instantly - no downloads, no installations, no hassle.</p>
+      <p>We believe gaming should be accessible to everyone. Whether you have 2 minutes or 2 hours, our games are designed to be fun, engaging, and playable on any device.</p>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">🕹️</span> Our Games</h2>
+      <p>From classic arcade games to modern puzzles, we've got something for everyone:</p>
+      <div class="games-grid">
+        <a href="/games/wordle/" class="game-card">
+          <div class="game-icon">🔤</div>
+          <div class="game-name">Wordle</div>
+        </a>
+        <a href="/games/snake/" class="game-card">
+          <div class="game-icon">🐍</div>
+          <div class="game-name">Snake</div>
+        </a>
+        <a href="/games/2048/" class="game-card">
+          <div class="game-icon">🔢</div>
+          <div class="game-name">2048</div>
+        </a>
+        <a href="/games/chaos-kitchen/" class="game-card">
+          <div class="game-icon">👨‍🍳</div>
+          <div class="game-name">Chaos Kitchen</div>
+        </a>
+        <a href="/games/memory-match/" class="game-card">
+          <div class="game-icon">🧠</div>
+          <div class="game-name">Memory Match</div>
+        </a>
+        <a href="/games/voidbreak/" class="game-card">
+          <div class="game-icon">🚀</div>
+          <div class="game-name">Voidbreak</div>
+        </a>
+        <a href="/games/lumble/" class="game-card">
+          <div class="game-icon">🌟</div>
+          <div class="game-name">Lumble</div>
+        </a>
+        <a href="/games/fieldstone/" class="game-card">
+          <div class="game-icon">🏰</div>
+          <div class="game-name">Fieldstone</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">✨</span> Features</h2>
+      <div class="features-grid">
+        <div class="feature">
+          <div class="feature-icon">🆓</div>
+          <div class="feature-title">100% Free</div>
+          <div class="feature-desc">No hidden costs, no paywalls</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📱</div>
+          <div class="feature-title">Play Anywhere</div>
+          <div class="feature-desc">Desktop, tablet, or mobile</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🏆</div>
+          <div class="feature-title">Leaderboards</div>
+          <div class="feature-desc">Compete with players worldwide</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">💾</div>
+          <div class="feature-title">Cloud Saves</div>
+          <div class="feature-desc">Your progress, synced everywhere</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎖️</div>
+          <div class="feature-title">Achievements</div>
+          <div class="feature-desc">Unlock badges and rewards</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔄</div>
+          <div class="feature-title">Weekly Updates</div>
+          <div class="feature-desc">New games and features regularly</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">🤝</span> Join the Community</h2>
+      <p>Create a free account to:</p>
+      <ul>
+        <li>Save your progress across all devices</li>
+        <li>Compete on global leaderboards</li>
+        <li>Unlock achievements and track your stats</li>
+        <li>Customize your gaming experience</li>
+      </ul>
+      <p>Don't want to sign up? No problem! You can still play all our games as a guest.</p>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">📬</span> Contact Us</h2>
+      <p>Have feedback, suggestions, or found a bug? We'd love to hear from you!</p>
+      <p><strong>Email:</strong> hello@weeklyarcade.games</p>
+    </div>
+
+    <div class="cta">
+      <a href="/" class="cta-btn">Start Playing Now</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/about/">About</a>
+      <a href="/privacy/">Privacy Policy</a>
+      <a href="/terms/">Terms of Service</a>
+    </div>
+    <p>&copy; 2026 Weekly Arcade. All rights reserved.</p>
+  </footer>
+</body>
+</html>
