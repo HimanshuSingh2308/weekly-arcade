@@ -206,6 +206,25 @@
       transform: translateX(3px);
     }
 
+    .card.joker-card {
+      background: linear-gradient(135deg, #2d1b4e, var(--bg-secondary));
+      border-color: #9333ea;
+    }
+
+    .card.joker-card:hover {
+      border-color: #a855f7;
+    }
+
+    .jokers-section {
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+
+    .jokers-section .panel-title {
+      color: #a855f7;
+    }
+
     .card.disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -557,6 +576,25 @@
 
     .shop-card.free {
       border-color: #4CAF50;
+    }
+
+    .shop-card.joker {
+      border-color: #9333ea;
+      background: linear-gradient(135deg, var(--bg-card) 0%, #2d1b4e 100%);
+      box-shadow: 0 0 15px rgba(147, 51, 234, 0.3);
+    }
+
+    .shop-card.joker:hover {
+      border-color: #a855f7;
+      box-shadow: 0 0 25px rgba(147, 51, 234, 0.5);
+    }
+
+    .shop-card-type {
+      font-size: 0.7rem;
+      color: #a855f7;
+      text-align: center;
+      font-weight: 600;
+      letter-spacing: 0.1em;
     }
 
     .shop-card-icon { font-size: 2rem; text-align: center; }
@@ -1027,6 +1065,11 @@
         <div class="panel-title">Cards</div>
         <div id="cardsList"></div>
       </div>
+
+      <div class="panel-section jokers-section" id="jokersSection" style="display: none;">
+        <div class="panel-title">⭐ Jokers</div>
+        <div id="jokersList"></div>
+      </div>
     </div>
 
     <!-- Board -->
@@ -1392,21 +1435,30 @@
 
     // Card Definitions
     const ALL_CARDS = [
-      // Buildings
+      // Buildings (6 total)
       { id: 'lumber_mill', name: 'Lumber Mill', icon: '🪚', type: 'building', desc: '+50% Lumber production', cost: { gold: 3 }, effect: 'lumber_bonus' },
       { id: 'granary', name: 'Granary', icon: '🏪', type: 'building', desc: '+50% Food production', cost: { gold: 3 }, effect: 'food_bonus' },
       { id: 'quarry', name: 'Quarry', icon: '⛏️', type: 'building', desc: '+50% Stone production', cost: { gold: 3 }, effect: 'stone_bonus' },
       { id: 'treasury', name: 'Treasury', icon: '🏦', type: 'building', desc: '+10% Gold per round', cost: { gold: 5 }, effect: 'gold_bonus' },
       { id: 'watchtower', name: 'Watchtower', icon: '🗼', type: 'building', desc: '+20 Defence', cost: { stone: 5 }, effect: 'defence_bonus' },
-      // Units
+      { id: 'mill', name: 'Water Mill', icon: '💧', type: 'building', desc: '+50% Gold from Rivers', cost: { gold: 4 }, effect: 'river_bonus' },
+      // Units (8 total)
       { id: 'spearmen', name: 'Spearmen', icon: '🗡️', type: 'unit', desc: 'Block 30 damage', cost: { food: 4 }, power: 30 },
       { id: 'archers', name: 'Archers', icon: '🏹', type: 'unit', desc: 'Deal 40 damage', cost: { lumber: 4 }, power: 40 },
       { id: 'knights', name: 'Knights', icon: '🐴', type: 'unit', desc: 'Block 60 damage', cost: { food: 6, gold: 4 }, power: 60 },
       { id: 'catapult', name: 'Catapult', icon: '💥', type: 'unit', desc: 'Deal 80 damage', cost: { stone: 8, lumber: 4 }, power: 80 },
-      // Spells
+      { id: 'general', name: 'General', icon: '⚔️', type: 'unit', desc: 'All units +50% power', cost: { gold: 12 }, power: 0, effect: 'unit_boost' },
+      { id: 'pikemen', name: 'Pikemen', icon: '🔱', type: 'unit', desc: 'Block 45 damage', cost: { food: 5, lumber: 2 }, power: 45 },
+      { id: 'crossbowmen', name: 'Crossbowmen', icon: '🎯', type: 'unit', desc: 'Deal 55 damage', cost: { lumber: 6, gold: 2 }, power: 55 },
+      { id: 'cavalry', name: 'Cavalry', icon: '🏇', type: 'unit', desc: 'Deal 70 damage', cost: { food: 8, gold: 3 }, power: 70 },
+      // Spells (4 total)
       { id: 'terraform', name: 'Terraform', icon: '🔄', type: 'spell', desc: 'Change tile terrain', cost: { gold: 5 }, effect: 'terraform' },
       { id: 'harvest_bonus', name: 'Bountiful Harvest', icon: '✨', type: 'spell', desc: 'Double next harvest', cost: { gold: 4 }, effect: 'double_harvest' },
-      { id: 'reinforcements', name: 'Reinforcements', icon: '🛡️', type: 'spell', desc: '+50 Defence this wave', cost: { gold: 6 }, effect: 'temp_defence' }
+      { id: 'reinforcements', name: 'Reinforcements', icon: '🛡️', type: 'spell', desc: '+50 Defence this wave', cost: { gold: 6 }, effect: 'temp_defence' },
+      { id: 'siege_break', name: 'Siege Break', icon: '🔥', type: 'spell', desc: 'Destroy 50 enemy power', cost: { gold: 10 }, effect: 'siege_break' },
+      // Jokers (2 total) - Rare permanent run modifiers
+      { id: 'gold_rush', name: 'Gold Rush', icon: '🏔️', type: 'joker', desc: 'Mountains also produce +1 Gold', cost: { gold: 15 }, effect: 'gold_rush' },
+      { id: 'feudal_lord', name: 'Feudal Lord', icon: '👑', type: 'joker', desc: 'Settlements count as all terrains', cost: { gold: 15 }, effect: 'feudal_lord' }
     ];
 
     // Starting Decks
@@ -1429,6 +1481,7 @@
       tilesPlaced: 0,
       cards: [],
       buildings: [],
+      jokers: [],        // Permanent run modifiers
       tempEffects: [],
       gameOver: false,
       selectedDeck: 'farmer',
@@ -1625,21 +1678,32 @@
 
           const totalOutput = Math.floor((baseOutput + clusterBonus) * cluster.size * buildingMultiplier);
 
+          // Gold Rush joker: Mountains also produce +1 Gold per tile
+          const bonusGold = getJokerBonusGold(cluster.terrain) * cluster.size;
+
           // Track what we're gaining
           switch(cluster.terrain) {
             case TERRAIN.FOREST: gained.lumber += totalOutput; break;
             case TERRAIN.PLAINS: gained.food += totalOutput; break;
-            case TERRAIN.MOUNTAIN: gained.stone += totalOutput; break;
+            case TERRAIN.MOUNTAIN:
+              gained.stone += totalOutput;
+              if (bonusGold > 0) gained.gold += bonusGold;
+              break;
             case TERRAIN.RIVER: gained.gold += totalOutput; break;
             case TERRAIN.SETTLEMENT:
-              gained.lumber += Math.floor(totalOutput / 4);
-              gained.food += Math.floor(totalOutput / 4);
-              gained.stone += Math.floor(totalOutput / 4);
-              gained.gold += Math.floor(totalOutput / 4);
+              // Feudal Lord joker: Settlements produce more (count as all terrains)
+              const feudalBonus = hasFeudallord() ? 1.5 : 1;
+              gained.lumber += Math.floor(totalOutput / 4 * feudalBonus);
+              gained.food += Math.floor(totalOutput / 4 * feudalBonus);
+              gained.stone += Math.floor(totalOutput / 4 * feudalBonus);
+              gained.gold += Math.floor(totalOutput / 4 * feudalBonus);
               break;
           }
 
           addResource(cluster.terrain, totalOutput);
+          if (bonusGold > 0) {
+            gameState.resources.gold += bonusGold;
+          }
         });
       });
 
@@ -1721,7 +1785,21 @@
       if (terrain === TERRAIN.FOREST && gameState.buildings.includes('lumber_mill')) multiplier *= 1.5;
       if (terrain === TERRAIN.PLAINS && gameState.buildings.includes('granary')) multiplier *= 1.5;
       if (terrain === TERRAIN.MOUNTAIN && gameState.buildings.includes('quarry')) multiplier *= 1.5;
+      if (terrain === TERRAIN.RIVER && gameState.buildings.includes('mill')) multiplier *= 1.5;
       return multiplier;
+    }
+
+    // Get bonus gold from Gold Rush joker (Mountains produce +1 Gold)
+    function getJokerBonusGold(terrain) {
+      if (terrain === TERRAIN.MOUNTAIN && gameState.jokers.includes('gold_rush')) {
+        return 1;
+      }
+      return 0;
+    }
+
+    // Check if Feudal Lord joker is active (Settlements count as all terrains)
+    function hasFeudallord() {
+      return gameState.jokers.includes('feudal_lord');
     }
 
     // Show toast notification
@@ -1770,11 +1848,14 @@
       clearInterval(gameState.dropInterval);
       playSound('attack');
 
-      const enemyPower = calculateEnemyPower();
+      let enemyPower = calculateEnemyPower();
+      const siegeBreakReduction = calculateSiegeBreak();
+      enemyPower = Math.max(0, enemyPower - siegeBreakReduction);
+
       const playerDefence = calculatePlayerDefence();
 
       // Display attack phase
-      renderAttackPhase(enemyPower, playerDefence);
+      renderAttackPhase(enemyPower, playerDefence, siegeBreakReduction);
       document.getElementById('attackOverlay').classList.add('show');
     }
 
@@ -1799,11 +1880,15 @@
       // Building bonuses
       if (gameState.buildings.includes('watchtower')) defence += 20;
 
+      // Check if General is in cards (gives +50% to all units)
+      const hasGeneral = gameState.cards.includes('general');
+      const unitMultiplier = hasGeneral ? 1.5 : 1;
+
       // Unit cards
       gameState.cards.forEach(card => {
         const cardDef = ALL_CARDS.find(c => c.id === card);
-        if (cardDef && cardDef.type === 'unit') {
-          defence += cardDef.power;
+        if (cardDef && cardDef.type === 'unit' && cardDef.power > 0) {
+          defence += Math.floor(cardDef.power * unitMultiplier);
         }
       });
 
@@ -1814,6 +1899,15 @@
       }
 
       return defence;
+    }
+
+    // Calculate siege break bonus (reduces enemy power)
+    function calculateSiegeBreak() {
+      if (gameState.tempEffects.includes('siege_break')) {
+        gameState.tempEffects = gameState.tempEffects.filter(e => e !== 'siege_break');
+        return 50; // Reduce enemy power by 50
+      }
+      return 0;
     }
 
     // Render attack phase
@@ -1888,22 +1982,45 @@
     // Open card shop
     function openShop() {
       const shopCards = document.getElementById('shopCards');
-      const availableCards = ALL_CARDS.filter(card => !gameState.buildings.includes(card.id));
-      const shuffled = availableCards.sort(() => Math.random() - 0.5);
-      const offered = shuffled.slice(0, 3);
+
+      // Filter available cards (exclude already owned buildings and jokers)
+      const regularCards = ALL_CARDS.filter(card =>
+        card.type !== 'joker' &&
+        !gameState.buildings.includes(card.id)
+      );
+
+      // Jokers: available only if wave >= 3, max 1 per shop, 25% chance
+      const availableJokers = ALL_CARDS.filter(card =>
+        card.type === 'joker' &&
+        !gameState.jokers.includes(card.id)
+      );
+
+      const showJoker = gameState.wave >= 3 && availableJokers.length > 0 && Math.random() < 0.25;
+
+      // Shuffle and pick cards
+      const shuffledRegular = regularCards.sort(() => Math.random() - 0.5);
+      let offered = shuffledRegular.slice(0, showJoker ? 2 : 3);
+
+      // Add a joker if showing one
+      if (showJoker) {
+        const joker = availableJokers[Math.floor(Math.random() * availableJokers.length)];
+        offered.push(joker);
+      }
 
       shopCards.innerHTML = offered.map((card, i) => {
         const costText = Object.entries(card.cost || {}).map(([res, amt]) => `${amt} ${res}`).join(', ');
         const canAfford = canAffordCard(card);
+        const isJoker = card.type === 'joker';
 
         return `
-          <div class="shop-card ${i === 0 ? 'free' : ''} ${canAfford || i === 0 ? '' : 'disabled'}"
-               onclick="buyCard('${card.id}', ${i === 0})"
+          <div class="shop-card ${i === 0 && !isJoker ? 'free' : ''} ${isJoker ? 'joker' : ''} ${canAfford || (i === 0 && !isJoker) ? '' : 'disabled'}"
+               onclick="buyCard('${card.id}', ${i === 0 && !isJoker})"
                data-card="${card.id}">
             <div class="shop-card-icon">${card.icon}</div>
             <div class="shop-card-name">${card.name}</div>
+            ${isJoker ? '<div class="shop-card-type">⭐ JOKER</div>' : ''}
             <div class="shop-card-desc">${card.desc}</div>
-            <div class="shop-card-cost">${i === 0 ? 'FREE' : costText}</div>
+            <div class="shop-card-cost">${i === 0 && !isJoker ? 'FREE' : costText}</div>
           </div>
         `;
       }).join('');
@@ -1936,6 +2053,16 @@
 
       if (card.type === 'building') {
         gameState.buildings.push(cardId);
+        showToast(`Built ${card.name}!`, 'score');
+      } else if (card.type === 'joker') {
+        gameState.jokers.push(cardId);
+        showToast(`👑 ${card.name} activated!`, 'score');
+      } else if (card.type === 'spell') {
+        // Spells add temp effects
+        if (card.effect) {
+          gameState.tempEffects.push(card.effect);
+        }
+        showToast(`Cast ${card.name}!`, 'score');
       } else {
         gameState.cards.push(cardId);
       }
@@ -2136,6 +2263,27 @@
           </div>
         `;
       }).join('');
+
+      // Update jokers display
+      const jokersSection = document.getElementById('jokersSection');
+      const jokersList = document.getElementById('jokersList');
+      if (gameState.jokers.length > 0) {
+        jokersSection.style.display = 'block';
+        jokersList.innerHTML = gameState.jokers.map(jokerId => {
+          const joker = ALL_CARDS.find(c => c.id === jokerId);
+          if (!joker) return '';
+          return `
+            <div class="card joker-card">
+              <div class="card-header">
+                <span class="card-name">${joker.icon} ${joker.name}</span>
+              </div>
+              <div class="card-desc">${joker.desc}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        jokersSection.style.display = 'none';
+      }
 
       // Update enemy preview
       const enemyPower = calculateEnemyPower();
