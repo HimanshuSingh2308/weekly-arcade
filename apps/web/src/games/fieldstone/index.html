@@ -1986,9 +1986,12 @@
     async function submitScore() {
       try {
         if (window.apiClient) {
-          await window.apiClient.submitScore('fieldstone', gameState.score, {
+          await window.apiClient.submitScore('fieldstone', {
+            score: gameState.score,
             wave: gameState.wave,
-            deck: gameState.selectedDeck
+            metadata: {
+              deck: gameState.selectedDeck
+            }
           });
         }
       } catch (e) {
