@@ -1125,7 +1125,7 @@
           <div class="control-item"><kbd>↓</kbd> Soft Drop</div>
           <div class="control-item"><kbd>Space</kbd> Hard Drop</div>
         </div>
-        <p style="margin-top: 0.5rem; font-size: 0.8rem;">📱 <em>Touch: Swipe left/right to move, up to rotate, down to drop</em></p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">📱 <em>Touch: Tap to rotate, swipe left/right to move, swipe down to drop</em></p>
       </div>
 
       <div class="tutorial-section">
@@ -2165,21 +2165,33 @@
       // Touch controls
       let touchStartX = 0;
       let touchStartY = 0;
+      let touchStartTime = 0;
 
       document.getElementById('gameBoard').addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
-      });
+        touchStartTime = Date.now();
+        e.preventDefault();
+      }, { passive: false });
 
       document.getElementById('gameBoard').addEventListener('touchend', (e) => {
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
+        const dt = Date.now() - touchStartTime;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
+        // Tap to rotate (small movement, quick tap)
+        if (distance < 20 && dt < 300) {
+          rotatePiece();
+          return;
+        }
+
+        // Swipe gestures
         if (Math.abs(dx) > Math.abs(dy)) {
           if (dx > 30) movePiece(1);
           else if (dx < -30) movePiece(-1);
         } else {
-          if (dy > 30) hardDrop();
+          if (dy > 50) hardDrop();
           else if (dy < -30) rotatePiece();
         }
       });
