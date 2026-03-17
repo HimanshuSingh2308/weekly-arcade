@@ -3688,25 +3688,35 @@
 
       try {
         const cloudState = await window.apiClient.getGameState('wordle');
-        if (cloudState && cloudState.data) {
+        if (cloudState) {
           // Merge cloud state with local (prefer higher values)
           const localStats = JSON.parse(localStorage.getItem('wordle-stats') || '{}');
-          const cloudStats = cloudState.data.stats || {};
+
+          // Cloud state uses gamesPlayed/gamesWon, local uses played/won
+          const cloudPlayed = cloudState.gamesPlayed || 0;
+          const cloudWon = cloudState.gamesWon || 0;
 
           // Use cloud if it has better stats
-          if ((cloudStats.played || 0) > (localStats.played || 0)) {
-            localStorage.setItem('wordle-stats', JSON.stringify(cloudStats));
-            stats = cloudStats;
+          if (cloudPlayed > (localStats.played || 0)) {
+            const mergedStats = {
+              played: cloudPlayed,
+              won: cloudWon,
+              streak: cloudState.currentStreak || 0,
+              maxStreak: cloudState.bestStreak || 0,
+              distribution: cloudState.guessDistribution || {}
+            };
+            localStorage.setItem('wordle-stats', JSON.stringify(mergedStats));
+            stats = mergedStats;
           }
 
           // Sync level
-          if ((cloudState.data.level || 1) > (parseInt(localStorage.getItem('wordle-level')) || 1)) {
-            localStorage.setItem('wordle-level', cloudState.data.level);
+          if ((cloudState.currentLevel || 1) > (parseInt(localStorage.getItem('wordle-level')) || 1)) {
+            localStorage.setItem('wordle-level', cloudState.currentLevel);
           }
 
           // Sync XP
-          if ((cloudState.data.totalXP || 0) > (parseInt(localStorage.getItem('wordle-total-xp')) || 0)) {
-            localStorage.setItem('wordle-total-xp', cloudState.data.totalXP);
+          if ((cloudState.additionalData?.totalXP || 0) > (parseInt(localStorage.getItem('wordle-total-xp')) || 0)) {
+            localStorage.setItem('wordle-total-xp', cloudState.additionalData.totalXP);
           }
 
           console.log('Cloud state loaded');

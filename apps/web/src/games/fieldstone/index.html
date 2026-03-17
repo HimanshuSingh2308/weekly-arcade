@@ -2677,8 +2677,9 @@
 
       modal.classList.add('show');
 
-      // Submit score
+      // Submit score and save state
       submitScore();
+      saveCloudState();
     }
 
     // Submit score to leaderboard
@@ -3085,6 +3086,61 @@
       btn.classList.toggle('muted', !soundEnabled);
     }
 
+    // Cloud state
+    let cloudStateFieldstone = null;
+
+    async function saveCloudState() {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        const prevGamesPlayed = cloudStateFieldstone?.gamesPlayed || 0;
+        const prevGamesWon = cloudStateFieldstone?.gamesWon || 0;
+        const prevBestStreak = cloudStateFieldstone?.bestStreak || 0;
+        const didWin = gameState.wave >= 10;
+
+        const state = {
+          currentLevel: gameState.wave,
+          currentStreak: 0,
+          bestStreak: Math.max(prevBestStreak, gameState.wave),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (didWin ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
+          additionalData: {
+            bestScore: Math.max(cloudStateFieldstone?.additionalData?.bestScore || 0, gameState.score),
+            bestWave: Math.max(cloudStateFieldstone?.additionalData?.bestWave || 0, gameState.wave)
+          }
+        };
+        await window.apiClient.saveGameState('fieldstone', state);
+        cloudStateFieldstone = state;
+
+        checkAchievementsFieldstone(state);
+      } catch (e) {
+        console.error('Failed to save cloud state:', e);
+      }
+    }
+
+    async function loadCloudState() {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        cloudStateFieldstone = await window.apiClient.getGameState('fieldstone');
+      } catch (e) {
+        console.log('Could not load cloud state');
+      }
+    }
+
+    async function checkAchievementsFieldstone(state) {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        if (state.gamesPlayed === 1) {
+          await window.apiClient.unlockAchievement('first_word', 'fieldstone');
+        }
+        if (state.gamesWon >= 10) {
+          await window.apiClient.unlockAchievement('ten_wins', 'fieldstone');
+        }
+      } catch (e) {
+        console.log('Could not check achievements');
+      }
+    }
+
     // Auth integration
     function initAuth() {
       if (window.authManager) {
@@ -3092,6 +3148,7 @@
           currentUser = user;
           if (user) {
             console.log('User signed in:', user.displayName);
+            loadCloudState();
           }
         });
       }

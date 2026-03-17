@@ -2550,8 +2550,9 @@
 
       document.getElementById('resultsModal').classList.add('show');
 
-      // Submit final score
+      // Submit final score and save state
       submitScore();
+      saveCloudState();
     }
 
     function formatTime(seconds) {
@@ -2975,6 +2976,64 @@
     }
 
     // ============================================
+    // CLOUD STATE
+    // ============================================
+
+    let cloudStateLumble = null;
+
+    async function saveCloudState() {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        const prevGamesPlayed = cloudStateLumble?.gamesPlayed || 0;
+        const prevGamesWon = cloudStateLumble?.gamesWon || 0;
+        const prevBestStreak = cloudStateLumble?.bestStreak || 0;
+        const didWin = gameState.sparksCollected >= gameState.totalSparks;
+
+        const state = {
+          currentLevel: gameState.sparksCollected,
+          currentStreak: 0,
+          bestStreak: Math.max(prevBestStreak, gameState.sparksCollected),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (didWin ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
+          additionalData: {
+            bestScore: Math.max(cloudStateLumble?.additionalData?.bestScore || 0, gameState.score),
+            bestSparks: Math.max(cloudStateLumble?.additionalData?.bestSparks || 0, gameState.sparksCollected)
+          }
+        };
+        await window.apiClient.saveGameState('lumble', state);
+        cloudStateLumble = state;
+
+        checkAchievementsLumble(state);
+      } catch (e) {
+        console.error('Failed to save cloud state:', e);
+      }
+    }
+
+    async function loadCloudState() {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        cloudStateLumble = await window.apiClient.getGameState('lumble');
+      } catch (e) {
+        console.log('Could not load cloud state');
+      }
+    }
+
+    async function checkAchievementsLumble(state) {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        if (state.gamesPlayed === 1) {
+          await window.apiClient.unlockAchievement('first_word', 'lumble');
+        }
+        if (state.gamesWon >= 10) {
+          await window.apiClient.unlockAchievement('ten_wins', 'lumble');
+        }
+      } catch (e) {
+        console.log('Could not check achievements');
+      }
+    }
+
+    // ============================================
     // AUTH
     // ============================================
 
@@ -2989,6 +3048,7 @@
               userSection.innerHTML = `
                 <img class="user-avatar" src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" alt="User">
               `;
+              loadCloudState();
               syncGuestScores();
             } else {
               userSection.innerHTML = `

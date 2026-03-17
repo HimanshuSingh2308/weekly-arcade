@@ -1952,18 +1952,31 @@
       }
     }
 
+    // Store cloud state for incremental updates
+    let cloudStateKitchen = null;
+
     async function saveCloudState() {
       if (!currentUser || !window.apiClient) return;
       try {
-        await window.apiClient.saveGameState('chaos-kitchen', {
+        const prevGamesPlayed = cloudStateKitchen?.gamesPlayed || 0;
+        const prevGamesWon = cloudStateKitchen?.gamesWon || 0;
+        const prevBestStreak = cloudStateKitchen?.bestStreak || 0;
+        const didWin = ordersCompleted >= 5;
+
+        const state = {
           currentLevel: level,
           currentStreak: 0,
-          bestStreak: 0,
-          gamesPlayed: 1,
-          gamesWon: ordersCompleted >= 5 ? 1 : 0,
-          lastPlayedDate: new Date().toISOString(),
+          bestStreak: Math.max(prevBestStreak, level),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (didWin ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
           additionalData: { highScore, bestOrders: ordersCompleted }
-        });
+        };
+        await window.apiClient.saveGameState('chaos-kitchen', state);
+        cloudStateKitchen = state;
+
+        // Check achievements
+        checkAchievementsKitchen(state);
       } catch (e) {
         console.error('Failed to save state:', e);
       }
@@ -1972,13 +1985,27 @@
     async function loadCloudState() {
       if (!currentUser || !window.apiClient) return;
       try {
-        const state = await window.apiClient.getGameState('chaos-kitchen');
-        if (state?.additionalData?.highScore > highScore) {
-          highScore = state.additionalData.highScore;
+        cloudStateKitchen = await window.apiClient.getGameState('chaos-kitchen');
+        if (cloudStateKitchen?.additionalData?.highScore > highScore) {
+          highScore = cloudStateKitchen.additionalData.highScore;
           localStorage.setItem('chaos-kitchen-high-score', highScore);
         }
       } catch (e) {
         console.log('Could not load cloud state');
+      }
+    }
+
+    async function checkAchievementsKitchen(state) {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        if (state.gamesPlayed === 1) {
+          await window.apiClient.unlockAchievement('first_word', 'chaos-kitchen');
+        }
+        if (state.gamesWon >= 10) {
+          await window.apiClient.unlockAchievement('ten_wins', 'chaos-kitchen');
+        }
+      } catch (e) {
+        console.log('Could not check achievements');
       }
     }
 

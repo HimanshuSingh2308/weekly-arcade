@@ -1480,8 +1480,9 @@
         document.getElementById('dailyChallengeBtn').innerHTML = '&#10004; Daily Complete!';
       }
 
-      // Submit score
+      // Submit score and save state
       submitScore(won);
+      saveCloudState(won);
 
       // Show results modal
       setTimeout(() => {
@@ -1591,6 +1592,61 @@
 
     // Auth state management
     let currentUser = null;
+    let cloudStateMemory = null;
+
+    // Cloud state functions
+    async function saveCloudState(won) {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        const prevGamesPlayed = cloudStateMemory?.gamesPlayed || 0;
+        const prevGamesWon = cloudStateMemory?.gamesWon || 0;
+        const prevBestStreak = cloudStateMemory?.bestStreak || 0;
+
+        const state = {
+          currentLevel: 1,
+          currentStreak: 0,
+          bestStreak: Math.max(prevBestStreak, gameState.maxCombo),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (won ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
+          additionalData: {
+            bestScore: Math.max(cloudStateMemory?.additionalData?.bestScore || 0, gameState.score),
+            bestTime: Math.min(cloudStateMemory?.additionalData?.bestTime || 9999, gameState.timer),
+            bestMoves: Math.min(cloudStateMemory?.additionalData?.bestMoves || 9999, gameState.moves)
+          }
+        };
+        await window.apiClient.saveGameState('memory-match', state);
+        cloudStateMemory = state;
+
+        // Check achievements
+        checkAchievementsMemory(state);
+      } catch (e) {
+        console.error('Failed to save cloud state:', e);
+      }
+    }
+
+    async function loadCloudState() {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        cloudStateMemory = await window.apiClient.getGameState('memory-match');
+      } catch (e) {
+        console.log('Could not load cloud state');
+      }
+    }
+
+    async function checkAchievementsMemory(state) {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        if (state.gamesPlayed === 1) {
+          await window.apiClient.unlockAchievement('first_word', 'memory-match');
+        }
+        if (state.gamesWon >= 10) {
+          await window.apiClient.unlockAchievement('ten_wins', 'memory-match');
+        }
+      } catch (e) {
+        console.log('Could not check achievements');
+      }
+    }
 
     function initAuth() {
       const checkAuth = setInterval(() => {
@@ -1599,6 +1655,7 @@
           window.authManager.onAuthStateChanged(user => {
             currentUser = user;
             if (user) {
+              loadCloudState();
               syncGuestScores();
             }
           });

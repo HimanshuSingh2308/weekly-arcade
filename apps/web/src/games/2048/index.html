@@ -1241,17 +1241,25 @@
       }
     }
 
+    // Store cloud state for incremental updates
+    let cloudState2048 = null;
+
     async function saveCloudState() {
       if (!window.apiClient || !currentUser) return;
 
       try {
+        // Increment from existing cloud state
+        const prevGamesPlayed = cloudState2048?.gamesPlayed || 0;
+        const prevGamesWon = cloudState2048?.gamesWon || 0;
+        const prevBestStreak = cloudState2048?.bestStreak || 0;
+
         const state = {
           currentLevel: Math.floor(Math.log2(highestTile || 2)),
           currentStreak: 0,
-          bestStreak: 0,
-          gamesPlayed: parseInt(localStorage.getItem('2048-games-played')) || 1,
-          gamesWon: won ? 1 : 0,
-          lastPlayedDate: new Date().toISOString(),
+          bestStreak: Math.max(prevBestStreak, Math.floor(Math.log2(highestTile || 2))),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (won ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
           additionalData: {
             bestScore,
             highestTile,
@@ -1259,6 +1267,10 @@
           }
         };
         await window.apiClient.saveGameState('2048', state);
+        cloudState2048 = state;
+
+        // Check achievements
+        checkAchievements2048(state);
       } catch (error) {
         console.error('Failed to save cloud state:', error);
       }
@@ -1268,14 +1280,29 @@
       if (!window.apiClient || !currentUser) return;
 
       try {
-        const state = await window.apiClient.getGameState('2048');
-        if (state?.additionalData?.bestScore > bestScore) {
-          bestScore = state.additionalData.bestScore;
+        cloudState2048 = await window.apiClient.getGameState('2048');
+        if (cloudState2048?.additionalData?.bestScore > bestScore) {
+          bestScore = cloudState2048.additionalData.bestScore;
           localStorage.setItem('2048-best-score', bestScore);
           bestScoreEl.textContent = bestScore;
         }
       } catch (error) {
         console.error('Failed to load cloud state:', error);
+      }
+    }
+
+    async function checkAchievements2048(state) {
+      if (!window.apiClient || !currentUser) return;
+
+      try {
+        if (state.gamesPlayed === 1) {
+          await window.apiClient.unlockAchievement('first_word', '2048');
+        }
+        if (state.gamesWon >= 10) {
+          await window.apiClient.unlockAchievement('ten_wins', '2048');
+        }
+      } catch (error) {
+        console.log('Could not check achievements');
       }
     }
 

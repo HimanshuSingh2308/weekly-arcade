@@ -1099,13 +1099,16 @@
       }
     }
 
+    // Store cloud state for incremental updates
+    let cloudState = null;
+
     async function loadCloudState() {
       if (!currentUser || !window.apiClient) return;
 
       try {
-        const state = await window.apiClient.getGameState('snake');
-        if (state && state.additionalData?.highScore) {
-          const cloudHighScore = state.additionalData.highScore;
+        cloudState = await window.apiClient.getGameState('snake');
+        if (cloudState && cloudState.additionalData?.highScore) {
+          const cloudHighScore = cloudState.additionalData.highScore;
           if (cloudHighScore > highScore) {
             highScore = cloudHighScore;
             localStorage.setItem('snake-high-score', highScore);
@@ -1117,24 +1120,52 @@
       }
     }
 
-    async function saveCloudState() {
+    async function saveCloudState(won = false) {
       if (!currentUser || !window.apiClient) return;
 
       try {
-        await window.apiClient.saveGameState('snake', {
+        // Increment from existing state
+        const prevGamesPlayed = cloudState?.gamesPlayed || 0;
+        const prevGamesWon = cloudState?.gamesWon || 0;
+        const prevBestStreak = cloudState?.bestStreak || 0;
+
+        const newState = {
           currentLevel: level,
           currentStreak: 0,
-          bestStreak: 0,
-          gamesPlayed: 1,
-          gamesWon: 0,
-          lastPlayedDate: new Date().toISOString(),
+          bestStreak: Math.max(prevBestStreak, level),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (won ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
           additionalData: {
             highScore: highScore,
             lastScore: score
           }
-        });
+        };
+
+        await window.apiClient.saveGameState('snake', newState);
+        cloudState = newState; // Update local cache
+
+        // Check achievements
+        checkAchievements(newState);
       } catch (error) {
         console.log('Could not save cloud state');
+      }
+    }
+
+    async function checkAchievements(state) {
+      if (!currentUser || !window.apiClient) return;
+
+      try {
+        // First game achievement
+        if (state.gamesPlayed === 1) {
+          await window.apiClient.unlockAchievement('first_word', 'snake');
+        }
+        // 10 wins achievement
+        if (state.gamesWon >= 10) {
+          await window.apiClient.unlockAchievement('ten_wins', 'snake');
+        }
+      } catch (error) {
+        console.log('Could not check achievements');
       }
     }
 

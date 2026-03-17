@@ -2296,7 +2296,8 @@
           if (user) {
             authBtn.textContent = user.displayName || 'Profile';
             authBtn.onclick = () => window.location.href = '/profile/';
-            // Load customization data on login
+            // Load cloud state and customization data on login
+            loadCloudState();
             loadCustomizationData();
           } else {
             authBtn.textContent = 'Sign In';
@@ -2803,8 +2804,9 @@
       stopAmbientMusic();
       playSound('game_over');
 
-      // Submit score and check achievements
+      // Submit score, save state, and check achievements
       submitScore();
+      saveCloudState();
       checkAchievements();
     }
 
@@ -2856,6 +2858,46 @@
         });
       } catch (err) {
         console.error('Failed to submit score:', err);
+      }
+    }
+
+    // Cloud state for tracking game progress
+    let cloudStateVoidbreak = null;
+
+    async function saveCloudState() {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        const prevGamesPlayed = cloudStateVoidbreak?.gamesPlayed || 0;
+        const prevGamesWon = cloudStateVoidbreak?.gamesWon || 0;
+        const prevBestStreak = cloudStateVoidbreak?.bestStreak || 0;
+        const didWin = wave >= 10;
+
+        const state = {
+          currentLevel: wave,
+          currentStreak: getPlayStreak(),
+          bestStreak: Math.max(prevBestStreak, getPlayStreak(), wave),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (didWin ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
+          additionalData: {
+            bestScore: Math.max(cloudStateVoidbreak?.additionalData?.bestScore || 0, score),
+            bestWave: Math.max(cloudStateVoidbreak?.additionalData?.bestWave || 0, wave),
+            totalKills: (cloudStateVoidbreak?.additionalData?.totalKills || 0) + totalKills
+          }
+        };
+        await window.apiClient.saveGameState('voidbreak', state);
+        cloudStateVoidbreak = state;
+      } catch (e) {
+        console.error('Failed to save cloud state:', e);
+      }
+    }
+
+    async function loadCloudState() {
+      if (!currentUser || !window.apiClient) return;
+      try {
+        cloudStateVoidbreak = await window.apiClient.getGameState('voidbreak');
+      } catch (e) {
+        console.log('Could not load cloud state');
       }
     }
 
