@@ -13,11 +13,13 @@ export type AchievementCategory =
   | 'streak'
   | 'level'
   | 'speed'
-  | 'skill';
+  | 'skill'
+  | 'voidbreak';
 
 export interface AchievementRequirement {
-  type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins';
+  type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special';
   value?: number;
+  gameId?: string;
 }
 
 export interface UserAchievement {
