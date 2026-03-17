@@ -4774,22 +4774,27 @@
       // If user is logged in, sync with backend
       if (currentUser && window.apiClient) {
         try {
+          console.log('[Customization] Loading from backend...');
           // Get inventory (coins + owned items)
           const inventory = await window.apiClient.getInventory();
+          console.log('[Customization] Inventory loaded:', inventory);
           customization.coins = inventory.coins || 0;
           customization.totalCoinsEarned = inventory.totalCoinsEarned || 0;
           customization.ownedItems = inventory.ownedItemIds || [];
 
           // Get equipped items
           const equipped = await window.apiClient.getEquipped('voidbreak');
+          console.log('[Customization] Equipped loaded:', equipped);
           if (equipped.equipped) {
             customization.equipped = { ...customization.equipped, ...equipped.equipped };
           }
 
           updateCoinDisplays();
         } catch (e) {
-          console.warn('[Customization] Failed to load from backend:', e);
+          console.error('[Customization] Failed to load from backend:', e);
         }
+      } else {
+        console.log('[Customization] Skipping backend load - not logged in or no apiClient');
       }
 
       // Mark free items as owned
@@ -4982,6 +4987,8 @@
     async function addCoinsReward(amount, description) {
       if (amount <= 0) return;
 
+      console.log('[Coins] Adding reward:', { amount, description, currentUser: !!currentUser, apiClient: !!window.apiClient });
+
       coinsEarnedThisRun += amount;
 
       // Update local state
@@ -4994,10 +5001,14 @@
       // Sync with backend if logged in
       if (currentUser && window.apiClient) {
         try {
-          await window.apiClient.addCoins(amount, 'game_reward', 'voidbreak', description);
+          console.log('[Coins] Syncing to backend...');
+          const result = await window.apiClient.addCoins(amount, 'game_reward', 'voidbreak', description);
+          console.log('[Coins] Backend sync success:', result);
         } catch (e) {
-          console.warn('[Coins] Failed to sync:', e);
+          console.error('[Coins] Failed to sync to backend:', e);
         }
+      } else {
+        console.log('[Coins] Skipping backend sync - not logged in or no apiClient');
       }
 
       updateCoinDisplays();
