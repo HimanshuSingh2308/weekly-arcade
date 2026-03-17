@@ -104,7 +104,7 @@
     .header {
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border);
-      padding: 0.5rem 1rem;
+      padding: 0.75rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -112,17 +112,18 @@
       top: 0;
       left: 0;
       right: 0;
-      z-index: 100;
+      z-index: 500;
       height: 50px;
     }
 
     .back-btn {
-      color: var(--text-secondary);
+      color: var(--text-primary);
       text-decoration: none;
       font-size: 0.9rem;
+      padding: 0.25rem 0.5rem;
     }
 
-    .back-btn:hover { color: var(--text-primary); }
+    .back-btn:hover { color: var(--accent); }
 
     .title {
       font-size: 1.3rem;
@@ -256,8 +257,11 @@
     /* Menu Screen */
     .menu-screen {
       position: fixed;
-      inset: 0;
-      background: rgba(5, 5, 16, 0.95);
+      top: 50px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 5, 16, 0.98);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -631,20 +635,22 @@
       position: fixed;
       top: 70px;
       left: 50%;
-      transform: translateX(-50%) translateY(-100px);
+      transform: translateX(-50%);
       background: var(--bg-card);
       border: 2px solid var(--epic);
       border-radius: 12px;
       padding: 1rem 1.5rem;
-      display: flex;
+      display: none;
       align-items: center;
       gap: 1rem;
       z-index: 300;
-      transition: transform 0.3s ease-out;
+      opacity: 0;
+      transition: opacity 0.3s ease-out;
     }
 
     .achievement-toast.show {
-      transform: translateX(-50%) translateY(0);
+      display: flex;
+      opacity: 1;
     }
 
     .achievement-toast-icon {
@@ -746,7 +752,7 @@
 
   <!-- Menu Screen -->
   <div class="menu-screen" id="menuScreen">
-    <div class="menu-icon">☄️</div>
+    <div class="menu-icon">🚀</div>
     <h2 class="menu-title">Voidbreak</h2>
     <p class="menu-tagline">Clear the field. Choose your weapon. Go deeper.</p>
     <button class="play-btn" id="playBtn">START RUN</button>

@@ -499,6 +499,32 @@
       margin-bottom: 0.5rem;
     }
 
+    .menu-meta {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .meta-hearthstones {
+      font-size: 1.3rem;
+      color: #ff6b35;
+      font-weight: 700;
+    }
+
+    .meta-rank {
+      color: #a855f7;
+      font-weight: 600;
+      margin: 0.3rem 0;
+    }
+
+    .meta-stats {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
     .menu-subtitle {
       color: var(--text-secondary);
       margin-bottom: 2rem;
@@ -917,7 +943,55 @@
     .gameover-icon { font-size: 4rem; }
     .gameover-title { font-size: 2rem; margin: 1rem 0; }
     .gameover-score { font-size: 3rem; color: var(--gold); font-weight: 700; }
-    .gameover-wave { color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .gameover-wave { color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+    .gameover-meta {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .gameover-hearthstones {
+      font-size: 1.3rem;
+      color: #ff6b35;
+      font-weight: 700;
+    }
+
+    .gameover-total {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.3rem;
+    }
+
+    .gameover-tier {
+      font-size: 1rem;
+      color: #a855f7;
+      margin-top: 0.5rem;
+      font-weight: 600;
+    }
+
+    .gameover-next-tier {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .gameover-unlocks {
+      margin: 1rem 0;
+    }
+
+    .new-unlock {
+      background: linear-gradient(135deg, #4CAF50, #2e7d32);
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-weight: 600;
+      animation: unlock-glow 1s infinite alternate;
+    }
+
+    @keyframes unlock-glow {
+      from { box-shadow: 0 0 5px #4CAF50; }
+      to { box-shadow: 0 0 20px #4CAF50; }
+    }
 
     .gameover-btn {
       background: var(--accent);
@@ -1021,6 +1095,12 @@
     <div class="menu-icon">🏰</div>
     <h1 class="menu-title">Fieldstone</h1>
     <p class="menu-subtitle">Build your kingdom, one tile at a time</p>
+
+    <div class="menu-meta" id="menuMeta">
+      <div class="meta-hearthstones">🔥 <span id="menuHearthstones">0</span> Hearthstones</div>
+      <div class="meta-rank">Rank: <span id="menuRank">Peasant</span></div>
+      <div class="meta-stats">Runs: <span id="menuRuns">0</span> | Wins: <span id="menuWins">0</span> | Best: <span id="menuBest">0</span></div>
+    </div>
 
     <button class="menu-btn" id="startBtn">Start Game</button>
     <button class="menu-btn" id="tutorialBtn" style="background: var(--bg-card); border: 2px solid var(--border); margin-top: -0.5rem;">How to Play</button>
@@ -1163,6 +1243,16 @@
       <div class="gameover-title" id="gameoverTitle">Kingdom Fallen</div>
       <div class="gameover-score" id="gameoverScore">0</div>
       <div class="gameover-wave" id="gameoverWave">Reached Wave 1</div>
+
+      <div class="gameover-meta">
+        <div class="gameover-hearthstones" id="gameoverHearthstones">+0 🔥 Hearthstones</div>
+        <div class="gameover-total" id="gameoverTotal">Total: 0 🔥</div>
+        <div class="gameover-tier" id="gameoverTier">Rank: Peasant</div>
+        <div class="gameover-next-tier" id="gameoverNextTier">Next: Apprentice (50 🔥)</div>
+      </div>
+
+      <div class="gameover-unlocks" id="gameoverUnlocks" style="display: none;"></div>
+
       <button class="gameover-btn" onclick="location.reload()">Play Again</button>
       <button class="gameover-btn" style="background: var(--bg-card);" onclick="window.location='/'">Menu</button>
     </div>
@@ -1524,6 +1614,85 @@
       lastDrop: 0
     };
 
+    // ============================================
+    // META-PROGRESSION SYSTEM (Hearthstones)
+    // ============================================
+
+    const META_STORAGE_KEY = 'fieldstone_meta';
+
+    // Unlock tiers per PRD
+    const UNLOCK_TIERS = [
+      { tier: 1, cost: 50, name: 'Apprentice', reward: 'Unlocks Water Mill card', unlocks: ['mill'] },
+      { tier: 2, cost: 150, name: 'Builder', reward: 'Unlocks 2 new Jokers', unlocks: ['gold_rush', 'feudal_lord'] },
+      { tier: 3, cost: 300, name: 'Commander', reward: 'Unlocks General + Cavalry', unlocks: ['general', 'cavalry'] },
+      { tier: 4, cost: 500, name: 'Warlord', reward: 'Unlocks all Units', unlocks: ['pikemen', 'crossbowmen'] },
+      { tier: 5, cost: 1000, name: 'Legend', reward: 'All cards unlocked!', unlocks: ['siege_break'] }
+    ];
+
+    // Load meta progress from localStorage
+    function loadMetaProgress() {
+      try {
+        const saved = localStorage.getItem(META_STORAGE_KEY);
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.log('Failed to load meta progress:', e);
+      }
+      return {
+        hearthstones: 0,
+        totalHearthstones: 0,
+        highScore: 0,
+        totalRuns: 0,
+        victories: 0,
+        currentTier: 0,
+        unlockedCards: []
+      };
+    }
+
+    // Save meta progress to localStorage
+    function saveMetaProgress(meta) {
+      try {
+        localStorage.setItem(META_STORAGE_KEY, JSON.stringify(meta));
+      } catch (e) {
+        console.log('Failed to save meta progress:', e);
+      }
+    }
+
+    // Calculate Hearthstones earned from a run
+    function calculateHearthstones(score, wave, victory) {
+      let earned = Math.floor(score / 10); // Base: 1 hearthstone per 10 points
+      if (victory) earned += 50;            // Victory bonus
+      earned += wave * 5;                   // Wave bonus
+      return earned;
+    }
+
+    // Check and apply unlocks
+    function checkUnlocks(meta) {
+      let newUnlocks = [];
+      UNLOCK_TIERS.forEach(tier => {
+        if (meta.totalHearthstones >= tier.cost && meta.currentTier < tier.tier) {
+          meta.currentTier = tier.tier;
+          tier.unlocks.forEach(cardId => {
+            if (!meta.unlockedCards.includes(cardId)) {
+              meta.unlockedCards.push(cardId);
+              newUnlocks.push(cardId);
+            }
+          });
+        }
+      });
+      return newUnlocks;
+    }
+
+    // Get current tier info
+    function getCurrentTierInfo(meta) {
+      const currentTier = UNLOCK_TIERS.find(t => t.tier === meta.currentTier) || { name: 'Peasant', tier: 0 };
+      const nextTier = UNLOCK_TIERS.find(t => t.tier === meta.currentTier + 1);
+      return { current: currentTier, next: nextTier };
+    }
+
+    let metaProgress = loadMetaProgress();
+
     // Initialize Board
     function initBoard() {
       gameState.board = Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(TERRAIN.EMPTY));
@@ -1535,7 +1704,18 @@
     // Create random terrain piece
     function createPiece() {
       const shape = TETROMINOES[Math.floor(Math.random() * TETROMINOES.length)];
-      const terrains = [TERRAIN.FOREST, TERRAIN.PLAINS, TERRAIN.MOUNTAIN, TERRAIN.RIVER, TERRAIN.SETTLEMENT];
+
+      // Normal terrains
+      let terrains = [TERRAIN.FOREST, TERRAIN.PLAINS, TERRAIN.MOUNTAIN, TERRAIN.RIVER, TERRAIN.SETTLEMENT];
+
+      // Wave 6+: 20% chance of cursed tile
+      if (gameState.wave >= 6 && Math.random() < 0.2) {
+        return {
+          shape: shape.map(row => row.map(cell => cell ? TERRAIN.CURSED : 0)),
+          terrain: TERRAIN.CURSED
+        };
+      }
+
       const terrain = terrains[Math.floor(Math.random() * terrains.length)];
 
       return {
@@ -1702,6 +1882,7 @@
 
       // Track total resources gained for toast
       let gained = { lumber: 0, food: 0, stone: 0, gold: 0 };
+      let cursedPenalty = 0;
 
       rows.forEach(rowIndex => {
         // Add harvesting animation
@@ -1710,14 +1891,24 @@
 
         // Calculate resources with adjacency bonuses
         const row = gameState.board[rowIndex];
+
+        // Count cursed tiles - each cursed tile reduces output by 25%
+        const cursedCount = row.filter(cell => cell === TERRAIN.CURSED).length;
+        const cursePenaltyMultiplier = Math.max(0, 1 - (cursedCount * 0.25));
+        if (cursedCount > 0) cursedPenalty += cursedCount;
+
         let clusters = findClusters(row);
 
         clusters.forEach(cluster => {
+          // Skip cursed tiles - they produce nothing
+          if (cluster.terrain === TERRAIN.CURSED) return;
+
           const baseOutput = getBaseOutput(cluster.terrain);
           const clusterBonus = cluster.size - 1; // +1 per adjacent same terrain
           const buildingMultiplier = getBuildingMultiplier(cluster.terrain);
 
-          const totalOutput = Math.floor((baseOutput + clusterBonus) * cluster.size * buildingMultiplier);
+          // Apply curse penalty
+          const totalOutput = Math.floor((baseOutput + clusterBonus) * cluster.size * buildingMultiplier * cursePenaltyMultiplier);
 
           // Gold Rush joker: Mountains also produce +1 Gold per tile
           const bonusGold = getJokerBonusGold(cluster.terrain) * cluster.size;
@@ -1768,7 +1959,11 @@
       if (gained.gold > 0) toastParts.push(`+${gained.gold} 💰`);
 
       if (toastParts.length > 0) {
-        showToast(`${rows.length} row${rows.length > 1 ? 's' : ''} harvested! ${toastParts.join(' ')}`, 'harvest');
+        let harvestMsg = `${rows.length} row${rows.length > 1 ? 's' : ''} harvested! ${toastParts.join(' ')}`;
+        if (cursedPenalty > 0) {
+          harvestMsg += ` (💀 -${Math.round(cursedPenalty * 25)}% curse)`;
+        }
+        showToast(harvestMsg, 'harvest');
       }
       showToast(`+${rowBonus} points!`, 'score');
 
@@ -2206,13 +2401,53 @@
 
       playSound(victory ? 'victory' : 'defeat');
 
+      if (victory) gameState.score += 500;
+
+      // Award Hearthstones
+      const earnedHearthstones = calculateHearthstones(gameState.score, gameState.wave, victory);
+      metaProgress.hearthstones += earnedHearthstones;
+      metaProgress.totalHearthstones += earnedHearthstones;
+      metaProgress.totalRuns++;
+      if (victory) metaProgress.victories++;
+      if (gameState.score > metaProgress.highScore) {
+        metaProgress.highScore = gameState.score;
+      }
+
+      // Check for new unlocks
+      const newUnlocks = checkUnlocks(metaProgress);
+      saveMetaProgress(metaProgress);
+
       const modal = document.getElementById('gameoverModal');
       document.getElementById('gameoverIcon').textContent = victory ? '👑' : '💀';
       document.getElementById('gameoverTitle').textContent = victory ? 'Victory!' : 'Kingdom Fallen';
       document.getElementById('gameoverScore').textContent = gameState.score;
       document.getElementById('gameoverWave').textContent = `Reached Wave ${gameState.wave}`;
 
-      if (victory) gameState.score += 500;
+      // Show Hearthstones earned
+      document.getElementById('gameoverHearthstones').textContent = `+${earnedHearthstones} 🔥 Hearthstones`;
+      document.getElementById('gameoverTotal').textContent = `Total: ${metaProgress.totalHearthstones} 🔥`;
+
+      // Show new unlocks if any
+      const unlocksEl = document.getElementById('gameoverUnlocks');
+      if (newUnlocks.length > 0) {
+        const unlockNames = newUnlocks.map(id => {
+          const card = ALL_CARDS.find(c => c.id === id);
+          return card ? `${card.icon} ${card.name}` : id;
+        }).join(', ');
+        unlocksEl.innerHTML = `<div class="new-unlock">🎉 NEW UNLOCK: ${unlockNames}</div>`;
+        unlocksEl.style.display = 'block';
+      } else {
+        unlocksEl.style.display = 'none';
+      }
+
+      // Show tier progress
+      const tierInfo = getCurrentTierInfo(metaProgress);
+      document.getElementById('gameoverTier').textContent = `Rank: ${tierInfo.current.name}`;
+      if (tierInfo.next) {
+        document.getElementById('gameoverNextTier').textContent = `Next: ${tierInfo.next.name} (${tierInfo.next.cost} 🔥)`;
+      } else {
+        document.getElementById('gameoverNextTier').textContent = 'Max Rank Achieved!';
+      }
 
       modal.classList.add('show');
 
@@ -2499,6 +2734,16 @@
       startGameLoop();
     }
 
+    // Update menu with meta progress
+    function updateMenuMeta() {
+      const tierInfo = getCurrentTierInfo(metaProgress);
+      document.getElementById('menuHearthstones').textContent = metaProgress.totalHearthstones;
+      document.getElementById('menuRank').textContent = tierInfo.current.name;
+      document.getElementById('menuRuns').textContent = metaProgress.totalRuns;
+      document.getElementById('menuWins').textContent = metaProgress.victories;
+      document.getElementById('menuBest').textContent = metaProgress.highScore;
+    }
+
     // Initialize
     document.getElementById('startBtn').addEventListener('click', startGame);
 
@@ -2515,6 +2760,9 @@
 
     // Make buyCard global
     window.buyCard = buyCard;
+
+    // Initialize menu with meta progress
+    updateMenuMeta();
 
     // Tutorial functions
     function openTutorial() {
