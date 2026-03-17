@@ -1161,138 +1161,174 @@
 
     function initAudio() {
       if (!audioCtx) {
-        audioCtx = new AudioCtx();
+        try {
+          audioCtx = new AudioCtx();
+        } catch(e) {
+          console.log('Audio not supported');
+          soundEnabled = false;
+        }
       }
     }
 
     function playSound(type) {
-      if (!soundEnabled || !audioCtx) return;
+      if (!soundEnabled) return;
+      if (!audioCtx) initAudio();
+      if (!audioCtx) return;
 
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+      try {
+        const now = audioCtx.currentTime;
 
-      const now = audioCtx.currentTime;
-
-      switch(type) {
-        case 'move':
-          oscillator.frequency.setValueAtTime(200, now);
-          oscillator.type = 'sine';
-          gainNode.gain.setValueAtTime(0.1, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.05);
-          oscillator.start(now);
-          oscillator.stop(now + 0.05);
-          break;
-
-        case 'rotate':
-          oscillator.frequency.setValueAtTime(300, now);
-          oscillator.frequency.exponentialRampToValueAtTime(400, now + 0.08);
-          oscillator.type = 'sine';
-          gainNode.gain.setValueAtTime(0.1, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.1);
-          oscillator.start(now);
-          oscillator.stop(now + 0.1);
-          break;
-
-        case 'drop':
-          oscillator.frequency.setValueAtTime(150, now);
-          oscillator.type = 'triangle';
-          gainNode.gain.setValueAtTime(0.15, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.1);
-          oscillator.start(now);
-          oscillator.stop(now + 0.1);
-          break;
-
-        case 'lock':
-          oscillator.frequency.setValueAtTime(100, now);
-          oscillator.type = 'square';
-          gainNode.gain.setValueAtTime(0.08, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.15);
-          oscillator.start(now);
-          oscillator.stop(now + 0.15);
-          break;
-
-        case 'clear':
-          // Play ascending notes for row clear
-          [400, 500, 600, 800].forEach((freq, i) => {
+        switch(type) {
+          case 'move': {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            osc.frequency.value = 200;
             osc.type = 'sine';
-            gain.gain.setValueAtTime(0.12, now + i * 0.08);
-            gain.gain.exponentialDecayTo(0.01, now + i * 0.08 + 0.15);
-            osc.start(now + i * 0.08);
-            osc.stop(now + i * 0.08 + 0.15);
-          });
-          return;
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
+            break;
+          }
 
-        case 'hardDrop':
-          oscillator.frequency.setValueAtTime(200, now);
-          oscillator.frequency.exponentialRampToValueAtTime(80, now + 0.15);
-          oscillator.type = 'sawtooth';
-          gainNode.gain.setValueAtTime(0.12, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.2);
-          oscillator.start(now);
-          oscillator.stop(now + 0.2);
-          break;
-
-        case 'attack':
-          // War drums
-          oscillator.frequency.setValueAtTime(60, now);
-          oscillator.type = 'triangle';
-          gainNode.gain.setValueAtTime(0.2, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.3);
-          oscillator.start(now);
-          oscillator.stop(now + 0.3);
-          break;
-
-        case 'victory':
-          [523, 659, 784, 1047].forEach((freq, i) => {
+          case 'rotate': {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.frequency.setValueAtTime(freq, now + i * 0.15);
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(400, now + 0.08);
             osc.type = 'sine';
-            gain.gain.setValueAtTime(0.15, now + i * 0.15);
-            gain.gain.exponentialDecayTo(0.01, now + i * 0.15 + 0.4);
-            osc.start(now + i * 0.15);
-            osc.stop(now + i * 0.15 + 0.4);
-          });
-          return;
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+            break;
+          }
 
-        case 'defeat':
-          oscillator.frequency.setValueAtTime(200, now);
-          oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.5);
-          oscillator.type = 'sawtooth';
-          gainNode.gain.setValueAtTime(0.15, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.5);
-          oscillator.start(now);
-          oscillator.stop(now + 0.5);
-          break;
+          case 'drop': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 150;
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+            break;
+          }
 
-        case 'buy':
-          oscillator.frequency.setValueAtTime(600, now);
-          oscillator.frequency.setValueAtTime(800, now + 0.05);
-          oscillator.type = 'sine';
-          gainNode.gain.setValueAtTime(0.1, now);
-          gainNode.gain.exponentialDecayTo(0.01, now + 0.15);
-          oscillator.start(now);
-          oscillator.stop(now + 0.15);
-          break;
+          case 'lock': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 100;
+            osc.type = 'square';
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+          }
 
-        default:
-          return;
+          case 'clear':
+            [400, 500, 600, 800].forEach((freq, i) => {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.frequency.value = freq;
+              osc.type = 'sine';
+              gain.gain.setValueAtTime(0.12, now + i * 0.08);
+              gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.15);
+              osc.start(now + i * 0.08);
+              osc.stop(now + i * 0.08 + 0.15);
+            });
+            break;
+
+          case 'hardDrop': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+            break;
+          }
+
+          case 'attack': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 60;
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+            break;
+          }
+
+          case 'victory':
+            [523, 659, 784, 1047].forEach((freq, i) => {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.frequency.value = freq;
+              osc.type = 'sine';
+              gain.gain.setValueAtTime(0.15, now + i * 0.15);
+              gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.4);
+              osc.start(now + i * 0.15);
+              osc.stop(now + i * 0.15 + 0.4);
+            });
+            break;
+
+          case 'defeat': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+            break;
+          }
+
+          case 'buy': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.setValueAtTime(800, now + 0.05);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+          }
+        }
+      } catch(e) {
+        console.log('Sound error:', e);
       }
     }
-
-    // Helper for exponential decay (not native)
-    GainNode.prototype.exponentialDecayTo = function(value, endTime) {
-      this.gain.setTargetAtTime(value, this.context.currentTime, (endTime - this.context.currentTime) / 3);
-    };
 
     // Game Constants
     const BOARD_WIDTH = 10;
@@ -1522,12 +1558,39 @@
       gameState.tilesPlaced++;
       updateWaveProgress();
 
-      // Check for completed rows and handle next piece after clearing
-      checkRowsAndContinue();
+      // Check for completed rows
+      const clearedCount = checkRows();
+
+      // If rows were cleared, wait for animation before spawning next piece
+      if (clearedCount > 0) {
+        // Pause the drop interval during row clear
+        clearInterval(gameState.dropInterval);
+
+        setTimeout(() => {
+          if (gameState.tilesPlaced >= TILES_PER_ROUND) {
+            startAttackPhase();
+          } else {
+            spawnPiece();
+            // Restart drop interval
+            gameState.dropInterval = setInterval(() => {
+              if (!gameState.gameOver && gameState.currentPiece) {
+                dropPiece();
+              }
+            }, 1000);
+          }
+        }, 350);
+      } else {
+        // No rows cleared, continue immediately
+        if (gameState.tilesPlaced >= TILES_PER_ROUND) {
+          startAttackPhase();
+        } else {
+          spawnPiece();
+        }
+      }
     }
 
-    // Check rows and continue game after clearing
-    function checkRowsAndContinue() {
+    // Check and harvest completed rows, returns count
+    function checkRows() {
       let harvestedRows = [];
 
       for (let row = 0; row < BOARD_HEIGHT; row++) {
@@ -1537,27 +1600,14 @@
       }
 
       if (harvestedRows.length > 0) {
-        // Harvest rows, then continue after clearing
-        harvestRows(harvestedRows, () => {
-          continueAfterHarvest();
-        });
-      } else {
-        // No rows to clear, continue immediately
-        continueAfterHarvest();
+        harvestRows(harvestedRows);
       }
-    }
 
-    // Continue game after harvest completes
-    function continueAfterHarvest() {
-      if (gameState.tilesPlaced >= TILES_PER_ROUND) {
-        startAttackPhase();
-      } else {
-        spawnPiece();
-      }
+      return harvestedRows.length;
     }
 
     // Harvest resources from completed rows
-    function harvestRows(rows, callback) {
+    function harvestRows(rows) {
       // Sort rows from bottom to top for proper removal
       rows.sort((a, b) => b - a);
 
@@ -1633,9 +1683,6 @@
 
         updateUI();
         renderBoard();
-
-        // Call callback after rows are cleared
-        if (callback) callback();
       }, 300);
 
       updateUI();
@@ -1961,7 +2008,7 @@
     function startGameLoop() {
       spawnPiece();
       gameState.dropInterval = setInterval(() => {
-        if (!gameState.gameOver) {
+        if (!gameState.gameOver && gameState.currentPiece) {
           dropPiece();
         }
       }, 1000);
