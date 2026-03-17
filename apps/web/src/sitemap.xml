@@ -79,4 +79,19 @@
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
+
+  <!-- Legal Pages -->
+  <url>
+    <loc>https://www.weeklyarcade.games/privacy/</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://www.weeklyarcade.games/terms/</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
 </urlset>
