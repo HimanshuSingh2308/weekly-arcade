@@ -58,10 +58,22 @@
     }
 
     .back-btn {
-      color: var(--text-secondary);
+      color: var(--text-primary);
       text-decoration: none;
-      font-size: 1.2rem;
-      padding: 0.3rem;
+      font-size: 1.5rem;
+      padding: 0.5rem 0.8rem;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
     .title {
