@@ -1171,6 +1171,9 @@
     let audioCtx = null;
     let soundEnabled = true;
 
+    // Auth state
+    let currentUser = null;
+
     function initAudio() {
       if (!audioCtx) {
         try {
@@ -1984,16 +1987,19 @@
 
     // Submit score to leaderboard
     async function submitScore() {
+      if (!currentUser || !window.apiClient) {
+        console.log('Score not submitted: user not signed in');
+        return;
+      }
       try {
-        if (window.apiClient) {
-          await window.apiClient.submitScore('fieldstone', {
-            score: gameState.score,
-            wave: gameState.wave,
-            metadata: {
-              deck: gameState.selectedDeck
-            }
-          });
-        }
+        await window.apiClient.submitScore('fieldstone', {
+          score: gameState.score,
+          wave: gameState.wave,
+          metadata: {
+            deck: gameState.selectedDeck
+          }
+        });
+        console.log('Score submitted successfully');
       } catch (e) {
         console.log('Score submission failed:', e);
       }
@@ -2264,6 +2270,26 @@
       btn.textContent = soundEnabled ? '🔊' : '🔇';
       btn.classList.toggle('muted', !soundEnabled);
     }
+
+    // Auth integration
+    function initAuth() {
+      if (window.authManager) {
+        window.authManager.onAuthStateChanged(user => {
+          currentUser = user;
+          if (user) {
+            console.log('User signed in:', user.displayName);
+          }
+        });
+      }
+    }
+
+    // Initialize auth when ready
+    const authCheckInterval = setInterval(() => {
+      if (window.authManager?.isInitialized) {
+        clearInterval(authCheckInterval);
+        initAuth();
+      }
+    }, 100);
   </script>
 </body>
 </html>
