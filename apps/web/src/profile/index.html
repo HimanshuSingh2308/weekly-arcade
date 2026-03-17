@@ -875,25 +875,28 @@
       try {
         gameStates = await window.apiClient.getAllGameStates().catch(() => []) || [];
 
-        // Calculate stats from game states
-        let gamesPlayed = 0;
-        let wins = 0;
+        // Calculate stats from game states (using correct GameState fields)
+        let totalGamesPlayed = 0;
+        let totalWins = 0;
         let totalScore = 0;
         let bestStreak = 0;
 
         if (gameStates.length > 0) {
           gameStates.forEach(game => {
-            gamesPlayed++;
-            const state = game.state || game;
-            if (state.won) wins++;
-            totalScore += state.score || game.score || 0;
-            const streak = state.streak || game.streak || 0;
-            if (streak > bestStreak) bestStreak = streak;
+            // GameState has: gamesPlayed, gamesWon, bestStreak, currentStreak
+            totalGamesPlayed += game.gamesPlayed || 0;
+            totalWins += game.gamesWon || 0;
+            // Score might be in additionalData
+            totalScore += game.additionalData?.totalScore || game.additionalData?.score || 0;
+            // Track best streak across all games
+            if ((game.bestStreak || 0) > bestStreak) {
+              bestStreak = game.bestStreak;
+            }
           });
         }
 
-        document.getElementById('statGamesPlayed').textContent = gamesPlayed.toLocaleString();
-        document.getElementById('statWins').textContent = wins.toLocaleString();
+        document.getElementById('statGamesPlayed').textContent = totalGamesPlayed.toLocaleString();
+        document.getElementById('statWins').textContent = totalWins.toLocaleString();
         document.getElementById('statStreak').textContent = bestStreak;
         document.getElementById('statTotalScore').textContent = totalScore.toLocaleString();
 
@@ -909,8 +912,9 @@
     }
 
     function getXpForLevel(level) {
-      // XP curve: each level requires more XP
-      return Math.floor(100 * Math.pow(level, 1.5));
+      // XP curve: matches backend formula (level = floor(sqrt(totalXP / 100)) + 1)
+      // So XP to reach level n = (n-1)² * 100
+      return Math.pow(level - 1, 2) * 100;
     }
 
     // Load Achievements
@@ -995,24 +999,43 @@
           return;
         }
 
+        // Helper to parse dates (handles Firestore Timestamps, ISO strings, Date objects)
+        const parseDate = (dateValue) => {
+          if (!dateValue) return null;
+          // Firestore Timestamp has toDate() method
+          if (dateValue.toDate) return dateValue.toDate();
+          // Handle _seconds format from Firestore REST API
+          if (dateValue._seconds) return new Date(dateValue._seconds * 1000);
+          // Try parsing as string or Date
+          const parsed = new Date(dateValue);
+          return isNaN(parsed.getTime()) ? null : parsed;
+        };
+
         // Sort by most recent
-        const sortedGames = gameStates.sort((a, b) =>
-          new Date(b.updatedAt || b.lastPlayed || 0) - new Date(a.updatedAt || a.lastPlayed || 0)
-        ).slice(0, 5);
+        const sortedGames = gameStates.sort((a, b) => {
+          const dateA = parseDate(b.updatedAt) || parseDate(b.lastPlayedDate) || new Date(0);
+          const dateB = parseDate(a.updatedAt) || parseDate(a.lastPlayedDate) || new Date(0);
+          return dateA - dateB;
+        }).slice(0, 5);
 
         const gameIcons = {
           wordle: '🔤',
           snake: '🐍',
           '2048': '🔢',
-          memory: '🃏'
+          'memory-match': '🃏',
+          'chaos-kitchen': '👨‍🍳',
+          voidbreak: '☄️',
+          lumble: '🪙',
+          fieldstone: '🏰'
         };
 
         container.innerHTML = sortedGames.map(game => {
-          const date = new Date(game.updatedAt || game.lastPlayed).toLocaleDateString();
+          const dateObj = parseDate(game.updatedAt) || parseDate(game.lastPlayedDate);
+          const date = dateObj ? dateObj.toLocaleDateString() : 'Unknown date';
           const icon = gameIcons[game.gameId] || '🎮';
-          const gameName = game.gameId.charAt(0).toUpperCase() + game.gameId.slice(1);
-          const won = game.state?.won || game.won;
-          const score = game.state?.score || game.score || 0;
+          const gameName = game.gameId.charAt(0).toUpperCase() + game.gameId.slice(1).replace('-', ' ');
+          const won = game.gamesWon > 0;
+          const score = game.additionalData?.score || game.currentGameProgress?.score || 0;
 
           return `
             <div class="game-history-item">
