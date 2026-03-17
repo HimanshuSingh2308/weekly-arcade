@@ -8,11 +8,11 @@
   <!-- SEO -->
   <meta name="description" content="Play Fieldstone free online. A Tetris-like kingdom builder! Place terrain tiles, harvest resources, build your army, and defend against waves of enemies.">
   <meta name="keywords" content="puzzle game, strategy game, tetris-like, kingdom builder, free game, browser game">
-  <link rel="canonical" href="https://weekly-arcade.web.app/games/fieldstone/">
+  <link rel="canonical" href="https://www.weeklyarcade.games/games/fieldstone/">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://weekly-arcade.web.app/games/fieldstone/">
+  <meta property="og:url" content="https://www.weeklyarcade.games/games/fieldstone/">
   <meta property="og:title" content="Fieldstone | Kingdom Builder Puzzle">
   <meta property="og:description" content="Tetris meets kingdom building! Place terrain tiles and defend your realm.">
 
@@ -343,18 +343,10 @@
       animation: harvest-flash 0.3s ease-out, glow-pulse 0.3s ease-out;
     }
 
-    /* Harvested rows - permanent kingdom land */
+    /* Harvested rows - permanent kingdom land (subtle indicator) */
     .cell.harvested {
-      box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.4);
-      border: 1px solid rgba(255, 215, 0, 0.3);
-    }
-
-    .cell.harvested::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, transparent 50%);
-      pointer-events: none;
+      box-shadow: inset 0 0 3px rgba(255, 215, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.15);
     }
 
     /* Next Piece Preview */
@@ -1074,18 +1066,206 @@
       .cell { width: 24px; height: 24px; }
     }
 
+    /* Mobile UI - hidden on desktop */
+    .mobile-ui, .mobile-controls {
+      display: none;
+    }
+
     @media (max-width: 600px) {
       .left-panel, .right-panel {
         display: none;
       }
 
       .game-board {
-        grid-template-columns: repeat(10, 28px);
-        grid-template-rows: repeat(18, 28px);
+        grid-template-columns: repeat(10, 24px);
+        grid-template-rows: repeat(20, 24px);
+      }
+
+      .cell {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
       }
 
       .controls-hint {
         display: none;
+      }
+
+      .header {
+        padding: 8px 12px;
+      }
+
+      .title {
+        font-size: 1rem;
+      }
+
+      /* Show mobile UI */
+      .mobile-ui {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .mobile-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .mobile-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .mobile-score {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      .mobile-label {
+        font-size: 0.6rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+      }
+
+      .mobile-wave {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .mobile-resources {
+        display: flex;
+        justify-content: space-around;
+        gap: 8px;
+      }
+
+      .mobile-res {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: var(--bg-card);
+        padding: 4px 10px;
+        border-radius: 12px;
+      }
+
+      /* Mobile Touch Controls */
+      .mobile-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+      }
+
+      .mobile-controls-row {
+        display: flex;
+        gap: 12px;
+      }
+
+      .mobile-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.1s;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+
+      .mobile-btn:active {
+        background: var(--accent);
+        transform: scale(0.95);
+      }
+
+      .mobile-btn-drop {
+        background: var(--bg-secondary);
+      }
+
+      .mobile-btn-hard {
+        width: 80px;
+        border-radius: 28px;
+        background: var(--accent);
+        color: var(--bg-primary);
+      }
+
+      /* Adjust game container for mobile */
+      .game-container {
+        padding-bottom: 180px;
+      }
+
+      .board-container {
+        margin-top: 8px;
+      }
+
+      .next-piece {
+        margin-top: 8px;
+        padding: 8px;
+        min-width: 100px;
+      }
+
+      .next-preview {
+        grid-template-columns: repeat(4, 20px);
+        grid-template-rows: repeat(4, 20px);
+      }
+
+      .next-label {
+        font-size: 0.7rem;
+      }
+
+      /* Adjust modals for mobile */
+      .shop-content {
+        width: 95%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .shop-cards {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .shop-card {
+        width: 100%;
+      }
+
+      .menu-screen {
+        padding: 20px;
+      }
+
+      .menu-title {
+        font-size: 2rem;
+      }
+
+      .deck-select {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .deck-btn {
+        padding: 12px;
       }
     }
   </style>
@@ -1205,6 +1385,40 @@
         <div class="panel-title">Incoming</div>
         <div id="enemyList"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Mobile UI -->
+  <div class="mobile-ui">
+    <div class="mobile-stats">
+      <div class="mobile-stat">
+        <span class="mobile-score" id="mobileScore">0</span>
+        <span class="mobile-label">Score</span>
+      </div>
+      <div class="mobile-stat">
+        <span class="mobile-wave">Wave <span id="mobileWave">1</span>/10</span>
+      </div>
+    </div>
+    <div class="mobile-resources">
+      <div class="mobile-res">🪵<span id="mobileLumber">0</span></div>
+      <div class="mobile-res">🌾<span id="mobileFood">0</span></div>
+      <div class="mobile-res">🪨<span id="mobileStone">0</span></div>
+      <div class="mobile-res">💰<span id="mobileGold">0</span></div>
+    </div>
+  </div>
+
+  <!-- Mobile Touch Controls -->
+  <div class="mobile-controls">
+    <div class="mobile-controls-row">
+      <button class="mobile-btn" id="btnRotate">↻</button>
+    </div>
+    <div class="mobile-controls-row">
+      <button class="mobile-btn" id="btnLeft">←</button>
+      <button class="mobile-btn mobile-btn-drop" id="btnDrop">▼</button>
+      <button class="mobile-btn" id="btnRight">→</button>
+    </div>
+    <div class="mobile-controls-row">
+      <button class="mobile-btn mobile-btn-hard" id="btnHardDrop">⏬</button>
     </div>
   </div>
 
@@ -2609,6 +2823,14 @@
       document.getElementById('score').textContent = gameState.score;
       document.getElementById('waveNumber').textContent = gameState.wave;
 
+      // Update mobile UI
+      document.getElementById('mobileLumber').textContent = gameState.resources.lumber;
+      document.getElementById('mobileFood').textContent = gameState.resources.food;
+      document.getElementById('mobileStone').textContent = gameState.resources.stone;
+      document.getElementById('mobileGold').textContent = gameState.resources.gold;
+      document.getElementById('mobileScore').textContent = gameState.score;
+      document.getElementById('mobileWave').textContent = gameState.wave;
+
       // Update cards list
       const cardsList = document.getElementById('cardsList');
       cardsList.innerHTML = gameState.cards.map(cardId => {
@@ -2728,6 +2950,33 @@
           else if (dy < -30) rotatePiece();
         }
       });
+
+      // Mobile button controls
+      const btnLeft = document.getElementById('btnLeft');
+      const btnRight = document.getElementById('btnRight');
+      const btnRotate = document.getElementById('btnRotate');
+      const btnDrop = document.getElementById('btnDrop');
+      const btnHardDrop = document.getElementById('btnHardDrop');
+
+      const handleMobileBtn = (action) => {
+        if (gameState.gameOver) return;
+        if (document.getElementById('shopModal').classList.contains('show')) return;
+        if (document.getElementById('attackOverlay').classList.contains('show')) return;
+        action();
+      };
+
+      btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(() => movePiece(-1)); });
+      btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(() => movePiece(1)); });
+      btnRotate.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(rotatePiece); });
+      btnDrop.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(dropPiece); });
+      btnHardDrop.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(hardDrop); });
+
+      // Also support click for testing on desktop
+      btnLeft.addEventListener('click', () => handleMobileBtn(() => movePiece(-1)));
+      btnRight.addEventListener('click', () => handleMobileBtn(() => movePiece(1)));
+      btnRotate.addEventListener('click', () => handleMobileBtn(rotatePiece));
+      btnDrop.addEventListener('click', () => handleMobileBtn(dropPiece));
+      btnHardDrop.addEventListener('click', () => handleMobileBtn(hardDrop));
     }
 
     // Start game

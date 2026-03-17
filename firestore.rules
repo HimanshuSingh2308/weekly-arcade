@@ -37,5 +37,47 @@ service cloud.firestore {
       // Only backend can write (via Admin SDK)
       allow write: if false;
     }
+
+    // ============ CUSTOMIZATION SYSTEM ============
+
+    // Customization item catalog - publicly readable
+    match /customizationItems/{itemId} {
+      allow read: if true;
+      // Only backend can write (via Admin SDK)
+      allow write: if false;
+    }
+
+    // User inventory - readable by owner only
+    match /userInventory/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Only backend can write (via Admin SDK)
+      allow write: if false;
+
+      // Items subcollection
+      match /items/{itemId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    // User equipped items - readable by owner only
+    match /userEquipped/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+
+      // Games subcollection
+      match /games/{gameId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    // Coin transactions - readable by owner only
+    match /coinTransactions/{transactionId} {
+      allow read: if request.auth != null &&
+        resource.data.odId == request.auth.uid;
+      // Only backend can write (via Admin SDK)
+      allow write: if false;
+    }
   }
 }

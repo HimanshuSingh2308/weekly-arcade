@@ -13,21 +13,21 @@
   <!-- SEO -->
   <meta name="description" content="Play Voidbreak free online. Smash asteroids, upgrade your ship, go deeper. Modern Asteroids roguelite with upgrades and leaderboards. No download required.">
   <meta name="keywords" content="voidbreak, asteroids game, roguelite, arcade game, space shooter, browser game, free game">
-  <link rel="canonical" href="https://weekly-arcade.web.app/games/voidbreak/">
+  <link rel="canonical" href="https://www.weeklyarcade.games/games/voidbreak/">
 
   <!-- Open Graph -->
   <meta property="og:title" content="Voidbreak | Weekly Arcade - Asteroid Roguelite">
   <meta property="og:description" content="Smash asteroids, upgrade your ship, go deeper. How far can you get?">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://weekly-arcade.web.app/games/voidbreak/">
-  <meta property="og:image" content="https://weekly-arcade.web.app/og-image.png">
+  <meta property="og:url" content="https://www.weeklyarcade.games/games/voidbreak/">
+  <meta property="og:image" content="https://www.weeklyarcade.games/og-image.png">
   <meta property="og:site_name" content="Weekly Arcade">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Voidbreak | Weekly Arcade">
   <meta name="twitter:description" content="Smash asteroids, upgrade your ship, go deeper. How far can you get?">
-  <meta name="twitter:image" content="https://weekly-arcade.web.app/og-image.png">
+  <meta name="twitter:image" content="https://www.weeklyarcade.games/og-image.png">
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
@@ -40,7 +40,7 @@
     "@context": "https://schema.org",
     "@type": "VideoGame",
     "name": "Voidbreak",
-    "url": "https://weekly-arcade.web.app/games/voidbreak/",
+    "url": "https://www.weeklyarcade.games/games/voidbreak/",
     "description": "Smash asteroids, upgrade your ship, go deeper. Modern Asteroids roguelite with upgrades and leaderboards.",
     "genre": ["Action", "Arcade", "Roguelite"],
     "playMode": "SinglePlayer",
@@ -57,7 +57,7 @@
     "author": {
       "@type": "Organization",
       "name": "Weekly Arcade",
-      "url": "https://weekly-arcade.web.app/"
+      "url": "https://www.weeklyarcade.games/"
     }
   }
   </script>
@@ -66,9 +66,9 @@
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weekly-arcade.web.app/" },
-      { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://weekly-arcade.web.app/#new" },
-      { "@type": "ListItem", "position": 3, "name": "Voidbreak", "item": "https://weekly-arcade.web.app/games/voidbreak/" }
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.weeklyarcade.games/" },
+      { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://www.weeklyarcade.games/#new" },
+      { "@type": "ListItem", "position": 3, "name": "Voidbreak", "item": "https://www.weeklyarcade.games/games/voidbreak/" }
     ]
   }
   </script>
@@ -239,6 +239,29 @@
 
     .combo-display.active {
       opacity: 1;
+    }
+
+    .combo-timer-bar {
+      width: 100px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      margin: 4px auto 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .combo-display.active + .combo-timer-bar,
+    .combo-timer-bar.active {
+      opacity: 1;
+    }
+
+    .combo-timer-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      border-radius: 2px;
+      transition: width 0.1s linear;
     }
 
     .lives-display {
@@ -686,6 +709,33 @@
       border-style: solid;
     }
 
+    /* Auto-fire toggle button */
+    .autofire-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: rgba(100, 100, 100, 0.3);
+      border: 2px solid rgba(150, 150, 150, 0.5);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: center;
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.2s;
+    }
+
+    .autofire-toggle.active {
+      background: rgba(34, 197, 94, 0.4);
+      border-color: rgba(34, 197, 94, 0.8);
+      color: #22c55e;
+    }
+
     /* Gesture hints */
     .gesture-hint {
       position: absolute;
@@ -1033,6 +1083,327 @@
     @media (max-width: 600px) {
       .more-games { display: none; }
     }
+
+    /* ============ CUSTOMIZATION / LOADOUT SCREEN ============ */
+    .loadout-screen {
+      position: fixed;
+      top: 50px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 5, 16, 0.98);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      z-index: 200;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .loadout-screen.hidden { display: none; }
+
+    .loadout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 1rem;
+    }
+
+    .loadout-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    .coin-display {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.4rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffd700;
+    }
+
+    .loadout-preview {
+      width: 120px;
+      height: 120px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loadout-preview canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .loadout-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .loadout-tab {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .loadout-tab:hover {
+      border-color: var(--cyan);
+      color: var(--text-primary);
+    }
+
+    .loadout-tab.active {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: #000;
+    }
+
+    .loadout-items {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 1.5rem;
+    }
+
+    .loadout-item {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      position: relative;
+    }
+
+    .loadout-item:hover {
+      transform: translateY(-2px);
+      border-color: var(--cyan);
+    }
+
+    .loadout-item.selected {
+      border-color: var(--cyan);
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    .loadout-item.locked {
+      opacity: 0.6;
+    }
+
+    .loadout-item.locked:hover {
+      border-color: var(--accent);
+    }
+
+    .loadout-item-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .loadout-item-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .loadout-item-rarity {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .loadout-item-rarity.common { color: var(--common); }
+    .loadout-item-rarity.rare { color: var(--rare); }
+    .loadout-item-rarity.epic { color: var(--epic); }
+    .loadout-item-rarity.legendary { color: #ff6b6b; }
+
+    .loadout-item-price {
+      font-size: 0.8rem;
+      color: #ffd700;
+      margin-top: 0.25rem;
+    }
+
+    .loadout-item-lock {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 1rem;
+    }
+
+    .loadout-item-check {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 1rem;
+      color: var(--cyan);
+    }
+
+    .loadout-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .loadout-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .loadout-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .loadout-btn.secondary {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+    }
+
+    .loadout-btn.secondary:hover {
+      border-color: var(--cyan);
+    }
+
+    /* Coin Popup Animation */
+    .coin-popup {
+      position: fixed;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+      pointer-events: none;
+      z-index: 300;
+      animation: coinFloat 1.5s ease-out forwards;
+    }
+
+    @keyframes coinFloat {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-40px) scale(1); }
+    }
+
+    /* Accessibility Settings */
+    .settings-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      z-index: 400;
+      min-width: 300px;
+    }
+
+    .settings-modal.hidden { display: none; }
+
+    .settings-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 399;
+    }
+
+    .settings-overlay.hidden { display: none; }
+
+    .settings-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .settings-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-option:last-child {
+      border-bottom: none;
+    }
+
+    .settings-label {
+      font-size: 0.95rem;
+    }
+
+    .settings-toggle {
+      width: 50px;
+      height: 26px;
+      background: var(--bg-secondary);
+      border-radius: 13px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .settings-toggle.active {
+      background: var(--cyan);
+    }
+
+    .settings-toggle::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+    }
+
+    .settings-toggle.active::after {
+      transform: translateX(24px);
+    }
+
+    .settings-close {
+      margin-top: 1rem;
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -1041,6 +1412,7 @@
     <a href="/" class="back-btn">&larr; Back</a>
     <h1 class="title">Voidbreak</h1>
     <div class="header-right">
+      <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
       <button class="icon-btn" id="soundBtn" title="Toggle Sound">🔊</button>
       <button class="auth-btn" id="authBtn">Sign In</button>
     </div>
@@ -1054,6 +1426,9 @@
     </div>
     <div class="hud-center">
       <div class="combo-display" id="comboDisplay">x1.5 COMBO</div>
+      <div class="combo-timer-bar" id="comboTimerBar">
+        <div class="combo-timer-fill" id="comboTimerFill" style="width: 100%"></div>
+      </div>
     </div>
     <div class="hud-right">
       <div class="lives-display" id="livesDisplay"></div>
@@ -1102,11 +1477,69 @@
     <p class="menu-tagline">Clear the field. Choose your weapon. Go deeper.</p>
     <button class="play-btn" id="playBtn">START RUN</button>
     <button class="play-btn" id="dailyBtn" style="background: linear-gradient(135deg, #ffd700, #ff8c00); margin-top: 0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">DAILY CHALLENGE</button>
+    <button class="play-btn secondary" id="loadoutBtn" style="background: var(--bg-card); border: 2px solid var(--cyan); margin-top: 0.5rem; padding: 0.6rem 1.5rem; font-size: 0.9rem;">CUSTOMIZE</button>
+    <div class="coin-display" id="menuCoinDisplay" style="margin-top: 0.75rem; display: none;">
+      <span>Coins:</span> <span id="menuCoins">0</span>
+    </div>
     <div class="controls-hint">
       <kbd>WASD</kbd> move
       <span>•</span>
+      <kbd>S</kbd> brake
+      <span>•</span>
       <kbd>Space</kbd> fire
+      <span>•</span>
+      <kbd>N</kbd> nuke
     </div>
+  </div>
+
+  <!-- Loadout / Customization Screen -->
+  <div class="loadout-screen hidden" id="loadoutScreen">
+    <div class="loadout-header">
+      <div class="loadout-title">CUSTOMIZE</div>
+      <div class="coin-display">
+        <span>Coins:</span> <span id="loadoutCoins">0</span>
+      </div>
+    </div>
+
+    <div class="loadout-preview">
+      <canvas id="previewCanvas" width="100" height="100"></canvas>
+    </div>
+
+    <div class="loadout-tabs">
+      <button class="loadout-tab active" data-tab="ship">Ships</button>
+      <button class="loadout-tab" data-tab="trail">Trails</button>
+      <button class="loadout-tab" data-tab="bullet">Bullets</button>
+      <button class="loadout-tab" data-tab="hud">HUD</button>
+      <button class="loadout-tab" data-tab="class">Class</button>
+    </div>
+
+    <div class="loadout-items" id="loadoutItems">
+      <!-- Items populated by JavaScript -->
+    </div>
+
+    <div class="loadout-buttons">
+      <button class="loadout-btn" id="loadoutStartBtn">START RUN</button>
+      <button class="loadout-btn secondary" id="loadoutBackBtn">Back</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-overlay hidden" id="settingsOverlay"></div>
+  <div class="settings-modal hidden" id="settingsModal">
+    <div class="settings-title">Settings</div>
+    <div class="settings-option">
+      <span class="settings-label">High Contrast</span>
+      <div class="settings-toggle" id="highContrastToggle" data-setting="highContrast"></div>
+    </div>
+    <div class="settings-option">
+      <span class="settings-label">Reduce Motion</span>
+      <div class="settings-toggle" id="reduceMotionToggle" data-setting="reduceMotion"></div>
+    </div>
+    <div class="settings-option">
+      <span class="settings-label">Auto-Fire</span>
+      <div class="settings-toggle" id="autoFireSettingToggle" data-setting="autoFire"></div>
+    </div>
+    <button class="settings-close" id="settingsClose">Close</button>
   </div>
 
   <!-- Shop Screen -->
@@ -1170,6 +1603,8 @@
     <div class="gesture-zone gesture-zone-right" id="fireZone">
       <div class="fire-zone-indicator" id="fireIndicator">FIRE</div>
     </div>
+    <!-- Auto-fire toggle button -->
+    <div class="autofire-toggle" id="autofireToggle">AUTO<br>FIRE</div>
     <div class="gesture-hint">Left: drag to move • Right: tap to fire</div>
   </div>
 
@@ -1209,15 +1644,16 @@
       <div class="tutorial-text" id="tutorialText">
         <span class="desktop-controls">
           Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys to move.<br>
-          Press <kbd>Space</kbd> to fire.<br>
+          <kbd>S</kbd> to brake. <kbd>Space</kbd> to fire. <kbd>N</kbd> for nuke.<br>
         </span>
         <span class="mobile-controls-text" style="display: none;">
           Drag left side of screen to move.<br>
-          Tap right side to fire.<br>
+          Tap right side to fire. Toggle auto-fire in top right.<br>
           Double-tap right side to pause.<br>
         </span>
         <br>
         Destroy asteroids to earn points.<br>
+        Collect golden orbs for bonus score!<br>
         Clear each wave to unlock powerful upgrades!
       </div>
       <button class="tutorial-skip" id="tutorialSkip">Got it!</button>
@@ -1361,6 +1797,7 @@
     let particles = [];
     let scorePopups = [];
     let stars = [];
+    let scoreOrbs = []; // Collectible score orbs
 
     let score = 0;
     let wave = 1;
@@ -1376,6 +1813,9 @@
     let lastKillTime = 0;
     let comboActive = false;
     let highestCombo = 0;
+
+    // Survival time bonus
+    let survivalTimeAccumulator = 0;
 
     // Screen shake
     let screenShake = 0;
@@ -1395,6 +1835,7 @@
     let damageTakenThisWave = false;
     let wavesWithoutDamage = 0;
     let upgradesTaken = [];
+    let droneTypesKilled = new Set(); // Track killed drone types for Exterminator achievement
 
     // Daily challenge
     let isDailyChallenge = false;
@@ -1418,6 +1859,7 @@
       ghostCharges: 0,
       armorActive: false,
       overclock: false,
+      magnet: false,
       doublePoints: false,
       comboMaster: false,
       asteroidBounty: false,
@@ -1441,11 +1883,105 @@
       left: false,
       right: false,
       thrust: false,
-      fire: false
+      fire: false,
+      brake: false
     };
+
+    // Auto-fire for mobile
+    let autoFireEnabled = false;
 
     // User/Auth
     let currentUser = null;
+
+    // ==========================================
+    // CUSTOMIZATION SYSTEM
+    // ==========================================
+
+    // Item catalog (loaded from constants, synced with backend)
+    const VOIDBREAK_ITEMS = {
+      ships: [
+        { id: 'voidbreak_ship_dart', name: 'Dart', icon: '🚀', rarity: 'common', unlockMethod: 'free', coinCost: 0,
+          visualData: { points: [[0, -18], [12, 14], [-12, 14]], trailColor: '#00ffff', bulletColor: '#fff' }},
+        { id: 'voidbreak_ship_blade', name: 'Blade', icon: '⚔️', rarity: 'rare', unlockMethod: 'coins', coinCost: 400,
+          visualData: { points: [[0, -22], [8, 18], [-8, 18]], trailColor: '#ff8c00', bulletColor: '#ff8c00' }},
+        { id: 'voidbreak_ship_hexron', name: 'Hexron', icon: '⬡', rarity: 'rare', unlockMethod: 'coins', coinCost: 800,
+          visualData: { points: [[0, -16], [14, -8], [14, 8], [0, 16], [-14, 8], [-14, -8]], trailColor: '#b44aff', bulletColor: '#b44aff' }},
+        { id: 'voidbreak_ship_ghost', name: 'Ghost', icon: '👻', rarity: 'epic', unlockMethod: 'coins', coinCost: 1500,
+          visualData: { points: [[0, -16], [10, 10], [0, 6], [-10, 10]], dashed: true, trailColor: '#fff', bulletColor: '#fff' }},
+        { id: 'voidbreak_ship_nova', name: 'Nova', icon: '⭐', rarity: 'legendary', unlockMethod: 'achievement', coinCost: 0,
+          visualData: { points: [[0, -20], [6, -6], [20, -6], [10, 4], [14, 20], [0, 10], [-14, 20], [-10, 4], [-20, -6], [-6, -6]], trailColor: '#ffd700', bulletColor: '#ffd700' }},
+      ],
+      trails: [
+        { id: 'voidbreak_trail_cyan', name: 'Cyan Burn', icon: '💠', rarity: 'common', unlockMethod: 'free', coinCost: 0,
+          visualData: { color: '#00ffff', particleShape: 'circle' }},
+        { id: 'voidbreak_trail_fire', name: 'Fire', icon: '🔥', rarity: 'rare', unlockMethod: 'coins', coinCost: 300,
+          visualData: { color: '#ff6b00', particleShape: 'circle', flicker: true }},
+        { id: 'voidbreak_trail_ice', name: 'Ice', icon: '❄️', rarity: 'rare', unlockMethod: 'coins', coinCost: 300,
+          visualData: { color: '#5ac8fa', particleShape: 'diamond' }},
+        { id: 'voidbreak_trail_plasma', name: 'Plasma', icon: '💜', rarity: 'epic', unlockMethod: 'coins', coinCost: 1000,
+          visualData: { color: '#b44aff', particleShape: 'orb', pulse: true }},
+        { id: 'voidbreak_trail_rainbow', name: 'Rainbow', icon: '🌈', rarity: 'legendary', unlockMethod: 'coins', coinCost: 2500,
+          visualData: { hueShift: true, particleShape: 'circle' }},
+      ],
+      bullets: [
+        { id: 'voidbreak_bullet_classic', name: 'Classic', icon: '⚪', rarity: 'common', unlockMethod: 'free', coinCost: 0,
+          visualData: { shape: 'circle', color: '#fff' }},
+        { id: 'voidbreak_bullet_laser', name: 'Laser', icon: '📍', rarity: 'rare', unlockMethod: 'coins', coinCost: 250,
+          visualData: { shape: 'line', color: '#00ffff', glow: true }},
+        { id: 'voidbreak_bullet_plasma', name: 'Plasma Orb', icon: '🔮', rarity: 'epic', unlockMethod: 'coins', coinCost: 800,
+          visualData: { shape: 'orb', color: '#b44aff', trail: true }},
+      ],
+      huds: [
+        { id: 'voidbreak_hud_void', name: 'Void', icon: '🌑', rarity: 'common', unlockMethod: 'free', coinCost: 0,
+          visualData: { primary: '#00d4ff', secondary: '#e94560', background: '#050510' }},
+        { id: 'voidbreak_hud_amber', name: 'Arcade', icon: '🟠', rarity: 'rare', unlockMethod: 'coins', coinCost: 400,
+          visualData: { primary: '#ffbf00', secondary: '#ff8c00', background: '#1a1a0a' }},
+        { id: 'voidbreak_hud_neon', name: 'Neon', icon: '💗', rarity: 'epic', unlockMethod: 'coins', coinCost: 1200,
+          visualData: { primary: '#ff00ff', secondary: '#00ff00', background: '#0a0a1a' }},
+      ],
+      classes: [
+        { id: 'voidbreak_class_ranger', name: 'Ranger', icon: '🎯', rarity: 'common', unlockMethod: 'free', coinCost: 0,
+          visualData: { weapon: 'single', fireRate: 0.4, passive: null, desc: 'Balanced - default loadout' }},
+        { id: 'voidbreak_class_blaster', name: 'Blaster', icon: '💥', rarity: 'common', unlockMethod: 'free', coinCost: 0,
+          visualData: { weapon: 'spread', fireRate: 0.6, passive: null, desc: 'Wide spread, slower fire' }},
+        { id: 'voidbreak_class_ghost', name: 'Ghost', icon: '👻', rarity: 'common', unlockMethod: 'free', coinCost: 0,
+          visualData: { weapon: 'single', fireRate: 0.3, passive: 'inertiaDampener', desc: 'Fast fire, better control' }},
+      ]
+    };
+
+    // Coin reward constants
+    const COIN_REWARDS = {
+      WAVE_MULTIPLIER: 5,
+      PERFECT_WAVE_BONUS: 20,
+      BOSS_DEFEATED: 50,
+      RUN_COMPLETED: 10,
+      NEW_PERSONAL_BEST: 25
+    };
+
+    // Customization state
+    let customization = {
+      coins: 0,
+      totalCoinsEarned: 0,
+      ownedItems: [],
+      equipped: {
+        ship: 'voidbreak_ship_dart',
+        trail: 'voidbreak_trail_cyan',
+        bullet: 'voidbreak_bullet_classic',
+        hud: 'voidbreak_hud_void',
+        class: 'voidbreak_class_ranger'
+      },
+      currentTab: 'ship'
+    };
+
+    // Accessibility settings
+    let accessibilitySettings = {
+      highContrast: false,
+      reduceMotion: false,
+      autoFire: false
+    };
+
+    // Coins earned this run (for game over display)
+    let coinsEarnedThisRun = 0;
 
     // ==========================================
     // INITIALIZATION
@@ -1495,6 +2031,10 @@
       // Setup event listeners
       setupControls();
       setupAuth();
+      setupCustomizationListeners();
+
+      // Load customization data (async)
+      loadCustomizationData();
 
       // Start game loop
       requestAnimationFrame(gameLoop);
@@ -1520,14 +2060,28 @@
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
         if (e.code === 'ArrowUp' || e.code === 'KeyW') keys.thrust = true;
+        if (e.code === 'ArrowDown' || e.code === 'KeyS') keys.brake = true;
         if (e.code === 'Space') { keys.fire = true; e.preventDefault(); }
+        if (e.code === 'KeyN') { triggerNuke(); e.preventDefault(); }
       });
 
       document.addEventListener('keyup', e => {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
         if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
         if (e.code === 'ArrowUp' || e.code === 'KeyW') keys.thrust = false;
+        if (e.code === 'ArrowDown' || e.code === 'KeyS') keys.brake = false;
         if (e.code === 'Space') keys.fire = false;
+      });
+
+      // Mouse click to fire
+      canvas.addEventListener('mousedown', e => {
+        if (gameState === 'playing' && !paused) {
+          keys.fire = true;
+        }
+      });
+
+      canvas.addEventListener('mouseup', e => {
+        keys.fire = false;
       });
 
       // Mobile gesture controls
@@ -1681,6 +2235,25 @@
         }
         lastTapTime = now;
       }, { passive: true });
+
+      // Auto-fire toggle button
+      const autofireToggle = document.getElementById('autofireToggle');
+      autofireToggle.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        autoFireEnabled = !autoFireEnabled;
+        autofireToggle.classList.toggle('active', autoFireEnabled);
+        autofireToggle.textContent = autoFireEnabled ? 'AUTO\nON' : 'AUTO\nFIRE';
+      }, { passive: false });
+
+      // Also handle click for testing on desktop
+      autofireToggle.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        autoFireEnabled = !autoFireEnabled;
+        autofireToggle.classList.toggle('active', autoFireEnabled);
+        autofireToggle.textContent = autoFireEnabled ? 'AUTO\nON' : 'AUTO\nFIRE';
+      });
     }
 
     // Pause functionality
@@ -1723,9 +2296,15 @@
           if (user) {
             authBtn.textContent = user.displayName || 'Profile';
             authBtn.onclick = () => window.location.href = '/profile/';
+            // Load customization data on login
+            loadCustomizationData();
           } else {
             authBtn.textContent = 'Sign In';
             authBtn.onclick = () => window.authManager.signIn();
+            // Reset customization to local state
+            customization.coins = 0;
+            customization.totalCoinsEarned = 0;
+            document.getElementById('menuCoinDisplay').style.display = 'none';
           }
         });
       }
@@ -1777,11 +2356,13 @@
       wavesWithoutDamage = 0;
       upgradesTaken = [];
       damageTakenThisWave = false;
+      droneTypesKilled = new Set();
       comboKills = 0;
       comboActive = false;
       screenShake = 0;
       blackHole = null;
       timeWarpActive = false;
+      coinsEarnedThisRun = 0;
 
       // Reset upgrades
       Object.keys(activeUpgrades).forEach(k => {
@@ -1806,6 +2387,8 @@
       droneBullets = [];
       particles = [];
       scorePopups = [];
+      scoreOrbs = [];
+      survivalTimeAccumulator = 0;
 
       // Start wave
       gameStartTime = Date.now();
@@ -1972,6 +2555,16 @@
     }
 
     function waveCleared() {
+      // Coin rewards for wave clear
+      const waveCoins = COIN_REWARDS.WAVE_MULTIPLIER * wave;
+      const perfectBonus = !damageTakenThisWave ? COIN_REWARDS.PERFECT_WAVE_BONUS : 0;
+      const bossBonus = (wave % 5 === 0) ? COIN_REWARDS.BOSS_DEFEATED : 0;
+      const totalCoins = waveCoins + perfectBonus + bossBonus;
+
+      if (totalCoins > 0 && currentUser) {
+        addCoinsReward(totalCoins, `Wave ${wave} cleared${perfectBonus ? ' (Perfect!)' : ''}${bossBonus ? ' (Boss!)' : ''}`);
+      }
+
       // Perfect wave bonus
       if (!damageTakenThisWave) {
         perfectWaves++;
@@ -2106,7 +2699,7 @@
         case 'P3': activeUpgrades.inertiaDampener = true; break;
         case 'P4': lives++; updateLivesDisplay(); break;
         case 'P5': activeUpgrades.ghostCharges = 1; break;
-        case 'P6': /* Magnet handled in update */ break;
+        case 'P6': activeUpgrades.magnet = true; break;
         case 'P7': activeUpgrades.armorActive = true; break;
         case 'P8': activeUpgrades.overclock = true; break;
         case 'P9': deployBlackHole(); break;
@@ -2153,6 +2746,15 @@
       gameState = 'game_over';
 
       const isNewBest = score > bestScore;
+
+      // Coin rewards for run completion
+      if (currentUser) {
+        let runCoins = COIN_REWARDS.RUN_COMPLETED;
+        if (isNewBest) {
+          runCoins += COIN_REWARDS.NEW_PERSONAL_BEST;
+        }
+        addCoinsReward(runCoins, `Run completed${isNewBest ? ' (New Best!)' : ''}`);
+      }
 
       // Update best score
       if (isNewBest) {
@@ -2286,6 +2888,18 @@
       }
       if (activeUpgrades.riskReward) achievements.push('voidbreak_risk_reward');
 
+      // Purist: Reach Wave 5 with only default weapon (no weapon upgrades W1-W10)
+      const weaponUpgrades = upgradesTaken.filter(id => id.startsWith('W'));
+      if (wave >= 5 && weaponUpgrades.length === 0) {
+        achievements.push('voidbreak_purist');
+      }
+
+      // Exterminator: Kill all 4 drone types in one run
+      const allDroneTypes = ['scout', 'bomber', 'sniper', 'swarm'];
+      if (allDroneTypes.every(type => droneTypesKilled.has(type))) {
+        achievements.push('voidbreak_exterminator');
+      }
+
       for (const achievementId of achievements) {
         try {
           await window.apiClient.unlockAchievement(achievementId, 'voidbreak');
@@ -2305,6 +2919,8 @@
         'voidbreak_perfect_wave': ['🛡️', 'Ghost Pilot'],
         'voidbreak_combo_10': ['⚡', 'Chain Reaction'],
         'voidbreak_score_10k': ['💰', 'High Roller'],
+        'voidbreak_purist': ['🎯', 'Purist'],
+        'voidbreak_exterminator': ['🤖', 'Exterminator'],
         'voidbreak_score_50k': ['🏆', 'Legend'],
         'voidbreak_nuke_used': ['💥', 'Nuclear Option'],
         'voidbreak_risk_reward': ['🎲', 'All In']
@@ -2382,6 +2998,17 @@
       // Update combo
       updateCombo();
 
+      // Update score orbs
+      updateScoreOrbs(dt);
+
+      // Survival time bonus (+10 pts per second)
+      survivalTimeAccumulator += dt;
+      if (survivalTimeAccumulator >= 1) {
+        survivalTimeAccumulator -= 1;
+        score += 10;
+        updateScoreDisplay();
+      }
+
       // Homing missile
       if (activeUpgrades.homingMissile && Date.now() - lastBulletTime > 2000) {
         fireHomingMissile();
@@ -2400,6 +3027,20 @@
         ship.vy -= Math.cos(ship.angle) * THRUST * thrustMult * dt;
       }
 
+      // Brake / Reverse thrust
+      if (keys.brake) {
+        // Apply braking force opposite to current velocity
+        const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
+        if (speed > 5) {
+          const brakeMult = 150 * dt;
+          ship.vx -= (ship.vx / speed) * brakeMult;
+          ship.vy -= (ship.vy / speed) * brakeMult;
+        } else {
+          ship.vx = 0;
+          ship.vy = 0;
+        }
+      }
+
       // Drag
       const dragMult = activeUpgrades.inertiaDampener ? 0.97 : DRAG;
       ship.vx *= dragMult;
@@ -2413,8 +3054,8 @@
       ship.x = wrap(ship.x, 800);
       ship.y = wrap(ship.y, 600);
 
-      // Fire
-      if (keys.fire) {
+      // Fire (including auto-fire for mobile)
+      if (keys.fire || autoFireEnabled) {
         fire();
       }
     }
@@ -2625,18 +3266,31 @@
     function updateCombo() {
       const now = Date.now();
       const threshold = activeUpgrades.comboMaster ? 3 : COMBO_THRESHOLD;
+      const timeSinceKill = now - lastKillTime;
+      const comboTimerBar = document.getElementById('comboTimerBar');
+      const comboTimerFill = document.getElementById('comboTimerFill');
 
-      if (comboKills >= threshold && now - lastKillTime < COMBO_WINDOW) {
+      if (comboKills >= threshold && timeSinceKill < COMBO_WINDOW) {
         if (!comboActive) {
           comboActive = true;
           document.getElementById('comboDisplay').classList.add('active');
+          comboTimerBar.classList.add('active');
         }
-      } else if (now - lastKillTime > COMBO_WINDOW) {
+        // Update timer bar width
+        const remaining = Math.max(0, (COMBO_WINDOW - timeSinceKill) / COMBO_WINDOW);
+        comboTimerFill.style.width = (remaining * 100) + '%';
+      } else if (timeSinceKill > COMBO_WINDOW) {
         if (comboActive) {
           comboActive = false;
           document.getElementById('comboDisplay').classList.remove('active');
+          comboTimerBar.classList.remove('active');
         }
         comboKills = 0;
+        comboTimerFill.style.width = '0%';
+      } else if (comboKills > 0) {
+        // Show decay bar even before combo activates
+        const remaining = Math.max(0, (COMBO_WINDOW - timeSinceKill) / COMBO_WINDOW);
+        comboTimerFill.style.width = (remaining * 100) + '%';
       }
 
       if (comboKills > highestCombo) {
@@ -2700,6 +3354,11 @@
             totalKills++;
             registerKill();
 
+            // Spawn score orb (small chance based on asteroid size)
+            if (Math.random() < 0.3 + (ast.size === 'small' ? 0.2 : 0)) {
+              spawnScoreOrb(ast.x, ast.y, Math.round(pts * 0.5));
+            }
+
             // Piercing
             if (bullet.piercing <= 0) {
               bullet.life = 0;
@@ -2756,6 +3415,14 @@
             totalKills++;
             registerKill();
             bullet.life = 0;
+
+            // Track drone type for Exterminator achievement
+            droneTypesKilled.add(drone.type);
+
+            // Spawn score orb from drone
+            if (Math.random() < 0.5) {
+              spawnScoreOrb(drone.x, drone.y, Math.round(pts * 0.4));
+            }
 
             if (activeUpgrades.plasmaRing) {
               spawnPlasmaRing(drone.x, drone.y);
@@ -2920,6 +3587,107 @@
         }
         return true;
       });
+    }
+
+    function spawnScoreOrb(x, y, value) {
+      // Spawn a collectible score orb
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 30 + Math.random() * 50;
+      scoreOrbs.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        value: value,
+        life: 8, // 8 seconds before disappearing
+        size: 6 + Math.min(value / 20, 8),
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+
+    function updateScoreOrbs(dt) {
+      const collectRange = activeUpgrades.magnet ? 150 : 50;
+      const magnetPull = activeUpgrades.magnet ? 200 : 80;
+
+      for (let i = scoreOrbs.length - 1; i >= 0; i--) {
+        const orb = scoreOrbs[i];
+
+        // Decay velocity
+        orb.vx *= 0.95;
+        orb.vy *= 0.95;
+
+        // Move toward player when close
+        const dx = ship.x - orb.x;
+        const dy = ship.y - orb.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+
+        if (d < magnetPull) {
+          // Pull toward ship
+          const pullStrength = (1 - d / magnetPull) * 400 * dt;
+          orb.vx += (dx / d) * pullStrength;
+          orb.vy += (dy / d) * pullStrength;
+        }
+
+        // Apply velocity
+        orb.x += orb.vx * dt;
+        orb.y += orb.vy * dt;
+
+        // Wrap around screen
+        orb.x = wrap(orb.x, 800);
+        orb.y = wrap(orb.y, 600);
+
+        // Update pulse animation
+        orb.pulse += dt * 5;
+
+        // Decay life
+        orb.life -= dt;
+
+        // Collect if close to ship
+        if (d < collectRange) {
+          addScore(orb.value, orb.x, orb.y);
+          playSound('orb_collect');
+          scoreOrbs.splice(i, 1);
+          continue;
+        }
+
+        // Remove if expired
+        if (orb.life <= 0) {
+          scoreOrbs.splice(i, 1);
+        }
+      }
+    }
+
+    function triggerNuke() {
+      if (!activeUpgrades.nukeAvailable || gameState !== 'playing') return;
+
+      activeUpgrades.nukeAvailable = false;
+      playSound('nuke');
+
+      // Massive screen shake
+      screenShake = 50;
+
+      // Destroy all asteroids on screen
+      asteroids.forEach(ast => {
+        const config = ast.isBoss ?
+          { score: 500 + wave * 100 } :
+          ASTEROID_CONFIG[ast.size];
+        addScore(config.score, ast.x, ast.y);
+        spawnExplosion(ast.x, ast.y, ast.radius * 1.5, 2);
+        spawnScoreOrb(ast.x, ast.y, config.score * 0.3);
+      });
+      asteroids = [];
+
+      // Destroy all drones on screen
+      drones.forEach(drone => {
+        const config = DRONE_CONFIG[drone.type];
+        addScore(config.score, drone.x, drone.y);
+        spawnExplosion(drone.x, drone.y, drone.radius * 1.2, 1.5);
+        spawnScoreOrb(drone.x, drone.y, config.score * 0.3);
+      });
+      drones = [];
+
+      // Update upgrade HUD
+      updateUpgradeHud();
     }
 
     function deployBlackHole() {
@@ -3112,6 +3880,27 @@
           }
         });
         ctx.globalAlpha = 1;
+
+        // Score orbs
+        scoreOrbs.forEach(orb => {
+          const pulse = Math.sin(orb.pulse) * 0.3 + 1;
+          const fadeAlpha = Math.min(1, orb.life / 2); // Fade when dying
+          ctx.globalAlpha = fadeAlpha * 0.9;
+
+          // Outer glow
+          ctx.fillStyle = '#ffd700';
+          ctx.beginPath();
+          ctx.arc(orb.x, orb.y, orb.size * pulse * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Inner core
+          ctx.globalAlpha = fadeAlpha;
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(orb.x, orb.y, orb.size * pulse * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
       }
 
       ctx.restore();
@@ -3126,6 +3915,12 @@
 
       // Blink when invincible
       if (isInvincible && Math.floor(now / 100) % 2 === 0) return;
+
+      // Get equipped cosmetics
+      const cosmetics = getEquippedCosmetics();
+      const shipColor = cosmetics.ship.visualData.trailColor || '#4da6ff';
+      const innerFlameColor = cosmetics.trail.visualData.color || '#00d4ff';
+      const lineWidth = accessibilitySettings.highContrast ? 3 : 2;
 
       ctx.save();
       ctx.translate(ship.x, ship.y);
@@ -3153,8 +3948,8 @@
         ctx.closePath();
         ctx.fill();
 
-        // Inner blue flame
-        ctx.fillStyle = '#00d4ff';
+        // Inner flame (colored by trail)
+        ctx.fillStyle = innerFlameColor;
         ctx.globalAlpha = 0.9;
         ctx.beginPath();
         ctx.moveTo(-5, 12);
@@ -3173,9 +3968,9 @@
         ctx.globalAlpha = 1;
       }
 
-      // Ship shadow/glow
-      ctx.shadowColor = '#00d4ff';
-      ctx.shadowBlur = 10;
+      // Ship shadow/glow (colored by ship cosmetic)
+      ctx.shadowColor = shipColor;
+      ctx.shadowBlur = accessibilitySettings.reduceMotion ? 5 : 10;
 
       // Main hull (dark fill)
       ctx.fillStyle = '#1a1a2e';
@@ -3190,9 +3985,9 @@
       ctx.closePath();
       ctx.fill();
 
-      // Hull outline
-      ctx.strokeStyle = '#4da6ff';
-      ctx.lineWidth = 2;
+      // Hull outline (colored by ship cosmetic)
+      ctx.strokeStyle = shipColor;
+      ctx.lineWidth = lineWidth;
       ctx.stroke();
 
       // Left wing
@@ -3204,7 +3999,7 @@
       ctx.lineTo(-4, s * 0.5);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#4da6ff';
+      ctx.strokeStyle = shipColor;
       ctx.stroke();
 
       // Right wing
@@ -3217,8 +4012,8 @@
       ctx.fill();
       ctx.stroke();
 
-      // Cockpit window
-      ctx.fillStyle = '#00d4ff';
+      // Cockpit window (colored by trail)
+      ctx.fillStyle = innerFlameColor;
       ctx.globalAlpha = 0.7;
       ctx.beginPath();
       ctx.moveTo(0, -s * 0.9);
@@ -3230,7 +4025,7 @@
       ctx.globalAlpha = 1;
 
       // Cockpit highlight
-      ctx.strokeStyle = '#00ffff';
+      ctx.strokeStyle = innerFlameColor;
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -3239,8 +4034,8 @@
       ctx.fillRect(-7, s * 0.5, 4, 6);
       ctx.fillRect(3, s * 0.5, 4, 6);
 
-      // Engine glow
-      ctx.fillStyle = keys.thrust ? '#00d4ff' : '#666';
+      // Engine glow (colored by trail)
+      ctx.fillStyle = keys.thrust ? innerFlameColor : '#666';
       ctx.fillRect(-6, s * 0.7, 2, 3);
       ctx.fillRect(4, s * 0.7, 2, 3);
 
@@ -3671,6 +4466,28 @@
           osc.stop(now + 0.25);
           break;
 
+        case 'orb_collect':
+          // Quick coin/pickup sound
+          osc.frequency.setValueAtTime(1200, now);
+          osc.frequency.linearRampToValueAtTime(1800, now + 0.05);
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+          break;
+
+        case 'nuke':
+          // Deep 60Hz rumble
+          osc.frequency.setValueAtTime(60, now);
+          osc.type = 'sawtooth';
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.linearRampToValueAtTime(0.15, now + 0.3);
+          gain.gain.linearRampToValueAtTime(0, now + 0.8);
+          osc.start(now);
+          osc.stop(now + 0.8);
+          break;
+
         case 'new_best':
           // Triumphant fanfare
           const fanfare = [523, 659, 784, 1047];
@@ -3869,6 +4686,327 @@
       setTimeout(() => {
         overlay.classList.remove('show');
       }, 3500);
+    }
+
+    // ==========================================
+    // CUSTOMIZATION FUNCTIONS
+    // ==========================================
+
+    // Load customization data from backend or localStorage
+    async function loadCustomizationData() {
+      // Load accessibility settings from localStorage
+      const savedSettings = localStorage.getItem('voidbreak-accessibility');
+      if (savedSettings) {
+        accessibilitySettings = { ...accessibilitySettings, ...JSON.parse(savedSettings) };
+      }
+      updateSettingsToggles();
+
+      // Load local customization state
+      const savedCustom = localStorage.getItem('voidbreak-customization');
+      if (savedCustom) {
+        const saved = JSON.parse(savedCustom);
+        customization.equipped = { ...customization.equipped, ...saved.equipped };
+      }
+
+      // If user is logged in, sync with backend
+      if (currentUser && window.apiClient) {
+        try {
+          // Get inventory (coins + owned items)
+          const inventory = await window.apiClient.getInventory();
+          customization.coins = inventory.coins || 0;
+          customization.totalCoinsEarned = inventory.totalCoinsEarned || 0;
+          customization.ownedItems = inventory.ownedItemIds || [];
+
+          // Get equipped items
+          const equipped = await window.apiClient.getEquipped('voidbreak');
+          if (equipped.equipped) {
+            customization.equipped = { ...customization.equipped, ...equipped.equipped };
+          }
+
+          updateCoinDisplays();
+        } catch (e) {
+          console.warn('[Customization] Failed to load from backend:', e);
+        }
+      }
+
+      // Mark free items as owned
+      markFreeItemsAsOwned();
+    }
+
+    function markFreeItemsAsOwned() {
+      Object.values(VOIDBREAK_ITEMS).flat().forEach(item => {
+        if (item.unlockMethod === 'free' && !customization.ownedItems.includes(item.id)) {
+          customization.ownedItems.push(item.id);
+        }
+      });
+    }
+
+    function saveCustomizationLocal() {
+      localStorage.setItem('voidbreak-customization', JSON.stringify({
+        equipped: customization.equipped
+      }));
+    }
+
+    function updateCoinDisplays() {
+      document.getElementById('menuCoins').textContent = customization.coins.toLocaleString();
+      document.getElementById('loadoutCoins').textContent = customization.coins.toLocaleString();
+
+      // Show coin display if user is logged in
+      if (currentUser) {
+        document.getElementById('menuCoinDisplay').style.display = 'flex';
+      }
+    }
+
+    // Show loadout screen
+    function showLoadoutScreen() {
+      document.getElementById('menuScreen').classList.add('hidden');
+      document.getElementById('loadoutScreen').classList.remove('hidden');
+      customization.currentTab = 'ship';
+      renderLoadoutItems();
+      renderLoadoutPreview();
+    }
+
+    // Hide loadout screen
+    function hideLoadoutScreen() {
+      document.getElementById('loadoutScreen').classList.add('hidden');
+      document.getElementById('menuScreen').classList.remove('hidden');
+    }
+
+    // Render loadout items for current tab
+    function renderLoadoutItems() {
+      const container = document.getElementById('loadoutItems');
+      const tabKey = customization.currentTab + 's'; // ship -> ships
+      const tabKeyMap = { ship: 'ships', trail: 'trails', bullet: 'bullets', hud: 'huds', class: 'classes' };
+      const items = VOIDBREAK_ITEMS[tabKeyMap[customization.currentTab]] || [];
+
+      container.innerHTML = items.map(item => {
+        const owned = customization.ownedItems.includes(item.id);
+        const selected = customization.equipped[customization.currentTab] === item.id;
+        const canAfford = customization.coins >= item.coinCost;
+
+        return `
+          <div class="loadout-item ${selected ? 'selected' : ''} ${!owned ? 'locked' : ''}"
+               data-item-id="${item.id}" data-owned="${owned}" data-cost="${item.coinCost}">
+            ${selected ? '<span class="loadout-item-check">✓</span>' : ''}
+            ${!owned ? '<span class="loadout-item-lock">🔒</span>' : ''}
+            <div class="loadout-item-icon">${item.icon}</div>
+            <div class="loadout-item-name">${item.name}</div>
+            <div class="loadout-item-rarity ${item.rarity}">${item.rarity}</div>
+            ${!owned && item.unlockMethod === 'coins' ? `<div class="loadout-item-price">${item.coinCost} coins</div>` : ''}
+            ${!owned && item.unlockMethod === 'achievement' ? `<div class="loadout-item-price">Achievement</div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      // Add click handlers
+      container.querySelectorAll('.loadout-item').forEach(el => {
+        el.addEventListener('click', () => handleItemClick(el));
+      });
+
+      // Update tab buttons
+      document.querySelectorAll('.loadout-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === customization.currentTab);
+      });
+    }
+
+    // Handle item click
+    async function handleItemClick(el) {
+      const itemId = el.dataset.itemId;
+      const owned = el.dataset.owned === 'true';
+      const cost = parseInt(el.dataset.cost) || 0;
+
+      if (owned) {
+        // Equip the item
+        customization.equipped[customization.currentTab] = itemId;
+        saveCustomizationLocal();
+
+        // Sync with backend if logged in
+        if (currentUser && window.apiClient) {
+          try {
+            await window.apiClient.equipItem('voidbreak', customization.currentTab, itemId);
+          } catch (e) {
+            console.warn('[Customization] Failed to sync equip:', e);
+          }
+        }
+
+        renderLoadoutItems();
+        renderLoadoutPreview();
+        playSound('select');
+      } else if (cost > 0 && customization.coins >= cost) {
+        // Purchase the item
+        if (confirm(`Purchase for ${cost} coins?`)) {
+          if (currentUser && window.apiClient) {
+            try {
+              const result = await window.apiClient.purchaseItem(itemId);
+              customization.coins = result.newBalance;
+              customization.ownedItems.push(itemId);
+              customization.equipped[customization.currentTab] = itemId;
+              saveCustomizationLocal();
+              updateCoinDisplays();
+              renderLoadoutItems();
+              renderLoadoutPreview();
+              playSound('coin');
+            } catch (e) {
+              console.error('[Customization] Purchase failed:', e);
+              alert(e.message || 'Purchase failed');
+            }
+          } else {
+            // Offline mode - just local
+            customization.ownedItems.push(itemId);
+            customization.equipped[customization.currentTab] = itemId;
+            saveCustomizationLocal();
+            renderLoadoutItems();
+            renderLoadoutPreview();
+            playSound('select');
+          }
+        }
+      } else if (cost > 0) {
+        // Can't afford
+        playSound('error');
+      }
+    }
+
+    // Render ship preview on canvas
+    function renderLoadoutPreview() {
+      const canvas = document.getElementById('previewCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const shipItem = VOIDBREAK_ITEMS.ships.find(s => s.id === customization.equipped.ship);
+      if (!shipItem) return;
+
+      ctx.save();
+      ctx.translate(50, 55);
+
+      // Draw ship based on equipped cosmetic
+      const points = shipItem.visualData.points;
+      const scale = 1.5;
+
+      ctx.fillStyle = '#1a1a2e';
+      ctx.strokeStyle = shipItem.visualData.trailColor || '#4da6ff';
+      ctx.lineWidth = 2;
+
+      if (shipItem.visualData.dashed) {
+        ctx.setLineDash([4, 4]);
+      }
+
+      ctx.beginPath();
+      points.forEach((p, i) => {
+        const x = p[0] * scale / 2;
+        const y = p[1] * scale / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Get current cosmetic visual data
+    function getEquippedCosmetics() {
+      const ship = VOIDBREAK_ITEMS.ships.find(s => s.id === customization.equipped.ship) || VOIDBREAK_ITEMS.ships[0];
+      const trail = VOIDBREAK_ITEMS.trails.find(t => t.id === customization.equipped.trail) || VOIDBREAK_ITEMS.trails[0];
+      const bullet = VOIDBREAK_ITEMS.bullets.find(b => b.id === customization.equipped.bullet) || VOIDBREAK_ITEMS.bullets[0];
+      const hud = VOIDBREAK_ITEMS.huds.find(h => h.id === customization.equipped.hud) || VOIDBREAK_ITEMS.huds[0];
+      const classItem = VOIDBREAK_ITEMS.classes.find(c => c.id === customization.equipped.class) || VOIDBREAK_ITEMS.classes[0];
+
+      return { ship, trail, bullet, hud, class: classItem };
+    }
+
+    // Add coins (game rewards)
+    async function addCoinsReward(amount, description) {
+      if (amount <= 0) return;
+
+      coinsEarnedThisRun += amount;
+
+      // Update local state
+      customization.coins += amount;
+      customization.totalCoinsEarned += amount;
+
+      // Show coin popup
+      showCoinPopup(amount);
+
+      // Sync with backend if logged in
+      if (currentUser && window.apiClient) {
+        try {
+          await window.apiClient.addCoins(amount, 'game_reward', 'voidbreak', description);
+        } catch (e) {
+          console.warn('[Coins] Failed to sync:', e);
+        }
+      }
+
+      updateCoinDisplays();
+    }
+
+    // Show coin popup animation
+    function showCoinPopup(amount) {
+      const popup = document.createElement('div');
+      popup.className = 'coin-popup';
+      popup.textContent = `+${amount}`;
+      popup.style.left = (Math.random() * 100 + 100) + 'px';
+      popup.style.top = '100px';
+      document.body.appendChild(popup);
+
+      setTimeout(() => popup.remove(), 1500);
+    }
+
+    // Settings functions
+    function showSettings() {
+      document.getElementById('settingsOverlay').classList.remove('hidden');
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function hideSettings() {
+      document.getElementById('settingsOverlay').classList.add('hidden');
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function updateSettingsToggles() {
+      document.getElementById('highContrastToggle').classList.toggle('active', accessibilitySettings.highContrast);
+      document.getElementById('reduceMotionToggle').classList.toggle('active', accessibilitySettings.reduceMotion);
+      document.getElementById('autoFireSettingToggle').classList.toggle('active', accessibilitySettings.autoFire);
+    }
+
+    function toggleSetting(setting) {
+      accessibilitySettings[setting] = !accessibilitySettings[setting];
+      localStorage.setItem('voidbreak-accessibility', JSON.stringify(accessibilitySettings));
+      updateSettingsToggles();
+
+      // Apply auto-fire setting
+      if (setting === 'autoFire') {
+        autoFireEnabled = accessibilitySettings.autoFire;
+        document.getElementById('autofireToggle')?.classList.toggle('active', autoFireEnabled);
+      }
+    }
+
+    // Setup customization event listeners
+    function setupCustomizationListeners() {
+      // Loadout button
+      document.getElementById('loadoutBtn').addEventListener('click', showLoadoutScreen);
+      document.getElementById('loadoutBackBtn').addEventListener('click', hideLoadoutScreen);
+      document.getElementById('loadoutStartBtn').addEventListener('click', () => {
+        hideLoadoutScreen();
+        startGame(false);
+      });
+
+      // Tab buttons
+      document.querySelectorAll('.loadout-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          customization.currentTab = tab.dataset.tab;
+          renderLoadoutItems();
+        });
+      });
+
+      // Settings
+      document.getElementById('settingsBtn').addEventListener('click', showSettings);
+      document.getElementById('settingsClose').addEventListener('click', hideSettings);
+      document.getElementById('settingsOverlay').addEventListener('click', hideSettings);
+
+      document.querySelectorAll('.settings-toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => toggleSetting(toggle.dataset.setting));
+      });
     }
 
     // Start!

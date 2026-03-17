@@ -196,6 +196,93 @@ class ApiClient {
       }),
     });
   }
+
+  // ============ CUSTOMIZATION ENDPOINTS ============
+
+  /**
+   * Get item catalog for a game
+   * @param {string} gameId - Game identifier (e.g., 'voidbreak')
+   * @returns {Promise<{items: Array, gameId: string}>}
+   */
+  async getCatalog(gameId) {
+    return this.request(`/customizations/catalog/${gameId}`);
+  }
+
+  /**
+   * Get user's inventory (coins + owned items)
+   * @returns {Promise<{coins: number, totalCoinsEarned: number, items: Array, ownedItemIds: string[]}>}
+   */
+  async getInventory() {
+    return this.request('/customizations/inventory');
+  }
+
+  /**
+   * Get equipped items for a game
+   * @param {string} gameId - Game identifier
+   * @returns {Promise<{gameId: string, equipped: Object}>}
+   */
+  async getEquipped(gameId) {
+    return this.request(`/customizations/equipped/${gameId}`);
+  }
+
+  /**
+   * Purchase item with coins
+   * @param {string} itemId - Item to purchase
+   * @returns {Promise<{success: boolean, item: Object, coinsSpent: number, newBalance: number, transactionId: string}>}
+   */
+  async purchaseItem(itemId) {
+    return this.request('/customizations/purchase', {
+      method: 'POST',
+      body: JSON.stringify({ itemId }),
+    });
+  }
+
+  /**
+   * Equip an owned item
+   * @param {string} gameId - Game identifier
+   * @param {string} itemType - Type: 'ship', 'trail', 'bullet', 'hud', 'class'
+   * @param {string|null} itemId - Item to equip, or null to unequip
+   * @returns {Promise<{success: boolean, equipped: Object}>}
+   */
+  async equipItem(gameId, itemType, itemId) {
+    return this.request('/customizations/equip', {
+      method: 'POST',
+      body: JSON.stringify({ gameId, itemType, itemId }),
+    });
+  }
+
+  /**
+   * Add coins (called after game events)
+   * @param {number} amount - Coins to add
+   * @param {string} type - Transaction type: 'game_reward', 'achievement', etc.
+   * @param {string} gameId - Game that awarded coins
+   * @param {string} description - Description of why coins were earned
+   * @param {Object} [metadata] - Additional metadata
+   * @returns {Promise<{success: boolean, coinsAdded: number, newBalance: number, transactionId: string}>}
+   */
+  async addCoins(amount, type, gameId, description, metadata = {}) {
+    return this.request('/customizations/coins/add', {
+      method: 'POST',
+      body: JSON.stringify({ amount, type, gameId, description, metadata }),
+    });
+  }
+
+  /**
+   * Get coin balance
+   * @returns {Promise<{coins: number, totalCoinsEarned: number}>}
+   */
+  async getCoinBalance() {
+    return this.request('/customizations/coins/balance');
+  }
+
+  /**
+   * Get coin transaction history
+   * @param {number} [limit=50] - Max transactions to return
+   * @returns {Promise<{transactions: Array, totalCount: number}>}
+   */
+  async getCoinHistory(limit = 50) {
+    return this.request(`/customizations/coins/history?limit=${limit}`);
+  }
 }
 
 // Export singleton instance

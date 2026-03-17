@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { GameStateModule } from '../game-state/game-state.module';
 import { LeaderboardModule } from '../leaderboard/leaderboard.module';
 import { AchievementsModule } from '../achievements/achievements.module';
+import { CustomizationsModule } from '../customizations/customizations.module';
 import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
 
 @Module({
@@ -18,6 +19,7 @@ import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
     GameStateModule,
     LeaderboardModule,
     AchievementsModule,
+    CustomizationsModule,
   ],
   controllers: [AppController],
   providers: [

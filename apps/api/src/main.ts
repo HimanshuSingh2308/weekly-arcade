@@ -15,6 +15,8 @@ async function bootstrap() {
       'https://loyal-curve-425715-h6.web.app',
       'https://loyal-curve-425715-h6.firebaseapp.com',
       'https://himanshuSingh2308.github.io',
+      'https://weeklyarcade.games',
+      'https://www.weeklyarcade.games',
     ],
     credentials: true,
   });
