@@ -290,6 +290,15 @@
     .cell.river { background: var(--river); }
     .cell.settlement { background: var(--settlement); }
     .cell.wall { background: #4a4a4a; }
+    .cell.cursed {
+      background: linear-gradient(135deg, #2d1b4e, #1a0a2e);
+      animation: cursed-pulse 2s infinite;
+    }
+
+    @keyframes cursed-pulse {
+      0%, 100% { box-shadow: inset 0 0 10px rgba(128, 0, 128, 0.5); }
+      50% { box-shadow: inset 0 0 20px rgba(128, 0, 128, 0.8); }
+    }
 
     .cell.ghost {
       opacity: 0.4;
@@ -331,6 +340,20 @@
 
     .cell.harvesting {
       animation: harvest-flash 0.3s ease-out, glow-pulse 0.3s ease-out;
+    }
+
+    /* Harvested rows - permanent kingdom land */
+    .cell.harvested {
+      box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.4);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+
+    .cell.harvested::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, transparent 50%);
+      pointer-events: none;
     }
 
     /* Next Piece Preview */
@@ -656,21 +679,29 @@
 
     .attack-enemies {
       display: flex;
-      gap: 20px;
+      gap: 10px;
       justify-content: center;
-      margin: 2rem 0;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
     }
 
     .attack-enemy {
       background: var(--bg-card);
-      padding: 1rem 2rem;
+      padding: 0.8rem 1.2rem;
       border-radius: 10px;
       text-align: center;
+      min-width: 70px;
     }
 
-    .attack-enemy-icon { font-size: 2.5rem; }
-    .attack-enemy-count { font-size: 1.5rem; font-weight: 700; }
-    .attack-enemy-type { font-size: 0.8rem; color: var(--text-secondary); }
+    .attack-enemy.total {
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      border: 2px solid var(--accent);
+    }
+
+    .attack-enemy-icon { font-size: 1.8rem; }
+    .attack-enemy-count { font-size: 1.2rem; font-weight: 700; }
+    .attack-enemy-type { font-size: 0.7rem; color: var(--text-secondary); }
+    .attack-enemy.total .attack-enemy-type { color: white; }
 
     .attack-vs {
       font-size: 2rem;
@@ -1153,7 +1184,7 @@
       <div class="tutorial-section">
         <h3>🧩 Gameplay Loop</h3>
         <p><strong>1. Place Tiles:</strong> Tetris-style pieces fall from the top. Move and rotate them to fill the board.</p>
-        <p><strong>2. Complete Rows:</strong> Fill an entire row to <em>harvest</em> it! The row clears (like Tetris) and you gain resources based on the terrain types in that row.</p>
+        <p><strong>2. Complete Rows:</strong> Fill an entire row to <em>harvest</em> it! Unlike Tetris, rows STAY on the board as permanent kingdom land (shown with golden glow). You gain resources based on the terrain types.</p>
         <p><strong>3. Survive Attacks:</strong> After placing 10 tiles, enemies attack! Your defence (from walls + units) must beat enemy power or you lose tiles.</p>
         <p><strong>4. Shop & Upgrade:</strong> Between waves, buy cards to boost resource production or add defence units.</p>
         <p style="margin-top: 0.5rem; background: rgba(255,215,0,0.1); padding: 8px; border-radius: 6px; border-left: 3px solid var(--gold);">
@@ -1401,7 +1432,8 @@
       MOUNTAIN: 3,
       RIVER: 4,
       SETTLEMENT: 5,
-      WALL: 6
+      WALL: 6,
+      CURSED: 7  // Negative terrain - reduces adjacent output (wave 6+)
     };
 
     const TERRAIN_COLORS = {
@@ -1410,7 +1442,8 @@
       [TERRAIN.MOUNTAIN]: 'mountain',
       [TERRAIN.RIVER]: 'river',
       [TERRAIN.SETTLEMENT]: 'settlement',
-      [TERRAIN.WALL]: 'wall'
+      [TERRAIN.WALL]: 'wall',
+      [TERRAIN.CURSED]: 'cursed'
     };
 
     const TERRAIN_ICONS = {
@@ -1419,7 +1452,8 @@
       [TERRAIN.MOUNTAIN]: '⛰️',
       [TERRAIN.RIVER]: '💧',
       [TERRAIN.SETTLEMENT]: '🏠',
-      [TERRAIN.WALL]: '🧱'
+      [TERRAIN.WALL]: '🧱',
+      [TERRAIN.CURSED]: '💀'
     };
 
     // Tetromino Shapes
@@ -1471,6 +1505,7 @@
     // Game State
     let gameState = {
       board: [],
+      harvestedRows: [],  // Track which rows have been harvested (they stay but can't harvest again)
       currentPiece: null,
       nextPiece: null,
       pieceX: 0,
@@ -1492,6 +1527,8 @@
     // Initialize Board
     function initBoard() {
       gameState.board = Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(TERRAIN.EMPTY));
+      gameState.harvestedRows = []; // Reset harvested rows for new game
+      gameState.jokers = [];        // Reset jokers for new run
       renderBoard();
     }
 
@@ -1638,20 +1675,24 @@
     }
 
     // Check and harvest completed rows, returns count
+    // PRD: Rows stay on board after harvest - they become permanent kingdom land
     function checkRows() {
-      let harvestedRows = [];
+      let newHarvestedRows = [];
 
       for (let row = 0; row < BOARD_HEIGHT; row++) {
+        // Skip already harvested rows
+        if (gameState.harvestedRows.includes(row)) continue;
+
         if (gameState.board[row].every(cell => cell !== TERRAIN.EMPTY)) {
-          harvestedRows.push(row);
+          newHarvestedRows.push(row);
         }
       }
 
-      if (harvestedRows.length > 0) {
-        harvestRows(harvestedRows);
+      if (newHarvestedRows.length > 0) {
+        harvestRows(newHarvestedRows);
       }
 
-      return harvestedRows.length;
+      return newHarvestedRows.length;
     }
 
     // Harvest resources from completed rows
@@ -1727,24 +1768,19 @@
       if (gained.gold > 0) toastParts.push(`+${gained.gold} 💰`);
 
       if (toastParts.length > 0) {
-        showToast(`${rows.length} row${rows.length > 1 ? 's' : ''} cleared! ${toastParts.join(' ')}`, 'harvest');
+        showToast(`${rows.length} row${rows.length > 1 ? 's' : ''} harvested! ${toastParts.join(' ')}`, 'harvest');
       }
       showToast(`+${rowBonus} points!`, 'score');
 
-      // Clear the completed rows and drop tiles above
-      setTimeout(() => {
-        rows.forEach(rowIndex => {
-          // Remove the row
-          gameState.board.splice(rowIndex, 1);
-          // Add empty row at top
-          gameState.board.unshift(Array(BOARD_WIDTH).fill(TERRAIN.EMPTY));
-        });
-
-        updateUI();
-        renderBoard();
-      }, 300);
+      // PRD: Rows STAY on board - mark them as harvested (permanent kingdom land)
+      rows.forEach(rowIndex => {
+        if (!gameState.harvestedRows.includes(rowIndex)) {
+          gameState.harvestedRows.push(rowIndex);
+        }
+      });
 
       updateUI();
+      renderBoard();
     }
 
     // Find clusters of same terrain in a row
@@ -1859,11 +1895,65 @@
       document.getElementById('attackOverlay').classList.add('show');
     }
 
+    // Enemy Types per PRD
+    const ENEMY_TYPES = {
+      infantry: { icon: '🗡️', name: 'Infantry', power: 10 },
+      archer: { icon: '🏹', name: 'Archers', power: 15 },
+      cavalry: { icon: '🐴', name: 'Cavalry', power: 25 },
+      siege: { icon: '💥', name: 'Siege', power: 40 },
+      elite: { icon: '👑', name: 'Elite', power: 50 }
+    };
+
+    // Generate enemy composition based on wave
+    function generateEnemies() {
+      const wave = gameState.wave;
+      let enemies = [];
+
+      if (wave <= 3) {
+        // Waves 1-3: Infantry only
+        const count = 2 + wave;
+        for (let i = 0; i < count; i++) enemies.push('infantry');
+      } else if (wave <= 6) {
+        // Waves 4-6: Infantry + Archers
+        const infantryCount = Math.floor(wave / 2) + 1;
+        const archerCount = wave - 3;
+        for (let i = 0; i < infantryCount; i++) enemies.push('infantry');
+        for (let i = 0; i < archerCount; i++) enemies.push('archer');
+      } else if (wave <= 8) {
+        // Waves 7-8: All types
+        enemies.push('infantry', 'infantry', 'archer', 'archer', 'cavalry');
+        if (wave === 8) enemies.push('siege');
+      } else if (wave === 9) {
+        // Wave 9: Elite + Siege
+        enemies.push('infantry', 'archer', 'cavalry', 'siege', 'elite');
+      } else {
+        // Wave 10: Full assault
+        enemies.push('infantry', 'infantry', 'archer', 'archer', 'cavalry', 'cavalry', 'siege', 'elite');
+      }
+
+      return enemies;
+    }
+
     // Calculate enemy power based on wave
     function calculateEnemyPower() {
-      const basePower = 20 + (gameState.wave * 15);
-      const randomVariance = Math.floor(Math.random() * 20) - 10;
-      return Math.max(10, basePower + randomVariance);
+      const enemies = generateEnemies();
+      let totalPower = 0;
+      enemies.forEach(type => {
+        totalPower += ENEMY_TYPES[type].power;
+      });
+      // Add some variance
+      const variance = Math.floor(Math.random() * 10) - 5;
+      return Math.max(10, totalPower + variance);
+    }
+
+    // Get enemy breakdown for display
+    function getEnemyBreakdown() {
+      const enemies = generateEnemies();
+      const counts = {};
+      enemies.forEach(type => {
+        counts[type] = (counts[type] || 0) + 1;
+      });
+      return counts;
     }
 
     // Calculate player defence
@@ -1911,15 +2001,33 @@
     }
 
     // Render attack phase
-    function renderAttackPhase(enemyPower, playerDefence) {
+    function renderAttackPhase(enemyPower, playerDefence, siegeBreakUsed = 0) {
       const enemyList = document.getElementById('attackEnemies');
-      enemyList.innerHTML = `
-        <div class="attack-enemy">
+      const breakdown = getEnemyBreakdown();
+
+      // Show each enemy type
+      let enemyHTML = '';
+      for (const [type, count] of Object.entries(breakdown)) {
+        const enemy = ENEMY_TYPES[type];
+        enemyHTML += `
+          <div class="attack-enemy">
+            <div class="attack-enemy-icon">${enemy.icon}</div>
+            <div class="attack-enemy-count">×${count}</div>
+            <div class="attack-enemy-type">${enemy.name}</div>
+          </div>
+        `;
+      }
+
+      // Show total power
+      enemyHTML += `
+        <div class="attack-enemy total">
           <div class="attack-enemy-icon">⚔️</div>
-          <div class="attack-enemy-count">${enemyPower}</div>
-          <div class="attack-enemy-type">Enemy Power</div>
+          <div class="attack-enemy-count">${enemyPower}${siegeBreakUsed > 0 ? ` <span style="color:#4CAF50">(-${siegeBreakUsed})</span>` : ''}</div>
+          <div class="attack-enemy-type">Total Power</div>
         </div>
       `;
+
+      enemyList.innerHTML = enemyHTML;
 
       document.getElementById('attackDefence').textContent = `Your Defence: ${playerDefence}`;
 
@@ -2170,6 +2278,11 @@
         if (terrain !== TERRAIN.EMPTY) {
           cell.classList.add(TERRAIN_COLORS[terrain]);
           cell.textContent = TERRAIN_ICONS[terrain];
+
+          // Mark harvested rows (permanent kingdom land)
+          if (gameState.harvestedRows.includes(row)) {
+            cell.classList.add('harvested');
+          }
         } else {
           cell.textContent = '';
         }
@@ -2285,14 +2398,18 @@
         jokersSection.style.display = 'none';
       }
 
-      // Update enemy preview
+      // Update enemy preview with type breakdown
       const enemyPower = calculateEnemyPower();
+      const breakdown = getEnemyBreakdown();
+      const typeIcons = Object.entries(breakdown).map(([type, count]) =>
+        `${ENEMY_TYPES[type].icon}×${count}`
+      ).join(' ');
+
       document.getElementById('enemyList').innerHTML = `
         <div class="enemy-wave">
-          <span class="enemy-icon">⚔️</span>
           <div>
-            <div class="enemy-count">~${enemyPower}</div>
-            <div class="enemy-type">Wave ${gameState.wave}</div>
+            <div class="enemy-count">~${enemyPower} Power</div>
+            <div class="enemy-type">Wave ${gameState.wave}: ${typeIcons}</div>
           </div>
         </div>
       `;

@@ -51,6 +51,20 @@
     <priority>0.8</priority>
   </url>
 
+  <url>
+    <loc>https://weekly-arcade.web.app/games/fieldstone/</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://weekly-arcade.web.app/games/voidbreak/</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Other Pages -->
   <url>
     <loc>https://weekly-arcade.web.app/leaderboard/</loc>

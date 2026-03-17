@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Voidbreak | Weekly Arcade - Asteroid Roguelite</title>
+
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
+  <!-- SEO -->
+  <meta name="description" content="Play Voidbreak free online. Smash asteroids, upgrade your ship, go deeper. Modern Asteroids roguelite with upgrades and leaderboards. No download required.">
+  <meta name="keywords" content="voidbreak, asteroids game, roguelite, arcade game, space shooter, browser game, free game">
+  <link rel="canonical" href="https://weekly-arcade.web.app/games/voidbreak/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Voidbreak | Weekly Arcade - Asteroid Roguelite">
+  <meta property="og:description" content="Smash asteroids, upgrade your ship, go deeper. How far can you get?">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weekly-arcade.web.app/games/voidbreak/">
+  <meta property="og:image" content="https://weekly-arcade.web.app/og-image.png">
+  <meta property="og:site_name" content="Weekly Arcade">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Voidbreak | Weekly Arcade">
+  <meta name="twitter:description" content="Smash asteroids, upgrade your ship, go deeper. How far can you get?">
+  <meta name="twitter:image" content="https://weekly-arcade.web.app/og-image.png">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0a2e">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Voidbreak",
+    "url": "https://weekly-arcade.web.app/games/voidbreak/",
+    "description": "Smash asteroids, upgrade your ship, go deeper. Modern Asteroids roguelite with upgrades and leaderboards.",
+    "genre": ["Action", "Arcade", "Roguelite"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "gamePlatform": "Web Browser",
+    "inLanguage": "en",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Weekly Arcade",
+      "url": "https://weekly-arcade.web.app/"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weekly-arcade.web.app/" },
+      { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://weekly-arcade.web.app/#new" },
+      { "@type": "ListItem", "position": 3, "name": "Voidbreak", "item": "https://weekly-arcade.web.app/games/voidbreak/" }
+    ]
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #050510;
+      --bg-secondary: #0a0a2e;
+      --bg-card: #16213e;
+      --accent: #e94560;
+      --accent-light: #ff6b6b;
+      --cyan: #00d4ff;
+      --text-primary: #fff;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+      --common: #888;
+      --rare: #4da6ff;
+      --epic: #ffd700;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 50px;
+    }
+
+    .back-btn {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .back-btn:hover { color: var(--text-primary); }
+
+    .title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .auth-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .icon-btn {
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.4rem;
+      border-radius: 8px;
+      min-width: 36px;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--accent);
+    }
+
+    /* Game Container */
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding-top: 50px;
+    }
+
+    #gameCanvas {
+      display: block;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+    }
+
+    /* HUD Overlay */
+    .hud {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .hud-left, .hud-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .hud-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .score-display {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+
+    .wave-display {
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .combo-display {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .combo-display.active {
+      opacity: 1;
+    }
+
+    .lives-display {
+      display: flex;
+      gap: 0.25rem;
+      justify-content: flex-end;
+    }
+
+    .life-icon {
+      font-size: 1.2rem;
+    }
+
+    .best-display {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+
+    /* Menu Screen */
+    .menu-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 16, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .menu-screen.hidden { display: none; }
+
+    .menu-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .menu-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .menu-tagline {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .play-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border: none;
+      padding: 1rem 3rem;
+      border-radius: 30px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-bottom: 1.5rem;
+    }
+
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
+    }
+
+    .controls-hint {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      max-width: 300px;
+    }
+
+    .controls-hint kbd {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    /* Shop Screen */
+    .shop-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 16, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 1rem;
+    }
+
+    .shop-screen.hidden { display: none; }
+
+    .shop-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    .shop-timer {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .shop-cards {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 800px;
+    }
+
+    .upgrade-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      width: 220px;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      text-align: center;
+    }
+
+    .upgrade-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .upgrade-card.common { border-color: var(--common); }
+    .upgrade-card.common:hover { box-shadow: 0 8px 25px rgba(136, 136, 136, 0.3); }
+
+    .upgrade-card.rare { border-color: var(--rare); }
+    .upgrade-card.rare:hover { box-shadow: 0 8px 25px rgba(77, 166, 255, 0.3); }
+
+    .upgrade-card.epic { border-color: var(--epic); }
+    .upgrade-card.epic:hover { box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3); }
+
+    .upgrade-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .upgrade-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .upgrade-rarity {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .upgrade-card.common .upgrade-rarity { color: var(--common); }
+    .upgrade-card.rare .upgrade-rarity { color: var(--rare); }
+    .upgrade-card.epic .upgrade-rarity { color: var(--epic); }
+
+    .upgrade-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .skip-btn {
+      margin-top: 1.5rem;
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.75rem 2rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .skip-btn:hover {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+
+    /* Game Over Screen */
+    .gameover-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 16, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 2rem;
+    }
+
+    .gameover-screen.hidden { display: none; }
+
+    .gameover-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .gameover-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    .gameover-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .gameover-stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    .gameover-stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .new-best {
+      color: var(--epic) !important;
+    }
+
+    .gameover-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .retry-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .retry-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .home-btn {
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.75rem 2rem;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .home-btn:hover {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+
+    /* Wave Clear Flash */
+    .wave-clear {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: white;
+      text-shadow: 0 0 20px var(--cyan);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 150;
+      transition: opacity 0.3s;
+    }
+
+    .wave-clear.show {
+      opacity: 1;
+    }
+
+    /* Score Popup */
+    .score-popup {
+      position: fixed;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+      pointer-events: none;
+      z-index: 100;
+      animation: scoreFloat 1s ease-out forwards;
+    }
+
+    @keyframes scoreFloat {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-30px); }
+    }
+
+    /* Mobile Controls */
+    .mobile-controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      padding: 1rem;
+      z-index: 100;
+    }
+
+    .mobile-controls-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .mobile-dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      grid-template-rows: repeat(2, 60px);
+      gap: 5px;
+    }
+
+    .mobile-btn {
+      background: rgba(233, 69, 96, 0.3);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-btn:active {
+      background: var(--accent);
+    }
+
+    .mobile-btn.thrust { grid-column: 2; }
+    .mobile-btn.left { grid-column: 1; grid-row: 2; }
+    .mobile-btn.right { grid-column: 3; grid-row: 2; }
+
+    .mobile-fire {
+      width: 100px;
+      height: 100px;
+      background: rgba(233, 69, 96, 0.4);
+      border: 3px solid var(--accent);
+      border-radius: 50%;
+      color: white;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+      .mobile-controls { display: block; }
+      .hud { top: 55px; }
+    }
+
+    /* Achievement Toast */
+    .achievement-toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--bg-card);
+      border: 2px solid var(--epic);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 300;
+      transition: transform 0.3s ease-out;
+    }
+
+    .achievement-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .achievement-toast-icon {
+      font-size: 2rem;
+    }
+
+    .achievement-toast-text {
+      font-size: 0.9rem;
+    }
+
+    .achievement-toast-title {
+      font-weight: 700;
+      color: var(--epic);
+    }
+
+    /* More Games */
+    .more-games {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      margin-top: auto;
+    }
+
+    .more-games-title {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .more-games-grid {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .more-game-link {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .more-game-link:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .more-game-link span:first-child {
+      font-size: 1.2rem;
+    }
+
+    @media (max-width: 600px) {
+      .more-games { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <a href="/" class="back-btn">&larr; Back</a>
+    <h1 class="title">Voidbreak</h1>
+    <div class="header-right">
+      <button class="icon-btn" id="soundBtn" title="Toggle Sound">🔊</button>
+      <button class="auth-btn" id="authBtn">Sign In</button>
+    </div>
+  </header>
+
+  <!-- HUD -->
+  <div class="hud" id="hud" style="display: none;">
+    <div class="hud-left">
+      <div class="score-display" id="scoreDisplay">0</div>
+      <div class="wave-display">Wave <span id="waveDisplay">1</span></div>
+    </div>
+    <div class="hud-center">
+      <div class="combo-display" id="comboDisplay">x1.5 COMBO</div>
+    </div>
+    <div class="hud-right">
+      <div class="lives-display" id="livesDisplay"></div>
+      <div class="best-display">Best: <span id="bestDisplay">0</span></div>
+    </div>
+  </div>
+
+  <!-- Wave Clear Flash -->
+  <div class="wave-clear" id="waveClear">WAVE 1 CLEARED</div>
+
+  <!-- Game Canvas -->
+  <div class="game-container">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <!-- Menu Screen -->
+  <div class="menu-screen" id="menuScreen">
+    <div class="menu-icon">☄️</div>
+    <h2 class="menu-title">Voidbreak</h2>
+    <p class="menu-tagline">Clear the field. Choose your weapon. Go deeper.</p>
+    <button class="play-btn" id="playBtn">START RUN</button>
+    <p class="controls-hint">
+      <kbd>WASD</kbd> or <kbd>Arrow Keys</kbd> to move<br>
+      <kbd>Space</kbd> to fire
+    </p>
+  </div>
+
+  <!-- Shop Screen -->
+  <div class="shop-screen hidden" id="shopScreen">
+    <div class="shop-title">UPGRADE AVAILABLE</div>
+    <div class="shop-timer" id="shopTimer">10</div>
+    <div class="shop-cards" id="shopCards"></div>
+    <button class="skip-btn" id="skipBtn">Skip</button>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="gameover-screen hidden" id="gameoverScreen">
+    <div class="gameover-title">GAME OVER</div>
+    <div class="gameover-stats">
+      <div class="gameover-stat">
+        <div class="gameover-stat-value" id="finalScore">0</div>
+        <div class="gameover-stat-label">Score</div>
+      </div>
+      <div class="gameover-stat">
+        <div class="gameover-stat-value" id="finalWave">1</div>
+        <div class="gameover-stat-label">Wave</div>
+      </div>
+      <div class="gameover-stat">
+        <div class="gameover-stat-value" id="finalKills">0</div>
+        <div class="gameover-stat-label">Kills</div>
+      </div>
+      <div class="gameover-stat">
+        <div class="gameover-stat-value" id="finalCombo">0</div>
+        <div class="gameover-stat-label">Best Combo</div>
+      </div>
+    </div>
+    <div class="gameover-buttons">
+      <button class="retry-btn" id="retryBtn">Play Again</button>
+      <a href="/" class="home-btn">Home</a>
+    </div>
+  </div>
+
+  <!-- Mobile Controls -->
+  <div class="mobile-controls" id="mobileControls">
+    <div class="mobile-controls-inner">
+      <div class="mobile-dpad">
+        <button class="mobile-btn thrust" id="mobileThrust">▲</button>
+        <button class="mobile-btn left" id="mobileLeft">◀</button>
+        <button class="mobile-btn right" id="mobileRight">▶</button>
+      </div>
+      <button class="mobile-btn mobile-fire" id="mobileFire">FIRE</button>
+    </div>
+  </div>
+
+  <!-- Achievement Toast -->
+  <div class="achievement-toast" id="achievementToast">
+    <div class="achievement-toast-icon" id="achievementIcon">🏆</div>
+    <div class="achievement-toast-text">
+      <div class="achievement-toast-title" id="achievementTitle">Achievement Unlocked!</div>
+      <div id="achievementName">Into the Void</div>
+    </div>
+  </div>
+
+  <!-- More Games -->
+  <section class="more-games">
+    <h3 class="more-games-title">More Games</h3>
+    <div class="more-games-grid">
+      <a href="/games/wordle/" class="more-game-link"><span>🔤</span><span>Wordle</span></a>
+      <a href="/games/snake/" class="more-game-link"><span>🐍</span><span>Snake</span></a>
+      <a href="/games/2048/" class="more-game-link"><span>🔢</span><span>2048</span></a>
+      <a href="/games/lumble/" class="more-game-link"><span>🫧</span><span>Lumble</span></a>
+      <a href="/games/fieldstone/" class="more-game-link"><span>🏰</span><span>Fieldstone</span></a>
+    </div>
+  </section>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+
+  <!-- API Client -->
+  <script src="../../js/api-client.js"></script>
+  <script src="../../js/auth.js"></script>
+
+  <script>
+    // ==========================================
+    // VOIDBREAK - Asteroid Roguelite
+    // ==========================================
+
+    // Canvas setup
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Responsive canvas sizing
+    function resizeCanvas() {
+      const maxW = Math.min(800, window.innerWidth - 20);
+      const maxH = Math.min(600, window.innerHeight - 150);
+      const aspect = 800 / 600;
+
+      if (maxW / maxH > aspect) {
+        canvas.height = maxH;
+        canvas.width = maxH * aspect;
+      } else {
+        canvas.width = maxW;
+        canvas.height = maxW / aspect;
+      }
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Game constants
+    const SHIP_SIZE = 15;
+    const THRUST = 200;
+    const ROTATION_SPEED = 4;
+    const DRAG = 0.99;
+    const BULLET_SPEED = 400;
+    const BULLET_COOLDOWN = 400;
+    const STARTING_LIVES = 3;
+    const INVINCIBILITY_TIME = 2000;
+    const SHOP_TIME = 10;
+    const COMBO_WINDOW = 3000;
+    const COMBO_MULTIPLIER = 1.5;
+    const COMBO_THRESHOLD = 5;
+
+    // Asteroid configs
+    const ASTEROID_CONFIG = {
+      large: { radius: 40, speed: 40, score: 20, splits: 2, nextSize: 'medium' },
+      medium: { radius: 25, speed: 60, score: 50, splits: 2, nextSize: 'small' },
+      small: { radius: 12, speed: 90, score: 100, splits: 0, nextSize: null }
+    };
+
+    // Drone configs
+    const DRONE_CONFIG = {
+      scout: { radius: 12, speed: 80, score: 150, color: '#22c55e', fireRate: 2000, firstWave: 4 },
+      hunter: { radius: 15, speed: 50, score: 300, color: '#ef4444', tracking: true, firstWave: 7 },
+      bomber: { radius: 20, speed: 30, score: 500, color: '#f97316', explodes: true, firstWave: 10 },
+      swarm: { radius: 18, speed: 40, score: 400, color: '#a855f7', spawns: 3, firstWave: 12 }
+    };
+
+    // Wave scaling
+    const WAVE_CONFIG = [
+      { asteroids: 4, drones: {} },
+      { asteroids: 6, drones: {} },
+      { asteroids: 8, drones: {} },
+      { asteroids: 8, drones: { scout: 1 } },
+      { asteroids: 10, drones: { scout: 2 } },
+      { asteroids: 10, drones: { scout: 2 } },
+      { asteroids: 10, drones: { scout: 2, hunter: 1 } },
+      { asteroids: 10, drones: { scout: 2, hunter: 1 } },
+      { asteroids: 12, drones: { scout: 2, hunter: 1 } },
+      { asteroids: 12, drones: { scout: 3, hunter: 1, bomber: 1 } },
+      { asteroids: 12, drones: { scout: 3, hunter: 2, bomber: 1 } },
+      { asteroids: 12, drones: { scout: 3, hunter: 2, bomber: 1, swarm: 1 } }
+    ];
+
+    // Upgrades catalog
+    const UPGRADES = {
+      // Weapons
+      W1: { name: 'Spread Shot', icon: '🔱', rarity: 'common', type: 'weapon', desc: 'Fire 3 bullets in a 20° spread' },
+      W2: { name: 'Rapid Fire', icon: '⚡', rarity: 'common', type: 'weapon', desc: 'Fire rate +50%' },
+      W3: { name: 'Piercing Round', icon: '🎯', rarity: 'rare', type: 'weapon', desc: 'Bullets pass through 1 extra object' },
+      W4: { name: 'Laser Burst', icon: '💫', rarity: 'rare', type: 'weapon', desc: 'Short-range instant hit laser' },
+      W5: { name: 'Homing Missile', icon: '🚀', rarity: 'rare', type: 'weapon', desc: 'Fires heat-seeking missile every 2s' },
+      W6: { name: 'Plasma Ring', icon: '💠', rarity: 'epic', type: 'weapon', desc: 'On kill, emit damaging ring' },
+      W7: { name: 'Twin Cannons', icon: '🔫', rarity: 'epic', type: 'weapon', desc: 'Fire from both sides simultaneously' },
+      W8: { name: 'Nuke', icon: '💥', rarity: 'epic', type: 'weapon', desc: 'One-use mega-explosion (1 per run)' },
+      W9: { name: 'Ricochet', icon: '↩️', rarity: 'rare', type: 'weapon', desc: 'Bullets bounce off screen edges' },
+      W10: { name: 'Burst Fire', icon: '💨', rarity: 'common', type: 'weapon', desc: 'Fire 3 rapid shots per press' },
+      // Passives
+      P1: { name: 'Shield Regen', icon: '🛡️', rarity: 'common', type: 'passive', desc: 'Regain 1 HP after 3 deathless waves' },
+      P2: { name: 'Thruster Boost', icon: '🔥', rarity: 'common', type: 'passive', desc: 'Max speed +20%' },
+      P3: { name: 'Inertia Dampener', icon: '⚓', rarity: 'common', type: 'passive', desc: 'Decelerate faster' },
+      P4: { name: 'Extra Life', icon: '❤️', rarity: 'rare', type: 'passive', desc: '+1 life immediately' },
+      P5: { name: 'Ghost Mode', icon: '👻', rarity: 'rare', type: 'passive', desc: 'Pass through 1 asteroid per wave' },
+      P6: { name: 'Magnet', icon: '🧲', rarity: 'common', type: 'passive', desc: 'Score orbs auto-collect from further' },
+      P7: { name: 'Armor Plating', icon: '🛡️', rarity: 'rare', type: 'passive', desc: 'First hit each wave deals no damage' },
+      P8: { name: 'Overclock', icon: '⚙️', rarity: 'epic', type: 'passive', desc: 'All cooldowns -30% for 1 wave' },
+      P9: { name: 'Black Hole', icon: '🌀', rarity: 'epic', type: 'passive', desc: 'Deploy black hole that pulls asteroids' },
+      P10: { name: 'Time Warp', icon: '⏱️', rarity: 'epic', type: 'passive', desc: 'Slow all enemies for 5 seconds' },
+      // Score multipliers
+      M1: { name: 'Double Points', icon: '✖️', rarity: 'rare', type: 'score', desc: '2x score for next wave' },
+      M2: { name: 'Combo Master', icon: '🔗', rarity: 'common', type: 'score', desc: '1.5x combo activates at 3 kills' },
+      M3: { name: 'Asteroid Bounty', icon: '💎', rarity: 'common', type: 'score', desc: '+25 pts per small asteroid' },
+      M4: { name: 'Drone Hunter', icon: '🤖', rarity: 'common', type: 'score', desc: '+100 pts per drone' },
+      M5: { name: 'Perfect Wave', icon: '⭐', rarity: 'rare', type: 'score', desc: 'No damage = 2x wave score' },
+      M6: { name: 'Risk/Reward', icon: '🎲', rarity: 'epic', type: 'score', desc: '-1 life for 3x score entire run' }
+    };
+
+    // Game state
+    let gameState = 'menu'; // menu, playing, shop, wave_clear, game_over
+    let ship = null;
+    let asteroids = [];
+    let drones = [];
+    let bullets = [];
+    let droneBullets = [];
+    let particles = [];
+    let scorePopups = [];
+    let stars = [];
+
+    let score = 0;
+    let wave = 1;
+    let lives = STARTING_LIVES;
+    let bestScore = parseInt(localStorage.getItem('voidbreak-best') || '0');
+    let invincibleUntil = 0;
+    let lastBulletTime = 0;
+    let gameStartTime = 0;
+    let waveStartTime = 0;
+
+    // Combo system
+    let comboKills = 0;
+    let lastKillTime = 0;
+    let comboActive = false;
+    let highestCombo = 0;
+
+    // Stats
+    let totalKills = 0;
+    let perfectWaves = 0;
+    let damageTakenThisWave = false;
+    let wavesWithoutDamage = 0;
+    let upgradesTaken = [];
+
+    // Active upgrades effects
+    let activeUpgrades = {
+      spreadShot: false,
+      rapidFire: false,
+      piercing: 0,
+      laserBurst: false,
+      homingMissile: false,
+      plasmaRing: false,
+      twinCannons: false,
+      nukeAvailable: false,
+      ricochet: false,
+      burstFire: false,
+      thrusterBoost: false,
+      inertiaDampener: false,
+      ghostCharges: 0,
+      armorActive: false,
+      overclock: false,
+      doublePoints: false,
+      comboMaster: false,
+      asteroidBounty: false,
+      droneHunter: false,
+      perfectWaveBonus: false,
+      riskReward: false,
+      scoreMultiplier: 1
+    };
+
+    // Shop state
+    let shopTimer = SHOP_TIME;
+    let shopOptions = [];
+
+    // Audio
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    // Input state
+    const keys = {
+      left: false,
+      right: false,
+      thrust: false,
+      fire: false
+    };
+
+    // User/Auth
+    let currentUser = null;
+
+    // ==========================================
+    // INITIALIZATION
+    // ==========================================
+
+    function init() {
+      // Generate starfield
+      stars = [];
+      for (let i = 0; i < 200; i++) {
+        stars.push({
+          x: Math.random() * 800,
+          y: Math.random() * 600,
+          size: Math.random() * 1.5 + 0.5,
+          alpha: Math.random() * 0.5 + 0.3
+        });
+      }
+
+      // Update displays
+      document.getElementById('bestDisplay').textContent = bestScore.toLocaleString();
+      updateLivesDisplay();
+
+      // Setup event listeners
+      setupControls();
+      setupAuth();
+
+      // Start game loop
+      requestAnimationFrame(gameLoop);
+    }
+
+    function setupControls() {
+      // Keyboard
+      document.addEventListener('keydown', e => {
+        if (gameState === 'menu') return;
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+        if (e.code === 'ArrowUp' || e.code === 'KeyW') keys.thrust = true;
+        if (e.code === 'Space') { keys.fire = true; e.preventDefault(); }
+      });
+
+      document.addEventListener('keyup', e => {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+        if (e.code === 'ArrowUp' || e.code === 'KeyW') keys.thrust = false;
+        if (e.code === 'Space') keys.fire = false;
+      });
+
+      // Mobile controls
+      const mobileLeft = document.getElementById('mobileLeft');
+      const mobileRight = document.getElementById('mobileRight');
+      const mobileThrust = document.getElementById('mobileThrust');
+      const mobileFire = document.getElementById('mobileFire');
+
+      const addMobileEvents = (el, key) => {
+        el.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; });
+        el.addEventListener('touchend', e => { e.preventDefault(); keys[key] = false; });
+      };
+
+      addMobileEvents(mobileLeft, 'left');
+      addMobileEvents(mobileRight, 'right');
+      addMobileEvents(mobileThrust, 'thrust');
+      addMobileEvents(mobileFire, 'fire');
+
+      // Buttons
+      document.getElementById('playBtn').addEventListener('click', startGame);
+      document.getElementById('retryBtn').addEventListener('click', startGame);
+      document.getElementById('skipBtn').addEventListener('click', skipShop);
+      document.getElementById('soundBtn').addEventListener('click', toggleSound);
+    }
+
+    function setupAuth() {
+      if (window.authManager) {
+        window.authManager.onAuthStateChanged(user => {
+          currentUser = user;
+          const authBtn = document.getElementById('authBtn');
+          if (user) {
+            authBtn.textContent = user.displayName || 'Profile';
+            authBtn.onclick = () => window.location.href = '/profile/';
+          } else {
+            authBtn.textContent = 'Sign In';
+            authBtn.onclick = () => window.authManager.signIn();
+          }
+        });
+      }
+    }
+
+    // ==========================================
+    // GAME FLOW
+    // ==========================================
+
+    function startGame() {
+      // Reset game state
+      gameState = 'playing';
+      score = 0;
+      wave = 1;
+      lives = STARTING_LIVES;
+      totalKills = 0;
+      perfectWaves = 0;
+      highestCombo = 0;
+      wavesWithoutDamage = 0;
+      upgradesTaken = [];
+      damageTakenThisWave = false;
+      comboKills = 0;
+      comboActive = false;
+
+      // Reset upgrades
+      Object.keys(activeUpgrades).forEach(k => {
+        if (typeof activeUpgrades[k] === 'boolean') activeUpgrades[k] = false;
+        else if (typeof activeUpgrades[k] === 'number') activeUpgrades[k] = k === 'scoreMultiplier' ? 1 : 0;
+      });
+
+      // Create ship
+      ship = {
+        x: 400,
+        y: 300,
+        vx: 0,
+        vy: 0,
+        angle: -Math.PI / 2,
+        radius: SHIP_SIZE
+      };
+
+      // Clear arrays
+      asteroids = [];
+      drones = [];
+      bullets = [];
+      droneBullets = [];
+      particles = [];
+      scorePopups = [];
+
+      // Start wave
+      gameStartTime = Date.now();
+      spawnWave();
+
+      // Hide menu, show HUD
+      document.getElementById('menuScreen').classList.add('hidden');
+      document.getElementById('gameoverScreen').classList.add('hidden');
+      document.getElementById('shopScreen').classList.add('hidden');
+      document.getElementById('hud').style.display = 'flex';
+
+      updateScoreDisplay();
+      updateWaveDisplay();
+      updateLivesDisplay();
+
+      playSound('start');
+    }
+
+    function spawnWave() {
+      waveStartTime = Date.now();
+      damageTakenThisWave = false;
+
+      // Reset per-wave upgrades
+      if (activeUpgrades.armorActive) activeUpgrades.armorActive = true;
+      if (activeUpgrades.ghostCharges > 0) activeUpgrades.ghostCharges = 1;
+      if (activeUpgrades.overclock) activeUpgrades.overclock = false;
+
+      const config = WAVE_CONFIG[Math.min(wave - 1, WAVE_CONFIG.length - 1)];
+      const asteroidCount = Math.min(config.asteroids + (wave > WAVE_CONFIG.length ? wave - WAVE_CONFIG.length : 0), 12);
+
+      // Spawn asteroids away from ship
+      for (let i = 0; i < asteroidCount; i++) {
+        let x, y;
+        do {
+          x = Math.random() * 800;
+          y = Math.random() * 600;
+        } while (distance(x, y, ship.x, ship.y) < 150);
+
+        asteroids.push(createAsteroid(x, y, 'large'));
+      }
+
+      // Spawn drones
+      for (const [type, count] of Object.entries(config.drones)) {
+        if (wave >= DRONE_CONFIG[type].firstWave) {
+          for (let i = 0; i < count; i++) {
+            let x, y;
+            do {
+              x = Math.random() * 800;
+              y = Math.random() * 600;
+            } while (distance(x, y, ship.x, ship.y) < 200);
+
+            drones.push(createDrone(x, y, type));
+          }
+        }
+      }
+    }
+
+    function createAsteroid(x, y, size) {
+      const config = ASTEROID_CONFIG[size];
+      const angle = Math.random() * Math.PI * 2;
+      const speedMult = 1 + (wave - 1) * 0.05; // Speed increases slightly each wave
+      return {
+        x, y,
+        vx: Math.cos(angle) * config.speed * speedMult * (0.5 + Math.random() * 0.5),
+        vy: Math.sin(angle) * config.speed * speedMult * (0.5 + Math.random() * 0.5),
+        radius: config.radius * (0.8 + Math.random() * 0.4),
+        size,
+        vertices: generateAsteroidVertices(size)
+      };
+    }
+
+    function generateAsteroidVertices(size) {
+      const count = size === 'large' ? 8 : size === 'medium' ? 7 : 5;
+      const vertices = [];
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2;
+        const r = 0.7 + Math.random() * 0.3;
+        vertices.push({ angle, r });
+      }
+      return vertices;
+    }
+
+    function createDrone(x, y, type) {
+      const config = DRONE_CONFIG[type];
+      const angle = Math.random() * Math.PI * 2;
+      return {
+        x, y,
+        vx: Math.cos(angle) * config.speed,
+        vy: Math.sin(angle) * config.speed,
+        radius: config.radius,
+        type,
+        hp: 1,
+        lastFire: 0
+      };
+    }
+
+    function waveCleared() {
+      // Perfect wave bonus
+      if (!damageTakenThisWave) {
+        perfectWaves++;
+        wavesWithoutDamage++;
+        addScore(1000, ship.x, ship.y, true);
+
+        // Shield regen check
+        if (wavesWithoutDamage >= 3 && lives < STARTING_LIVES) {
+          lives++;
+          wavesWithoutDamage = 0;
+          updateLivesDisplay();
+        }
+      } else {
+        wavesWithoutDamage = 0;
+      }
+
+      // Wave clear bonus
+      const waveBonus = 500 * wave;
+      addScore(waveBonus, 400, 300, true);
+
+      // Show wave clear text
+      const waveClear = document.getElementById('waveClear');
+      waveClear.textContent = `WAVE ${wave} CLEARED`;
+      waveClear.classList.add('show');
+
+      playSound('wave_clear');
+
+      // Transition to shop after brief delay
+      setTimeout(() => {
+        waveClear.classList.remove('show');
+        openShop();
+      }, 1500);
+
+      gameState = 'wave_clear';
+    }
+
+    function openShop() {
+      gameState = 'shop';
+      shopTimer = SHOP_TIME;
+
+      // Generate 3 random upgrades
+      shopOptions = generateShopOptions();
+      renderShopCards();
+
+      document.getElementById('shopScreen').classList.remove('hidden');
+      playSound('shop_open');
+
+      // Start shop timer
+      const timerEl = document.getElementById('shopTimer');
+      const timerInterval = setInterval(() => {
+        shopTimer--;
+        timerEl.textContent = shopTimer;
+
+        if (shopTimer <= 0 || gameState !== 'shop') {
+          clearInterval(timerInterval);
+          if (gameState === 'shop') skipShop();
+        }
+      }, 1000);
+    }
+
+    function generateShopOptions() {
+      const available = Object.entries(UPGRADES).filter(([id, u]) => {
+        // Epic upgrades only appear after wave 5
+        if (u.rarity === 'epic' && wave < 5) return false;
+        // Don't offer upgrades we already have (except stackable ones)
+        if (upgradesTaken.includes(id) && !['P4', 'M1'].includes(id)) return false;
+        return true;
+      });
+
+      // Weighted random selection
+      const weights = { common: 60, rare: 30, epic: 10 };
+      const selected = [];
+
+      while (selected.length < 3 && available.length > 0) {
+        const totalWeight = available.reduce((sum, [, u]) => sum + weights[u.rarity], 0);
+        let rand = Math.random() * totalWeight;
+
+        for (let i = 0; i < available.length; i++) {
+          rand -= weights[available[i][1].rarity];
+          if (rand <= 0) {
+            selected.push(available[i]);
+            available.splice(i, 1);
+            break;
+          }
+        }
+      }
+
+      return selected;
+    }
+
+    function renderShopCards() {
+      const container = document.getElementById('shopCards');
+      container.innerHTML = '';
+
+      shopOptions.forEach(([id, upgrade]) => {
+        const card = document.createElement('div');
+        card.className = `upgrade-card ${upgrade.rarity}`;
+        card.innerHTML = `
+          <div class="upgrade-icon">${upgrade.icon}</div>
+          <div class="upgrade-name">${upgrade.name}</div>
+          <div class="upgrade-rarity">${upgrade.rarity}</div>
+          <div class="upgrade-desc">${upgrade.desc}</div>
+        `;
+        card.addEventListener('click', () => selectUpgrade(id, upgrade));
+        container.appendChild(card);
+      });
+    }
+
+    function selectUpgrade(id, upgrade) {
+      upgradesTaken.push(id);
+      applyUpgrade(id, upgrade);
+      playSound('upgrade_pick');
+      closeShop();
+    }
+
+    function applyUpgrade(id, upgrade) {
+      switch (id) {
+        case 'W1': activeUpgrades.spreadShot = true; break;
+        case 'W2': activeUpgrades.rapidFire = true; break;
+        case 'W3': activeUpgrades.piercing++; break;
+        case 'W4': activeUpgrades.laserBurst = true; break;
+        case 'W5': activeUpgrades.homingMissile = true; break;
+        case 'W6': activeUpgrades.plasmaRing = true; break;
+        case 'W7': activeUpgrades.twinCannons = true; break;
+        case 'W8': activeUpgrades.nukeAvailable = true; break;
+        case 'W9': activeUpgrades.ricochet = true; break;
+        case 'W10': activeUpgrades.burstFire = true; break;
+        case 'P1': /* Shield regen is passive */ break;
+        case 'P2': activeUpgrades.thrusterBoost = true; break;
+        case 'P3': activeUpgrades.inertiaDampener = true; break;
+        case 'P4': lives++; updateLivesDisplay(); break;
+        case 'P5': activeUpgrades.ghostCharges = 1; break;
+        case 'P6': /* Magnet handled in update */ break;
+        case 'P7': activeUpgrades.armorActive = true; break;
+        case 'P8': activeUpgrades.overclock = true; break;
+        case 'P9': /* Black hole - TODO */ break;
+        case 'P10': /* Time warp - TODO */ break;
+        case 'M1': activeUpgrades.doublePoints = true; break;
+        case 'M2': activeUpgrades.comboMaster = true; break;
+        case 'M3': activeUpgrades.asteroidBounty = true; break;
+        case 'M4': activeUpgrades.droneHunter = true; break;
+        case 'M5': activeUpgrades.perfectWaveBonus = true; break;
+        case 'M6':
+          activeUpgrades.riskReward = true;
+          activeUpgrades.scoreMultiplier = 3;
+          lives = Math.max(1, lives - 1);
+          updateLivesDisplay();
+          break;
+      }
+    }
+
+    function skipShop() {
+      closeShop();
+    }
+
+    function closeShop() {
+      document.getElementById('shopScreen').classList.add('hidden');
+
+      // Reset double points after use
+      if (activeUpgrades.doublePoints) {
+        activeUpgrades.doublePoints = false;
+      }
+
+      // Next wave
+      wave++;
+      updateWaveDisplay();
+      spawnWave();
+      gameState = 'playing';
+    }
+
+    function gameOver() {
+      gameState = 'game_over';
+
+      // Update best score
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('voidbreak-best', bestScore.toString());
+        document.getElementById('bestDisplay').textContent = bestScore.toLocaleString();
+      }
+
+      // Show game over screen
+      document.getElementById('finalScore').textContent = score.toLocaleString();
+      document.getElementById('finalWave').textContent = wave;
+      document.getElementById('finalKills').textContent = totalKills;
+      document.getElementById('finalCombo').textContent = highestCombo;
+
+      if (score >= bestScore) {
+        document.getElementById('finalScore').classList.add('new-best');
+      } else {
+        document.getElementById('finalScore').classList.remove('new-best');
+      }
+
+      document.getElementById('gameoverScreen').classList.remove('hidden');
+      document.getElementById('hud').style.display = 'none';
+
+      playSound('game_over');
+
+      // Submit score and check achievements
+      submitScore();
+      checkAchievements();
+    }
+
+    async function submitScore() {
+      if (!currentUser || !window.apiClient) return;
+
+      try {
+        await window.apiClient.submitScore('voidbreak', {
+          score: score,
+          level: wave,
+          metadata: {
+            upgradesTaken: upgradesTaken,
+            livesLost: STARTING_LIVES - lives,
+            perfectWaves: perfectWaves,
+            highestCombo: highestCombo,
+            totalKills: totalKills
+          }
+        });
+      } catch (err) {
+        console.error('Failed to submit score:', err);
+      }
+    }
+
+    async function checkAchievements() {
+      if (!currentUser || !window.apiClient) return;
+
+      const achievements = [];
+
+      // First run
+      achievements.push('voidbreak_first_run');
+
+      // Wave achievements
+      if (wave >= 5) achievements.push('voidbreak_wave_5');
+      if (wave >= 10) achievements.push('voidbreak_wave_10');
+      if (wave >= 15) achievements.push('voidbreak_wave_15');
+
+      // Perfect wave
+      if (perfectWaves > 0) achievements.push('voidbreak_perfect_wave');
+
+      // Combo
+      if (highestCombo >= 10) achievements.push('voidbreak_combo_10');
+
+      // Score achievements
+      if (score >= 10000) achievements.push('voidbreak_score_10k');
+      if (score >= 50000) achievements.push('voidbreak_score_50k');
+
+      // Special achievements
+      if (activeUpgrades.nukeAvailable === false && upgradesTaken.includes('W8')) {
+        achievements.push('voidbreak_nuke_used');
+      }
+      if (activeUpgrades.riskReward) achievements.push('voidbreak_risk_reward');
+
+      for (const achievementId of achievements) {
+        try {
+          await window.apiClient.unlockAchievement(achievementId, 'voidbreak');
+          showAchievementToast(achievementId);
+        } catch (err) {
+          // Achievement might already be unlocked
+        }
+      }
+    }
+
+    function showAchievementToast(achievementId) {
+      const names = {
+        'voidbreak_first_run': ['🚀', 'Into the Void'],
+        'voidbreak_wave_5': ['⭐', 'Survivor'],
+        'voidbreak_wave_10': ['🌌', 'Deep Space'],
+        'voidbreak_wave_15': ['👑', 'Voidbreaker'],
+        'voidbreak_perfect_wave': ['🛡️', 'Ghost Pilot'],
+        'voidbreak_combo_10': ['⚡', 'Chain Reaction'],
+        'voidbreak_score_10k': ['💰', 'High Roller'],
+        'voidbreak_score_50k': ['🏆', 'Legend'],
+        'voidbreak_nuke_used': ['💥', 'Nuclear Option'],
+        'voidbreak_risk_reward': ['🎲', 'All In']
+      };
+
+      const [icon, name] = names[achievementId] || ['🏆', 'Achievement'];
+
+      const toast = document.getElementById('achievementToast');
+      document.getElementById('achievementIcon').textContent = icon;
+      document.getElementById('achievementName').textContent = name;
+
+      toast.classList.add('show');
+      playSound('achievement');
+
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ==========================================
+    // GAME LOOP
+    // ==========================================
+
+    let lastTime = 0;
+
+    function gameLoop(timestamp) {
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+      lastTime = timestamp;
+
+      if (gameState === 'playing') {
+        update(dt);
+      }
+
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function update(dt) {
+      // Update ship
+      updateShip(dt);
+
+      // Update bullets
+      updateBullets(dt);
+
+      // Update asteroids
+      updateAsteroids(dt);
+
+      // Update drones
+      updateDrones(dt);
+
+      // Update drone bullets
+      updateDroneBullets(dt);
+
+      // Update particles
+      updateParticles(dt);
+
+      // Update score popups
+      updateScorePopups(dt);
+
+      // Check collisions
+      checkCollisions();
+
+      // Check wave clear
+      if (asteroids.length === 0 && drones.length === 0) {
+        waveCleared();
+      }
+
+      // Update combo
+      updateCombo();
+
+      // Homing missile
+      if (activeUpgrades.homingMissile && Date.now() - lastBulletTime > 2000) {
+        fireHomingMissile();
+      }
+    }
+
+    function updateShip(dt) {
+      // Rotation
+      if (keys.left) ship.angle -= ROTATION_SPEED * dt;
+      if (keys.right) ship.angle += ROTATION_SPEED * dt;
+
+      // Thrust
+      if (keys.thrust) {
+        const thrustMult = activeUpgrades.thrusterBoost ? 1.2 : 1;
+        ship.vx += Math.sin(ship.angle) * THRUST * thrustMult * dt;
+        ship.vy -= Math.cos(ship.angle) * THRUST * thrustMult * dt;
+      }
+
+      // Drag
+      const dragMult = activeUpgrades.inertiaDampener ? 0.97 : DRAG;
+      ship.vx *= dragMult;
+      ship.vy *= dragMult;
+
+      // Move
+      ship.x += ship.vx * dt;
+      ship.y += ship.vy * dt;
+
+      // Wrap
+      ship.x = wrap(ship.x, 800);
+      ship.y = wrap(ship.y, 600);
+
+      // Fire
+      if (keys.fire) {
+        fire();
+      }
+    }
+
+    function fire() {
+      const cooldown = activeUpgrades.rapidFire ? BULLET_COOLDOWN * 0.5 :
+                       activeUpgrades.overclock ? BULLET_COOLDOWN * 0.7 : BULLET_COOLDOWN;
+
+      if (Date.now() - lastBulletTime < cooldown) return;
+      lastBulletTime = Date.now();
+
+      playSound('laser');
+
+      if (activeUpgrades.burstFire) {
+        // Burst fire: 3 shots rapid
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => fireBullet(ship.angle), i * 50);
+        }
+      } else if (activeUpgrades.spreadShot) {
+        // Spread shot: 3 bullets
+        fireBullet(ship.angle - 0.17);
+        fireBullet(ship.angle);
+        fireBullet(ship.angle + 0.17);
+      } else if (activeUpgrades.twinCannons) {
+        // Twin cannons
+        fireBullet(ship.angle, -8);
+        fireBullet(ship.angle, 8);
+      } else {
+        fireBullet(ship.angle);
+      }
+    }
+
+    function fireBullet(angle, offset = 0) {
+      const cos = Math.cos(angle - Math.PI / 2);
+      const sin = Math.sin(angle - Math.PI / 2);
+
+      bullets.push({
+        x: ship.x + offset * cos,
+        y: ship.y + offset * sin,
+        vx: Math.sin(angle) * BULLET_SPEED + ship.vx * 0.5,
+        vy: -Math.cos(angle) * BULLET_SPEED + ship.vy * 0.5,
+        piercing: activeUpgrades.piercing,
+        ricochet: activeUpgrades.ricochet ? 1 : 0,
+        life: 2
+      });
+    }
+
+    function fireHomingMissile() {
+      // Find nearest target
+      let nearest = null;
+      let nearestDist = Infinity;
+
+      [...asteroids, ...drones].forEach(target => {
+        const d = distance(ship.x, ship.y, target.x, target.y);
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearest = target;
+        }
+      });
+
+      if (nearest) {
+        const angle = Math.atan2(nearest.y - ship.y, nearest.x - ship.x);
+        bullets.push({
+          x: ship.x,
+          y: ship.y,
+          vx: Math.cos(angle) * BULLET_SPEED * 0.8,
+          vy: Math.sin(angle) * BULLET_SPEED * 0.8,
+          homing: true,
+          target: nearest,
+          piercing: 0,
+          ricochet: 0,
+          life: 3
+        });
+        lastBulletTime = Date.now();
+      }
+    }
+
+    function updateBullets(dt) {
+      bullets = bullets.filter(bullet => {
+        // Homing behavior
+        if (bullet.homing && bullet.target) {
+          const angle = Math.atan2(bullet.target.y - bullet.y, bullet.target.x - bullet.x);
+          bullet.vx += Math.cos(angle) * 500 * dt;
+          bullet.vy += Math.sin(angle) * 500 * dt;
+          const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+          if (speed > BULLET_SPEED) {
+            bullet.vx = (bullet.vx / speed) * BULLET_SPEED;
+            bullet.vy = (bullet.vy / speed) * BULLET_SPEED;
+          }
+        }
+
+        bullet.x += bullet.vx * dt;
+        bullet.y += bullet.vy * dt;
+
+        // Ricochet
+        if (bullet.ricochet > 0) {
+          if (bullet.x < 0 || bullet.x > 800) {
+            bullet.vx *= -1;
+            bullet.ricochet--;
+          }
+          if (bullet.y < 0 || bullet.y > 600) {
+            bullet.vy *= -1;
+            bullet.ricochet--;
+          }
+        }
+
+        // Wrap or remove
+        if (bullet.ricochet <= 0) {
+          if (bullet.x < -10 || bullet.x > 810 || bullet.y < -10 || bullet.y > 610) {
+            return false;
+          }
+        }
+
+        bullet.life -= dt;
+        return bullet.life > 0;
+      });
+    }
+
+    function updateAsteroids(dt) {
+      asteroids.forEach(ast => {
+        ast.x += ast.vx * dt;
+        ast.y += ast.vy * dt;
+        ast.x = wrap(ast.x, 800);
+        ast.y = wrap(ast.y, 600);
+      });
+    }
+
+    function updateDrones(dt) {
+      drones.forEach(drone => {
+        const config = DRONE_CONFIG[drone.type];
+
+        // Hunter tracking
+        if (config.tracking) {
+          const angle = Math.atan2(ship.y - drone.y, ship.x - drone.x);
+          drone.vx += Math.cos(angle) * 50 * dt;
+          drone.vy += Math.sin(angle) * 50 * dt;
+          const speed = Math.sqrt(drone.vx * drone.vx + drone.vy * drone.vy);
+          if (speed > config.speed) {
+            drone.vx = (drone.vx / speed) * config.speed;
+            drone.vy = (drone.vy / speed) * config.speed;
+          }
+        }
+
+        drone.x += drone.vx * dt;
+        drone.y += drone.vy * dt;
+        drone.x = wrap(drone.x, 800);
+        drone.y = wrap(drone.y, 600);
+
+        // Firing (scouts and hunters)
+        if (config.fireRate && Date.now() - drone.lastFire > config.fireRate) {
+          drone.lastFire = Date.now();
+          const angle = Math.atan2(ship.y - drone.y, ship.x - drone.x);
+          droneBullets.push({
+            x: drone.x,
+            y: drone.y,
+            vx: Math.cos(angle) * 200,
+            vy: Math.sin(angle) * 200,
+            life: 3
+          });
+        }
+      });
+    }
+
+    function updateDroneBullets(dt) {
+      droneBullets = droneBullets.filter(bullet => {
+        bullet.x += bullet.vx * dt;
+        bullet.y += bullet.vy * dt;
+        bullet.life -= dt;
+
+        if (bullet.x < -10 || bullet.x > 810 || bullet.y < -10 || bullet.y > 610) {
+          return false;
+        }
+
+        return bullet.life > 0;
+      });
+    }
+
+    function updateParticles(dt) {
+      particles = particles.filter(p => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        p.alpha = p.life / p.maxLife;
+        return p.life > 0;
+      });
+    }
+
+    function updateScorePopups(dt) {
+      scorePopups = scorePopups.filter(p => {
+        p.y -= 30 * dt;
+        p.life -= dt;
+        return p.life > 0;
+      });
+    }
+
+    function updateCombo() {
+      const now = Date.now();
+      const threshold = activeUpgrades.comboMaster ? 3 : COMBO_THRESHOLD;
+
+      if (comboKills >= threshold && now - lastKillTime < COMBO_WINDOW) {
+        if (!comboActive) {
+          comboActive = true;
+          document.getElementById('comboDisplay').classList.add('active');
+        }
+      } else if (now - lastKillTime > COMBO_WINDOW) {
+        if (comboActive) {
+          comboActive = false;
+          document.getElementById('comboDisplay').classList.remove('active');
+        }
+        comboKills = 0;
+      }
+
+      if (comboKills > highestCombo) {
+        highestCombo = comboKills;
+      }
+
+      document.getElementById('comboDisplay').textContent = `x${COMBO_MULTIPLIER} COMBO (${comboKills})`;
+    }
+
+    function checkCollisions() {
+      const now = Date.now();
+      const isInvincible = now < invincibleUntil;
+
+      // Bullets vs asteroids
+      bullets.forEach(bullet => {
+        asteroids.forEach((ast, i) => {
+          if (distance(bullet.x, bullet.y, ast.x, ast.y) < ast.radius) {
+            // Hit!
+            const config = ASTEROID_CONFIG[ast.size];
+            let pts = config.score;
+
+            // Bonuses
+            if (activeUpgrades.asteroidBounty && ast.size === 'small') pts += 25;
+            if (activeUpgrades.doublePoints) pts *= 2;
+            if (comboActive) pts *= COMBO_MULTIPLIER;
+            pts *= activeUpgrades.scoreMultiplier;
+
+            addScore(Math.round(pts), ast.x, ast.y);
+            spawnExplosion(ast.x, ast.y, ast.radius);
+            playSound(ast.size === 'large' ? 'explode_large' : 'explode_small');
+
+            // Split
+            if (config.nextSize) {
+              for (let j = 0; j < config.splits; j++) {
+                asteroids.push(createAsteroid(ast.x, ast.y, config.nextSize));
+              }
+            }
+
+            asteroids.splice(i, 1);
+            totalKills++;
+            registerKill();
+
+            // Piercing
+            if (bullet.piercing <= 0) {
+              bullet.life = 0;
+            } else {
+              bullet.piercing--;
+            }
+
+            // Plasma ring
+            if (activeUpgrades.plasmaRing) {
+              spawnPlasmaRing(ast.x, ast.y);
+            }
+          }
+        });
+      });
+
+      // Bullets vs drones
+      bullets.forEach(bullet => {
+        drones.forEach((drone, i) => {
+          if (distance(bullet.x, bullet.y, drone.x, drone.y) < drone.radius) {
+            const config = DRONE_CONFIG[drone.type];
+            let pts = config.score;
+
+            if (activeUpgrades.droneHunter) pts += 100;
+            if (activeUpgrades.doublePoints) pts *= 2;
+            if (comboActive) pts *= COMBO_MULTIPLIER;
+            pts *= activeUpgrades.scoreMultiplier;
+
+            addScore(Math.round(pts), drone.x, drone.y);
+            spawnExplosion(drone.x, drone.y, drone.radius);
+            playSound('drone_die');
+
+            // Bomber explodes
+            if (config.explodes) {
+              for (let j = 0; j < 4; j++) {
+                const angle = (j / 4) * Math.PI * 2;
+                droneBullets.push({
+                  x: drone.x,
+                  y: drone.y,
+                  vx: Math.cos(angle) * 150,
+                  vy: Math.sin(angle) * 150,
+                  life: 2
+                });
+              }
+            }
+
+            // Swarm spawns scouts
+            if (config.spawns) {
+              for (let j = 0; j < config.spawns; j++) {
+                drones.push(createDrone(drone.x + (Math.random() - 0.5) * 30, drone.y + (Math.random() - 0.5) * 30, 'scout'));
+              }
+            }
+
+            drones.splice(i, 1);
+            totalKills++;
+            registerKill();
+            bullet.life = 0;
+
+            if (activeUpgrades.plasmaRing) {
+              spawnPlasmaRing(drone.x, drone.y);
+            }
+          }
+        });
+      });
+
+      // Ship vs asteroids
+      if (!isInvincible) {
+        for (const ast of asteroids) {
+          if (distance(ship.x, ship.y, ast.x, ast.y) < ast.radius + ship.radius * 0.5) {
+            // Ghost mode
+            if (activeUpgrades.ghostCharges > 0) {
+              activeUpgrades.ghostCharges--;
+              continue;
+            }
+            // Armor
+            if (activeUpgrades.armorActive) {
+              activeUpgrades.armorActive = false;
+              continue;
+            }
+            shipHit();
+            break;
+          }
+        }
+      }
+
+      // Ship vs drones
+      if (!isInvincible) {
+        for (const drone of drones) {
+          if (distance(ship.x, ship.y, drone.x, drone.y) < drone.radius + ship.radius * 0.5) {
+            if (activeUpgrades.armorActive) {
+              activeUpgrades.armorActive = false;
+              continue;
+            }
+            shipHit();
+            break;
+          }
+        }
+      }
+
+      // Ship vs drone bullets
+      if (!isInvincible) {
+        for (let i = droneBullets.length - 1; i >= 0; i--) {
+          const bullet = droneBullets[i];
+          if (distance(ship.x, ship.y, bullet.x, bullet.y) < ship.radius) {
+            if (activeUpgrades.armorActive) {
+              activeUpgrades.armorActive = false;
+              droneBullets.splice(i, 1);
+              continue;
+            }
+            droneBullets.splice(i, 1);
+            shipHit();
+            break;
+          }
+        }
+      }
+    }
+
+    function shipHit() {
+      damageTakenThisWave = true;
+      lives--;
+      updateLivesDisplay();
+      playSound('player_hit');
+      spawnExplosion(ship.x, ship.y, 20);
+
+      if (lives <= 0) {
+        gameOver();
+      } else {
+        // Respawn with invincibility
+        invincibleUntil = Date.now() + INVINCIBILITY_TIME;
+        ship.x = 400;
+        ship.y = 300;
+        ship.vx = 0;
+        ship.vy = 0;
+      }
+    }
+
+    function registerKill() {
+      comboKills++;
+      lastKillTime = Date.now();
+      playSound('combo_tick');
+    }
+
+    function spawnExplosion(x, y, radius) {
+      const count = Math.min(16, Math.max(8, radius / 3));
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 50 + Math.random() * 100;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0.5 + Math.random() * 0.5,
+          maxLife: 1,
+          alpha: 1,
+          color: Math.random() > 0.5 ? '#ff6b6b' : '#ffd93d'
+        });
+      }
+    }
+
+    function spawnPlasmaRing(x, y) {
+      // Damage nearby asteroids
+      asteroids = asteroids.filter(ast => {
+        if (distance(x, y, ast.x, ast.y) < 80) {
+          addScore(ASTEROID_CONFIG[ast.size].score, ast.x, ast.y);
+          spawnExplosion(ast.x, ast.y, ast.radius * 0.5);
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function addScore(points, x, y, isBonus = false) {
+      score += points;
+      updateScoreDisplay();
+
+      // Extra life every 5000 points
+      if (Math.floor((score - points) / 5000) < Math.floor(score / 5000)) {
+        lives++;
+        updateLivesDisplay();
+      }
+
+      // Score popup
+      scorePopups.push({
+        x, y,
+        text: isBonus ? `+${points} BONUS` : `+${points}`,
+        life: 1,
+        bonus: isBonus
+      });
+    }
+
+    // ==========================================
+    // RENDERING
+    // ==========================================
+
+    function render() {
+      const scale = canvas.width / 800;
+      ctx.save();
+      ctx.scale(scale, scale);
+
+      // Clear
+      ctx.fillStyle = '#050510';
+      ctx.fillRect(0, 0, 800, 600);
+
+      // Stars
+      ctx.fillStyle = '#fff';
+      stars.forEach(star => {
+        ctx.globalAlpha = star.alpha;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      if (gameState === 'playing' || gameState === 'wave_clear') {
+        // Asteroids
+        asteroids.forEach(ast => renderAsteroid(ast));
+
+        // Drones
+        drones.forEach(drone => renderDrone(drone));
+
+        // Bullets
+        ctx.fillStyle = '#00d4ff';
+        bullets.forEach(bullet => {
+          ctx.beginPath();
+          ctx.arc(bullet.x, bullet.y, bullet.homing ? 4 : 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Drone bullets
+        ctx.fillStyle = '#ef4444';
+        droneBullets.forEach(bullet => {
+          ctx.beginPath();
+          ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Ship
+        if (ship) renderShip();
+
+        // Particles
+        particles.forEach(p => {
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.restore();
+
+      // Score popups (in screen space)
+      renderScorePopups();
+    }
+
+    function renderShip() {
+      const now = Date.now();
+      const isInvincible = now < invincibleUntil;
+
+      // Blink when invincible
+      if (isInvincible && Math.floor(now / 100) % 2 === 0) return;
+
+      ctx.save();
+      ctx.translate(ship.x, ship.y);
+      ctx.rotate(ship.angle);
+
+      // Engine trail when thrusting
+      if (keys.thrust) {
+        ctx.fillStyle = '#00d4ff';
+        ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(-5, 10);
+        ctx.lineTo(0, 20 + Math.random() * 10);
+        ctx.lineTo(5, 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      // Ship body
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, -SHIP_SIZE);
+      ctx.lineTo(-SHIP_SIZE * 0.7, SHIP_SIZE * 0.7);
+      ctx.lineTo(0, SHIP_SIZE * 0.3);
+      ctx.lineTo(SHIP_SIZE * 0.7, SHIP_SIZE * 0.7);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function renderAsteroid(ast) {
+      ctx.save();
+      ctx.translate(ast.x, ast.y);
+
+      const shade = ast.size === 'large' ? '#444' : ast.size === 'medium' ? '#666' : '#888';
+      ctx.strokeStyle = shade;
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ast.vertices.forEach((v, i) => {
+        const r = ast.radius * v.r;
+        const x = Math.cos(v.angle) * r;
+        const y = Math.sin(v.angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function renderDrone(drone) {
+      const config = DRONE_CONFIG[drone.type];
+      ctx.save();
+      ctx.translate(drone.x, drone.y);
+
+      ctx.fillStyle = config.color;
+      ctx.strokeStyle = config.color;
+      ctx.lineWidth = 2;
+
+      if (drone.type === 'scout') {
+        // Diamond
+        ctx.beginPath();
+        ctx.moveTo(0, -drone.radius);
+        ctx.lineTo(drone.radius, 0);
+        ctx.lineTo(0, drone.radius);
+        ctx.lineTo(-drone.radius, 0);
+        ctx.closePath();
+        ctx.stroke();
+      } else if (drone.type === 'hunter') {
+        // Hexagon
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+          const r = i % 2 === 0 ? drone.radius : drone.radius * 0.7;
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      } else if (drone.type === 'bomber') {
+        // Pulsing square
+        const pulse = 1 + Math.sin(Date.now() / 200) * 0.1;
+        ctx.globalAlpha = 0.3;
+        ctx.fillRect(-drone.radius * pulse, -drone.radius * pulse, drone.radius * 2 * pulse, drone.radius * 2 * pulse);
+        ctx.globalAlpha = 1;
+        ctx.strokeRect(-drone.radius, -drone.radius, drone.radius * 2, drone.radius * 2);
+      } else if (drone.type === 'swarm') {
+        // Circle
+        ctx.beginPath();
+        ctx.arc(0, 0, drone.radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function renderScorePopups() {
+      const scale = canvas.width / 800;
+      scorePopups.forEach(p => {
+        const screenX = canvas.offsetLeft + p.x * scale;
+        const screenY = canvas.offsetTop + 50 + p.y * scale;
+
+        const popup = document.createElement('div');
+        popup.className = 'score-popup';
+        popup.style.left = screenX + 'px';
+        popup.style.top = screenY + 'px';
+        popup.style.color = p.bonus ? '#ffd700' : '#00d4ff';
+        popup.textContent = p.text;
+        document.body.appendChild(popup);
+
+        setTimeout(() => popup.remove(), 1000);
+      });
+      scorePopups = [];
+    }
+
+    // ==========================================
+    // AUDIO
+    // ==========================================
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      switch (type) {
+        case 'laser':
+          osc.frequency.setValueAtTime(600, now);
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialDecayTo && gain.gain.exponentialDecayTo(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+          break;
+
+        case 'explode_large':
+          osc.frequency.setValueAtTime(80, now);
+          osc.type = 'sawtooth';
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+
+        case 'explode_small':
+          osc.frequency.setValueAtTime(150, now);
+          osc.type = 'square';
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+          break;
+
+        case 'drone_die':
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.linearRampToValueAtTime(220, now + 0.2);
+          osc.type = 'sawtooth';
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+          break;
+
+        case 'player_hit':
+          osc.frequency.setValueAtTime(200, now);
+          osc.type = 'sawtooth';
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+
+        case 'wave_clear':
+          const freqs = [523, 659, 784];
+          freqs.forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.frequency.setValueAtTime(f, now + i * 0.1);
+            o.type = 'sine';
+            g.gain.setValueAtTime(0.1, now + i * 0.1);
+            g.gain.linearRampToValueAtTime(0, now + i * 0.1 + 0.3);
+            o.start(now + i * 0.1);
+            o.stop(now + i * 0.1 + 0.3);
+          });
+          return;
+
+        case 'shop_open':
+          osc.frequency.setValueAtTime(880, now);
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+          break;
+
+        case 'upgrade_pick':
+          osc.frequency.setValueAtTime(660, now);
+          osc.frequency.linearRampToValueAtTime(990, now + 0.15);
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+          break;
+
+        case 'combo_tick':
+          osc.frequency.setValueAtTime(400 + comboKills * 50, now);
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.05);
+          osc.start(now);
+          osc.stop(now + 0.05);
+          break;
+
+        case 'game_over':
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.5);
+          osc.type = 'sawtooth';
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.5);
+          osc.start(now);
+          osc.stop(now + 0.5);
+          break;
+
+        case 'achievement':
+          const notes = [880, 1100];
+          notes.forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.frequency.setValueAtTime(f, now + i * 0.1);
+            o.type = 'sine';
+            g.gain.setValueAtTime(0.1, now + i * 0.1);
+            g.gain.linearRampToValueAtTime(0, now + i * 0.1 + 0.2);
+            o.start(now + i * 0.1);
+            o.stop(now + i * 0.1 + 0.2);
+          });
+          return;
+
+        case 'start':
+          osc.frequency.setValueAtTime(330, now);
+          osc.frequency.linearRampToValueAtTime(660, now + 0.2);
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+    }
+
+    // ==========================================
+    // UTILITIES
+    // ==========================================
+
+    function distance(x1, y1, x2, y2) {
+      return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    }
+
+    function wrap(val, max) {
+      if (val < 0) return max + val;
+      if (val > max) return val - max;
+      return val;
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('scoreDisplay').textContent = score.toLocaleString();
+    }
+
+    function updateWaveDisplay() {
+      document.getElementById('waveDisplay').textContent = wave;
+    }
+
+    function updateLivesDisplay() {
+      const container = document.getElementById('livesDisplay');
+      container.innerHTML = '';
+      for (let i = 0; i < lives; i++) {
+        const span = document.createElement('span');
+        span.className = 'life-icon';
+        span.textContent = '🚀';
+        container.appendChild(span);
+      }
+    }
+
+    // Start!
+    init();
+  </script>
+</body>
+</html>
