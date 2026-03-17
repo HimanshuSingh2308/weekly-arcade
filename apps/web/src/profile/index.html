@@ -852,9 +852,9 @@
           document.getElementById('profileJoined').textContent = `Joined ${joinDate}`;
         }
 
-        // Level & XP
-        const level = profile.level || 1;
-        const totalXp = profile.totalXp || 0;
+        // Level & XP (API uses playerLevel and totalXP)
+        const level = profile.playerLevel || 1;
+        const totalXp = profile.totalXP || 0;
         const xpForCurrentLevel = getXpForLevel(level);
         const xpForNextLevel = getXpForLevel(level + 1);
         const xpProgress = totalXp - xpForCurrentLevel;
@@ -866,22 +866,46 @@
         document.getElementById('xpNeeded').textContent = `${(xpNeeded - xpProgress).toLocaleString()} XP to level ${level + 1}`;
         document.getElementById('levelProgressBar').style.width = `${progressPercent}%`;
 
-        // Stats
-        const stats = profile.stats || {};
-        document.getElementById('statGamesPlayed').textContent = (stats.gamesPlayed || 0).toLocaleString();
-        document.getElementById('statWins').textContent = (stats.wins || 0).toLocaleString();
-        document.getElementById('statStreak').textContent = stats.bestStreak || 0;
-        document.getElementById('statTotalScore').textContent = (stats.totalScore || 0).toLocaleString();
-
       } catch (error) {
         console.error('Failed to load profile:', error);
+      }
+
+      // Load game states once for stats and recent games
+      let gameStates = [];
+      try {
+        gameStates = await window.apiClient.getAllGameStates().catch(() => []) || [];
+
+        // Calculate stats from game states
+        let gamesPlayed = 0;
+        let wins = 0;
+        let totalScore = 0;
+        let bestStreak = 0;
+
+        if (gameStates.length > 0) {
+          gameStates.forEach(game => {
+            gamesPlayed++;
+            const state = game.state || game;
+            if (state.won) wins++;
+            totalScore += state.score || game.score || 0;
+            const streak = state.streak || game.streak || 0;
+            if (streak > bestStreak) bestStreak = streak;
+          });
+        }
+
+        document.getElementById('statGamesPlayed').textContent = gamesPlayed.toLocaleString();
+        document.getElementById('statWins').textContent = wins.toLocaleString();
+        document.getElementById('statStreak').textContent = bestStreak;
+        document.getElementById('statTotalScore').textContent = totalScore.toLocaleString();
+
+      } catch (error) {
+        console.error('Failed to load stats:', error);
       }
 
       // Load achievements
       loadAchievements();
 
-      // Load recent games
-      loadRecentGames();
+      // Load recent games (pass already fetched data)
+      loadRecentGames(gameStates);
     }
 
     function getXpForLevel(level) {
@@ -952,13 +976,16 @@
     }
 
     // Load Recent Games
-    async function loadRecentGames() {
+    async function loadRecentGames(gameStates = null) {
       const container = document.getElementById('recentGames');
 
       try {
-        const gameStates = await window.apiClient.getAllGameStates().catch(() => []);
+        // Use passed data or fetch if not provided
+        if (!gameStates) {
+          gameStates = await window.apiClient.getAllGameStates().catch(() => []) || [];
+        }
 
-        if (!gameStates || gameStates.length === 0) {
+        if (gameStates.length === 0) {
           container.innerHTML = `
             <div class="empty-state">
               <div class="empty-icon">🎮</div>
