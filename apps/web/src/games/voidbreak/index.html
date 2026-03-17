@@ -600,67 +600,116 @@
       100% { opacity: 0; transform: translateY(-30px); }
     }
 
-    /* Mobile Controls */
+    /* Mobile Controls - Gesture Zones */
     .mobile-controls {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
+      top: 50px;
       display: none;
-      padding: 1rem;
-      z-index: 100;
+      z-index: 90;
+      pointer-events: none;
     }
 
-    .mobile-controls-inner {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      max-width: 600px;
-      margin: 0 auto;
+    .mobile-controls.active {
+      pointer-events: auto;
     }
 
-    .mobile-dpad {
-      display: grid;
-      grid-template-columns: repeat(3, 60px);
-      grid-template-rows: repeat(2, 60px);
-      gap: 5px;
+    .gesture-zone {
+      position: absolute;
+      bottom: 0;
+      height: 50%;
+      pointer-events: auto;
     }
 
-    .mobile-btn {
-      background: rgba(233, 69, 96, 0.3);
+    .gesture-zone-left {
+      left: 0;
+      width: 50%;
+    }
+
+    .gesture-zone-right {
+      right: 0;
+      width: 50%;
+    }
+
+    /* Virtual Joystick */
+    .joystick-base {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      background: rgba(233, 69, 96, 0.15);
+      border: 2px solid rgba(233, 69, 96, 0.4);
+      border-radius: 50%;
+      display: none;
+      pointer-events: none;
+    }
+
+    .joystick-base.active {
+      display: block;
+    }
+
+    .joystick-stick {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(233, 69, 96, 0.6);
       border: 2px solid var(--accent);
-      border-radius: 12px;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Fire Zone Indicator */
+    .fire-zone-indicator {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      width: 80px;
+      height: 80px;
+      background: rgba(233, 69, 96, 0.2);
+      border: 2px dashed rgba(233, 69, 96, 0.5);
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      -webkit-tap-highlight-color: transparent;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.8rem;
+      font-weight: 600;
+      pointer-events: none;
     }
 
-    .mobile-btn:active {
-      background: var(--accent);
+    .fire-zone-indicator.firing {
+      background: rgba(233, 69, 96, 0.5);
+      border-style: solid;
     }
 
-    .mobile-btn.thrust { grid-column: 2; }
-    .mobile-btn.left { grid-column: 1; grid-row: 2; }
-    .mobile-btn.right { grid-column: 3; grid-row: 2; }
-
-    .mobile-fire {
-      width: 100px;
-      height: 100px;
-      background: rgba(233, 69, 96, 0.4);
-      border: 3px solid var(--accent);
-      border-radius: 50%;
-      color: white;
-      font-size: 2rem;
-      font-weight: 700;
+    /* Gesture hints */
+    .gesture-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.75rem;
+      text-align: center;
+      pointer-events: none;
     }
 
     @media (max-width: 768px) {
       .mobile-controls { display: block; }
       .hud { top: 55px; }
+    }
+
+    @media (min-width: 769px) {
+      .gesture-hint { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .desktop-controls { display: none; }
+      .mobile-controls-text { display: inline !important; }
     }
 
     /* Achievement Toast */
@@ -1109,16 +1158,19 @@
     </div>
   </div>
 
-  <!-- Mobile Controls -->
+  <!-- Mobile Controls - Gesture Based -->
   <div class="mobile-controls" id="mobileControls">
-    <div class="mobile-controls-inner">
-      <div class="mobile-dpad">
-        <button class="mobile-btn thrust" id="mobileThrust">▲</button>
-        <button class="mobile-btn left" id="mobileLeft">◀</button>
-        <button class="mobile-btn right" id="mobileRight">▶</button>
+    <!-- Left zone: Virtual joystick for movement -->
+    <div class="gesture-zone gesture-zone-left" id="joystickZone">
+      <div class="joystick-base" id="joystickBase">
+        <div class="joystick-stick" id="joystickStick"></div>
       </div>
-      <button class="mobile-btn mobile-fire" id="mobileFire">FIRE</button>
     </div>
+    <!-- Right zone: Tap/hold to fire -->
+    <div class="gesture-zone gesture-zone-right" id="fireZone">
+      <div class="fire-zone-indicator" id="fireIndicator">FIRE</div>
+    </div>
+    <div class="gesture-hint">Left: drag to move • Right: tap to fire</div>
   </div>
 
   <!-- Achievement Toast -->
@@ -1154,9 +1206,17 @@
   <div class="tutorial-overlay hidden" id="tutorialOverlay">
     <div class="tutorial-step">
       <div class="tutorial-icon">🚀</div>
-      <div class="tutorial-text">
-        Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys to move.<br>
-        Press <kbd>Space</kbd> to fire.<br><br>
+      <div class="tutorial-text" id="tutorialText">
+        <span class="desktop-controls">
+          Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys to move.<br>
+          Press <kbd>Space</kbd> to fire.<br>
+        </span>
+        <span class="mobile-controls-text" style="display: none;">
+          Drag left side of screen to move.<br>
+          Tap right side to fire.<br>
+          Double-tap right side to pause.<br>
+        </span>
+        <br>
         Destroy asteroids to earn points.<br>
         Clear each wave to unlock powerful upgrades!
       </div>
@@ -1470,21 +1530,8 @@
         if (e.code === 'Space') keys.fire = false;
       });
 
-      // Mobile controls
-      const mobileLeft = document.getElementById('mobileLeft');
-      const mobileRight = document.getElementById('mobileRight');
-      const mobileThrust = document.getElementById('mobileThrust');
-      const mobileFire = document.getElementById('mobileFire');
-
-      const addMobileEvents = (el, key) => {
-        el.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; });
-        el.addEventListener('touchend', e => { e.preventDefault(); keys[key] = false; });
-      };
-
-      addMobileEvents(mobileLeft, 'left');
-      addMobileEvents(mobileRight, 'right');
-      addMobileEvents(mobileThrust, 'thrust');
-      addMobileEvents(mobileFire, 'fire');
+      // Mobile gesture controls
+      setupGestureControls();
 
       // Buttons
       document.getElementById('playBtn').addEventListener('click', () => startGame(false));
@@ -1498,6 +1545,142 @@
         startGame();
       });
       document.getElementById('tutorialSkip').addEventListener('click', hideTutorial);
+    }
+
+    // Gesture Controls for Mobile
+    function setupGestureControls() {
+      const joystickZone = document.getElementById('joystickZone');
+      const joystickBase = document.getElementById('joystickBase');
+      const joystickStick = document.getElementById('joystickStick');
+      const fireZone = document.getElementById('fireZone');
+      const fireIndicator = document.getElementById('fireIndicator');
+      const mobileControls = document.getElementById('mobileControls');
+
+      let joystickTouch = null;
+      let joystickOrigin = { x: 0, y: 0 };
+      const joystickMaxDist = 50;
+
+      // Joystick - Left zone
+      joystickZone.addEventListener('touchstart', e => {
+        if (gameState !== 'playing' || paused) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        joystickTouch = touch.identifier;
+        joystickOrigin = { x: touch.clientX, y: touch.clientY };
+
+        // Position joystick at touch point
+        joystickBase.style.left = (touch.clientX - 60) + 'px';
+        joystickBase.style.top = (touch.clientY - 60) + 'px';
+        joystickBase.classList.add('active');
+
+        mobileControls.classList.add('active');
+      }, { passive: false });
+
+      joystickZone.addEventListener('touchmove', e => {
+        if (joystickTouch === null) return;
+        e.preventDefault();
+
+        let touch = null;
+        for (let t of e.touches) {
+          if (t.identifier === joystickTouch) {
+            touch = t;
+            break;
+          }
+        }
+        if (!touch) return;
+
+        // Calculate offset from origin
+        let dx = touch.clientX - joystickOrigin.x;
+        let dy = touch.clientY - joystickOrigin.y;
+
+        // Clamp to max distance
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > joystickMaxDist) {
+          dx = (dx / dist) * joystickMaxDist;
+          dy = (dy / dist) * joystickMaxDist;
+        }
+
+        // Move joystick stick
+        joystickStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+        // Convert to controls
+        const threshold = 15;
+        keys.left = dx < -threshold;
+        keys.right = dx > threshold;
+        keys.thrust = dy < -threshold;
+      }, { passive: false });
+
+      const endJoystick = e => {
+        if (joystickTouch === null) return;
+
+        let found = false;
+        for (let t of e.touches) {
+          if (t.identifier === joystickTouch) {
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          joystickTouch = null;
+          joystickBase.classList.remove('active');
+          joystickStick.style.transform = 'translate(-50%, -50%)';
+          keys.left = false;
+          keys.right = false;
+          keys.thrust = false;
+        }
+      };
+
+      joystickZone.addEventListener('touchend', endJoystick, { passive: false });
+      joystickZone.addEventListener('touchcancel', endJoystick, { passive: false });
+
+      // Fire - Right zone (tap or hold)
+      let fireTouch = null;
+
+      fireZone.addEventListener('touchstart', e => {
+        if (gameState !== 'playing' || paused) return;
+        e.preventDefault();
+
+        fireTouch = e.touches[0].identifier;
+        keys.fire = true;
+        fireIndicator.classList.add('firing');
+        mobileControls.classList.add('active');
+      }, { passive: false });
+
+      const endFire = e => {
+        if (fireTouch === null) return;
+
+        let found = false;
+        for (let t of e.touches) {
+          if (t.identifier === fireTouch) {
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          fireTouch = null;
+          keys.fire = false;
+          fireIndicator.classList.remove('firing');
+        }
+      };
+
+      fireZone.addEventListener('touchend', endFire, { passive: false });
+      fireZone.addEventListener('touchcancel', endFire, { passive: false });
+
+      // Double tap right zone to pause
+      let lastTapTime = 0;
+      fireZone.addEventListener('touchstart', e => {
+        const now = Date.now();
+        if (now - lastTapTime < 300) {
+          // Double tap detected
+          if (gameState === 'playing') {
+            togglePause();
+          }
+        }
+        lastTapTime = now;
+      }, { passive: true });
     }
 
     // Pause functionality
