@@ -74,6 +74,25 @@
 
     .title-icon { font-size: 1.4rem; }
 
+    .sound-btn {
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sound-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .sound-btn.muted {
+      opacity: 0.5;
+    }
+
     /* Game Layout */
     .game-container {
       display: flex;
@@ -252,6 +271,35 @@
     @keyframes harvest-flash {
       0%, 100% { filter: brightness(1); }
       50% { filter: brightness(2); }
+    }
+
+    @keyframes land-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .board-shake {
+      animation: land-shake 0.15s ease-out;
+    }
+
+    @keyframes cell-pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    .cell.just-placed {
+      animation: cell-pop 0.2s ease-out;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 5px currentColor; }
+      50% { box-shadow: 0 0 15px currentColor, 0 0 25px currentColor; }
+    }
+
+    .cell.harvesting {
+      animation: harvest-flash 0.3s ease-out, glow-pulse 0.3s ease-out;
     }
 
     /* Next Piece Preview */
@@ -922,7 +970,7 @@
       <span class="title-icon">🏰</span>
       <span>Fieldstone</span>
     </h1>
-    <div style="width: 30px;"></div>
+    <button class="sound-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
   </header>
 
   <!-- Game Container -->
@@ -1106,6 +1154,146 @@
     // FIELDSTONE - Kingdom Builder Puzzle
     // ============================================
 
+    // Sound System using Web Audio API
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioCtx();
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled || !audioCtx) return;
+
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      switch(type) {
+        case 'move':
+          oscillator.frequency.setValueAtTime(200, now);
+          oscillator.type = 'sine';
+          gainNode.gain.setValueAtTime(0.1, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.05);
+          oscillator.start(now);
+          oscillator.stop(now + 0.05);
+          break;
+
+        case 'rotate':
+          oscillator.frequency.setValueAtTime(300, now);
+          oscillator.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+          oscillator.type = 'sine';
+          gainNode.gain.setValueAtTime(0.1, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.1);
+          oscillator.start(now);
+          oscillator.stop(now + 0.1);
+          break;
+
+        case 'drop':
+          oscillator.frequency.setValueAtTime(150, now);
+          oscillator.type = 'triangle';
+          gainNode.gain.setValueAtTime(0.15, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.1);
+          oscillator.start(now);
+          oscillator.stop(now + 0.1);
+          break;
+
+        case 'lock':
+          oscillator.frequency.setValueAtTime(100, now);
+          oscillator.type = 'square';
+          gainNode.gain.setValueAtTime(0.08, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.15);
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+          break;
+
+        case 'clear':
+          // Play ascending notes for row clear
+          [400, 500, 600, 800].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.12, now + i * 0.08);
+            gain.gain.exponentialDecayTo(0.01, now + i * 0.08 + 0.15);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.15);
+          });
+          return;
+
+        case 'hardDrop':
+          oscillator.frequency.setValueAtTime(200, now);
+          oscillator.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+          oscillator.type = 'sawtooth';
+          gainNode.gain.setValueAtTime(0.12, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.2);
+          oscillator.start(now);
+          oscillator.stop(now + 0.2);
+          break;
+
+        case 'attack':
+          // War drums
+          oscillator.frequency.setValueAtTime(60, now);
+          oscillator.type = 'triangle';
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.3);
+          oscillator.start(now);
+          oscillator.stop(now + 0.3);
+          break;
+
+        case 'victory':
+          [523, 659, 784, 1047].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(freq, now + i * 0.15);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.15, now + i * 0.15);
+            gain.gain.exponentialDecayTo(0.01, now + i * 0.15 + 0.4);
+            osc.start(now + i * 0.15);
+            osc.stop(now + i * 0.15 + 0.4);
+          });
+          return;
+
+        case 'defeat':
+          oscillator.frequency.setValueAtTime(200, now);
+          oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+          oscillator.type = 'sawtooth';
+          gainNode.gain.setValueAtTime(0.15, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.5);
+          oscillator.start(now);
+          oscillator.stop(now + 0.5);
+          break;
+
+        case 'buy':
+          oscillator.frequency.setValueAtTime(600, now);
+          oscillator.frequency.setValueAtTime(800, now + 0.05);
+          oscillator.type = 'sine';
+          gainNode.gain.setValueAtTime(0.1, now);
+          gainNode.gain.exponentialDecayTo(0.01, now + 0.15);
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+          break;
+
+        default:
+          return;
+      }
+    }
+
+    // Helper for exponential decay (not native)
+    GainNode.prototype.exponentialDecayTo = function(value, endTime) {
+      this.gain.setTargetAtTime(value, this.context.currentTime, (endTime - this.context.currentTime) / 3);
+    };
+
     // Game Constants
     const BOARD_WIDTH = 10;
     const BOARD_HEIGHT = 20;
@@ -1259,6 +1447,7 @@
       const newX = gameState.pieceX + dx;
       if (canPlace(newX, gameState.pieceY, gameState.currentPiece.shape)) {
         gameState.pieceX = newX;
+        playSound('move');
         renderBoard();
       }
     }
@@ -1270,6 +1459,7 @@
 
       if (canPlace(gameState.pieceX, gameState.pieceY, rotated)) {
         gameState.currentPiece.shape = rotated;
+        playSound('rotate');
         renderBoard();
       }
     }
@@ -1288,12 +1478,22 @@
 
     // Hard drop
     function hardDrop() {
+      playSound('hardDrop');
       while (dropPiece()) {}
     }
 
     // Lock piece in place
     function lockPiece() {
+      playSound('lock');
       const shape = gameState.currentPiece.shape;
+
+      // Screen shake
+      const board = document.getElementById('gameBoard');
+      board.classList.add('board-shake');
+      setTimeout(() => board.classList.remove('board-shake'), 150);
+
+      // Track placed cells for animation
+      const placedCells = [];
 
       for (let row = 0; row < shape.length; row++) {
         for (let col = 0; col < shape[row].length; col++) {
@@ -1302,10 +1502,22 @@
             const boardX = gameState.pieceX + col;
             if (boardY >= 0) {
               gameState.board[boardY][boardX] = shape[row][col];
+              placedCells.push({ row: boardY, col: boardX });
             }
           }
         }
       }
+
+      // Animate placed cells
+      setTimeout(() => {
+        placedCells.forEach(({ row, col }) => {
+          const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+          if (cell) {
+            cell.classList.add('just-placed');
+            setTimeout(() => cell.classList.remove('just-placed'), 200);
+          }
+        });
+      }, 10);
 
       gameState.tilesPlaced++;
       updateWaveProgress();
@@ -1386,6 +1598,9 @@
         gameState.score += rowBonus;
         gameState.tempEffects = gameState.tempEffects.filter(e => e !== 'double_harvest');
       }
+
+      // Play clear sound
+      playSound('clear');
 
       // Show toast with what was gained
       let toastParts = [];
@@ -1500,6 +1715,7 @@
     // Start attack phase
     function startAttackPhase() {
       clearInterval(gameState.dropInterval);
+      playSound('attack');
 
       const enemyPower = calculateEnemyPower();
       const playerDefence = calculatePlayerDefence();
@@ -1565,10 +1781,12 @@
         result.className = 'attack-result victory';
         result.textContent = '✓ Wave Repelled! +50 Score';
         gameState.score += 50;
+        setTimeout(() => playSound('victory'), 500);
       } else {
         const breach = enemyPower - playerDefence;
         result.className = 'attack-result breach';
         result.textContent = `✗ Breach! -${breach} Border Tiles`;
+        setTimeout(() => playSound('defeat'), 500);
         // Remove some tiles from right edge
         for (let i = 0; i < Math.min(breach / 10, 5); i++) {
           removeBorderTile();
@@ -1661,6 +1879,8 @@
         }
       }
 
+      playSound('buy');
+
       if (card.type === 'building') {
         gameState.buildings.push(cardId);
       } else {
@@ -1695,6 +1915,8 @@
     function endGame(victory) {
       gameState.gameOver = true;
       clearInterval(gameState.dropInterval);
+
+      playSound(victory ? 'victory' : 'defeat');
 
       const modal = document.getElementById('gameoverModal');
       document.getElementById('gameoverIcon').textContent = victory ? '👑' : '💀';
@@ -1927,6 +2149,9 @@
 
     // Start game
     function startGame() {
+      // Initialize audio on user interaction
+      initAudio();
+
       document.getElementById('menuScreen').classList.add('hidden');
 
       // Initialize with selected deck
@@ -1966,6 +2191,14 @@
 
     document.getElementById('tutorialBtn').addEventListener('click', openTutorial);
     window.closeTutorial = closeTutorial;
+
+    // Sound toggle
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('soundBtn');
+      btn.textContent = soundEnabled ? '🔊' : '🔇';
+      btn.classList.toggle('muted', !soundEnabled);
+    }
   </script>
 </body>
 </html>
