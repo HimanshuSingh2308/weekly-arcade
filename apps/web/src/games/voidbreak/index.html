@@ -1212,26 +1212,54 @@
       }
     }
 
-    function createAsteroid(x, y, size) {
+    // Asteroid visual types
+    const ASTEROID_TYPES = [
+      { name: 'rock', fill: '#4a3728', stroke: '#8b7355', accent: '#6b5344' },      // Brown rocky
+      { name: 'ice', fill: '#1a3a4a', stroke: '#5ac8fa', accent: '#3a7a9a' },       // Blue icy
+      { name: 'metal', fill: '#2a2a3a', stroke: '#8888aa', accent: '#5a5a7a' },     // Grey metallic
+      { name: 'fire', fill: '#4a1a1a', stroke: '#ff6b4a', accent: '#8a3a2a' },      // Red volcanic
+      { name: 'crystal', fill: '#2a1a4a', stroke: '#b44aff', accent: '#6a3a8a' },   // Purple crystal
+      { name: 'gold', fill: '#4a4a1a', stroke: '#ffd700', accent: '#8a8a3a' }       // Gold rare
+    ];
+
+    function createAsteroid(x, y, size, parentType = null) {
       const config = ASTEROID_CONFIG[size];
       const angle = Math.random() * Math.PI * 2;
-      const speedMult = 1 + (wave - 1) * 0.05; // Speed increases slightly each wave
+      const speedMult = 1 + (wave - 1) * 0.05;
+
+      // Inherit parent type or pick random (gold is rare)
+      let astType;
+      if (parentType !== null) {
+        astType = parentType;
+      } else {
+        const rand = Math.random();
+        if (rand < 0.02) astType = 5;        // 2% gold
+        else if (rand < 0.12) astType = 4;   // 10% crystal
+        else if (rand < 0.27) astType = 3;   // 15% fire
+        else if (rand < 0.47) astType = 2;   // 20% metal
+        else if (rand < 0.72) astType = 1;   // 25% ice
+        else astType = 0;                     // 28% rock
+      }
+
       return {
         x, y,
         vx: Math.cos(angle) * config.speed * speedMult * (0.5 + Math.random() * 0.5),
         vy: Math.sin(angle) * config.speed * speedMult * (0.5 + Math.random() * 0.5),
         radius: config.radius * (0.8 + Math.random() * 0.4),
         size,
+        astType,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 2,
         vertices: generateAsteroidVertices(size)
       };
     }
 
     function generateAsteroidVertices(size) {
-      const count = size === 'large' ? 8 : size === 'medium' ? 7 : 5;
+      const count = size === 'large' ? 9 : size === 'medium' ? 7 : 6;
       const vertices = [];
       for (let i = 0; i < count; i++) {
         const angle = (i / count) * Math.PI * 2;
-        const r = 0.7 + Math.random() * 0.3;
+        const r = 0.6 + Math.random() * 0.4;
         vertices.push({ angle, r });
       }
       return vertices;
@@ -1747,6 +1775,7 @@
         ast.y += ast.vy * dt;
         ast.x = wrap(ast.x, 800);
         ast.y = wrap(ast.y, 600);
+        ast.rotation += ast.rotationSpeed * dt;
       });
     }
 
@@ -1864,10 +1893,10 @@
             spawnExplosion(ast.x, ast.y, ast.radius);
             playSound(ast.size === 'large' ? 'explode_large' : 'explode_small');
 
-            // Split
+            // Split - children inherit parent type
             if (config.nextSize) {
               for (let j = 0; j < config.splits; j++) {
-                asteroids.push(createAsteroid(ast.x, ast.y, config.nextSize));
+                asteroids.push(createAsteroid(ast.x, ast.y, config.nextSize, ast.astType));
               }
             }
 
@@ -2261,21 +2290,105 @@
     function renderAsteroid(ast) {
       ctx.save();
       ctx.translate(ast.x, ast.y);
+      ctx.rotate(ast.rotation);
 
-      const shade = ast.size === 'large' ? '#444' : ast.size === 'medium' ? '#666' : '#888';
-      ctx.strokeStyle = shade;
-      ctx.lineWidth = 2;
+      const type = ASTEROID_TYPES[ast.astType];
+      const r = ast.radius;
 
+      // Glow effect for special types
+      if (ast.astType >= 3) {
+        ctx.shadowColor = type.stroke;
+        ctx.shadowBlur = 8;
+      }
+
+      // Main body fill
+      ctx.fillStyle = type.fill;
       ctx.beginPath();
       ast.vertices.forEach((v, i) => {
-        const r = ast.radius * v.r;
-        const x = Math.cos(v.angle) * r;
-        const y = Math.sin(v.angle) * r;
+        const vr = r * v.r;
+        const x = Math.cos(v.angle) * vr;
+        const y = Math.sin(v.angle) * vr;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
       ctx.closePath();
+      ctx.fill();
+
+      // Outer stroke
+      ctx.strokeStyle = type.stroke;
+      ctx.lineWidth = 2;
       ctx.stroke();
+
+      // Inner detail based on type
+      ctx.shadowBlur = 0;
+
+      if (ast.astType === 0) {
+        // Rock - crater marks
+        ctx.fillStyle = type.accent;
+        ctx.beginPath();
+        ctx.arc(r * 0.2, -r * 0.1, r * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(-r * 0.3, r * 0.2, r * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (ast.astType === 1) {
+        // Ice - crystal lines
+        ctx.strokeStyle = type.stroke;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.5, -r * 0.3);
+        ctx.lineTo(r * 0.3, r * 0.4);
+        ctx.moveTo(r * 0.2, -r * 0.4);
+        ctx.lineTo(-r * 0.3, r * 0.3);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      } else if (ast.astType === 2) {
+        // Metal - shine highlight
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.ellipse(-r * 0.2, -r * 0.2, r * 0.25, r * 0.1, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else if (ast.astType === 3) {
+        // Fire - glowing cracks
+        ctx.strokeStyle = '#ff4400';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.5);
+        ctx.lineTo(r * 0.1, 0);
+        ctx.lineTo(-r * 0.2, r * 0.4);
+        ctx.moveTo(r * 0.1, 0);
+        ctx.lineTo(r * 0.4, r * 0.1);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      } else if (ast.astType === 4) {
+        // Crystal - facets
+        ctx.fillStyle = type.stroke;
+        ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.6);
+        ctx.lineTo(r * 0.3, 0);
+        ctx.lineTo(0, r * 0.4);
+        ctx.lineTo(-r * 0.2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else if (ast.astType === 5) {
+        // Gold - sparkle
+        ctx.fillStyle = '#fff';
+        ctx.globalAlpha = 0.8;
+        const sparkleTime = Date.now() / 200;
+        ctx.beginPath();
+        ctx.arc(Math.cos(sparkleTime) * r * 0.3, Math.sin(sparkleTime) * r * 0.3, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(Math.cos(sparkleTime + 2) * r * 0.2, Math.sin(sparkleTime + 2) * r * 0.2, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
 
       ctx.restore();
     }

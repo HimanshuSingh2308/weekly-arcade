@@ -1691,6 +1691,15 @@
       return { current: currentTier, next: nextTier };
     }
 
+    // Get all cards that require unlocking
+    const LOCKED_CARDS = UNLOCK_TIERS.flatMap(tier => tier.unlocks);
+
+    // Check if a card is available (base card or unlocked)
+    function isCardAvailable(cardId) {
+      if (!LOCKED_CARDS.includes(cardId)) return true; // Base card
+      return metaProgress.unlockedCards.includes(cardId); // Check if unlocked
+    }
+
     let metaProgress = loadMetaProgress();
 
     // Initialize Board
@@ -2286,16 +2295,18 @@
     function openShop() {
       const shopCards = document.getElementById('shopCards');
 
-      // Filter available cards (exclude already owned buildings and jokers)
+      // Filter available cards (exclude already owned buildings, jokers, and locked cards)
       const regularCards = ALL_CARDS.filter(card =>
         card.type !== 'joker' &&
-        !gameState.buildings.includes(card.id)
+        !gameState.buildings.includes(card.id) &&
+        isCardAvailable(card.id)
       );
 
-      // Jokers: available only if wave >= 3, max 1 per shop, 25% chance
+      // Jokers: available only if wave >= 3, max 1 per shop, 25% chance, AND unlocked
       const availableJokers = ALL_CARDS.filter(card =>
         card.type === 'joker' &&
-        !gameState.jokers.includes(card.id)
+        !gameState.jokers.includes(card.id) &&
+        isCardAvailable(card.id)
       );
 
       const showJoker = gameState.wave >= 3 && availableJokers.length > 0 && Math.random() < 0.25;
