@@ -142,19 +142,23 @@
 
     .auth-btn {
       background: var(--accent);
-      color: #000;
+      color: #fff;
       border: none;
-      padding: 0.4rem 1rem;
+      padding: 0.5rem 1.25rem;
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
     }
 
+    .auth-btn:hover {
+      background: var(--accent-light);
+    }
+
     .icon-btn {
-      background: none;
+      background: var(--bg-card);
       border: 2px solid var(--border);
-      color: var(--text-secondary);
+      color: var(--text-primary);
       font-size: 1.1rem;
       cursor: pointer;
       padding: 0.4rem;
@@ -167,7 +171,6 @@
     }
 
     .icon-btn:hover {
-      color: var(--text-primary);
       border-color: var(--accent);
     }
 
@@ -335,8 +338,11 @@
     /* Shop Screen */
     .shop-screen {
       position: fixed;
-      inset: 0;
-      background: rgba(5, 5, 16, 0.9);
+      top: 50px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 5, 16, 0.95);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -441,8 +447,11 @@
     /* Game Over Screen */
     .gameover-screen {
       position: fixed;
-      inset: 0;
-      background: rgba(5, 5, 16, 0.95);
+      top: 50px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 5, 16, 0.98);
       display: flex;
       flex-direction: column;
       align-items: center;
