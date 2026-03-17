@@ -15,13 +15,20 @@
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <filter id="fireGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
   <!-- Background -->
   <rect width="400" height="300" fill="url(#bgGrad)"/>
 
   <!-- Stars -->
-  <g fill="#fff" opacity="0.4">
+  <g fill="#fff" opacity="0.5">
     <circle cx="30" cy="40" r="1"/>
     <circle cx="80" cy="80" r="1.5"/>
     <circle cx="150" cy="30" r="1"/>
@@ -36,49 +43,87 @@
     <circle cx="60" cy="260" r="1.2"/>
   </g>
 
-  <!-- Large asteroid -->
-  <g transform="translate(100, 130)" stroke="#666" stroke-width="2" fill="none">
-    <polygon points="0,-35 25,-25 35,-5 30,20 10,35 -20,30 -35,10 -30,-20"/>
+  <!-- Fire asteroid (large, red) -->
+  <g transform="translate(85, 120)" filter="url(#fireGlow)">
+    <polygon points="0,-38 28,-26 38,-4 32,22 12,38 -22,32 -38,12 -32,-22" fill="#4a1a1a" stroke="#ff6b4a" stroke-width="2"/>
+    <!-- Lava cracks -->
+    <path d="M0,-20 L5,0 L-8,18 M5,0 L20,5" stroke="#ff4400" stroke-width="2" fill="none" opacity="0.8"/>
   </g>
 
-  <!-- Medium asteroid -->
-  <g transform="translate(300, 100)" stroke="#888" stroke-width="2" fill="none">
-    <polygon points="0,-20 15,-10 18,8 5,20 -15,15 -20,-5"/>
+  <!-- Ice asteroid (medium, blue) -->
+  <g transform="translate(320, 85)">
+    <polygon points="0,-22 16,-12 20,8 6,22 -16,16 -22,-6" fill="#1a3a4a" stroke="#5ac8fa" stroke-width="2"/>
+    <!-- Crystal lines -->
+    <path d="M-12,-8 L8,12 M6,-10 L-8,10" stroke="#5ac8fa" stroke-width="1" fill="none" opacity="0.6"/>
   </g>
 
-  <!-- Small asteroid -->
-  <g transform="translate(320, 200)" stroke="#aaa" stroke-width="2" fill="none">
-    <polygon points="0,-10 8,-5 8,5 0,10 -8,5 -8,-5"/>
+  <!-- Crystal asteroid (small, purple) -->
+  <g transform="translate(340, 200)" filter="url(#glow)">
+    <polygon points="0,-14 10,-6 10,6 0,14 -10,6 -10,-6" fill="#2a1a4a" stroke="#b44aff" stroke-width="2"/>
+    <!-- Facet -->
+    <polygon points="0,-10 6,0 0,8 -4,0" fill="#b44aff" opacity="0.4"/>
   </g>
 
-  <!-- Ship -->
-  <g transform="translate(200, 150) rotate(-30)" filter="url(#glow)">
-    <!-- Engine trail -->
-    <polygon points="-6,12 0,30 6,12" fill="#00d4ff" opacity="0.6"/>
-    <!-- Ship body -->
-    <polygon points="0,-18 -10,10 0,4 10,10" stroke="#fff" stroke-width="2" fill="none"/>
+  <!-- Gold asteroid (tiny, rare!) -->
+  <g transform="translate(60, 200)" filter="url(#glow)">
+    <polygon points="0,-10 8,-4 8,4 0,10 -8,4 -8,-4" fill="#4a4a1a" stroke="#ffd700" stroke-width="2"/>
+    <!-- Sparkle -->
+    <circle cx="2" cy="-2" r="2" fill="#fff" opacity="0.9"/>
+  </g>
+
+  <!-- Rock asteroid (medium, brown) -->
+  <g transform="translate(280, 155)">
+    <polygon points="0,-18 14,-10 16,6 4,18 -14,14 -18,-4" fill="#4a3728" stroke="#8b7355" stroke-width="2"/>
+    <!-- Craters -->
+    <circle cx="4" cy="-2" r="4" fill="#6b5344"/>
+    <circle cx="-6" cy="6" r="3" fill="#6b5344"/>
+  </g>
+
+  <!-- Ship (detailed) -->
+  <g transform="translate(190, 145) rotate(-25)" filter="url(#glow)">
+    <!-- Engine flames -->
+    <polygon points="-6,14 -4,28 -2,14" fill="#ff6b00" opacity="0.8"/>
+    <polygon points="2,14 4,28 6,14" fill="#ff6b00" opacity="0.8"/>
+    <polygon points="-5,14 -4,22 -3,14" fill="#00d4ff" opacity="0.9"/>
+    <polygon points="3,14 4,22 5,14" fill="#00d4ff" opacity="0.9"/>
+
+    <!-- Main hull -->
+    <polygon points="0,-18 -4,-6 -6,3 -4,12 4,12 6,3 4,-6" fill="#1a1a2e" stroke="#4da6ff" stroke-width="2"/>
+
+    <!-- Wings -->
+    <polygon points="-6,2 -16,14 -14,14 -4,8" fill="#16213e" stroke="#4da6ff" stroke-width="1.5"/>
+    <polygon points="6,2 16,14 14,14 4,8" fill="#16213e" stroke="#4da6ff" stroke-width="1.5"/>
+
+    <!-- Cockpit -->
+    <polygon points="0,-14 -3,-3 0,2 3,-3" fill="#00d4ff" opacity="0.7" stroke="#00ffff" stroke-width="1"/>
+
+    <!-- Engine pods -->
+    <rect x="-7" y="8" width="4" height="5" fill="#333"/>
+    <rect x="3" y="8" width="4" height="5" fill="#333"/>
+    <rect x="-6" y="10" width="2" height="3" fill="#00d4ff"/>
+    <rect x="4" y="10" width="2" height="3" fill="#00d4ff"/>
   </g>
 
   <!-- Bullets -->
   <g fill="#00d4ff" filter="url(#glow)">
-    <circle cx="175" cy="120" r="3"/>
-    <circle cx="155" cy="100" r="3"/>
-    <circle cx="135" cy="80" r="3"/>
+    <circle cx="165" cy="115" r="3"/>
+    <circle cx="145" cy="95" r="3"/>
+    <circle cx="125" cy="75" r="3"/>
   </g>
 
   <!-- Scout drone -->
-  <g transform="translate(280, 180)" stroke="#22c55e" stroke-width="2" fill="none">
+  <g transform="translate(260, 200)" stroke="#22c55e" stroke-width="2" fill="none">
     <polygon points="0,-12 12,0 0,12 -12,0"/>
   </g>
 
-  <!-- Explosion particles -->
+  <!-- Explosion particles on fire asteroid -->
   <g fill="#ff6b6b" opacity="0.8">
-    <circle cx="100" cy="130" r="4"/>
-    <circle cx="115" cy="115" r="3"/>
-    <circle cx="90" cy="145" r="3"/>
-    <circle cx="85" cy="120" r="2"/>
+    <circle cx="105" cy="105" r="4"/>
+    <circle cx="118" cy="112" r="3"/>
+    <circle cx="95" cy="138" r="3"/>
+    <circle cx="70" cy="108" r="2"/>
   </g>
 
   <!-- Title -->
-  <text x="200" y="260" font-family="system-ui, sans-serif" font-size="28" font-weight="800" fill="url(#accentGrad)" text-anchor="middle" filter="url(#glow)">VOIDBREAK</text>
+  <text x="200" y="265" font-family="system-ui, sans-serif" font-size="28" font-weight="800" fill="url(#accentGrad)" text-anchor="middle" filter="url(#glow)">VOIDBREAK</text>
 </svg>
