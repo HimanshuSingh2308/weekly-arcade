@@ -1522,19 +1522,12 @@
       gameState.tilesPlaced++;
       updateWaveProgress();
 
-      // Check for completed rows
-      checkRows();
-
-      // Check if round complete
-      if (gameState.tilesPlaced >= TILES_PER_ROUND) {
-        startAttackPhase();
-      } else {
-        spawnPiece();
-      }
+      // Check for completed rows and handle next piece after clearing
+      checkRowsAndContinue();
     }
 
-    // Check and harvest completed rows
-    function checkRows() {
+    // Check rows and continue game after clearing
+    function checkRowsAndContinue() {
       let harvestedRows = [];
 
       for (let row = 0; row < BOARD_HEIGHT; row++) {
@@ -1544,12 +1537,27 @@
       }
 
       if (harvestedRows.length > 0) {
-        harvestRows(harvestedRows);
+        // Harvest rows, then continue after clearing
+        harvestRows(harvestedRows, () => {
+          continueAfterHarvest();
+        });
+      } else {
+        // No rows to clear, continue immediately
+        continueAfterHarvest();
+      }
+    }
+
+    // Continue game after harvest completes
+    function continueAfterHarvest() {
+      if (gameState.tilesPlaced >= TILES_PER_ROUND) {
+        startAttackPhase();
+      } else {
+        spawnPiece();
       }
     }
 
     // Harvest resources from completed rows
-    function harvestRows(rows) {
+    function harvestRows(rows, callback) {
       // Sort rows from bottom to top for proper removal
       rows.sort((a, b) => b - a);
 
@@ -1625,6 +1633,9 @@
 
         updateUI();
         renderBoard();
+
+        // Call callback after rows are cleared
+        if (callback) callback();
       }, 300);
 
       updateUI();
