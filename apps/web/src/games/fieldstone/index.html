@@ -1994,8 +1994,8 @@
       try {
         await window.apiClient.submitScore('fieldstone', {
           score: gameState.score,
-          wave: gameState.wave,
           metadata: {
+            wave: gameState.wave,
             deck: gameState.selectedDeck
           }
         });
