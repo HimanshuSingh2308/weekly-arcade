@@ -339,16 +339,36 @@
 
     .controls-hint {
       color: var(--text-secondary);
-      font-size: 0.9rem;
-      max-width: 300px;
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .controls-hint kbd {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-family: monospace;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .controls-hint .separator {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
     }
 
     /* Shop Screen */
@@ -807,10 +827,18 @@
     <h2 class="menu-title">Voidbreak</h2>
     <p class="menu-tagline">Clear the field. Choose your weapon. Go deeper.</p>
     <button class="play-btn" id="playBtn">START RUN</button>
-    <p class="controls-hint">
-      <kbd>WASD</kbd> or <kbd>Arrow Keys</kbd> to move<br>
-      <kbd>Space</kbd> to fire
-    </p>
+    <div class="controls-hint">
+      <div class="controls-row">
+        <kbd>WASD</kbd>
+        <span class="separator">or</span>
+        <kbd>Arrow Keys</kbd>
+        <span class="separator">to move</span>
+      </div>
+      <div class="controls-row">
+        <kbd>Space</kbd>
+        <span class="separator">to fire</span>
+      </div>
+    </div>
   </div>
 
   <!-- Shop Screen -->
