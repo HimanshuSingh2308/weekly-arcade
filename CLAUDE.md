@@ -21,3 +21,119 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+# Weekly Arcade Project Guidelines
+
+## Project Structure
+
+- `apps/web/` - Frontend (vanilla JS, served via Firebase Hosting)
+- `apps/api/` - Backend (NestJS on Cloud Run)
+- `packages/shared/` - Shared types and constants
+
+## API Client Usage
+
+The frontend uses `window.apiClient` (from `/js/api-client.js`) for all backend communication.
+
+### Authentication Required
+
+All write operations require the user to be signed in. Always check auth state before API calls:
+
+```javascript
+// Add auth state tracking to your game
+let currentUser = null;
+
+// Initialize auth when ready
+const authCheckInterval = setInterval(() => {
+  if (window.authManager?.isInitialized) {
+    clearInterval(authCheckInterval);
+    window.authManager.onAuthStateChanged(user => {
+      currentUser = user;
+    });
+  }
+}, 100);
+
+// Check before submitting
+if (!currentUser || !window.apiClient) {
+  console.log('User not signed in');
+  return;
+}
+```
+
+### Score Submission (Leaderboard)
+
+**IMPORTANT:** The API validates score submissions strictly. Only these fields are allowed:
+
+```javascript
+await window.apiClient.submitScore('game-id', {
+  score: number,           // REQUIRED - the score value
+  guessCount?: number,     // Optional - number of attempts
+  level?: number,          // Optional - current level
+  timeMs?: number,         // Optional - time in milliseconds
+  wordHash?: string,       // Optional - for word games validation
+  metadata?: {             // Optional - ANY extra data goes here
+    wave: number,
+    deck: string,
+    // ... any custom fields
+  }
+});
+```
+
+**Common Mistakes:**
+- DO NOT add custom fields at the top level (e.g., `wave`, `deck`)
+- ALL custom/game-specific data must go inside `metadata`
+- Score must be a number, not an object
+
+**Correct Example (Fieldstone):**
+```javascript
+await window.apiClient.submitScore('fieldstone', {
+  score: gameState.score,
+  metadata: {
+    wave: gameState.wave,
+    deck: gameState.selectedDeck
+  }
+});
+```
+
+**Correct Example (Wordle):**
+```javascript
+await window.apiClient.submitScore('wordle', {
+  score: scoreData.score,
+  level: wordLength - MIN_LENGTH + 1,
+  guessCount: scoreData.attempts,
+  timeMs: scoreData.timeMs || 0,
+  metadata: {
+    wordLength: wordLength,
+    hardMode: hardMode
+  }
+});
+```
+
+### Other API Endpoints
+
+```javascript
+// Get leaderboard
+await window.apiClient.getLeaderboard('game-id', 'daily'); // 'daily', 'weekly', 'monthly'
+
+// Save game state
+await window.apiClient.saveGameState('game-id', stateObject);
+
+// Load game state
+const state = await window.apiClient.getGameState('game-id');
+
+// Unlock achievement
+await window.apiClient.unlockAchievement('achievement-id', 'game-id', { metadata });
+```
+
+## Adding a New Game
+
+1. Create game in `apps/web/src/games/{game-name}/index.html`
+2. Add to home page in `apps/web/src/index.html`
+3. Add to leaderboard GAMES array in `apps/web/src/leaderboard/index.html`
+4. Add to service worker cache in `apps/web/src/sw.js`
+5. Include auth integration (see above)
+6. Create SVG thumbnail in `apps/web/src/images/thumbnails/{game-name}.svg`
+
+## Deployment
+
+- Frontend: Auto-deploys to Firebase Hosting on push to main
+- Backend: Auto-deploys to Cloud Run on push to main
