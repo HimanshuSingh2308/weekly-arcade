@@ -801,6 +801,50 @@
       margin: 0.5rem;
     }
 
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 1.5s forwards;
+      white-space: nowrap;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    .toast.harvest {
+      border-color: #4CAF50;
+      color: #4CAF50;
+    }
+
+    .toast.score {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
     /* Responsive */
     @media (max-width: 900px) {
       .game-container {
@@ -949,6 +993,9 @@
     </div>
   </div>
 
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <!-- Controls Hint -->
   <div class="controls-hint">
     <kbd>←→</kbd> Move <kbd>↑</kbd> Rotate <kbd>↓</kbd> Drop <kbd>Space</kbd> Hard Drop
@@ -1001,11 +1048,14 @@
       </div>
 
       <div class="tutorial-section">
-        <h3>🧩 Gameplay</h3>
-        <p><strong>1. Place Tiles:</strong> Tetris-style pieces fall from the top. Move and rotate them to place on the board.</p>
-        <p><strong>2. Complete Rows:</strong> When a row is full, it gets <em>harvested</em> - you collect resources based on the terrain types!</p>
-        <p><strong>3. Defend:</strong> After 10 tiles, enemies attack. Your defence must exceed enemy power to survive.</p>
-        <p><strong>4. Shop:</strong> Between waves, buy cards to boost production or add defence.</p>
+        <h3>🧩 Gameplay Loop</h3>
+        <p><strong>1. Place Tiles:</strong> Tetris-style pieces fall from the top. Move and rotate them to fill the board.</p>
+        <p><strong>2. Complete Rows:</strong> Fill an entire row to <em>harvest</em> it! The row clears (like Tetris) and you gain resources based on the terrain types in that row.</p>
+        <p><strong>3. Survive Attacks:</strong> After placing 10 tiles, enemies attack! Your defence (from walls + units) must beat enemy power or you lose tiles.</p>
+        <p><strong>4. Shop & Upgrade:</strong> Between waves, buy cards to boost resource production or add defence units.</p>
+        <p style="margin-top: 0.5rem; background: rgba(255,215,0,0.1); padding: 8px; border-radius: 6px; border-left: 3px solid var(--gold);">
+          <strong>Key Insight:</strong> Group same terrain types together before completing a row for bonus resources!
+        </p>
       </div>
 
       <div class="tutorial-section">
@@ -1033,11 +1083,11 @@
       <div class="tutorial-section">
         <h3>💡 Pro Tips</h3>
         <ul class="tutorial-tips">
-          <li>Group same terrain types together for cluster bonuses!</li>
-          <li>Build walls (🧱) for passive defence each wave</li>
-          <li>Buy unit cards before tough waves for extra defence</li>
-          <li>Treasury building gives 10% gold interest each wave</li>
-          <li>Watch the "NEXT" preview to plan ahead</li>
+          <li>Place same terrain types adjacent to each other before completing a row = more resources!</li>
+          <li>Clear multiple rows at once for big score bonuses (2 rows = 30pts, 3 = 60pts, 4 = 100pts!)</li>
+          <li>Buy unit cards (🗡️🏹🐴) before tough waves - they add to your defence</li>
+          <li>Building cards give permanent bonuses (Lumber Mill = +50% lumber forever)</li>
+          <li>Watch the "NEXT" preview to plan where to place your current piece</li>
         </ul>
       </div>
 
@@ -1288,6 +1338,12 @@
 
     // Harvest resources from completed rows
     function harvestRows(rows) {
+      // Sort rows from bottom to top for proper removal
+      rows.sort((a, b) => b - a);
+
+      // Track total resources gained for toast
+      let gained = { lumber: 0, food: 0, stone: 0, gold: 0 };
+
       rows.forEach(rowIndex => {
         // Add harvesting animation
         const cells = document.querySelectorAll(`[data-row="${rowIndex}"]`);
@@ -1304,25 +1360,59 @@
 
           const totalOutput = Math.floor((baseOutput + clusterBonus) * cluster.size * buildingMultiplier);
 
+          // Track what we're gaining
+          switch(cluster.terrain) {
+            case TERRAIN.FOREST: gained.lumber += totalOutput; break;
+            case TERRAIN.PLAINS: gained.food += totalOutput; break;
+            case TERRAIN.MOUNTAIN: gained.stone += totalOutput; break;
+            case TERRAIN.RIVER: gained.gold += totalOutput; break;
+            case TERRAIN.SETTLEMENT:
+              gained.lumber += Math.floor(totalOutput / 4);
+              gained.food += Math.floor(totalOutput / 4);
+              gained.stone += Math.floor(totalOutput / 4);
+              gained.gold += Math.floor(totalOutput / 4);
+              break;
+          }
+
           addResource(cluster.terrain, totalOutput);
         });
-
-        // Score for harvesting
-        gameState.score += 10 * rows.length;
-        if (gameState.tempEffects.includes('double_harvest')) {
-          gameState.score += 10 * rows.length;
-          gameState.tempEffects = gameState.tempEffects.filter(e => e !== 'double_harvest');
-        }
       });
 
-      updateUI();
+      // Score for harvesting (bonus for multiple rows)
+      const rowBonus = rows.length === 1 ? 10 : rows.length === 2 ? 30 : rows.length === 3 ? 60 : 100;
+      gameState.score += rowBonus;
 
-      // Remove animation after delay
+      if (gameState.tempEffects.includes('double_harvest')) {
+        gameState.score += rowBonus;
+        gameState.tempEffects = gameState.tempEffects.filter(e => e !== 'double_harvest');
+      }
+
+      // Show toast with what was gained
+      let toastParts = [];
+      if (gained.lumber > 0) toastParts.push(`+${gained.lumber} 🪵`);
+      if (gained.food > 0) toastParts.push(`+${gained.food} 🌾`);
+      if (gained.stone > 0) toastParts.push(`+${gained.stone} 🪨`);
+      if (gained.gold > 0) toastParts.push(`+${gained.gold} 💰`);
+
+      if (toastParts.length > 0) {
+        showToast(`${rows.length} row${rows.length > 1 ? 's' : ''} cleared! ${toastParts.join(' ')}`, 'harvest');
+      }
+      showToast(`+${rowBonus} points!`, 'score');
+
+      // Clear the completed rows and drop tiles above
       setTimeout(() => {
-        document.querySelectorAll('.harvesting').forEach(cell => {
-          cell.classList.remove('harvesting');
+        rows.forEach(rowIndex => {
+          // Remove the row
+          gameState.board.splice(rowIndex, 1);
+          // Add empty row at top
+          gameState.board.unshift(Array(BOARD_WIDTH).fill(TERRAIN.EMPTY));
         });
-      }, 500);
+
+        updateUI();
+        renderBoard();
+      }, 300);
+
+      updateUI();
     }
 
     // Find clusters of same terrain in a row
@@ -1364,6 +1454,17 @@
       if (terrain === TERRAIN.PLAINS && gameState.buildings.includes('granary')) multiplier *= 1.5;
       if (terrain === TERRAIN.MOUNTAIN && gameState.buildings.includes('quarry')) multiplier *= 1.5;
       return multiplier;
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'harvest') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 2000);
     }
 
     // Add resource
