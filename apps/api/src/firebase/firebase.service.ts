@@ -60,6 +60,11 @@ export class FirebaseService implements OnModuleInit {
     return this._firestore.runTransaction(updateFunction);
   }
 
+  // Create a batch write
+  batch(): FirebaseFirestore.WriteBatch {
+    return this._firestore.batch();
+  }
+
   // Verify Firebase ID token
   async verifyIdToken(token: string): Promise<admin.auth.DecodedIdToken> {
     return this._auth.verifyIdToken(token);
