@@ -339,36 +339,24 @@
 
     .controls-hint {
       color: var(--text-secondary);
-      font-size: 0.95rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .controls-row {
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
       flex-wrap: wrap;
       justify-content: center;
+      margin-top: 0.5rem;
     }
 
     .controls-hint kbd {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      padding: 0.4rem 0.75rem;
-      border-radius: 6px;
+      padding: 0.35rem 0.6rem;
+      border-radius: 5px;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-primary);
       font-weight: 500;
-    }
-
-    .controls-hint .separator {
-      color: var(--text-secondary);
-      font-size: 0.85rem;
     }
 
     /* Shop Screen */
@@ -828,16 +816,9 @@
     <p class="menu-tagline">Clear the field. Choose your weapon. Go deeper.</p>
     <button class="play-btn" id="playBtn">START RUN</button>
     <div class="controls-hint">
-      <div class="controls-row">
-        <kbd>WASD</kbd>
-        <span class="separator">or</span>
-        <kbd>Arrow Keys</kbd>
-        <span class="separator">to move</span>
-      </div>
-      <div class="controls-row">
-        <kbd>Space</kbd>
-        <span class="separator">to fire</span>
-      </div>
+      <kbd>WASD</kbd> move
+      <span>•</span>
+      <kbd>Space</kbd> fire
     </div>
   </div>
 

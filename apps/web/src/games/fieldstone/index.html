@@ -1253,8 +1253,8 @@
 
       <div class="gameover-unlocks" id="gameoverUnlocks" style="display: none;"></div>
 
-      <button class="gameover-btn" onclick="location.reload()">Play Again</button>
-      <button class="gameover-btn" style="background: var(--bg-card);" onclick="window.location='/'">Menu</button>
+      <button class="gameover-btn" onclick="returnToMenu()">Play Again</button>
+      <button class="gameover-btn" style="background: var(--bg-card);" onclick="window.location='/'">Home</button>
     </div>
   </div>
 
@@ -2753,6 +2753,46 @@
       document.getElementById('menuRuns').textContent = metaProgress.totalRuns;
       document.getElementById('menuWins').textContent = metaProgress.victories;
       document.getElementById('menuBest').textContent = metaProgress.highScore;
+    }
+
+    // Return to menu after game over
+    function returnToMenu() {
+      // Hide game over modal
+      document.getElementById('gameoverModal').classList.remove('show');
+
+      // Clear the game board display
+      document.getElementById('gameBoard').innerHTML = '';
+      document.getElementById('nextPiecePreview').innerHTML = '';
+
+      // Reset game state
+      gameState.board = [];
+      gameState.harvestedRows = [];
+      gameState.currentPiece = null;
+      gameState.nextPiece = null;
+      gameState.pieceX = 0;
+      gameState.pieceY = 0;
+      gameState.resources = { lumber: 10, food: 10, stone: 10, gold: 5 };
+      gameState.score = 0;
+      gameState.wave = 1;
+      gameState.tilesPlaced = 0;
+      gameState.cards = [];
+      gameState.buildings = [];
+      gameState.jokers = [];
+      gameState.tempEffects = [];
+      gameState.gameOver = false;
+
+      // Clear any running intervals
+      if (gameState.dropInterval) {
+        clearInterval(gameState.dropInterval);
+        gameState.dropInterval = null;
+      }
+
+      // Reload meta progress from localStorage (in case it was updated)
+      metaProgress = loadMetaProgress();
+
+      // Update and show menu
+      updateMenuMeta();
+      document.getElementById('menuScreen').classList.remove('hidden');
     }
 
     // Initialize
