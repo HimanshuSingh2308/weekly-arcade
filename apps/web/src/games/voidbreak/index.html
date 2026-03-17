@@ -4852,14 +4852,11 @@
       }
     }
 
-    // Apply HUD colors from equipped cosmetic
+    // Apply HUD colors from equipped cosmetic (for in-game elements only)
     function applyHudColors() {
-      const hud = VOIDBREAK_ITEMS.huds.find(h => h.id === customization.equipped.hud) || VOIDBREAK_ITEMS.huds[0];
-      const vd = hud.visualData;
-
-      document.documentElement.style.setProperty('--accent', vd.primary || '#e94560');
-      document.documentElement.style.setProperty('--accent-light', vd.secondary || '#ff6b6b');
-      // Background is applied to game canvas, not CSS
+      // HUD colors are used directly in game rendering via getEquippedCosmetics()
+      // We don't modify CSS variables to preserve menu styling
+      // The game canvas background and in-game text use HUD colors from visualData
     }
 
     // Show loadout screen
