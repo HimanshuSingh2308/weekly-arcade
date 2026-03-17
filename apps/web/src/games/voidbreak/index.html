@@ -3124,8 +3124,14 @@
     }
 
     function fire() {
-      const cooldown = activeUpgrades.rapidFire ? BULLET_COOLDOWN * 0.5 :
-                       activeUpgrades.overclock ? BULLET_COOLDOWN * 0.7 : BULLET_COOLDOWN;
+      // Get class fire rate (in seconds) and convert to ms
+      const classData = getEquippedCosmetics().class.visualData;
+      const classFireRate = (classData.fireRate || 0.4) * 1000; // Default 400ms
+      const classWeapon = classData.weapon || 'single';
+
+      // Apply upgrade modifiers to class base rate
+      const cooldown = activeUpgrades.rapidFire ? classFireRate * 0.5 :
+                       activeUpgrades.overclock ? classFireRate * 0.7 : classFireRate;
 
       if (Date.now() - lastBulletTime < cooldown) return;
       lastBulletTime = Date.now();
@@ -3137,8 +3143,8 @@
         for (let i = 0; i < 3; i++) {
           setTimeout(() => fireBullet(ship.angle), i * 50);
         }
-      } else if (activeUpgrades.spreadShot) {
-        // Spread shot: 3 bullets
+      } else if (activeUpgrades.spreadShot || classWeapon === 'spread') {
+        // Spread shot: 3 bullets (from upgrade or Blaster class)
         fireBullet(ship.angle - 0.17);
         fireBullet(ship.angle);
         fireBullet(ship.angle + 0.17);
@@ -3858,8 +3864,9 @@
         screenShake = 0;
       }
 
-      // Clear
-      ctx.fillStyle = '#050510';
+      // Clear (use HUD background color)
+      const hudBg = getEquippedCosmetics().hud.visualData.background || '#050510';
+      ctx.fillStyle = hudBg;
       ctx.fillRect(-10, -10, 820, 620);
 
       // Parallax stars - move based on ship velocity
@@ -3888,12 +3895,10 @@
         // Drones
         drones.forEach(drone => renderDrone(drone));
 
-        // Bullets
-        ctx.fillStyle = '#00d4ff';
+        // Bullets (with cosmetic support)
+        const bulletCosmetic = getEquippedCosmetics().bullet;
         bullets.forEach(bullet => {
-          ctx.beginPath();
-          ctx.arc(bullet.x, bullet.y, bullet.homing ? 4 : 3, 0, Math.PI * 2);
-          ctx.fill();
+          renderBullet(bullet, bulletCosmetic);
         });
 
         // Drone bullets
@@ -3981,33 +3986,35 @@
 
       // Get equipped cosmetics
       const cosmetics = getEquippedCosmetics();
-      const shipColor = cosmetics.ship.visualData.trailColor || '#4da6ff';
+      const shipData = cosmetics.ship.visualData;
+      const shipColor = shipData.trailColor || '#4da6ff';
       const innerFlameColor = cosmetics.trail.visualData.color || '#00d4ff';
       const lineWidth = accessibilitySettings.highContrast ? 3 : 2;
+      const shipPoints = shipData.points || [[0, -18], [12, 14], [-12, 14]]; // Default triangle
+      const isDashed = shipData.dashed || false;
 
       ctx.save();
       ctx.translate(ship.x, ship.y);
       ctx.rotate(ship.angle);
 
-      const s = SHIP_SIZE;
-
-      // Engine flames when thrusting
+      // Engine flames when thrusting (positioned based on ship shape)
       if (keys.thrust) {
-        // Left engine flame
+        const flameY = Math.max(...shipPoints.map(p => p[1])); // Bottom of ship
+
+        // Outer flames
         ctx.fillStyle = '#ff6b00';
         ctx.globalAlpha = 0.8;
         ctx.beginPath();
-        ctx.moveTo(-6, 12);
-        ctx.lineTo(-4, 22 + Math.random() * 8);
-        ctx.lineTo(-2, 12);
+        ctx.moveTo(-5, flameY);
+        ctx.lineTo(-3, flameY + 10 + Math.random() * 8);
+        ctx.lineTo(-1, flameY);
         ctx.closePath();
         ctx.fill();
 
-        // Right engine flame
         ctx.beginPath();
-        ctx.moveTo(2, 12);
-        ctx.lineTo(4, 22 + Math.random() * 8);
-        ctx.lineTo(6, 12);
+        ctx.moveTo(1, flameY);
+        ctx.lineTo(3, flameY + 10 + Math.random() * 8);
+        ctx.lineTo(5, flameY);
         ctx.closePath();
         ctx.fill();
 
@@ -4015,92 +4022,110 @@
         ctx.fillStyle = innerFlameColor;
         ctx.globalAlpha = 0.9;
         ctx.beginPath();
-        ctx.moveTo(-5, 12);
-        ctx.lineTo(-4, 16 + Math.random() * 5);
-        ctx.lineTo(-3, 12);
+        ctx.moveTo(-4, flameY);
+        ctx.lineTo(-3, flameY + 5 + Math.random() * 5);
+        ctx.lineTo(-2, flameY);
         ctx.closePath();
         ctx.fill();
 
         ctx.beginPath();
-        ctx.moveTo(3, 12);
-        ctx.lineTo(4, 16 + Math.random() * 5);
-        ctx.lineTo(5, 12);
+        ctx.moveTo(2, flameY);
+        ctx.lineTo(3, flameY + 5 + Math.random() * 5);
+        ctx.lineTo(4, flameY);
         ctx.closePath();
         ctx.fill();
 
         ctx.globalAlpha = 1;
       }
 
-      // Ship shadow/glow (colored by ship cosmetic)
+      // Ship shadow/glow
       ctx.shadowColor = shipColor;
       ctx.shadowBlur = accessibilitySettings.reduceMotion ? 5 : 10;
 
-      // Main hull (dark fill)
-      ctx.fillStyle = '#1a1a2e';
+      // Draw ship shape from points
+      ctx.fillStyle = isDashed ? 'rgba(26, 26, 46, 0.5)' : '#1a1a2e';
       ctx.beginPath();
-      ctx.moveTo(0, -s * 1.2);           // Nose
-      ctx.lineTo(-4, -s * 0.4);          // Left neck
-      ctx.lineTo(-6, s * 0.2);           // Left body
-      ctx.lineTo(-4, s * 0.8);           // Left rear
-      ctx.lineTo(4, s * 0.8);            // Right rear
-      ctx.lineTo(6, s * 0.2);            // Right body
-      ctx.lineTo(4, -s * 0.4);           // Right neck
+      ctx.moveTo(shipPoints[0][0], shipPoints[0][1]);
+      for (let i = 1; i < shipPoints.length; i++) {
+        ctx.lineTo(shipPoints[i][0], shipPoints[i][1]);
+      }
       ctx.closePath();
       ctx.fill();
 
-      // Hull outline (colored by ship cosmetic)
+      // Hull outline
       ctx.strokeStyle = shipColor;
       ctx.lineWidth = lineWidth;
+      if (isDashed) {
+        ctx.setLineDash([5, 5]);
+      }
       ctx.stroke();
+      ctx.setLineDash([]);
 
-      // Left wing
-      ctx.fillStyle = '#16213e';
-      ctx.beginPath();
-      ctx.moveTo(-6, s * 0.1);
-      ctx.lineTo(-s * 1.1, s * 0.9);
-      ctx.lineTo(-s * 0.9, s * 0.9);
-      ctx.lineTo(-4, s * 0.5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = shipColor;
-      ctx.stroke();
-
-      // Right wing
-      ctx.beginPath();
-      ctx.moveTo(6, s * 0.1);
-      ctx.lineTo(s * 1.1, s * 0.9);
-      ctx.lineTo(s * 0.9, s * 0.9);
-      ctx.lineTo(4, s * 0.5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Cockpit window (colored by trail)
+      // Cockpit glow (centered, scaled to ship size)
+      const shipHeight = Math.max(...shipPoints.map(p => p[1])) - Math.min(...shipPoints.map(p => p[1]));
+      const cockpitSize = shipHeight * 0.2;
       ctx.fillStyle = innerFlameColor;
       ctx.globalAlpha = 0.7;
       ctx.beginPath();
-      ctx.moveTo(0, -s * 0.9);
-      ctx.lineTo(-3, -s * 0.2);
-      ctx.lineTo(0, s * 0.1);
-      ctx.lineTo(3, -s * 0.2);
-      ctx.closePath();
+      ctx.arc(0, -cockpitSize, cockpitSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // Cockpit highlight
-      ctx.strokeStyle = innerFlameColor;
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
 
-      // Engine pods
-      ctx.fillStyle = '#333';
-      ctx.fillRect(-7, s * 0.5, 4, 6);
-      ctx.fillRect(3, s * 0.5, 4, 6);
+    function renderBullet(bullet, cosmetic) {
+      const vd = cosmetic.visualData;
+      const color = vd.color || '#00d4ff';
+      const size = bullet.homing ? 4 : 3;
 
-      // Engine glow (colored by trail)
-      ctx.fillStyle = keys.thrust ? innerFlameColor : '#666';
-      ctx.fillRect(-6, s * 0.7, 2, 3);
-      ctx.fillRect(4, s * 0.7, 2, 3);
+      ctx.save();
+
+      if (vd.glow) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+      }
+
+      ctx.fillStyle = color;
+
+      if (vd.shape === 'line') {
+        // Laser style - elongated line
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const angle = Math.atan2(bullet.vy, bullet.vx);
+        const len = 12;
+        ctx.moveTo(bullet.x - Math.cos(angle) * len / 2, bullet.y - Math.sin(angle) * len / 2);
+        ctx.lineTo(bullet.x + Math.cos(angle) * len / 2, bullet.y + Math.sin(angle) * len / 2);
+        ctx.stroke();
+      } else if (vd.shape === 'orb') {
+        // Plasma orb - glowing sphere with trail
+        if (vd.trail) {
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath();
+          ctx.arc(bullet.x - bullet.vx * 0.1, bullet.y - bullet.vy * 0.1, size * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 0.5;
+          ctx.beginPath();
+          ctx.arc(bullet.x - bullet.vx * 0.05, bullet.y - bullet.vy * 0.05, size * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, size * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Inner bright core
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, size * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Default circle
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.shadowBlur = 0;
       ctx.restore();
@@ -4790,6 +4815,7 @@
           }
 
           updateCoinDisplays();
+          applyHudColors();
         } catch (e) {
           console.error('[Customization] Failed to load from backend:', e);
         }
@@ -4799,6 +4825,7 @@
 
       // Mark free items as owned
       markFreeItemsAsOwned();
+      applyHudColors();
     }
 
     function markFreeItemsAsOwned() {
@@ -4823,6 +4850,16 @@
       if (currentUser) {
         document.getElementById('menuCoinDisplay').style.display = 'flex';
       }
+    }
+
+    // Apply HUD colors from equipped cosmetic
+    function applyHudColors() {
+      const hud = VOIDBREAK_ITEMS.huds.find(h => h.id === customization.equipped.hud) || VOIDBREAK_ITEMS.huds[0];
+      const vd = hud.visualData;
+
+      document.documentElement.style.setProperty('--accent', vd.primary || '#e94560');
+      document.documentElement.style.setProperty('--accent-light', vd.secondary || '#ff6b6b');
+      // Background is applied to game canvas, not CSS
     }
 
     // Show loadout screen
@@ -4897,6 +4934,11 @@
           }
         }
 
+        // Apply HUD colors if HUD was changed
+        if (customization.currentTab === 'hud') {
+          applyHudColors();
+        }
+
         renderLoadoutItems();
         renderLoadoutPreview();
         playSound('select');
@@ -4911,6 +4953,7 @@
               customization.equipped[customization.currentTab] = itemId;
               saveCustomizationLocal();
               updateCoinDisplays();
+              if (customization.currentTab === 'hud') applyHudColors();
               renderLoadoutItems();
               renderLoadoutPreview();
               playSound('coin');
@@ -4923,6 +4966,7 @@
             customization.ownedItems.push(itemId);
             customization.equipped[customization.currentTab] = itemId;
             saveCustomizationLocal();
+            if (customization.currentTab === 'hud') applyHudColors();
             renderLoadoutItems();
             renderLoadoutPreview();
             playSound('select');
