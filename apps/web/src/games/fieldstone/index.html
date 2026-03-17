@@ -258,31 +258,49 @@
     .next-piece {
       margin-top: 10px;
       background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 12px;
       text-align: center;
+      min-width: 120px;
     }
 
     .next-label {
-      font-size: 0.7rem;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
     .next-preview {
       display: grid;
-      grid-template-columns: repeat(4, 20px);
-      grid-template-rows: repeat(4, 20px);
-      gap: 1px;
+      grid-template-columns: repeat(4, 24px);
+      grid-template-rows: repeat(4, 24px);
+      gap: 2px;
       justify-content: center;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: 6px;
     }
 
     .preview-cell {
-      width: 20px;
-      height: 20px;
-      border-radius: 2px;
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      background: transparent;
     }
+
+    .preview-cell.forest { background: var(--forest); }
+    .preview-cell.plains { background: var(--plains); }
+    .preview-cell.mountain { background: var(--mountain); }
+    .preview-cell.river { background: var(--river); }
+    .preview-cell.settlement { background: var(--settlement); }
 
     /* Right Panel - Enemy Info */
     .right-panel {
@@ -595,6 +613,155 @@
       cursor: pointer;
     }
 
+    /* Tutorial Modal */
+    .tutorial-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .tutorial-modal.show {
+      display: flex;
+    }
+
+    .tutorial-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .tutorial-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .tutorial-title {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tutorial-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .tutorial-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .tutorial-section h3 {
+      color: var(--accent);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tutorial-section p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+
+    .tutorial-terrains {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .terrain-item {
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+
+    .terrain-item span:first-child {
+      font-size: 1.2rem;
+    }
+
+    .tutorial-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .control-item {
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    .control-item kbd {
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-right: 6px;
+    }
+
+    .tutorial-tips {
+      background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), transparent);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .tutorial-tips li {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      list-style: none;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .tutorial-tips li::before {
+      content: '💡';
+      position: absolute;
+      left: 0;
+      font-size: 0.7rem;
+    }
+
+    .tutorial-start-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.8rem 2rem;
+      border-radius: 20px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
     /* Game Over */
     .gameover-modal {
       position: fixed;
@@ -683,6 +850,7 @@
     <p class="menu-subtitle">Build your kingdom, one tile at a time</p>
 
     <button class="menu-btn" id="startBtn">Start Game</button>
+    <button class="menu-btn" id="tutorialBtn" style="background: var(--bg-card); border: 2px solid var(--border); margin-top: -0.5rem;">How to Play</button>
 
     <div class="deck-select">
       <button class="deck-btn selected" data-deck="farmer">
@@ -816,6 +984,64 @@
       <div class="gameover-wave" id="gameoverWave">Reached Wave 1</div>
       <button class="gameover-btn" onclick="location.reload()">Play Again</button>
       <button class="gameover-btn" style="background: var(--bg-card);" onclick="window.location='/'">Menu</button>
+    </div>
+  </div>
+
+  <!-- Tutorial Modal -->
+  <div class="tutorial-modal" id="tutorialModal">
+    <div class="tutorial-content">
+      <div class="tutorial-header">
+        <h2 class="tutorial-title">📖 How to Play</h2>
+        <button class="tutorial-close" onclick="closeTutorial()">&times;</button>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🎯 Objective</h3>
+        <p>Build and defend your kingdom! Place terrain tiles to harvest resources, then use those resources to defend against enemy waves. Survive 10 waves to win!</p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🧩 Gameplay</h3>
+        <p><strong>1. Place Tiles:</strong> Tetris-style pieces fall from the top. Move and rotate them to place on the board.</p>
+        <p><strong>2. Complete Rows:</strong> When a row is full, it gets <em>harvested</em> - you collect resources based on the terrain types!</p>
+        <p><strong>3. Defend:</strong> After 10 tiles, enemies attack. Your defence must exceed enemy power to survive.</p>
+        <p><strong>4. Shop:</strong> Between waves, buy cards to boost production or add defence.</p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🌍 Terrain Types</h3>
+        <div class="tutorial-terrains">
+          <div class="terrain-item"><span>🌲</span> Forest = 🪵 Lumber</div>
+          <div class="terrain-item"><span>🌾</span> Plains = 🌾 Food</div>
+          <div class="terrain-item"><span>⛰️</span> Mountain = 🪨 Stone</div>
+          <div class="terrain-item"><span>💧</span> River = 💰 Gold</div>
+          <div class="terrain-item"><span>🏠</span> Settlement = All</div>
+        </div>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>⌨️ Controls</h3>
+        <div class="tutorial-controls">
+          <div class="control-item"><kbd>←</kbd><kbd>→</kbd> Move</div>
+          <div class="control-item"><kbd>↑</kbd> Rotate</div>
+          <div class="control-item"><kbd>↓</kbd> Soft Drop</div>
+          <div class="control-item"><kbd>Space</kbd> Hard Drop</div>
+        </div>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">📱 <em>Touch: Swipe left/right to move, up to rotate, down to drop</em></p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>💡 Pro Tips</h3>
+        <ul class="tutorial-tips">
+          <li>Group same terrain types together for cluster bonuses!</li>
+          <li>Build walls (🧱) for passive defence each wave</li>
+          <li>Buy unit cards before tough waves for extra defence</li>
+          <li>Treasury building gives 10% gold interest each wave</li>
+          <li>Watch the "NEXT" preview to plan ahead</li>
+        </ul>
+      </div>
+
+      <button class="tutorial-start-btn" onclick="closeTutorial()">Got it!</button>
     </div>
   </div>
 
@@ -1496,7 +1722,9 @@
           const cell = document.createElement('div');
           cell.className = 'preview-cell';
           if (shape[row] && shape[row][col]) {
-            cell.classList.add(TERRAIN_COLORS[shape[row][col]]);
+            const terrain = shape[row][col];
+            cell.classList.add(TERRAIN_COLORS[terrain]);
+            cell.textContent = TERRAIN_ICONS[terrain];
           }
           preview.appendChild(cell);
         }
@@ -1625,6 +1853,18 @@
 
     // Make buyCard global
     window.buyCard = buyCard;
+
+    // Tutorial functions
+    function openTutorial() {
+      document.getElementById('tutorialModal').classList.add('show');
+    }
+
+    function closeTutorial() {
+      document.getElementById('tutorialModal').classList.remove('show');
+    }
+
+    document.getElementById('tutorialBtn').addEventListener('click', openTutorial);
+    window.closeTutorial = closeTutorial;
   </script>
 </body>
 </html>
