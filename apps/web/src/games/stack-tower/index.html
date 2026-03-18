@@ -704,6 +704,9 @@
 
     // ============ GAME LOGIC ============
     function startGame() {
+      // CRITICAL: Unlock audio on this user gesture (mobile requirement)
+      unlockAudio();
+
       document.getElementById('startOverlay').classList.add('hidden');
       document.getElementById('gameOverOverlay').classList.add('hidden');
 
@@ -1032,6 +1035,8 @@
 
     function spawnFallingPiece(x, y, width) {
       if (width <= 0) return;
+      // Limit particles to prevent memory issues
+      if (particles.length > 200) return;
 
       // Create particles for falling piece
       for (let i = 0; i < Math.abs(width) / 5; i++) {
