@@ -1166,72 +1166,120 @@
 
     // ============ SOUND ============
     let audioCtx = null;
-    let audioInitialized = false;
+    let audioUnlocked = false;
 
-    function initAudio() {
-      if (audioInitialized) return;
+    // Create AudioContext lazily (must be in user gesture on mobile)
+    function getAudioContext() {
+      if (!audioCtx) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.warn('Web Audio not supported');
+          return null;
+        }
+      }
+      return audioCtx;
+    }
+
+    // Unlock audio on mobile - must happen in user gesture
+    async function unlockAudio() {
+      if (audioUnlocked) return true;
+
+      const ctx = getAudioContext();
+      if (!ctx) return false;
+
       try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        audioInitialized = true;
+        // Resume if suspended
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+
+        // Play silent buffer to fully unlock on iOS
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+
+        audioUnlocked = true;
+        return true;
       } catch (e) {
-        console.warn('Web Audio not supported');
+        return false;
       }
     }
 
-    // Initialize audio on first user interaction
-    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
-      document.addEventListener(event, function initOnInteraction() {
-        initAudio();
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        document.removeEventListener(event, initOnInteraction);
-      }, { once: true });
-    });
+    // Unlock audio on ANY user interaction (critical for mobile)
+    function setupAudioUnlock() {
+      const unlockEvents = ['touchstart', 'touchend', 'mousedown', 'keydown', 'click'];
 
-    function playSound(type) {
-      if (!soundEnabled || !audioCtx) return;
-
-      // Resume if suspended (iOS requirement)
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+      function handleUnlock() {
+        unlockAudio().then(unlocked => {
+          if (unlocked) {
+            // Remove all listeners once unlocked
+            unlockEvents.forEach(evt => {
+              document.removeEventListener(evt, handleUnlock, true);
+            });
+          }
+        });
       }
 
+      unlockEvents.forEach(evt => {
+        document.addEventListener(evt, handleUnlock, true);
+      });
+    }
+
+    // Initialize audio unlock listeners
+    setupAudioUnlock();
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      // Try to resume on each play (mobile requirement)
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      // Don't play if not unlocked yet
+      if (ctx.state !== 'running') return;
+
       try {
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
 
         oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+        gainNode.connect(ctx.destination);
         gainNode.gain.value = 0.1;
 
         switch (type) {
           case 'place':
             oscillator.frequency.value = 200;
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
+            oscillator.stop(ctx.currentTime + 0.1);
             break;
           case 'perfect':
             oscillator.frequency.value = 600;
             oscillator.start();
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime + 0.05);
-            oscillator.stop(audioCtx.currentTime + 0.15);
+            gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+            oscillator.frequency.setValueAtTime(800, ctx.currentTime + 0.05);
+            oscillator.stop(ctx.currentTime + 0.15);
             break;
           case 'trim':
             oscillator.frequency.value = 300;
             oscillator.type = 'sawtooth';
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.05);
+            oscillator.stop(ctx.currentTime + 0.05);
             break;
           case 'fail':
             oscillator.frequency.value = 150;
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.3);
+            oscillator.stop(ctx.currentTime + 0.3);
             break;
         }
       } catch (e) {
-        // Audio playback failed
+        // Audio playback failed silently
       }
     }
 
@@ -1239,9 +1287,9 @@
       soundEnabled = !soundEnabled;
       document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
 
-      // Initialize audio when enabling sound
-      if (soundEnabled && !audioInitialized) {
-        initAudio();
+      // Unlock audio when enabling sound (user gesture)
+      if (soundEnabled) {
+        unlockAudio();
       }
     }
 
