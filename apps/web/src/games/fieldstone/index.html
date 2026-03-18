@@ -1560,6 +1560,26 @@
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
     let soundEnabled = true;
+    let audioUnlocked = false;
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      if (audioCtx) {
+        // Play silent buffer to fully unlock on iOS
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+      }
+      audioUnlocked = true;
+    }
+
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
 
     // Auth state
     let currentUser = null;
@@ -1573,6 +1593,7 @@
           soundEnabled = false;
         }
       }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     function playSound(type) {

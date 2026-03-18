@@ -3543,11 +3543,32 @@
     // Sound System
     let soundEnabled = localStorage.getItem('wordle-sound') !== 'false';
     let audioContext = null;
+    let audioUnlocked = false;
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      initAudio();
+      if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+      if (audioContext) {
+        // Play silent buffer to fully unlock on iOS
+        const buffer = audioContext.createBuffer(1, 1, 22050);
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+      }
+      audioUnlocked = true;
+    }
+
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
 
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
+      if (audioContext && audioContext.state === 'suspended') audioContext.resume();
       return audioContext;
     }
 

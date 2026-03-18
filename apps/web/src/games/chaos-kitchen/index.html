@@ -1804,52 +1804,81 @@
     }
 
     // ============ SOUND ============
+    let audioCtx = null;
+    let audioUnlocked = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+      // Play silent buffer to fully unlock on iOS
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlocked = true;
+    }
+
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
+
     function playSound(type) {
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
         oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+        gainNode.connect(ctx.destination);
         gainNode.gain.value = 0.08;
 
         switch (type) {
           case 'pickup':
             oscillator.frequency.value = 600;
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.05);
+            oscillator.stop(ctx.currentTime + 0.05);
             break;
           case 'place':
             oscillator.frequency.value = 450;
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.08);
+            oscillator.stop(ctx.currentTime + 0.08);
             break;
           case 'complete':
             oscillator.frequency.value = 700;
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.12);
+            oscillator.stop(ctx.currentTime + 0.12);
             break;
           case 'success':
             oscillator.frequency.value = 880;
             oscillator.start();
             setTimeout(() => oscillator.frequency.value = 1100, 80);
-            oscillator.stop(audioCtx.currentTime + 0.2);
+            oscillator.stop(ctx.currentTime + 0.2);
             break;
           case 'fail':
             oscillator.frequency.value = 220;
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.25);
+            oscillator.stop(ctx.currentTime + 0.25);
             break;
           case 'chaos':
             oscillator.frequency.value = 330;
             oscillator.type = 'sawtooth';
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.35);
+            oscillator.stop(ctx.currentTime + 0.35);
             break;
           case 'clear':
             oscillator.frequency.value = 380;
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
+            oscillator.stop(ctx.currentTime + 0.1);
             break;
         }
       } catch (e) {}

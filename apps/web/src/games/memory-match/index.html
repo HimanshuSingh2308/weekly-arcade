@@ -1148,6 +1148,24 @@
       document.getElementById('soundBtn').classList.toggle('muted', !gameState.soundEnabled);
     }
 
+    // Unlock audio for iOS - play/pause on user gesture
+    let audioUnlocked = false;
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      const sounds = [flipSound, matchSound, comboSound];
+      sounds.forEach(sound => {
+        sound.play().then(() => {
+          sound.pause();
+          sound.currentTime = 0;
+        }).catch(() => {});
+      });
+      audioUnlocked = true;
+    }
+
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
+
     // Play sound
     function playSound(sound) {
       if (!gameState.soundEnabled) return;

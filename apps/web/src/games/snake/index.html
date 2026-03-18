@@ -1007,36 +1007,69 @@
     }
 
     // ============ SOUND ============
+    // Global AudioContext for iOS compatibility (reuse single context)
+    let audioCtx = null;
+    let audioUnlocked = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      // Play silent buffer to fully unlock on iOS
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlocked = true;
+    }
+
+    // Unlock audio on first user interaction
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
+
     function playSound(type) {
       if (!soundEnabled) return;
-      // Simple beep sounds using Web Audio API
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
 
         oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+        gainNode.connect(ctx.destination);
 
+        const now = ctx.currentTime;
         switch (type) {
           case 'eat':
-            oscillator.frequency.value = 600;
-            gainNode.gain.value = 0.1;
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
+            oscillator.frequency.setValueAtTime(600, now);
+            gainNode.gain.setValueAtTime(0.1, now);
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
             break;
           case 'levelup':
-            oscillator.frequency.value = 800;
-            gainNode.gain.value = 0.1;
-            oscillator.start();
-            setTimeout(() => oscillator.frequency.value = 1000, 100);
-            oscillator.stop(audioCtx.currentTime + 0.2);
+            oscillator.frequency.setValueAtTime(800, now);
+            gainNode.gain.setValueAtTime(0.1, now);
+            oscillator.start(now);
+            oscillator.frequency.setValueAtTime(1000, now + 0.1);
+            oscillator.stop(now + 0.2);
             break;
           case 'gameover':
-            oscillator.frequency.value = 200;
-            gainNode.gain.value = 0.1;
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.3);
+            oscillator.frequency.setValueAtTime(200, now);
+            gainNode.gain.setValueAtTime(0.1, now);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
             break;
         }
       } catch (e) {
