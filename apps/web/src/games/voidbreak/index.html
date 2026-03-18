@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Voidbreak | Weekly Arcade - Asteroid Roguelite</title>
 
   <!-- Preconnect for faster loading -->
@@ -1414,6 +1414,17 @@
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
+    }
+
+    /* Accessibility: Respect reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -4371,7 +4382,7 @@
           osc.frequency.setValueAtTime(600, now);
           osc.type = 'sine';
           gain.gain.setValueAtTime(0.1, now);
-          gain.gain.exponentialDecayTo && gain.gain.exponentialDecayTo(0.01, now + 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
           osc.start(now);
           osc.stop(now + 0.1);
           break;

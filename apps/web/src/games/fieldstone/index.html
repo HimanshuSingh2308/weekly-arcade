@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Fieldstone | Weekly Arcade</title>
 
   <!-- SEO -->
@@ -1266,6 +1266,17 @@
 
       .deck-btn {
         padding: 12px;
+      }
+    }
+
+    /* Accessibility: Respect reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
     }
   </style>
@@ -3013,7 +3024,7 @@
 
       // Clear the game board display
       document.getElementById('gameBoard').innerHTML = '';
-      document.getElementById('nextPiecePreview').innerHTML = '';
+      document.getElementById('nextPreview').innerHTML = '';
 
       // Reset game state
       gameState.board = [];

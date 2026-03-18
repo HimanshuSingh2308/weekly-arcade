@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Wordle | Weekly Arcade - Free Daily Word Game</title>
 
   <!-- Preconnect for faster loading -->
@@ -1266,6 +1266,17 @@
 
     @media (max-width: 600px) {
       .more-games { display: none; }
+    }
+
+    /* Accessibility: Respect reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 
@@ -3740,7 +3751,7 @@
           lastPlayedDate: new Date().toISOString(),
           additionalData: {
             totalXP: parseInt(localStorage.getItem('wordle-total-xp')) || 0,
-            hintsRemaining: hintsRemaining
+            hintsRemaining: MAX_HINTS - hintsUsed
           }
         };
 
