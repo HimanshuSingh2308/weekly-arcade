@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Wordle | Weekly Arcade - Free Daily Word Game</title>
 
   <!-- Preconnect for faster loading -->
@@ -955,8 +955,8 @@
       }
 
       .level-badge, .streak-badge {
-        font-size: 0.6rem;
-        padding: 0.15rem 0.4rem;
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
       }
 
       .header {
@@ -1031,13 +1031,13 @@
       }
 
       .level-badge {
-        font-size: 0.5rem;
-        padding: 0.1rem 0.25rem;
+        font-size: 0.7rem;
+        padding: 0.15rem 0.3rem;
       }
 
       .streak-badge {
-        font-size: 0.5rem;
-        padding: 0.1rem 0.25rem;
+        font-size: 0.7rem;
+        padding: 0.15rem 0.3rem;
       }
 
       .header-buttons {
@@ -1045,35 +1045,44 @@
         flex-shrink: 0;
       }
 
-      /* Hide auth text on mobile */
+      /* Hide auth text on mobile - maintain 44px touch target */
       .auth-btn {
         font-size: 0;
-        padding: 0.3rem;
-        min-width: 28px;
+        padding: 0.5rem;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .auth-btn::before {
         content: '👤';
-        font-size: 0.9rem;
+        font-size: 1.1rem;
       }
 
-      /* Hide hint text on mobile */
+      /* Hide hint text on mobile - maintain 44px touch target */
       .hint-btn {
-        padding: 0.3rem;
+        padding: 0.5rem;
         font-size: 0;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .hint-btn::before {
         content: '💡';
-        font-size: 0.9rem;
+        font-size: 1.1rem;
       }
       .hint-count {
-        font-size: 0.6rem;
+        font-size: 0.75rem;
         margin-left: 2px;
       }
 
       .sound-btn, .help-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 0.9rem;
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
       }
 
       /* Ensure keyboard fits */
