@@ -2751,8 +2751,27 @@
       'toolkit': 'Tool collection. "Software ___."', 'unlocks': 'Opens. "___ the door."', 'upright': 'Vertical. "Stand ___."'
     };
 
-    // Game state
-    let targetWord = '';
+    // Game state - word storage with obfuscation to prevent console cheating
+    const _ws = (function() {
+      let _e = ''; // encoded storage
+      const _k = 42; // simple XOR key
+      const encode = (s) => s.split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ _k)).join('');
+      const decode = (s) => s.split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ _k)).join('');
+      return {
+        set: function(w) { _e = encode(w); },
+        get: function() { return decode(_e); },
+        charAt: function(i) { return decode(_e)[i]; },
+        split: function(d) { return decode(_e).split(d); },
+        toLowerCase: function() { return decode(_e).toLowerCase(); },
+        equals: function(g) { return decode(_e) === g; }
+      };
+    })();
+    // Legacy accessor for any remaining direct references
+    Object.defineProperty(window, 'targetWord', {
+      get: function() { return '[hidden]'; },
+      set: function() {},
+      configurable: false
+    });
     let wordLength = 3; // Start with 3 letters
     let hintsUsed = 0;
     let revealedPositions = [];
@@ -2790,7 +2809,7 @@
     // Show first hint (definition) by default
     function showDefaultHint() {
       const hintsContainer = document.getElementById('hintsContainer');
-      const definition = WORD_HINTS[targetWord.toLowerCase()] || 'Think about what this word means';
+      const definition = WORD_HINTS[_ws.toLowerCase()] || 'Think about what this word means';
       const hintItem = document.createElement('div');
       hintItem.className = 'hint-item';
       hintItem.id = 'defaultHint';
@@ -2848,7 +2867,7 @@
       const today = new Date();
       const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate() + wordLength;
       const index = seed % words.length;
-      targetWord = words[index].toUpperCase();
+      _ws.set(words[index].toUpperCase());
     }
 
     function setupKeyboard() {
@@ -2917,7 +2936,7 @@
 
     function revealTiles(guess) {
       const row = document.getElementById(`row-${currentRow}`);
-      const targetArray = targetWord.split('');
+      const targetArray = _ws.split('');
       const guessArray = guess.split('');
       const result = new Array(wordLength).fill('absent');
 
@@ -2977,7 +2996,7 @@
     }
 
     function checkGameEnd(guess) {
-      if (guess === targetWord) {
+      if (_ws.equals(guess)) {
         gameOver = true;
         document.getElementById('hintBtn').disabled = true;
         stats.played++;
@@ -3259,7 +3278,7 @@
       }
 
       document.getElementById('modal-subtitle').textContent = subtitle;
-      document.getElementById('modal-word').textContent = targetWord;
+      document.getElementById('modal-word').textContent = _ws.get();
       document.getElementById('stat-played').textContent = stats.played;
       document.getElementById('stat-win').textContent = stats.played ? Math.round(stats.won / stats.played * 100) + '%' : '0%';
       document.getElementById('stat-streak').textContent = stats.streak;
@@ -3451,7 +3470,7 @@
 
       // New random word for current level
       const words = WORDS_BY_LENGTH[wordLength];
-      targetWord = words[Math.floor(Math.random() * words.length)].toUpperCase();
+      _ws.set(words[Math.floor(Math.random() * words.length)].toUpperCase());
 
       // Show default hint (definition)
       showDefaultHint();
@@ -3502,7 +3521,7 @@
       let html = '<div style="display: flex; justify-content: center; gap: 4px; flex-wrap: wrap;">';
       for (let i = 0; i < wordLength; i++) {
         const isRevealed = revealedPositions.includes(i);
-        const letter = isRevealed ? targetWord[i] : '?';
+        const letter = isRevealed ? _ws.charAt(i) : '?';
         const cssClass = isRevealed ? 'hint-letter' : 'hint-letter unknown';
         html += `<span class="${cssClass}">${letter}</span>`;
       }
@@ -3824,7 +3843,7 @@
 
       // After game ends, sync to cloud
       if (gameOver) {
-        const won = guess === targetWord;
+        const won = _ws.equals(guess);
         if (won) {
           const scoreData = calculateScore();
           submitScoreToCloud(scoreData, won);
