@@ -1080,67 +1080,88 @@
 
     // ============ INPUT HANDLERS ============
     let lastInputTime = 0;
-    const INPUT_DEBOUNCE_MS = 50; // Prevent double-firing
+    const INPUT_DEBOUNCE_MS = 100; // Prevent double-firing (mobile needs longer)
+    let lastEventType = null; // Track event type to avoid touch+click double fire
 
-    function canProcessInput() {
+    function canProcessInput(eventType) {
       const now = Date.now();
+
+      // If we just handled a touch event, ignore the synthetic click
+      if (eventType === 'click' && lastEventType === 'touch' && now - lastInputTime < 300) {
+        return false;
+      }
+
       if (now - lastInputTime < INPUT_DEBOUNCE_MS) {
         return false;
       }
+
       lastInputTime = now;
+      lastEventType = eventType;
       return true;
+    }
+
+    function isInteractiveElement(target) {
+      // Don't trigger game on buttons, links, or interactive elements
+      return target.closest('button') ||
+             target.closest('a') ||
+             target.closest('.header') ||
+             target.closest('.auth-modal') ||
+             target.closest('.game-overlay');
+    }
+
+    function handleGameInput(eventType) {
+      if (!canProcessInput(eventType)) return;
+
+      if (!isPlaying && !isGameOver) {
+        // On start screen overlay - don't auto-start, let them use Play button
+        return;
+      } else if (isPlaying && !isGameOver) {
+        dropBlock();
+      } else if (isGameOver) {
+        // On game over screen - don't auto-restart, let them use Play Again button
+        return;
+      }
     }
 
     function handleKeydown(e) {
       if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault();
-        if (!canProcessInput()) return;
+        if (!canProcessInput('keyboard')) return;
 
         if (!isPlaying && !isGameOver) {
-          startGame(); // Fix BUG #1: Start game on spacebar
+          startGame();
         } else if (isPlaying && !isGameOver) {
           dropBlock();
+        } else if (isGameOver) {
+          startGame();
         }
       }
     }
 
     function handleClick(e) {
       e.stopPropagation();
-      if (!canProcessInput()) return;
-      if (isPlaying && !isGameOver) {
-        dropBlock();
-      }
+      if (isInteractiveElement(e.target)) return;
+      handleGameInput('click');
     }
 
     function handleTouch(e) {
+      if (isInteractiveElement(e.target)) return;
       e.preventDefault();
       e.stopPropagation();
-      if (!canProcessInput()) return;
-      if (isPlaying && !isGameOver) {
-        dropBlock();
-      }
+      handleGameInput('touch');
     }
 
     function handleDocumentClick(e) {
-      // Only handle if clicking outside overlays
-      if (e.target.closest('.game-overlay') || e.target.closest('.auth-modal-overlay')) {
-        return;
-      }
-      if (!canProcessInput()) return;
-      if (isPlaying && !isGameOver) {
-        dropBlock();
-      }
+      if (isInteractiveElement(e.target)) return;
+      handleGameInput('click');
     }
 
     function handleDocumentTouch(e) {
-      if (e.target.closest('.game-overlay') || e.target.closest('.auth-modal-overlay')) {
-        return;
-      }
-      if (!canProcessInput()) return;
+      if (isInteractiveElement(e.target)) return;
       if (isPlaying && !isGameOver) {
         e.preventDefault();
-        dropBlock();
       }
+      handleGameInput('touch');
     }
 
     // ============ SOUND ============
