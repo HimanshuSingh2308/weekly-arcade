@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { LeaderboardService } from './leaderboard.service';
 import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -20,9 +21,17 @@ export class LeaderboardController {
 
   /**
    * Submit a score for a game
+   * SECURITY: Rate limited to prevent score flooding and automated attacks
+   * - 3 submissions per minute per user
+   * - 10 submissions per hour per user
    */
   @Post(':gameId/submit')
   @HttpCode(HttpStatus.OK)
+  @Throttle({
+    short: { limit: 1, ttl: 5000 }, // 1 per 5 seconds
+    medium: { limit: 3, ttl: 60000 }, // 3 per minute
+    long: { limit: 30, ttl: 3600000 }, // 30 per hour
+  })
   async submitScore(
     @CurrentUser() authUser: AuthUser,
     @Param('gameId') gameId: string,
@@ -34,9 +43,11 @@ export class LeaderboardController {
   /**
    * Get leaderboard for a game and period
    * This endpoint is public so guests can view leaderboards
+   * Uses default rate limits (less restrictive for read operations)
    */
   @Get(':gameId/:period')
   @Public()
+  @SkipThrottle({ short: true }) // Skip short throttle for read operations
   async getLeaderboard(
     @Param('gameId') gameId: string,
     @Param('period') period: LeaderboardPeriod,

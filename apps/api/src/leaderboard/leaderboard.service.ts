@@ -1,9 +1,10 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
 import { UsersService } from '../users/users.service';
 import { AuthService } from '../auth/auth.service';
 import { LeaderboardEntry, LeaderboardPeriod, ScoreRecord, User } from '@weekly-arcade/shared';
 import { SubmitScoreDto } from './dto';
+import { validateScore, ValidationResult } from './config/game-config';
 
 // Helper to remove undefined values (Firestore doesn't accept undefined)
 function removeUndefined<T extends object>(obj: T): T {
@@ -56,6 +57,16 @@ export class LeaderboardService {
     submitDto: SubmitScoreDto
   ): Promise<{ scoreId: string; rank: number; xpEarned: number }> {
     const now = new Date();
+
+    // SECURITY: Validate score against game-specific rules
+    const validationResult = this.validateScoreSubmission(gameId, submitDto);
+    if (!validationResult.valid) {
+      this.logger.warn(
+        `[SECURITY] Invalid score submission from user ${uid} for ${gameId}: ${validationResult.reason}`,
+        { uid, gameId, score: submitDto.score, timeMs: submitDto.timeMs }
+      );
+      throw new ForbiddenException(`Invalid score: ${validationResult.reason}`);
+    }
 
     // Get user info, or create a basic profile if user doesn't exist yet
     let user: User;
@@ -137,6 +148,20 @@ export class LeaderboardService {
     }
 
     return Math.floor(Math.max(10, xp)); // Minimum 10 XP
+  }
+
+  /**
+   * SECURITY: Validate score submission against game-specific rules
+   * Prevents cheating by enforcing realistic limits on scores
+   */
+  private validateScoreSubmission(gameId: string, submitDto: SubmitScoreDto): ValidationResult {
+    return validateScore(gameId, {
+      score: submitDto.score,
+      timeMs: submitDto.timeMs,
+      level: submitDto.level,
+      guessCount: submitDto.guessCount,
+      metadata: submitDto.metadata,
+    });
   }
 
   private async updateLeaderboard(
