@@ -304,6 +304,16 @@
       color: var(--accent);
     }
 
+    .btn-sound {
+      flex: 0 0 auto;
+      width: 44px;
+      padding: 0.75rem;
+    }
+
+    .btn-sound.muted {
+      opacity: 0.5;
+    }
+
     .btn-primary {
       background: var(--accent);
       border-color: var(--accent);
@@ -651,6 +661,9 @@
 
     <!-- Controls -->
     <div class="controls">
+      <button class="btn btn-sound" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">
+        🔊
+      </button>
       <button class="btn" onclick="undoMove()">
         <span>↩️</span> Undo
       </button>
@@ -726,6 +739,138 @@
     let previousState = null;
     let tileId = 0;
     let currentUser = null;
+
+    // Audio System
+    let soundEnabled = localStorage.getItem('2048-sound') !== 'false';
+    let audioCtx = null;
+    let audioUnlocked = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+      // Play silent buffer to fully unlock on iOS
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlocked = true;
+    }
+
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('2048-sound', soundEnabled);
+      const btn = document.getElementById('soundBtn');
+      btn.textContent = soundEnabled ? '🔊' : '🔇';
+      btn.classList.toggle('muted', !soundEnabled);
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        const now = ctx.currentTime;
+
+        switch (type) {
+          case 'move':
+            osc.frequency.value = 200;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
+            break;
+
+          case 'merge':
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+
+          case 'bigmerge':
+            // Play a chord for big merges (512+)
+            osc.frequency.setValueAtTime(523, now); // C5
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+            // Add harmony note
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.frequency.value = 659; // E5
+            osc2.type = 'sine';
+            gain2.gain.setValueAtTime(0.1, now);
+            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc2.start(now);
+            osc2.stop(now + 0.3);
+            break;
+
+          case 'win':
+            // Ascending arpeggio
+            [523, 659, 784, 1047].forEach((freq, i) => {
+              setTimeout(() => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g);
+                g.connect(ctx.destination);
+                o.frequency.value = freq;
+                o.type = 'sine';
+                const t = ctx.currentTime;
+                g.gain.setValueAtTime(0.15, t);
+                g.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                o.start(t);
+                o.stop(t + 0.2);
+              }, i * 100);
+            });
+            break;
+
+          case 'lose':
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.4);
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+            break;
+        }
+      } catch (e) {}
+    }
+
+    // Update sound button on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('soundBtn');
+      if (btn) {
+        btn.textContent = soundEnabled ? '🔊' : '🔇';
+        btn.classList.toggle('muted', !soundEnabled);
+      }
+    });
 
     // DOM Elements
     const tilesContainer = document.getElementById('tilesContainer');
@@ -896,6 +1041,9 @@
               highestTile = Math.max(highestTile, merged.value);
               moved = true;
 
+              // Play merge sound (big merge for 512+)
+              playSound(merged.value >= 512 ? 'bigmerge' : 'merge');
+
               // Check for milestone (256, 512, 1024, 2048, etc.)
               if (highestTile > prevHighest && highestTile >= 256 && isPowerOfTwo(highestTile)) {
                 submitMilestoneScore(highestTile);
@@ -904,6 +1052,7 @@
               // Check for win
               if (merged.value === WINNING_TILE && !won) {
                 won = true;
+                playSound('win');
                 setTimeout(() => showWinOverlay(), 300);
               }
             } else {
@@ -922,6 +1071,7 @@
       });
 
       if (moved) {
+        playSound('move');
         moves++;
         addRandomTile();
         render();
@@ -930,6 +1080,7 @@
 
         if (!movesAvailable()) {
           gameOver = true;
+          playSound('lose');
           setTimeout(() => showGameOverOverlay(), 500);
         }
       }
