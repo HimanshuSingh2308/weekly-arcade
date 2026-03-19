@@ -117,7 +117,8 @@
     /* Game Layout */
     .game-container {
       display: flex;
-      height: calc(100vh - 50px);
+      height: calc(100dvh - 50px);
+      height: calc(-webkit-fill-available - 50px);
       gap: 10px;
       padding: 10px;
     }
@@ -270,10 +271,15 @@
       justify-content: center;
     }
 
+    /* Responsive cell size: min 16px, preferred based on viewport, max 28px */
+    :root {
+      --cell-size: clamp(16px, min(2.8vw, 2.8vh), 28px);
+    }
+
     .game-board {
       display: grid;
-      grid-template-columns: repeat(10, 28px);
-      grid-template-rows: repeat(20, 28px);
+      grid-template-columns: repeat(10, var(--cell-size));
+      grid-template-rows: repeat(20, var(--cell-size));
       gap: 1px;
       background: var(--border);
       border: 2px solid var(--border);
@@ -283,14 +289,14 @@
 
     .cell {
       position: relative;
-      width: 28px;
-      height: 28px;
+      width: var(--cell-size);
+      height: var(--cell-size);
       background: var(--bg-card);
       border-radius: 2px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
+      font-size: clamp(0.5rem, 1.5vw, 0.8rem);
       transition: background 0.1s;
     }
 
@@ -1052,6 +1058,10 @@
 
     /* Responsive */
     @media (max-width: 900px) {
+      :root {
+        --cell-size: clamp(16px, min(2.5vw, 2.5vh), 24px);
+      }
+
       .game-container {
         flex-direction: column;
         align-items: center;
@@ -1066,13 +1076,6 @@
       .left-panel { order: 1; }
       .board-container { order: 2; }
       .right-panel { order: 3; }
-
-      .game-board {
-        grid-template-columns: repeat(10, 24px);
-        grid-template-rows: repeat(20, 24px);
-      }
-
-      .cell { width: 24px; height: 24px; }
     }
 
     /* Mobile UI - hidden on desktop */
@@ -1081,19 +1084,14 @@
     }
 
     @media (max-width: 600px) {
+      /* Mobile-optimized cell size: fills width with small margins */
+      /* Available width ~= 100vw - 20px padding, divided by 10 cells */
+      :root {
+        --cell-size: clamp(18px, calc((100vw - 24px) / 10.5), 32px);
+      }
+
       .left-panel, .right-panel {
         display: none;
-      }
-
-      .game-board {
-        grid-template-columns: repeat(10, 24px);
-        grid-template-rows: repeat(20, 24px);
-      }
-
-      .cell {
-        width: 24px;
-        height: 24px;
-        font-size: 0.7rem;
       }
 
       .controls-hint {
@@ -1172,6 +1170,7 @@
         align-items: center;
         gap: 8px;
         padding: 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
         background: var(--bg-secondary);
         border-top: 1px solid var(--border);
         position: fixed;
@@ -1222,7 +1221,8 @@
 
       /* Adjust game container for mobile */
       .game-container {
-        padding-bottom: 180px;
+        height: calc(100dvh - 50px);
+        padding-bottom: calc(160px + env(safe-area-inset-bottom));
       }
 
       .board-container {
