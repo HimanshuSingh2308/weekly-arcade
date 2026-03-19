@@ -99,15 +99,25 @@
       font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
       background: var(--bg-primary);
       color: var(--text);
-      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
     }
 
     /* Header */
     .header {
       border-bottom: 1px solid var(--border);
       padding: 0.8rem 1rem;
+      padding-top: max(0.8rem, env(safe-area-inset-top));
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
       display: flex;
       justify-content: space-between;
       align-items: center;

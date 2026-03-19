@@ -105,10 +105,14 @@
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
-      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
       overflow: hidden;
       touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
       user-select: none;
+      overscroll-behavior: none;
     }
 
     /* Header */
@@ -116,10 +120,13 @@
       background: linear-gradient(135deg, var(--bg-secondary), #1a2744);
       border-bottom: 2px solid var(--accent);
       padding: 0.5rem 1rem;
+      padding-top: max(0.5rem, env(safe-area-inset-top));
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 50px;
+      min-height: 50px;
     }
 
     .back-btn {
