@@ -128,7 +128,11 @@
       color: var(--text-primary);
       text-decoration: none;
       font-size: 0.9rem;
-      padding: 0.25rem 0.5rem;
+      padding: 0.5rem 0.75rem;
+      min-height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
     }
 
     .back-btn:hover { color: var(--accent); }
@@ -195,7 +199,6 @@
     #gameCanvas {
       display: block;
       background: var(--bg-primary);
-      border: 1px solid var(--border);
     }
 
     @media (max-width: 768px) {
@@ -453,7 +456,7 @@
       border: 2px solid var(--border);
       border-radius: 12px;
       padding: 1.25rem;
-      width: 220px;
+      width: min(220px, calc(100vw - 3rem));
       cursor: pointer;
       transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
       text-align: center;
@@ -739,7 +742,7 @@
     /* Auto-fire toggle button */
     .autofire-toggle {
       position: absolute;
-      top: 20px;
+      top: 90px;
       right: 20px;
       width: 60px;
       height: 60px;
@@ -761,6 +764,53 @@
       background: rgba(34, 197, 94, 0.4);
       border-color: rgba(34, 197, 94, 0.8);
       color: #22c55e;
+    }
+
+    .nuke-btn {
+      position: absolute;
+      bottom: 120px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: rgba(233, 69, 96, 0.3);
+      border: 2px solid rgba(233, 69, 96, 0.6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+      cursor: pointer;
+      z-index: 100;
+    }
+    .nuke-btn.available {
+      background: rgba(233, 69, 96, 0.5);
+      border-color: var(--accent);
+      animation: nuke-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes nuke-pulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(233, 69, 96, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(233, 69, 96, 0.6); }
+    }
+
+    .mobile-pause-btn {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px;
+      height: 44px;
+      background: rgba(100, 100, 100, 0.3);
+      border: 2px solid rgba(150, 150, 150, 0.5);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      z-index: 100;
     }
 
     /* Gesture hints */
@@ -787,6 +837,21 @@
     @media (max-width: 768px) {
       .desktop-controls { display: none; }
       .mobile-controls-text { display: inline !important; }
+    }
+
+    @media (max-width: 400px) {
+      .auth-btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; white-space: nowrap; }
+    }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      .header { height: 36px; padding: 0.25rem 0.75rem; }
+      .game-container { top: 36px; height: calc(100dvh - 36px); }
+      .hud { top: 40px; padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+      .fire-zone-indicator { width: 60px; height: 60px; bottom: 15px; right: 15px; opacity: 0.6; }
+      .autofire-toggle { top: 5px; right: 5px; width: 44px; height: 44px; font-size: 0.6rem; }
+      .nuke-btn { bottom: 80px; right: 5px; width: 44px; height: 44px; font-size: 0.6rem; }
+      .mobile-pause-btn { top: 5px; }
+      .score-display { font-size: 1.2rem; }
     }
 
     /* Achievement Toast */
@@ -1292,6 +1357,10 @@
       gap: 1rem;
       flex-wrap: wrap;
       justify-content: center;
+      position: sticky;
+      bottom: 0;
+      background: rgba(5, 5, 16, 0.95);
+      z-index: 10;
     }
 
     .loadout-btn {
@@ -1432,6 +1501,73 @@
       cursor: pointer;
     }
 
+    .confirm-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 500;
+    }
+    .confirm-overlay.hidden { display: none; }
+    .confirm-dialog {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      z-index: 501;
+      min-width: 280px;
+      text-align: center;
+    }
+    .confirm-dialog.hidden { display: none; }
+    .confirm-message {
+      font-size: 1rem;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+    }
+    .confirm-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+    .confirm-btn {
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .confirm-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .settings-select {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .orient-btn {
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .orient-btn.active {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: #000;
+      font-weight: 600;
+    }
+
     /* Accessibility: Respect reduced motion preferences */
     @media (prefers-reduced-motion: reduce) {
       *,
@@ -1520,13 +1656,12 @@
       <span>Coins:</span> <span id="menuCoins">0</span>
     </div>
     <div class="controls-hint">
-      <kbd>WASD</kbd> move
-      <span>•</span>
-      <kbd>S</kbd> brake
-      <span>•</span>
-      <kbd>Space</kbd> fire
-      <span>•</span>
-      <kbd>N</kbd> nuke
+      <span class="desktop-controls">
+        <kbd>WASD</kbd> move <span>&bull;</span> <kbd>S</kbd> brake <span>&bull;</span> <kbd>Space</kbd> fire <span>&bull;</span> <kbd>N</kbd> nuke
+      </span>
+      <span class="mobile-controls-text" style="display: none;">
+        Drag to move &bull; Tap to fire
+      </span>
     </div>
   </div>
 
@@ -1577,7 +1712,25 @@
       <span class="settings-label">Auto-Fire</span>
       <div class="settings-toggle" id="autoFireSettingToggle" data-setting="autoFire"></div>
     </div>
+    <div class="settings-option">
+      <span class="settings-label">Orientation</span>
+      <div class="settings-select" id="orientationSelect">
+        <button class="orient-btn active" data-orient="auto">Auto</button>
+        <button class="orient-btn" data-orient="portrait">Portrait</button>
+        <button class="orient-btn" data-orient="landscape">Landscape</button>
+      </div>
+    </div>
     <button class="settings-close" id="settingsClose">Close</button>
+  </div>
+
+  <!-- Custom Confirm Dialog -->
+  <div class="confirm-overlay hidden" id="confirmOverlay"></div>
+  <div class="confirm-dialog hidden" id="confirmDialog">
+    <div class="confirm-message" id="confirmMessage"></div>
+    <div class="confirm-buttons">
+      <button class="confirm-btn primary" id="confirmYes">Yes</button>
+      <button class="confirm-btn" id="confirmNo">Cancel</button>
+    </div>
   </div>
 
   <!-- Shop Screen -->
@@ -1643,6 +1796,8 @@
     </div>
     <!-- Auto-fire toggle button -->
     <div class="autofire-toggle" id="autofireToggle">AUTO<br>FIRE</div>
+    <div class="nuke-btn hidden" id="nukeBtn">NUKE</div>
+    <div class="mobile-pause-btn" id="mobilePauseBtn">&#x23F8;</div>
     <div class="gesture-hint">Left: drag to move • Right: tap to fire</div>
   </div>
 
@@ -1687,7 +1842,7 @@
         <span class="mobile-controls-text" style="display: none;">
           Drag left side of screen to move.<br>
           Tap right side to fire. Toggle auto-fire in top right.<br>
-          Double-tap right side to pause.<br>
+          Tap &#x23F8; to pause.<br>
         </span>
         <br>
         Destroy asteroids to earn points.<br>
@@ -1733,34 +1888,38 @@
     // Responsive canvas sizing
     function resizeCanvas() {
       const isMobile = window.innerWidth <= 768;
-      const headerHeight = 50;
+      const isLandscape = window.innerWidth > window.innerHeight;
+      const headerHeight = (isMobile && isLandscape) ? 36 : 50;
 
       if (isMobile) {
-        // Full screen on mobile - use visualViewport for accurate height
         const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
         canvas.width = viewportWidth;
         canvas.height = viewportHeight - headerHeight;
-        // Force canvas to fill container
         canvas.style.width = '100%';
         canvas.style.height = '100%';
       } else {
-        // Desktop: maintain aspect ratio with max size
-        const maxW = Math.min(800, window.innerWidth - 20);
-        const maxH = Math.min(600, window.innerHeight - 150);
-        const aspect = 800 / 600;
-
-        if (maxW / maxH > aspect) {
-          canvas.height = maxH;
-          canvas.width = maxH * aspect;
-        } else {
-          canvas.width = maxW;
-          canvas.height = maxW / aspect;
-        }
+        canvas.width = Math.min(window.innerWidth - 20, 1400);
+        canvas.height = Math.min(window.innerHeight - 70, 900);
         canvas.style.width = '';
         canvas.style.height = '';
       }
+
+      worldW = 800;
+      worldH = Math.round(800 * (canvas.height / canvas.width));
+
+      if (stars && stars.length > 0) {
+        stars.forEach(star => {
+          if (star.x > worldW) star.x = Math.random() * worldW;
+          if (star.y > worldH) star.y = Math.random() * worldH;
+        });
+      }
     }
+    // Dynamic world size and stars (must be declared before resizeCanvas call)
+    let worldW = 800;
+    let worldH = 600;
+    let stars = [];
+
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     // Also listen to visualViewport changes for mobile browsers
@@ -1855,7 +2014,7 @@
     let droneBullets = [];
     let particles = [];
     let scorePopups = [];
-    let stars = [];
+    // stars is declared above resizeCanvas() to avoid TDZ
     let scoreOrbs = []; // Collectible score orbs
 
     let score = 0;
@@ -2052,8 +2211,8 @@
       // Far layer - small, slow, dim
       for (let i = 0; i < 80; i++) {
         stars.push({
-          x: Math.random() * 800,
-          y: Math.random() * 600,
+          x: Math.random() * worldW,
+          y: Math.random() * worldH,
           size: Math.random() * 0.8 + 0.3,
           alpha: Math.random() * 0.2 + 0.1,
           layer: 0,
@@ -2063,8 +2222,8 @@
       // Mid layer - medium
       for (let i = 0; i < 60; i++) {
         stars.push({
-          x: Math.random() * 800,
-          y: Math.random() * 600,
+          x: Math.random() * worldW,
+          y: Math.random() * worldH,
           size: Math.random() * 1.2 + 0.5,
           alpha: Math.random() * 0.3 + 0.2,
           layer: 1,
@@ -2074,8 +2233,8 @@
       // Near layer - bright, fast
       for (let i = 0; i < 40; i++) {
         stars.push({
-          x: Math.random() * 800,
-          y: Math.random() * 600,
+          x: Math.random() * worldW,
+          y: Math.random() * worldH,
           size: Math.random() * 1.8 + 0.8,
           alpha: Math.random() * 0.5 + 0.4,
           layer: 2,
@@ -2091,6 +2250,7 @@
       setupControls();
       setupAuth();
       setupCustomizationListeners();
+      setupOrientationToggle();
 
       // Load customization data (async)
       loadCustomizationData();
@@ -2222,6 +2382,7 @@
         keys.left = dx < -threshold;
         keys.right = dx > threshold;
         keys.thrust = dy < -threshold;
+        keys.brake = dy > threshold;
       }, { passive: false });
 
       const endJoystick = e => {
@@ -2242,6 +2403,7 @@
           keys.left = false;
           keys.right = false;
           keys.thrust = false;
+          keys.brake = false;
         }
       };
 
@@ -2282,19 +2444,6 @@
       fireZone.addEventListener('touchend', endFire, { passive: false });
       fireZone.addEventListener('touchcancel', endFire, { passive: false });
 
-      // Double tap right zone to pause
-      let lastTapTime = 0;
-      fireZone.addEventListener('touchstart', e => {
-        const now = Date.now();
-        if (now - lastTapTime < 300) {
-          // Double tap detected
-          if (gameState === 'playing') {
-            togglePause();
-          }
-        }
-        lastTapTime = now;
-      }, { passive: true });
-
       // Auto-fire toggle button
       const autofireToggle = document.getElementById('autofireToggle');
       autofireToggle.addEventListener('touchstart', e => {
@@ -2302,7 +2451,7 @@
         e.stopPropagation();
         autoFireEnabled = !autoFireEnabled;
         autofireToggle.classList.toggle('active', autoFireEnabled);
-        autofireToggle.textContent = autoFireEnabled ? 'AUTO\nON' : 'AUTO\nFIRE';
+        autofireToggle.innerHTML = autoFireEnabled ? 'AUTO<br>ON' : 'AUTO<br>FIRE';
       }, { passive: false });
 
       // Also handle click for testing on desktop
@@ -2311,8 +2460,28 @@
         e.stopPropagation();
         autoFireEnabled = !autoFireEnabled;
         autofireToggle.classList.toggle('active', autoFireEnabled);
-        autofireToggle.textContent = autoFireEnabled ? 'AUTO\nON' : 'AUTO\nFIRE';
+        autofireToggle.innerHTML = autoFireEnabled ? 'AUTO<br>ON' : 'AUTO<br>FIRE';
       });
+
+      // Nuke button
+      const nukeBtn = document.getElementById('nukeBtn');
+      nukeBtn.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerNuke();
+      }, { passive: false });
+      nukeBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerNuke();
+      });
+
+      // Mobile pause button
+      document.getElementById('mobilePauseBtn').addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (gameState === 'playing') togglePause();
+      }, { passive: false });
     }
 
     // Pause functionality
@@ -2432,8 +2601,8 @@
 
       // Create ship
       ship = {
-        x: 400,
-        y: 300,
+        x: worldW / 2,
+        y: worldH / 2,
         vx: 0,
         vy: 0,
         angle: -Math.PI / 2,
@@ -2469,6 +2638,10 @@
       // Show daily indicator
       document.getElementById('dailyIndicator').style.display = isDailyChallenge ? 'inline' : 'none';
 
+      document.getElementById('nukeBtn').classList.add('hidden');
+      document.getElementById('nukeBtn').classList.remove('available');
+      document.getElementById('mobileControls').style.display = '';
+
       playSound('start');
       startAmbientMusic();
     }
@@ -2495,8 +2668,8 @@
       for (let i = 0; i < asteroidCount; i++) {
         let x, y;
         do {
-          x = Math.random() * 800;
-          y = Math.random() * 600;
+          x = Math.random() * worldW;
+          y = Math.random() * worldH;
         } while (distance(x, y, ship.x, ship.y) < 150);
 
         asteroids.push(createAsteroid(x, y, 'large'));
@@ -2506,8 +2679,8 @@
       if (isBossWave) {
         let x, y;
         do {
-          x = Math.random() * 800;
-          y = Math.random() * 600;
+          x = Math.random() * worldW;
+          y = Math.random() * worldH;
         } while (distance(x, y, ship.x, ship.y) < 200);
 
         asteroids.push(createBossAsteroid(x, y));
@@ -2519,8 +2692,8 @@
           for (let i = 0; i < count; i++) {
             let x, y;
             do {
-              x = Math.random() * 800;
-              y = Math.random() * 600;
+              x = Math.random() * worldW;
+              y = Math.random() * worldH;
             } while (distance(x, y, ship.x, ship.y) < 200);
 
             drones.push(createDrone(x, y, type));
@@ -2751,7 +2924,7 @@
         case 'W5': activeUpgrades.homingMissile = true; break;
         case 'W6': activeUpgrades.plasmaRing = true; break;
         case 'W7': activeUpgrades.twinCannons = true; break;
-        case 'W8': activeUpgrades.nukeAvailable = true; break;
+        case 'W8': activeUpgrades.nukeAvailable = true; document.getElementById('nukeBtn').classList.remove('hidden'); document.getElementById('nukeBtn').classList.add('available'); break;
         case 'W9': activeUpgrades.ricochet = true; break;
         case 'W10': activeUpgrades.burstFire = true; break;
         case 'P1': /* Shield regen is passive */ break;
@@ -2859,6 +3032,7 @@
       document.getElementById('gameoverScreen').classList.remove('hidden');
       document.getElementById('hud').style.display = 'none';
       document.getElementById('upgradesHud').innerHTML = '';
+      document.getElementById('mobileControls').style.display = 'none';
 
       stopAmbientMusic();
       playSound('game_over');
@@ -3152,8 +3326,8 @@
       ship.y += ship.vy * dt;
 
       // Wrap
-      ship.x = wrap(ship.x, 800);
-      ship.y = wrap(ship.y, 600);
+      ship.x = wrap(ship.x, worldW);
+      ship.y = wrap(ship.y, worldH);
 
       // Fire (including auto-fire for mobile)
       if (keys.fire || autoFireEnabled) {
@@ -3259,11 +3433,11 @@
 
         // Ricochet
         if (bullet.ricochet > 0) {
-          if (bullet.x < 0 || bullet.x > 800) {
+          if (bullet.x < 0 || bullet.x > worldW) {
             bullet.vx *= -1;
             bullet.ricochet--;
           }
-          if (bullet.y < 0 || bullet.y > 600) {
+          if (bullet.y < 0 || bullet.y > worldH) {
             bullet.vy *= -1;
             bullet.ricochet--;
           }
@@ -3271,7 +3445,7 @@
 
         // Wrap or remove
         if (bullet.ricochet <= 0) {
-          if (bullet.x < -10 || bullet.x > 810 || bullet.y < -10 || bullet.y > 610) {
+          if (bullet.x < -10 || bullet.x > worldW + 10 || bullet.y < -10 || bullet.y > worldH + 10) {
             return false;
           }
         }
@@ -3285,8 +3459,8 @@
       asteroids.forEach(ast => {
         ast.x += ast.vx * dt;
         ast.y += ast.vy * dt;
-        ast.x = wrap(ast.x, 800);
-        ast.y = wrap(ast.y, 600);
+        ast.x = wrap(ast.x, worldW);
+        ast.y = wrap(ast.y, worldH);
         ast.rotation += ast.rotationSpeed * dt;
       });
     }
@@ -3309,8 +3483,8 @@
 
         drone.x += drone.vx * dt;
         drone.y += drone.vy * dt;
-        drone.x = wrap(drone.x, 800);
-        drone.y = wrap(drone.y, 600);
+        drone.x = wrap(drone.x, worldW);
+        drone.y = wrap(drone.y, worldH);
 
         // Firing (scouts and hunters)
         if (config.fireRate && Date.now() - drone.lastFire > config.fireRate) {
@@ -3333,7 +3507,7 @@
         bullet.y += bullet.vy * dt;
         bullet.life -= dt;
 
-        if (bullet.x < -10 || bullet.x > 810 || bullet.y < -10 || bullet.y > 610) {
+        if (bullet.x < -10 || bullet.x > worldW + 10 || bullet.y < -10 || bullet.y > worldH + 10) {
           return false;
         }
 
@@ -3740,8 +3914,8 @@
         orb.y += orb.vy * dt;
 
         // Wrap around screen
-        orb.x = wrap(orb.x, 800);
-        orb.y = wrap(orb.y, 600);
+        orb.x = wrap(orb.x, worldW);
+        orb.y = wrap(orb.y, worldH);
 
         // Update pulse animation
         orb.pulse += dt * 5;
@@ -3768,6 +3942,7 @@
       if (!activeUpgrades.nukeAvailable || gameState !== 'playing') return;
 
       activeUpgrades.nukeAvailable = false;
+      document.getElementById('nukeBtn').classList.remove('available');
       playSound('nuke');
 
       // Massive screen shake
@@ -3888,7 +4063,7 @@
     // ==========================================
 
     function render() {
-      const scale = canvas.width / 800;
+      const scale = canvas.width / worldW;
       ctx.save();
       ctx.scale(scale, scale);
 
@@ -3905,7 +4080,7 @@
       // Clear (use HUD background color)
       const hudBg = getEquippedCosmetics().hud.visualData.background || '#050510';
       ctx.fillStyle = hudBg;
-      ctx.fillRect(-10, -10, 820, 620);
+      ctx.fillRect(-10, -10, worldW + 20, worldH + 20);
 
       // Parallax stars - move based on ship velocity
       stars.forEach(star => {
@@ -3913,10 +4088,10 @@
           star.x -= ship.vx * 0.002 * star.speed;
           star.y -= ship.vy * 0.002 * star.speed;
           // Wrap stars
-          if (star.x < 0) star.x += 800;
-          if (star.x > 800) star.x -= 800;
-          if (star.y < 0) star.y += 600;
-          if (star.y > 600) star.y -= 600;
+          if (star.x < 0) star.x += worldW;
+          if (star.x > worldW) star.x -= worldW;
+          if (star.y < 0) star.y += worldH;
+          if (star.y > worldH) star.y -= worldH;
         }
         ctx.globalAlpha = star.alpha;
         ctx.fillStyle = star.layer === 2 ? '#aaddff' : '#fff';
@@ -3958,7 +4133,7 @@
         // Time warp overlay
         if (timeWarpActive) {
           ctx.fillStyle = 'rgba(100, 150, 255, 0.1)';
-          ctx.fillRect(0, 0, 800, 600);
+          ctx.fillRect(0, 0, worldW, worldH);
         }
 
         // Particles
@@ -4365,22 +4540,18 @@
     }
 
     function renderScorePopups() {
-      const scale = canvas.width / 800;
+      const scale = canvas.width / worldW;
       scorePopups.forEach(p => {
-        const screenX = canvas.offsetLeft + p.x * scale;
-        const screenY = canvas.offsetTop + 50 + p.y * scale;
-
-        const popup = document.createElement('div');
-        popup.className = 'score-popup';
-        popup.style.left = screenX + 'px';
-        popup.style.top = screenY + 'px';
-        popup.style.color = p.bonus ? '#ffd700' : '#00d4ff';
-        popup.textContent = p.text;
-        document.body.appendChild(popup);
-
-        setTimeout(() => popup.remove(), 1000);
+        const alpha = Math.min(1, p.life * 2);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = `bold ${Math.round(16 * scale)}px 'Segoe UI', system-ui, sans-serif`;
+        ctx.fillStyle = p.bonus ? '#ffd700' : '#00d4ff';
+        ctx.textAlign = 'center';
+        const offsetY = (1 - p.life) * 30;
+        ctx.fillText(p.text, p.x * scale, (p.y - offsetY) * scale + 50);
+        ctx.restore();
       });
-      scorePopups = [];
     }
 
     // ==========================================
@@ -4969,6 +5140,29 @@
       });
     }
 
+    // Custom confirm dialog
+    function showConfirmDialog(message) {
+      return new Promise(resolve => {
+        const overlay = document.getElementById('confirmOverlay');
+        const dialog = document.getElementById('confirmDialog');
+        document.getElementById('confirmMessage').textContent = message;
+        overlay.classList.remove('hidden');
+        dialog.classList.remove('hidden');
+
+        const cleanup = () => {
+          overlay.classList.add('hidden');
+          dialog.classList.add('hidden');
+          document.getElementById('confirmYes').onclick = null;
+          document.getElementById('confirmNo').onclick = null;
+          overlay.onclick = null;
+        };
+
+        document.getElementById('confirmYes').onclick = () => { cleanup(); resolve(true); };
+        document.getElementById('confirmNo').onclick = () => { cleanup(); resolve(false); };
+        overlay.onclick = () => { cleanup(); resolve(false); };
+      });
+    }
+
     // Handle item click
     async function handleItemClick(el) {
       const itemId = el.dataset.itemId;
@@ -4999,7 +5193,7 @@
         playSound('select');
       } else if (cost > 0 && customization.coins >= cost) {
         // Purchase the item
-        if (confirm(`Purchase for ${cost} coins?`)) {
+        if (await showConfirmDialog(`Purchase for ${cost} coins?`)) {
           if (currentUser && window.apiClient) {
             try {
               const result = await window.apiClient.purchaseItem(itemId);
@@ -5119,7 +5313,7 @@
       popup.className = 'coin-popup';
       popup.textContent = `+${amount}`;
       popup.style.left = (Math.random() * 100 + 100) + 'px';
-      popup.style.top = '100px';
+      popup.style.top = '160px';
       document.body.appendChild(popup);
 
       setTimeout(() => popup.remove(), 1500);
@@ -5151,6 +5345,38 @@
       if (setting === 'autoFire') {
         autoFireEnabled = accessibilitySettings.autoFire;
         document.getElementById('autofireToggle')?.classList.toggle('active', autoFireEnabled);
+      }
+    }
+
+    function setupOrientationToggle() {
+      const saved = localStorage.getItem('voidbreak-orientation') || 'auto';
+      const buttons = document.querySelectorAll('#orientationSelect .orient-btn');
+
+      buttons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.orient === saved);
+        btn.addEventListener('click', () => {
+          const orient = btn.dataset.orient;
+          localStorage.setItem('voidbreak-orientation', orient);
+          buttons.forEach(b => b.classList.toggle('active', b === btn));
+          applyOrientation(orient);
+        });
+      });
+
+      applyOrientation(saved);
+    }
+
+    function applyOrientation(orient) {
+      if (!screen.orientation || !screen.orientation.lock) return;
+      try {
+        if (orient === 'portrait') {
+          screen.orientation.lock('portrait').catch(() => {});
+        } else if (orient === 'landscape') {
+          screen.orientation.lock('landscape').catch(() => {});
+        } else {
+          screen.orientation.unlock();
+        }
+      } catch (e) {
+        // orientation lock not supported
       }
     }
 
