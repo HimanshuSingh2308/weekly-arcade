@@ -221,6 +221,8 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      aspect-ratio: 1;
       gap: 10px;
       position: relative;
     }
@@ -569,23 +571,20 @@
 
     /* Mobile full screen */
     @media (max-width: 600px) {
+      body {
+        overflow-y: auto;
+      }
       .game-container {
         max-width: 100%;
         padding: 0.5rem;
-        min-height: calc(100vh - 60px);
-        display: flex;
-        flex-direction: column;
       }
       .grid-container {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
         border-radius: 0;
-        margin-bottom: 0;
+        margin-bottom: 0.5rem;
         padding: 8px;
+        max-height: calc(100vw - 1rem);
       }
       .grid {
-        flex: 1;
         gap: 6px;
       }
       .cell {
@@ -597,8 +596,8 @@
       .score-section {
         margin-bottom: 0.5rem;
       }
-      .new-game-section {
-        padding: 0.5rem;
+      .controls {
+        gap: 0.5rem;
       }
     }
 
@@ -1180,14 +1179,19 @@
     function render() {
       tilesContainer.innerHTML = '';
 
-      const gridRect = document.getElementById('grid').getBoundingClientRect();
-      const cellSize = (gridRect.width - 30) / GRID_SIZE; // Account for gaps
-      const gap = 10;
+      const gridEl = document.getElementById('grid');
+      const cells = gridEl.querySelectorAll('.cell');
+      const gridRect = gridEl.getBoundingClientRect();
+      const firstCell = cells[0].getBoundingClientRect();
+      const secondCell = cells[1].getBoundingClientRect();
+      const cellSize = firstCell.width;
+      const gap = secondCell.left - firstCell.right;
 
       for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
           const tile = grid[r][c];
           if (tile) {
+            const cellRect = cells[r * GRID_SIZE + c].getBoundingClientRect();
             const tileEl = document.createElement('div');
             const tileClass = tile.value <= 8192 ? `tile-${tile.value}` : 'tile-super';
             tileEl.className = `tile ${tileClass}`;
@@ -1197,8 +1201,8 @@
 
             tileEl.style.width = `${cellSize}px`;
             tileEl.style.height = `${cellSize}px`;
-            tileEl.style.left = `${c * (cellSize + gap) + gap/2}px`;
-            tileEl.style.top = `${r * (cellSize + gap) + gap/2}px`;
+            tileEl.style.left = `${cellRect.left - gridRect.left}px`;
+            tileEl.style.top = `${cellRect.top - gridRect.top}px`;
             tileEl.textContent = tile.value;
 
             tilesContainer.appendChild(tileEl);
