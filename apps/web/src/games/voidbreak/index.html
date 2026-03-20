@@ -171,8 +171,8 @@
       cursor: pointer;
       padding: 0.4rem;
       border-radius: 8px;
-      min-width: 36px;
-      min-height: 36px;
+      min-width: 44px;
+      min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -188,7 +188,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      min-height: 100dvh;
       padding-top: 50px;
     }
 
@@ -200,12 +200,19 @@
 
     @media (max-width: 768px) {
       .game-container {
-        min-height: calc(100vh - 50px);
-        padding-top: 50px;
-        padding-bottom: 0;
+        position: fixed;
+        top: 50px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: auto;
+        height: calc(100dvh - 50px);
+        padding: 0;
       }
       #gameCanvas {
         border: none;
+        width: 100% !important;
+        height: 100% !important;
       }
     }
 
@@ -652,6 +659,7 @@
       display: none;
       z-index: 90;
       pointer-events: none;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
     .mobile-controls.active {
@@ -660,8 +668,8 @@
 
     .gesture-zone {
       position: absolute;
+      top: 0;
       bottom: 0;
-      height: 50%;
       pointer-events: auto;
     }
 
@@ -1728,9 +1736,14 @@
       const headerHeight = 50;
 
       if (isMobile) {
-        // Full screen on mobile
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight - headerHeight;
+        // Full screen on mobile - use visualViewport for accurate height
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+        canvas.width = viewportWidth;
+        canvas.height = viewportHeight - headerHeight;
+        // Force canvas to fill container
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
       } else {
         // Desktop: maintain aspect ratio with max size
         const maxW = Math.min(800, window.innerWidth - 20);
@@ -1744,10 +1757,16 @@
           canvas.width = maxW;
           canvas.height = maxW / aspect;
         }
+        canvas.style.width = '';
+        canvas.style.height = '';
       }
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+    // Also listen to visualViewport changes for mobile browsers
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', resizeCanvas);
+    }
 
     // Game constants
     const SHIP_SIZE = 15;
