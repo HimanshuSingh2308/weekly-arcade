@@ -1937,6 +1937,7 @@
     const BULLET_SPEED = 400;
     const BULLET_COOLDOWN = 400;
     const STARTING_LIVES = 3;
+    const MAX_LIVES = 5;
     const INVINCIBILITY_TIME = 2000;
     const SHOP_TIME = 10;
     const COMBO_WINDOW = 3000;
@@ -1991,7 +1992,7 @@
       P1: { name: 'Shield Regen', icon: '🛡️', rarity: 'common', type: 'passive', desc: 'Regain 1 HP after 3 deathless waves' },
       P2: { name: 'Thruster Boost', icon: '🔥', rarity: 'common', type: 'passive', desc: 'Max speed +20%' },
       P3: { name: 'Inertia Dampener', icon: '⚓', rarity: 'common', type: 'passive', desc: 'Decelerate faster' },
-      P4: { name: 'Extra Life', icon: '❤️', rarity: 'rare', type: 'passive', desc: '+1 life immediately' },
+      P4: { name: 'Extra Life', icon: '❤️', rarity: 'rare', type: 'passive', desc: '+1 life immediately (max 5)' },
       P5: { name: 'Ghost Mode', icon: '👻', rarity: 'rare', type: 'passive', desc: 'Pass through 1 asteroid per wave' },
       P6: { name: 'Magnet', icon: '🧲', rarity: 'common', type: 'passive', desc: 'Score orbs auto-collect from further' },
       P7: { name: 'Armor Plating', icon: '🛡️', rarity: 'rare', type: 'passive', desc: 'First hit each wave deals no damage' },
@@ -2813,7 +2814,7 @@
         addScore(1000, ship.x, ship.y, true);
 
         // Shield regen check
-        if (wavesWithoutDamage >= 3 && lives < STARTING_LIVES) {
+        if (wavesWithoutDamage >= 3 && lives < MAX_LIVES) {
           lives++;
           wavesWithoutDamage = 0;
           updateLivesDisplay();
@@ -2938,7 +2939,7 @@
         case 'P1': /* Shield regen is passive */ break;
         case 'P2': activeUpgrades.thrusterBoost = true; break;
         case 'P3': activeUpgrades.inertiaDampener = true; break;
-        case 'P4': lives++; updateLivesDisplay(); break;
+        case 'P4': if (lives < MAX_LIVES) { lives++; updateLivesDisplay(); } break;
         case 'P5': activeUpgrades.ghostCharges = 1; break;
         case 'P6': activeUpgrades.magnet = true; break;
         case 'P7': activeUpgrades.armorActive = true; break;
@@ -4051,8 +4052,8 @@
       score += points;
       updateScoreDisplay();
 
-      // Extra life every 5000 points
-      if (Math.floor((score - points) / 5000) < Math.floor(score / 5000)) {
+      // Extra life every 5000 points (capped at MAX_LIVES)
+      if (Math.floor((score - points) / 5000) < Math.floor(score / 5000) && lives < MAX_LIVES) {
         lives++;
         updateLivesDisplay();
       }
