@@ -87,30 +87,53 @@
       user-select: none;
     }
 
-    /* Header */
+    /* Header — two rows on mobile */
     .game-header {
       background: rgba(0,0,0,0.3);
-      padding: 0.5rem 1rem;
+      position: relative;
+      z-index: 50;
+    }
+    .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: relative;
-      z-index: 50;
+      padding: 0.4rem 0.75rem;
     }
     .back-link {
       color: var(--text-muted);
       text-decoration: none;
       font-size: 0.85rem;
+      white-space: nowrap;
     }
     .back-link:hover { color: var(--text); }
     .header-title {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
+      white-space: nowrap;
     }
-    .header-right {
+    .header-icons {
       display: flex;
-      gap: 0.75rem;
+      gap: 0.25rem;
       align-items: center;
+    }
+    .header-stats {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0.2rem 0.75rem 0.4rem;
+      font-size: 0.8rem;
+    }
+    .stat-group {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
     .score-display {
       font-size: 1.1rem;
@@ -118,8 +141,9 @@
       color: var(--gold);
     }
     .timer-display {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
     }
 
     /* Active Jokers Bar */
@@ -159,6 +183,7 @@
     /* Game Area */
     .game-area {
       max-width: 700px;
+      width: 100%;
       margin: 0 auto;
       padding: 0.5rem;
       position: relative;
@@ -592,10 +617,16 @@
     .help-close-btn:hover { transform: scale(1.05); }
     .help-btn {
       background: none; border: none;
-      font-size: 1.1rem; cursor: pointer; padding: 0.2rem;
+      font-size: 1.1rem; cursor: pointer;
+      min-width: 44px; min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
       opacity: 0.7; transition: opacity 0.2s;
     }
     .help-btn:hover { opacity: 1; }
+    .game-header button {
+      min-width: 44px; min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
+    }
 
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
@@ -620,14 +651,24 @@
 <body>
 
   <header class="game-header">
-    <a href="../../" class="back-link">← All Games</a>
-    <span class="header-title">🃏 Solitaire Roguelite</span>
-    <div class="header-right">
-      <span class="timer-display" id="timer">10:00</span>
-      <span class="score-display" id="scoreDisplay">0</span>
-      <button class="help-btn" onclick="showHelp()" title="How to Play">❓</button>
-      <button id="muteBtn" onclick="toggleMute()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0.2rem;" title="Toggle sound">🔊</button>
-      <button id="undoBtn" onclick="undoMove()" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.5rem;display:none;" title="Undo">↩ <span id="undoCount">0</span></button>
+    <div class="header-top">
+      <a href="../../" class="back-link">← Back</a>
+      <span class="header-title">🃏 Solitaire Roguelite</span>
+      <div class="header-icons">
+        <button id="undoBtn" onclick="undoMove()" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--text-muted);font-size:0.75rem;cursor:pointer;display:none;" title="Undo">↩ <span id="undoCount">0</span></button>
+        <button class="help-btn" onclick="showHelp()" title="How to Play">❓</button>
+        <button class="help-btn" id="muteBtn" onclick="toggleMute()" title="Toggle sound">🔊</button>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-group">
+        <span class="stat-label">Time</span>
+        <span class="timer-display" id="timer">10:00</span>
+      </div>
+      <div class="stat-group">
+        <span class="stat-label">Score</span>
+        <span class="score-display" id="scoreDisplay">0</span>
+      </div>
     </div>
   </header>
 
@@ -2035,7 +2076,9 @@
 
   // ── HELP MODAL ────────────────────────────────────────────
   function showHelp() {
-    document.getElementById('helpOverlay').classList.add('show');
+    const overlay = document.getElementById('helpOverlay');
+    overlay.classList.add('show');
+    overlay.querySelector('.help-modal').scrollTop = 0;
     if (timerInterval) clearInterval(timerInterval); // pause during help
   }
   function hideHelp() {
