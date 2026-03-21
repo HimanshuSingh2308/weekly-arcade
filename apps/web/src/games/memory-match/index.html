@@ -865,7 +865,7 @@
         <button class="mode-btn selected" data-mode="classic">
           <span class="mode-icon">&#9830;</span>
           <span class="mode-name">Classic</span>
-          <span class="mode-desc">No time limit</span>
+          <span class="mode-desc">Limited moves</span>
         </button>
         <button class="mode-btn" data-mode="timed">
           <span class="mode-icon">&#9200;</span>
@@ -1032,9 +1032,9 @@
 
     // Difficulty configs
     const DIFFICULTY_CONFIG = {
-      easy: { rows: 3, cols: 4, pairs: 6, time: 120 },
-      medium: { rows: 4, cols: 4, pairs: 8, time: 90 },
-      hard: { rows: 4, cols: 5, pairs: 10, time: 60 }
+      easy: { rows: 3, cols: 4, pairs: 6, time: 120, maxMoves: 20 },
+      medium: { rows: 4, cols: 4, pairs: 8, time: 90, maxMoves: 24 },
+      hard: { rows: 4, cols: 5, pairs: 10, time: 60, maxMoves: 28 }
     };
 
     // DOM Elements
@@ -1220,6 +1220,7 @@
       gameState.matchedPairs = 0;
       gameState.totalPairs = config.pairs;
       gameState.moves = 0;
+      gameState.maxMoves = (gameState.mode === 'classic') ? config.maxMoves : 0;
       gameState.score = 0;
       gameState.combo = 0;
       gameState.maxCombo = 0;
@@ -1296,6 +1297,15 @@
       if (gameState.flippedCards.length === 2) {
         gameState.moves++;
         checkMatch();
+
+        // Check move limit (Classic mode)
+        if (gameState.maxMoves > 0 && gameState.moves >= gameState.maxMoves && gameState.matchedPairs < gameState.totalPairs) {
+          setTimeout(() => {
+            if (gameState.matchedPairs < gameState.totalPairs) {
+              endGame(false);
+            }
+          }, 800); // Wait for match/mismatch animation to finish
+        }
       }
 
       updateUI();
@@ -1398,7 +1408,9 @@
     function updateUI() {
       scoreValue.textContent = gameState.score;
       matchesValue.textContent = `${gameState.matchedPairs}/${gameState.totalPairs}`;
-      movesValue.textContent = gameState.moves;
+      movesValue.textContent = gameState.maxMoves > 0
+        ? `${gameState.moves}/${gameState.maxMoves}`
+        : gameState.moves;
     }
 
     // Timer
@@ -1572,8 +1584,9 @@
     }
 
     function showResults(won) {
-      document.getElementById('modalIcon').textContent = won ? '🏆' : '⏰';
-      document.getElementById('modalTitle').textContent = won ? 'Great Job!' : 'Time\'s Up!';
+      const outOfMoves = !won && gameState.maxMoves > 0 && gameState.moves >= gameState.maxMoves;
+      document.getElementById('modalIcon').textContent = won ? '🏆' : (outOfMoves ? '🃏' : '⏰');
+      document.getElementById('modalTitle').textContent = won ? 'Great Job!' : (outOfMoves ? 'Out of Moves!' : 'Time\'s Up!');
       document.getElementById('modalSubtitle').textContent = won
         ? 'You matched all pairs!'
         : `You found ${gameState.matchedPairs} of ${gameState.totalPairs} pairs`;
