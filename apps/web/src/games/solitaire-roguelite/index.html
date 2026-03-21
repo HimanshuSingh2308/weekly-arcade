@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Solitaire Roguelite | Weekly Arcade - Free Klondike with Joker Cards</title>
+
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
+  <meta name="description" content="Play Solitaire Roguelite free online. Classic Klondike Solitaire with rule-breaking Joker cards, score multipliers, and daily leaderboards. No download required.">
+  <meta name="keywords" content="solitaire, klondike solitaire, free solitaire, solitaire online, roguelite, card game, joker cards, browser game, no download">
+  <link rel="canonical" href="https://weeklyarcade.games/games/solitaire-roguelite/">
+
+  <meta property="og:title" content="Solitaire Roguelite | Weekly Arcade">
+  <meta property="og:description" content="Classic Solitaire with rule-breaking Joker cards. Score multipliers and daily leaderboards. Play free online.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weeklyarcade.games/games/solitaire-roguelite/">
+  <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+  <meta property="og:site_name" content="Weekly Arcade">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Solitaire Roguelite | Weekly Arcade">
+  <meta name="twitter:description" content="Classic Solitaire with rule-breaking Joker cards. Score multipliers and daily leaderboards.">
+  <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+
+  <meta name="theme-color" content="#1a5c2a">
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Solitaire Roguelite",
+    "url": "https://weeklyarcade.games/games/solitaire-roguelite/",
+    "description": "Classic Klondike Solitaire with rule-breaking Joker modifier cards. Collect Jokers that bend the rules, stack multipliers, and chase high scores on daily leaderboards.",
+    "genre": ["Card", "Puzzle", "Roguelite"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Weekly Arcade", "item": "https://weeklyarcade.games/" },
+        { "@type": "ListItem", "position": 2, "name": "Solitaire Roguelite", "item": "https://weeklyarcade.games/games/solitaire-roguelite/" }
+      ]
+    }
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --felt: #1a5c2a;
+      --felt-dark: #145222;
+      --card-white: #ffffff;
+      --card-back: #1a3a4a;
+      --red: #d32f2f;
+      --black: #1a1a2e;
+      --accent: #e94560;
+      --gold: #ffd700;
+      --cyan: #00e5ff;
+      --text: #fff;
+      --text-muted: #b0b0b0;
+      --joker-common: #9e9e9e;
+      --joker-rare: #2196f3;
+      --joker-epic: #ffd700;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--felt);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    /* Header */
+    .game-header {
+      background: rgba(0,0,0,0.3);
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 50;
+    }
+    .back-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .back-link:hover { color: var(--text); }
+    .header-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .header-right {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .score-display {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .timer-display {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Active Jokers Bar */
+    .jokers-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.3rem 1rem;
+      background: rgba(0,0,0,0.2);
+      min-height: 36px;
+      flex-wrap: wrap;
+    }
+    .joker-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border: 1px solid;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .joker-badge:hover { transform: scale(1.1); }
+    .joker-badge.common { border-color: var(--joker-common); color: var(--joker-common); }
+    .joker-badge.rare { border-color: var(--joker-rare); color: var(--joker-rare); }
+    .joker-badge.epic { border-color: var(--joker-epic); color: var(--joker-epic); }
+    .joker-badge .joker-glow {
+      animation: jokerGlow 0.5s ease-out;
+    }
+    @keyframes jokerGlow {
+      0% { filter: brightness(2); transform: scale(1.3); }
+      100% { filter: brightness(1); transform: scale(1); }
+    }
+
+    /* Game Area */
+    .game-area {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0.5rem;
+      position: relative;
+    }
+
+    /* Top row: stock, waste, gap, foundations */
+    .top-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .top-row .slot {
+      aspect-ratio: 2.5/3.5;
+      border-radius: 6px;
+    }
+
+    /* Tableau */
+    .tableau {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      align-items: start;
+    }
+    .tableau-column {
+      position: relative;
+      min-height: 100px;
+    }
+
+    /* Cards */
+    .card {
+      width: 100%;
+      aspect-ratio: 2.5/3.5;
+      border-radius: 6px;
+      position: absolute;
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.1s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-weight: 700;
+      overflow: hidden;
+    }
+    .card.face-up {
+      background: var(--card-white);
+      border: 1px solid #ddd;
+    }
+    .card.face-down {
+      background: var(--card-back);
+      border: 1px solid #2a5a6a;
+      cursor: default;
+    }
+    .card.face-down::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+    .card.selected {
+      box-shadow: 0 0 0 3px var(--cyan), 0 4px 16px rgba(0,229,255,0.4);
+      transform: translateY(-4px);
+      z-index: 99 !important;
+    }
+    .card.valid-target {
+      box-shadow: 0 0 0 2px rgba(74,222,128,0.6);
+    }
+    .card .rank-suit {
+      padding: 2px 4px;
+      font-size: clamp(0.6rem, 2.5vw, 0.85rem);
+      line-height: 1.1;
+    }
+    .card .rank-suit.bottom {
+      align-self: flex-end;
+      transform: rotate(180deg);
+    }
+    .card .center-suit {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(1rem, 5vw, 1.8rem);
+      opacity: 0.3;
+    }
+    .card.red { color: var(--red); }
+    .card.black { color: var(--black); }
+
+    /* Slot placeholders */
+    .slot-placeholder {
+      width: 100%;
+      aspect-ratio: 2.5/3.5;
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      opacity: 0.5;
+      cursor: pointer;
+    }
+    .slot-placeholder.foundation {
+      border-color: rgba(255,215,0,0.3);
+    }
+    .slot-placeholder.foundation .suit-ghost {
+      font-size: clamp(1rem, 4vw, 1.5rem);
+      opacity: 0.4;
+    }
+
+    /* Stock pile */
+    .stock-pile {
+      position: relative;
+      cursor: pointer;
+    }
+    .stock-pile .card {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .stock-empty {
+      width: 100%;
+      aspect-ratio: 2.5/3.5;
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .stock-empty::after {
+      content: '↻';
+      font-size: 1.5rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* Waste pile */
+    .waste-pile {
+      position: relative;
+    }
+
+    /* Foundation progress */
+    .foundation-slot {
+      position: relative;
+    }
+    .foundation-progress {
+      position: absolute;
+      bottom: -2px;
+      left: 10%;
+      width: 80%;
+      height: 3px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .foundation-progress-fill {
+      height: 100%;
+      background: var(--gold);
+      transition: width 0.3s ease;
+    }
+
+    /* Joker Shop Overlay */
+    .shop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .shop-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .shop-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--gold);
+    }
+    .shop-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    .shop-cards {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .shop-card {
+      width: 160px;
+      background: #1a1a2e;
+      border-radius: 12px;
+      padding: 1.2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 2px solid;
+    }
+    .shop-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .shop-card.common { border-color: var(--joker-common); }
+    .shop-card.rare { border-color: var(--joker-rare); }
+    .shop-card.epic { border-color: var(--joker-epic); animation: epicShimmer 2s infinite; }
+    @keyframes epicShimmer {
+      0%,100% { box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+      50% { box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+    }
+    .shop-card-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .shop-card-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+    }
+    .shop-card-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+    .shop-card-rarity {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.5rem;
+    }
+    .shop-card.common .shop-card-rarity { color: var(--joker-common); }
+    .shop-card.rare .shop-card-rarity { color: var(--joker-rare); }
+    .shop-card.epic .shop-card-rarity { color: var(--joker-epic); }
+    .shop-skip {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--text-muted);
+      padding: 0.5rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .shop-skip:hover { border-color: var(--text); color: var(--text); }
+
+    /* Game Over Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-overlay.show { opacity: 1; visibility: visible; }
+    .modal {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+    .modal-overlay.show .modal { transform: scale(1); }
+    .modal h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .modal .final-score {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--gold);
+      margin: 0.5rem 0;
+    }
+    .modal .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+    .modal .stat-item {
+      background: rgba(0,0,0,0.3);
+      padding: 0.6rem;
+      border-radius: 8px;
+    }
+    .modal .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .modal .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .modal .jokers-used {
+      display: flex;
+      justify-content: center;
+      gap: 0.4rem;
+      margin: 0.75rem 0;
+      flex-wrap: wrap;
+    }
+    .modal-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin: 0.3rem;
+      transition: transform 0.2s;
+    }
+    .modal-btn:hover { transform: scale(1.05); }
+    .modal-btn.secondary {
+      background: transparent;
+      border: 1px solid var(--text-muted);
+      color: var(--text-muted);
+    }
+    .new-best { color: var(--gold); font-weight: 700; margin-top: 0.5rem; }
+
+    /* Achievement Toast */
+    .achievement-toast {
+      position: fixed; top: 20px; right: -320px;
+      background: linear-gradient(135deg, #b59f3b, #8b7a2e);
+      padding: 1rem 1.5rem; border-radius: 12px;
+      display: flex; align-items: center; gap: 1rem;
+      z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      transition: right 0.35s ease; max-width: 300px;
+    }
+    .achievement-toast.show { right: 20px; }
+    .achievement-icon { font-size: 2rem; }
+    .achievement-info { color: #fff; }
+    .achievement-name { font-weight: 700; font-size: 1rem; }
+    .achievement-desc { font-size: 0.8rem; opacity: 0.9; }
+
+    /* Confetti */
+    .confetti-container {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 1500; overflow: hidden;
+    }
+    .confetti {
+      position: absolute; width: 10px; height: 10px; top: -10px;
+      animation: confettiFall 3s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Score Pop */
+    .score-pop {
+      position: fixed; pointer-events: none; z-index: 1400;
+      font-size: 1.2rem; font-weight: 900; color: var(--gold);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      animation: scorePop 1.2s ease-out forwards;
+    }
+    @keyframes scorePop {
+      0%   { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-60px); opacity: 0; }
+    }
+
+    /* Hint glow */
+    @keyframes hintPulse {
+      0%,100% { box-shadow: 0 0 0 2px rgba(74,222,128,0.3); }
+      50% { box-shadow: 0 0 0 4px rgba(74,222,128,0.6); }
+    }
+    .card.hint-target {
+      animation: hintPulse 1.5s ease infinite;
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .game-area { padding: 2px; }
+      .top-row, .tableau { gap: 2px; }
+      .shop-card { width: 130px; padding: 0.8rem; }
+      .shop-cards { gap: 0.5rem; }
+    }
+    @media (min-width: 700px) {
+      .card .rank-suit { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="game-header">
+    <a href="../../" class="back-link">← All Games</a>
+    <span class="header-title">🃏 Solitaire Roguelite</span>
+    <div class="header-right">
+      <span class="timer-display" id="timer">10:00</span>
+      <span class="score-display" id="scoreDisplay">0</span>
+      <button id="muteBtn" onclick="toggleMute()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0.2rem;" title="Toggle sound">🔊</button>
+      <button id="undoBtn" onclick="undoMove()" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.5rem;display:none;" title="Undo">↩ <span id="undoCount">0</span></button>
+    </div>
+  </header>
+
+  <div class="jokers-bar" id="jokersBar"></div>
+
+  <div class="game-area" id="gameArea">
+    <div class="top-row" id="topRow"></div>
+    <div class="tableau" id="tableau"></div>
+  </div>
+
+  <!-- Joker Shop -->
+  <div class="shop-overlay" id="shopOverlay">
+    <div class="shop-title">🃏 Joker Shop</div>
+    <div class="shop-subtitle" id="shopSubtitle">Foundation complete! Pick a Joker to bend the rules.</div>
+    <div class="shop-cards" id="shopCards"></div>
+    <button class="shop-skip" id="shopSkip">Skip</button>
+  </div>
+
+  <!-- Game Over -->
+  <div class="modal-overlay" id="gameOverModal">
+    <div class="modal">
+      <h2 id="modalTitle">Game Over</h2>
+      <div class="final-score" id="finalScore">0</div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="jokers-used" id="jokersUsed"></div>
+      <div id="bestScore"></div>
+      <div style="margin-top:1rem;">
+        <button class="modal-btn" onclick="startNewGame()">Play Again</button>
+        <button class="modal-btn secondary" onclick="window.location.href='../../leaderboard/'">Leaderboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="../../js/api-client.js"></script>
+  <script src="../../js/auth.js"></script>
+
+  <script>
+  // ═══════════════════════════════════════════════════════════
+  // SOLITAIRE ROGUELITE — Complete Game Engine
+  // ═══════════════════════════════════════════════════════════
+
+  // ── CONSTANTS ────────────────────────────────────────────
+  const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
+  const SUIT_SYMBOLS = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
+  const SUIT_COLORS = { hearts: 'red', diamonds: 'red', clubs: 'black', spades: 'black' };
+  const RANK_NAMES = { 1:'A', 2:'2', 3:'3', 4:'4', 5:'5', 6:'6', 7:'7', 8:'8', 9:'9', 10:'10', 11:'J', 12:'Q', 13:'K' };
+  const STORAGE_KEY = 'solitaire-roguelite-player';
+  const GAME_SLUG = 'solitaire-roguelite';
+  const TIMER_SECONDS = 600; // 10 minutes
+
+  // ── GAME STATE ───────────────────────────────────────────
+  let deck = [];
+  let stock = [];
+  let waste = [];
+  let foundations = [[], [], [], []]; // 4 foundation piles
+  let tableau = [[], [], [], [], [], [], []]; // 7 columns
+  let activeJokers = [];
+  let score = 0;
+  let foundationsCompleted = 0;
+  let selectedCard = null;
+  let selectedSource = null;
+  let timerSeconds = TIMER_SECONDS;
+  let timerInterval = null;
+  let gameActive = false;
+  let startTime = 0;
+  let moveHistory = [];
+  let undosUsed = 0;
+  let undoCharges = 0;
+  let freeCells = []; // for Free Cell joker
+  let cardsOnFoundation = 0;
+  let consecutiveFoundationPlacements = 0;
+  let lastFoundationTime = 0;
+
+  // ── AUTH ─────────────────────────────────────────────────
+  let currentUser = null;
+  let soundMuted = localStorage.getItem('solitaire-mute') === 'true';
+  let movesSinceLastDraw = 0; // for S10 Streak Master
+  let stockCycleCount = 0; // track infinite stock cycling
+
+  const authCheckInterval = setInterval(() => {
+    if (window.authManager?.isInitialized) {
+      clearInterval(authCheckInterval);
+      window.authManager.onAuthStateChanged(user => {
+        currentUser = user;
+      });
+    }
+  }, 100);
+
+  // ── JOKER DEFINITIONS ───────────────────────────────────
+  const JOKERS = {
+    // Rule Modifiers
+    R1: { id:'R1', name:'Colour Blind', icon:'🌈', rarity:'common', type:'rule',
+          desc:'Stack same colour — ignore alternating rule' },
+    R4: { id:'R4', name:'Peek', icon:'👁️', rarity:'common', type:'rule',
+          desc:'See the top face-down card in each column' },
+    R9: { id:'R9', name:'Wild King', icon:'👑', rarity:'common', type:'rule',
+          desc:'Any card can fill an empty column, not just Kings' },
+    R10:{ id:'R10', name:'Undo Plus', icon:'↩️', rarity:'common', type:'rule',
+          desc:'Get 3 undo moves this run' },
+    R2: { id:'R2', name:'Wild Ace', icon:'🂡', rarity:'common', type:'rule',
+          desc:'Aces can be placed on any foundation regardless of suit' },
+    R5: { id:'R5', name:'Free Cell', icon:'📦', rarity:'rare', type:'rule',
+          desc:'Add 1 free cell — park any single card temporarily' },
+    R6: { id:'R6', name:'Rank Skip', icon:'⏭️', rarity:'rare', type:'rule',
+          desc:'Cards can stack with a gap of 1 rank (e.g., 7 on 9)' },
+    R3: { id:'R3', name:'Draw Three', icon:'3️⃣', rarity:'rare', type:'rule',
+          desc:'Draw 3 from stock instead of 1; score ×1.5' },
+    R8: { id:'R8', name:'Second Chance', icon:'🔀', rarity:'epic', type:'rule',
+          desc:'When stuck, shuffle all non-foundation cards and re-deal' },
+    // Score Multipliers
+    S1: { id:'S1', name:'Foundation Bonus', icon:'💎', rarity:'common', type:'score',
+          desc:'+50 pts per card placed on foundation' },
+    S2: { id:'S2', name:'Run Bonus', icon:'🏃', rarity:'common', type:'score',
+          desc:'Place 3+ cards in sequence: +100 pts' },
+    S5: { id:'S5', name:'Combo Master', icon:'🔥', rarity:'common', type:'score',
+          desc:'Each consecutive foundation card: +10 per streak' },
+    S9: { id:'S9', name:'Early Bird', icon:'🐦', rarity:'common', type:'score',
+          desc:'First 10 cards on foundations: double points' },
+    S3: { id:'S3', name:'Speed Demon', icon:'⚡', rarity:'rare', type:'score',
+          desc:'Cards placed within 2s of each other: +25 pts' },
+    S4: { id:'S4', name:'Perfect Suit', icon:'♠️', rarity:'rare', type:'score',
+          desc:'Completing a foundation scores ×2 for that pile' },
+    S10:{ id:'S10', name:'Streak Master', icon:'🎯', rarity:'rare', type:'score',
+          desc:'5+ cards without drawing from stock: ×1.5' },
+    S6: { id:'S6', name:'Waste Not', icon:'♻️', rarity:'rare', type:'score',
+          desc:'+5 pts every time you DON\'T draw from stock' },
+    S7: { id:'S7', name:'Full Clear', icon:'✨', rarity:'epic', type:'score',
+          desc:'Clear ALL 4 foundations: total score ×3' },
+    S8: { id:'S8', name:'Risk/Reward', icon:'🎲', rarity:'epic', type:'score',
+          desc:'Disable undo entirely; all scores ×2' },
+  };
+
+  function hasJoker(id) { return activeJokers.some(j => j.id === id); }
+  function getJoker(id) { return activeJokers.find(j => j.id === id); }
+
+  // ── DECK ─────────────────────────────────────────────────
+  function createDeck() {
+    const d = [];
+    for (const suit of SUITS) {
+      for (let rank = 1; rank <= 13; rank++) {
+        d.push({ rank, suit, faceUp: false });
+      }
+    }
+    return d;
+  }
+
+  function shuffleDeck(d) {
+    for (let i = d.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [d[i], d[j]] = [d[j], d[i]];
+    }
+    return d;
+  }
+
+  // ── CARD HELPERS ─────────────────────────────────────────
+  function isRed(card) { return card.suit === 'hearts' || card.suit === 'diamonds'; }
+  function isOppositeColor(a, b) { return isRed(a) !== isRed(b); }
+
+  function canPlaceOnTableau(card, column) {
+    const col = tableau[column];
+    const faceUpCards = col.filter(c => c.faceUp);
+    if (faceUpCards.length === 0 && col.length === 0) {
+      // Empty column — Kings only (or any card with Wild King)
+      return card.rank === 13 || hasJoker('R9');
+    }
+    const topCard = col[col.length - 1];
+    if (!topCard || !topCard.faceUp) {
+      return card.rank === 13 || hasJoker('R9');
+    }
+    // Color check
+    const colorOk = hasJoker('R1') ? true : isOppositeColor(card, topCard);
+    // Rank check
+    const rankDiff = topCard.rank - card.rank;
+    const rankOk = hasJoker('R6') ? (rankDiff >= 1 && rankDiff <= 2) : rankDiff === 1;
+    return colorOk && rankOk;
+  }
+
+  function canPlaceOnFoundation(card, foundIdx) {
+    const pile = foundations[foundIdx];
+    if (pile.length === 0) {
+      if (card.rank !== 1) return false;
+      // Wild Ace: any ace on any foundation
+      if (hasJoker('R2')) return true;
+      // Normal: must match the suit slot (we assign suits dynamically)
+      return true; // First ace defines the suit
+    }
+    const topCard = pile[pile.length - 1];
+    // Must match suit of the pile
+    if (card.suit !== topCard.suit) return false;
+    return card.rank === topCard.rank + 1;
+  }
+
+  function getFoundationSuit(foundIdx) {
+    if (foundations[foundIdx].length === 0) return null;
+    return foundations[foundIdx][0].suit;
+  }
+
+  // ── DEAL ─────────────────────────────────────────────────
+  function dealGame() {
+    deck = shuffleDeck(createDeck());
+    tableau = [[], [], [], [], [], [], []];
+    foundations = [[], [], [], []];
+    stock = [];
+    waste = [];
+    activeJokers = [];
+    score = 0;
+    foundationsCompleted = 0;
+    selectedCard = null;
+    selectedSource = null;
+    moveHistory = [];
+    undosUsed = 0;
+    undoCharges = 0;
+    freeCells = [];
+    cardsOnFoundation = 0;
+    consecutiveFoundationPlacements = 0;
+    lastFoundationTime = 0;
+    movesSinceLastDraw = 0;
+    stockCycleCount = 0;
+    timerSeconds = TIMER_SECONDS;
+    gameActive = true;
+    scoreSubmitted = false;
+    startTime = Date.now();
+    document.getElementById('muteBtn').textContent = soundMuted ? '🔇' : '🔊';
+    updateUndoBtn();
+
+    // Deal tableau
+    let idx = 0;
+    for (let col = 0; col < 7; col++) {
+      for (let row = 0; row <= col; row++) {
+        const card = deck[idx++];
+        card.faceUp = (row === col);
+        tableau[col].push(card);
+      }
+    }
+    // Remaining to stock
+    stock = deck.slice(idx).map(c => { c.faceUp = false; return c; });
+
+    updateScoreDisplay();
+    startTimer();
+    render();
+  }
+
+  // ── SCORING ──────────────────────────────────────────────
+  function addScore(pts, x, y) {
+    let mult = 1;
+    if (hasJoker('R3')) mult *= 1.5;
+    if (hasJoker('S8')) mult *= 2;
+    const finalPts = Math.round(pts * mult);
+    score += finalPts;
+    updateScoreDisplay();
+    if (x !== undefined && y !== undefined && finalPts > 0) {
+      showScorePop(finalPts, x, y);
+    }
+    return finalPts;
+  }
+
+  function addFoundationScore(card, el) {
+    let pts = 100;
+    // Foundation Bonus joker
+    if (hasJoker('S1')) pts += 50;
+    // Early Bird
+    if (hasJoker('S9') && cardsOnFoundation < 10) pts *= 2;
+    // Combo Master streak
+    if (hasJoker('S5')) {
+      consecutiveFoundationPlacements++;
+      pts += consecutiveFoundationPlacements * 10;
+    }
+    // Speed Demon
+    const now = Date.now();
+    if (hasJoker('S3') && lastFoundationTime && (now - lastFoundationTime) < 2000) {
+      pts += 25;
+    }
+    lastFoundationTime = now;
+    cardsOnFoundation++;
+    // Streak Master: 5+ without drawing from stock
+    if (hasJoker('S10') && movesSinceLastDraw >= 5) pts = Math.round(pts * 1.5);
+
+    const rect = el ? el.getBoundingClientRect() : null;
+    const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    const y = rect ? rect.top : window.innerHeight / 2;
+    addScore(pts, x, y);
+    triggerJokerGlow('S1');
+    triggerJokerGlow('S5');
+    triggerJokerGlow('S9');
+    triggerJokerGlow('S3');
+    triggerJokerGlow('S10');
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('scoreDisplay').textContent = score.toLocaleString();
+  }
+
+  // ── TIMER ────────────────────────────────────────────────
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (!gameActive) return;
+      if (timerSeconds > 0) timerSeconds--;
+      const m = Math.floor(timerSeconds / 60);
+      const s = timerSeconds % 60;
+      document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+      if (timerSeconds <= 0) {
+        endGame(false);
+      }
+    }, 1000);
+  }
+
+  // ── MUTE ────────────────────────────────────────────────
+  function toggleMute() {
+    soundMuted = !soundMuted;
+    localStorage.setItem('solitaire-mute', soundMuted);
+    document.getElementById('muteBtn').textContent = soundMuted ? '🔇' : '🔊';
+  }
+
+  // ── UNDO ────────────────────────────────────────────────
+  function saveState() {
+    if (hasJoker('S8')) return; // Risk/Reward disables undo
+    moveHistory.push({
+      stock: stock.map(c => ({...c})),
+      waste: waste.map(c => ({...c})),
+      foundations: foundations.map(p => p.map(c => ({...c}))),
+      tableau: tableau.map(col => col.map(c => ({...c}))),
+      freeCells: freeCells.map(c => c ? {...c} : null),
+      score,
+      cardsOnFoundation,
+      consecutiveFoundationPlacements,
+      movesSinceLastDraw,
+      stockCycleCount,
+    });
+    if (moveHistory.length > 30) moveHistory.shift();
+  }
+
+  function undoMove() {
+    if (!gameActive) return;
+    if (undoCharges <= 0 && !hasJoker('R10')) return;
+    if (moveHistory.length === 0) return;
+    if (hasJoker('S8')) return; // Risk/Reward blocks undo
+
+    if (hasJoker('R10') && undoCharges <= 0) return;
+    undoCharges--;
+    undosUsed++;
+
+    const state = moveHistory.pop();
+    stock = state.stock;
+    waste = state.waste;
+    foundations = state.foundations;
+    tableau = state.tableau;
+    freeCells = state.freeCells;
+    score = state.score - 50; // Apply -50 penalty after restoring
+    cardsOnFoundation = state.cardsOnFoundation;
+    consecutiveFoundationPlacements = state.consecutiveFoundationPlacements;
+    movesSinceLastDraw = state.movesSinceLastDraw;
+    stockCycleCount = state.stockCycleCount;
+
+    updateScoreDisplay();
+    updateUndoBtn();
+    clearSelection();
+    playSound('draw');
+    render();
+  }
+
+  function updateUndoBtn() {
+    const btn = document.getElementById('undoBtn');
+    const count = document.getElementById('undoCount');
+    if (undoCharges > 0) {
+      btn.style.display = 'inline-block';
+      count.textContent = undoCharges;
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  // ── MOVES ────────────────────────────────────────────────
+  function drawFromStock() {
+    if (!gameActive) return;
+    if (stock.length === 0 && waste.length === 0) return;
+    saveState();
+    movesSinceLastDraw = 0; // reset streak
+    consecutiveFoundationPlacements = 0;
+    if (stock.length === 0) {
+      // Recycle waste to stock
+      if (waste.length === 0) return;
+      stockCycleCount++;
+      stock = waste.reverse().map(c => { c.faceUp = false; return c; });
+      waste = [];
+    } else {
+      const count = hasJoker('R3') ? Math.min(3, stock.length) : 1;
+      for (let i = 0; i < count; i++) {
+        const card = stock.pop();
+        card.faceUp = true;
+        waste.push(card);
+      }
+    }
+    clearSelection();
+    playSound('draw');
+    render();
+  }
+
+  function selectCardAt(source, card, cards) {
+    if (!gameActive) return;
+    if (selectedCard && selectedSource) {
+      // Try to move to this location
+      if (source.type === 'tableau') {
+        if (tryMoveToTableau(source.index)) return;
+      } else if (source.type === 'foundation') {
+        if (tryMoveToFoundation(source.index)) return;
+      } else if (source.type === 'freecell') {
+        if (tryMoveToFreeCell(source.index)) return;
+      }
+    }
+    // Select this card
+    selectedCard = card;
+    selectedSource = source;
+    playSound('move');
+    render();
+  }
+
+  function tryMoveToTableau(colIdx) {
+    if (!selectedCard) return false;
+    const card = selectedCard;
+    const src = selectedSource;
+
+    if (!canPlaceOnTableau(card, colIdx)) {
+      clearSelection();
+      playSound('invalid');
+      render();
+      return true;
+    }
+
+    saveState();
+    movesSinceLastDraw++;
+    consecutiveFoundationPlacements = 0; // non-foundation move breaks streak
+
+    // Waste Not joker: +5 pts for non-draw moves
+    if (hasJoker('S6')) { addScore(5); triggerJokerGlow('S6'); }
+
+    // Move card(s)
+    let cardsToMove = [card];
+    if (src.type === 'tableau') {
+      const srcCol = tableau[src.index];
+      const cardIdx = srcCol.indexOf(card);
+      cardsToMove = srcCol.splice(cardIdx);
+      if (srcCol.length > 0 && !srcCol[srcCol.length - 1].faceUp) {
+        srcCol[srcCol.length - 1].faceUp = true;
+        addScore(25);
+        playSound('flip');
+      }
+    } else if (src.type === 'waste') {
+      waste.splice(waste.indexOf(card), 1);
+      addScore(15);
+    } else if (src.type === 'foundation') {
+      foundations[src.index].pop();
+      cardsOnFoundation--;
+    } else if (src.type === 'freecell') {
+      freeCells[src.index] = null;
+    }
+
+    tableau[colIdx].push(...cardsToMove);
+
+    // S2 Run Bonus: 3+ cards moved in sequence
+    if (hasJoker('S2') && cardsToMove.length >= 3) {
+      addScore(100); triggerJokerGlow('S2');
+    }
+
+    clearSelection();
+    playSound('place');
+    render();
+    checkStuck();
+    return true;
+  }
+
+  function tryMoveToFoundation(foundIdx) {
+    if (!selectedCard) return false;
+    const card = selectedCard;
+    const src = selectedSource;
+
+    if (!canPlaceOnFoundation(card, foundIdx)) {
+      clearSelection();
+      playSound('invalid');
+      render();
+      return true;
+    }
+
+    saveState();
+    movesSinceLastDraw++;
+    // S6 Waste Not
+    if (hasJoker('S6')) { addScore(5); triggerJokerGlow('S6'); }
+    // S10 Streak Master: 5+ moves without drawing
+    if (hasJoker('S10') && movesSinceLastDraw >= 5) {
+      triggerJokerGlow('S10');
+    }
+
+    // Can only move single cards to foundation
+    if (src.type === 'tableau') {
+      const srcCol = tableau[src.index];
+      if (srcCol.indexOf(card) !== srcCol.length - 1) {
+        clearSelection();
+        render();
+        return true; // Can't move stack to foundation
+      }
+      srcCol.pop();
+      if (srcCol.length > 0 && !srcCol[srcCol.length - 1].faceUp) {
+        srcCol[srcCol.length - 1].faceUp = true;
+        addScore(25);
+        playSound('flip');
+      }
+    } else if (src.type === 'waste') {
+      waste.splice(waste.indexOf(card), 1);
+    } else if (src.type === 'freecell') {
+      freeCells[src.index] = null;
+    }
+
+    const el = document.querySelector(`[data-foundation="${foundIdx}"]`);
+    foundations[foundIdx].push(card);
+    addFoundationScore(card, el);
+    playSound('foundation');
+
+    clearSelection();
+
+    // Check foundation complete (13 cards)
+    if (foundations[foundIdx].length === 13) {
+      foundationsCompleted++;
+      const completePts = 1000;
+      if (hasJoker('S4')) {
+        addScore(completePts * 2);
+      } else {
+        addScore(completePts);
+      }
+      playSound('foundation_complete');
+      triggerJokerGlow('S4');
+
+      // Check perfect clear
+      if (foundationsCompleted === 4) {
+        addScore(5000);
+        // S7 Full Clear triples TOTAL score (applied in endGame)
+        endGame(true);
+        return true;
+      }
+
+      // Open Joker shop
+      setTimeout(() => openShop(), 500);
+    }
+
+    render();
+    checkStuck();
+    return true;
+  }
+
+  function tryMoveToFreeCell(idx) {
+    if (!hasJoker('R5') || freeCells[idx] !== null) {
+      clearSelection();
+      render();
+      return true;
+    }
+    const card = selectedCard;
+    const src = selectedSource;
+
+    if (src.type === 'tableau') {
+      const srcCol = tableau[src.index];
+      if (srcCol.indexOf(card) !== srcCol.length - 1) {
+        clearSelection();
+        render();
+        return true;
+      }
+      srcCol.pop();
+      if (srcCol.length > 0 && !srcCol[srcCol.length - 1].faceUp) {
+        srcCol[srcCol.length - 1].faceUp = true;
+        addScore(25);
+      }
+    } else if (src.type === 'waste') {
+      waste.splice(waste.indexOf(card), 1);
+    }
+
+    freeCells[idx] = card;
+    clearSelection();
+    playSound('place');
+    render();
+    return true;
+  }
+
+  function doubleClickCard(source, card) {
+    if (!gameActive || !card.faceUp) return;
+    // Try to auto-move to foundation
+    for (let i = 0; i < 4; i++) {
+      if (canPlaceOnFoundation(card, i)) {
+        selectedCard = card;
+        selectedSource = source;
+        tryMoveToFoundation(i);
+        return;
+      }
+    }
+  }
+
+  function clearSelection() {
+    selectedCard = null;
+    selectedSource = null;
+  }
+
+  // ── STUCK DETECTION ──────────────────────────────────────
+  function checkStuck() {
+    if (!gameActive) return;
+    setTimeout(() => {
+      if (hasValidMove()) return;
+      if (hasJoker('R8') && !activeJokers.find(j => j.id === 'R8')._used) {
+        // Second Chance: reshuffle
+        activeJokers.find(j => j.id === 'R8')._used = true;
+        reshuffleNonFoundation();
+        playSound('levelup');
+        render();
+        return;
+      }
+      endGame(false);
+    }, 300);
+  }
+
+  function hasValidMove() {
+    // Check waste top
+    const wasteTop = waste.length > 0 ? waste[waste.length - 1] : null;
+    if (wasteTop) {
+      for (let i = 0; i < 7; i++) {
+        if (canPlaceOnTableau(wasteTop, i)) return true;
+      }
+      for (let i = 0; i < 4; i++) {
+        if (canPlaceOnFoundation(wasteTop, i)) return true;
+      }
+    }
+
+    // Check tableau face-up cards
+    for (let col = 0; col < 7; col++) {
+      const cards = tableau[col];
+      for (let j = cards.length - 1; j >= 0; j--) {
+        if (!cards[j].faceUp) break;
+        const card = cards[j];
+        // Can move to other tableau
+        for (let k = 0; k < 7; k++) {
+          if (k === col) continue;
+          if (canPlaceOnTableau(card, k)) return true;
+        }
+        // Top card can go to foundation
+        if (j === cards.length - 1) {
+          for (let f = 0; f < 4; f++) {
+            if (canPlaceOnFoundation(card, f)) return true;
+          }
+        }
+      }
+    }
+
+    // Check free cells
+    for (const fc of freeCells) {
+      if (!fc) continue;
+      for (let i = 0; i < 7; i++) {
+        if (canPlaceOnTableau(fc, i)) return true;
+      }
+      for (let i = 0; i < 4; i++) {
+        if (canPlaceOnFoundation(fc, i)) return true;
+      }
+    }
+
+    // Can still draw from stock (but cap cycling to prevent infinite loops)
+    if (stock.length > 0 && stockCycleCount < 3) return true;
+    // Can recycle waste (limited cycles)
+    if (waste.length > 0 && stock.length === 0 && stockCycleCount < 3) return true;
+
+    return false;
+  }
+
+  function reshuffleNonFoundation() {
+    let allCards = [];
+    for (let i = 0; i < 7; i++) {
+      allCards.push(...tableau[i]);
+      tableau[i] = [];
+    }
+    allCards.push(...stock, ...waste);
+    stock = [];
+    waste = [];
+    for (const fc of freeCells) {
+      if (fc) allCards.push(fc);
+    }
+    freeCells = freeCells.map(() => null);
+
+    shuffleDeck(allCards);
+
+    // Re-deal tableau
+    let idx = 0;
+    for (let col = 0; col < 7; col++) {
+      for (let row = 0; row <= col && idx < allCards.length; row++) {
+        allCards[idx].faceUp = (row === col);
+        tableau[col].push(allCards[idx++]);
+      }
+    }
+    stock = allCards.slice(idx).map(c => { c.faceUp = false; return c; });
+  }
+
+  // ── JOKER SHOP ───────────────────────────────────────────
+  function openShop() {
+    if (!gameActive) return;
+    const overlay = document.getElementById('shopOverlay');
+    const container = document.getElementById('shopCards');
+
+    // Draw 3 jokers
+    const available = Object.values(JOKERS).filter(j => {
+      if (activeJokers.some(a => a.id === j.id)) return false;
+      if (j.rarity === 'epic' && foundationsCompleted < 2) return false;
+      return true;
+    });
+
+    const weights = available.map(j =>
+      j.rarity === 'common' ? 55 : j.rarity === 'rare' ? 30 : 15
+    );
+    const picks = weightedSample(available, weights, Math.min(3, available.length));
+
+    container.innerHTML = picks.map(j => `
+      <div class="shop-card ${j.rarity}" onclick="pickJoker('${j.id}')">
+        <div class="shop-card-icon">${j.icon}</div>
+        <div class="shop-card-name">${j.name}</div>
+        <div class="shop-card-desc">${j.desc}</div>
+        <div class="shop-card-rarity">${j.rarity}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('shopSubtitle').textContent =
+      `Foundation ${foundationsCompleted}/4 complete! Pick a Joker.`;
+    document.getElementById('shopSkip').onclick = () => closeShop();
+    overlay.classList.add('show');
+    if (timerInterval) clearInterval(timerInterval); // pause timer during shop
+    playSound('shop');
+  }
+
+  function pickJoker(id) {
+    const joker = { ...JOKERS[id] };
+    activeJokers.push(joker);
+
+    // Apply immediate effects
+    if (id === 'R10') { undoCharges += 3; updateUndoBtn(); }
+    if (id === 'R5') freeCells.push(null);
+
+    closeShop();
+    playSound('joker_pick');
+    renderJokersBar();
+    render();
+  }
+
+  function closeShop() {
+    document.getElementById('shopOverlay').classList.remove('show');
+    if (gameActive) startTimer(); // resume timer after shop
+  }
+
+  function weightedSample(items, weights, count) {
+    const result = [];
+    const available = [...items];
+    const w = [...weights];
+    for (let i = 0; i < count && available.length > 0; i++) {
+      const total = w.reduce((a, b) => a + b, 0);
+      let r = Math.random() * total;
+      for (let j = 0; j < available.length; j++) {
+        r -= w[j];
+        if (r <= 0) {
+          result.push(available[j]);
+          available.splice(j, 1);
+          w.splice(j, 1);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  // ── JOKER BAR ────────────────────────────────────────────
+  function renderJokersBar() {
+    const bar = document.getElementById('jokersBar');
+    bar.innerHTML = activeJokers.map(j => `
+      <div class="joker-badge ${j.rarity}" data-joker="${j.id}" title="${j.name}: ${j.desc}">
+        <span>${j.icon}</span>
+        <span>${j.name}</span>
+      </div>
+    `).join('');
+  }
+
+  function triggerJokerGlow(id) {
+    if (!hasJoker(id)) return;
+    const el = document.querySelector(`[data-joker="${id}"]`);
+    if (!el) return;
+    el.querySelector('span').classList.add('joker-glow');
+    setTimeout(() => el.querySelector('span')?.classList.remove('joker-glow'), 500);
+  }
+
+  // ── RENDER ───────────────────────────────────────────────
+  function render() {
+    renderTopRow();
+    renderTableau();
+  }
+
+  function renderTopRow() {
+    const topRow = document.getElementById('topRow');
+    const suitOrder = ['♠', '♥', '♦', '♣'];
+    let html = '';
+
+    // Stock (col 0)
+    html += '<div class="stock-pile" onclick="drawFromStock()">';
+    if (stock.length > 0) {
+      html += `<div class="card face-down" style="position:relative;"></div>`;
+    } else {
+      html += `<div class="stock-empty"></div>`;
+    }
+    html += '</div>';
+
+    // Waste (col 1)
+    html += '<div class="waste-pile">';
+    if (waste.length > 0) {
+      const top = waste[waste.length - 1];
+      const color = SUIT_COLORS[top.suit];
+      const isSelected = selectedCard === top;
+      html += `<div class="card face-up ${color} ${isSelected ? 'selected' : ''}"
+                    style="position:relative; cursor:pointer;"
+                    onclick="selectCardAt({type:'waste'}, getWasteTop())"
+                    ondblclick="doubleClickCard({type:'waste'}, getWasteTop())">
+        <div class="rank-suit">${RANK_NAMES[top.rank]}${SUIT_SYMBOLS[top.suit]}</div>
+        <div class="center-suit">${SUIT_SYMBOLS[top.suit]}</div>
+        <div class="rank-suit bottom">${RANK_NAMES[top.rank]}${SUIT_SYMBOLS[top.suit]}</div>
+      </div>`;
+    } else {
+      html += `<div class="slot-placeholder"></div>`;
+    }
+    html += '</div>';
+
+    // Gap (col 2)
+    html += '<div></div>';
+
+    // Foundations (cols 3-6)
+    for (let i = 0; i < 4; i++) {
+      const pile = foundations[i];
+      html += `<div class="foundation-slot" data-foundation="${i}"
+                    onclick="handleFoundationClick(${i})">`;
+      if (pile.length > 0) {
+        const top = pile[pile.length - 1];
+        const color = SUIT_COLORS[top.suit];
+        html += `<div class="card face-up ${color}" style="position:relative;">
+          <div class="rank-suit">${RANK_NAMES[top.rank]}${SUIT_SYMBOLS[top.suit]}</div>
+          <div class="center-suit">${SUIT_SYMBOLS[top.suit]}</div>
+          <div class="rank-suit bottom">${RANK_NAMES[top.rank]}${SUIT_SYMBOLS[top.suit]}</div>
+        </div>`;
+        // Progress bar
+        const pct = Math.round((pile.length / 13) * 100);
+        html += `<div class="foundation-progress"><div class="foundation-progress-fill" style="width:${pct}%"></div></div>`;
+      } else {
+        html += `<div class="slot-placeholder foundation">${suitOrder[i]}</div>`;
+      }
+      html += '</div>';
+    }
+
+    topRow.innerHTML = html;
+  }
+
+  function renderTableau() {
+    const container = document.getElementById('tableau');
+    let html = '';
+
+    for (let col = 0; col < 7; col++) {
+      html += `<div class="tableau-column" data-col="${col}"
+                    onclick="handleTableauColumnClick(event, ${col})"
+                    style="min-height:${Math.max(100, tableau[col].length * 22 + 80)}px;">`;
+
+      if (tableau[col].length === 0) {
+        html += `<div class="slot-placeholder" style="position:absolute;top:0;left:0;width:100%;"
+                      onclick="handleEmptyColumnClick(${col})"></div>`;
+      }
+
+      const peekActive = hasJoker('R4');
+
+      for (let j = 0; j < tableau[col].length; j++) {
+        const card = tableau[col][j];
+        const offset = j * 22;
+        const isTop = j === tableau[col].length - 1;
+        const isSelected = selectedCard === card;
+
+        if (card.faceUp) {
+          const color = SUIT_COLORS[card.suit];
+          // Check if this card (and below) is a valid target for selected
+          let validTarget = false;
+          if (selectedCard && selectedSource && j === tableau[col].length - 1) {
+            validTarget = canPlaceOnTableau(selectedCard, col);
+          }
+          html += `<div class="card face-up ${color} ${isSelected ? 'selected' : ''} ${validTarget ? 'valid-target' : ''}"
+                        style="top:${offset}px; z-index:${j + 1};"
+                        data-col="${col}" data-idx="${j}">
+            <div class="rank-suit">${RANK_NAMES[card.rank]}${SUIT_SYMBOLS[card.suit]}</div>
+            <div class="center-suit">${SUIT_SYMBOLS[card.suit]}</div>
+            ${isTop ? `<div class="rank-suit bottom">${RANK_NAMES[card.rank]}${SUIT_SYMBOLS[card.suit]}</div>` : ''}
+          </div>`;
+        } else {
+          // Face down
+          let peekContent = '';
+          // Peek joker: show ghost of the topmost face-down card (the one just below face-up cards)
+          if (peekActive && !card.faceUp) {
+            const nextCard = tableau[col][j + 1];
+            // This card is the topmost face-down if the next card is face-up (or this is the last and all are face-down)
+            if (nextCard && nextCard.faceUp) {
+              const color = SUIT_COLORS[card.suit];
+              peekContent = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0.3;color:${color === 'red' ? 'var(--red)' : '#555'};font-size:clamp(0.6rem,2.5vw,0.85rem);font-weight:700;">${RANK_NAMES[card.rank]}${SUIT_SYMBOLS[card.suit]}</div>`;
+            }
+          }
+          html += `<div class="card face-down" style="top:${offset}px; z-index:${j + 1};">${peekContent}</div>`;
+        }
+      }
+      html += '</div>';
+    }
+
+    // Free cells (if joker active)
+    if (hasJoker('R5')) {
+      html += '<div style="grid-column: span 7; display:flex; justify-content:center; gap:8px; margin-top:8px;">';
+      for (let i = 0; i < freeCells.length; i++) {
+        const fc = freeCells[i];
+        if (fc) {
+          const color = SUIT_COLORS[fc.suit];
+          const isSelected = selectedCard === fc;
+          html += `<div class="card face-up ${color} ${isSelected ? 'selected' : ''}"
+                        style="position:relative; width:60px;"
+                        onclick="selectCardAt({type:'freecell',index:${i}}, freeCells[${i}])"
+                        ondblclick="doubleClickCard({type:'freecell',index:${i}}, freeCells[${i}])">
+            <div class="rank-suit">${RANK_NAMES[fc.rank]}${SUIT_SYMBOLS[fc.suit]}</div>
+            <div class="center-suit">${SUIT_SYMBOLS[fc.suit]}</div>
+          </div>`;
+        } else {
+          html += `<div class="slot-placeholder" style="width:60px;" onclick="handleFreeCellClick(${i})">FC</div>`;
+        }
+      }
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  // ── EVENT HANDLERS ───────────────────────────────────────
+  function handleTableauColumnClick(event, colIdx) {
+    const target = event.target.closest('.card');
+    if (!target) {
+      // Clicked empty space or placeholder
+      if (selectedCard) {
+        tryMoveToTableau(colIdx);
+      }
+      return;
+    }
+    if (target.classList.contains('face-down')) return;
+
+    const cardIdx = parseInt(target.dataset.idx);
+    const col = parseInt(target.dataset.col);
+    if (isNaN(cardIdx) || isNaN(col)) return;
+
+    const card = tableau[col][cardIdx];
+    if (!card) return;
+
+    // Double-click detection
+    if (target._lastClick && Date.now() - target._lastClick < 300) {
+      doubleClickCard({ type: 'tableau', index: col }, card);
+      target._lastClick = 0;
+      return;
+    }
+    target._lastClick = Date.now();
+
+    if (selectedCard === card) {
+      // Deselect
+      clearSelection();
+      render();
+      return;
+    }
+
+    if (selectedCard) {
+      // Try to move selected to this column
+      tryMoveToTableau(colIdx);
+    } else {
+      // Select this card (and all cards below it)
+      selectCardAt({ type: 'tableau', index: col }, card);
+    }
+  }
+
+  function handleEmptyColumnClick(colIdx) {
+    if (selectedCard) {
+      tryMoveToTableau(colIdx);
+    }
+  }
+
+  function handleFoundationClick(foundIdx) {
+    if (selectedCard) {
+      tryMoveToFoundation(foundIdx);
+    }
+  }
+
+  function handleFreeCellClick(idx) {
+    if (selectedCard) {
+      tryMoveToFreeCell(idx);
+    }
+  }
+
+  function getWasteTop() {
+    return waste.length > 0 ? waste[waste.length - 1] : null;
+  }
+
+  // ── GAME END ─────────────────────────────────────────────
+  let scoreSubmitted = false;
+  function endGame(perfectClear) {
+    if (!gameActive && scoreSubmitted) return; // prevent duplicate calls
+    gameActive = false;
+    scoreSubmitted = true;
+    if (timerInterval) clearInterval(timerInterval);
+
+    // Time bonus
+    const timeBonus = timerSeconds;
+    score += timeBonus;
+
+    // S7 Full Clear: triple total score on perfect clear
+    if (perfectClear && hasJoker('S7')) {
+      score = Math.round(score * 3);
+    }
+    updateScoreDisplay();
+
+    const elapsedMs = Date.now() - startTime;
+
+    // Check and show achievements
+    const newAchievements = checkAchievements({
+      score,
+      foundationsCompleted,
+      perfectClear,
+      undosUsed,
+      jokersCount: activeJokers.length,
+      cardsOnFoundation,
+      elapsedMs
+    });
+    showNewAchievements(newAchievements);
+
+    // XP
+    addXP(Math.round(score / 10) + (perfectClear ? 200 : 25));
+
+    // Submit score
+    submitScoreToCloud(score, {
+      level: foundationsCompleted,
+      timeMs: elapsedMs,
+      metadata: {
+        jokersTaken: activeJokers.map(j => j.id),
+        perfectClear,
+        cardsOnFoundation,
+        undosUsed,
+        timeBonus
+      }
+    });
+
+    // Show modal
+    setTimeout(() => {
+      if (perfectClear) {
+        playSound('win');
+        showConfetti();
+      } else {
+        playSound('fail');
+      }
+      showGameOverModal(perfectClear, score, {
+        foundationsCompleted,
+        cardsOnFoundation,
+        timeBonus,
+        jokers: activeJokers
+      });
+    }, perfectClear ? 200 : 500);
+  }
+
+  function showGameOverModal(perfectClear, finalScoreVal, stats) {
+    document.getElementById('modalTitle').textContent = perfectClear ? '🎉 Perfect Clear!' : 'Game Over';
+    document.getElementById('finalScore').textContent = finalScoreVal.toLocaleString();
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-item">
+        <div class="stat-value">${stats.foundationsCompleted}/4</div>
+        <div class="stat-label">Foundations</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${stats.cardsOnFoundation}</div>
+        <div class="stat-label">Cards Placed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${stats.timeBonus}</div>
+        <div class="stat-label">Time Bonus</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${activeJokers.length}</div>
+        <div class="stat-label">Jokers</div>
+      </div>
+    `;
+    document.getElementById('jokersUsed').innerHTML = stats.jokers.map(j =>
+      `<span class="joker-badge ${j.rarity}" style="font-size:0.65rem;">${j.icon} ${j.name}</span>`
+    ).join('');
+
+    // Best score
+    const playerData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const best = playerData.bestScore || 0;
+    if (finalScoreVal > best) {
+      playerData.bestScore = finalScoreVal;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(playerData));
+      document.getElementById('bestScore').innerHTML = '<div class="new-best">🏆 New Personal Best!</div>';
+    } else {
+      document.getElementById('bestScore').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">Best: ${best.toLocaleString()}</div>`;
+    }
+
+    document.getElementById('gameOverModal').classList.add('show');
+  }
+
+  function startNewGame() {
+    document.getElementById('gameOverModal').classList.remove('show');
+    dealGame();
+    renderJokersBar();
+  }
+
+  // ── SOUND ────────────────────────────────────────────────
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playSound(type) {
+    if (soundMuted) return;
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.value = 0.06;
+      const t = ctx.currentTime;
+
+      switch (type) {
+        case 'move':
+          osc.frequency.value = 440; osc.start(t); osc.stop(t + 0.04); break;
+        case 'place':
+          osc.frequency.value = 520; osc.start(t); osc.stop(t + 0.06); break;
+        case 'draw':
+          osc.type = 'triangle'; osc.frequency.value = 300;
+          osc.start(t); osc.stop(t + 0.05); break;
+        case 'flip':
+          osc.type = 'triangle'; osc.frequency.value = 600;
+          osc.start(t); osc.stop(t + 0.04); break;
+        case 'foundation':
+          osc.frequency.setValueAtTime(440, t);
+          osc.frequency.setValueAtTime(660, t + 0.06);
+          osc.start(t); osc.stop(t + 0.15); break;
+        case 'foundation_complete':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523, t);
+          osc.frequency.setValueAtTime(659, t + 0.08);
+          osc.frequency.setValueAtTime(784, t + 0.16);
+          osc.frequency.setValueAtTime(1047, t + 0.24);
+          osc.start(t); osc.stop(t + 0.5); break;
+        case 'shop':
+          osc.type = 'sine'; osc.frequency.value = 880; gain.gain.value = 0.04;
+          osc.start(t); osc.stop(t + 0.2); break;
+        case 'joker_pick':
+          osc.frequency.setValueAtTime(660, t);
+          osc.frequency.setValueAtTime(990, t + 0.08);
+          osc.start(t); osc.stop(t + 0.25); break;
+        case 'invalid':
+          osc.type = 'sawtooth'; osc.frequency.value = 200; gain.gain.value = 0.04;
+          osc.start(t); osc.stop(t + 0.08); break;
+        case 'fail':
+          osc.type = 'sawtooth'; gain.gain.value = 0.05;
+          osc.frequency.setValueAtTime(300, t);
+          osc.frequency.setValueAtTime(200, t + 0.1);
+          osc.frequency.setValueAtTime(150, t + 0.2);
+          osc.start(t); osc.stop(t + 0.4); break;
+        case 'win':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523, t);
+          osc.frequency.setValueAtTime(659, t + 0.08);
+          osc.frequency.setValueAtTime(784, t + 0.16);
+          osc.frequency.setValueAtTime(1047, t + 0.28);
+          osc.start(t); osc.stop(t + 0.6); break;
+        case 'achievement':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, t);
+          osc.frequency.setValueAtTime(1100, t + 0.1);
+          osc.start(t); osc.stop(t + 0.35); break;
+        case 'levelup':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523, t);
+          osc.frequency.setValueAtTime(659, t + 0.08);
+          osc.frequency.setValueAtTime(784, t + 0.16);
+          osc.start(t); osc.stop(t + 0.5); break;
+      }
+    } catch (e) { /* audio unavailable */ }
+  }
+
+  // ── ACHIEVEMENTS ─────────────────────────────────────────
+  const ACHIEVEMENTS = {
+    'first_run':        { name: "Dealer's In",    desc: 'Complete your first run',           icon: '🎯', xp: 100 },
+    'first_foundation': { name: 'Stacked',        desc: 'Complete your first foundation',    icon: '♠️', xp: 200 },
+    'two_foundations':   { name: 'Double Down',    desc: 'Complete 2 foundations in one run',  icon: '♦️', xp: 300 },
+    'three_foundations': { name: 'Hat Trick',      desc: 'Complete 3 foundations in one run',  icon: '♣️', xp: 500 },
+    'perfect_clear':    { name: 'Perfect Clear',  desc: 'Complete all 4 foundations',         icon: '👑', xp: 1000 },
+    'first_joker':      { name: 'Wild Card',      desc: 'Pick your first Joker',             icon: '🃏', xp: 100 },
+    'three_jokers':     { name: 'Full Hand',      desc: 'Have 3 Jokers active in one run',   icon: '🎰', xp: 300 },
+    'four_jokers':      { name: 'Royal Flush',    desc: 'Have all 4 Joker slots filled',     icon: '💎', xp: 500 },
+    'score_5k':         { name: 'High Score',     desc: 'Score 5,000 in a single run',       icon: '⭐', xp: 200 },
+    'score_20k':        { name: 'Card Shark',     desc: 'Score 20,000 in a single run',      icon: '🦈', xp: 500 },
+    'score_50k':        { name: 'Legend',          desc: 'Score 50,000 in a single run',      icon: '🏆', xp: 1000 },
+    'no_undo':          { name: 'No Take-Backs',  desc: 'Complete a run without using undo',  icon: '💪', xp: 300 },
+    'speed_foundation': { name: 'Speed Dealer',   desc: 'Complete a foundation under 2 min',  icon: '⚡', xp: 400 },
+  };
+
+  function checkAchievements(data) {
+    const pd = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"xp":0,"level":1,"achievements":[]}');
+    if (!pd.achievements) pd.achievements = [];
+    const newOnes = [];
+
+    const check = (id, cond) => {
+      if (!pd.achievements.includes(id) && cond) newOnes.push(id);
+    };
+
+    check('first_run', true);
+    check('first_foundation', data.foundationsCompleted >= 1);
+    check('two_foundations', data.foundationsCompleted >= 2);
+    check('three_foundations', data.foundationsCompleted >= 3);
+    check('perfect_clear', data.perfectClear);
+    check('first_joker', data.jokersCount >= 1);
+    check('three_jokers', data.jokersCount >= 3);
+    check('four_jokers', data.jokersCount >= 4);
+    check('score_5k', data.score >= 5000);
+    check('score_20k', data.score >= 20000);
+    check('score_50k', data.score >= 50000);
+    check('no_undo', data.undosUsed === 0);
+    check('speed_foundation', data.foundationsCompleted >= 1 && data.elapsedMs < 120000);
+
+    if (newOnes.length > 0) {
+      let bonusXP = 0;
+      newOnes.forEach(id => bonusXP += ACHIEVEMENTS[id]?.xp ?? 0);
+      pd.achievements = [...pd.achievements, ...newOnes];
+      pd.xp = (pd.xp || 0) + bonusXP;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pd));
+    }
+    return newOnes;
+  }
+
+  // ── VISUAL FEEDBACK ──────────────────────────────────────
+  let activeToasts = 0;
+
+  function showAchievementToast(achievement) {
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = `
+      <span class="achievement-icon">${achievement.icon}</span>
+      <div class="achievement-info">
+        <div class="achievement-name">${achievement.name}</div>
+        <div class="achievement-desc">${achievement.desc}</div>
+      </div>`;
+    toast.style.top = (20 + activeToasts * 90) + 'px';
+    activeToasts++;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      activeToasts = Math.max(0, activeToasts - 1);
+      setTimeout(() => toast.remove(), 350);
+    }, 3500);
+  }
+
+  function showConfetti() {
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+    const colors = ['#d32f2f','#ffd700','#2196f3','#4ade80','#e94560','#9c27b0'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.cssText = `
+        left:${Math.random()*100}%;
+        background:${colors[i % colors.length]};
+        animation-delay:${Math.random()*2}s;
+        animation-duration:${2 + Math.random()*2}s;
+        border-radius:${Math.random() > 0.5 ? '50%' : '0'};
+      `;
+      container.appendChild(el);
+    }
+    setTimeout(() => container.remove(), 5000);
+  }
+
+  function showScorePop(points, x, y) {
+    const el = document.createElement('div');
+    el.className = 'score-pop';
+    el.textContent = `+${points}`;
+    el.style.cssText = `left:${x}px; top:${y}px;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
+
+  function showNewAchievements(newIds) {
+    newIds.forEach((id, i) => {
+      const ach = ACHIEVEMENTS[id];
+      if (ach) setTimeout(() => {
+        showAchievementToast(ach);
+        playSound('achievement');
+      }, i * 900);
+    });
+  }
+
+  // ── XP & LEVELS ──────────────────────────────────────────
+  const XP_PER_LEVEL = 500;
+
+  function addXP(amount) {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"xp":0,"level":1,"achievements":[]}');
+    const prevLevel = Math.floor((data.xp || 0) / XP_PER_LEVEL) + 1;
+    data.xp = (data.xp || 0) + amount;
+    const newLevel = Math.floor(data.xp / XP_PER_LEVEL) + 1;
+    data.level = newLevel;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+    if (newLevel > prevLevel) {
+      showAchievementToast({ name: `Level ${newLevel}!`, icon: '⬆️', desc: 'Player level up!' });
+      playSound('levelup');
+    }
+  }
+
+  // ── SCORE SUBMISSION ─────────────────────────────────────
+  async function submitScoreToCloud(scoreValue, extras = {}) {
+    if (!currentUser || !window.apiClient) return;
+    try {
+      await window.apiClient.submitScore(GAME_SLUG, {
+        score: scoreValue,
+        ...extras
+      });
+    } catch (err) {
+      console.error('[Solitaire Roguelite] Score submit failed:', err);
+    }
+  }
+
+  // ── INIT ─────────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    dealGame();
+    renderJokersBar();
+  });
+
+  </script>
+</body>
+</html>
