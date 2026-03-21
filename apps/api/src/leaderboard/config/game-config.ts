@@ -171,6 +171,20 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     minTimeMs: 5000,
     maxGuessCount: 10,
   },
+
+  // Solitaire Roguelite: Klondike with Joker multipliers
+  'solitaire-roguelite': {
+    maxScore: 200000, // Perfect clear + S7 (×3) + S8 (×2) + R3 (×1.5) stacking
+    maxScorePerSecond: 100,
+    minTimeMs: 30000, // At least 30 seconds for a real game
+    maxLevel: 4, // foundationsCompleted 0-4
+    customValidation: (dto) => {
+      if (dto.level !== undefined && dto.level > 4) {
+        return { valid: false, reason: 'Foundations completed exceeds 4' };
+      }
+      return { valid: true };
+    },
+  },
 };
 
 /**
