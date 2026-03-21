@@ -77,8 +77,11 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--felt);
       color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -159,7 +162,12 @@
       margin: 0 auto;
       padding: 0.5rem;
       position: relative;
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
+    .game-area::-webkit-scrollbar { display: none; }
 
     /* Top row: stock, waste, gap, foundations */
     .top-row {
