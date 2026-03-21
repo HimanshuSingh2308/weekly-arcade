@@ -532,6 +532,61 @@
       animation: hintPulse 1.5s ease infinite;
     }
 
+    /* How to Play Modal */
+    .help-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 400; opacity: 0; visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .help-overlay.show { opacity: 1; visibility: visible; }
+    .help-modal {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 1.5rem 1.8rem;
+      width: 92%; max-width: 480px;
+      max-height: 85vh; overflow-y: auto;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+    .help-overlay.show .help-modal { transform: scale(1); }
+    .help-modal h2 { font-size: 1.3rem; margin-bottom: 1rem; text-align: center; }
+    .help-section { margin-bottom: 1rem; }
+    .help-section h3 {
+      font-size: 0.9rem; color: var(--gold);
+      margin-bottom: 0.4rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .help-section p, .help-section li {
+      font-size: 0.82rem; color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .help-section ul {
+      list-style: none; padding: 0;
+    }
+    .help-section li::before {
+      content: '• '; color: var(--cyan);
+    }
+    .help-section li { margin-bottom: 0.25rem; }
+    .help-divider {
+      border: none; border-top: 1px solid rgba(255,255,255,0.1);
+      margin: 0.8rem 0;
+    }
+    .help-close-btn {
+      display: block; margin: 1rem auto 0;
+      background: var(--accent); color: white; border: none;
+      padding: 0.65rem 2rem; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    }
+    .help-close-btn:hover { transform: scale(1.05); }
+    .help-btn {
+      background: none; border: none;
+      font-size: 1.1rem; cursor: pointer; padding: 0.2rem;
+      opacity: 0.7; transition: opacity 0.2s;
+    }
+    .help-btn:hover { opacity: 1; }
+
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -560,6 +615,7 @@
     <div class="header-right">
       <span class="timer-display" id="timer">10:00</span>
       <span class="score-display" id="scoreDisplay">0</span>
+      <button class="help-btn" onclick="showHelp()" title="How to Play">❓</button>
       <button id="muteBtn" onclick="toggleMute()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0.2rem;" title="Toggle sound">🔊</button>
       <button id="undoBtn" onclick="undoMove()" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.5rem;display:none;" title="Undo">↩ <span id="undoCount">0</span></button>
     </div>
@@ -570,6 +626,78 @@
   <div class="game-area" id="gameArea">
     <div class="top-row" id="topRow"></div>
     <div class="tableau" id="tableau"></div>
+  </div>
+
+  <!-- How to Play -->
+  <div class="help-overlay" id="helpOverlay" onclick="if(event.target===this)hideHelp()">
+    <div class="help-modal">
+      <h2>🃏 How to Play</h2>
+
+      <div class="help-section">
+        <h3>🎯 Goal</h3>
+        <p>Move all 52 cards to the 4 foundation piles, building each from Ace to King by suit. Score as many points as possible before you run out of moves or time.</p>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h3>🃏 Basics (Classic Klondike)</h3>
+        <ul>
+          <li><strong>Tableau</strong> — Stack cards in descending order, alternating colours (red 6 on black 7)</li>
+          <li><strong>Foundations</strong> — Build Ace → King by suit (top-right slots)</li>
+          <li><strong>Stock</strong> — Tap the deck (top-left) to draw cards to the waste pile</li>
+          <li><strong>Controls</strong> — Tap a card to select it, then tap where to move it</li>
+        </ul>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h3>✨ The Twist: Joker Cards</h3>
+        <p>Every time you complete a foundation pile (Ace through King), a <strong>Joker Shop</strong> appears. Pick 1 of 3 Joker cards that <strong>change the rules</strong> for the rest of your run!</p>
+        <ul>
+          <li><span style="color:var(--joker-common)">Grey = Common</span> — Helpful tweaks</li>
+          <li><span style="color:var(--joker-rare)">Blue = Rare</span> — Powerful modifiers</li>
+          <li><span style="color:var(--joker-epic)">Gold = Epic</span> — Run-defining (from foundation 2+)</li>
+        </ul>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h3>🌈 Example Jokers</h3>
+        <ul>
+          <li><strong>Colour Blind</strong> — Stack same colour (ignore alternating rule)</li>
+          <li><strong>Wild King</strong> — Any card can fill an empty column</li>
+          <li><strong>Rank Skip</strong> — Cards can stack with a gap of 1 rank</li>
+          <li><strong>Foundation Bonus</strong> — +50 pts per card on foundation</li>
+          <li><strong>Risk/Reward</strong> — No undo, but all scores ×2</li>
+        </ul>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h3>📊 Scoring</h3>
+        <ul>
+          <li>Card to foundation: <strong>+100 pts</strong></li>
+          <li>Flip face-down card: <strong>+25 pts</strong></li>
+          <li>Complete a foundation pile: <strong>+1,000 pts</strong></li>
+          <li>Perfect clear (all 4): <strong>+5,000 bonus</strong></li>
+          <li>Time bonus: <strong>+1 pt per second remaining</strong></li>
+          <li>Joker multipliers stack on top!</li>
+        </ul>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h3>⏱️ Timer & Game End</h3>
+        <p>You have <strong>10 minutes</strong>. The game ends when time runs out, you get stuck, or you clear all 4 foundations. Remaining time becomes bonus points!</p>
+      </div>
+
+      <button class="help-close-btn" onclick="hideHelp()">Got it — Deal me in!</button>
+    </div>
   </div>
 
   <!-- Joker Shop -->
@@ -1895,10 +2023,25 @@
     }
   }
 
+  // ── HELP MODAL ────────────────────────────────────────────
+  function showHelp() {
+    document.getElementById('helpOverlay').classList.add('show');
+    if (timerInterval) clearInterval(timerInterval); // pause during help
+  }
+  function hideHelp() {
+    document.getElementById('helpOverlay').classList.remove('show');
+    localStorage.setItem('solitaire-help-seen', 'true');
+    if (gameActive) startTimer(); // resume timer
+  }
+
   // ── INIT ─────────────────────────────────────────────────
   window.addEventListener('load', () => {
     dealGame();
     renderJokersBar();
+    // Show help on first visit
+    if (!localStorage.getItem('solitaire-help-seen')) {
+      showHelp();
+    }
   });
 
   </script>
