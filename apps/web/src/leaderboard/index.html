@@ -636,12 +636,27 @@
     @media (max-width: 900px) {
       .main-container {
         grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
       }
 
       .games-sidebar {
         border-right: none;
         border-bottom: 1px solid var(--border);
-        padding: 1rem;
+        padding: 0.75rem 1rem;
+        position: relative;
+      }
+
+      /* Scroll affordance — fade on right edge */
+      .games-sidebar::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        background: linear-gradient(to right, transparent, var(--bg-secondary));
+        pointer-events: none;
+        z-index: 1;
       }
 
       .games-list {
@@ -693,6 +708,22 @@
         width: 100%;
         overflow-x: auto;
       }
+
+      /* Touch targets — 44px minimum */
+      .period-tab {
+        padding: 0.7rem 1rem;
+        min-height: 44px;
+      }
+
+      .auth-btn {
+        padding: 0.7rem 1.2rem;
+        min-height: 44px;
+      }
+
+      .sign-in-card .auth-btn {
+        padding: 0.7rem 1.2rem;
+        min-height: 44px;
+      }
     }
 
     @media (max-width: 600px) {
@@ -731,6 +762,14 @@
         width: 40px;
         height: 40px;
         font-size: 1rem;
+      }
+
+      .modal-close {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     }
   </style>
