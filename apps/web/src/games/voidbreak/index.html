@@ -2379,12 +2379,18 @@
         // Move joystick stick
         joystickStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
 
-        // Convert to controls
+        // Convert to ship-relative controls
+        // Rotate joystick input by -ship.angle so "forward" on stick = thrust in ship's facing direction
+        const cos = Math.cos(-ship.angle);
+        const sin = Math.sin(-ship.angle);
+        const relX = dx * cos - dy * sin;
+        const relY = dx * sin + dy * cos;
+
         const threshold = 15;
-        keys.left = dx < -threshold;
-        keys.right = dx > threshold;
-        keys.thrust = dy < -threshold;
-        keys.brake = dy > threshold;
+        keys.left = relX < -threshold;
+        keys.right = relX > threshold;
+        keys.thrust = relY < -threshold;
+        keys.brake = relY > threshold;
       }, { passive: false });
 
       const endJoystick = e => {
