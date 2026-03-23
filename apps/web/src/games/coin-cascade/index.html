@@ -1031,38 +1031,39 @@
       if (c.grounded) c.vy = 0;
 
       // Pusher collision — push coins toward the front (downward on screen)
-      if (c.y > pusherY - c.radius && c.y < pusherY + 15 && c.x > pusherLeft && c.x < pusherRight) {
-        c.vy = Math.max(c.vy, 1.8);
-        c.vx += PUSHER_SPEED * pusherDir * 0.3;
+      if (c.y > pusherY - c.radius && c.y < pusherY + 20 && c.x > pusherLeft && c.x < pusherRight) {
+        c.vy = Math.max(c.vy, 2.5);
+        c.vx += PUSHER_SPEED * pusherDir * 0.4;
         c.grounded = false;
         if (Math.random() < 0.1) playSound('clink');
       }
 
-      // Platform floor collision — only applies if coin is ABOVE the front lip
-      // Once past platformFront, coins fall freely into the score zone
-      if (c.y < platformFront && c.y > platformFront - c.radius - 5) {
-        // Coin is at the front lip — let it teeter
-        // Only stop if moving slowly (settled on the edge)
-        if (c.vy > 0 && c.vy < 0.8) {
-          c.y = platformFront - c.radius;
-          c.vy = 0;
-          c.grounded = true;
-        }
-        // If pushed hard enough (vy >= 0.8), it goes over the lip
-      } else if (c.y <= platformFront - c.radius) {
-        // Coin is on the main platform area — normal floor collision
-        // The "floor" is the platform surface where coins rest
+      // Platform floor collision
+      // The platform surface stops coins. But coins pushed by the pusher
+      // accumulate at the front. When pushed hard enough, front coins
+      // get displaced past the lip and fall into the score zone.
+      //
+      // Key mechanic: coin-to-coin collisions push front coins over the edge.
+      // A coin is "over the edge" when c.y > platformFront.
+      if (c.y <= platformFront) {
+        // Coin is on the platform — apply floor
         const floorY = platformFront - c.radius;
         if (c.y > floorY) {
-          c.y = floorY;
-          c.vy = -c.vy * BOUNCE;
-          if (Math.abs(c.vy) < 0.5) {
-            c.vy = 0;
-            c.grounded = true;
+          // Coin is at the very edge. If being pushed (vy > threshold), let it over.
+          if (c.vy > 0.4) {
+            // Coin has enough momentum to go over the lip — don't stop it
+            c.grounded = false;
+          } else {
+            c.y = floorY;
+            c.vy = -c.vy * BOUNCE;
+            if (Math.abs(c.vy) < 0.5) {
+              c.vy = 0;
+              c.grounded = true;
+            }
           }
         }
       }
-      // If c.y >= platformFront, the coin is past the lip — falling freely toward frontEdge
+      // If c.y > platformFront: coin is past the lip, falls freely to frontEdge
 
       // Back wall collision — coins can't go above platformBottom (pushed back)
       if (c.y < platformBottom + c.radius && c.y > platformY + 10) {
