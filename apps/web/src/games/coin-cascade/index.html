@@ -465,6 +465,7 @@
   // ── GAME STATE ────────────────────────────────────────────
   let canvas, ctx;
   let gameRunning = false;
+  let gameStartTime = 0;
   let score = 0;
   let coinsLeft = STARTING_COINS;
   let bestScore = 0;
@@ -755,6 +756,7 @@
     try {
       const result = await window.apiClient.submitScore('coin-cascade', {
         score: scoreValue,
+        timeMs: Date.now() - gameStartTime,
         metadata: {
           coinsDropped: totalDropped,
           coinsCollected: totalCollected,
@@ -882,6 +884,7 @@
 
     updateHUD();
     gameRunning = true;
+    gameStartTime = Date.now();
     lastFrameTime = 0;
     accumulator = 0;
     settleTimer = 0;
