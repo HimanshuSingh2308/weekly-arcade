@@ -1,5 +1,5 @@
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 8;
+const CACHE_VERSION = 9;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -24,7 +24,9 @@ const ASSETS = [
   '/games/fieldstone/',
   '/games/fieldstone/index.html',
   '/games/solitaire-roguelite/',
-  '/games/solitaire-roguelite/index.html'
+  '/games/solitaire-roguelite/index.html',
+  '/games/coin-cascade/',
+  '/games/coin-cascade/index.html'
 ];
 
 // Install - cache assets (don't skipWaiting automatically, let user decide)

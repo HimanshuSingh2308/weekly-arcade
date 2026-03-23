@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Deploy: 2026-03-21 -->
+<!-- Deploy: 2026-03-23 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,8 +13,8 @@
   <link rel="dns-prefetch" href="https://firestore.googleapis.com">
 
   <!-- SEO -->
-  <meta name="description" content="Play free browser games with new releases every week. No downloads required. Solitaire Roguelite, Wordle, Snake, 2048, and more. Sign in optional for leaderboards.">
-  <meta name="keywords" content="free browser games, solitaire, solitaire online, free solitaire, klondike solitaire, wordle, snake game, 2048, arcade games, puzzle games, no download games">
+  <meta name="description" content="Play free browser games with new releases every week. No downloads required. Coin Cascade, Solitaire Roguelite, Wordle, Snake, 2048, and more. Sign in optional for leaderboards.">
+  <meta name="keywords" content="free browser games, coin pusher, coin cascade, arcade game, physics game, solitaire, wordle, snake game, 2048, arcade games, puzzle games, no download games">
   <meta name="author" content="Weekly Arcade">
   <meta name="google-site-verification" content="HllwzH7SRMYzO6uObrGjFTa8Hc8b8meEurkRuQB4Ag0" />
   <link rel="canonical" href="https://weeklyarcade.games/">
@@ -198,6 +198,21 @@
           "url": "https://weeklyarcade.games/games/solitaire-roguelite/",
           "description": "Classic Solitaire with rule-breaking Joker cards. How high can you score?",
           "genre": ["Card", "Puzzle", "Roguelite"],
+          "playMode": "SinglePlayer",
+          "applicationCategory": "Game",
+          "operatingSystem": "Web Browser",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 11,
+        "item": {
+          "@type": "VideoGame",
+          "name": "Coin Cascade",
+          "url": "https://weeklyarcade.games/games/coin-cascade/",
+          "description": "Drop coins onto a physics-driven pusher to cascade prizes off the edge!",
+          "genre": ["Arcade", "Physics", "Casual"],
           "playMode": "SinglePlayer",
           "applicationCategory": "Game",
           "operatingSystem": "Web Browser",
@@ -939,21 +954,34 @@
   <section class="hero">
     <h1>New <span>Free Games</span> Every Week</h1>
     <p>Play instantly in your browser. No downloads required. Sign in optional for leaderboards.</p>
-    <span class="badge">🎉 New Game This Week: Solitaire Roguelite</span>
+    <span class="badge">🎉 New Game This Week: Coin Cascade</span>
   </section>
 
   <main class="container">
     <h2 class="section-title" id="new">🔥 All Games</h2>
 
     <div class="games-grid">
-      <!-- Solitaire Roguelite — THIS WEEK -->
+      <!-- Coin Cascade — THIS WEEK -->
+      <a href="/games/coin-cascade/" class="game-card">
+        <div class="game-thumb"><img src="/images/thumbnails/coin-cascade.svg" alt="Coin Cascade"></div>
+        <div class="game-info">
+          <div class="game-title">Coin Cascade</div>
+          <div class="game-desc">Drop coins onto a physics pusher to cascade prizes off the edge!</div>
+          <div class="game-tags">
+            <span class="tag new">NEW</span>
+            <span class="tag">Arcade</span>
+            <span class="tag">Physics</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Solitaire Roguelite -->
       <a href="/games/solitaire-roguelite/" class="game-card">
         <div class="game-thumb"><img src="/images/thumbnails/solitaire-roguelite.svg" alt="Solitaire Roguelite"></div>
         <div class="game-info">
           <div class="game-title">Solitaire Roguelite</div>
           <div class="game-desc">Classic Solitaire with rule-breaking Joker cards. How high can you score?</div>
           <div class="game-tags">
-            <span class="tag new">NEW</span>
             <span class="tag">Card</span>
             <span class="tag">Roguelite</span>
           </div>
