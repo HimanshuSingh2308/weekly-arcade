@@ -493,9 +493,17 @@
 
   // ── AUTH ──────────────────────────────────────────────────
   let currentUser = null;
-  window.addEventListener('authStateChanged', (e) => {
-    currentUser = e.detail?.user ?? null;
-  });
+
+  function initAuth() {
+    const checkAuth = setInterval(() => {
+      if (window.authManager?.isInitialized) {
+        clearInterval(checkAuth);
+        window.authManager.onAuthStateChanged(user => {
+          currentUser = user;
+        });
+      }
+    }, 100);
+  }
 
   // ── ACHIEVEMENTS ──────────────────────────────────────────
   const ACHIEVEMENTS = {
@@ -798,8 +806,10 @@
     ctx = canvas.getContext('2d');
     try { bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0'); } catch(e) { bestScore = 0; }
     document.getElementById('hudBest').textContent = bestScore.toLocaleString();
+    initAuth();
 
     resizeCanvas();
+    mouseX = gameWidth / 2;
     window.addEventListener('resize', resizeCanvas);
 
     // Input — use pointer events to avoid click+touchstart double-fire
@@ -849,6 +859,10 @@
     document.getElementById('startOverlay').classList.add('hidden');
     document.getElementById('gameOverOverlay').classList.add('hidden');
 
+    // Clean up stale DOM effects from previous round
+    document.querySelectorAll('.score-pop, .combo-pop, .confetti-container, .levelup-container, .achievement-toast').forEach(el => el.remove());
+    activeToasts = 0;
+
     // Reset state
     score = 0;
     coinsLeft = STARTING_COINS;
@@ -871,7 +885,8 @@
     lastFrameTime = 0;
     accumulator = 0;
     settleTimer = 0;
-    requestAnimationFrame(gameLoop);
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(gameLoop);
   }
 
   function spawnInitialCoins() {
@@ -949,9 +964,10 @@
   let lastFrameTime = 0;
   let accumulator = 0;
   let settleTimer = 0;
+  let rafId = null;
 
   function gameLoop(timestamp) {
-    if (!gameRunning) return;
+    if (!gameRunning) { rafId = null; return; }
 
     if (lastFrameTime === 0) lastFrameTime = timestamp;
     const frameDelta = Math.min((timestamp - lastFrameTime) / 1000, 0.05); // cap at 50ms
@@ -965,11 +981,12 @@
 
     draw();
 
-    // Check end condition — all coins must be settled (grounded with low velocity)
+    // Check end condition — all coins must be settled for 3 seconds (enough for pusher cycles)
     if (coinsLeft <= 0 && coins.every(c => c.grounded && Math.abs(c.vx) < 0.3 && Math.abs(c.vy) < 0.3)) {
       settleTimer += frameDelta;
-      if (settleTimer > 1.0) {
+      if (settleTimer > 3.0) {
         gameRunning = false;
+        rafId = null;
         endGame();
         return;
       }
@@ -977,7 +994,7 @@
       settleTimer = 0;
     }
 
-    requestAnimationFrame(gameLoop);
+    rafId = requestAnimationFrame(gameLoop);
   }
 
   function update() {
