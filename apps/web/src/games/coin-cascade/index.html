@@ -509,8 +509,19 @@
     'perfect_round':  { name: 'No Waste',        desc: 'Lose zero coins off the sides',   icon: '\u2728', xp: 500 },
   };
 
+  const DEFAULT_PLAYER = '{"xp":0,"level":1,"achievements":[]}';
+
+  function safeGetPlayer() {
+    try { return JSON.parse(localStorage.getItem('coin-cascade-player') || DEFAULT_PLAYER); }
+    catch(e) { return JSON.parse(DEFAULT_PLAYER); }
+  }
+
+  function safeSavePlayer(data) {
+    try { localStorage.setItem('coin-cascade-player', JSON.stringify(data)); } catch(e) {}
+  }
+
   function checkAchievements(gameData) {
-    const playerData = JSON.parse(localStorage.getItem('coin-cascade-player') || '{"xp":0,"level":1,"achievements":[]}');
+    const playerData = safeGetPlayer();
     const newOnes = [];
     const earned = playerData.achievements;
 
@@ -528,7 +539,7 @@
       newOnes.forEach(id => bonusXP += ACHIEVEMENTS[id]?.xp ?? 0);
       playerData.achievements = [...earned, ...newOnes];
       playerData.xp += bonusXP;
-      localStorage.setItem('coin-cascade-player', JSON.stringify(playerData));
+      safeSavePlayer(playerData);
     }
     return newOnes;
   }
@@ -537,11 +548,11 @@
   const XP_PER_LEVEL = 500;
 
   function addXP(amount) {
-    const data = JSON.parse(localStorage.getItem('coin-cascade-player') || '{"xp":0,"level":1,"achievements":[]}');
+    const data = safeGetPlayer();
     const prevLevel = Math.floor(data.xp / XP_PER_LEVEL) + 1;
     data.xp += amount;
     const newLevel = Math.floor(data.xp / XP_PER_LEVEL) + 1;
-    localStorage.setItem('coin-cascade-player', JSON.stringify(data));
+    safeSavePlayer(data);
     if (newLevel > prevLevel) {
       showAchievementToast({ name: `Level ${newLevel}!`, icon: '\u2B06\uFE0F', desc: 'Player level up!' });
       showLevelUpEffect();
@@ -893,7 +904,6 @@
 
   // ── INPUT ─────────────────────────────────────────────────
   function handlePointerMove(e) {
-    canvasRect = canvas.getBoundingClientRect();
     mouseX = e.clientX - canvasRect.left;
   }
 
@@ -1345,7 +1355,7 @@
     const isNewBest = score > bestScore;
     if (isNewBest) {
       bestScore = score;
-      localStorage.setItem('coin-cascade-best', bestScore.toString());
+      try { localStorage.setItem('coin-cascade-best', bestScore.toString()); } catch(e) {}
     }
 
     // Sound
