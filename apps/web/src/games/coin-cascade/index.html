@@ -474,6 +474,7 @@
   let totalCollected = 0;
   let totalDropped = 0;
   let lastDropTime = 0;
+  let sideLosses = 0;
   let soundEnabled = true;
   let mouseX = 0;
   let canvasRect = null;
@@ -550,10 +551,22 @@
   }
 
   // ── SOUND ─────────────────────────────────────────────────
+  let audioCtx = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
   function playSound(type) {
     if (!soundEnabled) return;
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = getAudioCtx();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -772,17 +785,15 @@
   function init() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
-    bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0');
+    try { bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0'); } catch(e) { bestScore = 0; }
     document.getElementById('hudBest').textContent = bestScore.toLocaleString();
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Input
-    canvas.addEventListener('click', handleDrop);
-    canvas.addEventListener('touchstart', handleTouch, { passive: false });
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    // Input — use pointer events to avoid click+touchstart double-fire
+    canvas.addEventListener('pointerdown', handlePointerDown);
+    canvas.addEventListener('pointermove', handlePointerMove);
 
     // Sound toggle
     document.getElementById('soundToggle').addEventListener('click', () => {
@@ -846,10 +857,11 @@
 
     updateHUD();
     gameRunning = true;
+    lastFrameTime = 0;
+    accumulator = 0;
+    settleTimer = 0;
     requestAnimationFrame(gameLoop);
   }
-
-  let sideLosses = 0;
 
   function spawnInitialCoins() {
     // Scatter some coins on the lower platform area
@@ -880,28 +892,15 @@
   }
 
   // ── INPUT ─────────────────────────────────────────────────
-  function handleMouseMove(e) {
+  function handlePointerMove(e) {
+    canvasRect = canvas.getBoundingClientRect();
     mouseX = e.clientX - canvasRect.left;
   }
 
-  function handleTouchMove(e) {
-    e.preventDefault();
-    if (e.touches.length > 0) {
-      mouseX = e.touches[0].clientX - canvasRect.left;
-    }
-  }
-
-  function handleTouch(e) {
-    e.preventDefault();
-    if (e.touches.length > 0) {
-      mouseX = e.touches[0].clientX - canvasRect.left;
-      dropCoin(mouseX);
-    }
-  }
-
-  function handleDrop(e) {
-    const x = e.clientX - canvasRect.left;
-    dropCoin(x);
+  function handlePointerDown(e) {
+    canvasRect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - canvasRect.left;
+    dropCoin(mouseX);
   }
 
   function dropCoin(x) {
@@ -936,21 +935,36 @@
   }
 
   // ── GAME LOOP ─────────────────────────────────────────────
-  function gameLoop() {
+  const FIXED_DT = 1 / 60; // Physics runs at 60Hz regardless of display refresh rate
+  let lastFrameTime = 0;
+  let accumulator = 0;
+  let settleTimer = 0;
+
+  function gameLoop(timestamp) {
     if (!gameRunning) return;
 
-    update();
+    if (lastFrameTime === 0) lastFrameTime = timestamp;
+    const frameDelta = Math.min((timestamp - lastFrameTime) / 1000, 0.05); // cap at 50ms
+    lastFrameTime = timestamp;
+    accumulator += frameDelta;
+
+    while (accumulator >= FIXED_DT) {
+      update();
+      accumulator -= FIXED_DT;
+    }
+
     draw();
 
-    // Check end condition
-    if (coinsLeft <= 0 && coins.every(c => c.grounded || c.y > frontEdge)) {
-      // Wait a moment for last coins to settle
-      setTimeout(() => {
-        if (gameRunning) endGame();
-      }, 1500);
-      gameRunning = false;
-      // Still draw the final frame
-      return;
+    // Check end condition — all coins must be settled (grounded with low velocity)
+    if (coinsLeft <= 0 && coins.every(c => c.grounded && Math.abs(c.vx) < 0.3 && Math.abs(c.vy) < 0.3)) {
+      settleTimer += frameDelta;
+      if (settleTimer > 1.0) {
+        gameRunning = false;
+        endGame();
+        return;
+      }
+    } else {
+      settleTimer = 0;
     }
 
     requestAnimationFrame(gameLoop);
@@ -1031,8 +1045,13 @@
         continue;
       }
 
-      // Side loss check (falls off sides at bottom)
-      // In this version, walls prevent side loss, so we skip this
+      // Side loss check — coin escaped bounds (e.g., physics glitch)
+      if (c.x < -50 || c.x > gameWidth + 50 || c.y > gameHeight + 50) {
+        coins.splice(i, 1);
+        sideLosses++;
+        playSound('sideloss');
+        continue;
+      }
     }
 
     // Coin-to-coin collisions (simple overlap push)
@@ -1123,6 +1142,17 @@
       coinsLeft += BONUS_COINS_AMOUNT;
       playSound('bonus');
       showAchievementToast({ name: `+${BONUS_COINS_AMOUNT} Coins!`, icon: '\uD83C\uDF81', desc: `Milestone: ${newMilestone * BONUS_COINS_INTERVAL} pts` });
+
+      // Spawn a prize on the platform at higher milestones
+      const cx = wallLeft + 30 + Math.random() * (wallRight - wallLeft - 60);
+      const cy = platformY + 30 + Math.random() * 40;
+      if (score >= 5000) {
+        coins.push(createPrize(cx, cy, 'trophy'));
+      } else if (score >= 2000) {
+        coins.push(createPrize(cx, cy, 'crown'));
+      } else if (score >= 500) {
+        coins.push(createPrize(cx, cy, Math.random() < 0.5 ? 'gem' : 'star'));
+      }
     }
 
     updateHUD();
