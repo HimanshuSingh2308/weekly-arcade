@@ -185,6 +185,29 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
       return { valid: true };
     },
   },
+
+  // Coin Cascade: Physics coin pusher with combos and prizes
+  // Max score: 30 starting coins + bonus coins, best prizes (trophy 1000) × 5x combo = ~50k theoretical max
+  'coin-cascade': {
+    maxScore: 50000,
+    maxScorePerSecond: 200, // Rapid cascades can score fast with combos
+    minTimeMs: 15000, // Games take at least 15 seconds (30 coins × 0.5s cooldown)
+    customValidation: (dto) => {
+      if (dto.metadata) {
+        const dropped = dto.metadata.coinsDropped as number;
+        const collected = dto.metadata.coinsCollected as number;
+        // Can't collect more than you drop plus initial platform coins (~22)
+        if (dropped !== undefined && collected !== undefined && collected > dropped + 25) {
+          return { valid: false, reason: 'Collected more coins than possible' };
+        }
+        // Min time based on drop rate (each drop has 500ms cooldown)
+        if (dropped !== undefined && dto.timeMs && dto.timeMs < dropped * 300) {
+          return { valid: false, reason: 'Coin drop rate too fast' };
+        }
+      }
+      return { valid: true };
+    },
+  },
 };
 
 /**

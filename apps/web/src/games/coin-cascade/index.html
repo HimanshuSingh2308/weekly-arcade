@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Coin Cascade | Weekly Arcade - Arcade Coin Pusher Game</title>
+
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
+  <!-- SEO -->
+  <meta name="description" content="Play Coin Cascade free online. Drop coins onto a physics-driven pusher to cascade prizes off the edge. Chain combos and special coins for massive scores! No download required.">
+  <meta name="keywords" content="coin pusher, coin cascade, arcade game, physics game, browser game, free game, coin game, pusher game">
+  <link rel="canonical" href="https://weeklyarcade.games/games/coin-cascade/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Coin Cascade | Weekly Arcade">
+  <meta property="og:description" content="Drop coins onto a physics-driven pusher to cascade prizes off the edge. Chain combos for massive scores!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weeklyarcade.games/games/coin-cascade/">
+  <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+  <meta property="og:site_name" content="Weekly Arcade">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Coin Cascade | Weekly Arcade">
+  <meta name="twitter:description" content="Drop coins onto a physics-driven pusher to cascade prizes off the edge. Chain combos for massive scores!">
+  <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#FFD700">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Coin Cascade",
+    "url": "https://weeklyarcade.games/games/coin-cascade/",
+    "description": "Drop coins onto a physics-driven pusher to cascade prizes off the edge. Chain combos and special coins for massive scores!",
+    "genre": ["Arcade", "Physics", "Casual"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "gamePlatform": "Web Browser",
+    "inLanguage": "en",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Weekly Arcade",
+      "url": "https://weeklyarcade.games/"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weeklyarcade.games/" },
+      { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://weeklyarcade.games/#new" },
+      { "@type": "ListItem", "position": 3, "name": "Coin Cascade", "item": "https://weeklyarcade.games/games/coin-cascade/" }
+    ]
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a1a;
+      --bg-card: #141428;
+      --gold: #FFD700;
+      --gold-dark: #B8860B;
+      --silver: #C0C0C0;
+      --bronze: #CD7F32;
+      --accent: #e94560;
+      --text: #eee;
+      --text-dim: #888;
+      --neon-blue: #00d4ff;
+      --neon-pink: #ff2d95;
+      --neon-green: #39ff14;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Header */
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid #2a2a4a;
+      z-index: 10;
+      position: relative;
+    }
+
+    .back-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { color: var(--gold); }
+
+    .game-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .header-right {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+    }
+
+    .sound-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    /* HUD */
+    .hud {
+      display: flex;
+      justify-content: space-around;
+      padding: 0.4rem 1rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid #1a1a3a;
+    }
+
+    .hud-item {
+      text-align: center;
+    }
+
+    .hud-label {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .hud-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .hud-value.combo {
+      color: var(--neon-pink);
+    }
+
+    /* Canvas */
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      touch-action: none;
+    }
+
+    /* Overlays */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--bg-card);
+      border: 2px solid var(--gold-dark);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+    }
+
+    .modal h2 {
+      color: var(--gold);
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal p {
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+
+    .stat-box {
+      background: rgba(255,215,0,0.08);
+      border-radius: 8px;
+      padding: 0.5rem;
+    }
+
+    .stat-box .label {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .stat-box .value {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .new-best {
+      color: var(--neon-green) !important;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.8rem 2rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s;
+      margin: 0.3rem;
+    }
+
+    .btn:active { transform: scale(0.95); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #000;
+    }
+
+    .btn-secondary {
+      background: #2a2a4a;
+      color: var(--text);
+    }
+
+    /* Drop zone indicator */
+    .drop-indicator {
+      position: absolute;
+      width: 2px;
+      background: var(--gold);
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Achievement Toast */
+    .achievement-toast {
+      position: fixed; top: 20px; right: -320px;
+      background: linear-gradient(135deg, #b59f3b, #8b7a2e);
+      padding: 1rem 1.5rem; border-radius: 12px;
+      display: flex; align-items: center; gap: 1rem;
+      z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      transition: right 0.35s ease; max-width: 300px;
+    }
+    .achievement-toast.show { right: 20px; }
+    .achievement-icon { font-size: 2rem; }
+    .achievement-info { color: #fff; }
+    .achievement-name { font-weight: 700; font-size: 1rem; }
+    .achievement-desc { font-size: 0.8rem; opacity: 0.9; }
+
+    /* Confetti */
+    .confetti-container {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 1500; overflow: hidden;
+    }
+    .confetti {
+      position: absolute; width: 10px; height: 10px; top: -10px;
+      animation: confettiFall 3s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Level-Up Burst */
+    .levelup-container {
+      position: fixed; inset: 0; pointer-events: none;
+      z-index: 1600; display: flex; align-items: center; justify-content: center;
+    }
+    .levelup-particle {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      animation: levelupBurst 1s ease-out var(--delay, 0s) forwards;
+    }
+    @keyframes levelupBurst {
+      0%   { transform: rotate(var(--angle,0deg)) translateX(0); opacity: 1; }
+      100% { transform: rotate(var(--angle,0deg)) translateX(150px); opacity: 0; }
+    }
+
+    /* Score Pop */
+    .score-pop {
+      position: fixed; pointer-events: none; z-index: 1400;
+      font-size: 1.4rem; font-weight: 900; color: #ffd700;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      animation: scorePop 1.2s ease-out forwards;
+    }
+    @keyframes scorePop {
+      0%   { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-80px); opacity: 0; }
+    }
+
+    /* Combo label */
+    .combo-pop {
+      position: fixed; pointer-events: none; z-index: 1400;
+      font-size: 1.8rem; font-weight: 900;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+      animation: comboPop 1.5s ease-out forwards;
+    }
+    @keyframes comboPop {
+      0%   { transform: scale(0.5) translateY(0); opacity: 0; }
+      15%  { transform: scale(1.3) translateY(-10px); opacity: 1; }
+      100% { transform: scale(1) translateY(-100px); opacity: 0; }
+    }
+
+    /* Shake */
+    .shake { animation: shake 0.5s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60% { transform: translateX(-6px); }
+      40%,80% { transform: translateX(6px); }
+    }
+
+    @media (max-width: 480px) {
+      .game-header { padding: 0.4rem 0.6rem; }
+      .game-title { font-size: 0.95rem; }
+      .hud { padding: 0.3rem 0.5rem; }
+      .hud-value { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="game-header">
+    <a href="../../" class="back-link">&#8592; All Games</a>
+    <div class="game-title">&#x1FA99; Coin Cascade</div>
+    <div class="header-right">
+      <button class="sound-btn" id="soundToggle" aria-label="Toggle sound">&#x1F50A;</button>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-item">
+      <div class="hud-label">Score</div>
+      <div class="hud-value" id="hudScore">0</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Coins Left</div>
+      <div class="hud-value" id="hudCoins">30</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Combo</div>
+      <div class="hud-value combo" id="hudCombo">-</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Best</div>
+      <div class="hud-value" id="hudBest">0</div>
+    </div>
+  </div>
+
+  <!-- Game Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Start Overlay -->
+  <div class="overlay" id="startOverlay">
+    <div class="modal">
+      <h2>&#x1FA99; Coin Cascade</h2>
+      <p>Tap to drop coins onto the pusher. Cascade them off the edge to score!</p>
+      <button class="btn btn-primary" id="startBtn">Drop First Coin!</button>
+    </div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div class="overlay hidden" id="gameOverOverlay">
+    <div class="modal">
+      <h2 id="goTitle">Round Over!</h2>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="label">Score</div>
+          <div class="value" id="goScore">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Best</div>
+          <div class="value" id="goBest">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Collected</div>
+          <div class="value" id="goCollected">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Max Combo</div>
+          <div class="value" id="goCombo">0</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="retryBtn">Play Again</button>
+      <button class="btn btn-secondary" id="homeBtn" onclick="window.location.href='../../'">Home</button>
+    </div>
+  </div>
+
+  <script>
+  // ── GAME CONSTANTS ───────────────────────────────────────
+  const STARTING_COINS = 30;
+  const BONUS_COINS_INTERVAL = 500;
+  const BONUS_COINS_AMOUNT = 5;
+  const DROP_COOLDOWN = 500; // ms
+  const COIN_RADIUS = 12;
+  const PUSHER_SPEED = 1.2;
+  const GRAVITY = 0.15;
+  const FRICTION = 0.985;
+  const BOUNCE = 0.4;
+  const COMBO_WINDOW = 1500; // ms
+  const PLATFORM_Y_RATIO = 0.35; // where the platform shelf sits
+  const EDGE_BUFFER = 20; // side walls buffer
+
+  // Coin types
+  const COIN_TYPES = {
+    bronze: { color: '#CD7F32', value: 1, radius: COIN_RADIUS },
+    silver: { color: '#C0C0C0', value: 5, radius: COIN_RADIUS },
+    gold:   { color: '#FFD700', value: 25, radius: COIN_RADIUS + 2 },
+  };
+
+  // Prize types
+  const PRIZE_TYPES = {
+    star:   { color: '#FFD700', value: 100, symbol: '\u2B50', radius: 14 },
+    gem:    { color: '#60a5fa', value: 250, symbol: '\uD83D\uDC8E', radius: 14 },
+    crown:  { color: '#f472b6', value: 500, symbol: '\uD83D\uDC51', radius: 16 },
+    trophy: { color: '#ffd700', value: 1000, symbol: '\uD83C\uDFC6', radius: 18 },
+  };
+
+  // ── GAME STATE ────────────────────────────────────────────
+  let canvas, ctx;
+  let gameRunning = false;
+  let gameStartTime = 0;
+  let score = 0;
+  let coinsLeft = STARTING_COINS;
+  let bestScore = 0;
+  let comboCount = 0;
+  let maxCombo = 0;
+  let lastCollectTime = 0;
+  let totalCollected = 0;
+  let totalDropped = 0;
+  let lastDropTime = 0;
+  let sideLosses = 0;
+  let soundEnabled = true;
+  let mouseX = 0;
+  let canvasRect = null;
+
+  // Physics objects
+  let coins = [];       // coins on the platform
+  let pusherX = 0;      // pusher bar position
+  let pusherDir = 1;    // pusher direction
+  let platformY = 0;    // Y position of the shelf
+  let platformBottom = 0;
+  let gameWidth = 0;
+  let gameHeight = 0;
+  let wallLeft = 0;
+  let wallRight = 0;
+  let frontEdge = 0;    // Y position where coins score
+
+  // ── AUTH ──────────────────────────────────────────────────
+  let currentUser = null;
+
+  function initAuth() {
+    const checkAuth = setInterval(() => {
+      if (window.authManager?.isInitialized) {
+        clearInterval(checkAuth);
+        window.authManager.onAuthStateChanged(user => {
+          currentUser = user;
+        });
+      }
+    }, 100);
+  }
+
+  // ── ACHIEVEMENTS ──────────────────────────────────────────
+  const ACHIEVEMENTS = {
+    'first_cascade':  { name: 'First Drop',     desc: 'Complete your first round',       icon: '\uD83C\uDFAF', xp: 100 },
+    'combo_3':        { name: 'Triple!',         desc: 'Get a 3x combo',                  icon: '\uD83D\uDD25', xp: 150 },
+    'combo_5':        { name: 'Mega Cascade!',   desc: 'Get a 5x combo',                  icon: '\uD83C\uDF1F', xp: 300 },
+    'score_1000':     { name: 'Bronze Pusher',   desc: 'Score over 1,000 points',         icon: '\uD83E\uDE99', xp: 200 },
+    'score_5000':     { name: 'Silver Pusher',   desc: 'Score over 5,000 points',         icon: '\uD83E\uDE9C', xp: 400 },
+    'score_10000':    { name: 'Gold Pusher',     desc: 'Score over 10,000 points',        icon: '\uD83E\uDE99', xp: 600 },
+    'collect_100':    { name: 'Hoarder',         desc: 'Collect 100 coins in one round',  icon: '\uD83D\uDCB0', xp: 300 },
+    'perfect_round':  { name: 'No Waste',        desc: 'Lose zero coins off the sides',   icon: '\u2728', xp: 500 },
+  };
+
+  const DEFAULT_PLAYER = '{"xp":0,"level":1,"achievements":[]}';
+
+  function safeGetPlayer() {
+    try { return JSON.parse(localStorage.getItem('coin-cascade-player') || DEFAULT_PLAYER); }
+    catch(e) { return JSON.parse(DEFAULT_PLAYER); }
+  }
+
+  function safeSavePlayer(data) {
+    try { localStorage.setItem('coin-cascade-player', JSON.stringify(data)); } catch(e) {}
+  }
+
+  function checkAchievements(gameData) {
+    const playerData = safeGetPlayer();
+    const newOnes = [];
+    const earned = playerData.achievements;
+
+    if (!earned.includes('first_cascade')) newOnes.push('first_cascade');
+    if (gameData.maxCombo >= 3 && !earned.includes('combo_3')) newOnes.push('combo_3');
+    if (gameData.maxCombo >= 5 && !earned.includes('combo_5')) newOnes.push('combo_5');
+    if (gameData.score >= 1000 && !earned.includes('score_1000')) newOnes.push('score_1000');
+    if (gameData.score >= 5000 && !earned.includes('score_5000')) newOnes.push('score_5000');
+    if (gameData.score >= 10000 && !earned.includes('score_10000')) newOnes.push('score_10000');
+    if (gameData.collected >= 100 && !earned.includes('collect_100')) newOnes.push('collect_100');
+    if (gameData.sideLosses === 0 && gameData.collected > 0 && !earned.includes('perfect_round')) newOnes.push('perfect_round');
+
+    if (newOnes.length > 0) {
+      let bonusXP = 0;
+      newOnes.forEach(id => bonusXP += ACHIEVEMENTS[id]?.xp ?? 0);
+      playerData.achievements = [...earned, ...newOnes];
+      playerData.xp += bonusXP;
+      safeSavePlayer(playerData);
+    }
+    return newOnes;
+  }
+
+  // ── XP & LEVELS ──────────────────────────────────────────
+  const XP_PER_LEVEL = 500;
+
+  function addXP(amount) {
+    const data = safeGetPlayer();
+    const prevLevel = Math.floor(data.xp / XP_PER_LEVEL) + 1;
+    data.xp += amount;
+    const newLevel = Math.floor(data.xp / XP_PER_LEVEL) + 1;
+    safeSavePlayer(data);
+    if (newLevel > prevLevel) {
+      showAchievementToast({ name: `Level ${newLevel}!`, icon: '\u2B06\uFE0F', desc: 'Player level up!' });
+      showLevelUpEffect();
+      playSound('levelup');
+    }
+    return { xp: data.xp, playerLevel: newLevel, leveledUp: newLevel > prevLevel };
+  }
+
+  // ── SOUND ─────────────────────────────────────────────────
+  let audioCtx = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  function playSound(type) {
+    if (!soundEnabled) return;
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.value = 0.07;
+
+      switch (type) {
+        case 'drop':
+          osc.frequency.value = 300 + Math.random() * 100;
+          osc.type = 'triangle';
+          osc.start(); osc.stop(ctx.currentTime + 0.06);
+          break;
+        case 'clink':
+          osc.frequency.value = 800 + Math.random() * 400;
+          osc.type = 'sine';
+          gain.gain.value = 0.04;
+          osc.start(); osc.stop(ctx.currentTime + 0.04);
+          break;
+        case 'collect':
+          osc.frequency.value = 660 + comboCount * 80;
+          osc.type = 'sine';
+          osc.start();
+          setTimeout(() => { try { osc.frequency.value = 880 + comboCount * 80; } catch(e){} }, 50);
+          osc.stop(ctx.currentTime + 0.15);
+          break;
+        case 'combo':
+          osc.type = 'triangle';
+          osc.frequency.value = 523;
+          osc.start();
+          setTimeout(() => { try { osc.frequency.value = 659; } catch(e){} }, 60);
+          setTimeout(() => { try { osc.frequency.value = 784; } catch(e){} }, 120);
+          setTimeout(() => { try { osc.frequency.value = 1047; } catch(e){} }, 180);
+          osc.stop(ctx.currentTime + 0.4);
+          break;
+        case 'sideloss':
+          osc.type = 'sawtooth';
+          osc.frequency.value = 150;
+          gain.gain.value = 0.04;
+          osc.start(); osc.stop(ctx.currentTime + 0.15);
+          break;
+        case 'levelup':
+          osc.type = 'triangle';
+          osc.frequency.value = 523;
+          osc.start();
+          setTimeout(() => { try { osc.frequency.value = 659; } catch(e){} }, 80);
+          setTimeout(() => { try { osc.frequency.value = 784; } catch(e){} }, 160);
+          osc.stop(ctx.currentTime + 0.5);
+          break;
+        case 'achievement':
+          osc.type = 'sine';
+          osc.frequency.value = 880;
+          osc.start();
+          setTimeout(() => { try { osc.frequency.value = 1100; } catch(e){} }, 100);
+          osc.stop(ctx.currentTime + 0.35);
+          break;
+        case 'fail':
+          osc.type = 'sawtooth';
+          osc.frequency.value = 200;
+          gain.gain.value = 0.05;
+          osc.start(); osc.stop(ctx.currentTime + 0.3);
+          break;
+        case 'win':
+          osc.type = 'sine';
+          osc.frequency.value = 523;
+          osc.start();
+          setTimeout(() => { try { osc.frequency.value = 784; } catch(e){} }, 100);
+          setTimeout(() => { try { osc.frequency.value = 1047; } catch(e){} }, 220);
+          osc.stop(ctx.currentTime + 0.6);
+          break;
+        case 'bonus':
+          osc.type = 'triangle';
+          osc.frequency.value = 440;
+          osc.start();
+          setTimeout(() => { try { osc.frequency.value = 660; } catch(e){} }, 80);
+          osc.stop(ctx.currentTime + 0.25);
+          break;
+      }
+    } catch (e) { /* audio unavailable */ }
+  }
+
+  // ── VISUAL FEEDBACK ──────────────────────────────────────
+  let activeToasts = 0;
+
+  function showAchievementToast(achievement) {
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = `
+      <span class="achievement-icon">${achievement.icon}</span>
+      <div class="achievement-info">
+        <div class="achievement-name">${achievement.name}</div>
+        <div class="achievement-desc">${achievement.desc}</div>
+      </div>`;
+    toast.style.top = (20 + activeToasts * 90) + 'px';
+    activeToasts++;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      activeToasts = Math.max(0, activeToasts - 1);
+      setTimeout(() => toast.remove(), 350);
+    }, 3500);
+  }
+
+  function showConfetti() {
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+    const colors = ['#FFD700','#C0C0C0','#CD7F32','#e94560','#60a5fa','#39ff14'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.cssText = `left:${Math.random()*100}%;background:${colors[i%colors.length]};animation-delay:${Math.random()*2}s;animation-duration:${2+Math.random()*2}s;border-radius:${Math.random()>0.5?'50%':'0'};`;
+      container.appendChild(el);
+    }
+    setTimeout(() => container.remove(), 5000);
+  }
+
+  function showScorePop(points, x, y) {
+    const el = document.createElement('div');
+    el.className = 'score-pop';
+    el.textContent = `+${points}`;
+    el.style.cssText = `left:${x}px;top:${y}px;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
+
+  function showComboPop(count) {
+    const labels = { 2: 'Double!', 3: 'Triple!', 4: 'Cascade!', 5: 'MEGA CASCADE!' };
+    const colors = { 2: '#60a5fa', 3: '#f472b6', 4: '#ffd700', 5: '#39ff14' };
+    const label = labels[Math.min(count, 5)] || `${count}x CASCADE!`;
+    const color = colors[Math.min(count, 5)] || '#39ff14';
+    const el = document.createElement('div');
+    el.className = 'combo-pop';
+    el.textContent = label;
+    el.style.cssText = `left:50%;top:40%;transform:translateX(-50%);color:${color};`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+
+  function showLevelUpEffect() {
+    const container = document.createElement('div');
+    container.className = 'levelup-container';
+    document.body.appendChild(container);
+    const colors = ['#ffd700','#ff6b35','#4ade80','#60a5fa','#f472b6'];
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'levelup-particle';
+      p.style.cssText = `--angle:${(i/40)*360}deg;--delay:${(i%5)*0.05}s;background:${colors[i%colors.length]};`;
+      container.appendChild(p);
+    }
+    setTimeout(() => container.remove(), 1500);
+  }
+
+  function showNewAchievements(newIds) {
+    newIds.forEach((id, i) => {
+      const ach = ACHIEVEMENTS[id];
+      if (ach) setTimeout(() => {
+        showAchievementToast(ach);
+        playSound('achievement');
+      }, i * 900);
+    });
+  }
+
+  // ── SCORE SUBMISSION ─────────────────────────────────────
+  async function submitScoreToCloud(scoreValue, extras = {}) {
+    if (!currentUser || !window.apiClient) return;
+    try {
+      const result = await window.apiClient.submitScore('coin-cascade', {
+        score: scoreValue,
+        timeMs: Date.now() - gameStartTime,
+        metadata: {
+          coinsDropped: totalDropped,
+          coinsCollected: totalCollected,
+          maxCombo: maxCombo,
+          ...extras,
+        },
+      });
+      console.log('[Coin Cascade] Score submitted:', result);
+    } catch (err) {
+      console.error('[Coin Cascade] Score submit failed:', err);
+    }
+  }
+
+  // ── COIN PHYSICS OBJECT ──────────────────────────────────
+  function createCoin(x, y, type) {
+    const t = COIN_TYPES[type] || COIN_TYPES.bronze;
+    return {
+      x, y,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: 0,
+      radius: t.radius,
+      color: t.color,
+      value: t.value,
+      type: type,
+      isPrize: false,
+      symbol: null,
+      grounded: false,
+    };
+  }
+
+  function createPrize(x, y, type) {
+    const t = PRIZE_TYPES[type];
+    return {
+      x, y,
+      vx: 0, vy: 0,
+      radius: t.radius,
+      color: t.color,
+      value: t.value,
+      type: type,
+      isPrize: true,
+      symbol: t.symbol,
+      grounded: false,
+    };
+  }
+
+  // ── INITIALIZATION ────────────────────────────────────────
+  function init() {
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
+    try { bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0'); } catch(e) { bestScore = 0; }
+    document.getElementById('hudBest').textContent = bestScore.toLocaleString();
+    initAuth();
+
+    resizeCanvas();
+    mouseX = gameWidth / 2;
+    window.addEventListener('resize', resizeCanvas);
+
+    // Input — use pointer events to avoid click+touchstart double-fire
+    canvas.addEventListener('pointerdown', handlePointerDown);
+    canvas.addEventListener('pointermove', handlePointerMove);
+
+    // Sound toggle
+    document.getElementById('soundToggle').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundToggle').textContent = soundEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD07';
+    });
+
+    // Start button
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('retryBtn').addEventListener('click', startGame);
+
+    // Draw idle state
+    drawIdle();
+  }
+
+  function resizeCanvas() {
+    const header = document.querySelector('.game-header');
+    const hud = document.querySelector('.hud');
+    const headerH = header.offsetHeight + hud.offsetHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - headerH;
+    canvasRect = canvas.getBoundingClientRect();
+
+    // Calculate game dimensions
+    gameWidth = canvas.width;
+    gameHeight = canvas.height;
+    wallLeft = EDGE_BUFFER;
+    wallRight = gameWidth - EDGE_BUFFER;
+    platformY = gameHeight * PLATFORM_Y_RATIO;
+    platformBottom = gameHeight * 0.85;
+    frontEdge = gameHeight - 10;
+  }
+
+  function drawIdle() {
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, gameWidth, gameHeight);
+    drawMachine();
+  }
+
+  // ── GAME START ────────────────────────────────────────────
+  function startGame() {
+    document.getElementById('startOverlay').classList.add('hidden');
+    document.getElementById('gameOverOverlay').classList.add('hidden');
+
+    // Clean up stale DOM effects from previous round
+    document.querySelectorAll('.score-pop, .combo-pop, .confetti-container, .levelup-container, .achievement-toast').forEach(el => el.remove());
+    activeToasts = 0;
+
+    // Reset state
+    score = 0;
+    coinsLeft = STARTING_COINS;
+    comboCount = 0;
+    maxCombo = 0;
+    lastCollectTime = 0;
+    totalCollected = 0;
+    totalDropped = 0;
+    lastDropTime = 0;
+    coins = [];
+    pusherX = 0;
+    pusherDir = 1;
+    sideLosses = 0;
+
+    // Place some initial coins on the platform
+    spawnInitialCoins();
+
+    updateHUD();
+    gameRunning = true;
+    gameStartTime = Date.now();
+    lastFrameTime = 0;
+    accumulator = 0;
+    settleTimer = 0;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function spawnInitialCoins() {
+    // Scatter some coins on the lower platform area
+    const minX = wallLeft + 30;
+    const maxX = wallRight - 30;
+    const minY = platformY + 40;
+    const maxY = platformBottom - 30;
+
+    for (let i = 0; i < 20; i++) {
+      const x = minX + Math.random() * (maxX - minX);
+      const y = minY + Math.random() * (maxY - minY);
+      const type = Math.random() < 0.1 ? 'silver' : 'bronze';
+      const c = createCoin(x, y, type);
+      c.grounded = true;
+      c.vy = 0;
+      coins.push(c);
+    }
+
+    // Add 1-2 prizes
+    for (let i = 0; i < 2; i++) {
+      const x = minX + Math.random() * (maxX - minX);
+      const y = minY + Math.random() * (maxY - minY);
+      const types = ['star', 'star', 'gem'];
+      const p = createPrize(x, y, types[Math.floor(Math.random() * types.length)]);
+      p.grounded = true;
+      coins.push(p);
+    }
+  }
+
+  // ── INPUT ─────────────────────────────────────────────────
+  function handlePointerMove(e) {
+    mouseX = e.clientX - canvasRect.left;
+  }
+
+  function handlePointerDown(e) {
+    canvasRect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - canvasRect.left;
+    dropCoin(mouseX);
+  }
+
+  function dropCoin(x) {
+    if (!gameRunning) return;
+    const now = Date.now();
+    if (now - lastDropTime < DROP_COOLDOWN) return;
+    if (coinsLeft <= 0) return;
+
+    lastDropTime = now;
+    coinsLeft--;
+    totalDropped++;
+
+    // Clamp to drop zone
+    const dropX = Math.max(wallLeft + COIN_RADIUS, Math.min(wallRight - COIN_RADIUS, x));
+
+    // Determine coin type
+    let type = 'bronze';
+    const r = Math.random();
+    if (r < 0.05) type = 'gold';
+    else if (r < 0.2) type = 'silver';
+
+    const coin = createCoin(dropX, 10, type);
+    coin.vy = 2;
+    coins.push(coin);
+
+    playSound('drop');
+    updateHUD();
+
+    // Bonus coins at score milestones
+    const nextMilestone = Math.floor(score / BONUS_COINS_INTERVAL) * BONUS_COINS_INTERVAL + BONUS_COINS_INTERVAL;
+    // This is checked in collectCoin
+  }
+
+  // ── GAME LOOP ─────────────────────────────────────────────
+  const FIXED_DT = 1 / 60; // Physics runs at 60Hz regardless of display refresh rate
+  let lastFrameTime = 0;
+  let accumulator = 0;
+  let settleTimer = 0;
+  let rafId = null;
+
+  function gameLoop(timestamp) {
+    if (!gameRunning) { rafId = null; return; }
+
+    if (lastFrameTime === 0) lastFrameTime = timestamp;
+    const frameDelta = Math.min((timestamp - lastFrameTime) / 1000, 0.05); // cap at 50ms
+    lastFrameTime = timestamp;
+    accumulator += frameDelta;
+
+    while (accumulator >= FIXED_DT) {
+      update();
+      accumulator -= FIXED_DT;
+    }
+
+    draw();
+
+    // Check end condition — all coins must be settled for 3 seconds (enough for pusher cycles)
+    if (coinsLeft <= 0 && coins.every(c => c.grounded && Math.abs(c.vx) < 0.3 && Math.abs(c.vy) < 0.3)) {
+      settleTimer += frameDelta;
+      if (settleTimer > 3.0) {
+        gameRunning = false;
+        rafId = null;
+        endGame();
+        return;
+      }
+    } else {
+      settleTimer = 0;
+    }
+
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function update() {
+    // Move pusher
+    const pusherWidth = (wallRight - wallLeft) * 0.6;
+    const pusherRange = (wallRight - wallLeft - pusherWidth) / 2;
+    pusherX += PUSHER_SPEED * pusherDir;
+    if (pusherX > pusherRange) { pusherX = pusherRange; pusherDir = -1; }
+    if (pusherX < -pusherRange) { pusherX = -pusherRange; pusherDir = 1; }
+
+    const pusherLeft = (wallLeft + wallRight) / 2 - pusherWidth / 2 + pusherX;
+    const pusherRight = pusherLeft + pusherWidth;
+    const pusherY = platformY;
+
+    // Update coins
+    for (let i = coins.length - 1; i >= 0; i--) {
+      const c = coins[i];
+
+      // Apply gravity
+      if (!c.grounded) {
+        c.vy += GRAVITY;
+      }
+
+      c.x += c.vx;
+      c.y += c.vy;
+
+      // Friction
+      c.vx *= FRICTION;
+      if (c.grounded) c.vy = 0;
+
+      // Pusher collision — push coins forward (downward on screen)
+      if (c.y > pusherY - c.radius && c.y < pusherY + 15 && c.x > pusherLeft && c.x < pusherRight) {
+        c.vy = Math.max(c.vy, 1.5);
+        c.vx += PUSHER_SPEED * pusherDir * 0.3;
+        c.grounded = false;
+        if (Math.random() < 0.1) playSound('clink');
+      }
+
+      // Platform floor collision
+      if (c.y > platformBottom - c.radius) {
+        c.y = platformBottom - c.radius;
+        c.vy = -c.vy * BOUNCE;
+        if (Math.abs(c.vy) < 0.5) {
+          c.vy = 0;
+          c.grounded = true;
+        }
+      }
+
+      // Shelf collision (coins dropped from above land on the shelf area)
+      if (c.y > pusherY - c.radius && c.y < pusherY + 5 && c.vy > 0) {
+        // Only if above the pusher and falling
+        if (c.y - c.vy <= pusherY - c.radius) {
+          c.y = pusherY - c.radius;
+          c.vy = -c.vy * BOUNCE;
+          if (Math.abs(c.vy) < 0.3) {
+            c.vy = 0;
+            c.grounded = true;
+          }
+        }
+      }
+
+      // Wall collisions
+      if (c.x < wallLeft + c.radius) {
+        c.x = wallLeft + c.radius;
+        c.vx = Math.abs(c.vx) * BOUNCE;
+      }
+      if (c.x > wallRight - c.radius) {
+        c.x = wallRight - c.radius;
+        c.vx = -Math.abs(c.vx) * BOUNCE;
+      }
+
+      // Front edge — coin falls off = scored!
+      if (c.y > frontEdge) {
+        collectCoin(c, i);
+        continue;
+      }
+
+      // Side loss check — coin escaped bounds (e.g., physics glitch)
+      if (c.x < -50 || c.x > gameWidth + 50 || c.y > gameHeight + 50) {
+        coins.splice(i, 1);
+        sideLosses++;
+        playSound('sideloss');
+        continue;
+      }
+    }
+
+    // Coin-to-coin collisions (simple overlap push)
+    for (let i = 0; i < coins.length; i++) {
+      for (let j = i + 1; j < coins.length; j++) {
+        const a = coins[i], b = coins[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = a.radius + b.radius;
+
+        if (dist < minDist && dist > 0) {
+          const overlap = (minDist - dist) / 2;
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          a.x -= nx * overlap;
+          a.y -= ny * overlap;
+          b.x += nx * overlap;
+          b.y += ny * overlap;
+
+          // Transfer velocity
+          const dvx = a.vx - b.vx;
+          const dvy = a.vy - b.vy;
+          const dot = dvx * nx + dvy * ny;
+
+          if (dot > 0) {
+            a.vx -= dot * nx * 0.5;
+            a.vy -= dot * ny * 0.5;
+            b.vx += dot * nx * 0.5;
+            b.vy += dot * ny * 0.5;
+            a.grounded = false;
+            b.grounded = false;
+          }
+        }
+      }
+    }
+
+    // Combo timeout
+    if (comboCount > 0 && Date.now() - lastCollectTime > COMBO_WINDOW) {
+      comboCount = 0;
+      updateHUD();
+    }
+  }
+
+  function collectCoin(coin, index) {
+    const now = Date.now();
+    coins.splice(index, 1);
+
+    // Combo
+    if (now - lastCollectTime < COMBO_WINDOW) {
+      comboCount++;
+    } else {
+      comboCount = 1;
+    }
+    lastCollectTime = now;
+    if (comboCount > maxCombo) maxCombo = comboCount;
+
+    // Calculate multiplier
+    let multiplier = 1;
+    if (comboCount >= 5) multiplier = 5;
+    else if (comboCount >= 4) multiplier = 3;
+    else if (comboCount >= 3) multiplier = 2;
+    else if (comboCount >= 2) multiplier = 1.5;
+
+    const points = Math.round(coin.value * multiplier);
+    const prevScore = score;
+    score += points;
+    totalCollected++;
+
+    // Show score pop at coin position (convert canvas coords to screen)
+    const screenX = canvasRect.left + coin.x;
+    const screenY = canvasRect.top + coin.y - 20;
+    showScorePop(points, screenX, screenY);
+
+    // Combo label
+    if (comboCount >= 2) {
+      showComboPop(comboCount);
+      playSound('combo');
+    } else {
+      playSound('collect');
+    }
+
+    // Bonus coins at milestones
+    const prevMilestone = Math.floor(prevScore / BONUS_COINS_INTERVAL);
+    const newMilestone = Math.floor(score / BONUS_COINS_INTERVAL);
+    if (newMilestone > prevMilestone) {
+      coinsLeft += BONUS_COINS_AMOUNT;
+      playSound('bonus');
+      showAchievementToast({ name: `+${BONUS_COINS_AMOUNT} Coins!`, icon: '\uD83C\uDF81', desc: `Milestone: ${newMilestone * BONUS_COINS_INTERVAL} pts` });
+
+      // Spawn a prize on the platform at higher milestones
+      const cx = wallLeft + 30 + Math.random() * (wallRight - wallLeft - 60);
+      const cy = platformY + 30 + Math.random() * 40;
+      if (score >= 5000) {
+        coins.push(createPrize(cx, cy, 'trophy'));
+      } else if (score >= 2000) {
+        coins.push(createPrize(cx, cy, 'crown'));
+      } else if (score >= 500) {
+        coins.push(createPrize(cx, cy, Math.random() < 0.5 ? 'gem' : 'star'));
+      }
+    }
+
+    updateHUD();
+  }
+
+  // ── DRAWING ───────────────────────────────────────────────
+  function draw() {
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, gameWidth, gameHeight);
+
+    drawMachine();
+    drawCoins();
+    drawDropIndicator();
+  }
+
+  function drawMachine() {
+    // Side walls
+    ctx.fillStyle = '#1a1a3a';
+    ctx.fillRect(0, 0, wallLeft, gameHeight);
+    ctx.fillRect(wallRight, 0, gameWidth - wallRight, gameHeight);
+
+    // Wall edges glow
+    ctx.strokeStyle = '#2a2a5a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wallLeft, 0);
+    ctx.lineTo(wallLeft, gameHeight);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(wallRight, 0);
+    ctx.lineTo(wallRight, gameHeight);
+    ctx.stroke();
+
+    // Platform shelf line
+    ctx.strokeStyle = '#3a3a6a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(wallLeft, platformY);
+    ctx.lineTo(wallRight, platformY);
+    ctx.stroke();
+
+    // Platform bottom line
+    ctx.strokeStyle = '#2a2a4a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wallLeft, platformBottom);
+    ctx.lineTo(wallRight, platformBottom);
+    ctx.stroke();
+
+    // Pusher bar
+    const pusherWidth = (wallRight - wallLeft) * 0.6;
+    const pusherLeft = (wallLeft + wallRight) / 2 - pusherWidth / 2 + pusherX;
+    const barH = 12;
+
+    const grad = ctx.createLinearGradient(pusherLeft, platformY - barH/2, pusherLeft, platformY + barH/2);
+    grad.addColorStop(0, '#4a4a8a');
+    grad.addColorStop(0.5, '#6a6aaa');
+    grad.addColorStop(1, '#3a3a6a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(pusherLeft, platformY - barH/2, pusherWidth, barH);
+
+    // Pusher edge glow
+    ctx.strokeStyle = '#8a8acc';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pusherLeft, platformY - barH/2, pusherWidth, barH);
+
+    // Front edge zone (scoring zone) - glowing line
+    ctx.strokeStyle = 'rgba(57, 255, 20, 0.4)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(wallLeft, frontEdge);
+    ctx.lineTo(wallRight, frontEdge);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // "SCORE" label at bottom
+    ctx.fillStyle = 'rgba(57, 255, 20, 0.3)';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SCORE ZONE', gameWidth / 2, frontEdge + 5);
+
+    // Drop zone label at top
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('TAP TO DROP', gameWidth / 2, 20);
+  }
+
+  function drawCoins() {
+    for (const c of coins) {
+      ctx.save();
+
+      if (c.isPrize) {
+        // Draw prize as emoji
+        ctx.font = `${c.radius * 1.5}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(c.symbol, c.x, c.y);
+
+        // Glow effect
+        ctx.shadowColor = c.color;
+        ctx.shadowBlur = 8;
+        ctx.fillText(c.symbol, c.x, c.y);
+      } else {
+        // Draw coin circle
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+
+        // Gradient fill
+        const grad = ctx.createRadialGradient(
+          c.x - c.radius * 0.3, c.y - c.radius * 0.3, c.radius * 0.1,
+          c.x, c.y, c.radius
+        );
+        grad.addColorStop(0, lightenColor(c.color, 40));
+        grad.addColorStop(1, c.color);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = darkenColor(c.color, 30);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Value text on bigger coins
+        if (c.value >= 5) {
+          ctx.fillStyle = '#000';
+          ctx.font = `bold ${c.radius * 0.9}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(c.value, c.x, c.y);
+        }
+      }
+
+      ctx.restore();
+    }
+  }
+
+  function drawDropIndicator() {
+    if (!gameRunning || coinsLeft <= 0) return;
+
+    // Vertical line showing where the coin will drop
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(mouseX, 0);
+    ctx.lineTo(mouseX, platformY - 20);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Preview coin
+    ctx.beginPath();
+    ctx.arc(mouseX, 15, COIN_RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // ── COLOR HELPERS ─────────────────────────────────────────
+  function lightenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.min(255, (num >> 16) + percent);
+    const g = Math.min(255, ((num >> 8) & 0x00FF) + percent);
+    const b = Math.min(255, (num & 0x0000FF) + percent);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function darkenColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.max(0, (num >> 16) - percent);
+    const g = Math.max(0, ((num >> 8) & 0x00FF) - percent);
+    const b = Math.max(0, (num & 0x0000FF) - percent);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // ── HUD UPDATE ────────────────────────────────────────────
+  function updateHUD() {
+    document.getElementById('hudScore').textContent = score.toLocaleString();
+    document.getElementById('hudCoins').textContent = coinsLeft;
+    document.getElementById('hudCombo').textContent = comboCount > 1 ? `${comboCount}x` : '-';
+    document.getElementById('hudBest').textContent = Math.max(score, bestScore).toLocaleString();
+  }
+
+  // ── GAME END ──────────────────────────────────────────────
+  function endGame() {
+    gameRunning = false;
+
+    const isNewBest = score > bestScore;
+    if (isNewBest) {
+      bestScore = score;
+      try { localStorage.setItem('coin-cascade-best', bestScore.toString()); } catch(e) {}
+    }
+
+    // Sound
+    playSound(score >= 500 ? 'win' : 'fail');
+
+    // Confetti on good score
+    if (score >= 1000) showConfetti();
+
+    // Achievements
+    const newAchievements = checkAchievements({
+      score,
+      maxCombo,
+      collected: totalCollected,
+      sideLosses,
+    });
+
+    // XP
+    const xpEarned = Math.round(score / 10) + 25;
+    addXP(xpEarned);
+
+    // Show achievement toasts
+    showNewAchievements(newAchievements);
+
+    // Submit score
+    submitScoreToCloud(score);
+
+    // Show game over modal
+    document.getElementById('goTitle').textContent = isNewBest ? 'New Record!' : 'Round Over!';
+    document.getElementById('goScore').textContent = score.toLocaleString();
+    document.getElementById('goScore').className = isNewBest ? 'value new-best' : 'value';
+    document.getElementById('goBest').textContent = bestScore.toLocaleString();
+    document.getElementById('goCollected').textContent = totalCollected;
+    document.getElementById('goCombo').textContent = maxCombo + 'x';
+    document.getElementById('gameOverOverlay').classList.remove('hidden');
+  }
+
+  // ── BOOT ──────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', init);
+  </script>
+
+  <script src="../../js/api-client.js"></script>
+  <script src="../../js/auth.js"></script>
+</body>
+</html>
