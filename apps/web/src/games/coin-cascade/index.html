@@ -484,13 +484,14 @@
   let coins = [];       // coins on the platform
   let pusherX = 0;      // pusher bar position
   let pusherDir = 1;    // pusher direction
-  let platformY = 0;    // Y position of the shelf
-  let platformBottom = 0;
+  let platformY = 0;    // Y position of the shelf/pusher
+  let platformBottom = 0; // Back wall of the platform (coins can't go past this)
+  let platformFront = 0;  // Front lip — coins past this fall into score zone
   let gameWidth = 0;
   let gameHeight = 0;
   let wallLeft = 0;
   let wallRight = 0;
-  let frontEdge = 0;    // Y position where coins score
+  let frontEdge = 0;    // Y position where coins are collected (below platform front)
 
   // ── AUTH ──────────────────────────────────────────────────
   let currentUser = null;
@@ -846,8 +847,9 @@
     wallLeft = EDGE_BUFFER;
     wallRight = gameWidth - EDGE_BUFFER;
     platformY = gameHeight * PLATFORM_Y_RATIO;
-    platformBottom = gameHeight * 0.85;
-    frontEdge = gameHeight - 10;
+    platformBottom = gameHeight * 0.45; // Back wall — coins can't go above this on the platform
+    platformFront = gameHeight * 0.78;  // Front lip — coins past this fall off and score
+    frontEdge = gameHeight - 10;        // Collection line below the front lip
   }
 
   function drawIdle() {
@@ -893,11 +895,11 @@
   }
 
   function spawnInitialCoins() {
-    // Scatter some coins on the lower platform area
+    // Scatter some coins on the platform (between pusher and front lip)
     const minX = wallLeft + 30;
     const maxX = wallRight - 30;
-    const minY = platformY + 40;
-    const maxY = platformBottom - 30;
+    const minY = platformBottom + 20;
+    const maxY = platformFront - 30;
 
     for (let i = 0; i < 20; i++) {
       const x = minX + Math.random() * (maxX - minX);
@@ -984,8 +986,8 @@
 
     draw();
 
-    // Check end condition — all coins must be settled for 3 seconds (enough for pusher cycles)
-    if (coinsLeft <= 0 && coins.every(c => c.grounded && Math.abs(c.vx) < 0.3 && Math.abs(c.vy) < 0.3)) {
+    // Check end condition — no coins left to drop, and all remaining coins settled or gone
+    if (coinsLeft <= 0 && (coins.length === 0 || coins.every(c => c.grounded && Math.abs(c.vx) < 0.3 && Math.abs(c.vy) < 0.3))) {
       settleTimer += frameDelta;
       if (settleTimer > 3.0) {
         gameRunning = false;
@@ -1028,27 +1030,48 @@
       c.vx *= FRICTION;
       if (c.grounded) c.vy = 0;
 
-      // Pusher collision — push coins forward (downward on screen)
+      // Pusher collision — push coins toward the front (downward on screen)
       if (c.y > pusherY - c.radius && c.y < pusherY + 15 && c.x > pusherLeft && c.x < pusherRight) {
-        c.vy = Math.max(c.vy, 1.5);
+        c.vy = Math.max(c.vy, 1.8);
         c.vx += PUSHER_SPEED * pusherDir * 0.3;
         c.grounded = false;
         if (Math.random() < 0.1) playSound('clink');
       }
 
-      // Platform floor collision
-      if (c.y > platformBottom - c.radius) {
-        c.y = platformBottom - c.radius;
-        c.vy = -c.vy * BOUNCE;
-        if (Math.abs(c.vy) < 0.5) {
+      // Platform floor collision — only applies if coin is ABOVE the front lip
+      // Once past platformFront, coins fall freely into the score zone
+      if (c.y < platformFront && c.y > platformFront - c.radius - 5) {
+        // Coin is at the front lip — let it teeter
+        // Only stop if moving slowly (settled on the edge)
+        if (c.vy > 0 && c.vy < 0.8) {
+          c.y = platformFront - c.radius;
           c.vy = 0;
           c.grounded = true;
         }
+        // If pushed hard enough (vy >= 0.8), it goes over the lip
+      } else if (c.y <= platformFront - c.radius) {
+        // Coin is on the main platform area — normal floor collision
+        // The "floor" is the platform surface where coins rest
+        const floorY = platformFront - c.radius;
+        if (c.y > floorY) {
+          c.y = floorY;
+          c.vy = -c.vy * BOUNCE;
+          if (Math.abs(c.vy) < 0.5) {
+            c.vy = 0;
+            c.grounded = true;
+          }
+        }
+      }
+      // If c.y >= platformFront, the coin is past the lip — falling freely toward frontEdge
+
+      // Back wall collision — coins can't go above platformBottom (pushed back)
+      if (c.y < platformBottom + c.radius && c.y > platformY + 10) {
+        c.y = platformBottom + c.radius;
+        c.vy = Math.abs(c.vy) * BOUNCE;
       }
 
-      // Shelf collision (coins dropped from above land on the shelf area)
+      // Shelf collision — dropped coins land on the shelf (above the pusher)
       if (c.y > pusherY - c.radius && c.y < pusherY + 5 && c.vy > 0) {
-        // Only if above the pusher and falling
         if (c.y - c.vy <= pusherY - c.radius) {
           c.y = pusherY - c.radius;
           c.vy = -c.vy * BOUNCE;
@@ -1216,7 +1239,11 @@
     ctx.lineTo(wallRight, gameHeight);
     ctx.stroke();
 
-    // Platform shelf line
+    // Platform area background (the surface where coins sit)
+    ctx.fillStyle = 'rgba(30, 30, 60, 0.5)';
+    ctx.fillRect(wallLeft, platformBottom, wallRight - wallLeft, platformFront - platformBottom);
+
+    // Pusher shelf line (top of drop zone)
     ctx.strokeStyle = '#3a3a6a';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -1224,12 +1251,20 @@
     ctx.lineTo(wallRight, platformY);
     ctx.stroke();
 
-    // Platform bottom line
+    // Back wall line
     ctx.strokeStyle = '#2a2a4a';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(wallLeft, platformBottom);
     ctx.lineTo(wallRight, platformBottom);
+    ctx.stroke();
+
+    // Front lip line (coins fall off past this)
+    ctx.strokeStyle = '#5a5a8a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(wallLeft, platformFront);
+    ctx.lineTo(wallRight, platformFront);
     ctx.stroke();
 
     // Pusher bar
