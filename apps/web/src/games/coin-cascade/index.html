@@ -986,17 +986,17 @@
 
     draw();
 
-    // Check end condition — no coins left to drop, and all remaining coins settled or gone
-    if (coinsLeft <= 0 && (coins.length === 0 || coins.every(c => c.grounded && Math.abs(c.vx) < 0.3 && Math.abs(c.vy) < 0.3))) {
+    // Check end condition — no coins left to drop
+    // Give the pusher a few more cycles to push remaining coins off, then end
+    if (coinsLeft <= 0) {
       settleTimer += frameDelta;
-      if (settleTimer > 3.0) {
+      // End after 8 seconds (enough for ~5 pusher cycles to clear the platform)
+      if (settleTimer > 8.0 || coins.length === 0) {
         gameRunning = false;
         rafId = null;
         endGame();
         return;
       }
-    } else {
-      settleTimer = 0;
     }
 
     rafId = requestAnimationFrame(gameLoop);
@@ -1400,7 +1400,7 @@
   function updateHUD() {
     document.getElementById('hudScore').textContent = score.toLocaleString();
     document.getElementById('hudCoins').textContent = coinsLeft;
-    document.getElementById('hudCombo').textContent = comboCount > 1 ? `${comboCount}x` : '-';
+    document.getElementById('hudCombo').textContent = comboCount > 0 ? `${comboCount}x` : '-';
     document.getElementById('hudBest').textContent = Math.max(score, bestScore).toLocaleString();
   }
 
