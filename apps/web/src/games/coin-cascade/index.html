@@ -519,8 +519,7 @@
   <script>
   // ── GAME CONSTANTS ───────────────────────────────────────
   const STARTING_COINS = 40;
-  const BONUS_COINS_INTERVAL = 500;
-  const BONUS_COINS_AMOUNT = 5;
+  // Bonus coins removed — caused infinite feedback loops with prize scoring
   const DROP_COOLDOWN = 500; // ms
   const COIN_RADIUS = 12;
   const PUSHER_SPEED = 1.2;
@@ -560,8 +559,6 @@
   let totalDropped = 0;
   let lastDropTime = 0;
   let sideLosses = 0;
-  let bonusCoinsAwarded = 0;
-  const MAX_BONUS_ROUNDS = 3; // Cap at 3 bonus rounds (15 extra coins max)
   let soundEnabled = true;
   let mouseX = 0;
   let canvasRect = null;
@@ -967,7 +964,6 @@
     pusherX = 0;
     pusherDir = 1;
     sideLosses = 0;
-    bonusCoinsAwarded = 0;
 
     // Start with empty platform — player builds the pile by dropping coins
 
@@ -1045,10 +1041,6 @@
 
     playSound('drop');
     updateHUD();
-
-    // Bonus coins at score milestones
-    const nextMilestone = Math.floor(score / BONUS_COINS_INTERVAL) * BONUS_COINS_INTERVAL + BONUS_COINS_INTERVAL;
-    // This is checked in collectCoin
   }
 
   // ── GAME LOOP ─────────────────────────────────────────────
@@ -1282,25 +1274,12 @@
       playSound('collect');
     }
 
-    // Bonus coins at milestones (capped to prevent infinite loop)
-    const prevMilestone = Math.floor(prevScore / BONUS_COINS_INTERVAL);
-    const newMilestone = Math.floor(score / BONUS_COINS_INTERVAL);
-    if (newMilestone > prevMilestone && bonusCoinsAwarded < MAX_BONUS_ROUNDS) {
-      bonusCoinsAwarded++;
-      coinsLeft += BONUS_COINS_AMOUNT;
+    // Score milestone celebration (no bonus coins or prize spawns — causes feedback loops)
+    const prevMilestone = Math.floor(prevScore / 1000);
+    const newMilestone = Math.floor(score / 1000);
+    if (newMilestone > prevMilestone) {
       playSound('bonus');
-      showAchievementToast({ name: `+${BONUS_COINS_AMOUNT} Coins!`, icon: '\uD83C\uDF81', desc: `Milestone: ${newMilestone * BONUS_COINS_INTERVAL} pts` });
-
-      // Spawn a prize on the platform at higher milestones
-      const cx = wallLeft + 30 + Math.random() * (wallRight - wallLeft - 60);
-      const cy = platformY + 30 + Math.random() * 40;
-      if (score >= 5000) {
-        coins.push(createPrize(cx, cy, 'trophy'));
-      } else if (score >= 2000) {
-        coins.push(createPrize(cx, cy, 'crown'));
-      } else if (score >= 500) {
-        coins.push(createPrize(cx, cy, Math.random() < 0.5 ? 'gem' : 'star'));
-      }
+      showAchievementToast({ name: `${newMilestone * 1000} pts!`, icon: '\uD83C\uDF1F', desc: 'Score milestone reached!' });
     }
 
     updateHUD();
