@@ -114,7 +114,7 @@
     }
 
     .header {
-      background: var(--brown);
+      background: linear-gradient(180deg, #4A2E1A 0%, #5C3D2E 100%);
       padding: 0 0.75rem;
       padding-top: env(safe-area-inset-top, 0);
       padding-left: max(0.75rem, env(safe-area-inset-left));
@@ -125,7 +125,9 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 500;
-      height: calc(44px + env(safe-area-inset-top, 0px));
+      height: calc(48px + env(safe-area-inset-top, 0px));
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.05) inset;
+      border-bottom: 1px solid rgba(255,215,0,0.15);
     }
 
     .back-btn {
@@ -143,9 +145,11 @@
     .back-btn:hover { background: rgba(255,255,255,0.2); }
 
     .game-title {
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
       color: var(--gold);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      letter-spacing: 0.02em;
     }
 
     .header-right {
@@ -155,48 +159,55 @@
     }
 
     .day-badge {
-      background: rgba(255,255,255,0.15);
-      color: var(--cream);
-      padding: 0.2rem 0.5rem;
-      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(245,197,66,0.25), rgba(245,197,66,0.1));
+      color: var(--gold);
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
+      border: 1px solid rgba(245,197,66,0.2);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
     .icon-btn {
-      background: rgba(255,255,255,0.1);
-      border: none;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
       color: var(--cream);
       font-size: 1.1rem;
       cursor: pointer;
       padding: 0.3rem;
-      border-radius: 8px;
+      border-radius: 10px;
       min-width: 44px;
       min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.15s, transform 0.15s;
     }
-    .icon-btn:hover { background: rgba(255,255,255,0.2); }
-    .icon-btn.muted { opacity: 0.5; }
+    .icon-btn:hover { background: rgba(255,255,255,0.18); }
+    .icon-btn:active { transform: scale(0.93); }
+    .icon-btn.muted { opacity: 0.4; }
 
     .auth-btn {
-      background: var(--pink);
+      background: linear-gradient(135deg, #F2B5B5, #E8968E);
       color: var(--brown);
       border: none;
       padding: 0.4rem 0.8rem;
       border-radius: 20px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       min-height: 44px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: transform 0.15s, box-shadow 0.15s;
     }
+    .auth-btn:active { transform: scale(0.96); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
     .auth-btn:hover { background: #e9a0a0; }
 
     /* HUD */
     .hud {
       position: fixed;
-      top: calc(44px + env(safe-area-inset-top, 0px));
+      top: calc(48px + env(safe-area-inset-top, 0px));
       left: 50%; transform: translateX(-50%);
       width: 100%; max-width: 480px;
       height: 36px;
@@ -258,7 +269,7 @@
       position: relative;
       height: 100dvh;
       overflow: hidden;
-      padding-top: calc(80px + env(safe-area-inset-top, 0px));
+      padding-top: calc(84px + env(safe-area-inset-top, 0px));
     }
 
     .game-area {
@@ -589,16 +600,16 @@
       top: 0; left: 0;
       width: 25%;
       height: 44%;
-      background: linear-gradient(180deg, #1A1228 0%, #2A1F3D 60%, #362952 100%);
+      background: linear-gradient(180deg, #3D2A5C 0%, #4E3872 60%, #5C4680 100%);
       z-index: 3;
       transition: transform 0.6s ease-out, filter 0.6s ease-out, opacity 0.6s ease-out;
       border-right: 3px solid var(--vip-accent);
       overflow: hidden;
     }
     .vip-lounge.locked {
-      filter: grayscale(1) brightness(0.5);
-      opacity: 0.5;
-      transform: scaleY(0.95);
+      filter: grayscale(0.6) brightness(0.75);
+      opacity: 0.7;
+      transform: scaleY(0.98);
       transform-origin: bottom;
     }
     .vip-lounge.unlocked {
@@ -734,10 +745,10 @@
       border: 3px solid transparent;
     }
 
-    /* Queue area */
+    /* Queue area — customers stand in front of counter */
     .queue-area {
       position: absolute;
-      top: 52%;
+      top: 36%;
       left: 0;
       right: 0;
       bottom: 0;
