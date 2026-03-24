@@ -786,6 +786,14 @@
       0%, 100% { box-shadow: 0 0 8px rgba(125, 184, 125, 0.4); }
       50% { box-shadow: 0 0 16px rgba(125, 184, 125, 0.8); }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -990,8 +998,6 @@
   let lastFrameTime = 0;
   let animFrameId = null;
   let customerIdCounter = 0;
-  let coinAnimations = [];
-
   // Auth
   let currentUser = null;
 
@@ -1246,12 +1252,6 @@
     return base * Math.pow(0.95, level);
   }
 
-  function getAutoServeTime(drinkKey) {
-    // auto_serve_3 is 125%, others 150% of manual
-    const manual = getServeTime(drinkKey);
-    return manual * 1.5; // simplified; auto_serve_3 check below
-  }
-
   function getAutoServeTimeForStation(stationIndex, drinkKey) {
     const manual = getServeTime(drinkKey);
     if (stationIndex === 2) return manual * 1.25; // auto_serve_3
@@ -1446,6 +1446,7 @@
     } else {
       const stationIdx = parseInt(mode.charAt(4));
       autoServing[stationIdx] = c.id;
+      updateAutoStationsUI();
     }
 
     if (c.el) {
@@ -1503,7 +1504,7 @@
     // Release serve slot
     if (manualServing === c.id) manualServing = null;
     for (let i = 0; i < 3; i++) {
-      if (autoServing[i] === c.id) autoServing[i] = null;
+      if (autoServing[i] === c.id) { autoServing[i] = null; updateAutoStationsUI(); }
     }
 
     recalcQueuePositions();
@@ -1544,7 +1545,7 @@
     // Release serve slot
     if (manualServing === c.id) manualServing = null;
     for (let i = 0; i < 3; i++) {
-      if (autoServing[i] === c.id) autoServing[i] = null;
+      if (autoServing[i] === c.id) { autoServing[i] = null; updateAutoStationsUI(); }
     }
 
     recalcQueuePositions();
@@ -1786,7 +1787,6 @@
 
     // Auto-serve
     tryAutoServe();
-    updateAutoStationsUI();
 
     animFrameId = requestAnimationFrame(gameLoop);
   }
