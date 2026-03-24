@@ -476,6 +476,8 @@
   let totalDropped = 0;
   let lastDropTime = 0;
   let sideLosses = 0;
+  let bonusCoinsAwarded = 0;
+  const MAX_BONUS_ROUNDS = 3; // Cap at 3 bonus rounds (15 extra coins max)
   let soundEnabled = true;
   let mouseX = 0;
   let canvasRect = null;
@@ -880,6 +882,7 @@
     pusherX = 0;
     pusherDir = 1;
     sideLosses = 0;
+    bonusCoinsAwarded = 0;
 
     // Place some initial coins on the platform
     spawnInitialCoins();
@@ -1189,10 +1192,11 @@
       playSound('collect');
     }
 
-    // Bonus coins at milestones
+    // Bonus coins at milestones (capped to prevent infinite loop)
     const prevMilestone = Math.floor(prevScore / BONUS_COINS_INTERVAL);
     const newMilestone = Math.floor(score / BONUS_COINS_INTERVAL);
-    if (newMilestone > prevMilestone) {
+    if (newMilestone > prevMilestone && bonusCoinsAwarded < MAX_BONUS_ROUNDS) {
+      bonusCoinsAwarded++;
       coinsLeft += BONUS_COINS_AMOUNT;
       playSound('bonus');
       showAchievementToast({ name: `+${BONUS_COINS_AMOUNT} Coins!`, icon: '\uD83C\uDF81', desc: `Milestone: ${newMilestone * BONUS_COINS_INTERVAL} pts` });
