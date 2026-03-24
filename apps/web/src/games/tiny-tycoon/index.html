@@ -183,7 +183,7 @@
       font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
-      min-height: 28px;
+      min-height: 44px;
     }
     .auth-btn:hover { background: #e9a0a0; }
 
@@ -1521,6 +1521,7 @@
       // Combo preserved!
     } else {
       comboStreak = 0;
+      comboForgives = 0;
       updateComboDisplay();
     }
 
@@ -1862,10 +1863,15 @@
     rushBanner.classList.remove('visible');
     rushActive = false;
 
-    // Finish any mid-serve customers
+    // Mid-serve customers leave without reward or penalty
     customers.forEach(c => {
       if (c.state === 'serving') {
-        completeServe(c);
+        c.state = 'gone';
+        if (manualServing === c.id) manualServing = null;
+        for (let i = 0; i < 3; i++) {
+          if (autoServing[i] === c.id) autoServing[i] = null;
+        }
+        if (c.el) c.el.remove();
       }
     });
 
@@ -1874,9 +1880,9 @@
     const isNewBest = finalRevenue > bestScore;
 
     if (isNewBest) {
-      bestScore = finalRevenue;
       playSound('newBest');
       submitScore(finalRevenue);
+      bestScore = finalRevenue;
     }
 
     wallet += finalRevenue;
@@ -2010,10 +2016,7 @@
   // SCORE SUBMISSION
   // ==========================================
   async function submitScore(dayRev) {
-    const storedBest = parseInt(localStorage.getItem('tt_best_score') || '0');
-    if (dayRev <= storedBest && dayRev < bestScore) return;
-
-    localStorage.setItem('tt_best_score', bestScore.toString());
+    localStorage.setItem('tt_best_score', dayRev.toString());
 
     if (!window.apiClient || !currentUser) return;
 
@@ -2169,6 +2172,14 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && gameState === 'PLAYING') {
       pauseGame();
+    }
+  });
+
+  // Keyboard support
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (gameState === 'PLAYING') pauseGame();
+      else if (gameState === 'PAUSED') resumeGame();
     }
   });
 
