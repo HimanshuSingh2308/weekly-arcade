@@ -1,5 +1,5 @@
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 13;
+const CACHE_VERSION = 14;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
