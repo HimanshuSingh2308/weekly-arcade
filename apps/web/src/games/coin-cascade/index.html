@@ -518,7 +518,7 @@
 
   <script>
   // ── GAME CONSTANTS ───────────────────────────────────────
-  const STARTING_COINS = 30;
+  const STARTING_COINS = 40;
   const BONUS_COINS_INTERVAL = 500;
   const BONUS_COINS_AMOUNT = 5;
   const DROP_COOLDOWN = 500; // ms
@@ -969,8 +969,7 @@
     sideLosses = 0;
     bonusCoinsAwarded = 0;
 
-    // Place some initial coins on the platform
-    spawnInitialCoins();
+    // Start with empty platform — player builds the pile by dropping coins
 
     updateHUD();
     gameRunning = true;
@@ -1106,9 +1105,15 @@
     for (let i = coins.length - 1; i >= 0; i--) {
       const c = coins[i];
 
-      // Apply gravity
+      // Apply gravity only to coins in the air (falling from drop zone or past the lip)
+      // Coins on the platform surface don't get gravity — they only move from pusher/collisions
       if (!c.grounded) {
-        c.vy += GRAVITY;
+        const onPlatform = c.y > platformBottom && c.y < platformFront;
+        if (!onPlatform) {
+          c.vy += GRAVITY; // Full gravity when falling from above or past the lip
+        } else {
+          c.vy += GRAVITY * 0.02; // Tiny nudge on platform so coins settle, not slide
+        }
       }
 
       c.x += c.vx;
