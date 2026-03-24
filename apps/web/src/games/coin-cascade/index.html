@@ -155,36 +155,6 @@
       min-height: 28px;
     }
 
-    .auth-modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000; opacity: 0; visibility: hidden;
-      transition: all 0.3s;
-    }
-    .auth-modal-overlay.show { opacity: 1; visibility: visible; }
-
-    .auth-modal {
-      background: var(--bg-card);
-      border-radius: 16px; padding: 2rem;
-      width: 90%; max-width: 400px;
-      text-align: center; position: relative;
-    }
-    .auth-modal h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    .auth-modal p { color: var(--text-dim); margin-bottom: 1.5rem; }
-    .auth-modal-close {
-      position: absolute; top: 1rem; right: 1rem;
-      background: none; border: none; color: var(--text-dim);
-      font-size: 1.5rem; cursor: pointer;
-    }
-    .google-btn {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      background: #fff; color: #333; border: none; border-radius: 8px;
-      padding: 0.7rem 1.5rem; font-size: 1rem; font-weight: 600;
-      cursor: pointer;
-    }
-    .google-btn img { width: 20px; height: 20px; }
-
     /* HUD */
     .hud {
       display: flex;
@@ -411,7 +381,7 @@
     <a href="../../" class="back-link">&#8592; All Games</a>
     <div class="game-title">&#x1FA99; Coin Cascade</div>
     <div class="header-right">
-      <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
+      <button class="auth-btn" id="authBtn">Sign In</button>
       <button class="sound-btn" id="soundToggle" aria-label="Toggle sound">&#x1F50A;</button>
     </div>
   </div>
@@ -474,47 +444,6 @@
       <button class="btn btn-secondary" id="homeBtn" onclick="window.location.href='../../'">Home</button>
     </div>
   </div>
-
-  <!-- Auth Modal -->
-  <div class="auth-modal-overlay" id="authModal">
-    <div class="auth-modal">
-      <button class="auth-modal-close" onclick="hideAuthModal()">&times;</button>
-      <h2>Save Your Score</h2>
-      <p>Sign in to compete on the leaderboard!</p>
-      <button class="google-btn" onclick="signInWithGoogle()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-        Continue with Google
-      </button>
-    </div>
-  </div>
-
-  <script>
-  // ── AUTH UI ───────────────────────────────────────────────
-  function showAuthModal() {
-    document.getElementById('authModal').classList.add('show');
-  }
-  function hideAuthModal() {
-    document.getElementById('authModal').classList.remove('show');
-  }
-  async function signInWithGoogle() {
-    try {
-      await window.authManager.signInWithGoogle();
-      hideAuthModal();
-    } catch (err) {
-      console.error('[Coin Cascade] Sign in failed:', err);
-    }
-  }
-  function updateAuthUI() {
-    const btn = document.getElementById('authBtn');
-    if (currentUser) {
-      btn.textContent = currentUser.displayName?.split(' ')[0] || 'Player';
-      btn.onclick = null;
-    } else {
-      btn.textContent = 'Sign In';
-      btn.onclick = showAuthModal;
-    }
-  }
-  </script>
 
   <script>
   // ── GAME CONSTANTS ───────────────────────────────────────
@@ -585,7 +514,14 @@
         clearInterval(checkAuth);
         window.authManager.onAuthStateChanged(user => {
           currentUser = user;
-          updateAuthUI();
+          const authBtn = document.getElementById('authBtn');
+          if (user) {
+            authBtn.textContent = user.displayName?.split(' ')[0] || 'Player';
+            authBtn.onclick = () => window.location.href = '/profile/';
+          } else {
+            authBtn.textContent = 'Sign In';
+            authBtn.onclick = () => window.authManager.signInWithGoogle();
+          }
         });
       }
     }, 100);
@@ -1508,12 +1444,9 @@
     // Show achievement toasts
     showNewAchievements(newAchievements);
 
-    // Submit score (or prompt sign-in)
+    // Submit score if signed in
     if (currentUser) {
       submitScoreToCloud(score);
-    } else if (score > 0) {
-      // Show auth prompt after a short delay so game-over modal shows first
-      setTimeout(() => showAuthModal(), 1500);
     }
 
     // Show game over modal

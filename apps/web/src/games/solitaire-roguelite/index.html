@@ -623,6 +623,19 @@
       opacity: 0.7; transition: opacity 0.2s;
     }
     .help-btn:hover { opacity: 1; }
+    .auth-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 28px;
+      white-space: nowrap;
+    }
+    .auth-btn:hover { background: rgba(255,255,255,0.2); }
     .game-header button {
       min-width: 44px; min-height: 44px;
       display: flex; align-items: center; justify-content: center;
@@ -655,6 +668,7 @@
       <a href="../../" class="back-link">← Back</a>
       <span class="header-title">🃏 Solitaire Roguelite</span>
       <div class="header-icons">
+        <button class="auth-btn" id="authBtn">Sign In</button>
         <button id="undoBtn" onclick="undoMove()" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--text-muted);font-size:0.75rem;cursor:pointer;display:none;" title="Undo">↩ <span id="undoCount">0</span></button>
         <button class="help-btn" onclick="showHelp()" title="How to Play">❓</button>
         <button class="help-btn" id="muteBtn" onclick="toggleMute()" title="Toggle sound">🔊</button>
@@ -828,6 +842,14 @@
       clearInterval(authCheckInterval);
       window.authManager.onAuthStateChanged(user => {
         currentUser = user;
+        const authBtn = document.getElementById('authBtn');
+        if (user) {
+          authBtn.textContent = user.displayName?.split(' ')[0] || 'Player';
+          authBtn.onclick = () => window.location.href = '/profile/';
+        } else {
+          authBtn.textContent = 'Sign In';
+          authBtn.onclick = () => window.authManager.signInWithGoogle();
+        }
       });
     }
   }, 100);
