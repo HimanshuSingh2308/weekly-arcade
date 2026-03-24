@@ -91,6 +91,12 @@
       --white: #FEFEFE;
       --wood: #C4A882;
       --wall: #F0E6D6;
+      --wood-dark: #8B6914;
+      --wood-mid: #B8860B;
+      --wood-light: #D4A54A;
+      --vip-gold: #FFD700;
+      --vip-dark: #2A1F3D;
+      --vip-accent: #C9A84C;
     }
 
     body {
@@ -194,12 +200,14 @@
       left: 50%; transform: translateX(-50%);
       width: 100%; max-width: 480px;
       height: 36px;
-      background: rgba(92, 61, 46, 0.88);
+      background: rgba(92, 61, 46, 0.92);
+      backdrop-filter: blur(4px);
       display: flex;
       justify-content: space-around;
       align-items: center;
       z-index: 400;
       padding: 0 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
 
     .hud-item {
@@ -219,10 +227,28 @@
 
     .hud-combo {
       color: var(--gold);
-      transition: transform 0.15s;
+      transition: transform 0.15s, font-size 0.3s, color 0.3s;
     }
     .hud-combo.pulse {
       transform: scale(1.3);
+    }
+    /* Combo escalation styles */
+    .hud-combo.combo-warm {
+      color: #FFA500;
+      font-size: 0.95rem;
+      animation: comboGentlePulse 1s ease-in-out infinite;
+    }
+    .hud-combo.combo-hot {
+      color: #FF6B35;
+      font-size: 1.05rem;
+      text-shadow: 0 0 8px rgba(255,107,53,0.5);
+      animation: comboStrongPulse 0.7s ease-in-out infinite;
+    }
+    .hud-combo.combo-fire {
+      color: #FF2D2D;
+      font-size: 1.15rem;
+      text-shadow: 0 0 12px rgba(255,45,45,0.7), 0 0 24px rgba(255,100,0,0.4);
+      animation: comboFirePulse 0.4s ease-in-out infinite;
     }
 
     /* Game container */
@@ -242,107 +268,464 @@
       overflow: hidden;
     }
 
-    /* Shop background */
+    /* ===== RICH SHOP ENVIRONMENT ===== */
     .shop-bg {
       position: absolute;
       inset: 0;
       pointer-events: none;
     }
 
+    /* Back wall - warm gradient with subtle pattern */
     .shop-wall {
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 45%;
-      background: var(--wall);
+      background:
+        linear-gradient(180deg, #E8D5C0 0%, #F0E6D6 40%, #F5EDE2 100%);
+    }
+    /* Wainscoting / lower wall trim */
+    .shop-wall::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 18%;
+      background: linear-gradient(180deg, #D4C4A8 0%, #C9B896 100%);
+      border-top: 2px solid #BBA87A;
     }
 
+    /* Floor with tile pattern */
     .shop-floor {
       position: absolute;
       bottom: 0; left: 0; right: 0;
       height: 55%;
-      background: var(--wood);
+      background:
+        repeating-linear-gradient(
+          90deg,
+          #C9A87C 0px, #C9A87C 39px,
+          #B8956A 39px, #B8956A 40px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          #C4A276 0px, #C4A276 39px,
+          #B08F60 39px, #B08F60 40px
+        );
+      background-size: 40px 40px;
+    }
+    /* Floor depth gradient - darker at back */
+    .shop-floor::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.05) 100%);
+      pointer-events: none;
+    }
+    /* Floor shine highlight */
+    .shop-floor::after {
+      content: '';
+      position: absolute;
+      top: 30%; left: 20%; right: 20%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      border-radius: 50%;
+      filter: blur(4px);
     }
 
-    /* Shelves */
+    /* Ceiling lights */
+    .ceiling-light {
+      position: absolute;
+      top: 0;
+      width: 40px;
+      height: 50px;
+      z-index: 5;
+    }
+    .ceiling-light::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 14px;
+      background: #888;
+      border-radius: 2px;
+    }
+    .ceiling-light::after {
+      content: '';
+      position: absolute;
+      top: 14px; left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 10px;
+      background: linear-gradient(180deg, #4A4A4A, #666);
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 0 20px 10px rgba(255, 220, 150, 0.15);
+    }
+    .ceiling-glow {
+      position: absolute;
+      top: 24px; left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 120px;
+      background: radial-gradient(ellipse at top, rgba(255,220,150,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Shelves - enhanced with depth */
     .shelf {
       position: absolute;
-      height: 6px;
-      background: var(--taupe);
-      border-radius: 3px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      height: 8px;
+      background: linear-gradient(180deg, #A0845C, #8B7040);
+      border-radius: 2px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+      z-index: 6;
     }
-    .shelf-1 { top: 10%; left: 10%; width: 25%; }
-    .shelf-2 { top: 10%; right: 10%; width: 20%; }
-    .shelf-3 { top: 25%; left: 15%; width: 30%; }
+    .shelf::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 2px; right: 2px;
+      height: 4px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.15), transparent);
+      border-radius: 0 0 2px 2px;
+    }
+    .shelf-1 { top: 8%; left: 8%; width: 28%; }
+    .shelf-2 { top: 8%; right: 8%; width: 22%; }
+    .shelf-3 { top: 22%; left: 12%; width: 32%; }
 
     .shelf-item {
       position: absolute;
       bottom: 6px;
       font-size: 14px;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
     }
 
-    /* Menu board */
+    /* Menu board - enhanced with chalk-like text area */
     .menu-board {
       position: absolute;
-      top: 6%;
+      top: 4%;
       left: 50%;
       transform: translateX(-50%);
-      width: 60px;
-      height: 45px;
-      background: var(--brown);
+      width: 70px;
+      height: 52px;
+      background: linear-gradient(135deg, #3E2723, #4E342E);
       border-radius: 4px;
+      border: 2px solid #6D4C41;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       font-size: 10px;
       color: var(--cream);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+      z-index: 6;
     }
     .menu-board::before {
-      content: '🧋 MENU';
-      font-size: 9px;
-      font-weight: 700;
+      content: 'MENU';
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.9);
+    }
+    .menu-board::after {
+      content: '🧋 ☕ 🍵';
+      font-size: 10px;
+      margin-top: 2px;
     }
 
-    /* Counter */
+    /* Wall clock */
+    .wall-clock {
+      position: absolute;
+      top: 5%;
+      right: 14%;
+      width: 28px;
+      height: 28px;
+      background: radial-gradient(circle, #FFF 0%, #F5F0E8 70%, #E0D5C5 100%);
+      border: 2px solid #8B7355;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7px;
+      font-weight: 700;
+      color: var(--brown);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 6;
+    }
+    .wall-clock::after {
+      content: '';
+      position: absolute;
+      top: -5px; left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 4px;
+      background: #8B7355;
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* Equipment area behind counter */
+    .equipment-area {
+      position: absolute;
+      top: 30%;
+      right: 10%;
+      display: flex;
+      gap: 10px;
+      z-index: 7;
+    }
+
+    /* Boba machine */
+    .boba-machine {
+      width: 28px;
+      height: 38px;
+      background: linear-gradient(180deg, #E0E0E0, #BDBDBD);
+      border-radius: 4px 4px 2px 2px;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .boba-machine::before {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px; right: 4px;
+      height: 14px;
+      background: linear-gradient(180deg, #A1887F, #8D6E63);
+      border-radius: 2px;
+    }
+    .boba-machine::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 8px;
+      background: #666;
+      border-radius: 0 0 3px 3px;
+    }
+
+    /* Blender */
+    .blender {
+      width: 20px;
+      height: 34px;
+      position: relative;
+    }
+    .blender::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 2px;
+      width: 16px;
+      height: 20px;
+      background: linear-gradient(180deg, rgba(200,230,200,0.6), rgba(180,210,180,0.4));
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 2px 2px 4px 4px;
+      clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+    }
+    .blender::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 1px;
+      width: 18px;
+      height: 12px;
+      background: linear-gradient(180deg, #757575, #616161);
+      border-radius: 2px;
+    }
+
+    /* Steam particles */
+    .steam-container {
+      position: absolute;
+      top: 22%;
+      right: 12%;
+      width: 40px;
+      height: 30px;
+      z-index: 8;
+      pointer-events: none;
+    }
+    .steam {
+      position: absolute;
+      bottom: 0;
+      width: 6px;
+      height: 6px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 50%;
+      filter: blur(2px);
+      animation: steamRise 2s ease-out infinite;
+      will-change: transform, opacity;
+    }
+    .steam:nth-child(1) { left: 8px; animation-delay: 0s; }
+    .steam:nth-child(2) { left: 16px; animation-delay: 0.5s; }
+    .steam:nth-child(3) { left: 24px; animation-delay: 1s; }
+    .steam:nth-child(4) { left: 12px; animation-delay: 1.5s; width: 4px; height: 4px; }
+    .steam:nth-child(5) { left: 20px; animation-delay: 0.8s; width: 5px; height: 5px; }
+
+    /* Counter - 3D with wood texture */
     .counter {
       position: absolute;
-      top: 45%;
-      left: 10%;
-      right: 10%;
-      height: 10px;
-      background: linear-gradient(to bottom, #c9955f, var(--taupe));
-      border-radius: 5px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+      top: 44%;
+      left: 0%;
+      right: 0%;
+      height: 16px;
+      background: linear-gradient(180deg, #D4A54A 0%, #C99A3E 40%, #B8860B 100%);
+      box-shadow:
+        0 4px 0 0 #8B6914,
+        0 6px 12px rgba(0,0,0,0.3);
       z-index: 10;
     }
+    /* Counter top highlight */
+    .counter::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent);
+    }
+    /* Counter edge thickness */
+    .counter::after {
+      content: '';
+      position: absolute;
+      bottom: -8px; left: 0; right: 0;
+      height: 8px;
+      background: linear-gradient(180deg, #8B6914, #7A5C10);
+      border-radius: 0 0 2px 2px;
+    }
 
-    /* Auto-serve stations */
+    /* VIP Lounge area */
+    .vip-lounge {
+      position: absolute;
+      top: 0; left: 0;
+      width: 25%;
+      height: 44%;
+      background: linear-gradient(180deg, #1A1228 0%, #2A1F3D 60%, #362952 100%);
+      z-index: 3;
+      transition: transform 0.6s ease-out, filter 0.6s ease-out, opacity 0.6s ease-out;
+      border-right: 3px solid var(--vip-accent);
+      overflow: hidden;
+    }
+    .vip-lounge.locked {
+      filter: grayscale(1) brightness(0.5);
+      opacity: 0.5;
+      transform: scaleY(0.95);
+      transform-origin: bottom;
+    }
+    .vip-lounge.unlocked {
+      filter: none;
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    /* VIP glow effect */
+    .vip-lounge.unlocked::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(255,215,0,0.06) 0%, transparent 70%);
+      animation: vipAmbientGlow 3s ease-in-out infinite;
+    }
+    /* VIP rope / separator */
+    .vip-lounge::after {
+      content: '';
+      position: absolute;
+      top: 20%; right: -2px;
+      width: 4px;
+      height: 60%;
+      background: repeating-linear-gradient(180deg, var(--vip-accent) 0px, var(--vip-accent) 4px, transparent 4px, transparent 8px);
+      border-radius: 2px;
+    }
+    .vip-label {
+      position: absolute;
+      top: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--vip-accent);
+      text-shadow: 0 0 8px rgba(255,215,0,0.3);
+    }
+    .vip-lock {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      opacity: 0.7;
+      transition: opacity 0.4s;
+    }
+    .vip-lounge.unlocked .vip-lock { opacity: 0; display: none; }
+    .vip-lounge.locked .vip-label { color: #666; text-shadow: none; }
+    /* VIP interior details when unlocked */
+    .vip-cushion {
+      position: absolute;
+      bottom: 12%;
+      width: 18px;
+      height: 10px;
+      background: linear-gradient(180deg, #8B4513, #6B3410);
+      border-radius: 3px 3px 1px 1px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .vip-cushion:nth-child(3) { left: 12%; }
+    .vip-cushion:nth-child(4) { left: 55%; }
+    .vip-lounge.locked .vip-cushion { display: none; }
+
+    /* Auto-serve stations - machine style */
     .auto-stations {
       position: absolute;
-      top: 33%;
-      left: 12%;
+      top: 31%;
+      left: 4%;
       display: flex;
-      gap: 12px;
+      gap: 8px;
       z-index: 15;
     }
 
     .auto-station {
-      width: 36px;
-      height: 36px;
-      background: var(--white);
-      border: 2px solid var(--taupe);
-      border-radius: 8px;
+      width: 40px;
+      height: 44px;
+      background: linear-gradient(180deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%);
+      border: 2px solid #999;
+      border-radius: 6px 6px 3px 3px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      font-size: 16px;
+      justify-content: flex-end;
+      padding-bottom: 3px;
+      font-size: 14px;
       position: relative;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+      will-change: transform;
+    }
+    /* Machine screen/indicator */
+    .auto-station::before {
+      content: '';
+      position: absolute;
+      top: 4px; left: 6px; right: 6px;
+      height: 10px;
+      background: #2D5016;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .auto-station.active::before {
+      background: #4CAF50;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3), 0 0 6px rgba(76,175,80,0.4);
+    }
+    .auto-station .station-arm {
+      position: absolute;
+      bottom: -6px; left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 6px;
+      background: #888;
+      border-radius: 0 0 4px 4px;
+    }
+    .auto-station.idle {
+      animation: machineIdle 2s ease-in-out infinite;
     }
     .auto-station.active {
       border-color: var(--matcha);
-      animation: autoPulse 1.5s ease-in-out infinite;
+      animation: machineWorking 0.4s ease-in-out infinite;
+    }
+    .auto-station .drink-label {
+      position: absolute;
+      top: -18px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .auto-station.active .drink-label {
+      opacity: 1;
     }
     .auto-station .progress-ring {
       position: absolute;
@@ -351,25 +734,37 @@
       border: 3px solid transparent;
     }
 
-    /* Customer queue area */
+    /* Queue area */
     .queue-area {
       position: absolute;
-      top: 50%;
+      top: 52%;
       left: 0;
       right: 0;
       bottom: 0;
       z-index: 20;
     }
 
-    /* Customer */
+    /* Customer - enhanced with personality */
     .customer {
       position: absolute;
       width: 48px;
-      height: 72px;
+      height: 76px;
       cursor: pointer;
       will-change: transform;
       transition: opacity 0.3s;
       z-index: 25;
+    }
+
+    /* Customer shadow */
+    .customer-shadow {
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 8px;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.2) 0%, transparent 70%);
+      border-radius: 50%;
     }
 
     .customer-body {
@@ -408,13 +803,66 @@
       border-radius: 0 0 3px 3px;
     }
 
+    /* Customer type accessories */
+    .customer-accessory {
+      position: absolute;
+      pointer-events: none;
+      font-size: 8px;
+    }
+    /* Business tie */
+    .customer.type-business .customer-body::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 14px;
+      background: #2C3E50;
+      clip-path: polygon(30% 0%, 70% 0%, 80% 30%, 55% 100%, 45% 100%, 20% 30%);
+    }
+    /* Student backpack */
+    .customer.type-student .customer-body::after {
+      content: '';
+      position: absolute;
+      top: 4px; right: -5px;
+      width: 8px;
+      height: 14px;
+      background: #E67E22;
+      border-radius: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    /* Influencer glow */
+    .customer.type-influencer .customer-head {
+      box-shadow: 0 0 8px rgba(255,105,180,0.5);
+    }
+    .customer.type-influencer .customer-body {
+      box-shadow: 0 0 6px rgba(255,105,180,0.3);
+    }
+    /* Foodie hat */
+    .customer.type-foodie .customer-head::after {
+      content: '';
+      position: absolute;
+      top: -4px; left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 6px;
+      background: #DDA0DD;
+      border-radius: 4px 4px 0 0;
+    }
+
+    /* Walking bob animation */
+    .customer.walking {
+      animation: walkBob 0.4s ease-in-out infinite;
+    }
+
     .customer-order {
       position: absolute;
-      bottom: 58px;
+      bottom: 62px;
       right: 0;
       font-size: 16px;
       pointer-events: none;
       animation: floatOrder 2s ease-in-out infinite;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
     }
 
     .customer-crown {
@@ -424,6 +872,7 @@
       transform: translateX(-50%);
       font-size: 12px;
       pointer-events: none;
+      filter: drop-shadow(0 0 4px rgba(255,215,0,0.5));
     }
 
     .patience-bar-bg {
@@ -433,7 +882,7 @@
       transform: translateX(-50%);
       width: 30px;
       height: 4px;
-      background: #ddd;
+      background: rgba(0,0,0,0.15);
       border-radius: 2px;
       overflow: hidden;
     }
@@ -459,17 +908,35 @@
       opacity: 1;
     }
 
+    /* VIP customer golden glow + crown */
     .customer.vip .customer-body,
     .customer.vip .customer-head {
-      box-shadow: 0 0 10px var(--gold);
+      box-shadow: 0 0 10px var(--gold), 0 0 20px rgba(255,215,0,0.2);
       animation: vipGlow 1.5s ease-in-out infinite;
+    }
+    .customer.vip .customer-body::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, transparent, rgba(255,215,0,0.15), transparent);
     }
 
     .customer.angry .customer-body { background-color: var(--coral) !important; }
     .customer.angry .customer-head { background-color: var(--coral) !important; }
+    /* Angry shake */
+    .customer.angry {
+      animation: angryShake 0.15s ease-in-out infinite;
+      filter: brightness(0.9) saturate(1.3);
+    }
 
     .customer.impatient .customer-body {
       animation: impatientPulse 0.5s ease-in-out infinite;
+    }
+
+    /* Happy bounce */
+    .customer.happy-bounce {
+      animation: happyBounce 0.5s ease-out;
     }
 
     .customer-face {
@@ -481,24 +948,30 @@
       pointer-events: none;
     }
 
-    /* Coin animation */
+    /* Coin pop animation - golden circles */
     .coin-pop {
       position: absolute;
-      font-size: 12px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold) 0%, #DAA520 60%, #B8860B 100%);
+      box-shadow: 0 0 4px rgba(245,197,66,0.5);
       pointer-events: none;
       z-index: 100;
-      animation: coinFloat 0.6s ease-out forwards;
+      animation: coinFloat 0.7s ease-out forwards;
+      will-change: transform, opacity;
     }
 
     .floating-text {
       position: absolute;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 800;
       color: var(--gold);
       pointer-events: none;
       z-index: 100;
-      animation: textFloat 0.8s ease-out forwards;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      animation: textFloat 0.9s ease-out forwards;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 8px rgba(245,197,66,0.3);
+      will-change: transform, opacity;
     }
 
     /* Rush hour banner */
@@ -519,6 +992,11 @@
       display: none;
     }
     .rush-banner.visible { display: block; }
+
+    /* Screen shake */
+    .game-wrap.screen-shake {
+      animation: screenShake 0.4s ease-out;
+    }
 
     /* Overlays */
     .overlay {
@@ -635,6 +1113,57 @@
       max-height: 90vh;
     }
 
+    /* Shop preview in upgrade modal */
+    .shop-preview {
+      width: 100%;
+      height: 80px;
+      border-radius: 10px;
+      margin-bottom: 0.8rem;
+      background: linear-gradient(180deg, #E8D5C0 0%, #F0E6D6 40%, #C4A276 60%, #B8956A 100%);
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #D4A574;
+    }
+    .shop-preview-counter {
+      position: absolute;
+      top: 45%; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(180deg, #D4A54A, #B8860B);
+      box-shadow: 0 2px 0 #8B6914;
+    }
+    .shop-preview-label {
+      position: absolute;
+      bottom: 4px; right: 6px;
+      font-size: 8px;
+      color: rgba(92,61,46,0.6);
+      font-weight: 600;
+    }
+    .shop-preview-machines {
+      position: absolute;
+      top: 28%; left: 5%;
+      display: flex;
+      gap: 4px;
+    }
+    .shop-preview-machine {
+      width: 12px;
+      height: 16px;
+      background: linear-gradient(180deg, #E0E0E0, #BDBDBD);
+      border-radius: 2px;
+      border: 1px solid #999;
+    }
+    .shop-preview-vip {
+      position: absolute;
+      top: 0; left: 0;
+      width: 22%;
+      height: 45%;
+      background: linear-gradient(180deg, #1A1228, #2A1F3D);
+      border-right: 1px solid #C9A84C;
+      opacity: 0.3;
+    }
+    .shop-preview-vip.active {
+      opacity: 1;
+    }
+
     .shop-wallet {
       text-align: center;
       font-size: 1.2rem;
@@ -655,9 +1184,12 @@
       display: flex;
       align-items: center;
       gap: 0.6rem;
+      transition: border-color 0.2s, opacity 0.2s;
     }
-    .upgrade-card.maxed { border-color: var(--matcha); opacity: 0.7; }
+    .upgrade-card.affordable { border-color: var(--matcha); background: rgba(125,184,125,0.05); }
+    .upgrade-card.maxed { border-color: var(--gold); opacity: 0.8; }
     .upgrade-card.locked { opacity: 0.5; }
+    .upgrade-card.too-expensive { border-color: #ddd; opacity: 0.7; }
 
     .upgrade-icon {
       font-size: 1.5rem;
@@ -686,6 +1218,13 @@
       font-size: 0.7rem;
       color: var(--taro);
       font-weight: 600;
+    }
+
+    .upgrade-visible-tag {
+      font-size: 0.6rem;
+      color: var(--matcha);
+      font-weight: 600;
+      opacity: 0.8;
     }
 
     .upgrade-buy-btn {
@@ -742,7 +1281,7 @@
       text-align: center;
     }
 
-    /* Animations */
+    /* ===== ANIMATIONS ===== */
     @keyframes floatOrder {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-3px); }
@@ -750,17 +1289,24 @@
 
     @keyframes coinFloat {
       0% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-40px) scale(0.5); }
+      50% { opacity: 0.8; }
+      100% { opacity: 0; transform: translateY(-50px) scale(0.3); }
     }
 
     @keyframes textFloat {
       0% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-30px) scale(1.2); }
+      40% { opacity: 1; transform: translateY(-15px) scale(1.15); }
+      100% { opacity: 0; transform: translateY(-35px) scale(1.2); }
     }
 
     @keyframes vipGlow {
-      0%, 100% { box-shadow: 0 0 6px var(--gold); }
-      50% { box-shadow: 0 0 14px var(--gold); }
+      0%, 100% { box-shadow: 0 0 6px var(--gold), 0 0 12px rgba(255,215,0,0.15); }
+      50% { box-shadow: 0 0 14px var(--gold), 0 0 24px rgba(255,215,0,0.25); }
+    }
+
+    @keyframes vipAmbientGlow {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
     }
 
     @keyframes impatientPulse {
@@ -778,14 +1324,69 @@
       100% { transform: scale(1.05); }
     }
 
-    @keyframes autoPulse {
-      0%, 100% { box-shadow: 0 0 4px rgba(125, 184, 125, 0.3); }
-      50% { box-shadow: 0 0 12px rgba(125, 184, 125, 0.6); }
+    @keyframes machineIdle {
+      0%, 100% { box-shadow: 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5); }
+      50% { box-shadow: 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 8px rgba(125,184,125,0.2); }
+    }
+
+    @keyframes machineWorking {
+      0%, 100% { transform: translateY(0); }
+      25% { transform: translateY(-1px) rotate(1deg); }
+      75% { transform: translateY(-1px) rotate(-1deg); }
     }
 
     @keyframes servingGlow {
       0%, 100% { box-shadow: 0 0 8px rgba(125, 184, 125, 0.4); }
       50% { box-shadow: 0 0 16px rgba(125, 184, 125, 0.8); }
+    }
+
+    @keyframes steamRise {
+      0% { opacity: 0.5; transform: translateY(0) scale(1); }
+      50% { opacity: 0.3; transform: translateY(-12px) scale(1.3); }
+      100% { opacity: 0; transform: translateY(-25px) scale(0.6); }
+    }
+
+    @keyframes walkBob {
+      0%, 100% { transform: translateX(var(--tx, 0)) translateY(0); }
+      50% { transform: translateX(var(--tx, 0)) translateY(-3px); }
+    }
+
+    @keyframes happyBounce {
+      0% { transform: translateX(var(--tx, 0)) translateY(0); }
+      30% { transform: translateX(var(--tx, 0)) translateY(-12px); }
+      50% { transform: translateX(var(--tx, 0)) translateY(-10px) scale(1.05); }
+      70% { transform: translateX(var(--tx, 0)) translateY(-2px); }
+      100% { transform: translateX(var(--tx, 0)) translateY(0); }
+    }
+
+    @keyframes angryShake {
+      0%, 100% { transform: translateX(var(--tx, 0)); }
+      25% { transform: translateX(calc(var(--tx, 0px) + 3px)); }
+      75% { transform: translateX(calc(var(--tx, 0px) - 3px)); }
+    }
+
+    @keyframes screenShake {
+      0%, 100% { transform: translateX(0); }
+      10% { transform: translateX(-4px) rotate(-0.5deg); }
+      30% { transform: translateX(3px) rotate(0.3deg); }
+      50% { transform: translateX(-2px) rotate(-0.2deg); }
+      70% { transform: translateX(2px); }
+      90% { transform: translateX(-1px); }
+    }
+
+    @keyframes comboGentlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes comboStrongPulse {
+      0%, 100% { transform: scale(1); text-shadow: 0 0 8px rgba(255,107,53,0.5); }
+      50% { transform: scale(1.1); text-shadow: 0 0 14px rgba(255,107,53,0.7); }
+    }
+
+    @keyframes comboFirePulse {
+      0%, 100% { transform: scale(1); text-shadow: 0 0 12px rgba(255,45,45,0.7), 0 0 24px rgba(255,100,0,0.4); }
+      50% { transform: scale(1.15); text-shadow: 0 0 18px rgba(255,45,45,0.9), 0 0 36px rgba(255,100,0,0.6); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -827,21 +1428,62 @@
       <div class="shop-bg">
         <div class="shop-wall"></div>
         <div class="shop-floor"></div>
+
+        <!-- Ceiling lights -->
+        <div class="ceiling-light" style="left:20%;">
+          <div class="ceiling-glow"></div>
+        </div>
+        <div class="ceiling-light" style="left:50%;">
+          <div class="ceiling-glow"></div>
+        </div>
+        <div class="ceiling-light" style="left:78%;">
+          <div class="ceiling-glow"></div>
+        </div>
+
+        <!-- Shelves with items -->
         <div class="shelf shelf-1">
           <span class="shelf-item" style="left:4px;">🍵</span>
-          <span class="shelf-item" style="left:20px;">🧋</span>
-          <span class="shelf-item" style="left:36px;">☕</span>
+          <span class="shelf-item" style="left:22px;">🧋</span>
+          <span class="shelf-item" style="left:40px;">☕</span>
         </div>
         <div class="shelf shelf-2">
           <span class="shelf-item" style="left:4px;">🥤</span>
-          <span class="shelf-item" style="left:20px;">🍓</span>
+          <span class="shelf-item" style="left:22px;">🍓</span>
         </div>
         <div class="shelf shelf-3">
           <span class="shelf-item" style="left:4px;">🫧</span>
-          <span class="shelf-item" style="left:24px;">🧋</span>
-          <span class="shelf-item" style="left:44px;">🍵</span>
+          <span class="shelf-item" style="left:26px;">🧋</span>
+          <span class="shelf-item" style="left:48px;">🍵</span>
         </div>
+
+        <!-- Menu board -->
         <div class="menu-board"></div>
+
+        <!-- Wall clock -->
+        <div class="wall-clock" id="wallClock">1:00</div>
+
+        <!-- Equipment behind counter -->
+        <div class="equipment-area">
+          <div class="boba-machine"></div>
+          <div class="blender"></div>
+        </div>
+
+        <!-- Steam particles -->
+        <div class="steam-container">
+          <div class="steam"></div>
+          <div class="steam"></div>
+          <div class="steam"></div>
+          <div class="steam"></div>
+          <div class="steam"></div>
+        </div>
+
+        <!-- VIP Lounge -->
+        <div class="vip-lounge locked" id="vipLounge">
+          <div class="vip-label">VIP</div>
+          <div class="vip-lock">🔒</div>
+          <div class="vip-cushion"></div>
+          <div class="vip-cushion"></div>
+        </div>
       </div>
 
       <!-- Auto-serve stations -->
@@ -912,16 +1554,16 @@
   };
 
   const UPGRADES = {
-    speed_boost:  { name: 'Speed Boost',         icon: '⚡', desc: 'Reduce serve time by 5%', maxLevel: 10, costFn: (l) => 80 + (l * 40),  requires: null },
-    patience_plus:{ name: 'Patience Plus',        icon: '😊', desc: 'Customers wait 10% longer', maxLevel: 8,  costFn: (l) => 100 + (l * 50), requires: null },
-    tip_jar:      { name: 'Tip Jar',              icon: '🫙', desc: 'Higher speed bonus tips (+1/lv)', maxLevel: 8,  costFn: (l) => 60 + (l * 30),  requires: null },
-    premium_menu: { name: 'Premium Menu',         icon: '📋', desc: 'Boost drink value (+2 coins/lv)', maxLevel: 5,  costFn: (l) => 150 + (l * 100),requires: null },
-    queue_expand: { name: 'Bigger Queue',         icon: '📏', desc: 'Max queue +2 per level',   maxLevel: 3,  costFn: (l) => 200 + (l * 150),requires: null },
-    combo_keeper: { name: 'Combo Keeper',         icon: '🛡️', desc: 'Forgive angry for combo',  maxLevel: 3,  costFn: (l) => 250 + (l * 200),requires: null },
-    auto_serve_1: { name: 'Auto-Serve #1',        icon: '🤖', desc: 'Auto-serves basic drinks', maxLevel: 1,  costFn: () => 500,              requires: null },
-    auto_serve_2: { name: 'Auto-Serve #2',        icon: '🤖', desc: 'Serves drinks up to 20c',  maxLevel: 1,  costFn: () => 1500,             requires: 'auto_serve_1' },
-    auto_serve_3: { name: 'Auto-Serve #3',        icon: '🤖', desc: 'Serves all drinks',        maxLevel: 1,  costFn: () => 4000,             requires: 'auto_serve_2' },
-    vip_lounge:   { name: 'VIP Lounge',           icon: '👑', desc: 'VIP customers (2x coins)', maxLevel: 3,  costFn: (l) => 300 + (l * 250),requires: null }
+    speed_boost:  { name: 'Speed Boost',         icon: '⚡', desc: 'Reduce serve time by 5%', maxLevel: 10, costFn: (l) => 80 + (l * 40),  requires: null, visible: false },
+    patience_plus:{ name: 'Patience Plus',        icon: '😊', desc: 'Customers wait 10% longer', maxLevel: 8,  costFn: (l) => 100 + (l * 50), requires: null, visible: false },
+    tip_jar:      { name: 'Tip Jar',              icon: '🫙', desc: 'Higher speed bonus tips (+1/lv)', maxLevel: 8,  costFn: (l) => 60 + (l * 30),  requires: null, visible: false },
+    premium_menu: { name: 'Premium Menu',         icon: '📋', desc: 'Boost drink value (+2 coins/lv)', maxLevel: 5,  costFn: (l) => 150 + (l * 100),requires: null, visible: false },
+    queue_expand: { name: 'Bigger Queue',         icon: '📏', desc: 'Max queue +2 per level',   maxLevel: 3,  costFn: (l) => 200 + (l * 150),requires: null, visible: false },
+    combo_keeper: { name: 'Combo Keeper',         icon: '🛡️', desc: 'Forgive angry for combo',  maxLevel: 3,  costFn: (l) => 250 + (l * 200),requires: null, visible: false },
+    auto_serve_1: { name: 'Auto-Serve #1',        icon: '🤖', desc: 'Auto-serves basic drinks', maxLevel: 1,  costFn: () => 500,              requires: null, visible: true },
+    auto_serve_2: { name: 'Auto-Serve #2',        icon: '🤖', desc: 'Serves drinks up to 20c',  maxLevel: 1,  costFn: () => 1500,             requires: 'auto_serve_1', visible: true },
+    auto_serve_3: { name: 'Auto-Serve #3',        icon: '🤖', desc: 'Serves all drinks',        maxLevel: 1,  costFn: () => 4000,             requires: 'auto_serve_2', visible: true },
+    vip_lounge:   { name: 'VIP Lounge',           icon: '👑', desc: 'VIP customers (2x coins)', maxLevel: 3,  costFn: (l) => 300 + (l * 250),requires: null, visible: true }
   };
 
   const ACHIEVEMENTS = {
@@ -1016,6 +1658,9 @@
   const queueArea = document.getElementById('queueArea');
   const autoStationsEl = document.getElementById('autoStations');
   const gameArea = document.getElementById('gameArea');
+  const wallClock = document.getElementById('wallClock');
+  const vipLoungeEl = document.getElementById('vipLounge');
+  const gameWrap = document.getElementById('gameWrap');
 
   // ==========================================
   // SAVE / LOAD
@@ -1316,6 +1961,53 @@
     return n.toLocaleString();
   }
 
+  // Shop evolution level based on total upgrades
+  function getShopLevel() {
+    let total = 0;
+    for (const id in upgradeLevels) {
+      total += (upgradeLevels[id] || 0);
+    }
+    return total;
+  }
+
+  // Update shop visual environment based on upgrades
+  function updateShopEnvironment() {
+    const shopLevel = getShopLevel();
+    const shopWall = document.querySelector('.shop-wall');
+    const shopFloor = document.querySelector('.shop-floor');
+
+    // Wall evolves: basic -> painted -> premium
+    if (shopLevel >= 6) {
+      shopWall.style.background = 'linear-gradient(180deg, #D4B896 0%, #E8D5C0 30%, #F5EDE2 100%)';
+      shopWall.style.boxShadow = 'inset 0 0 40px rgba(245,197,66,0.05)';
+    } else if (shopLevel >= 3) {
+      shopWall.style.background = 'linear-gradient(180deg, #E0C9A8 0%, #EDE0D0 40%, #F5EDE2 100%)';
+    }
+
+    // Floor evolves
+    if (shopLevel >= 6) {
+      shopFloor.style.background = `
+        repeating-linear-gradient(90deg, #C9A87C 0px, #C9A87C 39px, #D4B48A 39px, #D4B48A 40px),
+        repeating-linear-gradient(0deg, #C4A276 0px, #C4A276 39px, #CEB080 39px, #CEB080 40px)`;
+      shopFloor.style.backgroundSize = '40px 40px';
+    }
+
+    // VIP Lounge
+    const vipLevel = upgradeLevels.vip_lounge || 0;
+    if (vipLevel > 0) {
+      vipLoungeEl.classList.remove('locked');
+      vipLoungeEl.classList.add('unlocked');
+    } else {
+      vipLoungeEl.classList.add('locked');
+      vipLoungeEl.classList.remove('unlocked');
+    }
+  }
+
+  function triggerScreenShake() {
+    gameWrap.classList.add('screen-shake');
+    setTimeout(() => gameWrap.classList.remove('screen-shake'), 400);
+  }
+
   // ==========================================
   // CUSTOMER MANAGEMENT
   // ==========================================
@@ -1380,7 +2072,7 @@
 
   function createCustomerElement(c) {
     const el = document.createElement('div');
-    el.className = 'customer' + (c.isVip ? ' vip' : '');
+    el.className = 'customer' + (c.isVip ? ' vip' : '') + ' type-' + c.type + ' walking';
     el.dataset.id = c.id;
     el.style.transform = `translateX(${c.x}px)`;
     el.style.top = c.y + 'px';
@@ -1388,6 +2080,7 @@
     const color = CUSTOMER_TYPES[c.type].color;
 
     el.innerHTML = `
+      <div class="customer-shadow"></div>
       <div class="patience-bar-bg">
         <div class="patience-bar" style="width:100%;background:var(--matcha)"></div>
       </div>
@@ -1451,6 +2144,7 @@
     }
 
     if (c.el) {
+      c.el.classList.remove('walking');
       c.el.style.animation = 'servingGlow 1s ease-in-out infinite';
     }
 
@@ -1483,7 +2177,7 @@
 
     // Coin animation
     spawnCoinAnimation(c);
-    spawnFloatingText(c, `+${totalCoins}`);
+    spawnFloatingText(c, `+$${totalCoins}`);
 
     // Sound
     playSound('serve');
@@ -1492,14 +2186,19 @@
       setTimeout(() => playSound('combo'), 200);
     }
 
-    // Customer exits left
+    // Customer exits left with happy bounce
     c.state = 'leaving_happy';
     c.targetX = -60;
 
     if (c.el) {
       c.el.style.animation = '';
+      c.el.classList.add('happy-bounce');
+      c.el.style.setProperty('--tx', c.x + 'px');
       const face = c.el.querySelector('.customer-face');
       if (face) face.textContent = '😊';
+      setTimeout(() => {
+        if (c.el) c.el.classList.remove('happy-bounce');
+      }, 500);
     }
 
     // Release serve slot
@@ -1536,6 +2235,8 @@
 
     if (c.el) {
       c.el.classList.add('angry');
+      c.el.classList.remove('walking');
+      c.el.style.setProperty('--tx', c.x + 'px');
       const order = c.el.querySelector('.customer-order');
       if (order) order.textContent = '😤';
       const face = c.el.querySelector('.customer-face');
@@ -1567,12 +2268,13 @@
     for (let i = 0; i < count; i++) {
       const coin = document.createElement('div');
       coin.className = 'coin-pop';
-      coin.textContent = '🪙';
-      coin.style.left = (c.x + 20 + (Math.random() - 0.5) * 20) + 'px';
-      coin.style.top = (c.y + 10) + 'px';
+      coin.style.left = (c.x + 20 + (Math.random() - 0.5) * 24) + 'px';
+      coin.style.top = (c.y + 10 + (Math.random() - 0.5) * 10) + 'px';
       coin.style.animationDelay = (i * 0.08) + 's';
+      coin.style.width = (8 + Math.random() * 6) + 'px';
+      coin.style.height = coin.style.width;
       queueArea.appendChild(coin);
-      setTimeout(() => coin.remove(), 700);
+      setTimeout(() => coin.remove(), 800);
     }
   }
 
@@ -1583,7 +2285,7 @@
     el.style.left = (c.x + 10) + 'px';
     el.style.top = (c.y - 5) + 'px';
     queueArea.appendChild(el);
-    setTimeout(() => el.remove(), 900);
+    setTimeout(() => el.remove(), 1000);
   }
 
   function updateComboDisplay() {
@@ -1591,6 +2293,17 @@
     hudCombo.textContent = `🔥 x${mult}`;
     hudCombo.classList.add('pulse');
     setTimeout(() => hudCombo.classList.remove('pulse'), 200);
+
+    // Combo escalation visual
+    hudCombo.classList.remove('combo-warm', 'combo-hot', 'combo-fire');
+    const multVal = parseFloat(mult);
+    if (multVal >= 2.5) {
+      hudCombo.classList.add('combo-fire');
+    } else if (multVal >= 2.0) {
+      hudCombo.classList.add('combo-hot');
+    } else if (multVal >= 1.5) {
+      hudCombo.classList.add('combo-warm');
+    }
   }
 
   // ==========================================
@@ -1608,9 +2321,22 @@
     autoStationsEl.innerHTML = '';
     const stations = getAutoServeStations();
     stations.forEach((s, i) => {
+      const isActive = autoServing[s.index] !== null;
       const div = document.createElement('div');
-      div.className = 'auto-station' + (autoServing[s.index] !== null ? ' active' : '');
-      div.textContent = '🤖';
+      div.className = 'auto-station' + (isActive ? ' active' : ' idle');
+
+      // Find drink being served
+      let drinkEmoji = '';
+      if (isActive) {
+        const c = customers.find(x => x.id === autoServing[s.index]);
+        if (c) drinkEmoji = DRINK_TYPES[c.order].emoji;
+      }
+
+      div.innerHTML = `
+        <div class="drink-label">${drinkEmoji}</div>
+        <span style="font-size:12px;margin-top:2px;">🤖</span>
+        <div class="station-arm"></div>
+      `;
       autoStationsEl.appendChild(div);
     });
   }
@@ -1661,6 +2387,9 @@
     hudCoins.textContent = formatCoins(Math.max(0, dayRevenue - dayPenalties));
     hudTimer.textContent = formatTime(dayTimer);
 
+    // Update wall clock
+    wallClock.textContent = formatTime(dayTimer);
+
     // Spawn timer
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
@@ -1679,6 +2408,7 @@
         rushTimer = 10000;
         rushBanner.classList.add('visible');
         playSound('rush');
+        triggerScreenShake();
       }
     }
     if (rushActive) {
@@ -1701,11 +2431,13 @@
         if (Math.abs(dx) < 2) {
           c.x = c.targetX;
           c.state = 'queued';
+          if (c.el) c.el.classList.remove('walking');
         } else {
           c.x += Math.sign(dx) * speed * (dt / 1000);
           if ((dx > 0 && c.x > c.targetX) || (dx < 0 && c.x < c.targetX)) {
             c.x = c.targetX;
             c.state = 'queued';
+            if (c.el) c.el.classList.remove('walking');
           }
         }
       }
@@ -1775,6 +2507,8 @@
       // Update position
       if (c.el) {
         c.el.style.transform = `translateX(${c.x}px)`;
+        // Keep --tx for shake/bounce animations
+        c.el.style.setProperty('--tx', c.x + 'px');
       }
     }
 
@@ -1849,6 +2583,7 @@
     hudTimer.textContent = '1:00';
     updateComboDisplay();
     updateAutoStationsUI();
+    updateShopEnvironment();
 
     playSound('dayStart');
 
@@ -1882,6 +2617,7 @@
 
     if (isNewBest) {
       playSound('newBest');
+      triggerScreenShake();
       submitScore(finalRevenue);
       bestScore = finalRevenue;
     }
@@ -1945,7 +2681,23 @@
 
   function renderShop() {
     const modal = document.getElementById('shopModal');
+
+    // Build preview of auto-serve machines
+    const stations = getAutoServeStations();
+    let machinesHtml = '';
+    for (let i = 0; i < stations.length; i++) {
+      machinesHtml += '<div class="shop-preview-machine"></div>';
+    }
+
+    const vipLevel = upgradeLevels.vip_lounge || 0;
+
     let html = `
+      <div class="shop-preview">
+        <div class="shop-preview-vip${vipLevel > 0 ? ' active' : ''}"></div>
+        <div class="shop-preview-machines">${machinesHtml}</div>
+        <div class="shop-preview-counter"></div>
+        <div class="shop-preview-label">Your Shop</div>
+      </div>
       <div class="shop-wallet">💰 Wallet: ${formatCoins(wallet)} coins</div>
     `;
 
@@ -1958,7 +2710,11 @@
 
       let cardClass = 'upgrade-card';
       if (maxed) cardClass += ' maxed';
-      if (locked) cardClass += ' locked';
+      else if (locked) cardClass += ' locked';
+      else if (canAfford) cardClass += ' affordable';
+      else cardClass += ' too-expensive';
+
+      const visibleTag = upgrade.visible ? '<div class="upgrade-visible-tag">Shows in shop!</div>' : '';
 
       html += `
         <div class="${cardClass}">
@@ -1967,8 +2723,9 @@
             <div class="upgrade-name">${upgrade.name}</div>
             <div class="upgrade-desc">${upgrade.desc}</div>
             <div class="upgrade-level">Lv ${level}/${upgrade.maxLevel}</div>
+            ${visibleTag}
           </div>
-          ${maxed ? '<span style="color:var(--matcha);font-weight:700;font-size:0.8rem;">MAX</span>' :
+          ${maxed ? '<span style="color:var(--gold);font-weight:700;font-size:0.8rem;border:1px solid var(--gold);padding:2px 8px;border-radius:6px;">MAX</span>' :
             locked ? '<span style="color:#999;font-size:0.7rem;">Requires ' + UPGRADES[upgrade.requires].name + '</span>' :
             `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}"
               ${canAfford ? '' : 'disabled'}
@@ -2109,6 +2866,9 @@
     customers.forEach(c => { if (c.el) c.el.remove(); });
     customers = [];
 
+    // Update shop environment visuals
+    updateShopEnvironment();
+
     const bestEl = document.getElementById('titleBest');
     bestEl.textContent = bestScore > 0 ? `Best Day: 💰 ${formatCoins(bestScore)}` : '';
 
@@ -2195,6 +2955,7 @@
   loadGame();
   updateSoundBtn();
   setupAuth();
+  updateShopEnvironment();
   showTitle();
   animFrameId = requestAnimationFrame(gameLoop);
   </script>
