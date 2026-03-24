@@ -2121,16 +2121,42 @@
     // Item catalog (loaded from constants, synced with backend)
     const VOIDBREAK_ITEMS = {
       ships: [
+        // Dart — classic fighter silhouette: pointed nose, swept wings, narrow tail
         { id: 'voidbreak_ship_dart', name: 'Dart', icon: '🚀', rarity: 'common', unlockMethod: 'free', coinCost: 0,
-          visualData: { points: [[0, -18], [12, 14], [-12, 14]], trailColor: '#00ffff', bulletColor: '#fff' }},
+          visualData: { points: [
+            [0, -20], [3, -14], [5, -8], [14, 4], [16, 8], [12, 10],
+            [5, 6], [4, 14], [2, 14], [2, 8], [-2, 8], [-2, 14], [-4, 14],
+            [-5, 6], [-12, 10], [-16, 8], [-14, 4], [-5, -8], [-3, -14]
+          ], trailColor: '#00ffff', bulletColor: '#fff' }},
+        // Blade — sleek interceptor: long fuselage, thin angled wings
         { id: 'voidbreak_ship_blade', name: 'Blade', icon: '⚔️', rarity: 'rare', unlockMethod: 'coins', coinCost: 400,
-          visualData: { points: [[0, -22], [8, 18], [-8, 18]], trailColor: '#ff8c00', bulletColor: '#ff8c00' }},
+          visualData: { points: [
+            [0, -22], [2, -16], [3, -6], [18, 6], [16, 10], [10, 10],
+            [3, 4], [3, 16], [1, 18], [-1, 18], [-3, 16], [-3, 4],
+            [-10, 10], [-16, 10], [-18, 6], [-3, -6], [-2, -16]
+          ], trailColor: '#ff8c00', bulletColor: '#ff8c00' }},
+        // Hexron — heavy cruiser: wide body, armored look, angular hull
         { id: 'voidbreak_ship_hexron', name: 'Hexron', icon: '⬡', rarity: 'rare', unlockMethod: 'coins', coinCost: 800,
-          visualData: { points: [[0, -16], [14, -8], [14, 8], [0, 16], [-14, 8], [-14, -8]], trailColor: '#b44aff', bulletColor: '#b44aff' }},
+          visualData: { points: [
+            [0, -18], [6, -16], [10, -10], [14, -4], [16, 4], [14, 10],
+            [8, 14], [4, 16], [2, 12], [-2, 12], [-4, 16], [-8, 14],
+            [-14, 10], [-16, 4], [-14, -4], [-10, -10], [-6, -16]
+          ], trailColor: '#b44aff', bulletColor: '#b44aff' }},
+        // Ghost — stealth ship: angular stealth bomber shape, dashed outline
         { id: 'voidbreak_ship_ghost', name: 'Ghost', icon: '👻', rarity: 'epic', unlockMethod: 'coins', coinCost: 1500,
-          visualData: { points: [[0, -16], [10, 10], [0, 6], [-10, 10]], dashed: true, trailColor: '#fff', bulletColor: '#fff' }},
+          visualData: { points: [
+            [0, -18], [4, -12], [8, -4], [20, 6], [18, 8], [6, 6],
+            [4, 10], [6, 16], [2, 12], [0, 14], [-2, 12], [-6, 16],
+            [-4, 10], [-6, 6], [-18, 8], [-20, 6], [-8, -4], [-4, -12]
+          ], dashed: true, trailColor: '#fff', bulletColor: '#fff' }},
+        // Nova — legendary flagship: ornate, multi-winged, imposing silhouette
         { id: 'voidbreak_ship_nova', name: 'Nova', icon: '⭐', rarity: 'legendary', unlockMethod: 'achievement', coinCost: 0,
-          visualData: { points: [[0, -20], [6, -6], [20, -6], [10, 4], [14, 20], [0, 10], [-14, 20], [-10, 4], [-20, -6], [-6, -6]], trailColor: '#ffd700', bulletColor: '#ffd700' }},
+          visualData: { points: [
+            [0, -22], [3, -16], [4, -10], [8, -6], [20, -2], [22, 4],
+            [16, 6], [10, 4], [8, 8], [12, 14], [8, 12], [4, 14],
+            [2, 10], [-2, 10], [-4, 14], [-8, 12], [-12, 14], [-8, 8],
+            [-10, 4], [-16, 6], [-22, 4], [-20, -2], [-8, -6], [-4, -10], [-3, -16]
+          ], trailColor: '#ffd700', bulletColor: '#ffd700' }},
       ],
       trails: [
         { id: 'voidbreak_trail_cyan', name: 'Cyan Burn', icon: '💠', rarity: 'common', unlockMethod: 'free', coinCost: 0,
