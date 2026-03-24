@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Tiny Tycoon | Weekly Arcade - Boba Tea Shop Simulator</title>
+
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
+  <!-- SEO -->
+  <meta name="description" content="Play Tiny Tycoon free online. Run a cozy boba tea shop in 60-second days — tap to serve customers, earn coins, upgrade your shop, and chase the highest single-day revenue on the leaderboard. No download required.">
+  <meta name="keywords" content="tiny tycoon, boba tea game, idle game, time management, arcade game, browser game, free game, shop simulator">
+  <link rel="canonical" href="https://weeklyarcade.games/games/tiny-tycoon/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Tiny Tycoon | Weekly Arcade - Boba Tea Shop Simulator">
+  <meta property="og:description" content="Run a cozy boba tea shop in 60-second days. Tap to serve, upgrade, and chase the leaderboard!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weeklyarcade.games/games/tiny-tycoon/">
+  <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+  <meta property="og:site_name" content="Weekly Arcade">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tiny Tycoon | Weekly Arcade">
+  <meta name="twitter:description" content="Run a cozy boba tea shop in 60-second days. Tap to serve, upgrade, and chase the leaderboard!">
+  <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#FFF8F0">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Tiny Tycoon",
+    "url": "https://weeklyarcade.games/games/tiny-tycoon/",
+    "description": "Run a cozy boba tea shop in 60-second days — tap to serve customers, earn coins, upgrade your shop, and chase the highest single-day revenue on the leaderboard.",
+    "genre": ["Idle", "Time Management", "Simulation", "Arcade"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "gamePlatform": "Web Browser",
+    "inLanguage": "en",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Weekly Arcade",
+      "url": "https://weeklyarcade.games/"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weeklyarcade.games/" },
+      { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://weeklyarcade.games/#new" },
+      { "@type": "ListItem", "position": 3, "name": "Tiny Tycoon", "item": "https://weeklyarcade.games/games/tiny-tycoon/" }
+    ]
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { scrollbar-width: none; -ms-overflow-style: none; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
+    :root {
+      --cream: #FFF8F0;
+      --taupe: #D4A574;
+      --pink: #F2B5B5;
+      --brown: #5C3D2E;
+      --matcha: #7DB87D;
+      --taro: #9B7DB8;
+      --sky: #87CEEB;
+      --coral: #E8736A;
+      --gold: #F5C542;
+      --white: #FEFEFE;
+      --wood: #C4A882;
+      --wall: #F0E6D6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--cream);
+      color: var(--brown);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    .header {
+      background: var(--brown);
+      padding: 0 0.75rem;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-left: max(0.75rem, env(safe-area-inset-left));
+      padding-right: max(0.75rem, env(safe-area-inset-right));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 500;
+      height: calc(44px + env(safe-area-inset-top, 0px));
+    }
+
+    .back-btn {
+      color: var(--cream);
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.6rem;
+      min-height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.2); }
+
+    .game-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .header-right {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .day-badge {
+      background: rgba(255,255,255,0.15);
+      color: var(--cream);
+      padding: 0.2rem 0.5rem;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .icon-btn {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: var(--cream);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.3rem;
+      border-radius: 8px;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.2); }
+    .icon-btn.muted { opacity: 0.5; }
+
+    .auth-btn {
+      background: var(--pink);
+      color: var(--brown);
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 28px;
+    }
+    .auth-btn:hover { background: #e9a0a0; }
+
+    /* HUD */
+    .hud {
+      position: fixed;
+      top: calc(44px + env(safe-area-inset-top, 0px));
+      left: 0; right: 0;
+      height: 36px;
+      background: rgba(92, 61, 46, 0.88);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 400;
+      padding: 0 1rem;
+    }
+
+    .hud-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .hud-timer {
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      color: var(--sky);
+    }
+
+    .hud-combo {
+      color: var(--gold);
+      transition: transform 0.15s;
+    }
+    .hud-combo.pulse {
+      transform: scale(1.3);
+    }
+
+    /* Game container */
+    .game-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+      height: 100dvh;
+      overflow: hidden;
+      padding-top: calc(80px + env(safe-area-inset-top, 0px));
+    }
+
+    .game-area {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Shop background */
+    .shop-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .shop-wall {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 45%;
+      background: var(--wall);
+    }
+
+    .shop-floor {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 55%;
+      background: var(--wood);
+    }
+
+    /* Shelves */
+    .shelf {
+      position: absolute;
+      height: 6px;
+      background: var(--taupe);
+      border-radius: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .shelf-1 { top: 10%; left: 10%; width: 25%; }
+    .shelf-2 { top: 10%; right: 10%; width: 20%; }
+    .shelf-3 { top: 25%; left: 15%; width: 30%; }
+
+    .shelf-item {
+      position: absolute;
+      bottom: 6px;
+      font-size: 14px;
+    }
+
+    /* Menu board */
+    .menu-board {
+      position: absolute;
+      top: 6%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 45px;
+      background: var(--brown);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--cream);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .menu-board::before {
+      content: '🧋 MENU';
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    /* Counter */
+    .counter {
+      position: absolute;
+      top: 45%;
+      left: 10%;
+      right: 10%;
+      height: 10px;
+      background: linear-gradient(to bottom, #c9955f, var(--taupe));
+      border-radius: 5px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    /* Auto-serve stations */
+    .auto-stations {
+      position: absolute;
+      top: 33%;
+      left: 12%;
+      display: flex;
+      gap: 12px;
+      z-index: 15;
+    }
+
+    .auto-station {
+      width: 36px;
+      height: 36px;
+      background: var(--white);
+      border: 2px solid var(--taupe);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .auto-station.active {
+      border-color: var(--matcha);
+      animation: autoPulse 1.5s ease-in-out infinite;
+    }
+    .auto-station .progress-ring {
+      position: absolute;
+      inset: -3px;
+      border-radius: 10px;
+      border: 3px solid transparent;
+    }
+
+    /* Customer queue area */
+    .queue-area {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+    }
+
+    /* Customer */
+    .customer {
+      position: absolute;
+      width: 48px;
+      height: 72px;
+      cursor: pointer;
+      will-change: transform;
+      transition: opacity 0.3s;
+      z-index: 25;
+    }
+
+    .customer-body {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 32px;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+    }
+
+    .customer-head {
+      position: absolute;
+      bottom: 38px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+
+    .customer-legs {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+    }
+    .customer-leg {
+      width: 6px;
+      height: 10px;
+      border-radius: 0 0 3px 3px;
+    }
+
+    .customer-order {
+      position: absolute;
+      bottom: 58px;
+      right: 0;
+      font-size: 16px;
+      pointer-events: none;
+      animation: floatOrder 2s ease-in-out infinite;
+    }
+
+    .customer-crown {
+      position: absolute;
+      bottom: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .patience-bar-bg {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .patience-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+
+    .serve-ring {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .serve-ring.active {
+      opacity: 1;
+    }
+
+    .customer.vip .customer-body,
+    .customer.vip .customer-head {
+      box-shadow: 0 0 10px var(--gold);
+      animation: vipGlow 1.5s ease-in-out infinite;
+    }
+
+    .customer.angry .customer-body { background-color: var(--coral) !important; }
+    .customer.angry .customer-head { background-color: var(--coral) !important; }
+
+    .customer.impatient .customer-body {
+      animation: impatientPulse 0.5s ease-in-out infinite;
+    }
+
+    .customer-face {
+      position: absolute;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      pointer-events: none;
+    }
+
+    /* Coin animation */
+    .coin-pop {
+      position: absolute;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 100;
+      animation: coinFloat 0.6s ease-out forwards;
+    }
+
+    .floating-text {
+      position: absolute;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--gold);
+      pointer-events: none;
+      z-index: 100;
+      animation: textFloat 0.8s ease-out forwards;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* Rush hour banner */
+    .rush-banner {
+      position: fixed;
+      top: calc(80px + env(safe-area-inset-top, 0px) + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--coral), #ff8a65);
+      color: white;
+      padding: 0.4rem 1.2rem;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      z-index: 300;
+      animation: rushPulse 0.5s ease-in-out infinite alternate;
+      box-shadow: 0 2px 10px rgba(232,115,106,0.5);
+      display: none;
+    }
+    .rush-banner.visible { display: block; }
+
+    /* Overlays */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(92, 61, 46, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    }
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 380px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .modal h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--brown);
+    }
+
+    .modal-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+    }
+    .modal-row:last-of-type { border-bottom: none; }
+
+    .new-best {
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin: 0.8rem 0;
+      animation: bestPulse 0.8s ease-in-out infinite alternate;
+    }
+
+    .btn {
+      background: var(--matcha);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin: 0.5rem 0.3rem;
+      min-height: 44px;
+      min-width: 44px;
+      transition: transform 0.1s, background 0.2s;
+    }
+    .btn:hover { transform: scale(1.03); }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-secondary {
+      background: var(--taupe);
+    }
+
+    .btn-small {
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .btn-danger {
+      background: var(--coral);
+    }
+
+    /* Title screen */
+    .title-logo {
+      font-size: 2.5rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .title-name {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--brown);
+      margin-bottom: 0.5rem;
+    }
+
+    .title-tagline {
+      font-size: 0.9rem;
+      color: #8a7060;
+      margin-bottom: 1.5rem;
+    }
+
+    .title-best {
+      font-size: 0.85rem;
+      color: var(--taupe);
+      margin-bottom: 1rem;
+    }
+
+    /* Upgrade shop */
+    .shop-modal {
+      text-align: left;
+      max-height: 90vh;
+    }
+
+    .shop-wallet {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: rgba(245, 197, 66, 0.1);
+      border-radius: 10px;
+    }
+
+    .upgrade-card {
+      background: var(--cream);
+      border: 2px solid #eee;
+      border-radius: 12px;
+      padding: 0.75rem;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .upgrade-card.maxed { border-color: var(--matcha); opacity: 0.7; }
+    .upgrade-card.locked { opacity: 0.5; }
+
+    .upgrade-icon {
+      font-size: 1.5rem;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .upgrade-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upgrade-name {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--brown);
+    }
+
+    .upgrade-desc {
+      font-size: 0.7rem;
+      color: #8a7060;
+      margin: 0.15rem 0;
+    }
+
+    .upgrade-level {
+      font-size: 0.7rem;
+      color: var(--taro);
+      font-weight: 600;
+    }
+
+    .upgrade-buy-btn {
+      background: var(--matcha);
+      color: white;
+      border: none;
+      padding: 0.35rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: 36px;
+      min-width: 44px;
+    }
+    .upgrade-buy-btn:disabled {
+      background: #ccc;
+      cursor: default;
+    }
+    .upgrade-buy-btn.affordable:hover { background: #6aa86a; }
+
+    .shop-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* Achievement toast */
+    .achievement-toast {
+      position: fixed;
+      top: calc(90px + env(safe-area-inset-top, 0px));
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: linear-gradient(135deg, var(--taro), #b09dd4);
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      z-index: 700;
+      transition: transform 0.4s ease-out;
+      box-shadow: 0 4px 15px rgba(155, 125, 184, 0.4);
+      text-align: center;
+      max-width: 300px;
+    }
+    .achievement-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Pause overlay */
+    .pause-content {
+      text-align: center;
+    }
+
+    /* Animations */
+    @keyframes floatOrder {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    @keyframes coinFloat {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-40px) scale(0.5); }
+    }
+
+    @keyframes textFloat {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-30px) scale(1.2); }
+    }
+
+    @keyframes vipGlow {
+      0%, 100% { box-shadow: 0 0 6px var(--gold); }
+      50% { box-shadow: 0 0 14px var(--gold); }
+    }
+
+    @keyframes impatientPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.04); }
+    }
+
+    @keyframes rushPulse {
+      0% { transform: translateX(-50%) scale(1); }
+      100% { transform: translateX(-50%) scale(1.05); }
+    }
+
+    @keyframes bestPulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
+
+    @keyframes autoPulse {
+      0%, 100% { box-shadow: 0 0 4px rgba(125, 184, 125, 0.3); }
+      50% { box-shadow: 0 0 12px rgba(125, 184, 125, 0.6); }
+    }
+
+    @keyframes servingGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(125, 184, 125, 0.4); }
+      50% { box-shadow: 0 0 16px rgba(125, 184, 125, 0.8); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <a href="/" class="back-btn" aria-label="Back to home">&larr;</a>
+    <span class="game-title">Tiny Tycoon</span>
+    <div class="header-right">
+      <span class="day-badge" id="dayBadge">Day 1</span>
+      <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">🔊</button>
+      <button class="auth-btn" id="authBtn">Sign In</button>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud" id="hud" style="display:none;">
+    <div class="hud-item">💰 <span id="hudCoins">0</span></div>
+    <div class="hud-item"><span class="hud-timer" id="hudTimer">1:00</span></div>
+    <div class="hud-item hud-combo" id="hudCombo">🔥 x1.0</div>
+  </div>
+
+  <!-- Rush Hour Banner -->
+  <div class="rush-banner" id="rushBanner">⚡ RUSH HOUR! ⚡</div>
+
+  <!-- Game Area -->
+  <div class="game-wrap" id="gameWrap">
+    <div class="game-area" id="gameArea">
+      <!-- Shop background -->
+      <div class="shop-bg">
+        <div class="shop-wall"></div>
+        <div class="shop-floor"></div>
+        <div class="shelf shelf-1">
+          <span class="shelf-item" style="left:4px;">🍵</span>
+          <span class="shelf-item" style="left:20px;">🧋</span>
+          <span class="shelf-item" style="left:36px;">☕</span>
+        </div>
+        <div class="shelf shelf-2">
+          <span class="shelf-item" style="left:4px;">🥤</span>
+          <span class="shelf-item" style="left:20px;">🍓</span>
+        </div>
+        <div class="shelf shelf-3">
+          <span class="shelf-item" style="left:4px;">🫧</span>
+          <span class="shelf-item" style="left:24px;">🧋</span>
+          <span class="shelf-item" style="left:44px;">🍵</span>
+        </div>
+        <div class="menu-board"></div>
+      </div>
+
+      <!-- Auto-serve stations -->
+      <div class="auto-stations" id="autoStations"></div>
+
+      <!-- Counter -->
+      <div class="counter"></div>
+
+      <!-- Queue area for customers -->
+      <div class="queue-area" id="queueArea"></div>
+    </div>
+  </div>
+
+  <!-- Title Overlay -->
+  <div class="overlay visible" id="titleOverlay">
+    <div class="modal">
+      <div class="title-logo">🧋</div>
+      <div class="title-name">Tiny Tycoon</div>
+      <div class="title-tagline">Run your own cozy boba shop!</div>
+      <div class="title-best" id="titleBest"></div>
+      <div id="titleButtons"></div>
+    </div>
+  </div>
+
+  <!-- Day End Overlay -->
+  <div class="overlay" id="dayEndOverlay">
+    <div class="modal" id="dayEndModal"></div>
+  </div>
+
+  <!-- Upgrade Shop Overlay -->
+  <div class="overlay" id="shopOverlay">
+    <div class="modal shop-modal" id="shopModal"></div>
+  </div>
+
+  <!-- Pause Overlay -->
+  <div class="overlay" id="pauseOverlay">
+    <div class="modal pause-content">
+      <h2>⏸ Paused</h2>
+      <br>
+      <button class="btn" onclick="resumeGame()">Resume</button>
+      <button class="btn btn-danger" onclick="quitToMenu()">Quit to Menu</button>
+    </div>
+  </div>
+
+  <!-- Achievement Toast -->
+  <div class="achievement-toast" id="achievementToast"></div>
+
+  <script>
+  // ==========================================
+  // GAME CONSTANTS
+  // ==========================================
+  const DRINK_TYPES = {
+    basic_tea:    { emoji: '🍵', name: 'Basic Tea',         baseCoins: 5,  serveTime: 800,  unlockDay: 1 },
+    boba_milk:    { emoji: '🧋', name: 'Boba Milk Tea',     baseCoins: 10, serveTime: 1200, unlockDay: 1 },
+    iced_coffee:  { emoji: '☕', name: 'Iced Coffee',        baseCoins: 8,  serveTime: 1000, unlockDay: 3 },
+    smoothie:     { emoji: '🥤', name: 'Fruit Smoothie',    baseCoins: 15, serveTime: 1500, unlockDay: 5 },
+    strawberry:   { emoji: '🍓', name: 'Strawberry Special', baseCoins: 20, serveTime: 2000, unlockDay: 8 },
+    sparkling:    { emoji: '🫧', name: 'Sparkling Boba',    baseCoins: 30, serveTime: 2500, unlockDay: 10 }
+  };
+
+  const CUSTOMER_TYPES = {
+    regular:    { color: '#8B9DC3', patienceMod: 1.0, orderPool: ['basic_tea', 'boba_milk'],             earlyWeight: 60, lateWeight: 25 },
+    student:    { color: '#FFB347', patienceMod: 1.2, orderPool: ['basic_tea', 'iced_coffee'],           earlyWeight: 30, lateWeight: 15 },
+    business:   { color: '#708090', patienceMod: 0.7, orderPool: ['iced_coffee', 'boba_milk'],           earlyWeight: 10, lateWeight: 20 },
+    foodie:     { color: '#DDA0DD', patienceMod: 0.9, orderPool: ['smoothie', 'strawberry'],             earlyWeight: 0,  lateWeight: 25 },
+    influencer: { color: '#FF69B4', patienceMod: 0.6, orderPool: ['strawberry', 'sparkling'],            earlyWeight: 0,  lateWeight: 10 },
+    vip:        { color: '#FFD700', patienceMod: 1.0, orderPool: Object.keys(DRINK_TYPES),              earlyWeight: 0,  lateWeight: 0  }
+  };
+
+  const UPGRADES = {
+    speed_boost:  { name: 'Speed Boost',         icon: '⚡', desc: 'Reduce serve time by 5%', maxLevel: 10, costFn: (l) => 80 + (l * 40),  requires: null },
+    patience_plus:{ name: 'Patience Plus',        icon: '😊', desc: 'Customers wait 10% longer', maxLevel: 8,  costFn: (l) => 100 + (l * 50), requires: null },
+    tip_jar:      { name: 'Tip Jar',              icon: '🫙', desc: 'Higher speed bonus tips (+1/lv)', maxLevel: 8,  costFn: (l) => 60 + (l * 30),  requires: null },
+    premium_menu: { name: 'Premium Menu',         icon: '📋', desc: 'Boost drink value (+2 coins/lv)', maxLevel: 5,  costFn: (l) => 150 + (l * 100),requires: null },
+    queue_expand: { name: 'Bigger Queue',         icon: '📏', desc: 'Max queue +2 per level',   maxLevel: 3,  costFn: (l) => 200 + (l * 150),requires: null },
+    combo_keeper: { name: 'Combo Keeper',         icon: '🛡️', desc: 'Forgive angry for combo',  maxLevel: 3,  costFn: (l) => 250 + (l * 200),requires: null },
+    auto_serve_1: { name: 'Auto-Serve #1',        icon: '🤖', desc: 'Auto-serves basic drinks', maxLevel: 1,  costFn: () => 500,              requires: null },
+    auto_serve_2: { name: 'Auto-Serve #2',        icon: '🤖', desc: 'Serves drinks up to 20c',  maxLevel: 1,  costFn: () => 1500,             requires: 'auto_serve_1' },
+    auto_serve_3: { name: 'Auto-Serve #3',        icon: '🤖', desc: 'Serves all drinks',        maxLevel: 1,  costFn: () => 4000,             requires: 'auto_serve_2' },
+    vip_lounge:   { name: 'VIP Lounge',           icon: '👑', desc: 'VIP customers (2x coins)', maxLevel: 3,  costFn: (l) => 300 + (l * 250),requires: null }
+  };
+
+  const ACHIEVEMENTS = {
+    tt_first_day:     { name: 'Open for Business', desc: 'Complete your first day',           xp: 10 },
+    tt_hundred_club:  { name: 'Hundred Club',      desc: 'Earn 100+ coins in a day',          xp: 25 },
+    tt_five_hundred:  { name: 'High Roller',       desc: 'Earn 500+ coins in a day',          xp: 50 },
+    tt_thousand:      { name: 'Boba Billionaire',  desc: 'Earn 1,000+ coins in a day',        xp: 100 },
+    tt_perfect_day:   { name: 'Perfect Day',       desc: 'Zero angry customers (10+ served)', xp: 50 },
+    tt_combo_5:       { name: 'Streak Starter',    desc: 'Reach 5x combo streak',             xp: 25 },
+    tt_combo_15:      { name: 'Combo King',        desc: 'Reach 15x combo streak',            xp: 75 },
+    tt_speed_demon:   { name: 'Speed Demon',       desc: 'Serve 30+ customers in a day',      xp: 50 },
+    tt_upgrade_first: { name: 'Investor',          desc: 'Purchase your first upgrade',       xp: 10 },
+    tt_max_upgrade:   { name: 'Fully Loaded',      desc: 'Max out any upgrade',               xp: 75 },
+    tt_day_10:        { name: 'Veteran Barista',   desc: 'Reach Day 10',                      xp: 50 },
+    tt_rush_survivor: { name: 'Rush Survivor',     desc: 'Survive Rush Hour perfectly',       xp: 100 }
+  };
+
+  const SPAWN_TABLE = [
+    { minDay: 1,  interval: 3000, maxQueue: 4 },
+    { minDay: 2,  interval: 2700, maxQueue: 4 },
+    { minDay: 3,  interval: 2400, maxQueue: 5 },
+    { minDay: 4,  interval: 2200, maxQueue: 5 },
+    { minDay: 5,  interval: 2000, maxQueue: 6 },
+    { minDay: 6,  interval: 1800, maxQueue: 6 },
+    { minDay: 8,  interval: 1600, maxQueue: 7 },
+    { minDay: 10, interval: 1400, maxQueue: 8 },
+    { minDay: 15, interval: 1200, maxQueue: 8 },
+    { minDay: 20, interval: 1000, maxQueue: 8 }
+  ];
+
+  const PATIENCE_TABLE = [
+    { minDay: 1,  patience: 12000 },
+    { minDay: 3,  patience: 10000 },
+    { minDay: 5,  patience: 8000 },
+    { minDay: 7,  patience: 7000 },
+    { minDay: 10, patience: 6000 },
+    { minDay: 15, patience: 5000 },
+    { minDay: 20, patience: 4000 }
+  ];
+
+  const DAY_DURATION = 60000; // 60 seconds
+
+  // ==========================================
+  // GAME STATE
+  // ==========================================
+  let gameState = 'TITLE';
+  let wallet = 0;
+  let bestScore = 0;
+  let currentDay = 1;
+  let upgradeLevels = {};
+  let unlockedAchievements = new Set();
+  let masterVolume = 0.5;
+  let isMuted = false;
+
+  // Per-day state
+  let dayTimer = 0;
+  let dayRevenue = 0;
+  let dayPenalties = 0;
+  let customersServed = 0;
+  let customersLost = 0;
+  let comboStreak = 0;
+  let peakCombo = 0;
+  let comboForgives = 0;
+  let customers = [];
+  let spawnTimer = 0;
+  let manualServing = null;
+  let autoServing = [null, null, null];
+  let rushActive = false;
+  let rushTimer = 0;
+  let rushStartTime = 0;
+  let rushScheduled = false;
+  let rushCustomerIds = new Set();
+  let rushLostAny = false;
+  let rushHadEvent = false;
+  let lastFrameTime = 0;
+  let animFrameId = null;
+  let customerIdCounter = 0;
+  let coinAnimations = [];
+
+  // Auth
+  let currentUser = null;
+
+  // Audio
+  let audioCtx = null;
+  let audioInitialized = false;
+
+  // DOM refs
+  const hudEl = document.getElementById('hud');
+  const hudCoins = document.getElementById('hudCoins');
+  const hudTimer = document.getElementById('hudTimer');
+  const hudCombo = document.getElementById('hudCombo');
+  const dayBadge = document.getElementById('dayBadge');
+  const rushBanner = document.getElementById('rushBanner');
+  const queueArea = document.getElementById('queueArea');
+  const autoStationsEl = document.getElementById('autoStations');
+  const gameArea = document.getElementById('gameArea');
+
+  // ==========================================
+  // SAVE / LOAD
+  // ==========================================
+  function saveGame() {
+    localStorage.setItem('tt_wallet', wallet.toString());
+    localStorage.setItem('tt_best_score', bestScore.toString());
+    localStorage.setItem('tt_current_day', currentDay.toString());
+    localStorage.setItem('tt_upgrades', JSON.stringify(upgradeLevels));
+    localStorage.setItem('tt_achievements', JSON.stringify([...unlockedAchievements]));
+  }
+
+  function loadGame() {
+    wallet = parseInt(localStorage.getItem('tt_wallet') || '0');
+    bestScore = parseInt(localStorage.getItem('tt_best_score') || '0');
+    currentDay = parseInt(localStorage.getItem('tt_current_day') || '1');
+    upgradeLevels = JSON.parse(localStorage.getItem('tt_upgrades') || '{}');
+    unlockedAchievements = new Set(JSON.parse(localStorage.getItem('tt_achievements') || '[]'));
+    masterVolume = parseFloat(localStorage.getItem('tt_volume') || '0.5');
+    isMuted = localStorage.getItem('tt_muted') === 'true';
+  }
+
+  function resetGame() {
+    ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements'].forEach(k => localStorage.removeItem(k));
+    loadGame();
+  }
+
+  // ==========================================
+  // SOUND ENGINE
+  // ==========================================
+  function initAudio() {
+    if (audioInitialized) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioInitialized = true;
+    } catch(e) { console.warn('Audio init failed', e); }
+  }
+
+  function playSound(type) {
+    if (!audioCtx || isMuted) return;
+    const vol = masterVolume;
+    const now = audioCtx.currentTime;
+
+    try {
+      switch(type) {
+        case 'tap': {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'sine'; o.frequency.value = 800;
+          g.gain.setValueAtTime(vol * 0.3, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          o.connect(g).connect(audioCtx.destination);
+          o.start(now); o.stop(now + 0.05);
+          break;
+        }
+        case 'serve': {
+          const notes = [523, 659, 784]; // C5, E5, G5
+          notes.forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'triangle'; o.frequency.value = f;
+            g.gain.setValueAtTime(vol * 0.2, now + i * 0.04);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.08);
+            o.connect(g).connect(audioCtx.destination);
+            o.start(now + i * 0.04); o.stop(now + i * 0.04 + 0.08);
+          });
+          break;
+        }
+        case 'coin': {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'sine'; o.frequency.value = 2000;
+          o.frequency.setValueAtTime(2000, now);
+          o.frequency.linearRampToValueAtTime(2200, now + 0.05);
+          o.frequency.linearRampToValueAtTime(1800, now + 0.15);
+          g.gain.setValueAtTime(vol * 0.15, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          o.connect(g).connect(audioCtx.destination);
+          o.start(now); o.stop(now + 0.15);
+          break;
+        }
+        case 'combo': {
+          const bufferSize = audioCtx.sampleRate * 0.2;
+          const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+          const src = audioCtx.createBufferSource();
+          src.buffer = buffer;
+          const bp = audioCtx.createBiquadFilter();
+          bp.type = 'bandpass'; bp.Q.value = 5;
+          bp.frequency.setValueAtTime(400, now);
+          bp.frequency.linearRampToValueAtTime(1200, now + 0.2);
+          const g = audioCtx.createGain();
+          g.gain.setValueAtTime(vol * 0.1, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          src.connect(bp).connect(g).connect(audioCtx.destination);
+          src.start(now); src.stop(now + 0.2);
+          break;
+        }
+        case 'angry': {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'sawtooth'; o.frequency.value = 150;
+          o.frequency.linearRampToValueAtTime(100, now + 0.2);
+          g.gain.setValueAtTime(vol * 0.15, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          o.connect(g).connect(audioCtx.destination);
+          o.start(now); o.stop(now + 0.2);
+          break;
+        }
+        case 'rush': {
+          [440, 659].forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'square'; o.frequency.value = f;
+            g.gain.setValueAtTime(vol * 0.15, now + i * 0.1);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.1);
+            o.connect(g).connect(audioCtx.destination);
+            o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.1);
+          });
+          break;
+        }
+        case 'dayStart': {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          const delay = audioCtx.createDelay();
+          const fb = audioCtx.createGain();
+          delay.delayTime.value = 0.15;
+          fb.gain.value = 0.3;
+          o.type = 'sine'; o.frequency.value = 1000;
+          g.gain.setValueAtTime(vol * 0.25, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+          o.connect(g).connect(audioCtx.destination);
+          g.connect(delay).connect(fb).connect(delay);
+          delay.connect(audioCtx.destination);
+          o.start(now); o.stop(now + 0.5);
+          break;
+        }
+        case 'dayEnd': {
+          [392, 330, 262].forEach((f, i) => { // G4, E4, C4
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'triangle'; o.frequency.value = f;
+            g.gain.setValueAtTime(vol * 0.2, now + i * 0.1);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.15);
+            o.connect(g).connect(audioCtx.destination);
+            o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.15);
+          });
+          break;
+        }
+        case 'upgrade': {
+          // Noise burst
+          const bufLen = audioCtx.sampleRate * 0.05;
+          const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < bufLen; i++) d[i] = Math.random() * 2 - 1;
+          const ns = audioCtx.createBufferSource(); ns.buffer = buf;
+          const ng = audioCtx.createGain();
+          ng.gain.setValueAtTime(vol * 0.1, now);
+          ng.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          ns.connect(ng).connect(audioCtx.destination);
+          ns.start(now); ns.stop(now + 0.05);
+          // Ping
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'sine'; o.frequency.value = 1500;
+          g.gain.setValueAtTime(vol * 0.2, now + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          o.connect(g).connect(audioCtx.destination);
+          o.start(now + 0.03); o.stop(now + 0.2);
+          break;
+        }
+        case 'newBest': {
+          [523, 587, 659, 698, 784].forEach((f, i) => { // C5-G5
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'triangle'; o.frequency.value = f;
+            g.gain.setValueAtTime(vol * 0.2, now + i * 0.08);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.15);
+            o.connect(g).connect(audioCtx.destination);
+            o.start(now + i * 0.08); o.stop(now + i * 0.08 + 0.15);
+          });
+          break;
+        }
+      }
+    } catch(e) { /* audio error, ignore */ }
+  }
+
+  // ==========================================
+  // AUTH
+  // ==========================================
+  function setupAuth() {
+    const checkAuth = setInterval(() => {
+      if (window.authManager?.isInitialized) {
+        clearInterval(checkAuth);
+        window.authManager.onAuthStateChanged(user => {
+          currentUser = user;
+          const authBtn = document.getElementById('authBtn');
+          if (user) {
+            authBtn.textContent = user.displayName?.split(' ')[0] || 'Player';
+            authBtn.onclick = () => window.location.href = '/profile/';
+          } else {
+            authBtn.textContent = 'Sign In';
+            authBtn.onclick = () => window.authManager.signInWithGoogle();
+          }
+        });
+      }
+    }, 100);
+  }
+
+  // ==========================================
+  // UTILITY HELPERS
+  // ==========================================
+  function getSpawnConfig(day) {
+    let config = SPAWN_TABLE[0];
+    for (const row of SPAWN_TABLE) {
+      if (day >= row.minDay) config = row;
+    }
+    const queueBonus = (upgradeLevels.queue_expand || 0) * 2;
+    return { interval: config.interval, maxQueue: config.maxQueue + queueBonus };
+  }
+
+  function getBasePatience(day) {
+    let p = PATIENCE_TABLE[0].patience;
+    for (const row of PATIENCE_TABLE) {
+      if (day >= row.minDay) p = row.patience;
+    }
+    const patienceBonus = 1 + (upgradeLevels.patience_plus || 0) * 0.10;
+    return p * patienceBonus;
+  }
+
+  function getServeTime(drinkKey) {
+    const base = DRINK_TYPES[drinkKey].serveTime;
+    const level = upgradeLevels.speed_boost || 0;
+    return base * Math.pow(0.95, level);
+  }
+
+  function getAutoServeTime(drinkKey) {
+    // auto_serve_3 is 125%, others 150% of manual
+    const manual = getServeTime(drinkKey);
+    return manual * 1.5; // simplified; auto_serve_3 check below
+  }
+
+  function getAutoServeTimeForStation(stationIndex, drinkKey) {
+    const manual = getServeTime(drinkKey);
+    if (stationIndex === 2) return manual * 1.25; // auto_serve_3
+    return manual * 1.5;
+  }
+
+  function getDrinkCoins(drinkKey) {
+    const base = DRINK_TYPES[drinkKey].baseCoins;
+    const menuBonus = (upgradeLevels.premium_menu || 0) * 2;
+    return base + menuBonus;
+  }
+
+  function getAvailableDrinks(day) {
+    const menuLevel = upgradeLevels.premium_menu || 0;
+    const effectiveDay = day + menuLevel;
+    return Object.entries(DRINK_TYPES).filter(([k, v]) => effectiveDay >= v.unlockDay).map(([k]) => k);
+  }
+
+  function getCustomerTypeWeights(day) {
+    const t = Math.min(1, (day - 1) / 9); // 0 at day1, 1 at day10+
+    const weights = {};
+    const available = getAvailableDrinks(day);
+
+    for (const [type, config] of Object.entries(CUSTOMER_TYPES)) {
+      if (type === 'vip') continue;
+      // Check if this type's orders are available
+      const hasOrders = config.orderPool.some(d => available.includes(d));
+      if (!hasOrders) continue;
+      const w = config.earlyWeight * (1 - t) + config.lateWeight * t;
+      if (w > 0) weights[type] = w;
+    }
+    return weights;
+  }
+
+  function weightedRandom(weights) {
+    const entries = Object.entries(weights);
+    const total = entries.reduce((s, [, w]) => s + w, 0);
+    let r = Math.random() * total;
+    for (const [key, w] of entries) {
+      r -= w;
+      if (r <= 0) return key;
+    }
+    return entries[entries.length - 1][0];
+  }
+
+  function pickOrder(customerType, day) {
+    const available = getAvailableDrinks(day);
+    const pool = CUSTOMER_TYPES[customerType].orderPool.filter(d => available.includes(d));
+    if (pool.length === 0) return available[Math.floor(Math.random() * available.length)];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function formatTime(ms) {
+    const secs = Math.max(0, Math.ceil(ms / 1000));
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function formatCoins(n) {
+    return n.toLocaleString();
+  }
+
+  // ==========================================
+  // CUSTOMER MANAGEMENT
+  // ==========================================
+  function createCustomer() {
+    const config = getSpawnConfig(currentDay);
+    const queuedCount = customers.filter(c => c.state === 'queued' || c.state === 'walking_to_queue').length;
+    if (queuedCount >= config.maxQueue) return;
+
+    const vipLevel = upgradeLevels.vip_lounge || 0;
+    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05) : 0; // 10%, 15%, 20%
+    let isVip = Math.random() < vipChance;
+
+    let type, order;
+    if (isVip) {
+      type = 'vip';
+      const available = getAvailableDrinks(currentDay);
+      order = available[Math.floor(Math.random() * available.length)];
+    } else {
+      const weights = getCustomerTypeWeights(currentDay);
+      type = weightedRandom(weights);
+      order = pickOrder(type, currentDay);
+    }
+
+    const basePatience = getBasePatience(currentDay);
+    const patienceMod = CUSTOMER_TYPES[type].patienceMod;
+    const patience = basePatience * patienceMod * (0.9 + Math.random() * 0.2);
+
+    const areaWidth = queueArea.offsetWidth || 360;
+    const queueX = getNextQueueX();
+
+    const customer = {
+      id: customerIdCounter++,
+      type,
+      order,
+      isVip,
+      maxPatience: patience,
+      patience,
+      state: 'walking_to_queue',
+      x: areaWidth + 20,
+      targetX: queueX,
+      y: 30,
+      serveProgress: 0,
+      serveTime: 0,
+      el: null
+    };
+
+    customers.push(customer);
+    createCustomerElement(customer);
+
+    if (rushActive) {
+      rushCustomerIds.add(customer.id);
+    }
+  }
+
+  function getNextQueueX() {
+    const areaWidth = queueArea.offsetWidth || 360;
+    const queued = customers.filter(c => c.state === 'queued' || c.state === 'walking_to_queue');
+    const baseX = 40;
+    const spacing = 50;
+    return baseX + queued.length * spacing;
+  }
+
+  function createCustomerElement(c) {
+    const el = document.createElement('div');
+    el.className = 'customer' + (c.isVip ? ' vip' : '');
+    el.dataset.id = c.id;
+    el.style.transform = `translateX(${c.x}px)`;
+    el.style.top = c.y + 'px';
+
+    const color = CUSTOMER_TYPES[c.type].color;
+
+    el.innerHTML = `
+      <div class="patience-bar-bg">
+        <div class="patience-bar" style="width:100%;background:var(--matcha)"></div>
+      </div>
+      ${c.isVip ? '<div class="customer-crown">👑</div>' : ''}
+      <div class="customer-order">${DRINK_TYPES[c.order].emoji}</div>
+      <div class="customer-face"></div>
+      <div class="customer-head" style="background:${color}"></div>
+      <div class="customer-body" style="background:${color}"></div>
+      <div class="customer-legs">
+        <div class="customer-leg" style="background:${color}"></div>
+        <div class="customer-leg" style="background:${color}"></div>
+      </div>
+      <div class="serve-ring"></div>
+    `;
+
+    el.addEventListener('click', () => handleCustomerTap(c.id));
+    el.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      handleCustomerTap(c.id);
+    }, { passive: false });
+
+    queueArea.appendChild(el);
+    c.el = el;
+  }
+
+  function handleCustomerTap(customerId) {
+    if (gameState !== 'PLAYING') return;
+    initAudio();
+
+    const c = customers.find(x => x.id === customerId);
+    if (!c || c.state !== 'queued') return;
+
+    // Must be front of queue
+    const queued = customers.filter(x => x.state === 'queued').sort((a, b) => a.x - b.x);
+    if (queued.length === 0 || queued[0].id !== c.id) return;
+
+    // Already serving manually?
+    if (manualServing) return;
+
+    // Start serving
+    startServing(c, 'manual');
+    playSound('tap');
+  }
+
+  function startServing(c, mode) {
+    c.state = 'serving';
+    c.serveTime = mode === 'manual' ? getServeTime(c.order) : getAutoServeTimeForStation(
+      mode === 'auto0' ? 0 : mode === 'auto1' ? 1 : 2,
+      c.order
+    );
+    c.serveProgress = 0;
+
+    if (mode === 'manual') {
+      manualServing = c.id;
+      // Move to serve position
+      c.targetX = 20;
+    } else {
+      const stationIdx = parseInt(mode.charAt(4));
+      autoServing[stationIdx] = c.id;
+    }
+
+    if (c.el) {
+      c.el.style.animation = 'servingGlow 1s ease-in-out infinite';
+    }
+
+    recalcQueuePositions();
+  }
+
+  function completeServe(c) {
+    // Calculate coins
+    const baseCoins = getDrinkCoins(c.order);
+    const vipMultiplier = c.isVip ? 2 : 1;
+    comboStreak++;
+    if (comboStreak > peakCombo) peakCombo = comboStreak;
+    const comboMultiplier = Math.min(3.0, 1.0 + comboStreak * 0.1);
+
+    let tipBonus = 0;
+    const tipLevel = upgradeLevels.tip_jar || 0;
+    const patienceRatio = c.patience / c.maxPatience;
+    if (patienceRatio > 0.9) {
+      tipBonus = 5 + tipLevel;
+    } else if (patienceRatio > 0.75) {
+      tipBonus = 2 + tipLevel;
+    }
+
+    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier) + tipBonus;
+    dayRevenue += totalCoins;
+    customersServed++;
+
+    // Update combo display
+    updateComboDisplay();
+
+    // Coin animation
+    spawnCoinAnimation(c);
+    spawnFloatingText(c, `+${totalCoins}`);
+
+    // Sound
+    playSound('serve');
+    setTimeout(() => playSound('coin'), 100);
+    if (comboStreak > 1 && comboStreak % 3 === 0) {
+      setTimeout(() => playSound('combo'), 200);
+    }
+
+    // Customer exits left
+    c.state = 'leaving_happy';
+    c.targetX = -60;
+
+    if (c.el) {
+      c.el.style.animation = '';
+      const face = c.el.querySelector('.customer-face');
+      if (face) face.textContent = '😊';
+    }
+
+    // Release serve slot
+    if (manualServing === c.id) manualServing = null;
+    for (let i = 0; i < 3; i++) {
+      if (autoServing[i] === c.id) autoServing[i] = null;
+    }
+
+    recalcQueuePositions();
+  }
+
+  function customerAngry(c) {
+    customersLost++;
+    dayPenalties += 5;
+
+    // Combo handling
+    const keeperLevel = upgradeLevels.combo_keeper || 0;
+    if (comboForgives < keeperLevel) {
+      comboForgives++;
+      // Combo preserved!
+    } else {
+      comboStreak = 0;
+      updateComboDisplay();
+    }
+
+    // Track rush hour
+    if (rushActive && rushCustomerIds.has(c.id)) {
+      rushLostAny = true;
+    }
+
+    c.state = 'leaving_angry';
+    c.targetX = (queueArea.offsetWidth || 360) + 60;
+
+    if (c.el) {
+      c.el.classList.add('angry');
+      const order = c.el.querySelector('.customer-order');
+      if (order) order.textContent = '😤';
+      const face = c.el.querySelector('.customer-face');
+      if (face) face.textContent = '';
+    }
+
+    playSound('angry');
+
+    // Release serve slot
+    if (manualServing === c.id) manualServing = null;
+    for (let i = 0; i < 3; i++) {
+      if (autoServing[i] === c.id) autoServing[i] = null;
+    }
+
+    recalcQueuePositions();
+  }
+
+  function recalcQueuePositions() {
+    const queued = customers.filter(c => c.state === 'queued').sort((a, b) => a.x - b.x);
+    const baseX = 40;
+    const spacing = 50;
+    queued.forEach((c, i) => {
+      c.targetX = baseX + i * spacing;
+    });
+  }
+
+  function spawnCoinAnimation(c) {
+    const count = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      const coin = document.createElement('div');
+      coin.className = 'coin-pop';
+      coin.textContent = '🪙';
+      coin.style.left = (c.x + 20 + (Math.random() - 0.5) * 20) + 'px';
+      coin.style.top = (c.y + 10) + 'px';
+      coin.style.animationDelay = (i * 0.08) + 's';
+      queueArea.appendChild(coin);
+      setTimeout(() => coin.remove(), 700);
+    }
+  }
+
+  function spawnFloatingText(c, text) {
+    const el = document.createElement('div');
+    el.className = 'floating-text';
+    el.textContent = text;
+    el.style.left = (c.x + 10) + 'px';
+    el.style.top = (c.y - 5) + 'px';
+    queueArea.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
+  function updateComboDisplay() {
+    const mult = Math.min(3.0, 1.0 + comboStreak * 0.1).toFixed(1);
+    hudCombo.textContent = `🔥 x${mult}`;
+    hudCombo.classList.add('pulse');
+    setTimeout(() => hudCombo.classList.remove('pulse'), 200);
+  }
+
+  // ==========================================
+  // AUTO-SERVE LOGIC
+  // ==========================================
+  function getAutoServeStations() {
+    const stations = [];
+    if (upgradeLevels.auto_serve_1) stations.push({ index: 0, maxBaseCoins: 10 });
+    if (upgradeLevels.auto_serve_2) stations.push({ index: 1, maxBaseCoins: 20 });
+    if (upgradeLevels.auto_serve_3) stations.push({ index: 2, maxBaseCoins: 999 });
+    return stations;
+  }
+
+  function updateAutoStationsUI() {
+    autoStationsEl.innerHTML = '';
+    const stations = getAutoServeStations();
+    stations.forEach((s, i) => {
+      const div = document.createElement('div');
+      div.className = 'auto-station' + (autoServing[s.index] !== null ? ' active' : '');
+      div.textContent = '🤖';
+      autoStationsEl.appendChild(div);
+    });
+  }
+
+  function tryAutoServe() {
+    const stations = getAutoServeStations();
+    const queued = customers.filter(c => c.state === 'queued').sort((a, b) => a.x - b.x);
+
+    for (const station of stations) {
+      if (autoServing[station.index] !== null) continue;
+
+      // Find first queued customer this station can handle
+      for (const c of queued) {
+        if (c.id === manualServing) continue;
+        if (autoServing.includes(c.id)) continue;
+        const baseCoins = DRINK_TYPES[c.order].baseCoins;
+        if (baseCoins <= station.maxBaseCoins) {
+          startServing(c, `auto${station.index}`);
+          break;
+        }
+      }
+    }
+  }
+
+  // ==========================================
+  // GAME LOOP
+  // ==========================================
+  function gameLoop(timestamp) {
+    if (gameState !== 'PLAYING') {
+      animFrameId = requestAnimationFrame(gameLoop);
+      return;
+    }
+
+    if (lastFrameTime === 0) lastFrameTime = timestamp;
+    const dt = Math.min(timestamp - lastFrameTime, 100); // cap delta
+    lastFrameTime = timestamp;
+
+    // Update day timer
+    dayTimer -= dt;
+    if (dayTimer <= 0) {
+      dayTimer = 0;
+      endDay();
+      animFrameId = requestAnimationFrame(gameLoop);
+      return;
+    }
+
+    // Update HUD
+    hudCoins.textContent = formatCoins(Math.max(0, dayRevenue - dayPenalties));
+    hudTimer.textContent = formatTime(dayTimer);
+
+    // Spawn timer
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      const config = getSpawnConfig(currentDay);
+      let interval = config.interval;
+      if (rushActive) interval *= 0.5;
+      spawnTimer = interval * (0.8 + Math.random() * 0.4);
+      createCustomer();
+    }
+
+    // Rush hour logic
+    if (rushScheduled && !rushActive) {
+      const elapsed = DAY_DURATION - dayTimer;
+      if (elapsed >= rushStartTime) {
+        rushActive = true;
+        rushTimer = 10000;
+        rushBanner.classList.add('visible');
+        playSound('rush');
+      }
+    }
+    if (rushActive) {
+      rushTimer -= dt;
+      if (rushTimer <= 0) {
+        rushActive = false;
+        rushBanner.classList.remove('visible');
+        // Check rush survivor achievement
+        if (!rushLostAny && rushCustomerIds.size > 0) {
+          // Will check at day end for all rush customers served
+        }
+      }
+    }
+
+    // Update customers
+    for (const c of customers) {
+      if (c.state === 'walking_to_queue') {
+        const speed = 120; // px/s
+        const dx = c.targetX - c.x;
+        if (Math.abs(dx) < 2) {
+          c.x = c.targetX;
+          c.state = 'queued';
+        } else {
+          c.x += Math.sign(dx) * speed * (dt / 1000);
+          if ((dx > 0 && c.x > c.targetX) || (dx < 0 && c.x < c.targetX)) {
+            c.x = c.targetX;
+            c.state = 'queued';
+          }
+        }
+      }
+
+      if (c.state === 'queued') {
+        c.patience -= dt;
+        // Move toward target
+        const dx = c.targetX - c.x;
+        if (Math.abs(dx) > 1) {
+          c.x += Math.sign(dx) * 100 * (dt / 1000);
+          if (Math.abs(c.targetX - c.x) < 1) c.x = c.targetX;
+        }
+
+        if (c.patience <= 0) {
+          customerAngry(c);
+        } else {
+          updatePatienceBar(c);
+          // Impatient visual
+          const ratio = c.patience / c.maxPatience;
+          if (ratio < 0.25 && c.el && !c.el.classList.contains('impatient')) {
+            c.el.classList.add('impatient');
+            const face = c.el.querySelector('.customer-face');
+            if (face) face.textContent = '😤';
+          }
+        }
+      }
+
+      if (c.state === 'serving') {
+        c.serveProgress += dt;
+        // Move toward target
+        const dx = c.targetX - c.x;
+        if (Math.abs(dx) > 1) {
+          c.x += Math.sign(dx) * 120 * (dt / 1000);
+        }
+
+        // Update serve ring
+        if (c.el) {
+          const ring = c.el.querySelector('.serve-ring');
+          if (ring) {
+            const pct = Math.min(1, c.serveProgress / c.serveTime);
+            ring.classList.add('active');
+            ring.style.background = `conic-gradient(var(--matcha) ${pct * 360}deg, transparent ${pct * 360}deg)`;
+          }
+        }
+
+        // Patience still ticks
+        c.patience -= dt;
+        updatePatienceBar(c);
+
+        if (c.patience <= 0) {
+          customerAngry(c);
+        } else if (c.serveProgress >= c.serveTime) {
+          completeServe(c);
+        }
+      }
+
+      if (c.state === 'leaving_happy') {
+        c.x -= 120 * (dt / 1000);
+        if (c.x < -60) c.state = 'gone';
+      }
+
+      if (c.state === 'leaving_angry') {
+        c.x += 100 * (dt / 1000);
+        if (c.x > (queueArea.offsetWidth || 400) + 60) c.state = 'gone';
+      }
+
+      // Update position
+      if (c.el) {
+        c.el.style.transform = `translateX(${c.x}px)`;
+      }
+    }
+
+    // Remove gone customers
+    customers = customers.filter(c => {
+      if (c.state === 'gone') {
+        if (c.el) c.el.remove();
+        return false;
+      }
+      return true;
+    });
+
+    // Auto-serve
+    tryAutoServe();
+    updateAutoStationsUI();
+
+    animFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  function updatePatienceBar(c) {
+    if (!c.el) return;
+    const bar = c.el.querySelector('.patience-bar');
+    if (!bar) return;
+    const ratio = Math.max(0, c.patience / c.maxPatience);
+    bar.style.width = (ratio * 100) + '%';
+    if (ratio > 0.5) bar.style.background = 'var(--matcha)';
+    else if (ratio > 0.25) bar.style.background = 'var(--gold)';
+    else bar.style.background = 'var(--coral)';
+  }
+
+  // ==========================================
+  // DAY MANAGEMENT
+  // ==========================================
+  function startDay() {
+    initAudio();
+    gameState = 'PLAYING';
+    dayTimer = DAY_DURATION;
+    dayRevenue = 0;
+    dayPenalties = 0;
+    customersServed = 0;
+    customersLost = 0;
+    comboStreak = 0;
+    peakCombo = 0;
+    comboForgives = 0;
+    manualServing = null;
+    autoServing = [null, null, null];
+    rushActive = false;
+    rushTimer = 0;
+    rushLostAny = false;
+    rushCustomerIds = new Set();
+    rushHadEvent = false;
+    spawnTimer = 1000;
+    lastFrameTime = 0;
+
+    // Clear existing customers
+    customers.forEach(c => { if (c.el) c.el.remove(); });
+    customers = [];
+
+    // Rush hour scheduling
+    if (currentDay >= 5 && Math.random() < 0.3) {
+      rushScheduled = true;
+      rushStartTime = 15000 + Math.random() * 30000; // 15s-45s
+      rushHadEvent = true;
+    } else {
+      rushScheduled = false;
+    }
+
+    // UI
+    hideAllOverlays();
+    hudEl.style.display = 'flex';
+    dayBadge.textContent = `Day ${currentDay}`;
+    hudCoins.textContent = '0';
+    hudTimer.textContent = '1:00';
+    updateComboDisplay();
+    updateAutoStationsUI();
+
+    playSound('dayStart');
+
+    if (!animFrameId) {
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+  }
+
+  function endDay() {
+    gameState = 'DAY_END';
+    playSound('dayEnd');
+
+    rushBanner.classList.remove('visible');
+    rushActive = false;
+
+    // Finish any mid-serve customers
+    customers.forEach(c => {
+      if (c.state === 'serving') {
+        completeServe(c);
+      }
+    });
+
+    // Calculate final revenue
+    const finalRevenue = Math.max(0, dayRevenue - dayPenalties);
+    const isNewBest = finalRevenue > bestScore;
+
+    if (isNewBest) {
+      bestScore = finalRevenue;
+      playSound('newBest');
+      submitScore(finalRevenue);
+    }
+
+    wallet += finalRevenue;
+    saveGame();
+
+    // Check rush survivor
+    let rushSurvivorEarned = false;
+    if (rushHadEvent && !rushLostAny && rushCustomerIds.size > 0) {
+      // Check all rush customers were served
+      const rushGone = [...rushCustomerIds].every(id => {
+        const c = customers.find(x => x.id === id);
+        return !c || c.state === 'leaving_happy' || c.state === 'gone';
+      });
+      if (rushGone) rushSurvivorEarned = true;
+    }
+
+    // Check achievements
+    checkAchievements({
+      dayNumber: currentDay,
+      dayRevenue: finalRevenue,
+      customersServed,
+      customersLost,
+      peakComboStreak: peakCombo,
+      rushSurvivor: rushSurvivorEarned
+    });
+
+    currentDay++;
+    saveGame();
+
+    // Show day end after brief delay
+    setTimeout(() => showDayEnd(finalRevenue, isNewBest), 1000);
+  }
+
+  function showDayEnd(revenue, isNewBest) {
+    const modal = document.getElementById('dayEndModal');
+    modal.innerHTML = `
+      <h2>☀️ Day ${currentDay - 1} Complete!</h2>
+      <div class="modal-row"><span>Revenue</span><span>💰 ${formatCoins(revenue)}</span></div>
+      <div class="modal-row"><span>Served</span><span>🧋 ${customersServed}</span></div>
+      <div class="modal-row"><span>Lost</span><span>😤 ${customersLost}</span></div>
+      <div class="modal-row"><span>Best Combo</span><span>🔥 x${Math.min(3.0, 1.0 + peakCombo * 0.1).toFixed(1)}</span></div>
+      ${isNewBest ? '<div class="new-best">⭐ NEW PERSONAL BEST! ⭐</div>' : ''}
+      <br>
+      <button class="btn" onclick="showShop()">Continue</button>
+    `;
+    showOverlay('dayEndOverlay');
+  }
+
+  // ==========================================
+  // UPGRADE SHOP
+  // ==========================================
+  function showShop() {
+    gameState = 'UPGRADE_SHOP';
+    hideAllOverlays();
+    hudEl.style.display = 'none';
+    renderShop();
+    showOverlay('shopOverlay');
+  }
+
+  function renderShop() {
+    const modal = document.getElementById('shopModal');
+    let html = `
+      <div class="shop-wallet">💰 Wallet: ${formatCoins(wallet)} coins</div>
+    `;
+
+    for (const [id, upgrade] of Object.entries(UPGRADES)) {
+      const level = upgradeLevels[id] || 0;
+      const maxed = level >= upgrade.maxLevel;
+      const cost = maxed ? 0 : upgrade.costFn(level);
+      const canAfford = wallet >= cost && !maxed;
+      const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
+
+      let cardClass = 'upgrade-card';
+      if (maxed) cardClass += ' maxed';
+      if (locked) cardClass += ' locked';
+
+      html += `
+        <div class="${cardClass}">
+          <div class="upgrade-icon">${upgrade.icon}</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">${upgrade.name}</div>
+            <div class="upgrade-desc">${upgrade.desc}</div>
+            <div class="upgrade-level">Lv ${level}/${upgrade.maxLevel}</div>
+          </div>
+          ${maxed ? '<span style="color:var(--matcha);font-weight:700;font-size:0.8rem;">MAX</span>' :
+            locked ? '<span style="color:#999;font-size:0.7rem;">Requires ' + UPGRADES[upgrade.requires].name + '</span>' :
+            `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}"
+              ${canAfford ? '' : 'disabled'}
+              onclick="buyUpgrade('${id}')">${formatCoins(cost)} 🪙</button>`
+          }
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="shop-actions">
+        <button class="btn" onclick="startDay()">Start Day ${currentDay}</button>
+        <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
+      </div>
+    `;
+
+    modal.innerHTML = html;
+  }
+
+  function buyUpgrade(id) {
+    const upgrade = UPGRADES[id];
+    const level = upgradeLevels[id] || 0;
+    if (level >= upgrade.maxLevel) return;
+    if (upgrade.requires && !(upgradeLevels[upgrade.requires] || 0)) return;
+
+    const cost = upgrade.costFn(level);
+    if (wallet < cost) return;
+
+    wallet -= cost;
+    upgradeLevels[id] = level + 1;
+    saveGame();
+    playSound('upgrade');
+
+    // Check achievements
+    checkAchievements({
+      upgraded: true,
+      upgradeId: id,
+      upgradeLevel: level + 1,
+      maxLevel: upgrade.maxLevel
+    });
+
+    renderShop();
+  }
+
+  // ==========================================
+  // SCORE SUBMISSION
+  // ==========================================
+  async function submitScore(dayRev) {
+    const storedBest = parseInt(localStorage.getItem('tt_best_score') || '0');
+    if (dayRev <= storedBest && dayRev < bestScore) return;
+
+    localStorage.setItem('tt_best_score', bestScore.toString());
+
+    if (!window.apiClient || !currentUser) return;
+
+    try {
+      await window.apiClient.submitScore('tiny-tycoon', {
+        score: dayRev,
+        level: currentDay,
+        metadata: {
+          day: currentDay,
+          customersServed,
+          customersLost,
+          peakCombo,
+          upgradeLevels: { ...upgradeLevels }
+        }
+      });
+    } catch (err) {
+      console.error('Score submission failed:', err);
+    }
+  }
+
+  // ==========================================
+  // ACHIEVEMENTS
+  // ==========================================
+  function checkAchievements(stats) {
+    const checks = {
+      'tt_first_day':     () => stats.dayNumber >= 1,
+      'tt_hundred_club':  () => stats.dayRevenue >= 100,
+      'tt_five_hundred':  () => stats.dayRevenue >= 500,
+      'tt_thousand':      () => stats.dayRevenue >= 1000,
+      'tt_perfect_day':   () => stats.customersLost === 0 && stats.customersServed >= 10,
+      'tt_combo_5':       () => stats.peakComboStreak >= 5,
+      'tt_combo_15':      () => stats.peakComboStreak >= 15,
+      'tt_speed_demon':   () => stats.customersServed >= 30,
+      'tt_upgrade_first': () => stats.upgraded,
+      'tt_max_upgrade':   () => stats.upgraded && stats.upgradeLevel >= stats.maxLevel,
+      'tt_day_10':        () => stats.dayNumber && currentDay >= 10,
+      'tt_rush_survivor': () => stats.rushSurvivor
+    };
+
+    for (const [id, condition] of Object.entries(checks)) {
+      if (!unlockedAchievements.has(id) && condition()) {
+        unlockAchievement(id);
+      }
+    }
+  }
+
+  function unlockAchievement(id) {
+    unlockedAchievements.add(id);
+    saveGame();
+    showAchievementToast(id);
+
+    if (window.apiClient && currentUser) {
+      try {
+        window.apiClient.unlockAchievement(id, 'tiny-tycoon', {
+          metadata: { day: currentDay }
+        });
+      } catch(e) { /* ignore */ }
+    }
+  }
+
+  function showAchievementToast(id) {
+    const ach = ACHIEVEMENTS[id];
+    if (!ach) return;
+    const toast = document.getElementById('achievementToast');
+    toast.innerHTML = `🏆 ${ach.name}<br><span style="font-size:0.7rem;font-weight:400;">${ach.desc}</span>`;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // ==========================================
+  // UI / OVERLAYS
+  // ==========================================
+  function hideAllOverlays() {
+    document.querySelectorAll('.overlay').forEach(o => o.classList.remove('visible'));
+  }
+
+  function showOverlay(id) {
+    document.getElementById(id).classList.add('visible');
+  }
+
+  function showTitle() {
+    gameState = 'TITLE';
+    hideAllOverlays();
+    hudEl.style.display = 'none';
+    rushBanner.classList.remove('visible');
+
+    // Clear customers
+    customers.forEach(c => { if (c.el) c.el.remove(); });
+    customers = [];
+
+    const bestEl = document.getElementById('titleBest');
+    bestEl.textContent = bestScore > 0 ? `Best Day: 💰 ${formatCoins(bestScore)}` : '';
+
+    const btns = document.getElementById('titleButtons');
+    const hasSave = parseInt(localStorage.getItem('tt_current_day') || '1') > 1;
+
+    btns.innerHTML = hasSave
+      ? `<button class="btn" onclick="showShop()">Continue (Day ${currentDay})</button><br>
+         <button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="newGame()">New Game</button>`
+      : `<button class="btn" onclick="startDay()">Start Day</button>`;
+
+    showOverlay('titleOverlay');
+    dayBadge.textContent = `Day ${currentDay}`;
+  }
+
+  function newGame() {
+    if (!confirm('Reset all progress?')) return;
+    resetGame();
+    showTitle();
+  }
+
+  function pauseGame() {
+    if (gameState !== 'PLAYING') return;
+    gameState = 'PAUSED';
+    showOverlay('pauseOverlay');
+  }
+
+  function resumeGame() {
+    if (gameState !== 'PAUSED') return;
+    gameState = 'PLAYING';
+    lastFrameTime = 0;
+    hideAllOverlays();
+  }
+
+  function quitToMenu() {
+    gameState = 'TITLE';
+    // Don't save mid-day progress
+    hideAllOverlays();
+    customers.forEach(c => { if (c.el) c.el.remove(); });
+    customers = [];
+    showTitle();
+  }
+
+  // ==========================================
+  // SOUND TOGGLE
+  // ==========================================
+  function updateSoundBtn() {
+    const btn = document.getElementById('soundBtn');
+    btn.textContent = isMuted ? '🔇' : '🔊';
+    btn.classList.toggle('muted', isMuted);
+  }
+
+  document.getElementById('soundBtn').addEventListener('click', () => {
+    initAudio();
+    isMuted = !isMuted;
+    localStorage.setItem('tt_muted', isMuted.toString());
+    updateSoundBtn();
+  });
+
+  // ==========================================
+  // VISIBILITY CHANGE (auto-pause)
+  // ==========================================
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && gameState === 'PLAYING') {
+      pauseGame();
+    }
+  });
+
+  // First interaction init audio
+  document.addEventListener('click', () => initAudio(), { once: true });
+  document.addEventListener('touchstart', () => initAudio(), { once: true });
+
+  // ==========================================
+  // INIT
+  // ==========================================
+  loadGame();
+  updateSoundBtn();
+  setupAuth();
+  showTitle();
+  animFrameId = requestAnimationFrame(gameLoop);
+  </script>
+
+  <!-- Firebase + Auth -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="../../js/api-client.js"></script>
+  <script src="../../js/auth.js"></script>
+</body>
+</html>
