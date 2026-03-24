@@ -243,7 +243,6 @@
     .hud-combo.pulse {
       transform: scale(1.3);
     }
-    /* Combo escalation styles */
     .hud-combo.combo-warm {
       color: #FFA500;
       font-size: 0.95rem;
@@ -279,22 +278,21 @@
       overflow: hidden;
     }
 
-    /* ===== RICH SHOP ENVIRONMENT ===== */
+    /* ===== TOP HALF: MAIN SHOP (0-50%) ===== */
     .shop-bg {
       position: absolute;
       inset: 0;
       pointer-events: none;
     }
 
-    /* Back wall - warm gradient with subtle pattern */
+    /* Back wall - compressed into top half */
     .shop-wall {
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 45%;
+      height: 22%;
       background:
         linear-gradient(180deg, #E8D5C0 0%, #F0E6D6 40%, #F5EDE2 100%);
     }
-    /* Wainscoting / lower wall trim */
     .shop-wall::after {
       content: '';
       position: absolute;
@@ -304,11 +302,11 @@
       border-top: 2px solid #BBA87A;
     }
 
-    /* Floor with tile pattern */
+    /* Shop floor - top half only */
     .shop-floor {
       position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 55%;
+      top: 22%; left: 0; right: 0;
+      height: 28%;
       background:
         repeating-linear-gradient(
           90deg,
@@ -322,7 +320,6 @@
         );
       background-size: 40px 40px;
     }
-    /* Floor depth gradient - darker at back */
     .shop-floor::before {
       content: '';
       position: absolute;
@@ -330,7 +327,6 @@
       background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.05) 100%);
       pointer-events: none;
     }
-    /* Floor shine highlight */
     .shop-floor::after {
       content: '';
       position: absolute;
@@ -380,7 +376,7 @@
       pointer-events: none;
     }
 
-    /* Shelves - enhanced with depth */
+    /* Shelves */
     .shelf {
       position: absolute;
       height: 8px;
@@ -397,9 +393,9 @@
       background: linear-gradient(180deg, rgba(0,0,0,0.15), transparent);
       border-radius: 0 0 2px 2px;
     }
-    .shelf-1 { top: 8%; left: 8%; width: 28%; }
-    .shelf-2 { top: 8%; right: 8%; width: 22%; }
-    .shelf-3 { top: 22%; left: 12%; width: 32%; }
+    .shelf-1 { top: 4%; left: 8%; width: 28%; }
+    .shelf-2 { top: 4%; right: 8%; width: 22%; }
+    .shelf-3 { top: 11%; left: 12%; width: 32%; }
 
     .shelf-item {
       position: absolute;
@@ -408,14 +404,14 @@
       filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
     }
 
-    /* Menu board - enhanced with chalk-like text area */
+    /* Menu board */
     .menu-board {
       position: absolute;
-      top: 4%;
+      top: 2%;
       left: 50%;
       transform: translateX(-50%);
       width: 70px;
-      height: 52px;
+      height: 42px;
       background: linear-gradient(135deg, #3E2723, #4E342E);
       border-radius: 4px;
       border: 2px solid #6D4C41;
@@ -444,7 +440,7 @@
     /* Wall clock */
     .wall-clock {
       position: absolute;
-      top: 5%;
+      top: 3%;
       right: 14%;
       width: 28px;
       height: 28px;
@@ -474,7 +470,7 @@
     /* Equipment area behind counter */
     .equipment-area {
       position: absolute;
-      top: 30%;
+      top: 15%;
       right: 10%;
       display: flex;
       gap: 10px;
@@ -539,7 +535,7 @@
     /* Steam particles */
     .steam-container {
       position: absolute;
-      top: 22%;
+      top: 11%;
       right: 12%;
       width: 40px;
       height: 30px;
@@ -563,10 +559,10 @@
     .steam:nth-child(4) { left: 12px; animation-delay: 1.5s; width: 4px; height: 4px; }
     .steam:nth-child(5) { left: 20px; animation-delay: 0.8s; width: 5px; height: 5px; }
 
-    /* Counter - 3D with wood texture */
+    /* Counter - positioned higher in compressed top half */
     .counter {
       position: absolute;
-      top: 44%;
+      top: 26%;
       left: 0%;
       right: 0%;
       height: 16px;
@@ -576,7 +572,6 @@
         0 6px 12px rgba(0,0,0,0.3);
       z-index: 10;
     }
-    /* Counter top highlight */
     .counter::before {
       content: '';
       position: absolute;
@@ -584,7 +579,6 @@
       height: 3px;
       background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent);
     }
-    /* Counter edge thickness */
     .counter::after {
       content: '';
       position: absolute;
@@ -594,140 +588,96 @@
       border-radius: 0 0 2px 2px;
     }
 
-    /* VIP Lounge area */
-    .vip-lounge {
+    /* ===== BARISTA CHARACTER ===== */
+    .barista {
       position: absolute;
-      top: 0; left: 0;
-      width: 25%;
-      height: 44%;
-      background: linear-gradient(180deg, #3D2A5C 0%, #4E3872 60%, #5C4680 100%);
-      z-index: 3;
-      transition: transform 0.6s ease-out, filter 0.6s ease-out, opacity 0.6s ease-out;
-      border-right: 3px solid var(--vip-accent);
-      overflow: hidden;
+      z-index: 9;
+      width: 28px;
+      height: 52px;
     }
-    .vip-lounge.locked {
-      filter: grayscale(0.6) brightness(0.75);
-      opacity: 0.7;
-      transform: scaleY(0.98);
-      transform-origin: bottom;
+    .barista .barista-head {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FFDAB9;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
-    .vip-lounge.unlocked {
-      filter: none;
-      opacity: 1;
-      transform: scaleY(1);
-    }
-    /* VIP glow effect */
-    .vip-lounge.unlocked::before {
+    /* Hair */
+    .barista .barista-head::before {
       content: '';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at center, rgba(255,215,0,0.06) 0%, transparent 70%);
-      animation: vipAmbientGlow 3s ease-in-out infinite;
+      top: -2px; left: 1px; right: 1px;
+      height: 8px;
+      background: #3E2723;
+      border-radius: 8px 8px 0 0;
     }
-    /* VIP rope / separator */
-    .vip-lounge::after {
+    .barista .barista-body {
+      position: absolute;
+      top: 16px; left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 24px;
+      border-radius: 4px;
+      background: #4CAF50;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    /* Apron detail */
+    .barista .barista-body::after {
       content: '';
       position: absolute;
-      top: 20%; right: -2px;
-      width: 4px;
-      height: 60%;
-      background: repeating-linear-gradient(180deg, var(--vip-accent) 0px, var(--vip-accent) 4px, transparent 4px, transparent 8px);
+      top: 4px; left: 3px; right: 3px;
+      bottom: 2px;
+      background: rgba(255,255,255,0.2);
       border-radius: 2px;
     }
-    .vip-label {
+    .barista .barista-arm {
       position: absolute;
-      top: 12%;
+      top: 18px;
+      width: 8px;
+      height: 14px;
+      background: #FFDAB9;
+      border-radius: 3px;
+      transition: transform 0.3s ease;
+    }
+    .barista .barista-arm.left { left: -3px; }
+    .barista .barista-arm.right { right: -3px; }
+    /* Serving animation: arms extend forward */
+    .barista.serving .barista-arm.left {
+      transform: translateY(-4px) rotate(-30deg);
+    }
+    .barista.serving .barista-arm.right {
+      transform: translateY(-4px) rotate(30deg);
+    }
+
+    /* Main barista behind counter */
+    .main-barista {
+      top: 16%;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      color: var(--vip-accent);
-      text-shadow: 0 0 8px rgba(255,215,0,0.3);
     }
-    .vip-lock {
-      position: absolute;
-      top: 45%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      opacity: 0.7;
-      transition: opacity 0.4s;
-    }
-    .vip-lounge.unlocked .vip-lock { opacity: 0; display: none; }
-    .vip-lounge.locked .vip-label { color: #666; text-shadow: none; }
-    /* VIP interior details when unlocked */
-    .vip-cushion {
-      position: absolute;
-      bottom: 12%;
-      width: 18px;
-      height: 10px;
-      background: linear-gradient(180deg, #8B4513, #6B3410);
-      border-radius: 3px 3px 1px 1px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-    .vip-cushion:nth-child(3) { left: 12%; }
-    .vip-cushion:nth-child(4) { left: 55%; }
-    .vip-lounge.locked .vip-cushion { display: none; }
 
-    /* Auto-serve stations - machine style */
+    /* Auto-serve barista workers */
     .auto-stations {
       position: absolute;
-      top: 31%;
+      top: 15%;
       left: 4%;
       display: flex;
-      gap: 8px;
+      gap: 12px;
       z-index: 15;
     }
 
-    .auto-station {
-      width: 40px;
-      height: 44px;
-      background: linear-gradient(180deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%);
-      border: 2px solid #999;
-      border-radius: 6px 6px 3px 3px;
+    .auto-barista-station {
+      position: relative;
+      width: 36px;
+      height: 56px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-end;
-      padding-bottom: 3px;
-      font-size: 14px;
-      position: relative;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
-      will-change: transform;
     }
-    /* Machine screen/indicator */
-    .auto-station::before {
-      content: '';
-      position: absolute;
-      top: 4px; left: 6px; right: 6px;
-      height: 10px;
-      background: #2D5016;
-      border-radius: 2px;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
-    }
-    .auto-station.active::before {
-      background: #4CAF50;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3), 0 0 6px rgba(76,175,80,0.4);
-    }
-    .auto-station .station-arm {
-      position: absolute;
-      bottom: -6px; left: 50%;
-      transform: translateX(-50%);
-      width: 12px;
-      height: 6px;
-      background: #888;
-      border-radius: 0 0 4px 4px;
-    }
-    .auto-station.idle {
-      animation: machineIdle 2s ease-in-out infinite;
-    }
-    .auto-station.active {
-      border-color: var(--matcha);
-      animation: machineWorking 0.4s ease-in-out infinite;
-    }
-    .auto-station .drink-label {
+    .auto-barista-station .drink-label {
       position: absolute;
       top: -18px;
       font-size: 12px;
@@ -735,27 +685,296 @@
       opacity: 0;
       transition: opacity 0.3s;
     }
-    .auto-station.active .drink-label {
+    .auto-barista-station.active .drink-label {
       opacity: 1;
     }
-    .auto-station .progress-ring {
-      position: absolute;
-      inset: -3px;
-      border-radius: 10px;
-      border: 3px solid transparent;
+    /* Blue apron barista */
+    .auto-barista-station.station-0 .barista .barista-body { background: #2196F3; }
+    /* Orange apron barista */
+    .auto-barista-station.station-1 .barista .barista-body { background: #FF9800; }
+    /* Purple apron barista */
+    .auto-barista-station.station-2 .barista .barista-body { background: #9C27B0; }
+
+    .auto-barista-station .barista {
+      position: relative;
+      width: 28px;
+      height: 44px;
+    }
+    .auto-barista-station .barista .barista-head {
+      width: 14px; height: 14px;
+    }
+    .auto-barista-station .barista .barista-head::before {
+      height: 7px;
+    }
+    .auto-barista-station .barista .barista-body {
+      top: 14px;
+      width: 18px;
+      height: 20px;
+    }
+    .auto-barista-station .barista .barista-arm {
+      top: 16px; width: 7px; height: 12px;
+    }
+    .auto-barista-station.idle .barista {
+      animation: baristaIdle 2s ease-in-out infinite;
+    }
+    .auto-barista-station.active .barista {
+      animation: baristaWorking 0.5s ease-in-out infinite;
+    }
+    .auto-barista-station.active .barista .barista-arm.left {
+      transform: translateY(-3px) rotate(-25deg);
+    }
+    .auto-barista-station.active .barista .barista-arm.right {
+      transform: translateY(-3px) rotate(25deg);
     }
 
-    /* Queue area — customers stand in front of counter */
+    /* ===== GOLD ROPE DIVIDER ===== */
+    .rope-divider {
+      position: absolute;
+      top: 50%;
+      left: 0; right: 0;
+      height: 8px;
+      z-index: 30;
+      pointer-events: none;
+    }
+    .rope-divider::before {
+      content: '';
+      position: absolute;
+      top: 2px; left: 5%; right: 5%;
+      height: 4px;
+      background: repeating-linear-gradient(90deg,
+        var(--vip-gold) 0px, #DAA520 4px,
+        var(--vip-accent) 4px, var(--vip-gold) 8px
+      );
+      border-radius: 2px;
+      box-shadow: 0 1px 4px rgba(218,165,32,0.4), 0 0 8px rgba(255,215,0,0.2);
+    }
+    /* Rope posts */
+    .rope-divider::after {
+      content: '';
+      position: absolute;
+      top: -4px; left: 5%;
+      width: 8px; height: 16px;
+      background: linear-gradient(180deg, #DAA520, #B8860B);
+      border-radius: 3px;
+      box-shadow: calc(90vw * 0.9) 0 0 0 #B8860B;
+    }
+
+    /* ===== BOTTOM HALF: VIP LOUNGE (50-100%) ===== */
+    .vip-lounge {
+      position: absolute;
+      top: 50%; left: 0; right: 0;
+      bottom: 0;
+      z-index: 3;
+      transition: filter 0.6s ease-out, opacity 0.6s ease-out;
+      overflow: hidden;
+    }
+    .vip-lounge-floor {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, #3D2A5C 0%, #4E3872 30%, #5C4680 80%, #4E3872 100%);
+    }
+    /* Subtle carpet pattern */
+    .vip-lounge-floor::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          rgba(255,215,0,0.03) 0px,
+          rgba(255,215,0,0.03) 2px,
+          transparent 2px,
+          transparent 10px
+        );
+    }
+    .vip-lounge.locked .vip-lounge-floor {
+      filter: grayscale(0.6) brightness(0.6);
+    }
+    .vip-lounge.unlocked .vip-lounge-floor::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(255,215,0,0.06) 0%, transparent 70%);
+      animation: vipAmbientGlow 3s ease-in-out infinite;
+    }
+
+    .vip-label {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: var(--vip-accent);
+      text-shadow: 0 0 8px rgba(255,215,0,0.3);
+      z-index: 32;
+    }
+    .vip-lounge.locked .vip-label { color: #666; text-shadow: none; }
+
+    .vip-lock {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 32px;
+      opacity: 0.7;
+      transition: opacity 0.4s;
+      z-index: 32;
+    }
+    .vip-lounge.unlocked .vip-lock { opacity: 0; display: none; }
+
+    /* VIP Tables */
+    .vip-table {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      z-index: 31;
+    }
+    .vip-table-top {
+      position: absolute;
+      top: 4px; left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 24px;
+      background: linear-gradient(135deg, #6D4C41, #5D4037);
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      border: 1px solid #8D6E63;
+    }
+    .vip-table-leg {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 12px;
+      background: linear-gradient(180deg, #5D4037, #4E342E);
+      border-radius: 0 0 2px 2px;
+    }
+    /* Chair indicators */
+    .vip-chair {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: radial-gradient(circle, #8D6E63, #6D4C41);
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .vip-table .vip-chair.chair-left { top: 10px; left: -8px; }
+    .vip-table .vip-chair.chair-right { top: 10px; right: -8px; }
+
+    /* Gold accent on tables when level 3 */
+    .vip-lounge.vip-level-3 .vip-table-top {
+      border-color: var(--vip-gold);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 0 8px rgba(255,215,0,0.2);
+    }
+    .vip-lounge.vip-level-2 .vip-table-top,
+    .vip-lounge.vip-level-3 .vip-table-top {
+      background: linear-gradient(135deg, #795548, #6D4C41);
+    }
+
+    /* Faded hint tables when locked */
+    .vip-table.faded {
+      opacity: 0.15;
+      filter: grayscale(1);
+    }
+
+    /* VIP customer area (inside lounge) */
+    .vip-customer-area {
+      position: absolute;
+      top: 50%; left: 0; right: 0;
+      bottom: 0;
+      z-index: 35;
+      pointer-events: none;
+    }
+    .vip-customer-area .customer {
+      pointer-events: none;
+    }
+
+    /* Waiter character */
+    .waiter {
+      position: absolute;
+      z-index: 36;
+      width: 28px;
+      height: 52px;
+      transition: left 0.8s ease-in-out, top 0.8s ease-in-out;
+      pointer-events: none;
+    }
+    .waiter .barista-head {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #FFDAB9;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .waiter .barista-head::before {
+      content: '';
+      position: absolute;
+      top: -2px; left: 1px; right: 1px;
+      height: 7px;
+      background: #4A2E1A;
+      border-radius: 7px 7px 0 0;
+    }
+    .waiter .barista-body {
+      position: absolute;
+      top: 14px; left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 20px;
+      border-radius: 4px;
+      background: #1A1A1A;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    /* Waiter vest detail */
+    .waiter .barista-body::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 50%; transform: translateX(-50%);
+      width: 6px;
+      height: 10px;
+      background: #B71C1C;
+      border-radius: 1px;
+    }
+    .waiter .barista-arm {
+      position: absolute;
+      top: 16px;
+      width: 7px;
+      height: 12px;
+      background: #FFDAB9;
+      border-radius: 3px;
+      transition: transform 0.3s ease;
+    }
+    .waiter .barista-arm.left { left: -2px; }
+    .waiter .barista-arm.right { right: -2px; }
+    /* Tray */
+    .waiter .waiter-tray {
+      position: absolute;
+      top: 12px; right: -8px;
+      width: 14px;
+      height: 3px;
+      background: linear-gradient(90deg, #888, #AAA);
+      border-radius: 1px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .waiter.serving .barista-arm.right {
+      transform: translateY(-6px) rotate(20deg);
+    }
+
+    /* Queue area — customers stand in front of counter (compressed) */
     .queue-area {
       position: absolute;
-      top: 36%;
+      top: 20%;
       left: 0;
       right: 0;
-      bottom: 0;
+      height: 30%;
       z-index: 20;
     }
 
-    /* Customer - enhanced with personality */
+    /* Customer */
     .customer {
       position: absolute;
       width: 48px;
@@ -766,7 +985,6 @@
       z-index: 25;
     }
 
-    /* Customer shadow */
     .customer-shadow {
       position: absolute;
       bottom: -2px;
@@ -820,7 +1038,6 @@
       pointer-events: none;
       font-size: 8px;
     }
-    /* Business tie */
     .customer.type-business .customer-body::after {
       content: '';
       position: absolute;
@@ -831,7 +1048,6 @@
       background: #2C3E50;
       clip-path: polygon(30% 0%, 70% 0%, 80% 30%, 55% 100%, 45% 100%, 20% 30%);
     }
-    /* Student backpack */
     .customer.type-student .customer-body::after {
       content: '';
       position: absolute;
@@ -842,14 +1058,12 @@
       border-radius: 2px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
-    /* Influencer glow */
     .customer.type-influencer .customer-head {
       box-shadow: 0 0 8px rgba(255,105,180,0.5);
     }
     .customer.type-influencer .customer-body {
       box-shadow: 0 0 6px rgba(255,105,180,0.3);
     }
-    /* Foodie hat */
     .customer.type-foodie .customer-head::after {
       content: '';
       position: absolute;
@@ -861,7 +1075,6 @@
       border-radius: 4px 4px 0 0;
     }
 
-    /* Walking bob animation */
     .customer.walking {
       animation: walkBob 0.4s ease-in-out infinite;
     }
@@ -919,7 +1132,7 @@
       opacity: 1;
     }
 
-    /* VIP customer golden glow + crown */
+    /* VIP customer glow */
     .customer.vip .customer-body,
     .customer.vip .customer-head {
       box-shadow: 0 0 10px var(--gold), 0 0 20px rgba(255,215,0,0.2);
@@ -935,7 +1148,6 @@
 
     .customer.angry .customer-body { background-color: var(--coral) !important; }
     .customer.angry .customer-head { background-color: var(--coral) !important; }
-    /* Angry shake */
     .customer.angry {
       animation: angryShake 0.15s ease-in-out infinite;
       filter: brightness(0.9) saturate(1.3);
@@ -945,7 +1157,6 @@
       animation: impatientPulse 0.5s ease-in-out infinite;
     }
 
-    /* Happy bounce */
     .customer.happy-bounce {
       animation: happyBounce 0.5s ease-out;
     }
@@ -959,7 +1170,7 @@
       pointer-events: none;
     }
 
-    /* Coin pop animation - golden circles */
+    /* Coin pop animation */
     .coin-pop {
       position: absolute;
       width: 10px;
@@ -1124,21 +1335,20 @@
       max-height: 90vh;
     }
 
-    /* Shop preview in upgrade modal */
     .shop-preview {
       width: 100%;
       height: 80px;
       border-radius: 10px;
       margin-bottom: 0.8rem;
-      background: linear-gradient(180deg, #E8D5C0 0%, #F0E6D6 40%, #C4A276 60%, #B8956A 100%);
+      background: linear-gradient(180deg, #E8D5C0 0%, #F0E6D6 20%, #C4A276 40%, #3D2A5C 55%, #4E3872 100%);
       position: relative;
       overflow: hidden;
       border: 2px solid #D4A574;
     }
     .shop-preview-counter {
       position: absolute;
-      top: 45%; left: 0; right: 0;
-      height: 6px;
+      top: 30%; left: 0; right: 0;
+      height: 4px;
       background: linear-gradient(180deg, #D4A54A, #B8860B);
       box-shadow: 0 2px 0 #8B6914;
     }
@@ -1146,33 +1356,40 @@
       position: absolute;
       bottom: 4px; right: 6px;
       font-size: 8px;
-      color: rgba(92,61,46,0.6);
+      color: rgba(255,255,255,0.6);
       font-weight: 600;
     }
     .shop-preview-machines {
       position: absolute;
-      top: 28%; left: 5%;
+      top: 14%; left: 5%;
       display: flex;
       gap: 4px;
     }
     .shop-preview-machine {
-      width: 12px;
-      height: 16px;
-      background: linear-gradient(180deg, #E0E0E0, #BDBDBD);
-      border-radius: 2px;
-      border: 1px solid #999;
+      width: 10px;
+      height: 14px;
+      background: #FFDAB9;
+      border-radius: 50% 50% 2px 2px;
+      border: 1px solid #ccc;
     }
     .shop-preview-vip {
       position: absolute;
-      top: 0; left: 0;
-      width: 22%;
-      height: 45%;
-      background: linear-gradient(180deg, #1A1228, #2A1F3D);
-      border-right: 1px solid #C9A84C;
+      top: 52%; left: 10%;
+      width: 12px;
+      height: 12px;
+      background: #6D4C41;
+      border-radius: 50%;
       opacity: 0.3;
     }
     .shop-preview-vip.active {
       opacity: 1;
+      box-shadow: 0 0 4px rgba(255,215,0,0.4);
+    }
+    .shop-preview-rope {
+      position: absolute;
+      top: 50%; left: 5%; right: 5%;
+      height: 2px;
+      background: var(--vip-gold);
     }
 
     .shop-wallet {
@@ -1335,15 +1552,15 @@
       100% { transform: scale(1.05); }
     }
 
-    @keyframes machineIdle {
-      0%, 100% { box-shadow: 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5); }
-      50% { box-shadow: 0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 8px rgba(125,184,125,0.2); }
+    @keyframes baristaIdle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-1px); }
     }
 
-    @keyframes machineWorking {
+    @keyframes baristaWorking {
       0%, 100% { transform: translateY(0); }
-      25% { transform: translateY(-1px) rotate(1deg); }
-      75% { transform: translateY(-1px) rotate(-1deg); }
+      25% { transform: translateY(-2px) rotate(2deg); }
+      75% { transform: translateY(-2px) rotate(-2deg); }
     }
 
     @keyframes servingGlow {
@@ -1487,17 +1704,17 @@
           <div class="steam"></div>
           <div class="steam"></div>
         </div>
-
-        <!-- VIP Lounge -->
-        <div class="vip-lounge locked" id="vipLounge">
-          <div class="vip-label">VIP</div>
-          <div class="vip-lock">🔒</div>
-          <div class="vip-cushion"></div>
-          <div class="vip-cushion"></div>
-        </div>
       </div>
 
-      <!-- Auto-serve stations -->
+      <!-- Main Barista behind counter -->
+      <div class="barista main-barista" id="mainBarista">
+        <div class="barista-head"></div>
+        <div class="barista-arm left"></div>
+        <div class="barista-arm right"></div>
+        <div class="barista-body"></div>
+      </div>
+
+      <!-- Auto-serve stations (barista workers) -->
       <div class="auto-stations" id="autoStations"></div>
 
       <!-- Counter -->
@@ -1505,6 +1722,28 @@
 
       <!-- Queue area for customers -->
       <div class="queue-area" id="queueArea"></div>
+
+      <!-- Gold Rope Divider -->
+      <div class="rope-divider"></div>
+
+      <!-- VIP Lounge (bottom half) -->
+      <div class="vip-lounge locked" id="vipLounge">
+        <div class="vip-lounge-floor"></div>
+        <div class="vip-label">VIP</div>
+        <div class="vip-lock">🔒</div>
+        <div id="vipTablesContainer"></div>
+        <!-- Waiter character -->
+        <div class="waiter" id="vipWaiter" style="display:none;">
+          <div class="barista-head"></div>
+          <div class="barista-arm left"></div>
+          <div class="barista-arm right"></div>
+          <div class="barista-body"></div>
+          <div class="waiter-tray"></div>
+        </div>
+      </div>
+
+      <!-- VIP customer area (overlaps lounge, for rendering VIP customers) -->
+      <div class="vip-customer-area" id="vipCustomerArea"></div>
     </div>
   </div>
 
@@ -1571,9 +1810,9 @@
     premium_menu: { name: 'Premium Menu',         icon: '📋', desc: 'Boost drink value (+2 coins/lv)', maxLevel: 5,  costFn: (l) => 150 + (l * 100),requires: null, visible: false },
     queue_expand: { name: 'Bigger Queue',         icon: '📏', desc: 'Max queue +2 per level',   maxLevel: 3,  costFn: (l) => 200 + (l * 150),requires: null, visible: false },
     combo_keeper: { name: 'Combo Keeper',         icon: '🛡️', desc: 'Forgive angry for combo',  maxLevel: 3,  costFn: (l) => 250 + (l * 200),requires: null, visible: false },
-    auto_serve_1: { name: 'Auto-Serve #1',        icon: '🤖', desc: 'Auto-serves basic drinks', maxLevel: 1,  costFn: () => 500,              requires: null, visible: true },
-    auto_serve_2: { name: 'Auto-Serve #2',        icon: '🤖', desc: 'Serves drinks up to 20c',  maxLevel: 1,  costFn: () => 1500,             requires: 'auto_serve_1', visible: true },
-    auto_serve_3: { name: 'Auto-Serve #3',        icon: '🤖', desc: 'Serves all drinks',        maxLevel: 1,  costFn: () => 4000,             requires: 'auto_serve_2', visible: true },
+    auto_serve_1: { name: 'Auto-Serve #1',        icon: '👨‍🍳', desc: 'Auto-serves basic drinks', maxLevel: 1,  costFn: () => 500,              requires: null, visible: true },
+    auto_serve_2: { name: 'Auto-Serve #2',        icon: '👨‍🍳', desc: 'Serves drinks up to 20c',  maxLevel: 1,  costFn: () => 1500,             requires: 'auto_serve_1', visible: true },
+    auto_serve_3: { name: 'Auto-Serve #3',        icon: '👨‍🍳', desc: 'Serves all drinks',        maxLevel: 1,  costFn: () => 4000,             requires: 'auto_serve_2', visible: true },
     vip_lounge:   { name: 'VIP Lounge',           icon: '👑', desc: 'VIP customers (2x coins)', maxLevel: 3,  costFn: (l) => 300 + (l * 250),requires: null, visible: true }
   };
 
@@ -1617,6 +1856,13 @@
 
   const DAY_DURATION = 60000; // 60 seconds
 
+  // VIP Table positions (relative to vip lounge, in % for responsiveness)
+  const VIP_TABLE_POSITIONS = [
+    { x: 60, y: 30 },   // table 0 (left)
+    { x: 180, y: 50 },  // table 1 (center)
+    { x: 300, y: 30 }   // table 2 (right)
+  ];
+
   // ==========================================
   // GAME STATE
   // ==========================================
@@ -1652,6 +1898,16 @@
   let lastFrameTime = 0;
   let animFrameId = null;
   let customerIdCounter = 0;
+
+  // VIP table state
+  let vipTables = []; // { occupied: false, customerId: null }
+
+  // Waiter state
+  let waiterState = 'idle'; // idle, walking, serving
+  let waiterTargetCustomerId = null;
+  let waiterServeTimer = 0;
+  let waiterServeTime = 0;
+
   // Auth
   let currentUser = null;
 
@@ -1671,6 +1927,10 @@
   const gameArea = document.getElementById('gameArea');
   const wallClock = document.getElementById('wallClock');
   const vipLoungeEl = document.getElementById('vipLounge');
+  const vipCustomerArea = document.getElementById('vipCustomerArea');
+  const vipTablesContainer = document.getElementById('vipTablesContainer');
+  const vipWaiterEl = document.getElementById('vipWaiter');
+  const mainBaristaEl = document.getElementById('mainBarista');
   const gameWrap = document.getElementById('gameWrap');
 
   // ==========================================
@@ -1728,7 +1988,7 @@
           break;
         }
         case 'serve': {
-          const notes = [523, 659, 784]; // C5, E5, G5
+          const notes = [523, 659, 784];
           notes.forEach((f, i) => {
             const o = audioCtx.createOscillator();
             const g = audioCtx.createGain();
@@ -1811,7 +2071,7 @@
           break;
         }
         case 'dayEnd': {
-          [392, 330, 262].forEach((f, i) => { // G4, E4, C4
+          [392, 330, 262].forEach((f, i) => {
             const o = audioCtx.createOscillator();
             const g = audioCtx.createGain();
             o.type = 'triangle'; o.frequency.value = f;
@@ -1823,7 +2083,6 @@
           break;
         }
         case 'upgrade': {
-          // Noise burst
           const bufLen = audioCtx.sampleRate * 0.05;
           const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
           const d = buf.getChannelData(0);
@@ -1834,7 +2093,6 @@
           ng.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
           ns.connect(ng).connect(audioCtx.destination);
           ns.start(now); ns.stop(now + 0.05);
-          // Ping
           const o = audioCtx.createOscillator();
           const g = audioCtx.createGain();
           o.type = 'sine'; o.frequency.value = 1500;
@@ -1845,7 +2103,7 @@
           break;
         }
         case 'newBest': {
-          [523, 587, 659, 698, 784].forEach((f, i) => { // C5-G5
+          [523, 587, 659, 698, 784].forEach((f, i) => {
             const o = audioCtx.createOscillator();
             const g = audioCtx.createGain();
             o.type = 'triangle'; o.frequency.value = f;
@@ -1911,7 +2169,12 @@
 
   function getAutoServeTimeForStation(stationIndex, drinkKey) {
     const manual = getServeTime(drinkKey);
-    if (stationIndex === 2) return manual * 1.25; // auto_serve_3
+    if (stationIndex === 2) return manual * 1.25;
+    return manual * 1.5;
+  }
+
+  function getWaiterServeTime(drinkKey) {
+    const manual = getServeTime(drinkKey);
     return manual * 1.5;
   }
 
@@ -1928,13 +2191,12 @@
   }
 
   function getCustomerTypeWeights(day) {
-    const t = Math.min(1, (day - 1) / 9); // 0 at day1, 1 at day10+
+    const t = Math.min(1, (day - 1) / 9);
     const weights = {};
     const available = getAvailableDrinks(day);
 
     for (const [type, config] of Object.entries(CUSTOMER_TYPES)) {
       if (type === 'vip') continue;
-      // Check if this type's orders are available
       const hasOrders = config.orderPool.some(d => available.includes(d));
       if (!hasOrders) continue;
       const w = config.earlyWeight * (1 - t) + config.lateWeight * t;
@@ -1972,7 +2234,6 @@
     return n.toLocaleString();
   }
 
-  // Shop evolution level based on total upgrades
   function getShopLevel() {
     let total = 0;
     for (const id in upgradeLevels) {
@@ -1981,13 +2242,59 @@
     return total;
   }
 
-  // Update shop visual environment based on upgrades
+  // ==========================================
+  // VIP TABLE MANAGEMENT
+  // ==========================================
+  function getVipTableCount() {
+    const vipLevel = upgradeLevels.vip_lounge || 0;
+    return Math.min(vipLevel, 3);
+  }
+
+  function initVipTables() {
+    const count = getVipTableCount();
+    vipTables = [];
+    for (let i = 0; i < count; i++) {
+      vipTables.push({ occupied: false, customerId: null });
+    }
+  }
+
+  function findAvailableVipTable() {
+    for (let i = 0; i < vipTables.length; i++) {
+      if (!vipTables[i].occupied) return i;
+    }
+    return -1;
+  }
+
+  function renderVipTables() {
+    vipTablesContainer.innerHTML = '';
+    const vipLevel = upgradeLevels.vip_lounge || 0;
+
+    // Always show 3 table placeholders (faded if locked)
+    for (let i = 0; i < 3; i++) {
+      const pos = VIP_TABLE_POSITIONS[i];
+      const isActive = i < vipLevel;
+      const table = document.createElement('div');
+      table.className = 'vip-table' + (isActive ? '' : ' faded');
+      table.style.left = pos.x + 'px';
+      table.style.top = pos.y + 'px';
+      table.innerHTML = `
+        <div class="vip-table-top"></div>
+        <div class="vip-table-leg"></div>
+        <div class="vip-chair chair-left"></div>
+        <div class="vip-chair chair-right"></div>
+      `;
+      vipTablesContainer.appendChild(table);
+    }
+  }
+
+  // ==========================================
+  // SHOP ENVIRONMENT
+  // ==========================================
   function updateShopEnvironment() {
     const shopLevel = getShopLevel();
     const shopWall = document.querySelector('.shop-wall');
     const shopFloor = document.querySelector('.shop-floor');
 
-    // Wall evolves: basic -> painted -> premium
     if (shopLevel >= 6) {
       shopWall.style.background = 'linear-gradient(180deg, #D4B896 0%, #E8D5C0 30%, #F5EDE2 100%)';
       shopWall.style.boxShadow = 'inset 0 0 40px rgba(245,197,66,0.05)';
@@ -1995,7 +2302,6 @@
       shopWall.style.background = 'linear-gradient(180deg, #E0C9A8 0%, #EDE0D0 40%, #F5EDE2 100%)';
     }
 
-    // Floor evolves
     if (shopLevel >= 6) {
       shopFloor.style.background = `
         repeating-linear-gradient(90deg, #C9A87C 0px, #C9A87C 39px, #D4B48A 39px, #D4B48A 40px),
@@ -2005,13 +2311,20 @@
 
     // VIP Lounge
     const vipLevel = upgradeLevels.vip_lounge || 0;
+    vipLoungeEl.classList.remove('locked', 'unlocked', 'vip-level-1', 'vip-level-2', 'vip-level-3');
     if (vipLevel > 0) {
-      vipLoungeEl.classList.remove('locked');
-      vipLoungeEl.classList.add('unlocked');
+      vipLoungeEl.classList.add('unlocked', 'vip-level-' + vipLevel);
+      vipWaiterEl.style.display = 'block';
+      // Position waiter at idle spot
+      vipWaiterEl.style.left = '170px';
+      vipWaiterEl.style.top = '70px';
     } else {
       vipLoungeEl.classList.add('locked');
-      vipLoungeEl.classList.remove('unlocked');
+      vipWaiterEl.style.display = 'none';
     }
+
+    renderVipTables();
+    initVipTables();
   }
 
   function triggerScreenShake() {
@@ -2020,16 +2333,37 @@
   }
 
   // ==========================================
+  // BARISTA ANIMATION
+  // ==========================================
+  function triggerBaristaServe() {
+    mainBaristaEl.classList.add('serving');
+    setTimeout(() => mainBaristaEl.classList.remove('serving'), 600);
+  }
+
+  // ==========================================
   // CUSTOMER MANAGEMENT
   // ==========================================
   function createCustomer() {
     const config = getSpawnConfig(currentDay);
-    const queuedCount = customers.filter(c => c.state === 'queued' || c.state === 'walking_to_queue').length;
-    if (queuedCount >= config.maxQueue) return;
+    // Count only non-VIP customers for queue limit
+    const queuedCount = customers.filter(c =>
+      !c.isVip && (c.state === 'queued' || c.state === 'walking_to_queue')
+    ).length;
 
     const vipLevel = upgradeLevels.vip_lounge || 0;
-    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05) : 0; // 10%, 15%, 20%
+    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05) : 0;
     let isVip = Math.random() < vipChance;
+
+    // If VIP, check for available table
+    if (isVip) {
+      const tableIdx = findAvailableVipTable();
+      if (tableIdx < 0) {
+        isVip = false; // No table available, spawn as regular
+      }
+    }
+
+    // If not VIP, check queue limit
+    if (!isVip && queuedCount >= config.maxQueue) return;
 
     let type, order;
     if (isVip) {
@@ -2047,35 +2381,72 @@
     const patience = basePatience * patienceMod * (0.9 + Math.random() * 0.2);
 
     const areaWidth = queueArea.offsetWidth || 360;
-    const queueX = getNextQueueX();
 
-    const customer = {
-      id: customerIdCounter++,
-      type,
-      order,
-      isVip,
-      maxPatience: patience,
-      patience,
-      state: 'walking_to_queue',
-      x: areaWidth + 20,
-      targetX: queueX,
-      y: 30,
-      serveProgress: 0,
-      serveTime: 0,
-      el: null
-    };
+    if (isVip) {
+      // VIP customer flow: find table, walk to it
+      const tableIdx = findAvailableVipTable();
+      if (tableIdx < 0) return; // shouldn't happen, checked above
 
-    customers.push(customer);
-    createCustomerElement(customer);
+      const tablePos = VIP_TABLE_POSITIONS[tableIdx];
+      vipTables[tableIdx].occupied = true;
 
-    if (rushActive) {
-      rushCustomerIds.add(customer.id);
+      const customer = {
+        id: customerIdCounter++,
+        type,
+        order,
+        isVip: true,
+        maxPatience: patience,
+        patience,
+        state: 'walking_to_table',
+        x: areaWidth + 20,
+        targetX: tablePos.x,
+        y: tablePos.y - 10,
+        targetY: tablePos.y - 10,
+        tableIndex: tableIdx,
+        serveProgress: 0,
+        serveTime: 0,
+        el: null
+      };
+
+      vipTables[tableIdx].customerId = customer.id;
+      customers.push(customer);
+      createVipCustomerElement(customer);
+
+      if (rushActive) {
+        rushCustomerIds.add(customer.id);
+      }
+    } else {
+      // Regular customer flow
+      const queueX = getNextQueueX();
+
+      const customer = {
+        id: customerIdCounter++,
+        type,
+        order,
+        isVip: false,
+        maxPatience: patience,
+        patience,
+        state: 'walking_to_queue',
+        x: areaWidth + 20,
+        targetX: queueX,
+        y: 30,
+        serveProgress: 0,
+        serveTime: 0,
+        el: null
+      };
+
+      customers.push(customer);
+      createCustomerElement(customer);
+
+      if (rushActive) {
+        rushCustomerIds.add(customer.id);
+      }
     }
   }
 
   function getNextQueueX() {
     const areaWidth = queueArea.offsetWidth || 360;
-    const queued = customers.filter(c => c.state === 'queued' || c.state === 'walking_to_queue');
+    const queued = customers.filter(c => !c.isVip && (c.state === 'queued' || c.state === 'walking_to_queue'));
     const baseX = 40;
     const spacing = 50;
     return baseX + queued.length * spacing;
@@ -2117,6 +2488,37 @@
     c.el = el;
   }
 
+  function createVipCustomerElement(c) {
+    const el = document.createElement('div');
+    el.className = 'customer vip type-vip walking';
+    el.dataset.id = c.id;
+    el.style.transform = `translateX(${c.x}px)`;
+    el.style.top = c.y + 'px';
+    el.style.pointerEvents = 'none'; // VIP not tappable
+
+    const color = CUSTOMER_TYPES.vip.color;
+
+    el.innerHTML = `
+      <div class="customer-shadow"></div>
+      <div class="patience-bar-bg">
+        <div class="patience-bar" style="width:100%;background:var(--matcha)"></div>
+      </div>
+      <div class="customer-crown">👑</div>
+      <div class="customer-order">${DRINK_TYPES[c.order].emoji}</div>
+      <div class="customer-face"></div>
+      <div class="customer-head" style="background:${color}"></div>
+      <div class="customer-body" style="background:${color}"></div>
+      <div class="customer-legs">
+        <div class="customer-leg" style="background:${color}"></div>
+        <div class="customer-leg" style="background:${color}"></div>
+      </div>
+      <div class="serve-ring"></div>
+    `;
+
+    vipCustomerArea.appendChild(el);
+    c.el = el;
+  }
+
   function handleCustomerTap(customerId) {
     if (gameState !== 'PLAYING') return;
     initAudio();
@@ -2124,15 +2526,17 @@
     const c = customers.find(x => x.id === customerId);
     if (!c || c.state !== 'queued') return;
 
-    // Must be front of queue
-    const queued = customers.filter(x => x.state === 'queued').sort((a, b) => a.x - b.x);
+    // VIP customers are NOT tappable
+    if (c.isVip) return;
+
+    // Must be front of queue (non-VIP only)
+    const queued = customers.filter(x => !x.isVip && x.state === 'queued').sort((a, b) => a.x - b.x);
     if (queued.length === 0 || queued[0].id !== c.id) return;
 
-    // Already serving manually?
     if (manualServing) return;
 
-    // Start serving
     startServing(c, 'manual');
+    triggerBaristaServe();
     playSound('tap');
   }
 
@@ -2146,7 +2550,6 @@
 
     if (mode === 'manual') {
       manualServing = c.id;
-      // Move to serve position
       c.targetX = 20;
     } else {
       const stationIdx = parseInt(mode.charAt(4));
@@ -2163,7 +2566,6 @@
   }
 
   function completeServe(c) {
-    // Calculate coins
     const baseCoins = getDrinkCoins(c.order);
     const vipMultiplier = c.isVip ? 2 : 1;
     comboStreak++;
@@ -2183,23 +2585,38 @@
     dayRevenue += totalCoins;
     customersServed++;
 
-    // Update combo display
     updateComboDisplay();
 
-    // Coin animation
-    spawnCoinAnimation(c);
-    spawnFloatingText(c, `+$${totalCoins}`);
+    // Coin animation - use appropriate container
+    if (c.isVip) {
+      spawnCoinAnimationInArea(c, vipCustomerArea);
+      spawnFloatingTextInArea(c, `+$${totalCoins}`, vipCustomerArea);
+    } else {
+      spawnCoinAnimation(c);
+      spawnFloatingText(c, `+$${totalCoins}`);
+    }
 
-    // Sound
     playSound('serve');
     setTimeout(() => playSound('coin'), 100);
     if (comboStreak > 1 && comboStreak % 3 === 0) {
       setTimeout(() => playSound('combo'), 200);
     }
 
-    // Customer exits left with happy bounce
-    c.state = 'leaving_happy';
-    c.targetX = -60;
+    if (c.isVip) {
+      // VIP leaves from lounge (walk right)
+      c.state = 'leaving_lounge';
+      c.targetX = (vipCustomerArea.offsetWidth || 400) + 60;
+
+      // Free the table
+      if (c.tableIndex !== undefined && c.tableIndex >= 0 && c.tableIndex < vipTables.length) {
+        vipTables[c.tableIndex].occupied = false;
+        vipTables[c.tableIndex].customerId = null;
+      }
+    } else {
+      // Regular customer exits left with happy bounce
+      c.state = 'leaving_happy';
+      c.targetX = -60;
+    }
 
     if (c.el) {
       c.el.style.animation = '';
@@ -2225,24 +2642,41 @@
     customersLost++;
     dayPenalties += 5;
 
-    // Combo handling
     const keeperLevel = upgradeLevels.combo_keeper || 0;
     if (comboForgives < keeperLevel) {
       comboForgives++;
-      // Combo preserved!
     } else {
       comboStreak = 0;
       comboForgives = 0;
       updateComboDisplay();
     }
 
-    // Track rush hour
     if (rushActive && rushCustomerIds.has(c.id)) {
       rushLostAny = true;
     }
 
-    c.state = 'leaving_angry';
-    c.targetX = (queueArea.offsetWidth || 360) + 60;
+    if (c.isVip) {
+      // VIP angry: leave from lounge (walk right)
+      c.state = 'leaving_lounge';
+      c.targetX = (vipCustomerArea.offsetWidth || 400) + 60;
+
+      // Free the table
+      if (c.tableIndex !== undefined && c.tableIndex >= 0 && c.tableIndex < vipTables.length) {
+        vipTables[c.tableIndex].occupied = false;
+        vipTables[c.tableIndex].customerId = null;
+      }
+
+      // Reset waiter if serving this customer
+      if (waiterTargetCustomerId === c.id) {
+        waiterState = 'idle';
+        waiterTargetCustomerId = null;
+        waiterServeTimer = 0;
+        vipWaiterEl.classList.remove('serving');
+      }
+    } else {
+      c.state = 'leaving_angry';
+      c.targetX = (queueArea.offsetWidth || 360) + 60;
+    }
 
     if (c.el) {
       c.el.classList.add('angry');
@@ -2266,7 +2700,7 @@
   }
 
   function recalcQueuePositions() {
-    const queued = customers.filter(c => c.state === 'queued').sort((a, b) => a.x - b.x);
+    const queued = customers.filter(c => !c.isVip && c.state === 'queued').sort((a, b) => a.x - b.x);
     const baseX = 40;
     const spacing = 50;
     queued.forEach((c, i) => {
@@ -2289,6 +2723,21 @@
     }
   }
 
+  function spawnCoinAnimationInArea(c, area) {
+    const count = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      const coin = document.createElement('div');
+      coin.className = 'coin-pop';
+      coin.style.left = (c.x + 20 + (Math.random() - 0.5) * 24) + 'px';
+      coin.style.top = (c.y + 10 + (Math.random() - 0.5) * 10) + 'px';
+      coin.style.animationDelay = (i * 0.08) + 's';
+      coin.style.width = (8 + Math.random() * 6) + 'px';
+      coin.style.height = coin.style.width;
+      area.appendChild(coin);
+      setTimeout(() => coin.remove(), 800);
+    }
+  }
+
   function spawnFloatingText(c, text) {
     const el = document.createElement('div');
     el.className = 'floating-text';
@@ -2299,13 +2748,22 @@
     setTimeout(() => el.remove(), 1000);
   }
 
+  function spawnFloatingTextInArea(c, text, area) {
+    const el = document.createElement('div');
+    el.className = 'floating-text';
+    el.textContent = text;
+    el.style.left = (c.x + 10) + 'px';
+    el.style.top = (c.y - 5) + 'px';
+    area.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+
   function updateComboDisplay() {
     const mult = Math.min(3.0, 1.0 + comboStreak * 0.1).toFixed(1);
     hudCombo.textContent = `🔥 x${mult}`;
     hudCombo.classList.add('pulse');
     setTimeout(() => hudCombo.classList.remove('pulse'), 200);
 
-    // Combo escalation visual
     hudCombo.classList.remove('combo-warm', 'combo-hot', 'combo-fire');
     const multVal = parseFloat(mult);
     if (multVal >= 2.5) {
@@ -2334,9 +2792,8 @@
     stations.forEach((s, i) => {
       const isActive = autoServing[s.index] !== null;
       const div = document.createElement('div');
-      div.className = 'auto-station' + (isActive ? ' active' : ' idle');
+      div.className = 'auto-barista-station station-' + s.index + (isActive ? ' active' : ' idle');
 
-      // Find drink being served
       let drinkEmoji = '';
       if (isActive) {
         const c = customers.find(x => x.id === autoServing[s.index]);
@@ -2345,8 +2802,12 @@
 
       div.innerHTML = `
         <div class="drink-label">${drinkEmoji}</div>
-        <span style="font-size:12px;margin-top:2px;">🤖</span>
-        <div class="station-arm"></div>
+        <div class="barista">
+          <div class="barista-head"></div>
+          <div class="barista-arm left"></div>
+          <div class="barista-arm right"></div>
+          <div class="barista-body"></div>
+        </div>
       `;
       autoStationsEl.appendChild(div);
     });
@@ -2354,12 +2815,12 @@
 
   function tryAutoServe() {
     const stations = getAutoServeStations();
-    const queued = customers.filter(c => c.state === 'queued').sort((a, b) => a.x - b.x);
+    // Only pick non-VIP queued customers
+    const queued = customers.filter(c => !c.isVip && c.state === 'queued').sort((a, b) => a.x - b.x);
 
     for (const station of stations) {
       if (autoServing[station.index] !== null) continue;
 
-      // Find first queued customer this station can handle
       for (const c of queued) {
         if (c.id === manualServing) continue;
         if (autoServing.includes(c.id)) continue;
@@ -2373,6 +2834,108 @@
   }
 
   // ==========================================
+  // WAITER AI (VIP LOUNGE)
+  // ==========================================
+  function updateWaiter(dt) {
+    const vipLevel = upgradeLevels.vip_lounge || 0;
+    if (vipLevel <= 0) return;
+
+    if (waiterState === 'idle') {
+      // Find oldest seated VIP customer
+      const seated = customers
+        .filter(c => c.isVip && c.state === 'seated')
+        .sort((a, b) => a.id - b.id); // oldest first
+
+      if (seated.length > 0) {
+        const target = seated[0];
+        waiterState = 'walking';
+        waiterTargetCustomerId = target.id;
+        target.state = 'waiter_coming';
+
+        // Move waiter to customer's table position
+        const tablePos = VIP_TABLE_POSITIONS[target.tableIndex];
+        if (tablePos) {
+          vipWaiterEl.style.left = (tablePos.x - 5) + 'px';
+          vipWaiterEl.style.top = (tablePos.y + 10) + 'px';
+        }
+
+        // After transition (0.8s), start serving
+        setTimeout(() => {
+          if (waiterState === 'walking' && waiterTargetCustomerId === target.id) {
+            const c = customers.find(x => x.id === target.id);
+            if (c && (c.state === 'waiter_coming')) {
+              waiterState = 'serving';
+              waiterServeTime = getWaiterServeTime(c.order);
+              waiterServeTimer = 0;
+              c.state = 'being_served_vip';
+              c.serveTime = waiterServeTime;
+              c.serveProgress = 0;
+              vipWaiterEl.classList.add('serving');
+            } else {
+              // Customer left before waiter arrived
+              waiterState = 'idle';
+              waiterTargetCustomerId = null;
+              vipWaiterEl.classList.remove('serving');
+              resetWaiterPosition();
+            }
+          }
+        }, 800);
+      }
+    }
+
+    if (waiterState === 'serving') {
+      waiterServeTimer += dt;
+      const c = customers.find(x => x.id === waiterTargetCustomerId);
+      if (c && c.state === 'being_served_vip') {
+        c.serveProgress = waiterServeTimer;
+
+        // Update serve ring
+        if (c.el) {
+          const ring = c.el.querySelector('.serve-ring');
+          if (ring) {
+            const pct = Math.min(1, c.serveProgress / c.serveTime);
+            ring.classList.add('active');
+            ring.style.background = `conic-gradient(var(--matcha) ${pct * 360}deg, transparent ${pct * 360}deg)`;
+          }
+        }
+
+        // Patience still ticks
+        c.patience -= dt;
+        updatePatienceBar(c);
+
+        if (c.patience <= 0) {
+          customerAngry(c);
+          waiterState = 'idle';
+          waiterTargetCustomerId = null;
+          waiterServeTimer = 0;
+          vipWaiterEl.classList.remove('serving');
+          resetWaiterPosition();
+        } else if (waiterServeTimer >= waiterServeTime) {
+          // Serve complete!
+          completeServe(c);
+          waiterState = 'idle';
+          waiterTargetCustomerId = null;
+          waiterServeTimer = 0;
+          vipWaiterEl.classList.remove('serving');
+          resetWaiterPosition();
+        }
+      } else {
+        // Customer gone
+        waiterState = 'idle';
+        waiterTargetCustomerId = null;
+        waiterServeTimer = 0;
+        vipWaiterEl.classList.remove('serving');
+        resetWaiterPosition();
+      }
+    }
+  }
+
+  function resetWaiterPosition() {
+    vipWaiterEl.style.left = '170px';
+    vipWaiterEl.style.top = '70px';
+  }
+
+  // ==========================================
   // GAME LOOP
   // ==========================================
   function gameLoop(timestamp) {
@@ -2382,7 +2945,7 @@
     }
 
     if (lastFrameTime === 0) lastFrameTime = timestamp;
-    const dt = Math.min(timestamp - lastFrameTime, 100); // cap delta
+    const dt = Math.min(timestamp - lastFrameTime, 100);
     lastFrameTime = timestamp;
 
     // Update day timer
@@ -2427,17 +2990,14 @@
       if (rushTimer <= 0) {
         rushActive = false;
         rushBanner.classList.remove('visible');
-        // Check rush survivor achievement
-        if (!rushLostAny && rushCustomerIds.size > 0) {
-          // Will check at day end for all rush customers served
-        }
       }
     }
 
     // Update customers
     for (const c of customers) {
+      // Regular customer states
       if (c.state === 'walking_to_queue') {
-        const speed = 120; // px/s
+        const speed = 120;
         const dx = c.targetX - c.x;
         if (Math.abs(dx) < 2) {
           c.x = c.targetX;
@@ -2453,9 +3013,42 @@
         }
       }
 
+      // VIP walking to table
+      if (c.state === 'walking_to_table') {
+        const speed = 120;
+        const dx = c.targetX - c.x;
+        if (Math.abs(dx) < 3) {
+          c.x = c.targetX;
+          c.state = 'seated';
+          if (c.el) c.el.classList.remove('walking');
+        } else {
+          c.x += Math.sign(dx) * speed * (dt / 1000);
+          if ((dx > 0 && c.x > c.targetX) || (dx < 0 && c.x < c.targetX)) {
+            c.x = c.targetX;
+            c.state = 'seated';
+            if (c.el) c.el.classList.remove('walking');
+          }
+        }
+      }
+
+      // VIP seated - patience ticks, waiting for waiter
+      if (c.state === 'seated' || c.state === 'waiter_coming') {
+        c.patience -= dt;
+        updatePatienceBar(c);
+        if (c.patience <= 0) {
+          customerAngry(c);
+        } else {
+          const ratio = c.patience / c.maxPatience;
+          if (ratio < 0.25 && c.el && !c.el.classList.contains('impatient')) {
+            c.el.classList.add('impatient');
+            const face = c.el.querySelector('.customer-face');
+            if (face) face.textContent = '😤';
+          }
+        }
+      }
+
       if (c.state === 'queued') {
         c.patience -= dt;
-        // Move toward target
         const dx = c.targetX - c.x;
         if (Math.abs(dx) > 1) {
           c.x += Math.sign(dx) * 100 * (dt / 1000);
@@ -2466,7 +3059,6 @@
           customerAngry(c);
         } else {
           updatePatienceBar(c);
-          // Impatient visual
           const ratio = c.patience / c.maxPatience;
           if (ratio < 0.25 && c.el && !c.el.classList.contains('impatient')) {
             c.el.classList.add('impatient');
@@ -2478,13 +3070,11 @@
 
       if (c.state === 'serving') {
         c.serveProgress += dt;
-        // Move toward target
         const dx = c.targetX - c.x;
         if (Math.abs(dx) > 1) {
           c.x += Math.sign(dx) * 120 * (dt / 1000);
         }
 
-        // Update serve ring
         if (c.el) {
           const ring = c.el.querySelector('.serve-ring');
           if (ring) {
@@ -2494,7 +3084,6 @@
           }
         }
 
-        // Patience still ticks
         c.patience -= dt;
         updatePatienceBar(c);
 
@@ -2504,6 +3093,8 @@
           completeServe(c);
         }
       }
+
+      // being_served_vip is handled by updateWaiter
 
       if (c.state === 'leaving_happy') {
         c.x -= 120 * (dt / 1000);
@@ -2515,10 +3106,14 @@
         if (c.x > (queueArea.offsetWidth || 400) + 60) c.state = 'gone';
       }
 
+      if (c.state === 'leaving_lounge') {
+        c.x += 100 * (dt / 1000);
+        if (c.x > (vipCustomerArea.offsetWidth || 400) + 60) c.state = 'gone';
+      }
+
       // Update position
       if (c.el) {
         c.el.style.transform = `translateX(${c.x}px)`;
-        // Keep --tx for shake/bounce animations
         c.el.style.setProperty('--tx', c.x + 'px');
       }
     }
@@ -2532,8 +3127,11 @@
       return true;
     });
 
-    // Auto-serve
+    // Auto-serve (regular customers only)
     tryAutoServe();
+
+    // Waiter AI (VIP customers)
+    updateWaiter(dt);
 
     animFrameId = requestAnimationFrame(gameLoop);
   }
@@ -2573,14 +3171,23 @@
     spawnTimer = 1000;
     lastFrameTime = 0;
 
+    // Reset waiter
+    waiterState = 'idle';
+    waiterTargetCustomerId = null;
+    waiterServeTimer = 0;
+    waiterServeTime = 0;
+
     // Clear existing customers
     customers.forEach(c => { if (c.el) c.el.remove(); });
     customers = [];
 
+    // Init VIP tables
+    initVipTables();
+
     // Rush hour scheduling
     if (currentDay >= 5 && Math.random() < 0.3) {
       rushScheduled = true;
-      rushStartTime = 15000 + Math.random() * 30000; // 15s-45s
+      rushStartTime = 15000 + Math.random() * 30000;
       rushHadEvent = true;
     } else {
       rushScheduled = false;
@@ -2612,17 +3219,26 @@
 
     // Mid-serve customers leave without reward or penalty
     customers.forEach(c => {
-      if (c.state === 'serving') {
+      if (c.state === 'serving' || c.state === 'being_served_vip') {
         c.state = 'gone';
         if (manualServing === c.id) manualServing = null;
         for (let i = 0; i < 3; i++) {
           if (autoServing[i] === c.id) autoServing[i] = null;
         }
+        // Free VIP table
+        if (c.isVip && c.tableIndex !== undefined && c.tableIndex >= 0 && c.tableIndex < vipTables.length) {
+          vipTables[c.tableIndex].occupied = false;
+          vipTables[c.tableIndex].customerId = null;
+        }
         if (c.el) c.el.remove();
       }
     });
 
-    // Calculate final revenue
+    // Reset waiter
+    waiterState = 'idle';
+    waiterTargetCustomerId = null;
+    vipWaiterEl.classList.remove('serving');
+
     const finalRevenue = Math.max(0, dayRevenue - dayPenalties);
     const isNewBest = finalRevenue > bestScore;
 
@@ -2636,18 +3252,15 @@
     wallet += finalRevenue;
     saveGame();
 
-    // Check rush survivor
     let rushSurvivorEarned = false;
     if (rushHadEvent && !rushLostAny && rushCustomerIds.size > 0) {
-      // Check all rush customers were served
       const rushGone = [...rushCustomerIds].every(id => {
         const c = customers.find(x => x.id === id);
-        return !c || c.state === 'leaving_happy' || c.state === 'gone';
+        return !c || c.state === 'leaving_happy' || c.state === 'leaving_lounge' || c.state === 'gone';
       });
       if (rushGone) rushSurvivorEarned = true;
     }
 
-    // Check achievements
     checkAchievements({
       dayNumber: currentDay,
       dayRevenue: finalRevenue,
@@ -2660,7 +3273,6 @@
     currentDay++;
     saveGame();
 
-    // Show day end after brief delay
     setTimeout(() => showDayEnd(finalRevenue, isNewBest), 1000);
   }
 
@@ -2693,7 +3305,6 @@
   function renderShop() {
     const modal = document.getElementById('shopModal');
 
-    // Build preview of auto-serve machines
     const stations = getAutoServeStations();
     let machinesHtml = '';
     for (let i = 0; i < stations.length; i++) {
@@ -2704,6 +3315,7 @@
 
     let html = `
       <div class="shop-preview">
+        <div class="shop-preview-rope"></div>
         <div class="shop-preview-vip${vipLevel > 0 ? ' active' : ''}"></div>
         <div class="shop-preview-machines">${machinesHtml}</div>
         <div class="shop-preview-counter"></div>
@@ -2770,7 +3382,6 @@
     saveGame();
     playSound('upgrade');
 
-    // Check achievements
     checkAchievements({
       upgraded: true,
       upgradeId: id,
@@ -2916,7 +3527,6 @@
 
   function quitToMenu() {
     gameState = 'TITLE';
-    // Don't save mid-day progress
     hideAllOverlays();
     customers.forEach(c => { if (c.el) c.el.remove(); });
     customers = [];
