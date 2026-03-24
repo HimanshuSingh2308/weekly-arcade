@@ -208,6 +208,28 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
       return { valid: true };
     },
   },
+  // Tiny Tycoon: Boba shop idle simulator — 60-second timed days
+  // Max score: ~40 customers × 30 base (sparkling) × 2 (VIP) × 3.0 (combo) + 13 tip = ~7,500 theoretical
+  'tiny-tycoon': {
+    maxScore: 15000, // generous buffer for edge cases
+    maxScorePerSecond: 250,
+    minTimeMs: 55000, // days are 60 seconds, allow 5s tolerance
+    customValidation: (dto) => {
+      if (dto.metadata) {
+        const served = dto.metadata.customersServed as number;
+        const lost = dto.metadata.customersLost as number;
+        // Max ~75 serves theoretical (60s / 0.8s fastest serve)
+        if (served !== undefined && served > 80) {
+          return { valid: false, reason: 'Too many customers served' };
+        }
+        // Revenue per customer sanity check
+        if (served !== undefined && served > 0 && dto.score / served > 250) {
+          return { valid: false, reason: 'Revenue per customer too high' };
+        }
+      }
+      return { valid: true };
+    },
+  },
 };
 
 /**

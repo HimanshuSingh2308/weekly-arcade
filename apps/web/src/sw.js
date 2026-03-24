@@ -26,7 +26,9 @@ const ASSETS = [
   '/games/solitaire-roguelite/',
   '/games/solitaire-roguelite/index.html',
   '/games/coin-cascade/',
-  '/games/coin-cascade/index.html'
+  '/games/coin-cascade/index.html',
+  '/games/tiny-tycoon/',
+  '/games/tiny-tycoon/index.html'
 ];
 
 // Install - cache assets (don't skipWaiting automatically, let user decide)
