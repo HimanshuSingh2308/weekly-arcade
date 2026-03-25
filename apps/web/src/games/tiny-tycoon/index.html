@@ -1518,7 +1518,7 @@
 
     .title-tagline {
       font-size: 0.9rem;
-      color: #8a7060;
+      color: #6d5a4a;
       margin-bottom: 1.5rem;
     }
 
@@ -1637,7 +1637,7 @@
 
     .upgrade-desc {
       font-size: 0.7rem;
-      color: #8a7060;
+      color: #6d5a4a;
       margin: 0.15rem 0;
     }
 
@@ -1859,6 +1859,17 @@
       100% { opacity: 0; }
     }
 
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -1887,6 +1898,7 @@
     <div class="hud-item">💰 <span id="hudCoins">0</span></div>
     <div class="hud-item"><span class="hud-timer" id="hudTimer">1:00</span></div>
     <div class="hud-item hud-combo" id="hudCombo">🔥 x1.0</div>
+    <button class="icon-btn" id="pauseBtn" aria-label="Pause game" style="background:none;border:none;color:var(--brown);font-size:1.2rem;min-width:44px;min-height:44px;">⏸</button>
   </div>
 
   <!-- Rush Hour Banner -->
@@ -1997,7 +2009,7 @@
   </div>
 
   <!-- Title Overlay -->
-  <div class="overlay visible" id="titleOverlay">
+  <div class="overlay visible" id="titleOverlay" role="dialog" aria-modal="true" aria-label="Tiny Tycoon - Start">
     <div class="modal">
       <div class="title-logo">🧋</div>
       <div class="title-name">Tiny Tycoon</div>
@@ -2008,29 +2020,31 @@
   </div>
 
   <!-- Day End Overlay -->
-  <div class="overlay" id="dayEndOverlay">
+  <div class="overlay" id="dayEndOverlay" role="dialog" aria-modal="true" aria-label="Day results">
     <div class="modal" id="dayEndModal"></div>
   </div>
 
   <!-- Upgrade Shop Overlay -->
-  <div class="overlay" id="shopOverlay">
+  <div class="overlay" id="shopOverlay" role="dialog" aria-modal="true" aria-label="Upgrade shop">
     <div class="modal shop-modal" id="shopModal"></div>
   </div>
 
   <!-- Pause Overlay -->
-  <div class="overlay" id="pauseOverlay">
+  <div class="overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-label="Game paused">
     <div class="modal pause-content">
       <h2>⏸ Paused</h2>
       <br>
-      <button class="btn" onclick="resumeGame()">Resume</button>
-      <button class="btn btn-danger" onclick="quitToMenu()">Quit to Menu</button>
+      <button class="btn" id="resumeBtn">Resume</button>
+      <button class="btn btn-danger" id="quitBtn">Quit to Menu</button>
     </div>
   </div>
 
   <!-- Achievement Toast -->
-  <div class="achievement-toast" id="achievementToast"></div>
+  <div class="achievement-toast" id="achievementToast" role="alert"></div>
+  <div id="srAnnounce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <script>
+  (() => {
   // ==========================================
   // GAME CONSTANTS
   // ==========================================
@@ -2194,12 +2208,12 @@
   }
 
   function loadGame() {
-    wallet = parseInt(localStorage.getItem('tt_wallet') || '0');
-    bestScore = parseInt(localStorage.getItem('tt_best_score') || '0');
-    currentDay = parseInt(localStorage.getItem('tt_current_day') || '1');
-    upgradeLevels = JSON.parse(localStorage.getItem('tt_upgrades') || '{}');
-    unlockedAchievements = new Set(JSON.parse(localStorage.getItem('tt_achievements') || '[]'));
-    masterVolume = parseFloat(localStorage.getItem('tt_volume') || '0.5');
+    wallet = parseInt(localStorage.getItem('tt_wallet') || '0') || 0;
+    bestScore = parseInt(localStorage.getItem('tt_best_score') || '0') || 0;
+    currentDay = parseInt(localStorage.getItem('tt_current_day') || '1') || 1;
+    try { upgradeLevels = JSON.parse(localStorage.getItem('tt_upgrades') || '{}'); } catch(e) { upgradeLevels = {}; }
+    try { unlockedAchievements = new Set(JSON.parse(localStorage.getItem('tt_achievements') || '[]')); } catch(e) { unlockedAchievements = new Set(); }
+    masterVolume = parseFloat(localStorage.getItem('tt_volume') || '0.5') || 0.5;
     isMuted = localStorage.getItem('tt_muted') === 'true';
   }
 
@@ -2371,7 +2385,9 @@
   // AUTH
   // ==========================================
   function setupAuth() {
+    let authAttempts = 0;
     const checkAuth = setInterval(() => {
+      if (++authAttempts > 100) { clearInterval(checkAuth); return; }
       if (window.authManager?.isInitialized) {
         clearInterval(checkAuth);
         window.authManager.onAuthStateChanged(user => {
@@ -3162,8 +3178,8 @@
           }
         }
 
-        // Patience still ticks
-        c.patience -= dt;
+        // Patience drains at 50% rate while being served
+        c.patience -= dt * 0.5;
         updatePatienceBar(c);
 
         if (c.patience <= 0) {
@@ -3356,7 +3372,7 @@
           }
         }
 
-        c.patience -= dt;
+        c.patience -= dt * 0.5; // 50% drain rate while being served
         updatePatienceBar(c);
 
         if (c.patience <= 0) {
@@ -3489,6 +3505,7 @@
   }
 
   function endDay() {
+    if (gameState !== 'PLAYING') return;
     gameState = 'DAY_END';
     // M. Cancel game loop
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
@@ -3497,22 +3514,20 @@
     rushBanner.classList.remove('visible');
     rushActive = false;
 
-    // Mid-serve customers leave without reward or penalty
+    // Clean up ALL remaining customers
     customers.forEach(c => {
-      if (c.state === 'serving' || c.state === 'being_served_vip') {
-        c.state = 'gone';
-        if (manualServing === c.id) manualServing = null;
-        for (let i = 0; i < 3; i++) {
-          if (autoServing[i] === c.id) autoServing[i] = null;
-        }
-        // Free VIP table
-        if (c.isVip && c.tableIndex !== undefined && c.tableIndex >= 0 && c.tableIndex < vipTables.length) {
-          vipTables[c.tableIndex].occupied = false;
-          vipTables[c.tableIndex].customerId = null;
-        }
-        if (c.el) c.el.remove();
+      if (manualServing === c.id) manualServing = null;
+      for (let i = 0; i < 3; i++) {
+        if (autoServing[i] === c.id) autoServing[i] = null;
       }
+      if (c.isVip && c.tableIndex !== undefined && c.tableIndex >= 0 && c.tableIndex < vipTables.length) {
+        vipTables[c.tableIndex].occupied = false;
+        vipTables[c.tableIndex].customerId = null;
+      }
+      c.state = 'gone';
+      if (c.el) c.el.remove();
     });
+    customers = [];
 
     // Reset waiter
     waiterState = 'idle';
@@ -3555,14 +3570,19 @@
     currentDay++;
     saveGame();
 
-    setTimeout(() => showDayEnd(finalRevenue, isNewBest), 1000);
+    // Announce to screen readers
+    const sr = document.getElementById('srAnnounce');
+    if (sr) sr.textContent = `Day ${currentDay} complete. Revenue: ${finalRevenue} coins. Served: ${customersServed}. Lost: ${customersLost}.`;
+
+    setTimeout(() => showDayEnd(finalRevenue, isNewBest, dayPenalties), 1000);
   }
 
-  function showDayEnd(revenue, isNewBest) {
+  function showDayEnd(revenue, isNewBest, penalties) {
     const modal = document.getElementById('dayEndModal');
     modal.innerHTML = `
       <h2>☀️ Day ${currentDay - 1} Complete!</h2>
       <div class="modal-row"><span>Revenue</span><span>💰 ${formatCoins(revenue)}</span></div>
+      ${penalties > 0 ? `<div class="modal-row" style="color:var(--coral);font-size:0.8rem;"><span>Penalties (${customersLost} lost)</span><span>-${penalties} 🪙</span></div>` : ''}
       <div class="modal-row"><span>Served</span><span>🧋 ${customersServed}</span></div>
       <div class="modal-row"><span>Lost</span><span>😤 ${customersLost}</span></div>
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${Math.min(3.0, 1.0 + peakCombo * 0.1).toFixed(1)}</span></div>
@@ -3764,13 +3784,27 @@
     }
   }
 
+  const achievementQueue = [];
+  let achievementShowing = false;
+
   function showAchievementToast(id) {
     const ach = ACHIEVEMENTS[id];
     if (!ach) return;
+    achievementQueue.push(ach);
+    if (!achievementShowing) processAchievementQueue();
+  }
+
+  function processAchievementQueue() {
+    if (achievementQueue.length === 0) { achievementShowing = false; return; }
+    achievementShowing = true;
+    const ach = achievementQueue.shift();
     const toast = document.getElementById('achievementToast');
     toast.innerHTML = `🏆 ${ach.name}<br><span style="font-size:0.7rem;font-weight:400;">${ach.desc}</span>`;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => processAchievementQueue(), 400);
+    }, 3000);
   }
 
   // ==========================================
@@ -4012,6 +4046,35 @@
   updateShopEnvironment();
   showTitle();
   // M. Don't start game loop at init - only when entering PLAYING state
+
+  // Expose functions needed by onclick handlers in dynamic HTML
+  window.resumeGame = resumeGame;
+  window.quitToMenu = quitToMenu;
+  window.showShop = showShop;
+  window.buyUpgrade = buyUpgrade;
+  window.startDay = startDay;
+  window.showTitle = showTitle;
+  window.newGame = newGame;
+
+  // Pause button handler
+  document.getElementById('pauseBtn').addEventListener('click', () => {
+    if (gameState === 'PLAYING') pauseGame();
+  });
+  document.getElementById('resumeBtn').addEventListener('click', () => resumeGame());
+  document.getElementById('quitBtn').addEventListener('click', () => quitToMenu());
+
+  // Keyboard: spacebar serves front customer
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ' && gameState === 'PLAYING') {
+      e.preventDefault();
+      const front = customers.filter(c => !c.isVip && c.state === 'queued').sort((a, b) => a.x - b.x)[0];
+      if (front && !manualServing) {
+        startServing(front, 'manual');
+      }
+    }
+  });
+
+  })();
   </script>
 
   <!-- Firebase + Auth -->
