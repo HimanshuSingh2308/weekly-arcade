@@ -29,9 +29,13 @@ class AuthManager {
     if (this.isInitialized) return;
 
     try {
-      // Check if Firebase is loaded
+      // Dynamically load Firebase SDK if not already present
       if (typeof firebase === 'undefined') {
-        console.warn('Firebase SDK not loaded. Auth features disabled.');
+        await this._loadFirebaseSDK();
+      }
+
+      if (typeof firebase === 'undefined') {
+        console.warn('Firebase SDK failed to load. Auth features disabled.');
         this.isInitialized = true;
         return;
       }
@@ -222,6 +226,26 @@ class AuthManager {
    */
   notifyListeners() {
     this.listeners.forEach(listener => listener(this.user));
+  }
+
+  /**
+   * Dynamically load Firebase SDK scripts
+   */
+  async _loadFirebaseSDK() {
+    const loadScript = (src) => new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+
+    try {
+      await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js');
+    } catch (e) {
+      console.warn('Failed to load Firebase SDK:', e);
+    }
   }
 }
 
