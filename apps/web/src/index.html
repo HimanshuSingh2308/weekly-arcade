@@ -370,7 +370,11 @@
       font-size: 0.85rem;
       font-weight: 600;
       animation: pulse 2s infinite;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
+    .badge:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(233,69,96,0.4); }
+    .badge:active { transform: scale(0.97); }
 
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
@@ -969,7 +973,7 @@
   <section class="hero">
     <h1>New <span>Free Games</span> Every Week</h1>
     <p>Play instantly in your browser. No downloads required. Sign in optional for leaderboards.</p>
-    <span class="badge">🎉 New Game This Week: Tiny Tycoon</span>
+    <a href="/games/tiny-tycoon/" class="badge">🎉 New Game This Week: Tiny Tycoon</a>
   </section>
 
   <main class="container">
