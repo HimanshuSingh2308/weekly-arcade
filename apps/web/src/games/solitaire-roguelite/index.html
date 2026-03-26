@@ -188,6 +188,7 @@
     .joker-badge.common { border-color: var(--joker-common); color: var(--joker-common); }
     .joker-badge.rare { border-color: var(--joker-rare); color: var(--joker-rare); }
     .joker-badge.epic { border-color: var(--joker-epic); color: var(--joker-epic); }
+    .joker-badge.cursed { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.1); }
     .joker-badge .joker-glow {
       animation: jokerGlow 0.5s ease-out;
     }
@@ -823,8 +824,24 @@
       <div id="bestScore"></div>
       <div style="margin-top:1rem;">
         <button class="modal-btn" onclick="startNewGame()">Play Again</button>
-        <button class="modal-btn btn-daily" onclick="startDailyChallenge()">🎯 Daily Challenge</button>
-        <button class="modal-btn secondary" onclick="window.location.href='/leaderboard/?game=solitaire-roguelite'">Leaderboard</button>
+        <button class="modal-btn btn-daily" onclick="startDailyChallenge()">🎯 Daily</button>
+        <button class="modal-btn" style="background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;" onclick="showPrestigeShop()">⭐ Prestige</button>
+        <button class="modal-btn secondary" onclick="window.location.href='/leaderboard/?game=solitaire-roguelite'">🏆</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prestige Shop -->
+  <div class="modal-overlay" id="prestigeModal">
+    <div class="modal" style="max-width:380px;">
+      <h2>⭐ Prestige Shop</h2>
+      <div style="text-align:center;margin-bottom:0.75rem;">
+        <span style="color:var(--gold);font-size:1.2rem;font-weight:700;" id="prestigeBalance">0</span>
+        <span style="color:var(--text-muted);font-size:0.8rem;"> points</span>
+      </div>
+      <div id="prestigeItems"></div>
+      <div style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
+        <button class="modal-btn secondary" onclick="hidePrestigeShop()">Close</button>
       </div>
     </div>
   </div>
@@ -896,6 +913,7 @@
     { id: 'speed_bonus', name: 'Speed Bonus', desc: '+3 pts per second remaining', icon: '⚡', timeBonusMult: 3 },
     { id: 'blind_deal', name: 'Blind Start', desc: 'First column cards face-down', icon: '🙈', apply: () => { tableau.forEach((col, i) => { if (i < 3 && col.length > 1) col[col.length - 2].faceUp = false; }); render(); } },
     { id: 'generous', name: 'Generous', desc: 'Start with a random Joker', icon: '🎁' },
+    { id: 'free_play', name: 'Free Play', desc: 'No timer — practice mode (no score)', icon: '🧘', apply: () => { timerSeconds = 99999; }, scoreMult: 0 },
     { id: 'ultimate', name: 'Ultimate', desc: '7 min + no undo + 2x score', icon: '💀', apply: () => { timerSeconds = 420; undoCharges = 0; }, scoreMult: 2 },
   ];
 
@@ -931,9 +949,14 @@
     return p.points;
   }
 
+  let activePrestigeMode = null; // currently active prestige mode
+
   const PRESTIGE_UNLOCKS = [
-    { id: 'speed_run', name: 'Speed Run', desc: '5-min timer, 1.5x score', cost: 5, icon: '⚡' },
-    { id: 'marathon', name: 'Marathon', desc: '15-min timer, 0.75x score', cost: 10, icon: '🏃' },
+    { id: 'speed_run', name: 'Speed Run', desc: '5-min timer, 1.5x score', cost: 5, icon: '⚡',
+      apply: () => { timerSeconds = 300; }, scoreMult: 1.5 },
+    { id: 'marathon', name: 'Marathon', desc: '15-min timer, 0.75x score', cost: 10, icon: '🏃',
+      apply: () => { timerSeconds = 900; }, scoreMult: 0.75 },
+    { id: 'cursed_deck', name: 'Cursed Deck', desc: '2 random Jokers are cursed (negative)', cost: 15, icon: '🦠' },
     { id: 'double_down', name: 'Double Down', desc: 'Start with 2 Jokers, no shop until foundation 2', cost: 20, icon: '🎰' },
   ];
 
@@ -1128,11 +1151,38 @@
       dailyModifier = getDailyModifier();
       if (dailyModifier.apply) dailyModifier.apply();
       if (dailyModifier.id === 'generous') {
-        // Give a random common Joker
         const commons = Object.values(JOKERS).filter(j => j.rarity === 'common');
         const freeJoker = commons[Math.floor(Math.random() * commons.length)];
         activeJokers.push({ ...freeJoker });
         renderJokersBar();
+      }
+    }
+
+    // Apply prestige mode if active
+    if (activePrestigeMode && isUnlocked(activePrestigeMode)) {
+      const mode = PRESTIGE_UNLOCKS.find(u => u.id === activePrestigeMode);
+      if (mode) {
+        if (mode.apply) mode.apply();
+        // Double Down: start with 2 random Jokers
+        if (mode.id === 'double_down') {
+          const pool = Object.values(JOKERS).filter(j => j.rarity !== 'epic');
+          for (let i = 0; i < 2 && pool.length > 0; i++) {
+            const idx = Math.floor(Math.random() * pool.length);
+            activeJokers.push({ ...pool[idx] });
+            pool.splice(idx, 1);
+          }
+          renderJokersBar();
+        }
+        // Cursed Deck: add 2 random cursed Jokers
+        if (mode.id === 'cursed_deck') {
+          const cursedPool = [...CURSED_JOKERS];
+          for (let i = 0; i < 2 && cursedPool.length > 0; i++) {
+            const idx = Math.floor(Math.random() * cursedPool.length);
+            activeJokers.push({ ...cursedPool[idx] });
+            cursedPool.splice(idx, 1);
+          }
+          renderJokersBar();
+        }
       }
     }
 
@@ -1174,6 +1224,8 @@
     cardsOnFoundation++;
     // Streak Master: 5+ without drawing from stock
     if (hasJoker('S10') && movesSinceLastDraw >= 5) pts = Math.round(pts * 1.5);
+    // Cursed: Sluggish — lose 2 pts per foundation card
+    if (hasJoker('C1')) pts = Math.max(10, pts - 2);
 
     const rect = el ? el.getBoundingClientRect() : null;
     const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
@@ -1196,6 +1248,8 @@
     timerInterval = setInterval(() => {
       if (!gameActive) return;
       if (timerSeconds > 0) timerSeconds--;
+      // Cursed: Foggy Mind — timer ticks 1.5x (extra tick every 2 seconds)
+      if (hasJoker('C2') && timerSeconds % 2 === 0 && timerSeconds > 0) timerSeconds--;
       const m = Math.floor(timerSeconds / 60);
       const s = timerSeconds % 60;
       document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
@@ -1437,8 +1491,12 @@
         return true;
       }
 
-      // Open Joker shop
-      setTimeout(() => openShop(), 500);
+      // Open Joker shop (Double Down: skip shop until foundation 2)
+      if (activePrestigeMode === 'double_down' && foundationsCompleted < 2) {
+        // No shop — just continue
+      } else {
+        setTimeout(() => openShop(), 500);
+      }
     }
 
     render();
@@ -1626,6 +1684,8 @@
     overlay.classList.add('show');
     if (timerInterval) clearInterval(timerInterval); // pause timer during shop
     playSound('shop');
+    // Cursed: Tax Collector — -100 pts per shop visit
+    if (hasJoker('C4')) { score = Math.max(0, score - 100); updateScoreDisplay(); }
   }
 
   function pickJoker(id) {
@@ -1928,8 +1988,13 @@
     }
 
     // Daily modifier score multiplier
-    if (isDailyChallenge && dailyModifier?.scoreMult) {
+    if (isDailyChallenge && dailyModifier?.scoreMult !== undefined) {
       score = Math.round(score * dailyModifier.scoreMult);
+    }
+    // Prestige mode score multiplier
+    if (activePrestigeMode && isUnlocked(activePrestigeMode)) {
+      const mode = PRESTIGE_UNLOCKS.find(u => u.id === activePrestigeMode);
+      if (mode?.scoreMult) score = Math.round(score * mode.scoreMult);
     }
     updateScoreDisplay();
 
@@ -2041,6 +2106,64 @@
     render();
     startTimer();
   }
+
+  // ── PRESTIGE SHOP UI ─────────────────────────────────────
+  function showPrestigeShop() {
+    document.getElementById('gameOverModal').classList.remove('show');
+    const pts = getPrestigePoints();
+    document.getElementById('prestigeBalance').textContent = pts;
+
+    const items = document.getElementById('prestigeItems');
+    items.innerHTML = PRESTIGE_UNLOCKS.map(u => {
+      const owned = isUnlocked(u.id);
+      const active = activePrestigeMode === u.id;
+      const canBuy = pts >= u.cost;
+      return `
+        <div style="display:flex;align-items:center;gap:0.6rem;padding:0.6rem;background:rgba(255,255,255,0.03);border:1px solid ${owned ? 'var(--gold)' : 'rgba(255,255,255,0.08)'};border-radius:10px;margin-bottom:0.5rem;">
+          <div style="font-size:1.4rem;flex-shrink:0;">${u.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:0.85rem;">${u.name}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">${u.desc}</div>
+          </div>
+          ${owned
+            ? `<button class="modal-btn" style="font-size:0.7rem;padding:0.3rem 0.6rem;min-width:auto;${active ? 'background:var(--gold);color:#000;' : ''}" onclick="togglePrestigeMode('${u.id}')">${active ? '✓ Active' : 'Use'}</button>`
+            : `<button class="modal-btn secondary" style="font-size:0.7rem;padding:0.3rem 0.6rem;min-width:auto;${canBuy ? '' : 'opacity:0.4;cursor:not-allowed;'}" onclick="${canBuy ? `buyPrestige('${u.id}')` : ''}">${u.cost} ⭐</button>`
+          }
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('prestigeModal').classList.add('show');
+  }
+
+  function hidePrestigeShop() {
+    document.getElementById('prestigeModal').classList.remove('show');
+    document.getElementById('gameOverModal').classList.add('show');
+  }
+
+  function buyPrestige(id) {
+    if (unlockPrestige(id)) {
+      playSound('foundation_complete');
+      showPrestigeShop(); // re-render
+    }
+  }
+
+  function togglePrestigeMode(id) {
+    activePrestigeMode = activePrestigeMode === id ? null : id;
+    localStorage.setItem('solitaire-active-mode', activePrestigeMode || '');
+    showPrestigeShop(); // re-render
+  }
+
+  // Restore active mode from localStorage
+  activePrestigeMode = localStorage.getItem('solitaire-active-mode') || null;
+
+  // ── CURSED JOKERS ───────────────────────────────────────
+  const CURSED_JOKERS = [
+    { id: 'C1', name: 'Sluggish', desc: '-2 pts per foundation card', icon: '🐌', rarity: 'cursed' },
+    { id: 'C2', name: 'Foggy Mind', desc: 'Timer ticks 1.5x faster', icon: '🌫️', rarity: 'cursed' },
+    { id: 'C3', name: 'Butterfingers', desc: 'Stock only draws 1 card', icon: '🧈', rarity: 'cursed' },
+    { id: 'C4', name: 'Tax Collector', desc: '-100 pts per shop visit', icon: '💸', rarity: 'cursed' },
+  ];
 
   // ── SOUND ────────────────────────────────────────────────
   let audioCtx = null;
@@ -2284,6 +2407,10 @@
   window.toggleMute = toggleMute;
   window.startNewGame = startNewGame;
   window.startDailyChallenge = startDailyChallenge;
+  window.showPrestigeShop = showPrestigeShop;
+  window.hidePrestigeShop = hidePrestigeShop;
+  window.buyPrestige = buyPrestige;
+  window.togglePrestigeMode = togglePrestigeMode;
   window.pickJoker = pickJoker;
   window.closeShop = closeShop;
   window.drawFromStock = drawFromStock;
