@@ -54,11 +54,18 @@
       font-weight: 700;
       margin: 0;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       display: flex;
       align-items: center;
       gap: 0.35rem;
       flex: 1;
+      min-width: 0;
       margin-left: 0.25rem;
+    }
+    .gh-title span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     @media (min-width: 600px) {

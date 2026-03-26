@@ -3432,12 +3432,13 @@
     }
 
     function updateSoundButton() {
-      const btn = document.getElementById('soundBtn');
+      const btn = document.getElementById('soundBtn') || document.getElementById('ghSoundBtn');
+      if (!btn) return;
       btn.textContent = soundEnabled ? '🔊' : '🔇';
       btn.classList.toggle('muted', !soundEnabled);
     }
 
-    // Initialize sound button state
+    // Initialize sound button state (may not exist until gameHeader renders)
     updateSoundButton();
 
     // ============================================
