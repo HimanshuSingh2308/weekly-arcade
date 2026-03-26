@@ -262,8 +262,14 @@ class AuthManager {
    */
   onAuthStateChanged(callback) {
     this.listeners.push(callback);
-    // Immediately call with current state
-    callback(this.user);
+    // Immediately call with current state — but only if it's a real user (not cached stub)
+    // Cached users don't have a valid token yet, so API calls would 401
+    if (this.user && !this.user._cached) {
+      callback(this.user);
+    } else if (!this.user) {
+      callback(null);
+    }
+    // If user._cached, the callback will fire when Firebase confirms the real user
     return () => {
       this.listeners = this.listeners.filter(l => l !== callback);
     };
