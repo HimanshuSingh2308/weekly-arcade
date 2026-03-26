@@ -714,8 +714,21 @@
   <script src="/js/auth.js"></script>
 
   <script>
-    // ─── Game metadata (loaded from API catalog) ───
-    let GAME_META = {}; // { gameId: { icon, name } }
+    // ─── Game metadata — inline fallback + API refresh ───
+    const GAME_META = {
+      'stack-tower':        { icon: '🏗️', name: 'Stack Tower' },
+      'voidbreak':          { icon: '☄️', name: 'Voidbreak' },
+      'wordle':             { icon: '🔤', name: 'Wordle' },
+      'snake':              { icon: '🐍', name: 'Snake' },
+      '2048':               { icon: '🔢', name: '2048' },
+      'chaos-kitchen':      { icon: '👨‍🍳', name: 'Chaos Kitchen' },
+      'memory-match':       { icon: '🃏', name: 'Memory Match' },
+      'lumble':             { icon: '🪙', name: 'Lumble' },
+      'fieldstone':         { icon: '🏰', name: 'Fieldstone' },
+      'solitaire-roguelite':{ icon: '🃏', name: 'Solitaire Roguelite' },
+      'coin-cascade':       { icon: '🪙', name: 'Coin Cascade' },
+      'tiny-tycoon':        { icon: '🧋', name: 'Tiny Tycoon' },
+    };
 
     async function loadGameMeta() {
       try {
@@ -724,7 +737,7 @@
           catalog.forEach(g => { GAME_META[g.id] = { icon: g.icon, name: g.name }; });
         }
       } catch (e) {
-        console.warn('Failed to load game catalog for profile', e);
+        // Inline fallback above is used — no action needed
       }
     }
 

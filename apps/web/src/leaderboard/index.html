@@ -998,12 +998,20 @@
   <script src="/js/auth.js"></script>
 
   <script>
-    // ─── Game Configuration (fetched from API) ───
-    // Inline fallback so page renders immediately; replaced by API data on load
+    // ─── Game Configuration — inline fallback + API refresh ───
     let GAMES = [
       { id: 'stack-tower', name: 'Stack Tower', icon: '🏗️', description: 'Timing arcade' },
+      { id: 'voidbreak', name: 'Voidbreak', icon: '☄️', description: 'Asteroid roguelite' },
       { id: 'wordle', name: 'Wordle', icon: '🔤', description: 'Word puzzle' },
       { id: 'snake', name: 'Snake', icon: '🐍', description: 'Classic arcade' },
+      { id: '2048', name: '2048', icon: '🔢', description: 'Number puzzle' },
+      { id: 'chaos-kitchen', name: 'Chaos Kitchen', icon: '👨‍🍳', description: 'Cooking game' },
+      { id: 'memory-match', name: 'Memory Match', icon: '🃏', description: 'Card matching' },
+      { id: 'lumble', name: 'Lumble', icon: '🪙', description: '3D platformer' },
+      { id: 'fieldstone', name: 'Fieldstone', icon: '🏰', description: 'Kingdom builder' },
+      { id: 'solitaire-roguelite', name: 'Solitaire Roguelite', icon: '🃏', description: 'Klondike with Jokers' },
+      { id: 'coin-cascade', name: 'Coin Cascade', icon: '🪙', description: 'Physics coin pusher' },
+      { id: 'tiny-tycoon', name: 'Tiny Tycoon', icon: '🧋', description: 'Boba shop simulator' },
     ];
 
     const urlGame = new URLSearchParams(window.location.search).get('game');
