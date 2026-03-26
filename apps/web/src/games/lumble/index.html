@@ -734,6 +734,58 @@
       .more-games { display: none; }
     }
 
+    /* Floating text for chain combos */
+    .floating-text {
+      position: fixed;
+      pointer-events: none;
+      font-weight: 900;
+      font-size: 1.5rem;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      z-index: 60;
+      animation: floatUp 1s ease-out forwards;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+    }
+
+    .chain-indicator {
+      position: fixed;
+      pointer-events: none;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: var(--spark-gold);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      z-index: 55;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .chain-indicator.active {
+      opacity: 1;
+    }
+
+    .zone-banner {
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      font-weight: 900;
+      font-size: 2rem;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+      z-index: 65;
+      animation: floatUp 2s ease-out forwards;
+      white-space: nowrap;
+    }
+
+    .personal-best {
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--spark-gold);
+      font-weight: 600;
+    }
+
     /* Accessibility: Respect reduced motion preferences */
     @media (prefers-reduced-motion: reduce) {
       *,
@@ -802,7 +854,13 @@
       <span class="hud-icon">⏱️</span>
       <span class="hud-value" id="timeDisplay">0:00</span>
     </div>
+    <div class="hud-item">
+      <span class="hud-icon">⏱️</span>
+      <span class="hud-value" id="timeBonusDisplay" style="color: var(--spark-gold);">10,000</span>
+      <span class="hud-label">Bonus</span>
+    </div>
   </div>
+  <div class="chain-indicator" id="chainIndicator"></div>
 
   <!-- Leaderboard -->
   <div class="leaderboard-section" id="leaderboardSection" style="display: none;">
@@ -864,6 +922,13 @@
         <div class="final-score-value" id="finalScore">9,500</div>
       </div>
 
+      <div class="personal-best" id="personalBest" style="display:none">
+        <span id="personalBestText"></span>
+      </div>
+
+      <div id="bonusSparkResult" style="text-align:center;margin-top:0.5rem;font-size:0.85rem;color:#ff69b4;font-weight:600;display:none"></div>
+      <div id="bestChainResult" style="text-align:center;margin-top:0.3rem;font-size:0.85rem;color:var(--spark-gold);font-weight:600;display:none"></div>
+
       <div class="results-buttons">
         <button class="btn btn-secondary" onclick="returnToMenu()">Menu</button>
         <button class="btn btn-primary" onclick="restartGame()">Play Again</button>
@@ -879,7 +944,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
-  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}b.onclick=function(){window.location.href='/profile/'}}if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
+  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}}b.onclick=function(){window.location.href='/profile/'};if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}}</script>
 
   <script>
     (function() {
@@ -900,8 +965,26 @@
       totalSparks: 50,
       startTime: 0,
       elapsedTime: 0,
-      score: 0
+      score: 0,
+      // Chain system
+      chainCount: 0,
+      chainTimer: 0,
+      chainMultiplier: 1,
+      bestChain: 0,
+      chainBonus: 0,
+      // Zone clear tracking
+      zoneClearBonus: 0,
+      zoneSparksCollected: { hub: 0, westGrove: 0, eastStones: 0, southCanyon: 0, northCanopy: 0 },
+      zoneSparksTotal: { hub: 0, westGrove: 0, eastStones: 0, southCanyon: 0, northCanopy: 0 },
+      zonesCleared: { hub: false, westGrove: false, eastStones: false, southCanyon: false, northCanopy: false },
+      // Bonus sparks
+      bonusSparksCollected: 0,
+      bonusSparksTotal: 3
     };
+
+    // Hazard tracking
+    let hazards = [];
+    let bonusSparks = [];
 
     // Three.js variables
     let scene, camera, renderer;
@@ -960,15 +1043,409 @@
     let butterflies = [];
     let waterMesh = null;
 
+    // ============================================
+    // BIOME LIGHTING & ATMOSPHERE CONFIG
+    // ============================================
+
+    function getBiomeLighting(biome) {
+      const configs = {
+        garden: {
+          fogColor: 0xC8E6FF, fogDensity: 0.012,
+          skyTop: 0x4A90D9, skyMid: 0x87CEEB, skyBottom: 0xC8E6FF,
+          hemiSky: 0x87CEEB, hemiGround: 0x4a7c4e, hemiIntensity: 0.6,
+          sunColor: 0xFFF5E1, sunIntensity: 1.0,
+          fillColor: 0x8BB8E8, fillIntensity: 0.3
+        },
+        tidepool: {
+          fogColor: 0xB0D8E8, fogDensity: 0.014,
+          skyTop: 0x2E6B8A, skyMid: 0x5BA3C9, skyBottom: 0xB0D8E8,
+          hemiSky: 0x5BA3C9, hemiGround: 0x3A7A6A, hemiIntensity: 0.65,
+          sunColor: 0xFFE8C0, sunIntensity: 0.9,
+          fillColor: 0x6BC0D9, fillIntensity: 0.35
+        },
+        clocktower: {
+          fogColor: 0xD4C5A0, fogDensity: 0.016,
+          skyTop: 0x4A3D2E, skyMid: 0x8B7355, skyBottom: 0xD4C5A0,
+          hemiSky: 0xC9A96E, hemiGround: 0x4A4A4A, hemiIntensity: 0.5,
+          sunColor: 0xFFD080, sunIntensity: 0.85,
+          fillColor: 0xAA8855, fillIntensity: 0.25
+        }
+      };
+      return configs[biome] || configs.garden;
+    }
+
+    function getBiomeTerrain(biome) {
+      const configs = {
+        garden: {
+          groundColor: 0x3D8C40, groundRoughness: 0.9,
+          groundSize: 120, hasGrass: true, hasFlowers: true,
+          hasMushrooms: true, hasWater: true, waterSize: 6,
+          waterPos: { x: -20, z: 15 }
+        },
+        tidepool: {
+          groundColor: 0xC2B280, groundRoughness: 0.85,
+          groundSize: 130, hasGrass: false, hasFlowers: false,
+          hasMushrooms: false, hasWater: true, waterSize: 25,
+          waterPos: { x: 0, z: 0 }
+        },
+        clocktower: {
+          groundColor: 0x5A5A5A, groundRoughness: 0.7,
+          groundSize: 100, hasGrass: false, hasFlowers: false,
+          hasMushrooms: false, hasWater: false, waterSize: 0,
+          waterPos: { x: 0, z: 0 }
+        }
+      };
+      return configs[biome] || configs.garden;
+    }
+
+    // ============================================
+    // BIOME LEVEL DATA
+    // ============================================
+
+    const BIOME_LEVELS = {
+      garden: {
+        zones: {
+          hub: {
+            platforms: [
+              { x: 0, y: 0.5, z: 0, w: 8, h: 1, d: 8, type: 'stone' }
+            ],
+            sparks: []
+          },
+          westGrove: {
+            platforms: [
+              // Ground-level easy platforms spreading west
+              { x: -8, y: 0.5, z: 2, w: 4, h: 0.5, d: 3, type: 'wood' },
+              { x: -14, y: 0.5, z: -1, w: 3, h: 0.5, d: 3, type: 'wood' },
+              { x: -20, y: 1, z: 3, w: 4, h: 0.5, d: 4, type: 'stone' },
+              { x: -26, y: 1.5, z: -2, w: 3, h: 0.5, d: 3, type: 'wood' },
+              { x: -18, y: 2, z: -6, w: 3, h: 0.5, d: 3, type: 'wood' },
+              { x: -24, y: 3, z: -8, w: 4, h: 0.5, d: 3, type: 'stone' },
+              { x: -30, y: 2, z: 5, w: 4, h: 0.5, d: 4, type: 'wood' },
+              { x: -32, y: 3.5, z: -3, w: 3, h: 0.5, d: 3, type: 'wood' },
+              { x: -28, y: 4.5, z: -12, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              // Trail from hub heading west - easy ground pickups
+              { x: -4, y: 1.2, z: 1 }, { x: -8, y: 1.5, z: 2 }, { x: -11, y: 1.2, z: 0 },
+              { x: -14, y: 1.5, z: -1 }, { x: -17, y: 1.2, z: 1 }, { x: -20, y: 2, z: 3 },
+              { x: -23, y: 1.5, z: 0 }, { x: -26, y: 2.5, z: -2 }, { x: -18, y: 3, z: -6 },
+              { x: -22, y: 2.5, z: -5 }, { x: -24, y: 4, z: -8 }, { x: -30, y: 3, z: 5 },
+              { x: -32, y: 4.5, z: -3 }, { x: -28, y: 6, z: -12 }
+            ]
+          },
+          eastStones: {
+            platforms: [
+              // Platforming challenge heading east, requires jumping
+              { x: 8, y: 2, z: -3, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 13, y: 3.5, z: -1, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 17, y: 5, z: -4, w: 3, h: 0.5, d: 2, type: 'wood' },
+              { x: 22, y: 4, z: -2, w: 2.5, h: 0.5, d: 2.5, type: 'stone' },
+              { x: 26, y: 5.5, z: -5, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 30, y: 6, z: -1, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 24, y: 7, z: 2, w: 2, h: 0.5, d: 2, type: 'wood' },
+              { x: 28, y: 8, z: 5, w: 3, h: 1, d: 3, type: 'island' },
+              // Latch trunk near waterfall cliff
+              { x: 34, y: 5, z: -3, w: 1.2, h: 10, d: 1.2, latchable: true }
+            ],
+            sparks: [
+              // Trail from hub heading east - requires jumping between platforms
+              { x: 4, y: 1.5, z: -1 }, { x: 8, y: 3.2, z: -3 }, { x: 11, y: 3, z: -2 },
+              { x: 13, y: 4.5, z: -1 }, { x: 15, y: 4.5, z: -3 }, { x: 17, y: 6, z: -4 },
+              { x: 20, y: 5, z: -3 }, { x: 22, y: 5, z: -2 }, { x: 26, y: 6.5, z: -5 },
+              { x: 30, y: 7, z: -1 }, { x: 24, y: 8, z: 2 }, { x: 28, y: 9.5, z: 5 },
+              { x: 34, y: 11, z: -3 }, { x: 34, y: 14, z: -3 }
+            ]
+          },
+          southCanyon: {
+            platforms: [
+              // Latch-focused zone heading south
+              { x: 2, y: 1, z: 8, w: 3, h: 0.5, d: 3, type: 'wood' },
+              { x: -3, y: 3, z: 14, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 5, y: 5, z: 18, w: 2, h: 0.5, d: 2, type: 'wood' },
+              // Latch pillars forming a chain
+              { x: 0, y: 6, z: 12, w: 1.2, h: 12, d: 1.2, latchable: true },
+              { x: -5, y: 7, z: 20, w: 1.2, h: 14, d: 1.2, latchable: true },
+              { x: 3, y: 8, z: 26, w: 1.2, h: 16, d: 1.2, latchable: true },
+              { x: -2, y: 9, z: 32, w: 1.2, h: 18, d: 1.2, latchable: true },
+              // Landing platforms between latches
+              { x: -4, y: 8, z: 24, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 1, y: 10, z: 30, w: 3, h: 0.5, d: 3, type: 'island' },
+              { x: -2, y: 13, z: 36, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              // Trail from hub heading south - requires latch skills
+              { x: 1, y: 1.5, z: 4 }, { x: 2, y: 2, z: 8 }, { x: 0, y: 5, z: 11 },
+              { x: -3, y: 4, z: 14 }, { x: -2, y: 7, z: 17 }, { x: 5, y: 6, z: 18 },
+              { x: -5, y: 10, z: 20 }, { x: -4, y: 9, z: 24 }, { x: 3, y: 12, z: 26 },
+              { x: 1, y: 11, z: 30 }, { x: -2, y: 14, z: 33 }, { x: -2, y: 15, z: 36 }
+            ]
+          },
+          northCanopy: {
+            platforms: [
+              // Expert zone heading north - high altitude floating islands + latch chains
+              { x: -2, y: 3, z: -8, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 2, y: 6, z: -14, w: 2, h: 0.5, d: 2, type: 'wood' },
+              // Latch trunks to gain height
+              { x: -4, y: 8, z: -18, w: 1.2, h: 16, d: 1.2, latchable: true },
+              { x: 4, y: 10, z: -24, w: 1.2, h: 20, d: 1.2, latchable: true },
+              // High floating islands
+              { x: 0, y: 12, z: -20, w: 4, h: 1.2, d: 4, type: 'island' },
+              { x: -6, y: 15, z: -26, w: 3, h: 1, d: 3, type: 'island' },
+              { x: 6, y: 17, z: -28, w: 3, h: 1, d: 3, type: 'island' },
+              // Final latch chain to the top
+              { x: 0, y: 14, z: -30, w: 1.2, h: 20, d: 1.2, latchable: true },
+              { x: 0, y: 19, z: -34, w: 4, h: 1.5, d: 4, type: 'island' },
+              { x: -3, y: 21, z: -38, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              // Trail from hub heading north - expert difficulty
+              { x: -1, y: 2, z: -5 }, { x: -2, y: 4, z: -8 }, { x: 0, y: 5.5, z: -11 },
+              { x: 2, y: 7, z: -14 }, { x: 0, y: 13.5, z: -20 }, { x: -6, y: 16.5, z: -26 },
+              { x: 6, y: 18.5, z: -28 }, { x: 0, y: 18, z: -32 }, { x: 0, y: 20.5, z: -34 },
+              { x: -3, y: 22.5, z: -38 }
+            ]
+          }
+        },
+        landmarks: [
+          { type: 'giantOak', x: -28, z: -12 },
+          { type: 'waterfallCliff', x: 34, z: -8 },
+          { type: 'crystalPillar', x: 0, y: 0, z: 22 },
+          { type: 'goldenCrown', x: -3, y: 24, z: -38 }
+        ],
+        bonusSparks: [
+          { x: -28, y: 18, z: -12, hint: 'Top of the Giant Oak' },
+          { x: 34, y: 12, z: -5, hint: 'Behind the waterfall cliff' },
+          { x: 0, y: 11, z: -20, hint: 'Under the highest floating island' }
+        ],
+        decorationOverrides: null
+      },
+      tidepool: {
+        zones: {
+          hub: {
+            platforms: [
+              { x: 0, y: 0.5, z: 0, w: 7, h: 1, d: 7, type: 'stone' }
+            ],
+            sparks: []
+          },
+          westGrove: {
+            platforms: [
+              // Coastal rock formations heading west
+              { x: -8, y: 0.5, z: 2, w: 4, h: 0.8, d: 3, type: 'stone' },
+              { x: -14, y: 1, z: -2, w: 3, h: 0.6, d: 3, type: 'stone' },
+              { x: -20, y: 0.3, z: 3, w: 5, h: 0.5, d: 4, type: 'stone' },
+              { x: -26, y: 1.5, z: -1, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -22, y: 2, z: -7, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -30, y: 2, z: 4, w: 4, h: 0.5, d: 3, type: 'stone' },
+              { x: -34, y: 3, z: -2, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -28, y: 4, z: -11, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              { x: -4, y: 1.2, z: 1 }, { x: -8, y: 1.5, z: 2 }, { x: -11, y: 1.2, z: 0 },
+              { x: -14, y: 2, z: -2 }, { x: -17, y: 1.2, z: 1 }, { x: -20, y: 1.5, z: 3 },
+              { x: -23, y: 1.5, z: -1 }, { x: -26, y: 2.5, z: -1 }, { x: -22, y: 3, z: -7 },
+              { x: -30, y: 3, z: 4 }, { x: -34, y: 4, z: -2 }, { x: -28, y: 5.5, z: -11 },
+              { x: -31, y: 2, z: 1 }, { x: -25, y: 1.5, z: 3 }
+            ]
+          },
+          eastStones: {
+            platforms: [
+              { x: 8, y: 2, z: -4, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 14, y: 3.5, z: -1, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 18, y: 5, z: -5, w: 3, h: 0.5, d: 2, type: 'stone' },
+              { x: 23, y: 4, z: -2, w: 2.5, h: 0.5, d: 2.5, type: 'stone' },
+              { x: 27, y: 6, z: -5, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 31, y: 6, z: -1, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 25, y: 7, z: 3, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 29, y: 8, z: 6, w: 3, h: 1, d: 3, type: 'island' },
+              // Coral latch pillar
+              { x: 35, y: 5, z: -3, w: 1.2, h: 10, d: 1.2, latchable: true }
+            ],
+            sparks: [
+              { x: 4, y: 1.5, z: -2 }, { x: 8, y: 3.2, z: -4 }, { x: 11, y: 3, z: -2 },
+              { x: 14, y: 4.5, z: -1 }, { x: 16, y: 4.5, z: -3 }, { x: 18, y: 6, z: -5 },
+              { x: 21, y: 5, z: -3 }, { x: 23, y: 5, z: -2 }, { x: 27, y: 7, z: -5 },
+              { x: 31, y: 7, z: -1 }, { x: 25, y: 8, z: 3 }, { x: 29, y: 9.5, z: 6 },
+              { x: 35, y: 11, z: -3 }, { x: 35, y: 14, z: -3 }
+            ]
+          },
+          southCanyon: {
+            platforms: [
+              { x: 2, y: 1, z: 10, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -3, y: 3, z: 16, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 5, y: 5, z: 20, w: 2, h: 0.5, d: 2, type: 'stone' },
+              // Coral latch pillars
+              { x: 0, y: 6, z: 14, w: 1.2, h: 12, d: 1.2, latchable: true },
+              { x: -5, y: 7, z: 22, w: 1.2, h: 14, d: 1.2, latchable: true },
+              { x: 3, y: 8, z: 28, w: 1.2, h: 16, d: 1.2, latchable: true },
+              { x: -2, y: 9, z: 34, w: 1.2, h: 18, d: 1.2, latchable: true },
+              { x: -4, y: 8, z: 26, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 1, y: 10, z: 32, w: 3, h: 0.5, d: 3, type: 'island' },
+              { x: -2, y: 13, z: 38, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              { x: 1, y: 1.5, z: 5 }, { x: 2, y: 2, z: 10 }, { x: 0, y: 5, z: 13 },
+              { x: -3, y: 4, z: 16 }, { x: -2, y: 7, z: 19 }, { x: 5, y: 6, z: 20 },
+              { x: -5, y: 10, z: 22 }, { x: -4, y: 9, z: 26 }, { x: 3, y: 12, z: 28 },
+              { x: 1, y: 11, z: 32 }, { x: -2, y: 14, z: 35 }, { x: -2, y: 15, z: 38 }
+            ]
+          },
+          northCanopy: {
+            platforms: [
+              { x: -2, y: 3, z: -9, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 2, y: 6, z: -15, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: -4, y: 8, z: -20, w: 1.2, h: 16, d: 1.2, latchable: true },
+              { x: 4, y: 10, z: -26, w: 1.2, h: 20, d: 1.2, latchable: true },
+              { x: 0, y: 12, z: -22, w: 4, h: 1.2, d: 4, type: 'island' },
+              { x: -6, y: 15, z: -28, w: 3, h: 1, d: 3, type: 'island' },
+              { x: 6, y: 17, z: -30, w: 3, h: 1, d: 3, type: 'island' },
+              { x: 0, y: 14, z: -32, w: 1.2, h: 20, d: 1.2, latchable: true },
+              { x: 0, y: 19, z: -36, w: 4, h: 1.5, d: 4, type: 'island' },
+              { x: -3, y: 21, z: -40, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              { x: -1, y: 2, z: -5 }, { x: -2, y: 4, z: -9 }, { x: 0, y: 5.5, z: -12 },
+              { x: 2, y: 7, z: -15 }, { x: 0, y: 13.5, z: -22 }, { x: -6, y: 16.5, z: -28 },
+              { x: 6, y: 18.5, z: -30 }, { x: 0, y: 18, z: -34 }, { x: 0, y: 20.5, z: -36 },
+              { x: -3, y: 22.5, z: -40 }
+            ]
+          }
+        },
+        landmarks: [
+          { type: 'rockArch', x: -28, y: 0, z: -11, w: 8, h: 6 },
+          { type: 'rockArch', x: 34, y: 0, z: -8, w: 10, h: 8 },
+          { type: 'coralPillar', x: 0, y: 0, z: 22, height: 14 },
+          { type: 'goldenCrown', x: -3, y: 24, z: -40 }
+        ],
+        bonusSparks: [
+          { x: -28, y: 7, z: -11, hint: 'Top of the rock arch' },
+          { x: 35, y: 16, z: -3, hint: 'Atop the coral latch pillar' },
+          { x: 0, y: 15, z: 22, hint: 'Above the tall coral pillar' }
+        ],
+        decorationOverrides: 'tidepool'
+      },
+      clocktower: {
+        zones: {
+          hub: {
+            platforms: [
+              { x: 0, y: 0.5, z: 0, w: 8, h: 1, d: 8, type: 'stone' }
+            ],
+            sparks: []
+          },
+          westGrove: {
+            platforms: [
+              // Gear platforms heading west on the ground floor
+              { x: -8, y: 1, z: 2, w: 4, h: 0.5, d: 3, type: 'stone' },
+              { x: -14, y: 1.5, z: -1, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -20, y: 2, z: 3, w: 4, h: 0.5, d: 4, type: 'stone' },
+              { x: -26, y: 2.5, z: -2, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -22, y: 3, z: -7, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -30, y: 3, z: 4, w: 4, h: 0.5, d: 3, type: 'stone' },
+              { x: -34, y: 4, z: -2, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -28, y: 5, z: -12, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              { x: -4, y: 1.5, z: 1 }, { x: -8, y: 2, z: 2 }, { x: -11, y: 1.5, z: 0 },
+              { x: -14, y: 2.5, z: -1 }, { x: -17, y: 2, z: 1 }, { x: -20, y: 3, z: 3 },
+              { x: -23, y: 2.5, z: -1 }, { x: -26, y: 3.5, z: -2 }, { x: -22, y: 4, z: -7 },
+              { x: -30, y: 4, z: 4 }, { x: -34, y: 5, z: -2 }, { x: -28, y: 6.5, z: -12 },
+              { x: -31, y: 3, z: 1 }, { x: -25, y: 2.5, z: 3 }
+            ]
+          },
+          eastStones: {
+            platforms: [
+              // Vertical gear tower heading east
+              { x: 8, y: 2, z: -4, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 14, y: 4, z: -1, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 18, y: 6, z: -5, w: 3, h: 0.5, d: 2, type: 'stone' },
+              { x: 23, y: 5, z: -2, w: 2.5, h: 0.5, d: 2.5, type: 'stone' },
+              { x: 27, y: 7, z: -5, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 31, y: 7, z: -1, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 25, y: 8, z: 3, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 29, y: 9, z: 6, w: 3, h: 1, d: 3, type: 'island' },
+              // Brass pipe latch
+              { x: 35, y: 5, z: -3, w: 1.2, h: 12, d: 1.2, latchable: true }
+            ],
+            sparks: [
+              { x: 4, y: 1.5, z: -2 }, { x: 8, y: 3.2, z: -4 }, { x: 11, y: 3, z: -2 },
+              { x: 14, y: 5, z: -1 }, { x: 16, y: 5.5, z: -3 }, { x: 18, y: 7, z: -5 },
+              { x: 21, y: 6, z: -3 }, { x: 23, y: 6, z: -2 }, { x: 27, y: 8, z: -5 },
+              { x: 31, y: 8, z: -1 }, { x: 25, y: 9, z: 3 }, { x: 29, y: 10.5, z: 6 },
+              { x: 35, y: 12, z: -3 }, { x: 35, y: 15, z: -3 }
+            ]
+          },
+          southCanyon: {
+            platforms: [
+              { x: 2, y: 1, z: 10, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: -3, y: 3, z: 16, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 5, y: 5, z: 20, w: 2, h: 0.5, d: 2, type: 'stone' },
+              // Brass pipe latches
+              { x: 0, y: 6, z: 14, w: 1.2, h: 12, d: 1.2, latchable: true },
+              { x: -5, y: 7, z: 22, w: 1.2, h: 14, d: 1.2, latchable: true },
+              { x: 3, y: 8, z: 28, w: 1.2, h: 16, d: 1.2, latchable: true },
+              { x: -2, y: 9, z: 34, w: 1.2, h: 18, d: 1.2, latchable: true },
+              { x: -4, y: 8, z: 26, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: 1, y: 10, z: 32, w: 3, h: 0.5, d: 3, type: 'island' },
+              { x: -2, y: 13, z: 38, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              { x: 1, y: 1.5, z: 5 }, { x: 2, y: 2, z: 10 }, { x: 0, y: 5, z: 13 },
+              { x: -3, y: 4, z: 16 }, { x: -2, y: 7, z: 19 }, { x: 5, y: 6, z: 20 },
+              { x: -5, y: 10, z: 22 }, { x: -4, y: 9, z: 26 }, { x: 3, y: 12, z: 28 },
+              { x: 1, y: 11, z: 32 }, { x: -2, y: 14, z: 35 }, { x: -2, y: 15, z: 38 }
+            ]
+          },
+          northCanopy: {
+            platforms: [
+              // Tall central tower spiraling upward
+              { x: -2, y: 3, z: -9, w: 3, h: 0.5, d: 3, type: 'stone' },
+              { x: 2, y: 6, z: -15, w: 2, h: 0.5, d: 2, type: 'stone' },
+              { x: -4, y: 8, z: -20, w: 1.2, h: 16, d: 1.2, latchable: true },
+              { x: 4, y: 10, z: -26, w: 1.2, h: 20, d: 1.2, latchable: true },
+              { x: 0, y: 12, z: -22, w: 4, h: 1.2, d: 4, type: 'island' },
+              { x: -6, y: 15, z: -28, w: 3, h: 1, d: 3, type: 'island' },
+              { x: 6, y: 17, z: -30, w: 3, h: 1, d: 3, type: 'island' },
+              { x: 0, y: 14, z: -32, w: 1.2, h: 20, d: 1.2, latchable: true },
+              { x: 0, y: 19, z: -36, w: 4, h: 1.5, d: 4, type: 'island' },
+              { x: -3, y: 21, z: -40, w: 3, h: 1, d: 3, type: 'island' }
+            ],
+            sparks: [
+              { x: -1, y: 2, z: -5 }, { x: -2, y: 4, z: -9 }, { x: 0, y: 5.5, z: -12 },
+              { x: 2, y: 7, z: -15 }, { x: 0, y: 13.5, z: -22 }, { x: -6, y: 16.5, z: -28 },
+              { x: 6, y: 18.5, z: -30 }, { x: 0, y: 18, z: -34 }, { x: 0, y: 20.5, z: -36 },
+              { x: -3, y: 22.5, z: -40 }
+            ]
+          }
+        },
+        landmarks: [
+          { type: 'gearPlatform', x: -28, y: 5, z: -12, radius: 4 },
+          { type: 'brassPipe', x: 34, y: 0, z: -8, height: 16 },
+          { type: 'brassPipe', x: 0, y: 0, z: 22, height: 18 },
+          { type: 'clockHands', x: 0, y: 22, z: -40 }
+        ],
+        bonusSparks: [
+          { x: -28, y: 7, z: -12, hint: 'On top of the gear platform' },
+          { x: 34, y: 17, z: -8, hint: 'Top of the tall brass pipe' },
+          { x: 0, y: 19, z: 22, hint: 'Above the tallest brass pipe' }
+        ],
+        decorationOverrides: 'clocktower'
+      }
+    };
+
+    // Animated landmark objects (for update loop)
+    let landmarkAnimObjects = [];
+
     function initThreeJS() {
       // Scene
       scene = new THREE.Scene();
 
+      const biome = gameState.biome;
+      const lighting = getBiomeLighting(biome);
+
       // Create gradient sky
-      createSky();
+      createSky(lighting);
 
       // Fog for depth
-      scene.fog = new THREE.FogExp2(0xC8E6FF, 0.012);
+      scene.fog = new THREE.FogExp2(lighting.fogColor, lighting.fogDensity);
 
       // Camera
       camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
@@ -987,12 +1464,12 @@
       document.getElementById('gameContainer').appendChild(renderer.domElement);
 
       // Hemisphere light - sky/ground ambient
-      const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x4a7c4e, 0.6);
+      const hemiLight = new THREE.HemisphereLight(lighting.hemiSky, lighting.hemiGround, lighting.hemiIntensity);
       hemiLight.position.set(0, 50, 0);
       scene.add(hemiLight);
 
       // Main sunlight
-      const sunLight = new THREE.DirectionalLight(0xFFF5E1, 1.0);
+      const sunLight = new THREE.DirectionalLight(lighting.sunColor, lighting.sunIntensity);
       sunLight.position.set(30, 50, 20);
       sunLight.castShadow = true;
       sunLight.shadow.mapSize.width = 4096;
@@ -1007,7 +1484,7 @@
       scene.add(sunLight);
 
       // Fill light from opposite side
-      const fillLight = new THREE.DirectionalLight(0x8BB8E8, 0.3);
+      const fillLight = new THREE.DirectionalLight(lighting.fillColor, lighting.fillIntensity);
       fillLight.position.set(-20, 30, -10);
       scene.add(fillLight);
 
@@ -1021,16 +1498,17 @@
       window.addEventListener('resize', onWindowResize);
     }
 
-    function createSky() {
+    function createSky(lighting) {
+      if (!lighting) lighting = getBiomeLighting(gameState.biome);
       // Create a large sphere for the sky dome with gradient
       const skyGeo = new THREE.SphereGeometry(200, 32, 32);
 
       // Custom shader for sky gradient
       const skyMat = new THREE.ShaderMaterial({
         uniforms: {
-          topColor: { value: new THREE.Color(0x4A90D9) },    // Deep blue
-          middleColor: { value: new THREE.Color(0x87CEEB) }, // Sky blue
-          bottomColor: { value: new THREE.Color(0xC8E6FF) }, // Light blue/white
+          topColor: { value: new THREE.Color(lighting.skyTop) },
+          middleColor: { value: new THREE.Color(lighting.skyMid) },
+          bottomColor: { value: new THREE.Color(lighting.skyBottom) },
           offset: { value: 20 },
           exponent: { value: 0.6 }
         },
@@ -1304,109 +1782,140 @@
       // Clear existing
       platforms.forEach(p => scene.remove(p));
       sparks.forEach(s => scene.remove(s));
+      bonusSparks.forEach(s => scene.remove(s));
+      hazards.forEach(h => { if (h.mesh) scene.remove(h.mesh); if (h.windLines) h.windLines.forEach(l => scene.remove(l)); });
       platforms = [];
       sparks = [];
+      bonusSparks = [];
+      hazards = [];
       grassBlades = [];
+      landmarkAnimObjects = [];
+
+      const biome = gameState.biome;
+      const biomeData = BIOME_LEVELS[biome] || BIOME_LEVELS.garden;
+      const terrainConfig = getBiomeTerrain(biome);
 
       // Create realistic terrain
-      createTerrain();
+      createTerrain(biome);
 
       // Create distant mountains
       createMountains();
 
-      // Garden biome - create platforms and sparks
+      // Biome color palettes
       const biomeColors = {
         garden: { platform: 0x6B4423, accent: 0x228B22, wood: 0x8B5A2B },
-        tidepool: { platform: 0x4682B4, accent: 0x00CED1, wood: 0x5D8AA8 },
+        tidepool: { platform: 0x7A8B6B, accent: 0x00CED1, wood: 0x5D8AA8 },
         clocktower: { platform: 0x8B7355, accent: 0xDAA520, wood: 0x9C7653 }
       };
 
-      const colors = biomeColors[gameState.biome] || biomeColors.garden;
+      const colors = biomeColors[biome] || biomeColors.garden;
 
-      // Platform materials with more detail
+      // Platform materials
       const platformMaterial = new THREE.MeshStandardMaterial({
         color: colors.platform,
-        roughness: 0.9,
-        metalness: 0.0
+        roughness: biome === 'clocktower' ? 0.6 : 0.9,
+        metalness: biome === 'clocktower' ? 0.3 : 0.0
       });
 
       const woodMaterial = new THREE.MeshStandardMaterial({
         color: colors.wood,
         roughness: 0.85,
-        metalness: 0.0
+        metalness: biome === 'clocktower' ? 0.2 : 0.0
       });
 
-      // Create platforms with more realistic appearance
-      const platformData = [
-        // Starting area - stone platform
-        { x: 0, y: 0.5, z: 0, w: 6, h: 1, d: 6, type: 'stone' },
-        // First jump series - wooden platforms
-        { x: 5, y: 2, z: -3, w: 3, h: 0.5, d: 3, type: 'wood' },
-        { x: 10, y: 4, z: -2, w: 2, h: 0.5, d: 2, type: 'wood' },
-        { x: 8, y: 6, z: 2, w: 3, h: 0.5, d: 3, type: 'wood' },
-        // Latch targets (tree trunks)
-        { x: 15, y: 5, z: 0, w: 1.2, h: 10, d: 1.2, latchable: true },
-        { x: 20, y: 6, z: -5, w: 1.2, h: 12, d: 1.2, latchable: true },
-        { x: 25, y: 4, z: 3, w: 1.2, h: 8, d: 1.2, latchable: true },
-        // More platforms
-        { x: 18, y: 3, z: 5, w: 4, h: 0.5, d: 2, type: 'wood' },
-        { x: -5, y: 3, z: 5, w: 3, h: 0.5, d: 3, type: 'stone' },
-        { x: -10, y: 5, z: 0, w: 2, h: 0.5, d: 4, type: 'wood' },
-        { x: -8, y: 8, z: -5, w: 3, h: 0.5, d: 3, type: 'wood' },
-        // Floating islands with grass tops
-        { x: 0, y: 10, z: -10, w: 5, h: 1.5, d: 5, type: 'island' },
-        { x: 12, y: 12, z: -8, w: 4, h: 1.2, d: 4, type: 'island' },
-        { x: -12, y: 10, z: -8, w: 4, h: 1.2, d: 4, type: 'island' },
-        // Latch chain area
-        { x: 30, y: 8, z: 0, w: 1.2, h: 16, d: 1.2, latchable: true },
-        { x: 35, y: 10, z: -3, w: 1.2, h: 20, d: 1.2, latchable: true },
-        { x: 40, y: 7, z: 2, w: 5, h: 1.2, d: 5, type: 'island' },
-      ];
+      // Iterate zones and create platforms
+      const zones = biomeData.zones;
+      Object.keys(zones).forEach(zoneName => {
+        const zone = zones[zoneName];
+        // Track zone spark totals
+        gameState.zoneSparksTotal[zoneName] = zone.sparks ? zone.sparks.length : 0;
+        zone.platforms.forEach((p, pIdx) => {
+          if (p.latchable) {
+            // Store platform count before creation to tag new ones
+            const prevLen = platforms.length;
+            if (biome === 'tidepool') {
+              createCoralPillar(p.x, 0, p.z, p.h);
+            } else if (biome === 'clocktower') {
+              createBrassPipe(p.x, 0, p.z, p.h);
+            } else {
+              createTreeTrunk(p.x, p.y, p.z, p.h, colors);
+            }
+            // Tag newly added platforms with zone
+            for (let pi = prevLen; pi < platforms.length; pi++) {
+              platforms[pi].userData.zone = zoneName;
+            }
+          } else if (p.type === 'island') {
+            const prevLen = platforms.length;
+            createFloatingIsland(p.x, p.y, p.z, p.w, p.h, p.d);
+            for (let pi = prevLen; pi < platforms.length; pi++) {
+              platforms[pi].userData.zone = zoneName;
+            }
+          } else {
+            const geometry = new THREE.BoxGeometry(p.w, p.h, p.d);
+            const material = p.type === 'wood' ? woodMaterial.clone() : platformMaterial.clone();
+            const platform = new THREE.Mesh(geometry, material);
+            platform.position.set(p.x, p.y, p.z);
+            platform.castShadow = true;
+            platform.receiveShadow = true;
+            platform.userData.type = 'platform';
+            platform.userData.latchable = false;
+            platform.userData.zone = zoneName;
 
-      platformData.forEach((p, i) => {
-        if (p.latchable) {
-          // Create tree trunk for latchable
-          createTreeTrunk(p.x, p.y, p.z, p.h, colors);
-        } else if (p.type === 'island') {
-          // Create floating island
-          createFloatingIsland(p.x, p.y, p.z, p.w, p.h, p.d);
-        } else {
-          // Regular platform
-          const geometry = new THREE.BoxGeometry(p.w, p.h, p.d);
-          const material = p.type === 'wood' ? woodMaterial.clone() : platformMaterial.clone();
-          const platform = new THREE.Mesh(geometry, material);
-          platform.position.set(p.x, p.y, p.z);
-          platform.castShadow = true;
-          platform.receiveShadow = true;
-          platform.userData.type = 'platform';
-          platform.userData.latchable = false;
+            if (p.type === 'wood') {
+              addPlatformDetails(platform, p.w, p.h, p.d);
+            }
 
-          // Add edge detail for wood platforms
-          if (p.type === 'wood') {
-            addPlatformDetails(platform, p.w, p.h, p.d);
+            scene.add(platform);
+            platforms.push(platform);
           }
-
-          scene.add(platform);
-          platforms.push(platform);
-        }
+        });
       });
 
-      // Create Sparks
-      createSparks();
+      // Create Sparks from zone data
+      createSparks(biomeData);
 
-      // Decorations - trees, flowers, etc.
-      createDecorations();
+      // Create landmarks
+      if (biomeData.landmarks) {
+        biomeData.landmarks.forEach(lm => {
+          switch (lm.type) {
+            case 'giantOak': createGiantOak(lm.x, lm.z); break;
+            case 'waterfallCliff': createWaterfallCliff(lm.x, lm.z); break;
+            case 'crystalPillar': createCrystalPillar(lm.x, lm.y || 0, lm.z); break;
+            case 'goldenCrown': createGoldenCrown(lm.x, lm.y, lm.z); break;
+            case 'rockArch': createRockArch(lm.x, lm.y || 0, lm.z, lm.w || 8, lm.h || 6); break;
+            case 'coralPillar': createCoralPillar(lm.x, lm.y || 0, lm.z, lm.height || 14); break;
+            case 'gearPlatform': createGearPlatform(lm.x, lm.y, lm.z, lm.radius || 4); break;
+            case 'brassPipe': createBrassPipe(lm.x, lm.y || 0, lm.z, lm.height || 16); break;
+            case 'clockHands': createClockHands(lm.x, lm.y, lm.z); break;
+          }
+        });
+      }
+
+      // Decorations
+      if (biome === 'garden' || !biomeData.decorationOverrides) {
+        createDecorations();
+      } else if (biomeData.decorationOverrides === 'tidepool') {
+        createTidepoolDecorations();
+      } else if (biomeData.decorationOverrides === 'clocktower') {
+        createClocktowerDecorations();
+      }
 
       // Create water feature
-      createWater();
+      if (terrainConfig.hasWater) {
+        createWater(biome);
+      }
 
-      // Create butterflies
-      createButterflies();
+      // Create butterflies (garden and tidepool only)
+      if (biome !== 'clocktower') {
+        createButterflies();
+      }
     }
 
-    function createTerrain() {
+    function createTerrain(biome) {
+      const terrainConfig = getBiomeTerrain(biome || gameState.biome);
+
       // Main ground with slight variation
-      const groundSize = 120;
+      const groundSize = terrainConfig.groundSize;
       const groundGeo = new THREE.PlaneGeometry(groundSize, groundSize, 50, 50);
 
       // Add slight height variation to vertices
@@ -1414,20 +1923,18 @@
       for (let i = 0; i < positions.count; i++) {
         const x = positions.getX(i);
         const y = positions.getY(i);
-        // Gentle rolling hills
         const height = Math.sin(x * 0.05) * 0.3 + Math.cos(y * 0.05) * 0.3 + Math.random() * 0.1;
         positions.setZ(i, height);
       }
       groundGeo.computeVertexNormals();
 
-      // Grass material
-      const grassMaterial = new THREE.MeshStandardMaterial({
-        color: 0x3D8C40,
-        roughness: 0.9,
-        metalness: 0.0
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: terrainConfig.groundColor,
+        roughness: terrainConfig.groundRoughness,
+        metalness: biome === 'clocktower' ? 0.2 : 0.0
       });
 
-      const ground = new THREE.Mesh(groundGeo, grassMaterial);
+      const ground = new THREE.Mesh(groundGeo, groundMaterial);
       ground.rotation.x = -Math.PI / 2;
       ground.position.y = 0;
       ground.receiveShadow = true;
@@ -1435,8 +1942,20 @@
       scene.add(ground);
       platforms.push(ground);
 
-      // Add grass patches for visual interest
-      createGrassPatches();
+      // Add grass patches for garden
+      if (terrainConfig.hasGrass) {
+        createGrassPatches();
+      }
+
+      // Add sand dunes for tidepool
+      if (biome === 'tidepool') {
+        createSandDunes();
+      }
+
+      // Add metal floor tiles for clocktower
+      if (biome === 'clocktower') {
+        createMetalFloorDetails();
+      }
     }
 
     function createGrassPatches() {
@@ -1606,36 +2125,43 @@
       platform.add(backEdge);
     }
 
-    function createWater() {
-      // Small pond
-      const waterGeo = new THREE.CircleGeometry(6, 32);
+    function createWater(biome) {
+      const terrainConfig = getBiomeTerrain(biome || gameState.biome);
+      if (!terrainConfig.hasWater) return;
+
+      const waterSize = terrainConfig.waterSize;
+      const waterPos = terrainConfig.waterPos;
+
+      const waterGeo = new THREE.CircleGeometry(waterSize, 32);
+      const waterColor = biome === 'tidepool' ? 0x2E8B8B : 0x4A90D9;
       const waterMat = new THREE.MeshStandardMaterial({
-        color: 0x4A90D9,
+        color: waterColor,
         transparent: true,
-        opacity: 0.7,
+        opacity: biome === 'tidepool' ? 0.6 : 0.7,
         roughness: 0.1,
         metalness: 0.3
       });
       waterMesh = new THREE.Mesh(waterGeo, waterMat);
       waterMesh.rotation.x = -Math.PI / 2;
-      waterMesh.position.set(-20, 0.05, 15);
+      waterMesh.position.set(waterPos.x, 0.05, waterPos.z);
       waterMesh.receiveShadow = true;
       scene.add(waterMesh);
 
       // Water edge - rocks
-      for (let i = 0; i < 12; i++) {
-        const angle = (i / 12) * Math.PI * 2;
-        const radius = 5.5 + Math.random() * 1;
+      const rockCount = biome === 'tidepool' ? 24 : 12;
+      for (let i = 0; i < rockCount; i++) {
+        const angle = (i / rockCount) * Math.PI * 2;
+        const radius = (waterSize - 0.5) + Math.random() * 1;
         const rockGeo = new THREE.DodecahedronGeometry(0.4 + Math.random() * 0.3, 0);
         const rockMat = new THREE.MeshStandardMaterial({
-          color: 0x808080,
+          color: biome === 'tidepool' ? 0x6B8E8E : 0x808080,
           roughness: 0.9
         });
         const rock = new THREE.Mesh(rockGeo, rockMat);
         rock.position.set(
-          -20 + Math.cos(angle) * radius,
+          waterPos.x + Math.cos(angle) * radius,
           0.2,
-          15 + Math.sin(angle) * radius
+          waterPos.z + Math.sin(angle) * radius
         );
         rock.rotation.set(Math.random(), Math.random(), Math.random());
         rock.castShadow = true;
@@ -1681,44 +2207,398 @@
       }
     }
 
-    function createSparks() {
-      // Create coin collectibles instead of sparks
-      // Coin positions - distributed around the level
-      const coinPositions = [
-        // Easy coins on ground level
-        { x: 3, y: 1.2, z: 2 }, { x: -2, y: 1.2, z: 3 }, { x: 4, y: 1.2, z: -2 },
-        // On first platforms
-        { x: 5, y: 3.2, z: -3 }, { x: 10, y: 5.2, z: -2 }, { x: 8, y: 7.2, z: 2 },
-        // Near latch pillars
-        { x: 15, y: 11, z: 0 }, { x: 20, y: 13, z: -5 }, { x: 25, y: 9, z: 3 },
-        // Scattered around
-        { x: 18, y: 4.2, z: 5 }, { x: -5, y: 4.2, z: 5 }, { x: -10, y: 6.2, z: 0 },
-        { x: -8, y: 9.2, z: -5 }, { x: 0, y: 12, z: -10 }, { x: 12, y: 13.2, z: -8 },
-        { x: -12, y: 11.2, z: -8 },
-        // High difficulty
-        { x: 30, y: 17, z: 0 }, { x: 35, y: 21, z: -3 }, { x: 40, y: 8.2, z: 2 },
-        // More coins to reach 50
-        { x: 7, y: 1.5, z: 5 }, { x: -3, y: 1.5, z: -4 }, { x: 13, y: 2.5, z: 4 },
-        { x: -7, y: 3.5, z: -2 }, { x: 22, y: 4.5, z: 1 }, { x: -15, y: 2.5, z: 3 },
-        { x: 28, y: 5.5, z: -2 }, { x: 16, y: 7.5, z: -6 }, { x: -4, y: 6.5, z: 8 },
-        { x: 9, y: 8.5, z: -4 }, { x: -11, y: 5.5, z: 5 }, { x: 33, y: 11.5, z: 1 },
-        { x: 2, y: 4.5, z: -8 }, { x: -9, y: 8.5, z: -1 }, { x: 19, y: 6.5, z: -3 },
-        { x: 6, y: 3.5, z: 7 }, { x: -6, y: 4.5, z: -6 }, { x: 14, y: 9.5, z: 2 },
-        { x: -2, y: 7.5, z: -5 }, { x: 24, y: 5.5, z: -1 }, { x: 11, y: 5.5, z: 6 },
-        { x: -13, y: 6.5, z: -4 }, { x: 37, y: 8.5, z: 0 }, { x: 4, y: 10.5, z: -7 },
-        { x: 21, y: 3.5, z: 6 }, { x: -8, y: 2.5, z: 7 }, { x: 31, y: 4.5, z: 3 },
-        { x: 1, y: 5.5, z: 4 }, { x: 17, y: 14.5, z: -1 }, { x: -5, y: 10.5, z: -3 },
-      ];
+    function createSparks(biomeData) {
+      if (!biomeData) biomeData = BIOME_LEVELS[gameState.biome] || BIOME_LEVELS.garden;
 
-      coinPositions.slice(0, gameState.totalSparks).forEach((pos, i) => {
+      // Collect all spark positions from all zones in order, tagged with zone
+      const allSparkPositions = [];
+      const zoneOrder = ['hub', 'westGrove', 'eastStones', 'southCanyon', 'northCanopy'];
+
+      zoneOrder.forEach(zoneName => {
+        const zone = biomeData.zones[zoneName];
+        if (zone && zone.sparks) {
+          zone.sparks.forEach(pos => {
+            allSparkPositions.push({ ...pos, zone: zoneName });
+          });
+        }
+      });
+
+      // Place sparks up to totalSparks count
+      allSparkPositions.slice(0, gameState.totalSparks).forEach((pos, i) => {
         const coin = createCoin();
         coin.position.set(pos.x, pos.y, pos.z);
         coin.userData.type = 'spark';
         coin.userData.collected = false;
         coin.userData.id = i;
+        coin.userData.zone = pos.zone;
         scene.add(coin);
         sparks.push(coin);
       });
+
+      // Create bonus sparks
+      if (biomeData.bonusSparks) {
+        biomeData.bonusSparks.forEach((pos, i) => {
+          const bonus = createBonusCoin();
+          bonus.position.set(pos.x, pos.y, pos.z);
+          bonus.userData.type = 'bonusSpark';
+          bonus.userData.collected = false;
+          bonus.userData.id = i;
+          bonus.userData.hint = pos.hint;
+          scene.add(bonus);
+          bonusSparks.push(bonus);
+        });
+        gameState.bonusSparksTotal = biomeData.bonusSparks.length;
+      }
+
+      // Create hazards for each zone
+      createHazards(biomeData);
+    }
+
+    function createBonusCoin() {
+      const coinGroup = new THREE.Group();
+
+      // Slightly larger coin body
+      const coinGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.1, 24);
+      const coinMat = new THREE.MeshStandardMaterial({
+        color: 0xFF69B4,
+        emissive: 0xFF1493,
+        emissiveIntensity: 0.5,
+        roughness: 0.2,
+        metalness: 0.9
+      });
+      const coinBody = new THREE.Mesh(coinGeo, coinMat);
+      coinBody.rotation.x = Math.PI / 2;
+      coinGroup.add(coinBody);
+
+      // Prismatic ring
+      const ringGeo = new THREE.TorusGeometry(0.3, 0.04, 8, 24);
+      const ringMat = new THREE.MeshStandardMaterial({
+        color: 0x00FFFF,
+        emissive: 0x00FFFF,
+        emissiveIntensity: 0.4,
+        roughness: 0.2,
+        metalness: 0.9
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.z = 0.04;
+      coinGroup.add(ring);
+
+      // Star emblem
+      const starShape = new THREE.Shape();
+      const outerRadius = 0.15;
+      const innerRadius = 0.06;
+      for (let i = 0; i < 5; i++) {
+        const outerAngle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+        const innerAngle = outerAngle + Math.PI / 5;
+        if (i === 0) {
+          starShape.moveTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
+        } else {
+          starShape.lineTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
+        }
+        starShape.lineTo(Math.cos(innerAngle) * innerRadius, Math.sin(innerAngle) * innerRadius);
+      }
+      starShape.closePath();
+      const starGeo = new THREE.ShapeGeometry(starShape);
+      const starMat = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        emissive: 0xFF69B4,
+        emissiveIntensity: 0.6,
+        side: THREE.DoubleSide
+      });
+      const star = new THREE.Mesh(starGeo, starMat);
+      star.position.z = 0.06;
+      coinGroup.add(star);
+
+      // Glow light
+      const glow = new THREE.PointLight(0xFF69B4, 0.5, 5);
+      glow.position.set(0, 0, 0);
+      coinGroup.add(glow);
+
+      return coinGroup;
+    }
+
+    // ============================================
+    // HAZARD SYSTEM
+    // ============================================
+
+    function createHazards(biomeData) {
+      // West Grove - Wind Gusts
+      hazards.push({
+        type: 'windGust',
+        zone: 'westGrove',
+        bounds: { minX: -35, maxX: -2, minZ: -15, maxZ: 10 },
+        timer: 0,
+        gustTimer: 0,
+        windDir: { x: 0, z: 0 },
+        active: false,
+        windLines: [],
+        nextGustIn: 8 + Math.random() * 2
+      });
+
+      // East Stones - Crumbling Platforms (tag 3 specific platforms)
+      let eastPlatforms = platforms.filter(p => p.userData.zone === 'eastStones' && !p.userData.latchable);
+      let crumbleTargets = eastPlatforms.slice(0, 3);
+      crumbleTargets.forEach(plat => {
+        // Darken the platform slightly to indicate crumbling
+        if (plat.material && plat.material.color) {
+          plat.material = plat.material.clone();
+          plat.material.color.multiplyScalar(0.7);
+        }
+        hazards.push({
+          type: 'crumbling',
+          zone: 'eastStones',
+          platform: plat,
+          state: 'idle', // idle, shaking, falling, respawning
+          timer: 0,
+          originalY: plat.position.y,
+          originalPos: plat.position.clone(),
+          shakeOffset: 0
+        });
+      });
+
+      // South Canyon - Retracting Latch Targets (2 latch pillars)
+      let southLatches = platforms.filter(p => p.userData.zone === 'southCanyon' && p.userData.latchable);
+      let retractTargets = southLatches.slice(0, 2);
+      retractTargets.forEach(plat => {
+        hazards.push({
+          type: 'retracting',
+          zone: 'southCanyon',
+          platform: plat,
+          state: 'visible', // visible, warning, retracting, hidden, emerging
+          timer: 5,
+          cycleVisible: 5,
+          cycleHidden: 3,
+          originalScaleY: plat.scale.y
+        });
+      });
+
+      // North Canopy - Drifting Islands (2 floating islands)
+      let northIslands = platforms.filter(p => p.userData.zone === 'northCanopy' && !p.userData.latchable);
+      let driftTargets = northIslands.slice(0, 2);
+      driftTargets.forEach((plat, idx) => {
+        hazards.push({
+          type: 'drifting',
+          zone: 'northCanopy',
+          platform: plat,
+          originalX: plat.position.x,
+          originalZ: plat.position.z,
+          axis: idx % 2 === 0 ? 'x' : 'z',
+          amplitude: 3,
+          period: 6,
+          phase: idx * Math.PI,
+          prevOffset: 0
+        });
+      });
+    }
+
+    function updateHazards(dt) {
+      const time = Date.now() * 0.001;
+
+      hazards.forEach(hazard => {
+        switch (hazard.type) {
+          case 'windGust':
+            updateWindGust(hazard, dt, time);
+            break;
+          case 'crumbling':
+            updateCrumbling(hazard, dt);
+            break;
+          case 'retracting':
+            updateRetracting(hazard, dt);
+            break;
+          case 'drifting':
+            updateDrifting(hazard, dt, time);
+            break;
+        }
+      });
+    }
+
+    function updateWindGust(hazard, dt, time) {
+      // Check if player is in zone
+      const inZone = playerState.x >= hazard.bounds.minX && playerState.x <= hazard.bounds.maxX &&
+                     playerState.z >= hazard.bounds.minZ && playerState.z <= hazard.bounds.maxZ;
+
+      if (hazard.active) {
+        hazard.gustTimer -= dt;
+        if (hazard.gustTimer <= 0) {
+          hazard.active = false;
+          hazard.nextGustIn = 8 + Math.random() * 2;
+          // Remove wind lines
+          hazard.windLines.forEach(l => scene.remove(l));
+          hazard.windLines = [];
+        } else if (inZone) {
+          // Apply wind force
+          playerState.vx += hazard.windDir.x * 3 * dt;
+          playerState.vz += hazard.windDir.z * 3 * dt;
+          // Animate wind lines
+          hazard.windLines.forEach(l => {
+            l.position.x += hazard.windDir.x * 15 * dt;
+            l.position.z += hazard.windDir.z * 15 * dt;
+            // Reset position if too far
+            if (Math.abs(l.position.x - l.userData.startX) > 20 ||
+                Math.abs(l.position.z - l.userData.startZ) > 20) {
+              l.position.x = l.userData.startX;
+              l.position.z = l.userData.startZ;
+            }
+          });
+        }
+      } else {
+        hazard.nextGustIn -= dt;
+        if (hazard.nextGustIn <= 0) {
+          hazard.active = true;
+          hazard.gustTimer = 2;
+          // Random wind direction
+          const angle = Math.random() * Math.PI * 2;
+          hazard.windDir = { x: Math.cos(angle), z: Math.sin(angle) };
+          // Create wind lines
+          for (let i = 0; i < 6; i++) {
+            const lineGeo = new THREE.BoxGeometry(0.03, 0.03, 1.5);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 });
+            const line = new THREE.Mesh(lineGeo, lineMat);
+            const startX = hazard.bounds.minX + Math.random() * (hazard.bounds.maxX - hazard.bounds.minX);
+            const startZ = hazard.bounds.minZ + Math.random() * (hazard.bounds.maxZ - hazard.bounds.minZ);
+            line.position.set(startX, 1 + Math.random() * 4, startZ);
+            line.rotation.y = Math.atan2(hazard.windDir.x, hazard.windDir.z);
+            line.userData.startX = startX;
+            line.userData.startZ = startZ;
+            scene.add(line);
+            hazard.windLines.push(line);
+          }
+        }
+      }
+    }
+
+    function updateCrumbling(hazard, dt) {
+      const plat = hazard.platform;
+      if (!plat) return;
+
+      // Check if player is standing on this platform
+      const box = new THREE.Box3().setFromObject(plat);
+      const onPlatform = playerState.onGround &&
+        playerState.x >= box.min.x - 0.5 && playerState.x <= box.max.x + 0.5 &&
+        playerState.z >= box.min.z - 0.5 && playerState.z <= box.max.z + 0.5 &&
+        Math.abs(playerState.y - box.max.y) < 0.3;
+
+      switch (hazard.state) {
+        case 'idle':
+          if (onPlatform) {
+            hazard.state = 'shaking';
+            hazard.timer = 2;
+          }
+          break;
+        case 'shaking':
+          hazard.timer -= dt;
+          // Shake effect
+          plat.position.x = hazard.originalPos.x + (Math.random() - 0.5) * 0.15;
+          plat.position.z = hazard.originalPos.z + (Math.random() - 0.5) * 0.15;
+          if (hazard.timer <= 0) {
+            hazard.state = 'falling';
+            hazard.timer = 4;
+          }
+          break;
+        case 'falling':
+          hazard.timer -= dt;
+          plat.position.y -= 15 * dt;
+          plat.material.opacity = Math.max(0, plat.material.opacity - dt);
+          plat.material.transparent = true;
+          if (hazard.timer <= 0) {
+            hazard.state = 'respawning';
+            hazard.timer = 0.5;
+            plat.position.copy(hazard.originalPos);
+            plat.material.opacity = 0;
+          }
+          break;
+        case 'respawning':
+          hazard.timer -= dt;
+          plat.material.opacity = Math.min(1, 1 - hazard.timer / 0.5);
+          if (hazard.timer <= 0) {
+            hazard.state = 'idle';
+            plat.position.copy(hazard.originalPos);
+            plat.material.opacity = 1;
+          }
+          break;
+      }
+    }
+
+    function updateRetracting(hazard, dt) {
+      const plat = hazard.platform;
+      if (!plat) return;
+
+      switch (hazard.state) {
+        case 'visible':
+          hazard.timer -= dt;
+          if (hazard.timer <= 1 && hazard.timer > 0) {
+            // Warning glow: pulse emissive
+            if (plat.material) {
+              plat.material.emissive = plat.material.emissive || new THREE.Color(0);
+              const pulse = (Math.sin(Date.now() * 0.01) + 1) * 0.5;
+              plat.material.emissiveIntensity = pulse * 0.3;
+            }
+          }
+          if (hazard.timer <= 0) {
+            hazard.state = 'retracting';
+            hazard.timer = 0.5;
+            if (plat.material) plat.material.emissiveIntensity = 0;
+          }
+          break;
+        case 'retracting':
+          hazard.timer -= dt;
+          plat.scale.y = Math.max(0.01, hazard.timer / 0.5) * hazard.originalScaleY;
+          if (hazard.timer <= 0) {
+            hazard.state = 'hidden';
+            hazard.timer = hazard.cycleHidden;
+            plat.scale.y = 0.01;
+            plat.userData.latchable = false;
+          }
+          break;
+        case 'hidden':
+          hazard.timer -= dt;
+          if (hazard.timer <= 0) {
+            hazard.state = 'emerging';
+            hazard.timer = 0.5;
+          }
+          break;
+        case 'emerging':
+          hazard.timer -= dt;
+          plat.scale.y = (1 - hazard.timer / 0.5) * hazard.originalScaleY;
+          if (hazard.timer <= 0) {
+            hazard.state = 'visible';
+            hazard.timer = hazard.cycleVisible;
+            plat.scale.y = hazard.originalScaleY;
+            plat.userData.latchable = true;
+          }
+          break;
+      }
+    }
+
+    function updateDrifting(hazard, dt, time) {
+      const plat = hazard.platform;
+      if (!plat) return;
+
+      const newOffset = Math.sin(time * (2 * Math.PI / hazard.period) + hazard.phase) * hazard.amplitude;
+      const delta = newOffset - hazard.prevOffset;
+
+      if (hazard.axis === 'x') {
+        plat.position.x = hazard.originalX + newOffset;
+      } else {
+        plat.position.z = hazard.originalZ + newOffset;
+      }
+
+      // Move player if standing on this platform
+      const box = new THREE.Box3().setFromObject(plat);
+      const onPlatform = playerState.onGround &&
+        playerState.x >= box.min.x - 0.5 && playerState.x <= box.max.x + 0.5 &&
+        playerState.z >= box.min.z - 0.5 && playerState.z <= box.max.z + 0.5 &&
+        Math.abs(playerState.y - box.max.y) < 0.3;
+
+      if (onPlatform) {
+        if (hazard.axis === 'x') {
+          playerState.x += delta;
+        } else {
+          playerState.z += delta;
+        }
+      }
+
+      hazard.prevOffset = newOffset;
     }
 
     function createCoin() {
@@ -2070,6 +2950,647 @@
       }
     }
 
+    // ============================================
+    // BIOME-SPECIFIC TERRAIN & DECORATIONS
+    // ============================================
+
+    function createSandDunes() {
+      // Sandy bumps for tidepool biome
+      const sandMat = new THREE.MeshStandardMaterial({
+        color: 0xD2B48C, roughness: 0.95
+      });
+      for (let i = 0; i < 30; i++) {
+        const x = (Math.random() - 0.5) * 80;
+        const z = (Math.random() - 0.5) * 80;
+        if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+        const size = 1 + Math.random() * 2;
+        const duneGeo = new THREE.SphereGeometry(size, 8, 6);
+        const dune = new THREE.Mesh(duneGeo, sandMat);
+        dune.position.set(x, size * 0.15, z);
+        dune.scale.y = 0.25;
+        dune.receiveShadow = true;
+        scene.add(dune);
+      }
+    }
+
+    function createMetalFloorDetails() {
+      // Riveted metal plates for clocktower biome
+      const plateMat = new THREE.MeshStandardMaterial({
+        color: 0x6A6A6A, roughness: 0.5, metalness: 0.5
+      });
+      for (let i = 0; i < 20; i++) {
+        const x = (Math.random() - 0.5) * 60;
+        const z = (Math.random() - 0.5) * 60;
+        if (Math.abs(x) < 6 && Math.abs(z) < 6) continue;
+        const plateGeo = new THREE.BoxGeometry(3 + Math.random() * 2, 0.05, 3 + Math.random() * 2);
+        const plate = new THREE.Mesh(plateGeo, plateMat);
+        plate.position.set(x, 0.03, z);
+        plate.receiveShadow = true;
+        scene.add(plate);
+      }
+    }
+
+    function createTidepoolDecorations() {
+      // Coral formations, seaweed, shells
+      const coralColors = [0xFF6B6B, 0xFF9E80, 0xE040FB, 0x40C4FF, 0x69F0AE];
+      for (let i = 0; i < 25; i++) {
+        const x = (Math.random() - 0.5) * 60;
+        const z = (Math.random() - 0.5) * 60;
+        if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+
+        const coral = new THREE.Group();
+        const color = coralColors[Math.floor(Math.random() * coralColors.length)];
+        const coralMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.7 });
+
+        // Branch coral
+        const numBranches = 2 + Math.floor(Math.random() * 3);
+        for (let j = 0; j < numBranches; j++) {
+          const bh = 0.5 + Math.random() * 1.5;
+          const branchGeo = new THREE.CylinderGeometry(0.05, 0.1, bh, 6);
+          const branch = new THREE.Mesh(branchGeo, coralMat);
+          branch.position.set((Math.random() - 0.5) * 0.4, bh / 2, (Math.random() - 0.5) * 0.4);
+          branch.rotation.z = (Math.random() - 0.5) * 0.5;
+          branch.castShadow = true;
+          coral.add(branch);
+          // Ball on top
+          const ballGeo = new THREE.SphereGeometry(0.1 + Math.random() * 0.1, 6, 6);
+          const ball = new THREE.Mesh(ballGeo, coralMat);
+          ball.position.set(branch.position.x, bh + 0.05, branch.position.z);
+          coral.add(ball);
+        }
+        coral.position.set(x, 0, z);
+        scene.add(coral);
+      }
+
+      // Seaweed
+      const seaweedMat = new THREE.MeshStandardMaterial({ color: 0x2E7D32, roughness: 0.8 });
+      for (let i = 0; i < 40; i++) {
+        const x = (Math.random() - 0.5) * 70;
+        const z = (Math.random() - 0.5) * 70;
+        if (Math.abs(x) < 6 && Math.abs(z) < 6) continue;
+        const h = 0.5 + Math.random() * 1;
+        const swGeo = new THREE.CylinderGeometry(0.03, 0.04, h, 4);
+        const sw = new THREE.Mesh(swGeo, seaweedMat);
+        sw.position.set(x, h / 2, z);
+        sw.rotation.z = (Math.random() - 0.5) * 0.4;
+        sw.userData.baseRotation = sw.rotation.z;
+        scene.add(sw);
+        grassBlades.push(sw); // Reuse grass sway animation
+      }
+
+      // Scattered rocks
+      createRocks();
+    }
+
+    function createClocktowerDecorations() {
+      // Pipes, bolts, small gear decorations
+      const pipeMat = new THREE.MeshStandardMaterial({
+        color: 0x8B7355, roughness: 0.4, metalness: 0.6
+      });
+      const boltMat = new THREE.MeshStandardMaterial({
+        color: 0xB8860B, roughness: 0.3, metalness: 0.8
+      });
+
+      // Scattered pipes
+      for (let i = 0; i < 15; i++) {
+        const x = (Math.random() - 0.5) * 50;
+        const z = (Math.random() - 0.5) * 50;
+        if (Math.abs(x) < 6 && Math.abs(z) < 6) continue;
+
+        const pipeH = 1 + Math.random() * 2;
+        const pipeGeo = new THREE.CylinderGeometry(0.15, 0.15, pipeH, 8);
+        const pipe = new THREE.Mesh(pipeGeo, pipeMat);
+        pipe.position.set(x, pipeH / 2, z);
+        pipe.castShadow = true;
+        scene.add(pipe);
+
+        // Bolt on top
+        const boltGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.08, 6);
+        const bolt = new THREE.Mesh(boltGeo, boltMat);
+        bolt.position.set(x, pipeH + 0.04, z);
+        scene.add(bolt);
+      }
+
+      // Small decorative gears on the ground
+      for (let i = 0; i < 10; i++) {
+        const x = (Math.random() - 0.5) * 40;
+        const z = (Math.random() - 0.5) * 40;
+        if (Math.abs(x) < 8 && Math.abs(z) < 8) continue;
+
+        const gearRadius = 0.3 + Math.random() * 0.5;
+        const gearGeo = new THREE.TorusGeometry(gearRadius, 0.08, 6, 8);
+        const gearMat = new THREE.MeshStandardMaterial({
+          color: 0xB8860B, roughness: 0.4, metalness: 0.7
+        });
+        const gear = new THREE.Mesh(gearGeo, gearMat);
+        gear.position.set(x, 0.1, z);
+        gear.rotation.x = Math.PI / 2;
+        scene.add(gear);
+      }
+    }
+
+    // ============================================
+    // LANDMARK CREATION FUNCTIONS
+    // ============================================
+
+    function createGiantOak(x, z) {
+      // Giant ancient oak ~15 units tall - much bigger than regular oaks
+      const treeGroup = new THREE.Group();
+
+      // Massive trunk
+      const trunkGeo = new THREE.CylinderGeometry(1.0, 1.8, 12, 12);
+      const trunkMat = new THREE.MeshStandardMaterial({
+        color: 0x4A3520, roughness: 0.95
+      });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 6;
+      trunk.castShadow = true;
+      treeGroup.add(trunk);
+
+      // Thick branches
+      const branchMat = new THREE.MeshStandardMaterial({ color: 0x5D4E37, roughness: 0.9 });
+      const branches = [
+        { rx: 0.5, ry: 0, y: 10, len: 4, r: 0.3 },
+        { rx: -0.4, ry: 1.2, y: 9, len: 3.5, r: 0.25 },
+        { rx: 0.3, ry: 2.5, y: 11, len: 3, r: 0.2 },
+        { rx: -0.6, ry: 3.8, y: 8, len: 4.5, r: 0.35 },
+      ];
+      branches.forEach(b => {
+        const brGeo = new THREE.CylinderGeometry(b.r * 0.5, b.r, b.len, 6);
+        const br = new THREE.Mesh(brGeo, branchMat);
+        br.position.set(Math.cos(b.ry) * 1.5, b.y, Math.sin(b.ry) * 1.5);
+        br.rotation.z = b.rx;
+        br.castShadow = true;
+        treeGroup.add(br);
+      });
+
+      // Massive canopy - multiple large spheres
+      const foliageMat = new THREE.MeshStandardMaterial({
+        color: 0x1B5E20, roughness: 0.85
+      });
+      const canopyPositions = [
+        { x: 0, y: 14, z: 0, s: 4.5 },
+        { x: 2, y: 13, z: 1.5, s: 3.5 },
+        { x: -2.5, y: 13, z: -1, s: 3.5 },
+        { x: 1, y: 12, z: -2, s: 3 },
+        { x: -1, y: 15, z: 1, s: 3 },
+        { x: 3, y: 12, z: 0, s: 2.5 },
+        { x: -3, y: 12, z: 1, s: 2.5 },
+        { x: 0, y: 16, z: 0, s: 2 },
+      ];
+      canopyPositions.forEach(f => {
+        const fGeo = new THREE.SphereGeometry(f.s, 8, 8);
+        const foliage = new THREE.Mesh(fGeo, foliageMat);
+        foliage.position.set(f.x, f.y, f.z);
+        foliage.castShadow = true;
+        treeGroup.add(foliage);
+      });
+
+      treeGroup.position.set(x, 0, z);
+      scene.add(treeGroup);
+    }
+
+    function createWaterfallCliff(x, z) {
+      // Tall cliff with animated water particles
+      const cliffGroup = new THREE.Group();
+
+      // Main cliff body
+      const cliffMat = new THREE.MeshStandardMaterial({
+        color: 0x6B7B8D, roughness: 0.95
+      });
+      const cliffGeo = new THREE.BoxGeometry(6, 16, 4);
+      const cliff = new THREE.Mesh(cliffGeo, cliffMat);
+      cliff.position.y = 8;
+      cliff.castShadow = true;
+      cliffGroup.add(cliff);
+
+      // Stepped ledges
+      for (let i = 0; i < 4; i++) {
+        const ledgeGeo = new THREE.BoxGeometry(7 - i, 1, 5 - i * 0.5);
+        const ledge = new THREE.Mesh(ledgeGeo, cliffMat);
+        ledge.position.set(0, i * 4, i * 0.3);
+        ledge.castShadow = true;
+        cliffGroup.add(ledge);
+      }
+
+      // Waterfall - vertical plane with transparent blue
+      const waterMat = new THREE.MeshStandardMaterial({
+        color: 0x4FC3F7,
+        transparent: true,
+        opacity: 0.5,
+        emissive: 0x1565C0,
+        emissiveIntensity: 0.2
+      });
+      const waterGeo = new THREE.PlaneGeometry(2, 14);
+      const waterfall = new THREE.Mesh(waterGeo, waterMat);
+      waterfall.position.set(0, 8, 2.1);
+      cliffGroup.add(waterfall);
+
+      // Water particles (small spheres that we can animate)
+      const particleMat = new THREE.MeshBasicMaterial({
+        color: 0x81D4FA,
+        transparent: true,
+        opacity: 0.7
+      });
+      for (let i = 0; i < 20; i++) {
+        const pGeo = new THREE.SphereGeometry(0.1 + Math.random() * 0.1, 4, 4);
+        const p = new THREE.Mesh(pGeo, particleMat);
+        p.position.set(
+          (Math.random() - 0.5) * 1.5,
+          Math.random() * 14 + 1,
+          2.2
+        );
+        p.userData.waterfallParticle = true;
+        p.userData.speed = 3 + Math.random() * 4;
+        p.userData.startY = p.position.y;
+        cliffGroup.add(p);
+        landmarkAnimObjects.push(p);
+      }
+
+      // Pool at base
+      const poolGeo = new THREE.CircleGeometry(3, 16);
+      const poolMat = new THREE.MeshStandardMaterial({
+        color: 0x4A90D9,
+        transparent: true,
+        opacity: 0.6,
+        roughness: 0.1
+      });
+      const pool = new THREE.Mesh(poolGeo, poolMat);
+      pool.rotation.x = -Math.PI / 2;
+      pool.position.set(0, 0.06, 3);
+      cliffGroup.add(pool);
+
+      cliffGroup.position.set(x, 0, z);
+      scene.add(cliffGroup);
+    }
+
+    function createCrystalPillar(x, y, z) {
+      // Pair of glowing crystalline pillars
+      const pillarGroup = new THREE.Group();
+
+      const crystalMat = new THREE.MeshStandardMaterial({
+        color: 0x7C4DFF,
+        emissive: 0x7C4DFF,
+        emissiveIntensity: 0.6,
+        transparent: true,
+        opacity: 0.85,
+        roughness: 0.2,
+        metalness: 0.5
+      });
+
+      // Two pillars side by side
+      const offsets = [{ x: -1.5, z: 0 }, { x: 1.5, z: 0 }];
+      offsets.forEach((off, idx) => {
+        const height = 10 + idx * 2;
+        const pillarGeo = new THREE.CylinderGeometry(0.5, 0.8, height, 6);
+        const pillar = new THREE.Mesh(pillarGeo, crystalMat);
+        pillar.position.set(off.x, height / 2, off.z);
+        pillar.castShadow = true;
+        pillarGroup.add(pillar);
+
+        // Crystal tip
+        const tipGeo = new THREE.ConeGeometry(0.6, 2, 6);
+        const tip = new THREE.Mesh(tipGeo, crystalMat);
+        tip.position.set(off.x, height + 1, off.z);
+        pillarGroup.add(tip);
+
+        // Glow point light
+        const glow = new THREE.PointLight(0x7C4DFF, 0.8, 15);
+        glow.position.set(off.x, height * 0.7, off.z);
+        pillarGroup.add(glow);
+      });
+
+      pillarGroup.position.set(x, y, z);
+      scene.add(pillarGroup);
+    }
+
+    function createGoldenCrown(x, y, z) {
+      // Spinning golden crown/trophy on the highest island
+      const crownGroup = new THREE.Group();
+
+      // Main ring
+      const ringGeo = new THREE.TorusGeometry(0.6, 0.12, 8, 24);
+      const crownMat = new THREE.MeshStandardMaterial({
+        color: 0xFFD700,
+        emissive: 0xFFAA00,
+        emissiveIntensity: 0.5,
+        roughness: 0.2,
+        metalness: 0.9
+      });
+      const ring = new THREE.Mesh(ringGeo, crownMat);
+      ring.rotation.x = Math.PI / 2;
+      crownGroup.add(ring);
+
+      // Crown points
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2;
+        const pointGeo = new THREE.ConeGeometry(0.12, 0.5, 4);
+        const point = new THREE.Mesh(pointGeo, crownMat);
+        point.position.set(
+          Math.cos(angle) * 0.6,
+          0.25,
+          Math.sin(angle) * 0.6
+        );
+        crownGroup.add(point);
+
+        // Gem on each point
+        const gemGeo = new THREE.SphereGeometry(0.06, 6, 6);
+        const gemMat = new THREE.MeshStandardMaterial({
+          color: i % 2 === 0 ? 0xFF0000 : 0x0000FF,
+          emissive: i % 2 === 0 ? 0xFF0000 : 0x0000FF,
+          emissiveIntensity: 0.4
+        });
+        const gem = new THREE.Mesh(gemGeo, gemMat);
+        gem.position.set(
+          Math.cos(angle) * 0.6,
+          0.5,
+          Math.sin(angle) * 0.6
+        );
+        crownGroup.add(gem);
+      }
+
+      // Glow
+      const glowLight = new THREE.PointLight(0xFFD700, 1.5, 20);
+      glowLight.position.set(0, 0, 0);
+      crownGroup.add(glowLight);
+
+      crownGroup.position.set(x, y, z);
+      crownGroup.userData.isSpinningLandmark = true;
+      scene.add(crownGroup);
+      landmarkAnimObjects.push(crownGroup);
+    }
+
+    function createCoralPillar(x, y, z, height) {
+      // Tidepool latchable pillar - organic coral look
+      const pillarGroup = new THREE.Group();
+
+      height = height || 10;
+
+      // Main coral trunk
+      const trunkGeo = new THREE.CylinderGeometry(0.35, 0.55, height, 8);
+      const trunkMat = new THREE.MeshStandardMaterial({
+        color: 0xE08060,
+        roughness: 0.7
+      });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = height / 2;
+      trunk.castShadow = true;
+      trunk.receiveShadow = true;
+      trunk.userData.type = 'platform';
+      trunk.userData.latchable = true;
+      pillarGroup.add(trunk);
+      platforms.push(trunk);
+
+      // Coral bumps along the trunk
+      const bumpMat = new THREE.MeshStandardMaterial({ color: 0xFF8A65, roughness: 0.6 });
+      for (let i = 0; i < 6; i++) {
+        const bumpGeo = new THREE.SphereGeometry(0.2 + Math.random() * 0.15, 6, 6);
+        const bump = new THREE.Mesh(bumpGeo, bumpMat);
+        const angle = Math.random() * Math.PI * 2;
+        bump.position.set(
+          Math.cos(angle) * 0.45,
+          2 + i * (height - 4) / 6,
+          Math.sin(angle) * 0.45
+        );
+        pillarGroup.add(bump);
+      }
+
+      // Top fan coral
+      const fanMat = new THREE.MeshStandardMaterial({
+        color: 0xFF6B6B, roughness: 0.5, side: THREE.DoubleSide
+      });
+      for (let i = 0; i < 3; i++) {
+        const fanGeo = new THREE.CircleGeometry(1 + Math.random() * 0.5, 8);
+        const fan = new THREE.Mesh(fanGeo, fanMat);
+        fan.position.set(
+          (Math.random() - 0.5) * 1.5,
+          height + 0.5,
+          (Math.random() - 0.5) * 1.5
+        );
+        fan.rotation.set(
+          -Math.PI / 4 + Math.random() * 0.5,
+          Math.random() * Math.PI * 2,
+          0
+        );
+        pillarGroup.add(fan);
+      }
+
+      pillarGroup.position.set(x, y, z);
+      scene.add(pillarGroup);
+    }
+
+    function createRockArch(x, y, z, w, h) {
+      // Tidepool rock arch formation
+      const archGroup = new THREE.Group();
+      w = w || 8;
+      h = h || 6;
+
+      const rockMat = new THREE.MeshStandardMaterial({
+        color: 0x7A8B6B, roughness: 0.95
+      });
+
+      // Left pillar
+      const leftGeo = new THREE.BoxGeometry(2, h, 2);
+      const left = new THREE.Mesh(leftGeo, rockMat);
+      left.position.set(-w / 2 + 1, h / 2, 0);
+      left.castShadow = true;
+      archGroup.add(left);
+
+      // Right pillar
+      const right = new THREE.Mesh(leftGeo, rockMat);
+      right.position.set(w / 2 - 1, h / 2, 0);
+      right.castShadow = true;
+      archGroup.add(right);
+
+      // Arch top - stretched box
+      const topGeo = new THREE.BoxGeometry(w, 1.5, 2.5);
+      const top = new THREE.Mesh(topGeo, rockMat);
+      top.position.set(0, h, 0);
+      top.castShadow = true;
+      top.userData.type = 'platform';
+      archGroup.add(top);
+      platforms.push(top);
+
+      // Roughen with random rock bumps
+      for (let i = 0; i < 8; i++) {
+        const bumpGeo = new THREE.DodecahedronGeometry(0.5 + Math.random() * 0.5, 0);
+        const bump = new THREE.Mesh(bumpGeo, rockMat);
+        bump.position.set(
+          (Math.random() - 0.5) * w,
+          Math.random() * h,
+          (Math.random() - 0.5) * 2
+        );
+        archGroup.add(bump);
+      }
+
+      archGroup.position.set(x, y, z);
+      scene.add(archGroup);
+    }
+
+    function createGearPlatform(x, y, z, radius) {
+      // Clocktower decorative gear platform (visual rotation)
+      radius = radius || 4;
+      const gearGroup = new THREE.Group();
+
+      const gearMat = new THREE.MeshStandardMaterial({
+        color: 0xB8860B, roughness: 0.3, metalness: 0.8
+      });
+
+      // Main gear disc
+      const discGeo = new THREE.CylinderGeometry(radius, radius, 0.3, 24);
+      const disc = new THREE.Mesh(discGeo, gearMat);
+      disc.castShadow = true;
+      disc.receiveShadow = true;
+      gearGroup.add(disc);
+
+      // Gear teeth around the edge
+      const teethCount = 16;
+      for (let i = 0; i < teethCount; i++) {
+        const angle = (i / teethCount) * Math.PI * 2;
+        const toothGeo = new THREE.BoxGeometry(0.6, 0.3, 0.5);
+        const tooth = new THREE.Mesh(toothGeo, gearMat);
+        tooth.position.set(
+          Math.cos(angle) * (radius + 0.3),
+          0,
+          Math.sin(angle) * (radius + 0.3)
+        );
+        tooth.rotation.y = -angle;
+        gearGroup.add(tooth);
+      }
+
+      // Center axle
+      const axleGeo = new THREE.CylinderGeometry(0.4, 0.4, 1, 8);
+      const axleMat = new THREE.MeshStandardMaterial({
+        color: 0x8B7355, roughness: 0.4, metalness: 0.7
+      });
+      const axle = new THREE.Mesh(axleGeo, axleMat);
+      axle.position.y = 0.5;
+      gearGroup.add(axle);
+
+      gearGroup.position.set(x, y, z);
+      gearGroup.userData.isSpinningGear = true;
+      scene.add(gearGroup);
+      landmarkAnimObjects.push(gearGroup);
+    }
+
+    function createBrassPipe(x, y, z, height) {
+      // Clocktower latchable brass pipe
+      height = height || 12;
+      const pipeGroup = new THREE.Group();
+
+      const pipeMat = new THREE.MeshStandardMaterial({
+        color: 0xB8860B, roughness: 0.3, metalness: 0.7
+      });
+
+      // Main pipe
+      const pipeGeo = new THREE.CylinderGeometry(0.4, 0.4, height, 10);
+      const pipe = new THREE.Mesh(pipeGeo, pipeMat);
+      pipe.position.y = height / 2;
+      pipe.castShadow = true;
+      pipe.receiveShadow = true;
+      pipe.userData.type = 'platform';
+      pipe.userData.latchable = true;
+      pipeGroup.add(pipe);
+      platforms.push(pipe);
+
+      // Riveted bands along the pipe
+      const bandMat = new THREE.MeshStandardMaterial({
+        color: 0x8B7355, roughness: 0.4, metalness: 0.6
+      });
+      for (let i = 0; i < 4; i++) {
+        const bandGeo = new THREE.TorusGeometry(0.45, 0.06, 6, 12);
+        const band = new THREE.Mesh(bandGeo, bandMat);
+        band.position.y = 2 + i * (height - 4) / 3;
+        band.rotation.x = Math.PI / 2;
+        pipeGroup.add(band);
+      }
+
+      // Cap on top
+      const capGeo = new THREE.SphereGeometry(0.5, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+      const cap = new THREE.Mesh(capGeo, pipeMat);
+      cap.position.y = height;
+      pipeGroup.add(cap);
+
+      pipeGroup.position.set(x, y, z);
+      scene.add(pipeGroup);
+    }
+
+    function createClockHands(x, y, z) {
+      // Clocktower landmark - large clock face with hands
+      const clockGroup = new THREE.Group();
+
+      // Clock face
+      const faceMat = new THREE.MeshStandardMaterial({
+        color: 0xFFF8DC, roughness: 0.5, metalness: 0.2
+      });
+      const faceGeo = new THREE.CylinderGeometry(3, 3, 0.3, 32);
+      const face = new THREE.Mesh(faceGeo, faceMat);
+      face.rotation.x = Math.PI / 2;
+      clockGroup.add(face);
+
+      // Frame ring
+      const frameMat = new THREE.MeshStandardMaterial({
+        color: 0xB8860B, roughness: 0.3, metalness: 0.8
+      });
+      const frameGeo = new THREE.TorusGeometry(3.1, 0.2, 8, 32);
+      const frame = new THREE.Mesh(frameGeo, frameMat);
+      clockGroup.add(frame);
+
+      // Hour markers
+      const markerMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 });
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const markerGeo = new THREE.BoxGeometry(0.15, 0.5, 0.1);
+        const marker = new THREE.Mesh(markerGeo, markerMat);
+        marker.position.set(
+          Math.cos(angle) * 2.5,
+          Math.sin(angle) * 2.5,
+          0.2
+        );
+        marker.rotation.z = angle + Math.PI / 2;
+        clockGroup.add(marker);
+      }
+
+      // Hour hand
+      const hourHandGeo = new THREE.BoxGeometry(0.2, 1.5, 0.08);
+      const handMat = new THREE.MeshStandardMaterial({
+        color: 0x222222, metalness: 0.6
+      });
+      const hourHand = new THREE.Mesh(hourHandGeo, handMat);
+      hourHand.position.set(0, 0.75, 0.25);
+      const hourPivot = new THREE.Group();
+      hourPivot.add(hourHand);
+      hourPivot.rotation.z = -Math.PI / 4; // 10 o'clock
+      hourPivot.userData.isClockHourHand = true;
+      clockGroup.add(hourPivot);
+      landmarkAnimObjects.push(hourPivot);
+
+      // Minute hand
+      const minHandGeo = new THREE.BoxGeometry(0.12, 2.2, 0.08);
+      const minHand = new THREE.Mesh(minHandGeo, handMat);
+      minHand.position.set(0, 1.1, 0.3);
+      const minPivot = new THREE.Group();
+      minPivot.add(minHand);
+      minPivot.rotation.z = Math.PI / 6; // 2 o'clock direction
+      minPivot.userData.isClockMinuteHand = true;
+      clockGroup.add(minPivot);
+      landmarkAnimObjects.push(minPivot);
+
+      // Center pin
+      const pinGeo = new THREE.SphereGeometry(0.15, 8, 8);
+      const pin = new THREE.Mesh(pinGeo, frameMat);
+      pin.position.z = 0.35;
+      clockGroup.add(pin);
+
+      // Glow
+      const glowLight = new THREE.PointLight(0xFFD700, 1, 15);
+      glowLight.position.set(0, 0, 1);
+      clockGroup.add(glowLight);
+
+      clockGroup.position.set(x, y, z);
+      scene.add(clockGroup);
+    }
+
     function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -2088,6 +3609,22 @@
       gameState.elapsedTime = 0;
       gameState.score = 0;
 
+      // Reset chain state
+      gameState.chainCount = 0;
+      gameState.chainTimer = 0;
+      gameState.chainMultiplier = 1;
+      gameState.bestChain = 0;
+      gameState.chainBonus = 0;
+
+      // Reset zone clear state
+      gameState.zoneClearBonus = 0;
+      gameState.zoneSparksCollected = { hub: 0, westGrove: 0, eastStones: 0, southCanyon: 0, northCanopy: 0 };
+      gameState.zonesCleared = { hub: false, westGrove: false, eastStones: false, southCanyon: false, northCanopy: false };
+      gameState.zoneSparksTotal = { hub: 0, westGrove: 0, eastStones: 0, southCanyon: 0, northCanopy: 0 };
+
+      // Reset bonus sparks
+      gameState.bonusSparksCollected = 0;
+
       playerState.x = 0;
       playerState.y = 2;
       playerState.z = 0;
@@ -2103,9 +3640,25 @@
         s.userData.collected = false;
       });
 
+      // Reset bonus sparks
+      bonusSparks.forEach(s => {
+        s.visible = true;
+        s.userData.collected = false;
+      });
+
       // Update UI
       document.getElementById('sparkCount').textContent = '0';
       document.getElementById('timeDisplay').textContent = '0:00';
+      document.getElementById('timeBonusDisplay').textContent = '10,000';
+      document.getElementById('timeBonusDisplay').style.color = 'var(--spark-gold)';
+      const chainEl = document.getElementById('chainIndicator');
+      if (chainEl) { chainEl.classList.remove('active'); chainEl.textContent = ''; }
+      const pbEl = document.getElementById('personalBest');
+      if (pbEl) pbEl.style.display = 'none';
+      const bsEl = document.getElementById('bonusSparkResult');
+      if (bsEl) bsEl.style.display = 'none';
+      const bcEl = document.getElementById('bestChainResult');
+      if (bcEl) bcEl.style.display = 'none';
 
       // Show game UI
       document.getElementById('menuScreen').classList.add('hidden');
@@ -2126,8 +3679,13 @@
       // Load leaderboard
       loadLeaderboard();
 
-      // Start game loop
-      if (!renderer) initThreeJS();
+      // Start game loop - rebuild scene if needed
+      if (!renderer) {
+        initThreeJS();
+      } else {
+        // Rebuild level for current biome (handles restart / biome switch)
+        createLevel();
+      }
       animate();
     }
 
@@ -2149,11 +3707,36 @@
       gameState.elapsedTime = (Date.now() - gameState.startTime) / 1000;
       updateTimerDisplay();
 
+      // Update chain timer
+      if (gameState.chainTimer > 0) {
+        gameState.chainTimer -= delta;
+        if (gameState.chainTimer <= 0) {
+          gameState.chainTimer = 0;
+          gameState.chainCount = 0;
+          gameState.chainMultiplier = 1;
+          const chainEl = document.getElementById('chainIndicator');
+          if (chainEl) chainEl.classList.remove('active');
+        }
+      }
+
+      // Update time bonus display
+      const currentTimeBonus = Math.max(0, 10000 - Math.floor(gameState.elapsedTime));
+      const tbEl = document.getElementById('timeBonusDisplay');
+      if (tbEl) {
+        tbEl.textContent = currentTimeBonus.toLocaleString();
+        if (currentTimeBonus <= 0) {
+          tbEl.style.color = '#666';
+        }
+      }
+
       // Update player physics
       updatePlayer(delta);
 
       // Update sparks (rotation animation)
       updateSparks(delta);
+
+      // Update bonus sparks (rotation + prismatic effect)
+      updateBonusSparks(delta, time);
 
       // Update latch visual
       updateLatch();
@@ -2163,6 +3746,22 @@
 
       // Update environment animations
       updateEnvironment(time, delta);
+
+      // Update hazards
+      updateHazards(delta);
+
+      // At 40+ sparks, pulse remaining sparks (make them bigger and more visible)
+      if (gameState.sparksCollected >= 40) {
+        const pulse = 1.0 + 0.2 * Math.sin(time * 4);
+        sparks.forEach(spark => {
+          if (!spark.userData.collected) {
+            spark.scale.setScalar(pulse);
+          }
+        });
+      }
+
+      // Check bonus spark collection
+      checkBonusSparkCollection();
 
       // Render
       renderer.render(scene, camera);
@@ -2208,6 +3807,31 @@
       if (waterMesh) {
         waterMesh.material.opacity = 0.6 + Math.sin(time * 2) * 0.1;
       }
+
+      // Animate landmark objects
+      landmarkAnimObjects.forEach(obj => {
+        if (obj.userData.isSpinningLandmark) {
+          // Golden crown spinning
+          obj.rotation.y += delta * 1.5;
+          obj.position.y += Math.sin(time * 2) * 0.003;
+        } else if (obj.userData.isSpinningGear) {
+          // Gear visual rotation
+          obj.rotation.y += delta * 0.3;
+        } else if (obj.userData.isClockHourHand) {
+          // Slow rotation for hour hand
+          obj.rotation.z -= delta * 0.02;
+        } else if (obj.userData.isClockMinuteHand) {
+          // Faster rotation for minute hand
+          obj.rotation.z -= delta * 0.24;
+        } else if (obj.userData.waterfallParticle) {
+          // Waterfall particle falling
+          obj.position.y -= obj.userData.speed * delta;
+          if (obj.position.y < 0.5) {
+            obj.position.y = obj.userData.startY;
+            obj.position.x = (Math.random() - 0.5) * 1.5;
+          }
+        }
+      });
     }
 
     function updatePlayer(delta) {
@@ -2421,6 +4045,113 @@
       });
     }
 
+    function updateBonusSparks(delta, time) {
+      bonusSparks.forEach((coin, i) => {
+        if (!coin.userData.collected) {
+          coin.rotation.y += delta * 4;
+          coin.position.y += Math.sin(Date.now() * 0.005 + i * 2) * 0.004;
+          // Prismatic color cycling on the main mesh
+          if (coin.children[0] && coin.children[0].material) {
+            const hue = (time * 0.3 + i * 0.5) % 1;
+            coin.children[0].material.emissive.setHSL(hue, 1, 0.3);
+          }
+        }
+      });
+    }
+
+    function checkBonusSparkCollection() {
+      bonusSparks.forEach(spark => {
+        if (!spark.userData.collected) {
+          const dx = spark.position.x - playerState.x;
+          const dy = spark.position.y - playerState.y;
+          const dz = spark.position.z - playerState.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          if (dist < 1.5) {
+            collectBonusSpark(spark);
+          }
+        }
+      });
+    }
+
+    function collectBonusSpark(spark) {
+      spark.userData.collected = true;
+      spark.visible = false;
+      gameState.bonusSparksCollected++;
+
+      // +1000 points
+      gameState.score += 1000;
+
+      // Rainbow floating text
+      showFloatingText('SECRET SPARK!', spark.position.clone(), '#FF69B4');
+
+      // Bigger particle burst
+      createSparkBurst(spark.position.clone());
+      createSparkBurst(spark.position.clone()); // Double burst
+
+      // Unique sound - ascending arpeggio
+      playBonusSparkSound();
+    }
+
+    function playBonusSparkSound() {
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
+          osc.start(ctx.currentTime + i * 0.1);
+          osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+        });
+      } catch (e) {}
+    }
+
+    // ============================================
+    // FLOATING TEXT SYSTEM
+    // ============================================
+
+    function showFloatingText(text, position3D, color) {
+      const div = document.createElement('div');
+      div.className = 'floating-text';
+      div.textContent = text;
+      div.style.color = color || '#ffd700';
+
+      // Project 3D position to screen
+      const screenPos = worldToScreen(position3D);
+      div.style.left = screenPos.x + 'px';
+      div.style.top = screenPos.y + 'px';
+      div.style.transform = 'translate(-50%, -50%)';
+
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 1100);
+    }
+
+    function showZoneBanner(text, color) {
+      const div = document.createElement('div');
+      div.className = 'zone-banner';
+      div.textContent = text;
+      div.style.color = color || '#ffd700';
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 2100);
+    }
+
+    function worldToScreen(pos) {
+      if (!camera) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      const vector = pos.clone().project(camera);
+      return {
+        x: (vector.x * 0.5 + 0.5) * window.innerWidth,
+        y: (-vector.y * 0.5 + 0.5) * window.innerHeight
+      };
+    }
+
     function updateLatch() {
       if (isLatching && latchPoint) {
         const points = [
@@ -2473,6 +4204,94 @@
       spark.visible = false;
       gameState.sparksCollected++;
 
+      // Chain system
+      if (gameState.chainTimer > 0) {
+        gameState.chainCount++;
+      } else {
+        gameState.chainCount = 1;
+      }
+      gameState.chainTimer = 3.0;
+
+      // Track best chain
+      if (gameState.chainCount > gameState.bestChain) {
+        gameState.bestChain = gameState.chainCount;
+      }
+
+      // Calculate chain multiplier and bonus points
+      let points = 100;
+      let chainText = '';
+      let chainColor = '#ffd700';
+      let bigBurst = false;
+
+      if (gameState.chainCount >= 5) {
+        gameState.chainMultiplier = 3;
+        points = 300;
+        chainText = 'AMAZING!';
+        chainColor = '#FF1493';
+        bigBurst = true;
+      } else if (gameState.chainCount >= 3) {
+        gameState.chainMultiplier = 2;
+        points = 200;
+        chainText = 'Great!';
+        chainColor = '#00FF7F';
+      } else if (gameState.chainCount >= 2) {
+        gameState.chainMultiplier = 1.5;
+        points = 150;
+        chainText = 'Nice!';
+        chainColor = '#87CEEB';
+      } else {
+        gameState.chainMultiplier = 1;
+      }
+
+      // Accumulate chain bonus (extra points beyond base 100)
+      gameState.chainBonus += (points - 100);
+
+      // Show floating text for chains of 2+
+      if (chainText) {
+        showFloatingText(chainText, spark.position.clone(), chainColor);
+      }
+
+      // Brief screen flash for chains of 3+
+      if (gameState.chainCount >= 3) {
+        const flash = document.createElement('div');
+        flash.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.15);z-index:55;pointer-events:none;';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 100);
+      }
+
+      // Update chain HUD
+      const chainEl = document.getElementById('chainIndicator');
+      if (chainEl) {
+        if (gameState.chainCount >= 2) {
+          chainEl.textContent = 'x' + gameState.chainMultiplier + ' Chain!';
+          chainEl.classList.add('active');
+          // Position near spark counter
+          const hudEl = document.getElementById('gameHud');
+          if (hudEl) {
+            const rect = hudEl.getBoundingClientRect();
+            chainEl.style.left = (rect.right + 10) + 'px';
+            chainEl.style.top = rect.top + 'px';
+          }
+        } else {
+          chainEl.classList.remove('active');
+        }
+      }
+
+      // Zone tracking
+      const zone = spark.userData.zone;
+      if (zone && gameState.zoneSparksCollected[zone] !== undefined) {
+        gameState.zoneSparksCollected[zone]++;
+        // Check zone clear
+        if (!gameState.zonesCleared[zone] && gameState.zoneSparksTotal[zone] > 0 &&
+            gameState.zoneSparksCollected[zone] >= gameState.zoneSparksTotal[zone]) {
+          gameState.zonesCleared[zone] = true;
+          gameState.zoneClearBonus += 500;
+          const zoneNames = { hub: 'Hub', westGrove: 'West Grove', eastStones: 'East Stones', southCanyon: 'South Canyon', northCanopy: 'North Canopy' };
+          showZoneBanner((zoneNames[zone] || zone) + ' Complete! +500', '#ffd700');
+          playZoneClearSound();
+        }
+      }
+
       // Update UI with animation
       const sparkCountEl = document.getElementById('sparkCount');
       sparkCountEl.textContent = gameState.sparksCollected;
@@ -2482,7 +4301,13 @@
       // Create particle burst effect at spark position
       createSparkBurst(spark.position.clone());
 
-      // Play collection sound (simple beep)
+      // Bigger burst for 5+ chains
+      if (bigBurst) {
+        createSparkBurst(spark.position.clone());
+        createSparkBurst(spark.position.clone());
+      }
+
+      // Play collection sound
       playCollectSound();
 
       // Check milestone submissions (every 10 sparks)
@@ -2571,29 +4396,120 @@
         const ctx = getAudioContext();
         if (ctx.state === 'suspended') ctx.resume();
 
+        const baseFreq = 800 + gameState.sparksCollected * 20;
+        const isNearEnd = gameState.sparksCollected >= 48;
+        const duration = isNearEnd ? 0.4 : 0.2;
+        const gain = gameState.sparksCollected >= 45 ? 0.35 : 0.3;
+
+        // Base oscillator
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
-
         oscillator.connect(gainNode);
         gainNode.connect(ctx.destination);
-
-        oscillator.frequency.value = 800 + gameState.sparksCollected * 20;
+        oscillator.frequency.value = baseFreq;
         oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-
+        gainNode.gain.setValueAtTime(gain, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
         oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.2);
+        oscillator.stop(ctx.currentTime + duration);
+
+        // At 40+: harmony note (5th interval = 1.5x)
+        if (gameState.sparksCollected >= 40) {
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.frequency.value = baseFreq * 1.5;
+          osc2.type = 'sine';
+          gain2.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+          osc2.start(ctx.currentTime);
+          osc2.stop(ctx.currentTime + duration);
+        }
+
+        // At 45+: third note (octave = 2x)
+        if (gameState.sparksCollected >= 45) {
+          const osc3 = ctx.createOscillator();
+          const gain3 = ctx.createGain();
+          osc3.connect(gain3);
+          gain3.connect(ctx.destination);
+          osc3.frequency.value = baseFreq * 2;
+          osc3.type = 'sine';
+          gain3.gain.setValueAtTime(0.1, ctx.currentTime);
+          gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+          osc3.start(ctx.currentTime);
+          osc3.stop(ctx.currentTime + duration);
+        }
+      } catch (e) {}
+    }
+
+    function playZoneClearSound() {
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        // Ascending arpeggio for zone clear
+        const notes = [440, 554, 659, 880]; // A4, C#5, E5, A5
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
+          osc.start(ctx.currentTime + i * 0.12);
+          osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+        });
+      } catch (e) {}
+    }
+
+    function playCompletionArpeggio() {
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        // Triumphant ascending arpeggio
+        const notes = [523, 659, 784, 1047, 1319, 1568]; // C5 E5 G5 C6 E6 G6
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.5);
+          osc.start(ctx.currentTime + i * 0.1);
+          osc.stop(ctx.currentTime + i * 0.1 + 0.5);
+
+          // Harmony
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.frequency.value = freq * 1.25; // Major third harmony
+          osc2.type = 'sine';
+          gain2.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.1);
+          gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.5);
+          osc2.start(ctx.currentTime + i * 0.1);
+          osc2.stop(ctx.currentTime + i * 0.1 + 0.5);
+        });
       } catch (e) {}
     }
 
     function completeLevel() {
       gameState.playing = false;
 
-      // Calculate score
-      const timeBonus = Math.max(0, 10000 - Math.floor(gameState.elapsedTime));
+      // Play completion arpeggio
+      playCompletionArpeggio();
+
+      // Calculate score with all bonuses
       const sparkScore = gameState.sparksCollected * 100;
-      gameState.score = sparkScore + timeBonus;
+      const timeBonus = Math.max(0, 10000 - Math.floor(gameState.elapsedTime));
+      const bonusSparkScore = gameState.bonusSparksCollected * 1000;
+      gameState.score = sparkScore + gameState.chainBonus + gameState.zoneClearBonus + timeBonus + bonusSparkScore;
 
       // Determine star rating
       let stars = '⭐';
@@ -2609,11 +4525,63 @@
       document.getElementById('resultStars').textContent = stars;
       document.getElementById('finalScore').textContent = gameState.score.toLocaleString();
 
+      // Show bonus spark result
+      const bsEl = document.getElementById('bonusSparkResult');
+      if (bsEl && gameState.bonusSparksTotal > 0) {
+        bsEl.textContent = 'Bonus Sparks: ' + gameState.bonusSparksCollected + '/' + gameState.bonusSparksTotal;
+        bsEl.style.display = 'block';
+      }
+
+      // Show best chain result
+      const bcEl = document.getElementById('bestChainResult');
+      if (bcEl && gameState.bestChain >= 2) {
+        bcEl.textContent = 'Best Chain: ' + gameState.bestChain + 'x';
+        bcEl.style.display = 'block';
+      }
+
+      // Personal best comparison
+      showPersonalBest();
+
       document.getElementById('resultsModal').classList.add('show');
 
       // Submit final score and save state
       submitScore();
       saveCloudState();
+    }
+
+    function showPersonalBest() {
+      const pbEl = document.getElementById('personalBest');
+      const pbText = document.getElementById('personalBestText');
+      if (!pbEl || !pbText) return;
+
+      const prevBestScore = cloudStateLumble?.additionalData?.bestScore || 0;
+      const prevBestTime = cloudStateLumble?.additionalData?.bestTime || 0;
+      const currentTime = gameState.elapsedTime;
+
+      let messages = [];
+
+      if (prevBestScore > 0 && gameState.score > prevBestScore) {
+        messages.push('New Personal Best!');
+      } else if (prevBestScore > 0) {
+        const diff = prevBestScore - gameState.score;
+        messages.push('Your best: ' + prevBestScore.toLocaleString() + ' (' + diff.toLocaleString() + ' away!)');
+      }
+
+      if (prevBestTime > 0 && currentTime < prevBestTime) {
+        messages.push('New fastest time!');
+      } else if (prevBestTime > 0) {
+        const timeDiff = Math.floor(currentTime - prevBestTime);
+        if (timeDiff > 0) {
+          messages.push('Best time: ' + formatTime(prevBestTime) + ' (' + timeDiff + 's away!)');
+        }
+      }
+
+      if (messages.length > 0) {
+        pbText.textContent = messages.join(' | ');
+        pbEl.style.display = 'block';
+      } else {
+        pbEl.style.display = 'none';
+      }
     }
 
     function formatTime(seconds) {
@@ -2927,7 +4895,11 @@
           sparksCollected: gameState.sparksCollected,
           totalSparks: gameState.totalSparks,
           timeSeconds: Math.floor(gameState.elapsedTime),
-          completionPercent: Math.round((gameState.sparksCollected / gameState.totalSparks) * 100)
+          completionPercent: Math.round((gameState.sparksCollected / gameState.totalSparks) * 100),
+          bestChain: gameState.bestChain,
+          chainBonus: gameState.chainBonus,
+          zoneClearBonus: gameState.zoneClearBonus,
+          bonusSparksCollected: gameState.bonusSparksCollected
         }
       };
 
@@ -3007,7 +4979,12 @@
           lastPlayedDate: new Date().toISOString().split('T')[0],
           additionalData: {
             bestScore: Math.max(cloudStateLumble?.additionalData?.bestScore || 0, gameState.score),
-            bestSparks: Math.max(cloudStateLumble?.additionalData?.bestSparks || 0, gameState.sparksCollected)
+            bestSparks: Math.max(cloudStateLumble?.additionalData?.bestSparks || 0, gameState.sparksCollected),
+            bestTime: cloudStateLumble?.additionalData?.bestTime > 0
+              ? Math.min(cloudStateLumble.additionalData.bestTime, gameState.elapsedTime)
+              : gameState.elapsedTime,
+            bestChain: Math.max(cloudStateLumble?.additionalData?.bestChain || 0, gameState.bestChain),
+            bonusSparksFound: Math.max(cloudStateLumble?.additionalData?.bonusSparksFound || 0, gameState.bonusSparksCollected)
           }
         };
         await window.gameCloud.saveState('lumble', state);
