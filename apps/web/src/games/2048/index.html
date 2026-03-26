@@ -112,67 +112,6 @@
       overscroll-behavior: none;
     }
 
-    /* Header */
-    .header {
-      position: relative;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      padding: 0.75rem 1.5rem;
-      padding-top: max(0.75rem, env(safe-area-inset-top));
-      padding-left: max(1.5rem, env(safe-area-inset-left));
-      padding-right: max(1.5rem, env(safe-area-inset-right));
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .back-btn {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 1.5rem;
-      padding: 0.5rem;
-      display: flex;
-      align-items: center;
-      transition: color 0.2s;
-    }
-
-    .back-btn:hover { color: var(--accent); }
-
-    .game-title {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.3rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .user-section {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid var(--accent);
-    }
-
-    .sign-in-btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 0.4rem 1rem;
-      border-radius: 16px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
     /* Main Game Area */
     .game-container {
       max-width: 500px;
@@ -620,17 +559,7 @@
   </style>
 </head>
 <body>
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="game-title">
-      <span>🔢</span>
-      <span>2048</span>
-    </h1>
-    <div class="user-section" id="userSection">
-      <button class="sign-in-btn" onclick="window.location.href='/leaderboard/?game=2048'" style="background:none;border:1px solid rgba(255,255,255,0.15);padding:0.3rem 0.5rem;border-radius:6px;cursor:pointer;font-size:1rem;" title="Leaderboard">🏆</button>
-      <button class="sign-in-btn" id="signInBtn" onclick="promptSignIn()">Sign In</button>
-    </div>
-  </header>
+  <header id="gameHeader"></header>
 
   <div class="game-container">
     <!-- Score Section -->
@@ -735,6 +664,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
+  <script src="/js/game-header.js"></script>
   <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}}b.onclick=function(){window.location.href='/profile/'};if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}}</script>
 
   <script>
@@ -906,7 +836,26 @@
       bestScoreEl.textContent = bestScore;
       setupEventListeners();
       loadGame();
-      updateAuthUI();
+      gameHeader.init({
+        title: '2048',
+        icon: '🔢',
+        gameId: '2048',
+        buttons: ['leaderboard', 'auth'],
+        onSignIn: async (user) => {
+          currentUser = user;
+          cloudState2048 = await window.gameCloud.loadState('2048');
+          if (cloudState2048?.additionalData?.bestScore > bestScore) {
+            bestScore = cloudState2048.additionalData.bestScore;
+            localStorage.setItem('2048-best-score', bestScore);
+            bestScoreEl.textContent = bestScore;
+          }
+          await window.gameCloud.syncGuestScores('2048');
+          loadLeaderboard();
+        },
+        onSignOut: () => {
+          currentUser = null;
+        }
+      });
       loadLeaderboard();
     }
 
@@ -1351,44 +1300,6 @@
 
     function hideOverlay() {
       document.getElementById('gameOverlay').classList.remove('show');
-    }
-
-    // Auth & API
-    function updateAuthUI() {
-      if (!window.gameCloud) return;
-      window.gameCloud.initAuth({
-        authBtnId: null, // 2048 manages its own user section
-        onSignIn: async (user) => {
-          currentUser = user;
-          // Update user section UI manually (2048 has custom avatar rendering)
-          const userSection = document.getElementById('userSection');
-          userSection.innerHTML = '';
-          const avatarImg = document.createElement('img');
-          avatarImg.className = 'user-avatar';
-          avatarImg.src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U');
-          avatarImg.alt = 'User';
-          userSection.appendChild(avatarImg);
-
-          cloudState2048 = await window.gameCloud.loadState('2048');
-          if (cloudState2048?.additionalData?.bestScore > bestScore) {
-            bestScore = cloudState2048.additionalData.bestScore;
-            localStorage.setItem('2048-best-score', bestScore);
-            bestScoreEl.textContent = bestScore;
-          }
-          await window.gameCloud.syncGuestScores('2048');
-          loadLeaderboard();
-        },
-        onSignOut: () => {
-          currentUser = null;
-          const userSection = document.getElementById('userSection');
-          userSection.innerHTML = '';
-          const signInButton = document.createElement('button');
-          signInButton.className = 'sign-in-btn';
-          signInButton.textContent = 'Sign In';
-          signInButton.addEventListener('click', promptSignIn);
-          userSection.appendChild(signInButton);
-        }
-      });
     }
 
     function promptSignIn() {

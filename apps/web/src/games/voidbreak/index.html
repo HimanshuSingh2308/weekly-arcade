@@ -107,99 +107,6 @@
       overscroll-behavior: none;
     }
 
-    /* Header */
-    .header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      padding: 0.75rem 1rem;
-      padding-top: max(0.75rem, env(safe-area-inset-top));
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 500;
-      height: 50px;
-    }
-
-    .back-btn {
-      color: var(--text-primary);
-      text-decoration: none;
-      font-size: 0.9rem;
-      padding: 0.5rem 0.75rem;
-      min-height: 44px;
-      min-width: 44px;
-      display: flex;
-      align-items: center;
-    }
-
-    .back-btn:hover { color: var(--accent); }
-
-    .game-title {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.3rem;
-      font-weight: 700;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .game-title span:first-child {
-      -webkit-text-fill-color: initial;
-      background: none;
-    }
-
-    .header-right {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .auth-btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1.25rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .auth-btn:hover {
-      background: var(--accent-light);
-    }
-
-    .icon-btn {
-      background: var(--bg-card);
-      border: 2px solid var(--border);
-      color: var(--text-primary);
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0.4rem;
-      border-radius: 8px;
-      min-width: 44px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .icon-btn:hover {
-      border-color: var(--accent);
-    }
-
     /* Game Container */
     .game-container {
       display: flex;
@@ -910,12 +817,10 @@
     }
 
     @media (max-width: 400px) {
-      .auth-btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; white-space: nowrap; }
       .autofire-toggle { top: 130px; right: 10px; width: 50px; height: 50px; font-size: 0.65rem; }
     }
 
     @media (orientation: landscape) and (max-height: 500px) {
-      .header { height: 36px; padding: 0.25rem 0.75rem; }
       .game-container { top: 36px; height: calc(100dvh - 36px); }
       .hud { top: 40px; padding: 0.25rem 0.5rem; font-size: 0.8rem; }
       .fire-zone-indicator { width: 60px; height: 60px; bottom: 15px; right: 15px; opacity: 0.6; }
@@ -1653,15 +1558,7 @@
 </head>
 <body>
   <!-- Header -->
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="game-title"><span>☄️</span><span>Voidbreak</span></h1>
-    <div class="header-right">
-      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
-      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=voidbreak'" title="Leaderboard">🏆</button>
-      <button class="auth-btn" id="authBtn">Sign In</button>
-    </div>
-  </header>
+  <header id="gameHeader"></header>
 
   <!-- HUD -->
   <div class="hud" id="hud" style="display: none;">
@@ -1945,6 +1842,7 @@
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/game-cloud.js"></script>
+  <script src="../../js/game-header.js"></script>
   <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}}b.onclick=function(){window.location.href='/profile/'};if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}}</script>
 
   <script>
@@ -2358,7 +2256,24 @@
 
       // Setup event listeners
       setupControls();
-      setupAuth();
+      gameHeader.init({
+        title: 'Voidbreak',
+        icon: '☄️',
+        gameId: 'voidbreak',
+        buttons: ['sound', 'leaderboard', 'auth'],
+        onSound: toggleSound,
+        onSignIn: (user) => {
+          currentUser = user;
+          loadCloudState();
+          loadCustomizationData();
+        },
+        onSignOut: () => {
+          currentUser = null;
+          customization.coins = 0;
+          customization.totalCoinsEarned = 0;
+          document.getElementById('menuCoinDisplay').style.display = 'none';
+        }
+      });
       setupCustomizationListeners();
       setupOrientationToggle();
 
@@ -2632,24 +2547,6 @@
       localStorage.setItem('voidbreak-played', 'true');
     }
 
-    function setupAuth() {
-      if (!window.gameCloud) return;
-      window.gameCloud.initAuth({
-        authBtnId: 'authBtn',
-        signInStyle: 'button',
-        onSignIn: (user) => {
-          currentUser = user;
-          loadCloudState();
-          loadCustomizationData();
-        },
-        onSignOut: () => {
-          currentUser = null;
-          customization.coins = 0;
-          customization.totalCoinsEarned = 0;
-          document.getElementById('menuCoinDisplay').style.display = 'none';
-        }
-      });
-    }
 
     // ==========================================
     // GAME FLOW

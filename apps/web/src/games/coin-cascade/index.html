@@ -103,63 +103,6 @@
       -webkit-user-select: none;
     }
 
-    /* Header */
-    .game-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      background: var(--bg-card);
-      border-bottom: 1px solid #2a2a4a;
-      z-index: 10;
-      position: relative;
-    }
-
-    .back-link {
-      color: var(--text-dim);
-      text-decoration: none;
-      font-size: 0.9rem;
-    }
-    .back-link:hover { color: var(--gold); }
-
-    .game-title {
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: var(--gold);
-    }
-
-    .header-right {
-      display: flex;
-      gap: 0.8rem;
-      align-items: center;
-    }
-
-    .sound-btn {
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 1.2rem;
-      cursor: pointer;
-      padding: 4px;
-      min-width: 44px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .auth-btn {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      min-height: 44px;
-    }
-
     /* HUD */
     .hud {
       display: flex;
@@ -391,8 +334,6 @@
     }
 
     @media (max-width: 480px) {
-      .game-header { padding: 0.4rem 0.6rem; }
-      .game-title { font-size: 0.95rem; }
       .hud { padding: 0.3rem 0.5rem; }
       .hud-value { font-size: 0.95rem; }
     }
@@ -401,15 +342,7 @@
 <body>
 
   <!-- Header -->
-  <div class="game-header">
-    <a href="../../" class="back-link">&#8592; All Games</a>
-    <div class="game-title">&#x1FA99; Coin Cascade</div>
-    <div class="header-right">
-      <button class="auth-btn" id="authBtn">Sign In</button>
-      <button class="sound-btn" onclick="window.location.href='/leaderboard/?game=coin-cascade'" title="Leaderboard">🏆</button>
-      <button class="sound-btn" id="soundToggle" aria-label="Toggle sound">&#x1F50A;</button>
-    </div>
-  </div>
+  <header id="gameHeader"></header>
 
   <!-- HUD -->
   <div class="hud">
@@ -823,8 +756,12 @@
     ctx = canvas.getContext('2d');
     try { bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0'); } catch(e) { bestScore = 0; }
     document.getElementById('hudBest').textContent = bestScore.toLocaleString();
-    if (window.gameCloud) window.gameCloud.initAuth({
-      authBtnId: 'authBtn',
+    if (window.gameHeader) window.gameHeader.init({
+      title: 'Coin Cascade',
+      icon: '\u{1FA99}',
+      gameId: 'coin-cascade',
+      buttons: ['sound', 'leaderboard', 'auth'],
+      soundBtnId: 'soundToggle',
       onSignIn: u => { currentUser = u; },
       onSignOut: () => { currentUser = null; },
     });
@@ -1490,6 +1427,7 @@
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/game-cloud.js"></script>
+  <script src="../../js/game-header.js"></script>
   <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}}b.onclick=function(){window.location.href='/profile/'};if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}}</script>
 </body>
 </html>
