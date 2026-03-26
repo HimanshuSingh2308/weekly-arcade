@@ -574,6 +574,7 @@
   <!-- API & Auth Scripts -->
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -1101,29 +1102,24 @@
       document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
     }
 
-    // ============ AUTH & CLOUD ============
-    function initAuth() {
-      const checkAuth = setInterval(() => {
-        if (window.authManager?.isInitialized) {
-          clearInterval(checkAuth);
-          window.authManager.onAuthStateChanged(user => {
-            currentUser = user;
-            updateAuthUI();
-            if (user) loadCloudState();
-          });
-        }
-      }, 100);
-    }
+    // ============ AUTH & CLOUD (via shared game-cloud.js) ============
+    let cloudState = null;
 
-    function updateAuthUI() {
-      const authBtn = document.getElementById('authBtn');
-      if (currentUser) {
-        authBtn.textContent = escapeHTML(currentUser.displayName?.split(' ')[0] || 'Player');
-        authBtn.onclick = null;
-      } else {
-        authBtn.textContent = 'Sign In';
-        authBtn.onclick = showAuthModal;
-      }
+    function initAuth() {
+      window.gameCloud.initAuth({
+        authBtnId: 'authBtn',
+        signInStyle: 'name',
+        onSignIn: async () => {
+          currentUser = window.gameCloud.getUser();
+          cloudState = await window.gameCloud.loadState('snake');
+          if (cloudState?.additionalData?.highScore > highScore) {
+            highScore = cloudState.additionalData.highScore;
+            localStorage.setItem('snake-high-score', highScore);
+            document.getElementById('highScoreDisplay').textContent = highScore;
+          }
+        },
+        onSignOut: () => { currentUser = null; }
+      });
     }
 
     function showAuthModal() {
@@ -1148,93 +1144,34 @@
     });
 
     async function submitScore() {
-      if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
-
-      try {
-        const timeMs = Date.now() - gameStartTime;
-        await window.apiClient.submitScore('snake', {
-          score: score,
-          level: level,
-          timeMs: timeMs,
-          metadata: {
-            foodEaten: foodEaten + (level - 1) * FOOD_FOR_LEVEL_UP,
-            finalLength: snake.length
-          }
-        });
-        // score submitted
-      } catch (error) {
-        console.error('Failed to submit score:', error);
-      }
-    }
-
-    // Store cloud state for incremental updates
-    let cloudState = null;
-
-    async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
-
-      try {
-        cloudState = await window.apiClient.getGameState('snake');
-        if (cloudState && cloudState.additionalData?.highScore) {
-          const cloudHighScore = cloudState.additionalData.highScore;
-          if (cloudHighScore > highScore) {
-            highScore = cloudHighScore;
-            localStorage.setItem('snake-high-score', highScore);
-            document.getElementById('highScoreDisplay').textContent = highScore;
-          }
+      await window.gameCloud.submitScore('snake', {
+        score: score,
+        level: level,
+        timeMs: Date.now() - gameStartTime,
+        metadata: {
+          foodEaten: foodEaten + (level - 1) * FOOD_FOR_LEVEL_UP,
+          finalLength: snake.length
         }
-      } catch (error) {
-        console.error('Could not load cloud state:', error);
-      }
+      });
     }
 
     async function saveCloudState(won = false) {
-      if (!currentUser || !window.apiClient) return;
+      const prev = cloudState || {};
+      const newState = {
+        currentLevel: level,
+        currentStreak: 0,
+        bestStreak: Math.max(prev.bestStreak || 0, level),
+        gamesPlayed: (prev.gamesPlayed || 0) + 1,
+        gamesWon: (prev.gamesWon || 0) + (won ? 1 : 0),
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        additionalData: { highScore, lastScore: score }
+      };
+      await window.gameCloud.saveState('snake', newState);
+      cloudState = newState;
 
-      try {
-        // Increment from existing state
-        const prevGamesPlayed = cloudState?.gamesPlayed || 0;
-        const prevGamesWon = cloudState?.gamesWon || 0;
-        const prevBestStreak = cloudState?.bestStreak || 0;
-
-        const newState = {
-          currentLevel: level,
-          currentStreak: 0,
-          bestStreak: Math.max(prevBestStreak, level),
-          gamesPlayed: prevGamesPlayed + 1,
-          gamesWon: prevGamesWon + (won ? 1 : 0),
-          lastPlayedDate: new Date().toISOString().split('T')[0],
-          additionalData: {
-            highScore: highScore,
-            lastScore: score
-          }
-        };
-
-        await window.apiClient.saveGameState('snake', newState);
-        cloudState = newState; // Update local cache
-
-        // Check achievements
-        checkAchievements(newState);
-      } catch (error) {
-        console.error('Could not save cloud state:', error);
-      }
-    }
-
-    async function checkAchievements(state) {
-      if (!currentUser || !window.apiClient) return;
-
-      try {
-        // First game achievement
-        if (state.gamesPlayed === 1) {
-          await window.apiClient.unlockAchievement('first_word', 'snake');
-        }
-        // 10 wins achievement
-        if (state.gamesWon >= 10) {
-          await window.apiClient.unlockAchievement('ten_wins', 'snake');
-        }
-      } catch (error) {
-        console.error('Could not check achievements:', error);
-      }
+      // Achievements
+      if (newState.gamesPlayed === 1) window.gameCloud.unlockAchievement('first_word', 'snake');
+      if (newState.gamesWon >= 10) window.gameCloud.unlockAchievement('ten_wins', 'snake');
     }
 
     // ============ START ============
