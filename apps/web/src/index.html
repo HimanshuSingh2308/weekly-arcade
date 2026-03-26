@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Deploy: 2026-03-23 -->
+<!-- Deploy: 2026-03-26 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -258,14 +258,21 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-primary: #0f0f1a;
-      --bg-secondary: #1a1a2e;
-      --bg-card: #16213e;
+      --bg-primary: #0a0a12;
+      --bg-secondary: #12121f;
+      --bg-card: rgba(22, 33, 62, 0.6);
+      --bg-card-solid: #16213e;
       --accent: #e94560;
       --accent-hover: #ff6b6b;
-      --text-primary: #eee;
-      --text-secondary: #888;
-      --border: #2a2a4a;
+      --accent-glow: rgba(233, 69, 96, 0.3);
+      --purple: #7c3aed;
+      --purple-glow: rgba(124, 58, 237, 0.2);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a8;
+      --border: rgba(255, 255, 255, 0.06);
+      --glass: rgba(255, 255, 255, 0.03);
+      --radius: 16px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     body {
@@ -273,232 +280,443 @@
       background: var(--bg-primary);
       color: var(--text-primary);
       min-height: 100vh;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
     }
 
-    /* Header */
+    /* ─── Header ─── */
     .header {
-      background: var(--bg-secondary);
+      background: rgba(18, 18, 31, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem;
+      padding: 0.8rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: relative;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
 
     .logo {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 800;
-      color: var(--accent);
+      color: var(--text-primary);
       text-decoration: none;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      letter-spacing: -0.02em;
     }
 
-    .logo-icon {
-      font-size: 1.8rem;
+    .logo-icon { font-size: 1.6rem; }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .nav {
-      display: flex;
-      gap: 1.5rem;
-    }
+    .nav { display: flex; gap: 0.25rem; }
 
     .nav a {
       color: var(--text-secondary);
       text-decoration: none;
       font-weight: 500;
-      transition: color 0.2s;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      transition: color var(--transition), background var(--transition);
     }
 
-    .nav a:hover {
-      color: var(--accent);
-    }
+    .nav a:hover { color: var(--text-primary); background: var(--glass); }
+    .nav a.active { color: var(--accent); background: rgba(233, 69, 96, 0.08); }
 
-    .nav a.active {
-      color: var(--accent);
-    }
-
-    /* Mobile Menu Button */
     .mobile-menu-btn {
       display: none;
       background: none;
-      border: 2px solid var(--border);
+      border: 1px solid var(--border);
       color: var(--text-primary);
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       padding: 0.4rem 0.6rem;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       line-height: 1;
+      transition: border-color var(--transition);
     }
+    .mobile-menu-btn:hover { border-color: var(--accent); }
 
-    .mobile-menu-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    /* Hero */
+    /* ─── Featured Hero ─── */
     .hero {
-      text-align: center;
-      padding: 4rem 2rem 3rem;
-      background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      position: relative;
+      overflow: hidden;
+      padding: 3rem 2rem 2rem;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(233, 69, 96, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+      position: relative;
+    }
+
+    .hero-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.35rem 1rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      animation: badge-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes badge-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0); }
+      50% { box-shadow: 0 0 20px 4px rgba(233, 69, 96, 0.25); }
     }
 
     .hero h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
     }
 
-    .hero h1 span {
-      color: var(--accent);
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .hero p {
+    .hero-desc {
       color: var(--text-secondary);
-      font-size: 1.1rem;
-      max-width: 500px;
-      margin: 0 auto 2rem;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+      max-width: 420px;
     }
 
-    .badge {
-      display: inline-block;
-      background: var(--accent);
-      color: white;
-      padding: 0.4rem 1rem;
+    .hero-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-tag {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.75rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
       border-radius: 20px;
+      color: var(--text-secondary);
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.9rem 2rem;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .hero-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(233, 69, 96, 0.35);
+    }
+    .hero-cta:active { transform: translateY(0); }
+
+    .hero-cta-arrow {
+      transition: transform var(--transition);
+    }
+    .hero-cta:hover .hero-cta-arrow { transform: translateX(3px); }
+
+    .hero-thumb {
+      flex: 0 0 340px;
+      height: 240px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px var(--accent-glow);
+      position: relative;
+    }
+
+    .hero-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hero-thumb:hover img { transform: scale(1.05); }
+
+    /* ─── Stats Banner ─── */
+    .stats-banner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .stats-inner {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1.25rem 2rem;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-top: 2rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .stat-icon { font-size: 1.2rem; }
+
+    .stat-value {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    /* ─── Filter Chips ─── */
+    .filters {
+      max-width: 1100px;
+      margin: 2.5rem auto 0;
+      padding: 0 2rem;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .filter-chip {
+      flex-shrink: 0;
+      padding: 0.5rem 1.15rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--glass);
+      color: var(--text-secondary);
       font-size: 0.85rem;
       font-weight: 600;
-      animation: pulse 2s infinite;
-      text-decoration: none;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .badge:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(233,69,96,0.4); }
-    .badge:active { transform: scale(0.97); }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
     }
 
-    /* Games Grid */
+    .filter-chip:hover {
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .filter-chip.active {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      border-color: transparent;
+      box-shadow: 0 2px 12px rgba(233, 69, 96, 0.3);
+    }
+
+    /* ─── Games Grid ─── */
     .container {
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 1.75rem 2rem 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
     }
 
     .section-title {
-      font-size: 1.3rem;
-      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
+    .game-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+    }
+
     .games-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
+      gap: 1.25rem;
     }
 
+    /* ─── Game Card ─── */
     .game-card {
       background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius);
       overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
       text-decoration: none;
       color: inherit;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      cursor: pointer;
+      position: relative;
     }
 
     .game-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px rgba(233, 69, 96, 0.2);
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 0 24px var(--accent-glow);
+      border-color: rgba(233, 69, 96, 0.15);
+    }
+
+    .game-card[data-hidden="true"] {
+      display: none;
     }
 
     .game-thumb {
       height: 160px;
-      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
       overflow: hidden;
+      position: relative;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card-solid));
     }
 
     .game-thumb img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .game-card:hover .game-thumb img {
+      transform: scale(1.08);
+    }
+
+    .thumb-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 2;
     }
 
     .game-info {
-      padding: 1rem;
+      padding: 1rem 1.15rem;
     }
 
     .game-title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       margin-bottom: 0.3rem;
+      letter-spacing: -0.01em;
     }
 
     .game-desc {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text-secondary);
       margin-bottom: 0.75rem;
+      line-height: 1.45;
     }
 
     .game-tags {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.4rem;
       flex-wrap: wrap;
     }
 
     .tag {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       padding: 0.2rem 0.6rem;
-      background: var(--bg-secondary);
-      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
       color: var(--text-secondary);
+      font-weight: 500;
     }
 
-    .tag.new {
-      background: var(--accent);
-      color: white;
-    }
-
-    /* Coming Soon */
-    .coming-soon {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-
-    .coming-soon .game-thumb::after {
-      content: 'COMING SOON';
-      position: absolute;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .game-thumb {
-      position: relative;
-    }
-
-    /* Footer */
+    /* ─── Footer ─── */
     .footer {
       text-align: center;
-      padding: 2rem;
+      padding: 2.5rem 2rem;
       color: var(--text-secondary);
       font-size: 0.85rem;
       border-top: 1px solid var(--border);
       margin-top: 3rem;
+      background: linear-gradient(180deg, transparent, rgba(18, 18, 31, 0.5));
     }
 
     .footer a {
       color: var(--accent);
       text-decoration: none;
+      transition: color var(--transition);
     }
+    .footer a:hover { color: var(--accent-hover); }
 
-    /* Auth Button & User Menu */
+    /* ─── Auth Button & User Menu ─── */
     .header-right {
       display: flex;
       align-items: center;
@@ -506,20 +724,20 @@
     }
 
     .auth-btn {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #c73e54);
       color: white;
       border: none;
       padding: 0.5rem 1.2rem;
-      border-radius: 20px;
-      font-size: 0.9rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s, transform 0.2s;
+      transition: transform var(--transition), box-shadow var(--transition);
     }
 
     .auth-btn:hover {
-      background: var(--accent-hover);
       transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(233, 69, 96, 0.3);
     }
 
     .user-menu {
@@ -556,19 +774,17 @@
       transition: transform 0.2s;
     }
 
-    .user-menu.open .dropdown-arrow {
-      transform: rotate(180deg);
-    }
+    .user-menu.open .dropdown-arrow { transform: rotate(180deg); }
 
     .user-dropdown {
       position: absolute;
       top: calc(100% + 0.5rem);
       right: 0;
-      background: var(--bg-card);
+      background: var(--bg-card-solid);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 12px;
       min-width: 180px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
       opacity: 0;
       visibility: hidden;
       transform: translateY(-10px);
@@ -590,20 +806,12 @@
       color: var(--text-primary);
       text-decoration: none;
       font-size: 0.9rem;
-      transition: background 0.2s;
+      transition: background var(--transition);
     }
 
-    .dropdown-item:hover {
-      background: var(--bg-secondary);
-    }
-
-    .dropdown-item:first-child {
-      border-radius: 8px 8px 0 0;
-    }
-
-    .dropdown-item:last-child {
-      border-radius: 0 0 8px 8px;
-    }
+    .dropdown-item:hover { background: rgba(255, 255, 255, 0.04); }
+    .dropdown-item:first-child { border-radius: 12px 12px 0 0; }
+    .dropdown-item:last-child { border-radius: 0 0 12px 12px; }
 
     .dropdown-divider {
       height: 1px;
@@ -611,15 +819,15 @@
       margin: 0.25rem 0;
     }
 
-    .dropdown-item.sign-out {
-      color: var(--accent);
-    }
+    .dropdown-item.sign-out { color: var(--accent); }
 
-    /* Auth Modal */
+    /* ─── Auth Modal ─── */
     .auth-modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -635,18 +843,20 @@
     }
 
     .auth-modal {
-      background: var(--bg-card);
-      border-radius: 16px;
-      padding: 2rem;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
       width: 90%;
       max-width: 400px;
       text-align: center;
-      transform: scale(0.9);
+      transform: scale(0.9) translateY(20px);
       transition: transform 0.3s;
+      position: relative;
     }
 
     .auth-modal-overlay.show .auth-modal {
-      transform: scale(1);
+      transform: scale(1) translateY(0);
     }
 
     .auth-modal h2 {
@@ -663,8 +873,9 @@
       text-align: left;
       margin-bottom: 1.5rem;
       padding: 1rem;
-      background: var(--bg-secondary);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
     }
 
     .auth-benefits li {
@@ -675,7 +886,7 @@
     }
 
     .auth-benefits li::before {
-      content: '✓ ';
+      content: '\2713  ';
       color: var(--accent);
       font-weight: bold;
     }
@@ -690,11 +901,11 @@
       background: white;
       color: #333;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s, transform 0.2s;
+      transition: background var(--transition), transform var(--transition);
     }
 
     .google-btn:hover {
@@ -702,10 +913,7 @@
       transform: scale(1.02);
     }
 
-    .google-btn img {
-      width: 20px;
-      height: 20px;
-    }
+    .google-btn img { width: 20px; height: 20px; }
 
     .auth-modal-close {
       position: absolute;
@@ -717,15 +925,9 @@
       font-size: 1.5rem;
       cursor: pointer;
       line-height: 1;
+      transition: color var(--transition);
     }
-
-    .auth-modal-close:hover {
-      color: var(--text-primary);
-    }
-
-    .auth-modal {
-      position: relative;
-    }
+    .auth-modal-close:hover { color: var(--text-primary); }
 
     .auth-skip {
       margin-top: 1rem;
@@ -738,53 +940,41 @@
       text-decoration: none;
     }
 
-    /* PWA Update Banner */
+    /* ─── PWA Update Banner ─── */
     .pwa-update-banner {
       position: fixed;
       bottom: 1rem;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
       background: linear-gradient(135deg, var(--accent), #c73e54);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 0.8rem 1.2rem;
       display: flex;
       align-items: center;
       gap: 1rem;
       z-index: 2000;
-      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+      box-shadow: 0 4px 24px rgba(233, 69, 96, 0.4);
       transition: transform 0.3s ease-out;
       max-width: 90%;
     }
 
-    .pwa-update-banner.show {
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .pwa-update-icon {
-      font-size: 1.5rem;
-    }
-
-    .pwa-update-text {
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
+    .pwa-update-banner.show { transform: translateX(-50%) translateY(0); }
+    .pwa-update-icon { font-size: 1.5rem; }
+    .pwa-update-text { font-size: 0.9rem; font-weight: 500; }
 
     .pwa-update-btn {
       background: white;
       color: var(--accent);
       border: none;
       padding: 0.5rem 1rem;
-      border-radius: 8px;
+      border-radius: 10px;
       font-weight: 700;
       font-size: 0.85rem;
       cursor: pointer;
       white-space: nowrap;
-      transition: transform 0.2s;
+      transition: transform var(--transition);
     }
-
-    .pwa-update-btn:hover {
-      transform: scale(1.05);
-    }
+    .pwa-update-btn:hover { transform: scale(1.05); }
 
     .pwa-update-dismiss {
       background: none;
@@ -795,18 +985,15 @@
       padding: 0.2rem;
       line-height: 1;
     }
+    .pwa-update-dismiss:hover { color: white; }
 
-    .pwa-update-dismiss:hover {
-      color: white;
-    }
-
-    /* iOS Install Banner */
+    /* ─── iOS Install Banner ─── */
     .ios-install-banner {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: var(--bg-card);
+      background: var(--bg-card-solid);
       border-top: 1px solid var(--border);
       padding: 1rem;
       display: none;
@@ -821,22 +1008,10 @@
       to { transform: translateY(0); }
     }
 
-    .ios-install-banner.show {
-      display: flex;
-    }
-
-    .ios-install-icon {
-      font-size: 2.5rem;
-    }
-
-    .ios-install-content {
-      flex: 1;
-    }
-
-    .ios-install-title {
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
+    .ios-install-banner.show { display: flex; }
+    .ios-install-icon { font-size: 2.5rem; }
+    .ios-install-content { flex: 1; }
+    .ios-install-title { font-weight: 700; margin-bottom: 0.25rem; }
 
     .ios-install-text {
       font-size: 0.85rem;
@@ -861,25 +1036,30 @@
       padding: 0.5rem;
     }
 
-    /* Responsive */
+    /* ─── No Results ─── */
+    .no-results {
+      display: none;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-secondary);
+      grid-column: 1 / -1;
+    }
+
+    .no-results.show { display: block; }
+    .no-results-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .no-results-text { font-size: 1.1rem; }
+
+    /* ─── Responsive ─── */
     @media (max-width: 768px) {
-      .header {
-        padding: 0.8rem 1rem;
-      }
+      .header { padding: 0.7rem 1rem; }
 
       .mobile-menu-btn {
         display: block;
         order: -1;
       }
 
-      .logo {
-        order: 0;
-        flex: 1;
-      }
-
-      .header-right {
-        order: 1;
-      }
+      .logo { order: 0; flex: 1; }
+      .header-right { order: 1; }
 
       .nav {
         display: none;
@@ -887,52 +1067,66 @@
         top: 100%;
         left: 0;
         right: 0;
-        background: var(--bg-secondary);
+        background: rgba(18, 18, 31, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         flex-direction: column;
-        padding: 1rem;
+        padding: 0.5rem;
         gap: 0;
         border-bottom: 1px solid var(--border);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
       }
 
-      .nav.open {
-        display: flex;
+      .nav.open { display: flex; }
+      .nav a { padding: 0.8rem 1rem; border-radius: 8px; }
+      .nav a:hover { background: rgba(233, 69, 96, 0.08); }
+      .user-name { display: none; }
+
+      .hero { padding: 2rem 1.25rem 1.5rem; }
+
+      .hero-inner {
+        flex-direction: column-reverse;
+        gap: 1.5rem;
+        text-align: center;
       }
 
-      .nav a {
-        padding: 0.8rem 1rem;
-        border-radius: 6px;
+      .hero-content { display: flex; flex-direction: column; align-items: center; }
+      .hero-desc { max-width: 100%; }
+      .hero-tags { justify-content: center; }
+
+      .hero-thumb {
+        flex: none;
+        width: 100%;
+        max-width: 400px;
+        height: 200px;
       }
 
-      .nav a:hover {
-        background: rgba(233, 69, 96, 0.1);
+      .hero h1 { font-size: 2rem; }
+
+      .stats-inner {
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        justify-content: center;
+        padding: 1rem;
       }
 
-      .user-name {
-        display: none;
-      }
+      .stat-divider { display: none; }
+
+      .filters { padding: 0 1.25rem; }
     }
 
     @media (max-width: 600px) {
-      .hero h1 {
-        font-size: 1.8rem;
-      }
+      .hero h1 { font-size: 1.7rem; }
+      .hero-desc { font-size: 0.95rem; }
 
-      .hero p {
-        font-size: 1rem;
-      }
-
-      .container {
-        padding: 1rem;
-      }
+      .container { padding: 1.25rem; }
+      .stats-banner { padding: 0 1.25rem; }
 
       .games-grid {
         grid-template-columns: 1fr;
       }
 
-      .auth-modal {
-        padding: 1.5rem;
-      }
+      .auth-modal { padding: 1.5rem; }
     }
   </style>
 </head>
@@ -940,7 +1134,7 @@
   <header class="header">
     <a href="/" class="logo">
       <span class="logo-icon">🎮</span>
-      Weekly Arcade
+      <span>Weekly Arcade</span>
     </a>
     <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
     <nav class="nav" id="mobileNav">
@@ -970,33 +1164,78 @@
     </div>
   </header>
 
+  <!-- Featured Game Hero -->
   <section class="hero">
-    <h1>New <span>Free Games</span> Every Week</h1>
-    <p>Play instantly in your browser. No downloads required. Sign in optional for leaderboards.</p>
-    <a href="/games/tiny-tycoon/" class="badge">🎉 New Game This Week: Tiny Tycoon</a>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">NEW THIS WEEK</div>
+        <h1><span class="highlight">Tiny Tycoon</span></h1>
+        <p class="hero-desc">Run a boba tea shop in 60-second days. Serve customers, earn coins, and upgrade your way to a tea empire!</p>
+        <div class="hero-tags">
+          <span class="hero-tag">Simulation</span>
+          <span class="hero-tag">Idle</span>
+          <span class="hero-tag">Casual</span>
+        </div>
+        <a href="/games/tiny-tycoon/" class="hero-cta">
+          Play Now <span class="hero-cta-arrow">→</span>
+        </a>
+      </div>
+      <a href="/games/tiny-tycoon/" class="hero-thumb">
+        <img src="/images/thumbnails/tiny-tycoon.svg" alt="Tiny Tycoon">
+      </a>
+    </div>
   </section>
 
+  <!-- Stats Banner -->
+  <div class="stats-banner">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <span class="stat-icon">🎮</span>
+        <span class="stat-value">12</span> Games
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-icon">💰</span>
+        <span class="stat-value">100%</span> Free
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-icon">🔥</span>
+        <span class="stat-value">New</span> Every Week
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-icon">⚡</span>
+        <span class="stat-value">Zero</span> Downloads
+      </div>
+    </div>
+  </div>
+
+  <!-- Genre Filters -->
+  <div class="filters">
+    <div class="filter-row" id="filterRow">
+      <button class="filter-chip active" data-filter="all">All Games</button>
+      <button class="filter-chip" data-filter="arcade">Arcade</button>
+      <button class="filter-chip" data-filter="puzzle">Puzzle</button>
+      <button class="filter-chip" data-filter="strategy">Strategy</button>
+      <button class="filter-chip" data-filter="action">Action</button>
+      <button class="filter-chip" data-filter="card">Card</button>
+      <button class="filter-chip" data-filter="simulation">Simulation</button>
+      <button class="filter-chip" data-filter="casual">Casual</button>
+      <button class="filter-chip" data-filter="3d">3D</button>
+    </div>
+  </div>
+
   <main class="container">
-    <h2 class="section-title" id="new">🔥 All Games</h2>
+    <div class="section-header">
+      <h2 class="section-title">All Games</h2>
+      <span class="game-count" id="gameCount">12 games</span>
+    </div>
 
-    <div class="games-grid">
-      <!-- Tiny Tycoon — THIS WEEK -->
-      <a href="/games/tiny-tycoon/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/tiny-tycoon.svg" alt="Tiny Tycoon"></div>
-        <div class="game-info">
-          <div class="game-title">Tiny Tycoon</div>
-          <div class="game-desc">Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!</div>
-          <div class="game-tags">
-            <span class="tag new">NEW</span>
-            <span class="tag">Simulation</span>
-            <span class="tag">Idle</span>
-          </div>
-        </div>
-      </a>
-
+    <div class="games-grid" id="gamesGrid">
       <!-- Coin Cascade -->
-      <a href="/games/coin-cascade/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/coin-cascade.svg" alt="Coin Cascade"></div>
+      <a href="/games/coin-cascade/" class="game-card" data-genres="arcade,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/coin-cascade.svg" alt="Coin Cascade" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Coin Cascade</div>
           <div class="game-desc">Drop coins onto a physics pusher to cascade prizes off the edge!</div>
@@ -1008,8 +1247,8 @@
       </a>
 
       <!-- Solitaire Roguelite -->
-      <a href="/games/solitaire-roguelite/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/solitaire-roguelite.svg" alt="Solitaire Roguelite"></div>
+      <a href="/games/solitaire-roguelite/" class="game-card" data-genres="card,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/solitaire-roguelite.svg" alt="Solitaire Roguelite" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Solitaire Roguelite</div>
           <div class="game-desc">Classic Solitaire with rule-breaking Joker cards. How high can you score?</div>
@@ -1021,8 +1260,8 @@
       </a>
 
       <!-- Stack Tower -->
-      <a href="/games/stack-tower/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/stack-tower.svg" alt="Stack Tower"></div>
+      <a href="/games/stack-tower/" class="game-card" data-genres="arcade,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/stack-tower.svg" alt="Stack Tower" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Stack Tower</div>
           <div class="game-desc">Stack blocks with perfect timing to build the tallest tower!</div>
@@ -1034,8 +1273,8 @@
       </a>
 
       <!-- Voidbreak -->
-      <a href="/games/voidbreak/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/voidbreak.svg" alt="Voidbreak"></div>
+      <a href="/games/voidbreak/" class="game-card" data-genres="action,arcade">
+        <div class="game-thumb"><img src="/images/thumbnails/voidbreak.svg" alt="Voidbreak" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Voidbreak</div>
           <div class="game-desc">Smash asteroids, upgrade your ship, go deeper. How far can you get?</div>
@@ -1047,8 +1286,8 @@
       </a>
 
       <!-- Fieldstone -->
-      <a href="/games/fieldstone/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/fieldstone.svg" alt="Fieldstone"></div>
+      <a href="/games/fieldstone/" class="game-card" data-genres="strategy,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/fieldstone.svg" alt="Fieldstone" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Fieldstone</div>
           <div class="game-desc">Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!</div>
@@ -1060,8 +1299,8 @@
       </a>
 
       <!-- Wordle -->
-      <a href="games/wordle/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/wordle.svg" alt="Wordle"></div>
+      <a href="/games/wordle/" class="game-card" data-genres="puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/wordle.svg" alt="Wordle" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Wordle</div>
           <div class="game-desc">Guess the 5-letter word in 6 tries. A new word every day!</div>
@@ -1073,8 +1312,8 @@
       </a>
 
       <!-- Snake -->
-      <a href="games/snake/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/snake.svg" alt="Snake"></div>
+      <a href="/games/snake/" class="game-card" data-genres="arcade">
+        <div class="game-thumb"><img src="/images/thumbnails/snake.svg" alt="Snake" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Snake</div>
           <div class="game-desc">Classic snake game. Eat, grow, don't hit the walls!</div>
@@ -1086,8 +1325,8 @@
       </a>
 
       <!-- 2048 -->
-      <a href="games/2048/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/2048.svg" alt="2048"></div>
+      <a href="/games/2048/" class="game-card" data-genres="puzzle,strategy">
+        <div class="game-thumb"><img src="/images/thumbnails/2048.svg" alt="2048" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">2048</div>
           <div class="game-desc">Slide tiles and merge numbers to reach 2048.</div>
@@ -1099,8 +1338,8 @@
       </a>
 
       <!-- Chaos Kitchen -->
-      <a href="games/chaos-kitchen/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/chaos-kitchen.svg" alt="Chaos Kitchen"></div>
+      <a href="/games/chaos-kitchen/" class="game-card" data-genres="action,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/chaos-kitchen.svg" alt="Chaos Kitchen" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Chaos Kitchen</div>
           <div class="game-desc">Run a chaotic kitchen! Fulfill orders and survive chaos events!</div>
@@ -1112,20 +1351,21 @@
       </a>
 
       <!-- Memory Match -->
-      <a href="/games/memory-match/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/memory-match.svg" alt="Memory Match"></div>
+      <a href="/games/memory-match/" class="game-card" data-genres="casual,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/memory-match.svg" alt="Memory Match" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Memory Match</div>
           <div class="game-desc">Flip cards and find matching pairs. Test your memory!</div>
           <div class="game-tags">
             <span class="tag">Casual</span>
+            <span class="tag">Memory</span>
           </div>
         </div>
       </a>
 
       <!-- Lumble -->
-      <a href="/games/lumble/" class="game-card">
-        <div class="game-thumb"><img src="/images/thumbnails/lumble.svg" alt="Lumble"></div>
+      <a href="/games/lumble/" class="game-card" data-genres="3d,action">
+        <div class="game-thumb"><img src="/images/thumbnails/lumble.svg" alt="Lumble" loading="lazy"></div>
         <div class="game-info">
           <div class="game-title">Lumble</div>
           <div class="game-desc">3D platformer! Latch, swing, and collect 50 Sparks!</div>
@@ -1135,6 +1375,28 @@
           </div>
         </div>
       </a>
+
+      <!-- Tiny Tycoon (also in grid) -->
+      <a href="/games/tiny-tycoon/" class="game-card" data-genres="simulation,casual">
+        <div class="game-thumb">
+          <span class="thumb-badge">NEW</span>
+          <img src="/images/thumbnails/tiny-tycoon.svg" alt="Tiny Tycoon" loading="lazy">
+        </div>
+        <div class="game-info">
+          <div class="game-title">Tiny Tycoon</div>
+          <div class="game-desc">Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!</div>
+          <div class="game-tags">
+            <span class="tag">Simulation</span>
+            <span class="tag">Idle</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- No Results Message -->
+      <div class="no-results" id="noResults">
+        <div class="no-results-icon">🔍</div>
+        <div class="no-results-text">No games match this filter</div>
+      </div>
     </div>
   </main>
 
@@ -1198,7 +1460,35 @@
   <script src="/js/sync.js"></script>
 
   <script>
-    // Register Service Worker with Update Detection
+    // ─── Genre Filter ───
+    const filterRow = document.getElementById('filterRow');
+    const gamesGrid = document.getElementById('gamesGrid');
+    const gameCount = document.getElementById('gameCount');
+    const noResults = document.getElementById('noResults');
+
+    filterRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+
+      filterRow.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      const filter = chip.dataset.filter;
+      const cards = gamesGrid.querySelectorAll('.game-card');
+      let visible = 0;
+
+      cards.forEach(card => {
+        const genres = card.dataset.genres || '';
+        const show = filter === 'all' || genres.includes(filter);
+        card.dataset.hidden = !show;
+        if (show) visible++;
+      });
+
+      gameCount.textContent = visible + (visible === 1 ? ' game' : ' games');
+      noResults.classList.toggle('show', visible === 0);
+    });
+
+    // ─── Service Worker with Update Detection ───
     let newWorker;
     const updateBanner = document.getElementById('pwaUpdateBanner');
     const updateBtn = document.getElementById('pwaUpdateBtn');
@@ -1209,25 +1499,17 @@
         navigator.serviceWorker.register('/sw.js')
           .then(reg => {
             console.log('SW registered');
-
-            // Check for updates immediately
             reg.update();
-
-            // Check for updates periodically (every 60 minutes)
             setInterval(() => reg.update(), 60 * 60 * 1000);
 
-            // Detect waiting service worker (new version available)
             if (reg.waiting) {
               newWorker = reg.waiting;
               showUpdateBanner();
             }
 
-            // Detect new service worker installing
             reg.addEventListener('updatefound', () => {
               newWorker = reg.installing;
-
               newWorker.addEventListener('statechange', () => {
-                // New service worker is installed and waiting
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   showUpdateBanner();
                 }
@@ -1236,7 +1518,6 @@
           })
           .catch(err => console.log('SW registration failed:', err));
 
-        // Reload page when new service worker takes over
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (!refreshing) {
@@ -1247,28 +1528,17 @@
       });
     }
 
-    function showUpdateBanner() {
-      updateBanner.classList.add('show');
-    }
+    function showUpdateBanner() { updateBanner.classList.add('show'); }
+    function hideUpdateBanner() { updateBanner.classList.remove('show'); }
 
-    function hideUpdateBanner() {
-      updateBanner.classList.remove('show');
-    }
-
-    // Update button click - tell service worker to skip waiting
     updateBtn.addEventListener('click', () => {
-      if (newWorker) {
-        newWorker.postMessage({ type: 'SKIP_WAITING' });
-      }
+      if (newWorker) newWorker.postMessage({ type: 'SKIP_WAITING' });
       hideUpdateBanner();
     });
 
-    // Dismiss button - hide banner (will show again on next page load if not updated)
-    updateDismiss.addEventListener('click', () => {
-      hideUpdateBanner();
-    });
+    updateDismiss.addEventListener('click', () => { hideUpdateBanner(); });
 
-    // iOS PWA Install Banner
+    // ─── iOS PWA Install Banner ───
     function isIOS() {
       return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     }
@@ -1279,11 +1549,10 @@
     }
 
     function showIOSInstallBanner() {
-      // Only show on iOS Safari, not in standalone mode, and if not dismissed
       if (isIOS() && !isInStandaloneMode() && !localStorage.getItem('ios-banner-dismissed')) {
         setTimeout(() => {
           document.getElementById('iosInstallBanner').classList.add('show');
-        }, 3000); // Show after 3 seconds
+        }, 3000);
       }
     }
 
@@ -1292,28 +1561,18 @@
       localStorage.setItem('ios-banner-dismissed', 'true');
     }
 
-    // Show iOS banner on load
     window.addEventListener('load', showIOSInstallBanner);
 
-    // Auth UI Functions
-    function showAuthModal() {
-      document.getElementById('authModal').classList.add('show');
-    }
+    // ─── Auth UI Functions ───
+    function showAuthModal() { document.getElementById('authModal').classList.add('show'); }
+    function hideAuthModal() { document.getElementById('authModal').classList.remove('show'); }
+    function toggleUserMenu() { document.getElementById('userMenu').classList.toggle('open'); }
 
-    function hideAuthModal() {
-      document.getElementById('authModal').classList.remove('show');
-    }
-
-    function toggleUserMenu() {
-      document.getElementById('userMenu').classList.toggle('open');
-    }
-
-    // Mobile menu
     function toggleMobileMenu() {
       const nav = document.getElementById('mobileNav');
       const btn = document.getElementById('mobileMenuBtn');
       nav.classList.toggle('open');
-      btn.textContent = nav.classList.contains('open') ? '✕' : '☰';
+      btn.textContent = nav.classList.contains('open') ? '\u2715' : '☰';
     }
 
     function closeMobileMenu() {
@@ -1323,19 +1582,13 @@
       btn.textContent = '☰';
     }
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
       const userMenu = document.getElementById('userMenu');
-      if (!userMenu.contains(e.target)) {
-        userMenu.classList.remove('open');
-      }
+      if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
     });
 
-    // Close modal on overlay click
     document.getElementById('authModal').addEventListener('click', (e) => {
-      if (e.target.id === 'authModal') {
-        hideAuthModal();
-      }
+      if (e.target.id === 'authModal') hideAuthModal();
     });
 
     async function signInWithGoogle() {
@@ -1358,18 +1611,15 @@
     function showProfile(e) {
       e.preventDefault();
       e.stopPropagation();
-      // TODO: Navigate to profile page
       alert('Profile page coming soon!');
     }
 
     function showLeaderboards(e) {
       e.preventDefault();
       e.stopPropagation();
-      // TODO: Navigate to leaderboards page
       alert('Leaderboards page coming soon!');
     }
 
-    // Update UI based on auth state
     function updateAuthUI(user) {
       const signInBtn = document.getElementById('signInBtn');
       const userMenu = document.getElementById('userMenu');
@@ -1387,9 +1637,7 @@
       }
     }
 
-    // Listen for auth state changes
     window.addEventListener('load', () => {
-      // Wait for authManager to initialize
       const checkAuth = setInterval(() => {
         if (window.authManager?.isInitialized) {
           clearInterval(checkAuth);
@@ -1400,4 +1648,3 @@
   </script>
 </body>
 </html>
-
