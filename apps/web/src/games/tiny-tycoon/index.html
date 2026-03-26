@@ -2643,17 +2643,26 @@
 
   function stopBgm() {
     if (!bgmNodes) return;
-    try {
-      const now = audioCtx.currentTime;
-      bgmNodes.masterGain.gain.linearRampToValueAtTime(0, now + 0.5);
-      const nodes = bgmNodes;
-      setTimeout(() => {
-        nodes.oscs.forEach(o => { try { o.stop(); } catch(e) {} });
-        try { nodes.lfo.stop(); } catch(e) {}
-      }, 600);
-    } catch(e) {}
+    const nodes = bgmNodes;
     bgmNodes = null;
     bgmPlaying = false;
+    try {
+      const now = audioCtx.currentTime;
+      nodes.masterGain.gain.linearRampToValueAtTime(0, now + 0.4);
+      setTimeout(() => {
+        try {
+          // Disconnect from destination to guarantee silence
+          nodes.masterGain.disconnect();
+          nodes.oscs.forEach(o => { try { o.stop(); } catch(e) {} });
+          try { nodes.lfo.stop(); } catch(e) {}
+        } catch(e) {}
+      }, 500);
+    } catch(e) {
+      // Fallback: force-disconnect immediately
+      try { nodes.masterGain.disconnect(); } catch(e2) {}
+      try { nodes.oscs.forEach(o => { try { o.stop(); } catch(e3) {} }); } catch(e2) {}
+      try { nodes.lfo.stop(); } catch(e2) {}
+    }
   }
 
   function updateBgmVolume() {
