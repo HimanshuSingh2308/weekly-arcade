@@ -9,8 +9,8 @@
  *     buttons: ['sound', 'leaderboard', 'auth'],
  *     onSound: () => toggleSound(),
  *     // Auth is handled automatically via gameCloud.initAuth
- *     onSignIn: (user) => { /* game-specific sign-in logic */ },
- *     onSignOut: () => { /* game-specific sign-out logic */ },
+ *     onSignIn: (user) => { ... },
+ *     onSignOut: () => { ... },
  *   });
  *
  * The header auto-injects CSS, renders HTML, and wires auth.
