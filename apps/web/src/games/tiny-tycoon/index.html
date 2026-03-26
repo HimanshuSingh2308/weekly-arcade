@@ -1931,6 +1931,73 @@
       100% { opacity: 0; }
     }
 
+    /* Prestige button */
+    .prestige-btn {
+      background: linear-gradient(135deg, var(--gold), #DAA520) !important;
+      color: var(--brown) !important;
+      font-weight: 800 !important;
+      box-shadow: 0 2px 12px rgba(255,215,0,0.4);
+      animation: prestigeGlow 2s ease-in-out infinite;
+    }
+    @keyframes prestigeGlow {
+      0%, 100% { box-shadow: 0 2px 12px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 2px 20px rgba(255,215,0,0.6), 0 0 30px rgba(255,215,0,0.2); }
+    }
+
+    /* Achievements gallery */
+    .ach-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
+    }
+    .ach-card {
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 10px;
+      padding: 0.5rem;
+      text-align: center;
+      transition: transform 0.15s;
+    }
+    .ach-card.locked {
+      opacity: 0.4;
+      filter: grayscale(0.6);
+    }
+    .ach-card.unlocked {
+      background: linear-gradient(135deg, rgba(155,125,184,0.12), rgba(245,197,66,0.08));
+      border-color: rgba(155,125,184,0.3);
+    }
+    .ach-card .ach-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.2rem;
+    }
+    .ach-card .ach-name {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--brown);
+      line-height: 1.2;
+    }
+    .ach-card .ach-desc {
+      font-size: 0.6rem;
+      color: #888;
+      margin-top: 0.15rem;
+      line-height: 1.2;
+    }
+    .ach-card .ach-xp {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--taro);
+      margin-top: 0.2rem;
+    }
+    .ach-summary {
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--brown);
+      margin-bottom: 0.5rem;
+    }
+    .ach-summary span { color: var(--taro); }
+
     .sr-only {
       position: absolute; width: 1px; height: 1px;
       padding: 0; margin: -1px; overflow: hidden;
@@ -2106,6 +2173,11 @@
     <div class="modal" id="statsModal"></div>
   </div>
 
+  <!-- Achievements Overlay -->
+  <div class="overlay" id="achievementsOverlay" role="dialog" aria-modal="true" aria-label="Achievements">
+    <div class="modal" id="achievementsModal"></div>
+  </div>
+
   <!-- Pause Overlay -->
   <div class="overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-label="Game paused">
     <div class="modal pause-content">
@@ -2168,7 +2240,8 @@
     tt_upgrade_first: { name: 'Investor',          desc: 'Purchase your first upgrade',       xp: 10 },
     tt_max_upgrade:   { name: 'Fully Loaded',      desc: 'Max out any upgrade',               xp: 75 },
     tt_day_10:        { name: 'Veteran Barista',   desc: 'Reach Day 10',                      xp: 50 },
-    tt_rush_survivor: { name: 'Rush Survivor',     desc: 'Survive Rush Hour perfectly',       xp: 100 }
+    tt_rush_survivor: { name: 'Rush Survivor',     desc: 'Survive Rush Hour perfectly',       xp: 100 },
+    tt_prestige:      { name: 'New Beginnings',   desc: 'Prestige for the first time',       xp: 150 }
   };
 
   const SPAWN_TABLE = [
@@ -2190,8 +2263,8 @@
     { minDay: 5,  patience: 8000 },
     { minDay: 7,  patience: 7000 },
     { minDay: 10, patience: 6000 },
-    { minDay: 15, patience: 5000 },
-    { minDay: 20, patience: 4000 }
+    { minDay: 15, patience: 5500 },
+    { minDay: 20, patience: 5000 }
   ];
 
   const DAY_DURATION = 60000; // 60 seconds
@@ -2218,6 +2291,13 @@
     { desc: 'Serve {n} customers', field: 'customersServed', target: 25, bonus: 75 },
     { desc: 'Earn {n} coins in one day', field: 'dayRevenue', target: 500, bonus: 100 },
     { desc: 'Reach a {n}-streak combo', field: 'peakCombo', target: 15, bonus: 100 },
+    { desc: 'Lose at most {n} customers', field: 'customersLost', target: 2, bonus: 80, compare: 'lte' },
+    { desc: 'Earn {n} coins in one day', field: 'dayRevenue', target: 150, bonus: 40 },
+    { desc: 'Serve {n} customers', field: 'customersServed', target: 30, bonus: 100 },
+    { desc: 'Reach a {n}-streak combo', field: 'peakCombo', target: 5, bonus: 35 },
+    { desc: 'Earn {n} coins in one day', field: 'dayRevenue', target: 750, bonus: 125 },
+    { desc: 'Serve {n} customers', field: 'customersServed', target: 15, bonus: 35 },
+    { desc: 'Reach a {n}-streak combo', field: 'peakCombo', target: 20, bonus: 150 },
   ];
   let dailyChallenge = null;
   let dailyChallengeComplete = false;
@@ -2226,6 +2306,7 @@
   let currentDay = 1;
   let upgradeLevels = {};
   let unlockedAchievements = new Set();
+  let prestigeLevel = 0;
   let masterVolume = 0.5;
   let isMuted = false;
 
@@ -2299,6 +2380,7 @@
     localStorage.setItem('tt_upgrades', JSON.stringify(upgradeLevels));
     localStorage.setItem('tt_achievements', JSON.stringify([...unlockedAchievements]));
     localStorage.setItem('tt_stats', JSON.stringify(cumulativeStats));
+    localStorage.setItem('tt_prestige', prestigeLevel.toString());
   }
 
   function loadGame() {
@@ -2308,12 +2390,13 @@
     try { upgradeLevels = JSON.parse(localStorage.getItem('tt_upgrades') || '{}'); } catch(e) { upgradeLevels = {}; }
     try { unlockedAchievements = new Set(JSON.parse(localStorage.getItem('tt_achievements') || '[]')); } catch(e) { unlockedAchievements = new Set(); }
     try { cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0, ...JSON.parse(localStorage.getItem('tt_stats') || '{}') }; } catch(e) {}
+    prestigeLevel = parseInt(localStorage.getItem('tt_prestige') || '0') || 0;
     masterVolume = parseFloat(localStorage.getItem('tt_volume') || '0.5') || 0.5;
     isMuted = localStorage.getItem('tt_muted') === 'true';
   }
 
   function resetGame() {
-    ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements', 'tt_stats'].forEach(k => localStorage.removeItem(k));
+    ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements', 'tt_stats', 'tt_prestige'].forEach(k => localStorage.removeItem(k));
     loadGame();
   }
 
@@ -2484,8 +2567,93 @@
           });
           break;
         }
+        case 'achievement': {
+          [659, 784, 988].forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sine'; o.frequency.value = f;
+            g.gain.setValueAtTime(vol * 0.18, now + i * 0.1);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.2);
+            o.connect(g).connect(audioCtx.destination);
+            o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.2);
+          });
+          break;
+        }
       }
     } catch(e) { /* audio error, ignore */ }
+  }
+
+  // ==========================================
+  // AMBIENT BACKGROUND MUSIC
+  // ==========================================
+  let bgmNodes = null;
+  let bgmPlaying = false;
+
+  function startBgm() {
+    if (!audioCtx || bgmPlaying || isMuted) return;
+    try {
+      // Soft pad chord: C major 7 (C4, E4, G4, B4) with detuned oscillators
+      const notes = [261.6, 329.6, 392.0, 493.9];
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.value = masterVolume * 0.04;
+      masterGain.connect(audioCtx.destination);
+
+      // Low-pass filter for warmth
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 800;
+      filter.Q.value = 0.7;
+      filter.connect(masterGain);
+
+      const oscs = [];
+      notes.forEach((freq) => {
+        // Two slightly detuned oscillators per note for chorus effect
+        for (let d = -3; d <= 3; d += 6) {
+          const osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          osc.detune.value = d;
+          const g = audioCtx.createGain();
+          g.gain.value = 0.5;
+          osc.connect(g).connect(filter);
+          osc.start();
+          oscs.push(osc);
+        }
+      });
+
+      // Slow LFO on filter cutoff for movement
+      const lfo = audioCtx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.08;
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.value = 300;
+      lfo.connect(lfoGain).connect(filter.frequency);
+      lfo.start();
+
+      bgmNodes = { oscs, lfo, masterGain, filter };
+      bgmPlaying = true;
+    } catch(e) { /* bgm init failed, non-critical */ }
+  }
+
+  function stopBgm() {
+    if (!bgmNodes) return;
+    try {
+      const now = audioCtx.currentTime;
+      bgmNodes.masterGain.gain.linearRampToValueAtTime(0, now + 0.5);
+      const nodes = bgmNodes;
+      setTimeout(() => {
+        nodes.oscs.forEach(o => { try { o.stop(); } catch(e) {} });
+        try { nodes.lfo.stop(); } catch(e) {}
+      }, 600);
+    } catch(e) {}
+    bgmNodes = null;
+    bgmPlaying = false;
+  }
+
+  function updateBgmVolume() {
+    if (bgmNodes && bgmNodes.masterGain) {
+      bgmNodes.masterGain.gain.value = isMuted ? 0 : masterVolume * 0.04;
+    }
   }
 
   // ==========================================
@@ -2965,7 +3133,8 @@
       tipBonus = 2 + tipLevel;
     }
 
-    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier) + tipBonus;
+    const prestigeMultiplier = 1 + prestigeLevel * 0.05;
+    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier) + tipBonus;
     dayRevenue += totalCoins;
     customersServed++;
 
@@ -3671,6 +3840,7 @@
     updateShopEnvironment();
 
     playSound('dayStart');
+    startBgm();
 
     // M. Start game loop
     if (!animFrameId) {
@@ -3688,6 +3858,7 @@
     gameState = 'DAY_END';
     // M. Cancel game loop
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+    stopBgm();
     playSound('dayEnd');
 
     rushBanner.classList.remove('visible');
@@ -3767,7 +3938,9 @@
         : dailyChallenge.field === 'customersServed' ? customersServed
         : dailyChallenge.field === 'customersLost' ? customersLost
         : dailyChallenge.field === 'peakCombo' ? peakCombo : 0;
-      const met = dailyChallenge.compare === 'eq' ? val === dailyChallenge.target : val >= dailyChallenge.target;
+      const met = dailyChallenge.compare === 'eq' ? val === dailyChallenge.target
+        : dailyChallenge.compare === 'lte' ? val <= dailyChallenge.target
+        : val >= dailyChallenge.target;
       if (met) {
         dailyChallengeComplete = true;
         challengeBonus = dailyChallenge.bonus;
@@ -3804,9 +3977,35 @@
       ${challengeHtml}
       ${isNewBest ? '<div class="new-best">⭐ NEW PERSONAL BEST! ⭐</div>' : ''}
       <br>
-      <button class="btn" onclick="showShop()">Continue</button>
+      <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
+        <button class="btn" onclick="showShop()">Continue</button>
+        <button class="btn btn-secondary btn-small" id="shareBtn" onclick="shareScore(${revenue}, ${currentDay - 1})">📤 Share</button>
+      </div>
     `;
     showOverlay('dayEndOverlay');
+  }
+
+  // ==========================================
+  // SCORE SHARING
+  // ==========================================
+  async function shareScore(revenue, day) {
+    const text = `I earned ${formatCoins(revenue)} coins on Day ${day} in Tiny Tycoon! Can you beat my score?`;
+    const url = 'https://weeklyarcade.games/games/tiny-tycoon/';
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Tiny Tycoon Score', text, url });
+      } catch(e) { /* user cancelled share */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        const btn = document.getElementById('shareBtn');
+        if (btn) {
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = '📤 Share'; }, 1500);
+        }
+      } catch(e) { /* clipboard failed */ }
+    }
   }
 
   // ==========================================
@@ -3841,7 +4040,7 @@
         <div class="shop-preview-counter"></div>
         <div class="shop-preview-label">Your Shop</div>
       </div>
-      <div class="shop-wallet">💰 Wallet: ${formatCoins(wallet)} coins</div>
+      <div class="shop-wallet">💰 Wallet: ${formatCoins(wallet)} coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.7rem;font-weight:700;">✨ P${prestigeLevel} (+${prestigeLevel * 5}%)</span>` : ''}</div>
     `;
 
     let firstLockedTeaser = null;
@@ -3900,9 +4099,12 @@
       `;
     }
 
+    const prestigeBtn = allUpgradesMaxed() ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()">✨ Prestige</button>` : '';
+
     html += `
       <div class="shop-actions">
         <button class="btn" onclick="startDay()">Start Day ${currentDay}</button>
+        ${prestigeBtn}
         <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
       </div>
     `;
@@ -3932,6 +4134,63 @@
     });
 
     renderShop();
+  }
+
+  // ==========================================
+  // PRESTIGE SYSTEM
+  // ==========================================
+  function allUpgradesMaxed() {
+    for (const [id, upgrade] of Object.entries(UPGRADES)) {
+      if ((upgradeLevels[id] || 0) < upgrade.maxLevel) return false;
+    }
+    return true;
+  }
+
+  function showPrestigeConfirm() {
+    const nextLevel = prestigeLevel + 1;
+    const bonusPct = nextLevel * 5;
+    const modal = document.getElementById('shopModal');
+    const html = `
+      <div style="text-align:center;padding:1rem 0;">
+        <div style="font-size:2.5rem;margin-bottom:0.5rem;">✨</div>
+        <h2 style="color:var(--gold);margin-bottom:0.5rem;">Prestige ${nextLevel}</h2>
+        <p style="font-size:0.85rem;color:var(--brown);margin-bottom:0.75rem;">
+          You've maxed every upgrade! Ready for a new challenge?
+        </p>
+        <div style="background:rgba(0,0,0,0.04);border-radius:10px;padding:0.75rem;margin-bottom:1rem;text-align:left;font-size:0.8rem;">
+          <div style="margin-bottom:0.3rem;"><strong>You keep:</strong> Achievements, stats, best score</div>
+          <div style="margin-bottom:0.3rem;"><strong>Reset:</strong> Upgrades, wallet, day counter</div>
+          <div style="color:var(--matcha);font-weight:700;">Gain: Permanent +${bonusPct}% coin bonus on all earnings</div>
+        </div>
+        ${prestigeLevel > 0 ? `<div style="font-size:0.75rem;color:var(--taro);margin-bottom:0.75rem;">Current prestige: ${prestigeLevel} (+${prestigeLevel * 5}% bonus)</div>` : ''}
+        <div style="display:flex;gap:0.5rem;justify-content:center;">
+          <button class="btn" onclick="doPrestige()" style="background:linear-gradient(135deg, var(--gold), #DAA520);">Prestige!</button>
+          <button class="btn btn-secondary btn-small" onclick="renderShop()">Not yet</button>
+        </div>
+      </div>
+    `;
+    modal.innerHTML = html;
+  }
+
+  function doPrestige() {
+    prestigeLevel++;
+    // Reset progression but keep achievements, stats, best score
+    wallet = 0;
+    currentDay = 1;
+    upgradeLevels = {};
+    // Clear VIP tutorial so it re-shows
+    localStorage.removeItem('tt_vip_tutorial_seen');
+    saveGame();
+    playSound('newBest');
+    spawnConfetti();
+    // Achievement for first prestige
+    if (prestigeLevel === 1 && !unlockedAchievements.has('tt_prestige')) {
+      unlockAchievement('tt_prestige');
+    }
+    // Show confirmation then go to shop
+    setTimeout(() => {
+      renderShop();
+    }, 1500);
   }
 
   // ==========================================
@@ -4059,11 +4318,14 @@
     const hasSave = parseInt(localStorage.getItem('tt_current_day') || '1') > 1;
 
     const statsBtn = hasSave ? `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showStats()">📊 Stats</button>` : '';
+    const achBtn = `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showAchievements()">🏆 Achievements</button>`;
     btns.innerHTML = hasSave
       ? `<button class="btn" onclick="showShop()">Continue (Day ${currentDay})</button><br>
          <button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="newGame()">New Game</button>
-         ${statsBtn}`
-      : `<button class="btn" onclick="startDay()">Start Day</button>`;
+         ${statsBtn}
+         ${achBtn}`
+      : `<button class="btn" onclick="startDay()">Start Day</button>
+         ${achBtn}`;
 
     showOverlay('titleOverlay');
     dayBadge.textContent = `Day ${currentDay}`;
@@ -4085,11 +4347,42 @@
       <div class="modal-row"><span>Best Day Revenue</span><span>⭐ ${formatCoins(bestScore)}</span></div>
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${bestMult} (${s.bestCombo} streak)</span></div>
       <div class="modal-row"><span>Achievements</span><span>🏆 ${achievCount}/${totalAch}</span></div>
+      ${prestigeLevel > 0 ? `<div class="modal-row"><span>Prestige Level</span><span>✨ ${prestigeLevel} (+${prestigeLevel * 5}% coins)</span></div>` : ''}
       <br>
       <button class="btn" onclick="hideAllOverlays(); showOverlay('titleOverlay');">Back</button>
     `;
     hideAllOverlays();
     showOverlay('statsOverlay');
+  }
+
+  function showAchievements() {
+    const total = Object.keys(ACHIEVEMENTS).length;
+    const earned = unlockedAchievements.size;
+    const totalXp = [...unlockedAchievements].reduce((sum, id) => sum + (ACHIEVEMENTS[id]?.xp || 0), 0);
+    const modal = document.getElementById('achievementsModal');
+
+    let cardsHtml = '';
+    for (const [id, ach] of Object.entries(ACHIEVEMENTS)) {
+      const unlocked = unlockedAchievements.has(id);
+      cardsHtml += `
+        <div class="ach-card ${unlocked ? 'unlocked' : 'locked'}">
+          <div class="ach-icon">${unlocked ? '🏆' : '🔒'}</div>
+          <div class="ach-name">${ach.name}</div>
+          <div class="ach-desc">${ach.desc}</div>
+          <div class="ach-xp">${unlocked ? `+${ach.xp} XP` : `${ach.xp} XP`}</div>
+        </div>
+      `;
+    }
+
+    modal.innerHTML = `
+      <h2>🏆 Achievements</h2>
+      <div class="ach-summary"><span>${earned}/${total}</span> unlocked &middot; <span>${totalXp} XP</span> earned</div>
+      <div class="ach-grid">${cardsHtml}</div>
+      <br>
+      <button class="btn" onclick="hideAllOverlays(); showOverlay('titleOverlay');">Back</button>
+    `;
+    hideAllOverlays();
+    showOverlay('achievementsOverlay');
   }
 
   function newGame() {
@@ -4102,6 +4395,7 @@
   function pauseGame() {
     if (gameState !== 'PLAYING') return;
     gameState = 'PAUSED';
+    stopBgm();
     showOverlay('pauseOverlay');
   }
 
@@ -4110,6 +4404,7 @@
     gameState = 'PLAYING';
     lastFrameTime = 0;
     hideAllOverlays();
+    startBgm();
     // M. Restart game loop
     if (!animFrameId) {
       animFrameId = requestAnimationFrame(gameLoop);
@@ -4120,6 +4415,7 @@
     gameState = 'TITLE';
     // M. Cancel game loop
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+    stopBgm();
     hideAllOverlays();
     customers.forEach(c => { if (c.el) c.el.remove(); });
     customers = [];
@@ -4140,6 +4436,11 @@
     isMuted = !isMuted;
     localStorage.setItem('tt_muted', isMuted.toString());
     updateSoundBtn();
+    if (isMuted) {
+      stopBgm();
+    } else if (gameState === 'PLAYING') {
+      startBgm();
+    }
   });
 
   // ==========================================
@@ -4232,11 +4533,13 @@
   // E. TUTORIAL ON DAY 1
   // ==========================================
   function showTutorial() {
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const overlay = document.createElement('div');
     overlay.className = 'tutorial-overlay';
     overlay.innerHTML = `
       <div class="tutorial-finger">&#128070;</div>
       <div class="tutorial-text">Tap customers at the counter to serve them!</div>
+      ${!isTouch ? '<div class="tutorial-text" style="font-size:0.75rem;margin-top:6px;opacity:0.8;">or press SPACEBAR</div>' : ''}
     `;
     document.body.appendChild(overlay);
     localStorage.setItem('tt_tutorial_seen', 'true');
@@ -4321,7 +4624,7 @@
   // All other functions are private to the IIFE scope.
   // Note: Client-side games cannot prevent console manipulation —
   // server-side score validation is the real anti-cheat layer.
-  const _api = { showShop, buyUpgrade, startDay, showTitle, newGame, showStats, hideAllOverlays, showOverlay, resumeGame, quitToMenu };
+  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu };
   Object.entries(_api).forEach(([k, v]) => { window[k] = v; });
 
   // Pause button handler
@@ -4338,6 +4641,8 @@
       const front = customers.filter(c => !c.isVip && c.state === 'queued').sort((a, b) => a.x - b.x)[0];
       if (front && !manualServing) {
         startServing(front, 'manual');
+        triggerBaristaServe();
+        playSound('tap');
       }
     }
   });

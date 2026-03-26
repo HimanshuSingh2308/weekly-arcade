@@ -1,108 +1,88 @@
 # Post-Launch Plan: Tiny Tycoon
 
 **Created**: 2026-03-26
-**Last Updated**: 2026-03-26 (All 12 patches applied)
+**Last Updated**: 2026-03-26 (Round 2: All 9 patches applied)
 **Status**: ALL_APPLIED
 
 ---
 
-## Funnel Assessment
+## Funnel Assessment (Round 2)
 
 ### BROKEN
-- `timeMs` hardcoded to ~60000 (server-side time validation bypassed)
-- Global state exposed on `window` (console exploits possible)
-- `metadata.streakBonus` unbounded (unlimited XP via client)
+- Spacebar serving (line 4340) doesn't call `triggerBaristaServe()` or `playSound('tap')` — keyboard players get no barista animation or tap sound
+- `playSound('achievement')` called on daily challenge completion (line 3775) but no `'achievement'` case in sound switch — silent failure
 
 ### CONFUSING
-- 7 upgrades hidden initially — players may not know more exist
-- VIP Lounge mechanics not explained (waiter NPCs, auto-serve interaction)
-- Rush Hour appears suddenly with no warning (30% random, no countdown)
+- No keyboard hint in tutorial — desktop players may never discover spacebar serving
+- No achievements gallery — players can't review which achievements they've unlocked
 
 ### UNFUN
-- Combo reset on ANY angry customer (harsh with 0.6x patience Influencers)
-- Day 15-20 patience drops to 4-5s (may feel impossible without upgrades)
-- No visual payoff for maxing all upgrades (end-game feels flat)
+- Day 20+ patience drops to 4000ms; Influencer (0.6x) = 2400ms effective — near-impossible to serve manually
+- Only 7 daily challenges cycling — repetitive after a week of play
 
 ### MISSING
-- Daily challenge / streak system (return reason)
-- Stats page (total served, best combo, etc.)
-- Shop visual evolution with upgrades
+- No achievements gallery/viewer (only toast notification on unlock)
+- No ambient background music loop (shop atmosphere is quiet)
+- No score sharing capability
 
 ### POLISH
-- Customer walking animation
-- Coin particle trail to wallet on earn
-- "New personal best!" celebration
+- End-game feels flat after maxing all upgrades — no prestige or milestone reward
 
 ---
 
-## Patches
+## Patches (Round 2)
 
 Ordered by improvement matrix score (highest first).
 
 ### Week 1 — Fix & Clarify
 
-- [x] **#3 Soften combo reset** (Score: 31) — Angry customer reduces combo by 50% (floor) instead of reset to 0. Combo Keeper still forgives entirely.
+- [x] **#1 Late-game patience floor** (Score: 29) — Raised Day 15 from 5000ms to 5500ms and Day 20 from 4000ms to 5000ms. Influencer effective patience now ~3000ms instead of ~2400ms
   - Category: UNFUN
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (search `combo = 0`)
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (PATIENCE_TABLE)
   - Applied: 2026-03-26
 
-- [x] **#6 "New personal best!" celebration** (Score: 29) — Show banner + confetti when beating high score on day end
-  - Category: POLISH (quick win)
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (day end handler)
-  - Applied: 2026-03-26
-
-- [x] **#1 Fix timeMs hardcoding** (Score: 28) — Already fixed: uses `Date.now() - dayStartTime` (commit e214078)
-  - Category: BROKEN
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (search `timeMs`)
-  - Applied: pre-existing (verified 2026-03-26)
-
-- [x] **#5 Add stats page** (Score: 26) — Show total served, best combo, total coins earned, days played in a stats overlay
+- [x] **#2 Achievements gallery** (Score: 28) — 2-column grid overlay showing all 12 achievements with locked/unlocked state, XP values, and summary. Accessible from title screen via new button
   - Category: MISSING
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (new state or overlay)
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (showAchievements, achievementsOverlay, ach-grid CSS)
   - Applied: 2026-03-26
 
-- [x] **#4 Rush Hour countdown** (Score: 25) — 3-second "RUSH INCOMING!" warning before Rush Hour starts
-  - Category: CONFUSING
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (search `rushHour`)
+- [x] **#3 Expand daily challenges to 14** (Score: 26) — Added 7 new challenges with varied targets + new 'lte' comparison type for "lose at most N" challenges
+  - Category: UNFUN
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (DAILY_CHALLENGES, endDay comparison logic)
   - Applied: 2026-03-26
 
-- [x] **#2 Cap streakBonus in metadata** (Score: 24) — N/A: no `streakBonus` field exists in code (stale audit finding)
+- [x] **#4 Fix spacebar missing barista + sound** (Score: 23) — Added `triggerBaristaServe()` and `playSound('tap')` to keyboard spacebar handler
   - Category: BROKEN
-  - Files: N/A
-  - Applied: N/A (verified 2026-03-26)
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (keydown handler)
+  - Applied: 2026-03-26
+
+- [x] **#5 Fix missing 'achievement' sound** (Score: 22) — Added 'achievement' case: 3-note ascending sine chime (E5, G5, B5)
+  - Category: BROKEN
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (playSound switch)
+  - Applied: 2026-03-26
 
 ### Week 2 — Polish & Feel
 
-- [x] **#9 Shop visual evolution** (Score: 24) — Day milestones (5/10/20) now contribute to shop level, so shop progresses visually even without upgrades
+- [x] **#6 Ambient background music loop** (Score: 25) — Soft C major 7 pad with detuned chorus oscillators + LFO filter sweep. Starts on day start, stops on pause/end/quit, respects mute toggle
   - Category: MISSING
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (getShopLevel)
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (startBgm, stopBgm, updateBgmVolume, lifecycle hooks)
   - Applied: 2026-03-26
 
-- [x] **#7 Coin particle trail** (Score: 23) — Coin flies from customer to HUD wallet with scale-down animation, wallet pulses on arrival
-  - Category: POLISH
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (spawnCoinTrailToWallet)
-  - Applied: 2026-03-26
-
-- [x] **#10 Daily challenge system** (Score: 23) — 7 rotating challenges (deterministic by day), bonus coins on completion, shown in day-end modal
+- [x] **#7 Score sharing button** (Score: 23) — Share button on day-end modal using Web Share API with clipboard fallback. Shows "Copied!" confirmation
   - Category: MISSING
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (DAILY_CHALLENGES, startDay, endDay, showDayEnd)
-  - Applied: 2026-03-26
-
-- [x] **#8 VIP tutorial tooltip** (Score: 22) — Tutorial overlay on first VIP customer explaining lounge + waiter + 2x coins, auto-dismisses in 4s
-  - Category: CONFUSING
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (createCustomer, showVipTutorial)
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (shareScore, showDayEnd)
   - Applied: 2026-03-26
 
 ### Week 3+ — Depth & Content
 
-- [x] **Global state cleanup** — Already in IIFE; consolidated window exports into single block with comment explaining client-side limitation
-  - Category: BROKEN (security)
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (window exports)
+- [x] **#8 End-game prestige system** (Score: 24) — Glowing "Prestige" button in shop when all upgrades maxed. Resets upgrades/wallet/day, keeps achievements/stats/best score. +5% permanent coin bonus per level. New "New Beginnings" achievement (150 XP). Prestige badge in shop wallet + stats page
+  - Category: POLISH
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (prestige state, save/load, allUpgradesMaxed, showPrestigeConfirm, doPrestige, completeServe multiplier, shop UI, stats, CSS)
   - Applied: 2026-03-26
 
-- [x] **Customer walking animation** — Fade-in entrance animation, gentler walk sway (reduced bob, added subtle rotation), angry leave animation
-  - Category: POLISH
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (CSS keyframes, createCustomerElement)
+- [x] **#9 Keyboard hint in tutorial** (Score: 18) — Shows "or press SPACEBAR" below tap instruction on non-touch devices (detected via ontouchstart/maxTouchPoints)
+  - Category: CONFUSING
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (showTutorial)
   - Applied: 2026-03-26
 
 ---
@@ -123,9 +103,10 @@ Ordered by improvement matrix score (highest first).
 
 | Element | Verdict | Notes |
 |---------|---------|-------|
-| Influencer type (0.6x patience) | Keep but monitor | Re-evaluate after combo softening |
+| Influencer type (0.6x patience) | Keep but cap via patience floor | Re-evaluate if Day 20+ still feels impossible after #1 |
 | 7 hidden upgrades at start | Keep | Discovery is part of the fun |
 | Auto-Serve #3 (4000 coins) | Keep | Aspirational end-game target |
+| VIP tutorial auto-dismiss | Monitor | 4s may be too short for some players |
 
 ---
 
@@ -134,7 +115,7 @@ Ordered by improvement matrix score (highest first).
 | Date | Signal | Action Taken |
 |------|--------|-------------|
 | 2026-03-26 | Initial analysis | Plan created, 12 patches identified |
-| 2026-03-26 | Patch #3 applied | Combo reset softened: halve instead of zero. Combo lost flash only shows when combo fully depleted. |
-| 2026-03-26 | Patch #6 applied | Full-screen "NEW PERSONAL BEST!" banner with scale animation + score display, auto-dismisses after 2.5s |
-| 2026-03-26 | Patch #1 verified | timeMs already fixed in prior commit (e214078), marked as pre-existing |
-| 2026-03-26 | Patch #5 applied | Stats page: cumulative tracking (served, lost, coins, combo, days) + stats overlay + title screen button |
+| 2026-03-26 | All Round 1 patches applied | 12/12 complete: combo softening, new best banner, stats page, rush countdown, coin trail, daily challenges, VIP tutorial, shop evolution, customer animations, global state cleanup |
+| 2026-03-26 | Round 2 fresh analysis | 9 new patches identified: patience floor, achievements gallery, expanded challenges, bug fixes, ambient music, sharing, prestige, keyboard hint |
+| 2026-03-26 | Round 2 patches #1-#7 applied | Patience floor raised, achievements gallery added, 14 daily challenges, spacebar bug fixed, achievement sound added, ambient BGM, share button |
+| 2026-03-26 | Round 2 patches #8-#9 applied | End-game prestige system with achievement + keyboard hint in tutorial. All 9 Round 2 patches complete |
