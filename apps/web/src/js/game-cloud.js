@@ -32,6 +32,16 @@
 
   function initAuth(opts = {}) {
     authCallbacks = opts;
+
+    // Instant render from cached user (before Firebase loads)
+    const cached = window.authManager?.user;
+    if (cached) {
+      currentUser = cached;
+      _updateAuthBtn(opts);
+      // Don't call onSignIn yet — wait for Firebase to confirm
+    }
+
+    // Poll for Firebase to finish initializing
     const poll = setInterval(() => {
       if (window.authManager?.isInitialized) {
         clearInterval(poll);
@@ -39,7 +49,6 @@
           currentUser = user;
           _updateAuthBtn(opts);
           if (user) {
-            // Initialize push notifications for signed-in users
             _initNotifications();
             if (opts.onSignIn) opts.onSignIn(user);
           }

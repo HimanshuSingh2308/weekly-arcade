@@ -91,6 +91,7 @@ class AuthManager {
       // Listen for auth state changes
       this.auth.onAuthStateChanged(async (user) => {
         this.user = user;
+        this._cacheUser(user);
 
         if (user) {
           // Get ID token and set it on the API client
@@ -212,6 +213,7 @@ class AuthManager {
     }
 
     try {
+      this._cacheUser(null);
       await this.auth.signOut();
     } catch (error) {
       console.error('Sign-out failed:', error);
