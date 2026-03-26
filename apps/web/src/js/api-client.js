@@ -164,6 +164,12 @@ class ApiClient {
       console.error('[ApiClient] submitScore: scoreData must be an object with a score property');
       throw new Error('Invalid scoreData format');
     }
+
+    // Nudge guest players to sign in when they try to submit a score
+    if (!this.token && window.authNudge) {
+      window.authNudge.show();
+    }
+
     console.log(`[ApiClient] Submitting score for ${gameId}:`, { score: scoreData.score, hasToken: !!this.token });
     const result = await this.request(`/leaderboard/${gameId}/submit`, {
       method: 'POST',

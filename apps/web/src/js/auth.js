@@ -249,8 +249,101 @@ class AuthManager {
   }
 }
 
+// ─── Auth Nudge ───
+// Prompts guest players to sign in after a game round.
+// Triggered automatically when apiClient.submitScore() is called without auth.
+// Self-injects HTML/CSS on first show — no per-game markup needed.
+const AuthNudge = (() => {
+  const DISMISS_KEY = 'auth-nudge-dismissed';
+  const DISMISS_HOURS = 24;
+  const MAX_PER_SESSION = 2;
+  let shown = 0;
+  let injected = false;
+
+  function shouldShow() {
+    if (window.authManager?.currentUser) return false;
+    if (shown >= MAX_PER_SESSION) return false;
+    const dismissed = localStorage.getItem(DISMISS_KEY);
+    if (dismissed && Date.now() - parseInt(dismissed, 10) < DISMISS_HOURS * 3600000) return false;
+    return true;
+  }
+
+  function inject() {
+    if (injected) return;
+    injected = true;
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .auth-nudge-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+      .auth-nudge-overlay.visible{opacity:1;visibility:visible}
+      .auth-nudge{background:#16213e;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:2rem 1.75rem;max-width:360px;width:90%;text-align:center;transform:translateY(20px) scale(.95);transition:transform .3s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f0f0f5}
+      .auth-nudge-overlay.visible .auth-nudge{transform:translateY(0) scale(1)}
+      .auth-nudge-icon{font-size:2.5rem;margin-bottom:.75rem}
+      .auth-nudge h3{font-size:1.25rem;font-weight:700;margin-bottom:.4rem}
+      .auth-nudge p{color:#8888a8;font-size:.9rem;margin-bottom:1.25rem;line-height:1.5}
+      .auth-nudge-benefits{display:flex;gap:1rem;justify-content:center;margin-bottom:1.25rem;flex-wrap:wrap}
+      .auth-nudge-benefit{font-size:.78rem;color:#8888a8;display:flex;align-items:center;gap:.3rem}
+      .auth-nudge-benefit span{font-size:1rem}
+      .auth-nudge-google{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;padding:.8rem 1rem;background:#fff;color:#333;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;transition:transform .2s,background .2s}
+      .auth-nudge-google:hover{background:#f5f5f5;transform:scale(1.02)}
+      .auth-nudge-google img{width:18px;height:18px}
+      .auth-nudge-skip{margin-top:.75rem;background:none;border:none;color:#8888a8;font-size:.82rem;cursor:pointer;padding:.5rem;transition:color .2s}
+      .auth-nudge-skip:hover{color:#f0f0f5}
+    `;
+    document.head.appendChild(style);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'auth-nudge-overlay';
+    overlay.id = 'authNudgeOverlay';
+    overlay.innerHTML = `
+      <div class="auth-nudge">
+        <div class="auth-nudge-icon">🏆</div>
+        <h3>Nice game!</h3>
+        <p>Sign in to save your score to the leaderboard and track your progress.</p>
+        <div class="auth-nudge-benefits">
+          <div class="auth-nudge-benefit"><span>📊</span> Leaderboards</div>
+          <div class="auth-nudge-benefit"><span>💾</span> Cloud saves</div>
+          <div class="auth-nudge-benefit"><span>🏅</span> Achievements</div>
+        </div>
+        <button class="auth-nudge-google" id="authNudgeSignIn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+          Continue with Google
+        </button>
+        <button class="auth-nudge-skip" id="authNudgeSkip">Maybe later</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+    document.getElementById('authNudgeSignIn').addEventListener('click', async () => {
+      try { await window.authManager.signInWithGoogle(); hide(); } catch (e) { console.error('Nudge sign-in failed:', e); }
+    });
+    document.getElementById('authNudgeSkip').addEventListener('click', dismiss);
+  }
+
+  function show() {
+    if (!shouldShow()) return;
+    inject();
+    shown++;
+    setTimeout(() => { document.getElementById('authNudgeOverlay').classList.add('visible'); }, 1200);
+  }
+
+  function hide() {
+    const el = document.getElementById('authNudgeOverlay');
+    if (el) el.classList.remove('visible');
+  }
+
+  function dismiss() {
+    hide();
+    localStorage.setItem(DISMISS_KEY, Date.now().toString());
+  }
+
+  return { show, hide, dismiss };
+})();
+
 // Export singleton instance
 window.authManager = new AuthManager();
+window.authNudge = AuthNudge;
 
 // Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
