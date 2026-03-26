@@ -122,8 +122,6 @@
       border-bottom: 1px solid var(--border);
       padding: 0.75rem 1rem;
       padding-top: max(0.75rem, env(safe-area-inset-top));
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -132,50 +130,63 @@
     .back-btn {
       color: var(--text-secondary);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 1.4rem;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
     }
+    .back-btn:hover { color: var(--accent); }
 
-    .back-btn:hover { color: var(--text-primary); }
-
-    .title-container { text-align: center; }
-
-    .title {
-      font-size: 1.5rem;
+    .game-title {
+      font-size: 1.2rem;
       font-weight: 700;
-      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
 
     .header-right {
       display: flex;
-      gap: 0.5rem;
       align-items: center;
-    }
-
-    .auth-btn {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      padding: 0.4rem 1rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
+      gap: 0.5rem;
     }
 
     .icon-btn {
       background: none;
-      border: 2px solid var(--border);
+      border: 1px solid var(--border);
       color: var(--text-secondary);
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0.4rem;
+      font-size: 1rem;
+      padding: 0.3rem 0.5rem;
       border-radius: 8px;
+      cursor: pointer;
       min-width: 44px;
       min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: border-color 0.2s, color 0.2s;
     }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .auth-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.4rem 0.9rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      transition: opacity 0.2s;
+    }
+    .auth-btn:hover { opacity: 0.9; }
 
     .icon-btn:hover {
       color: var(--text-primary);
@@ -500,15 +511,12 @@
 </head>
 <body>
   <header class="header">
-    <a href="/" class="back-btn">← Back</a>
-    <div class="title-container">
-      <h1 class="title">Snake</h1>
-    </div>
+    <a href="/" class="back-btn">←</a>
+    <h1 class="game-title"><span>🐍</span><span>Snake</span></h1>
     <div class="header-right">
-      <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
+      <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle Sound">🔊</button>
       <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=snake'" title="Leaderboard">🏆</button>
-      <button class="icon-btn" onclick="toggleSound()" id="soundBtn">🔊</button>
-      <button class="icon-btn" onclick="togglePause()">⏸️</button>
+      <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
     </div>
   </header>
 
@@ -575,7 +583,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
-  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){if(u&&o.onSignIn)o.onSignIn(u);if(!u&&o.onSignOut)o.onSignOut();})}},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
+  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){b.textContent=u.displayName?u.displayName.split(' ')[0]:'Player';b.onclick=function(){window.location.href='/profile/'}}if(o.onSignIn)o.onSignIn(u)}else{if(b){b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
 
   <script>
   (function() {

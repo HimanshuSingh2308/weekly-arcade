@@ -139,13 +139,22 @@
 
     .back-btn:hover { color: var(--accent); }
 
-    .title {
+    .game-title {
       font-size: 1.3rem;
       font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       background: linear-gradient(135deg, var(--accent), var(--accent-light));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+    }
+
+    .game-title span:first-child {
+      -webkit-text-fill-color: initial;
+      background: none;
     }
 
     .header-right {
@@ -1642,12 +1651,11 @@
 <body>
   <!-- Header -->
   <header class="header">
-    <a href="/" class="back-btn">&larr; Back</a>
-    <h1 class="title">Voidbreak</h1>
+    <a href="/" class="back-btn">←</a>
+    <h1 class="game-title"><span>☄️</span><span>Voidbreak</span></h1>
     <div class="header-right">
-      <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
       <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=voidbreak'" title="Leaderboard">🏆</button>
-      <button class="icon-btn" id="soundBtn" title="Toggle Sound">🔊</button>
       <button class="auth-btn" id="authBtn">Sign In</button>
     </div>
   </header>
@@ -1934,7 +1942,7 @@
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/game-cloud.js"></script>
-  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){if(u&&o.onSignIn)o.onSignIn(u);if(!u&&o.onSignOut)o.onSignOut();})}},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
+  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){b.textContent=u.displayName?u.displayName.split(' ')[0]:'Player';b.onclick=function(){window.location.href='/profile/'}}if(o.onSignIn)o.onSignIn(u)}else{if(b){b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
 
   <script>
   (function() {
@@ -5597,7 +5605,7 @@
       });
 
       // Settings
-      document.getElementById('settingsBtn').addEventListener('click', showSettings);
+      if (document.getElementById('settingsBtn')) document.getElementById('settingsBtn').addEventListener('click', showSettings);
       document.getElementById('settingsClose').addEventListener('click', hideSettings);
       document.getElementById('settingsOverlay').addEventListener('click', hideSettings);
 

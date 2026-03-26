@@ -87,7 +87,7 @@
       border-color: var(--accent);
     }
 
-    .title {
+    .game-title {
       font-size: 1.2rem;
       font-weight: 700;
       display: flex;
@@ -95,9 +95,13 @@
       gap: 0.5rem;
     }
 
-    .title-icon { font-size: 1.4rem; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
 
-    .sound-btn {
+    .icon-btn {
       background: none;
       border: 2px solid var(--border);
       color: var(--text-primary);
@@ -108,11 +112,11 @@
       transition: all 0.2s;
     }
 
-    .sound-btn:hover {
+    .icon-btn:hover {
       border-color: var(--accent);
     }
 
-    .sound-btn.muted {
+    .icon-btn.muted {
       opacity: 0.5;
     }
 
@@ -1104,7 +1108,7 @@
         padding: 8px 12px;
       }
 
-      .title {
+      .game-title {
         font-size: 1rem;
       }
 
@@ -1330,12 +1334,11 @@
   <!-- Header -->
   <header class="header">
     <a href="/" class="back-btn">←</a>
-    <h1 class="title">
-      <span class="title-icon">🏰</span>
-      <span>Fieldstone</span>
-    </h1>
-    <button class="sound-btn" onclick="window.location.href='/leaderboard/?game=fieldstone'" title="Leaderboard" style="margin-right:0.3rem;">🏆</button>
-    <button class="sound-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+    <h1 class="game-title"><span>🏰</span><span>Fieldstone</span></h1>
+    <div class="header-right">
+      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=fieldstone'" title="Leaderboard">🏆</button>
+    </div>
   </header>
 
   <!-- Game Container -->
@@ -1561,7 +1564,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
-  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){if(u&&o.onSignIn)o.onSignIn(u);if(!u&&o.onSignOut)o.onSignOut();})}},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
+  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){b.textContent=u.displayName?u.displayName.split(' ')[0]:'Player';b.onclick=function(){window.location.href='/profile/'}}if(o.onSignIn)o.onSignIn(u)}else{if(b){b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
 
   <script>
   (function() {

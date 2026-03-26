@@ -134,13 +134,18 @@
     .back-btn {
       color: var(--text-secondary);
       text-decoration: none;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: color 0.2s;
     }
 
     .back-btn:hover { color: var(--accent); }
 
-    .title {
+    .game-title {
       font-size: 1.3rem;
       font-weight: 800;
       background: linear-gradient(135deg, var(--accent), var(--warning));
@@ -152,9 +157,33 @@
       gap: 0.5rem;
     }
 
-    .title-icon {
+    .game-title span:first-child {
       -webkit-text-fill-color: initial;
       font-size: 1.4rem;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .auth-btn {
@@ -166,6 +195,9 @@
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
+      height: 44px;
+      display: flex;
+      align-items: center;
       transition: all 0.2s;
     }
 
@@ -1094,14 +1126,11 @@
 </head>
 <body>
   <header class="header">
-    <a href="/" class="back-btn">&#8592;</a>
-    <h1 class="title">
-      <span class="title-icon">&#x1F468;&#x200D;&#x1F373;</span>
-      <span>Chaos Kitchen</span>
-    </h1>
-    <div style="display:flex;gap:0.4rem;align-items:center;">
+    <a href="/" class="back-btn">←</a>
+    <h1 class="game-title"><span>👨‍🍳</span><span>Chaos Kitchen</span></h1>
+    <div class="header-right">
+      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=chaos-kitchen'" title="Leaderboard">🏆</button>
       <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
-      <button class="auth-btn" onclick="window.location.href='/leaderboard/?game=chaos-kitchen'" title="Leaderboard" style="padding:0.3rem 0.5rem;min-width:auto;">🏆</button>
     </div>
   </header>
 
@@ -1276,7 +1305,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
-  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){if(u&&o.onSignIn)o.onSignIn(u);if(!u&&o.onSignOut)o.onSignOut();})}},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
+  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){b.textContent=u.displayName?u.displayName.split(' ')[0]:'Player';b.onclick=function(){window.location.href='/profile/'}}if(o.onSignIn)o.onSignIn(u)}else{if(b){b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
 
   <script>
   (function() {

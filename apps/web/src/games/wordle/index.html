@@ -135,15 +135,21 @@
       color: #fff;
     }
 
-    .title-container {
+    .title-section {
       text-align: center;
+      flex: 1;
     }
 
-    .title {
+    .game-title {
       font-size: 1.8rem;
       font-weight: 700;
       letter-spacing: 0.1rem;
       text-transform: uppercase;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
     }
 
     .badges-row {
@@ -188,77 +194,46 @@
       box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     }
 
-    .header-right {
-      width: 60px;
-      text-align: right;
-    }
-
-    .help-btn {
-      background: none;
-      border: 2px solid #565758;
-      color: #fff;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .sound-btn {
-      background: none;
-      border: 2px solid #565758;
-      color: #fff;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-
-    .sound-btn.muted {
+    .icon-btn.muted {
       opacity: 0.5;
     }
 
-    .help-btn:hover {
-      border-color: #fff;
-    }
-
-    .header-buttons {
+    .header-right {
       display: flex;
       gap: 0.5rem;
       align-items: center;
     }
 
-    .hint-btn {
-      background: linear-gradient(135deg, #b59f3b, #8b7a2e);
-      border: none;
+    .icon-btn {
+      background: none;
+      border: 2px solid #565758;
       color: #fff;
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 700;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      justify-content: center;
+      gap: 0.2rem;
+      transition: border-color 0.2s;
     }
 
-    .hint-btn:hover {
-      background: linear-gradient(135deg, #c9b043, #a08c35);
+    .icon-btn:hover {
+      border-color: #fff;
     }
 
-    .hint-btn:disabled {
+    .icon-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    .hint-btn .hint-count {
+    .icon-btn .hint-count {
       background: rgba(0,0,0,0.3);
       padding: 0.1rem 0.4rem;
       border-radius: 4px;
-      font-size: 0.7rem;
+      font-size: 0.6rem;
     }
 
     /* Hint Display Container */
@@ -920,20 +895,16 @@
         font-size: 0.65rem;
       }
 
-      .header-buttons {
+      .header-right {
         gap: 0.3rem;
       }
 
-      .hint-btn {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.75rem;
-      }
-
-      .sound-btn, .help-btn {
-        width: 28px;
-        height: 28px;
+      .icon-btn {
+        width: 32px;
+        height: 32px;
         font-size: 0.9rem;
       }
+
     }
 
     /* Responsive - Small screens */
@@ -975,13 +946,14 @@
         padding: 0.5rem;
       }
 
-      .title {
+      .game-title {
         font-size: 1.2rem;
       }
 
-      .hint-btn {
-        padding: 0.3rem 0.5rem;
-        font-size: 0.7rem;
+      .icon-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.85rem;
       }
 
       .game-container {
@@ -1024,17 +996,12 @@
         min-width: auto;
       }
 
-      /* Hide "Back" text on mobile */
-      .back-btn::after {
-        content: none;
-      }
-
-      .title-container {
+      .title-section {
         flex: 1;
         min-width: 0;
       }
 
-      .title {
+      .game-title {
         font-size: 1.1rem;
       }
 
@@ -1052,7 +1019,7 @@
         padding: 0.15rem 0.3rem;
       }
 
-      .header-buttons {
+      .header-right {
         gap: 0.15rem;
         flex-shrink: 0;
       }
@@ -1072,29 +1039,15 @@
         font-size: 1.1rem;
       }
 
-      /* Hide hint text on mobile - maintain 44px touch target */
-      .hint-btn {
-        padding: 0.5rem;
-        font-size: 0;
-        min-width: 44px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .hint-btn::before {
-        content: '💡';
-        font-size: 1.1rem;
-      }
-      .hint-count {
-        font-size: 0.75rem;
-        margin-left: 2px;
-      }
-
-      .sound-btn, .help-btn {
+      .icon-btn {
         width: 44px;
         height: 44px;
         font-size: 1.1rem;
+      }
+
+      .hint-count {
+        font-size: 0.75rem;
+        margin-left: 2px;
       }
 
       /* Ensure keyboard fits */
@@ -1307,29 +1260,24 @@
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
   <script src="../../js/game-cloud.js"></script>
-  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){if(u&&o.onSignIn)o.onSignIn(u);if(!u&&o.onSignOut)o.onSignOut();})}},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
+  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){b.textContent=u.displayName?u.displayName.split(' ')[0]:'Player';b.onclick=function(){window.location.href='/profile/'}}if(o.onSignIn)o.onSignIn(u)}else{if(b){b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
   <script src="../../js/sync.js"></script>
 </head>
 <body>
   <header class="header">
-    <a href="/" class="back-btn">← Back</a>
-    <div class="title-container">
-      <h1 class="title">Wordle</h1>
+    <a href="/" class="back-btn">←</a>
+    <div class="title-section">
+      <h1 class="game-title"><span>🔤</span><span>Wordle</span></h1>
       <div class="badges-row">
         <div class="level-badge" id="levelBadge">Level 1 • 3 Letters</div>
         <div class="streak-badge" id="streakBadge">🔥 0</div>
       </div>
     </div>
-    <div class="header-buttons">
-      <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">
-        Sign In
-      </button>
-      <button class="hint-btn" id="hintBtn" onclick="useHint()">
-        💡 Hint <span class="hint-count" id="hintCount">3</span>
-      </button>
-      <button class="sound-btn" onclick="window.location.href='/leaderboard/?game=wordle'" title="Leaderboard">🏆</button>
-      <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
-      <button class="help-btn" onclick="showHelp()">?</button>
+    <div class="header-right">
+      <button class="icon-btn" id="hintBtn" onclick="useHint()" title="Hint">💡 <span class="hint-count" id="hintCount">3</span></button>
+      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=wordle'" title="Leaderboard">🏆</button>
+      <button class="auth-btn" id="authBtn" onclick="handleAuthClick()">Sign In</button>
     </div>
   </header>
 

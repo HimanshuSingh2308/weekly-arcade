@@ -129,15 +129,21 @@
     .back-btn {
       color: var(--text-secondary);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 1.2rem;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .back-btn:hover { color: var(--text-primary); }
 
-    .title-container { text-align: center; }
-
-    .title {
-      font-size: 1.5rem;
+    .game-title {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--accent);
     }
@@ -515,14 +521,12 @@
 </head>
 <body>
   <header class="header">
-    <a href="/" class="back-btn">← Back</a>
-    <div class="title-container">
-      <h1 class="title">Stack Tower</h1>
-    </div>
+    <a href="/" class="back-btn">←</a>
+    <h1 class="game-title"><span>🏗️</span><span>Stack Tower</span></h1>
     <div class="header-right">
-      <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
+      <button class="icon-btn" onclick="toggleSound()" id="soundBtn" title="Toggle Sound">🔊</button>
       <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=stack-tower'" title="Leaderboard">🏆</button>
-      <button class="icon-btn" onclick="toggleSound()" id="soundBtn">🔊</button>
+      <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
     </div>
   </header>
 
@@ -606,7 +610,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
-  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){if(u&&o.onSignIn)o.onSignIn(u);if(!u&&o.onSignOut)o.onSignOut();})}},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
+  <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){b.textContent=u.displayName?u.displayName.split(' ')[0]:'Player';b.onclick=function(){window.location.href='/profile/'}}if(o.onSignIn)o.onSignIn(u)}else{if(b){b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}</script>
 
   <script>
   (function() {
