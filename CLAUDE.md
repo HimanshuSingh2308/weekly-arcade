@@ -133,6 +133,21 @@ await window.apiClient.unlockAchievement('achievement-id', 'game-id', { metadata
 5. Include auth integration (see above)
 6. Create SVG thumbnail in `apps/web/src/images/thumbnails/{game-name}.svg`
 
+## Service Worker / PWA Cache
+
+**IMPORTANT:** Whenever you modify ANY file under `apps/web/src/` (games, JS, HTML, CSS), you MUST increment `CACHE_VERSION` in `apps/web/src/sw.js`. This is required for PWA users to receive updates — without it, they will be served stale cached files indefinitely.
+
+```javascript
+// In apps/web/src/sw.js — increment this number
+const CACHE_VERSION = 21; // ← bump this on every change
+```
+
+If adding a new game, also add its paths to the `ASSETS` array in `sw.js`:
+```javascript
+'/games/{game-name}/',
+'/games/{game-name}/index.html',
+```
+
 ## Deployment
 
 - Frontend: Auto-deploys to Firebase Hosting on push to main
