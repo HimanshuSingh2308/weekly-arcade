@@ -2,19 +2,20 @@
  * Game Header — shared, scalable header component for all games.
  *
  * Usage:
- *   window.gameHeader.init({
+ *   const header = window.gameHeader.init({
  *     title: 'Snake',
  *     icon: '🐍',              // optional emoji icon before title
- *     gameId: 'snake',          // for leaderboard deep link
- *     buttons: ['sound', 'leaderboard', 'auth'],  // which buttons to show
- *     onSound: () => toggleSound(),                // sound toggle callback
- *     soundBtnId: 'soundBtn',                      // optional custom ID
+ *     gameId: 'snake',          // for leaderboard deep link + auth
+ *     buttons: ['sound', 'leaderboard', 'auth'],
+ *     onSound: () => toggleSound(),
+ *     // Auth is handled automatically via gameCloud.initAuth
+ *     onSignIn: (user) => { /* game-specific sign-in logic */ },
+ *     onSignOut: () => { /* game-specific sign-out logic */ },
  *   });
  *
- * The header auto-injects CSS on first call. Games don't need any header HTML or CSS.
- * Just add an empty <header id="gameHeader"></header> in the body.
- *
- * Available buttons: 'sound', 'leaderboard', 'auth', 'hint', 'help', 'menu', 'undo'
+ * The header auto-injects CSS, renders HTML, and wires auth.
+ * Games just need: <header id="gameHeader"></header>
+ * No per-game header CSS or auth polling needed.
  */
 
 (function () {
@@ -49,9 +50,6 @@
     .gh-back:hover { color: var(--accent, #e94560); }
 
     .gh-title {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
       font-size: 1.05rem;
       font-weight: 700;
       margin: 0;
@@ -59,7 +57,19 @@
       display: flex;
       align-items: center;
       gap: 0.35rem;
-      pointer-events: none;
+      flex: 1;
+      margin-left: 0.25rem;
+    }
+
+    @media (min-width: 600px) {
+      .gh-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        flex: none;
+        margin-left: 0;
+        pointer-events: none;
+      }
     }
 
     .gh-right {
@@ -241,6 +251,17 @@
     if (opts.onUndo) {
       const undoEl = document.getElementById(undoBtnId);
       if (undoEl) undoEl.addEventListener('click', opts.onUndo);
+    }
+
+    // ── Auto-wire auth via gameCloud ──
+    // If auth button is present and gameCloud exists, automatically init auth.
+    // Games can still pass onSignIn/onSignOut for game-specific logic.
+    if (buttons.includes('auth') && window.gameCloud) {
+      window.gameCloud.initAuth({
+        authBtnId: authBtnId,
+        onSignIn: (user) => { if (opts.onSignIn) opts.onSignIn(user); },
+        onSignOut: () => { if (opts.onSignOut) opts.onSignOut(); },
+      });
     }
 
     return {
