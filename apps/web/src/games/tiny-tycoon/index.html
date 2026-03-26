@@ -2675,6 +2675,7 @@
   // AUTH (delegated to game-cloud.js)
   // ==========================================
   function setupAuth() {
+    if (!window.gameCloud) return;
     window.gameCloud.initAuth({
       authBtnId: 'authBtn',
       signInStyle: 'name',

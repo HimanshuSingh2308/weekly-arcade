@@ -1351,6 +1351,7 @@
 
     // Auth & API
     function updateAuthUI() {
+      if (!window.gameCloud) return;
       window.gameCloud.initAuth({
         authBtnId: null, // 2048 manages its own user section
         onSignIn: async (user) => {

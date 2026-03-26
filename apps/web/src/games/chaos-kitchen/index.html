@@ -1897,6 +1897,7 @@
     let cloudStateKitchen = null;
 
     function initAuth() {
+      if (!window.gameCloud) return;
       window.gameCloud.initAuth({
         authBtnId: 'authBtn',
         signInStyle: 'name',

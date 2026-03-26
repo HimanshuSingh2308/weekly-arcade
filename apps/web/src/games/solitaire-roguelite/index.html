@@ -848,7 +848,7 @@
   let movesSinceLastDraw = 0; // for S10 Streak Master
   let stockCycleCount = 0; // track infinite stock cycling
 
-  window.gameCloud.initAuth(user => {
+  if (window.gameCloud) window.gameCloud.initAuth(user => {
     currentUser = user;
     const authBtn = document.getElementById('authBtn');
     if (user) {

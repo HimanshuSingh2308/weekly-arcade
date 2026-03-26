@@ -823,7 +823,7 @@
     ctx = canvas.getContext('2d');
     try { bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0'); } catch(e) { bestScore = 0; }
     document.getElementById('hudBest').textContent = bestScore.toLocaleString();
-    window.gameCloud.initAuth({
+    if (window.gameCloud) window.gameCloud.initAuth({
       authBtnId: 'authBtn',
       onSignIn: u => { currentUser = u; },
       onSignOut: () => { currentUser = null; },

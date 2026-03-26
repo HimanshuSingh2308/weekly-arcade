@@ -3827,7 +3827,7 @@
     }
 
     // Initialize cloud sync via game-cloud.js
-    window.gameCloud.initAuth({
+    if (window.gameCloud) window.gameCloud.initAuth({
       authBtnId: 'authBtn',
       signInStyle: 'name',
       onSignIn: (user) => {

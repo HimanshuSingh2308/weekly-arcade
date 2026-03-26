@@ -3044,6 +3044,7 @@
     // ============================================
 
     function initAuth() {
+      if (!window.gameCloud) return;
       window.gameCloud.initAuth({
         onSignIn: async (user) => {
           currentUser = user;

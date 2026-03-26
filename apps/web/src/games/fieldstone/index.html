@@ -3174,7 +3174,7 @@
     }
 
     // Auth integration via gameCloud
-    window.gameCloud.initAuth({
+    if (window.gameCloud) window.gameCloud.initAuth({
       signInStyle: 'name',
       onSignIn: (user) => {
         currentUser = user;
