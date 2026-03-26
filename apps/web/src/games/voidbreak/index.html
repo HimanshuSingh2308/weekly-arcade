@@ -787,6 +787,14 @@
       cursor: pointer;
       z-index: 100;
     }
+    .nuke-btn.hidden { display: none !important; }
+    .nuke-btn.used {
+      opacity: 0.3;
+      border-color: rgba(150, 150, 150, 0.3);
+      color: rgba(150, 150, 150, 0.5);
+      pointer-events: none;
+      animation: none;
+    }
     .nuke-btn.available {
       background: rgba(233, 69, 96, 0.5);
       border-color: var(--accent);
@@ -795,6 +803,54 @@
     @keyframes nuke-pulse {
       0%, 100% { box-shadow: 0 0 5px rgba(233, 69, 96, 0.3); }
       50% { box-shadow: 0 0 20px rgba(233, 69, 96, 0.6); }
+    }
+
+    /* Nuke dramatic effects */
+    .nuke-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.9) 0%, rgba(233,69,96,0.6) 40%, transparent 70%);
+      animation: nukeFlash 0.8s ease-out forwards;
+    }
+    @keyframes nukeFlash {
+      0% { opacity: 1; transform: scale(0.5); }
+      30% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0; transform: scale(2); }
+    }
+    .nuke-shockwave {
+      position: fixed;
+      top: 50%; left: 50%;
+      width: 10px; height: 10px;
+      border: 3px solid rgba(233, 69, 96, 0.8);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      animation: nukeShockwave 0.6s ease-out forwards;
+    }
+    @keyframes nukeShockwave {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 1; border-width: 4px; }
+      100% { transform: translate(-50%, -50%) scale(80); opacity: 0; border-width: 1px; }
+    }
+    .nuke-killcount {
+      position: fixed;
+      top: 40%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(233,69,96,0.8), 0 0 40px rgba(233,69,96,0.4);
+      z-index: 10000;
+      pointer-events: none;
+      animation: nukeKillcount 1.5s ease-out forwards;
+    }
+    @keyframes nukeKillcount {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      40% { transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1) translateY(-30px); }
     }
 
     .mobile-pause-btn {
@@ -2067,6 +2123,7 @@
     let wavesWithoutDamage = 0;
     let upgradesTaken = [];
     let droneTypesKilled = new Set(); // Track killed drone types for Exterminator achievement
+    let nukeLifetimeKills = 0; // Track total nuke kills across the run
 
     // Daily challenge
     let isDailyChallenge = false;
@@ -2083,6 +2140,7 @@
       plasmaRing: false,
       twinCannons: false,
       nukeAvailable: false,
+      nukeKillsThisRun: 0,
       ricochet: false,
       burstFire: false,
       thrusterBoost: false,
@@ -3206,6 +3264,8 @@
       // Special achievements
       if (activeUpgrades.nukeAvailable === false && upgradesTaken.includes('W8')) {
         achievements.push('voidbreak_nuke_used');
+        if (nukeLifetimeKills >= 10) achievements.push('voidbreak_nuke_10_kills');
+        if (nukeLifetimeKills >= 20) achievements.push('voidbreak_nuke_20_kills');
       }
       if (activeUpgrades.riskReward) achievements.push('voidbreak_risk_reward');
 
@@ -3244,6 +3304,8 @@
         'voidbreak_exterminator': ['🤖', 'Exterminator'],
         'voidbreak_score_50k': ['🏆', 'Legend'],
         'voidbreak_nuke_used': ['💥', 'Nuclear Option'],
+        'voidbreak_nuke_10_kills': ['☢️', 'Chain Reaction Nuke'],
+        'voidbreak_nuke_20_kills': ['🌋', 'Extinction Event'],
         'voidbreak_risk_reward': ['🎲', 'All In']
       };
 
@@ -3988,31 +4050,70 @@
       if (!activeUpgrades.nukeAvailable || gameState !== 'playing') return;
 
       activeUpgrades.nukeAvailable = false;
-      document.getElementById('nukeBtn').classList.remove('available');
+      const nukeBtn = document.getElementById('nukeBtn');
+      nukeBtn.classList.remove('available');
+      nukeBtn.classList.add('used');
       playSound('nuke');
 
       // Massive screen shake
       screenShake = 50;
+
+      // Dramatic visual effects
+      const flash = document.createElement('div');
+      flash.className = 'nuke-flash';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 900);
+
+      const shockwave = document.createElement('div');
+      shockwave.className = 'nuke-shockwave';
+      document.body.appendChild(shockwave);
+      setTimeout(() => shockwave.remove(), 700);
+
+      // Track kills for bonus scoring
+      let nukeKills = 0;
+      let nukeScore = 0;
+      const NUKE_BONUS = 1.5; // 50% bonus on all nuke kills
 
       // Destroy all asteroids on screen
       asteroids.forEach(ast => {
         const config = ast.isBoss ?
           { score: 500 + wave * 100 } :
           ASTEROID_CONFIG[ast.size];
-        addScore(config.score, ast.x, ast.y);
+        const bonusScore = Math.floor(config.score * NUKE_BONUS);
+        addScore(bonusScore, ast.x, ast.y);
         spawnExplosion(ast.x, ast.y, ast.radius * 1.5, 2);
-        spawnScoreOrb(ast.x, ast.y, config.score * 0.3);
+        spawnScoreOrb(ast.x, ast.y, bonusScore * 0.3);
+        nukeKills++;
+        nukeScore += bonusScore;
       });
       asteroids = [];
 
       // Destroy all drones on screen
       drones.forEach(drone => {
         const config = DRONE_CONFIG[drone.type];
-        addScore(config.score, drone.x, drone.y);
+        const bonusScore = Math.floor(config.score * NUKE_BONUS);
+        addScore(bonusScore, drone.x, drone.y);
         spawnExplosion(drone.x, drone.y, drone.radius * 1.2, 1.5);
-        spawnScoreOrb(drone.x, drone.y, config.score * 0.3);
+        spawnScoreOrb(drone.x, drone.y, bonusScore * 0.3);
+        nukeKills++;
+        nukeScore += bonusScore;
       });
       drones = [];
+
+      // Also clear enemy bullets for a clean slate
+      enemyBullets = [];
+
+      // Show dramatic kill count overlay
+      if (nukeKills > 0) {
+        const killDisplay = document.createElement('div');
+        killDisplay.className = 'nuke-killcount';
+        killDisplay.innerHTML = `💥 ${nukeKills} KILLS<br><span style="font-size:1.2rem;color:#ffd700;">+${nukeScore.toLocaleString()} pts</span>`;
+        document.body.appendChild(killDisplay);
+        setTimeout(() => killDisplay.remove(), 1600);
+      }
+
+      // Track nuke kills for achievements
+      nukeLifetimeKills = (nukeLifetimeKills || 0) + nukeKills;
 
       // Update upgrade HUD
       updateUpgradeHud();
@@ -4844,11 +4945,23 @@
           // Deep 60Hz rumble
           osc.frequency.setValueAtTime(60, now);
           osc.type = 'sawtooth';
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.linearRampToValueAtTime(0.15, now + 0.3);
-          gain.gain.linearRampToValueAtTime(0, now + 0.8);
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.linearRampToValueAtTime(0.2, now + 0.3);
+          gain.gain.linearRampToValueAtTime(0, now + 1.0);
           osc.start(now);
-          osc.stop(now + 0.8);
+          osc.stop(now + 1.0);
+          // High-frequency impact burst
+          const nukeImpact = audioCtx.createOscillator();
+          const nukeImpactGain = audioCtx.createGain();
+          nukeImpact.connect(nukeImpactGain);
+          nukeImpactGain.connect(audioCtx.destination);
+          nukeImpact.type = 'square';
+          nukeImpact.frequency.setValueAtTime(800, now);
+          nukeImpact.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+          nukeImpactGain.gain.setValueAtTime(0.2, now);
+          nukeImpactGain.gain.linearRampToValueAtTime(0, now + 0.5);
+          nukeImpact.start(now);
+          nukeImpact.stop(now + 0.5);
           break;
 
         case 'new_best':
