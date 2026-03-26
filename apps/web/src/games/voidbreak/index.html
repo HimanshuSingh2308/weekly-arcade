@@ -4999,37 +4999,99 @@
       initAudio();
 
       try {
-        // Create ambient drone
+        const now = audioCtx.currentTime;
+        const master = audioCtx.createGain();
+        master.gain.value = 0.06;
+        master.connect(audioCtx.destination);
+
+        // Low-pass filter for warmth
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 600;
+        filter.Q.value = 1;
+        filter.connect(master);
+
+        // Slow LFO sweeps the filter for movement
+        const filterLfo = audioCtx.createOscillator();
+        const filterLfoGain = audioCtx.createGain();
+        filterLfo.type = 'sine';
+        filterLfo.frequency.value = 0.06;
+        filterLfoGain.gain.value = 250;
+        filterLfo.connect(filterLfoGain);
+        filterLfoGain.connect(filter.frequency);
+        filterLfo.start();
+
+        // Bass drone — sub bass A1 with subtle detuned layer
         const bassOsc = audioCtx.createOscillator();
         const bassGain = audioCtx.createGain();
-        bassOsc.type = 'sine';
-        bassOsc.frequency.setValueAtTime(55, audioCtx.currentTime); // Low A
-        bassGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        bassOsc.type = 'sawtooth';
+        bassOsc.frequency.value = 55;
+        bassGain.gain.value = 0.5;
         bassOsc.connect(bassGain);
-        bassGain.connect(audioCtx.destination);
+        bassGain.connect(filter);
         bassOsc.start();
 
-        // Add subtle movement
-        const lfo = audioCtx.createOscillator();
-        const lfoGain = audioCtx.createGain();
-        lfo.type = 'sine';
-        lfo.frequency.setValueAtTime(0.1, audioCtx.currentTime);
-        lfoGain.gain.setValueAtTime(2, audioCtx.currentTime);
-        lfo.connect(lfoGain);
-        lfoGain.connect(bassOsc.frequency);
-        lfo.start();
+        const bassSub = audioCtx.createOscillator();
+        const bassSubGain = audioCtx.createGain();
+        bassSub.type = 'sine';
+        bassSub.frequency.value = 55;
+        bassSubGain.gain.value = 0.6;
+        bassSub.connect(bassSubGain);
+        bassSubGain.connect(master); // Sub bypasses filter
+        bassSub.start();
 
-        // Higher harmony
-        const harmOsc = audioCtx.createOscillator();
-        const harmGain = audioCtx.createGain();
-        harmOsc.type = 'sine';
-        harmOsc.frequency.setValueAtTime(110, audioCtx.currentTime); // Higher A
-        harmGain.gain.setValueAtTime(0.015, audioCtx.currentTime);
-        harmOsc.connect(harmGain);
-        harmGain.connect(audioCtx.destination);
-        harmOsc.start();
+        // Pad chord: Am (A2, C3, E3) with detuned chorus
+        const padNotes = [110, 130.81, 164.81];
+        const padOscs = [];
+        padNotes.forEach(freq => {
+          for (let d = -4; d <= 4; d += 8) {
+            const osc = audioCtx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            osc.detune.value = d;
+            const g = audioCtx.createGain();
+            g.gain.value = 0.25;
+            osc.connect(g);
+            g.connect(filter);
+            osc.start();
+            padOscs.push(osc);
+          }
+        });
 
-        ambientNodes = { bassOsc, bassGain, lfo, lfoGain, harmOsc, harmGain };
+        // Rhythmic pulse — gentle sidechain-style pumping
+        const pulseOsc = audioCtx.createOscillator();
+        const pulseGain = audioCtx.createGain();
+        pulseOsc.type = 'sine';
+        pulseOsc.frequency.value = 1.5; // ~90 BPM feel
+        pulseGain.gain.value = 0.015;
+        pulseOsc.connect(pulseGain);
+        pulseGain.connect(master.gain);
+        pulseOsc.start();
+
+        // High atmospheric shimmer
+        const shimmer = audioCtx.createOscillator();
+        const shimmerGain = audioCtx.createGain();
+        shimmer.type = 'sine';
+        shimmer.frequency.value = 659.25; // E5
+        shimmerGain.gain.value = 0.08;
+        shimmer.connect(shimmerGain);
+        shimmerGain.connect(filter);
+        shimmer.start();
+
+        // Shimmer vibrato
+        const shimmerLfo = audioCtx.createOscillator();
+        const shimmerLfoGain = audioCtx.createGain();
+        shimmerLfo.type = 'sine';
+        shimmerLfo.frequency.value = 4;
+        shimmerLfoGain.gain.value = 8;
+        shimmerLfo.connect(shimmerLfoGain);
+        shimmerLfoGain.connect(shimmer.frequency);
+        shimmerLfo.start();
+
+        ambientNodes = {
+          master, filter, filterLfo, bassOsc, bassGain, bassSub, bassSubGain,
+          padOscs, pulseOsc, pulseGain, shimmer, shimmerGain, shimmerLfo
+        };
       } catch (e) {
         // ambient music init failed
       }
@@ -5040,17 +5102,18 @@
 
       try {
         const now = audioCtx.currentTime;
-        ambientNodes.bassGain.gain.linearRampToValueAtTime(0, now + 0.5);
-        ambientNodes.harmGain.gain.linearRampToValueAtTime(0, now + 0.5);
+        ambientNodes.master.gain.linearRampToValueAtTime(0, now + 0.8);
 
+        const nodes = ambientNodes;
         setTimeout(() => {
           try {
-            ambientNodes.bassOsc.stop();
-            ambientNodes.lfo.stop();
-            ambientNodes.harmOsc.stop();
+            nodes.bassOsc.stop(); nodes.bassSub.stop();
+            nodes.filterLfo.stop(); nodes.pulseOsc.stop();
+            nodes.shimmer.stop(); nodes.shimmerLfo.stop();
+            nodes.padOscs.forEach(o => o.stop());
           } catch (e) {}
           ambientNodes = null;
-        }, 600);
+        }, 900);
       } catch (e) {
         ambientNodes = null;
       }
