@@ -38,7 +38,11 @@
         window.authManager.onAuthStateChanged(user => {
           currentUser = user;
           _updateAuthBtn(opts);
-          if (user && opts.onSignIn) opts.onSignIn(user);
+          if (user) {
+            // Initialize push notifications for signed-in users
+            _initNotifications();
+            if (opts.onSignIn) opts.onSignIn(user);
+          }
           if (!user && opts.onSignOut) opts.onSignOut();
         });
       }
@@ -80,6 +84,46 @@
   function getUser() { return currentUser; }
   function isSignedIn() { return !!currentUser; }
 
+  // ─── Push Notifications ───
+
+  let notificationsInitialized = false;
+
+  async function _initNotifications() {
+    if (notificationsInitialized) return;
+    notificationsInitialized = true;
+
+    // Dynamically load notification manager if not present
+    if (!window.notificationManager) {
+      await new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = '/js/notification-manager.js';
+        s.onload = resolve;
+        s.onerror = resolve; // Don't block on failure
+        document.head.appendChild(s);
+      });
+    }
+    if (!window.notificationManager) return;
+
+    await window.notificationManager.init();
+
+    if (window.notificationManager.hasToken()) {
+      // Already registered — just set up token refresh
+      window.notificationManager.setupTokenRefresh();
+    }
+    // Prompt will be triggered on first score submission via _promptNotifications()
+  }
+
+  async function _promptNotifications() {
+    if (!window.notificationManager || !window.notificationManager.shouldPrompt()) return;
+    // Auto-request after first successful score submission
+    const granted = await window.notificationManager.requestPermissionAndRegister();
+    if (granted) {
+      window.notificationManager.setupTokenRefresh();
+    } else {
+      window.notificationManager.dismissPrompt();
+    }
+  }
+
   // ─── Screen Wake Lock ───
   // Prevents screen from sleeping during gameplay on mobile
   let wakeLock = null;
@@ -118,6 +162,8 @@
 
     try {
       const result = await window.apiClient.submitScore(gameId, scoreData);
+      // Prompt for push notifications after first successful score submit
+      _promptNotifications();
       return result;
     } catch (error) {
       console.error(`[${gameId}] Score submit failed:`, error);

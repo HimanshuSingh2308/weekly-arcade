@@ -170,6 +170,32 @@ export class UsersService {
       .map((doc) => doc.data() as User);
   }
 
+  async updatePlayStreak(uid: string): Promise<void> {
+    const userRef = this.firebaseService.doc(`${this.usersCollection}/${uid}`);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) return;
+
+    const user = userDoc.data() as User;
+    const today = new Date().toISOString().split('T')[0];
+
+    // Already counted today
+    if (user.lastPlayedDate === today) return;
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const currentStreak = user.currentPlayStreak || 0;
+
+    const newStreak = user.lastPlayedDate === yesterday ? currentStreak + 1 : 1;
+
+    await userRef.update({
+      lastPlayedDate: today,
+      currentPlayStreak: newStreak,
+      updatedAt: new Date(),
+    });
+
+    this.logger.log(`Updated play streak for user ${uid}: ${newStreak} days`);
+  }
+
   async addXP(uid: string, xpAmount: number): Promise<{ totalXP: number; playerLevel: number }> {
     const userRef = this.firebaseService.doc(`${this.usersCollection}/${uid}`);
     const userDoc = await userRef.get();

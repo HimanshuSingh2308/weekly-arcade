@@ -8,6 +8,7 @@ export class FirebaseService implements OnModuleInit {
   private _app: admin.app.App;
   private _firestore: Firestore;
   private _auth: admin.auth.Auth;
+  private _messaging: admin.messaging.Messaging;
 
   async onModuleInit() {
     try {
@@ -24,6 +25,7 @@ export class FirebaseService implements OnModuleInit {
 
       this._firestore = this._app.firestore();
       this._auth = this._app.auth();
+      this._messaging = this._app.messaging();
 
       this.logger.log('Firebase Admin SDK initialized');
     } catch (error) {
@@ -42,6 +44,10 @@ export class FirebaseService implements OnModuleInit {
 
   get app(): admin.app.App {
     return this._app;
+  }
+
+  get messaging(): admin.messaging.Messaging {
+    return this._messaging;
   }
 
   // Collection helpers

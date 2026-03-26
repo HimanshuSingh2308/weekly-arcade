@@ -35,6 +35,7 @@
       "purpose": "maskable"
     }
   ],
+  "gcm_sender_id": "103953800507",
   "categories": ["games", "entertainment"],
   "prefer_related_applications": false
 }

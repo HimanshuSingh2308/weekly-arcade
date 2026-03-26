@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CustomizationsService } from './customizations.service';
 import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -111,9 +112,15 @@ export class CustomizationsController {
 
   /**
    * Add coins (from game events)
+   * SECURITY: Rate limited to prevent coin flooding from console abuse
    */
   @Post('coins/add')
   @HttpCode(HttpStatus.OK)
+  @Throttle({
+    short: { limit: 1, ttl: 5000 }, // 1 per 5 seconds
+    medium: { limit: 5, ttl: 60000 }, // 5 per minute
+    long: { limit: 30, ttl: 3600000 }, // 30 per hour
+  })
   async addCoins(
     @CurrentUser() authUser: AuthUser,
     @Body() addCoinsDto: AddCoinsDto

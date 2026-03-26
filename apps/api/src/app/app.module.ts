@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FirebaseModule } from '../firebase/firebase.module';
@@ -10,6 +11,7 @@ import { GameStateModule } from '../game-state/game-state.module';
 import { LeaderboardModule } from '../leaderboard/leaderboard.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { CustomizationsModule } from '../customizations/customizations.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
 
 @Module({
@@ -32,6 +34,7 @@ import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
         limit: 1000, // 1000 requests per hour
       },
     ]),
+    ScheduleModule.forRoot(),
     FirebaseModule,
     AuthModule,
     UsersModule,
@@ -39,6 +42,7 @@ import { FirebaseAuthGuard } from '../auth/guards/firebase-auth.guard';
     LeaderboardModule,
     AchievementsModule,
     CustomizationsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

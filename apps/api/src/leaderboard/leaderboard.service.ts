@@ -113,6 +113,11 @@ export class LeaderboardService {
     // Get rank for today
     const rank = await this.getUserRank(uid, gameId, 'daily');
 
+    // Update play streak (fire-and-forget)
+    this.usersService.updatePlayStreak(uid).catch((err) =>
+      this.logger.warn(`Failed to update play streak for ${uid}: ${err.message}`)
+    );
+
     this.logger.log(`Score submitted for user ${uid}, game ${gameId}. XP: ${xpEarned}, Rank: ${rank}`);
 
     return {
@@ -137,14 +142,14 @@ export class LeaderboardService {
       xp += submitDto.level * 5;
     }
 
-    // Perfect game bonus
-    if (submitDto.metadata?.perfectGame) {
+    // Perfect game bonus (validate it's a boolean, not a truthy arbitrary value)
+    if (submitDto.metadata?.perfectGame === true) {
       xp *= 1.5;
     }
 
-    // Streak bonus
-    if (submitDto.metadata?.streakBonus) {
-      xp += submitDto.metadata.streakBonus;
+    // Streak bonus (capped to prevent client-side injection)
+    if (typeof submitDto.metadata?.streakBonus === 'number' && submitDto.metadata.streakBonus > 0) {
+      xp += Math.min(submitDto.metadata.streakBonus, 100);
     }
 
     return Math.floor(Math.max(10, xp)); // Minimum 10 XP

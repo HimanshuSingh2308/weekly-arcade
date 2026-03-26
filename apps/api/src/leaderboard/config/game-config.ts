@@ -127,12 +127,24 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     },
   },
 
-  // Fieldstone: Strategy game, slower paced
+  // Fieldstone: Strategy game, slower paced — max ~11 waves
   fieldstone: {
     maxScore: 100000,
     maxScorePerSecond: 100,
     minTimeMs: 30000, // Strategy games take time
-    maxLevel: 50,
+    maxLevel: 11, // wave 10 + victory
+    customValidation: (dto) => {
+      // Score should correlate with waves survived
+      if (dto.level !== undefined && dto.score > dto.level * 10000) {
+        return { valid: false, reason: 'Score too high for waves completed' };
+      }
+      // Validate deck is a known value
+      const validDecks = ['farmer', 'mason', 'merchant'];
+      if (dto.metadata?.deck && !validDecks.includes(dto.metadata.deck as string)) {
+        return { valid: false, reason: 'Invalid deck selection' };
+      }
+      return { valid: true };
+    },
   },
 
   // Chaos Kitchen: Time-pressure cooking game
@@ -151,14 +163,24 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   },
 
   // Memory Match: Pattern matching game
+  // Max: hard mode 10 pairs × 500 (max combo) = 5000 theoretical max
   'memory-match': {
-    maxScore: 20000,
+    maxScore: 6000, // 5000 theoretical + buffer
     maxScorePerSecond: 200,
     minTimeMs: 10000, // Minimum to complete a board
     customValidation: (dto) => {
       // Perfect memory should still take some time
-      if (dto.timeMs && dto.timeMs < 5000 && dto.score > 5000) {
+      if (dto.timeMs && dto.timeMs < 5000 && dto.score > 3000) {
         return { valid: false, reason: 'Score too high for completion time' };
+      }
+      // Validate difficulty-based max if provided
+      if (dto.metadata?.difficulty) {
+        const maxPairs: Record<string, number> = { easy: 6, medium: 8, hard: 10 };
+        const pairs = maxPairs[dto.metadata.difficulty as string] || 10;
+        const theoreticalMax = pairs * 500; // max combo multiplier is 5x
+        if (dto.score > theoreticalMax * 1.2) {
+          return { valid: false, reason: 'Score exceeds maximum for difficulty' };
+        }
       }
       return { valid: true };
     },
@@ -265,7 +287,15 @@ export function validateScore(
     };
   }
 
-  // Check minimum time (if time provided)
+  // SECURITY: Require timeMs when minTimeMs is configured — prevents bypassing time validation
+  if (config.minTimeMs > 0 && (dto.timeMs === undefined || dto.timeMs === null)) {
+    return {
+      valid: false,
+      reason: `timeMs is required for ${gameId}`,
+    };
+  }
+
+  // Check minimum time
   if (dto.timeMs !== undefined && dto.timeMs < config.minTimeMs) {
     return {
       valid: false,
@@ -273,7 +303,7 @@ export function validateScore(
     };
   }
 
-  // Check score rate (if time provided)
+  // Check score rate
   if (dto.timeMs !== undefined && dto.timeMs > 0) {
     const scorePerSecond = dto.score / (dto.timeMs / 1000);
     if (scorePerSecond > config.maxScorePerSecond) {

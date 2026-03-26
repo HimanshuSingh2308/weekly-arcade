@@ -1,6 +1,7 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
 import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Achievement, ACHIEVEMENTS, ACHIEVEMENT_LIST } from '@weekly-arcade/shared';
 import { UnlockAchievementDto } from './dto';
 
@@ -19,7 +20,9 @@ export class AchievementsService {
 
   constructor(
     private readonly firebaseService: FirebaseService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService
   ) {}
 
   async unlockAchievement(
@@ -65,6 +68,17 @@ export class AchievementsService {
     await this.usersService.addXP(uid, xpEarned);
 
     this.logger.log(`User ${uid} unlocked achievement: ${achievementId} (+${xpEarned} XP)`);
+
+    // Send push notification (fire-and-forget)
+    this.notificationsService
+      .sendToUser(
+        uid,
+        'Achievement Unlocked!',
+        `You earned "${achievement.name}" (+${xpEarned} XP)`,
+        'achievement_unlocked',
+        { achievementId, action: 'open_profile' }
+      )
+      .catch(() => {});
 
     return {
       achievement,

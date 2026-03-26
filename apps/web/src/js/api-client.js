@@ -312,6 +312,30 @@ class ApiClient {
   async getCoinHistory(limit = 50) {
     return this.request(`/customizations/coins/history?limit=${limit}`);
   }
+
+  // ─── Notifications ───
+
+  async getNotificationConfig() {
+    return this.request('/notifications/config');
+  }
+
+  async registerPushToken(token, deviceInfo) {
+    return this.request('/notifications/token', {
+      method: 'POST',
+      body: JSON.stringify({ token, deviceInfo }),
+    });
+  }
+
+  async removePushToken(token) {
+    return this.request('/notifications/token', {
+      method: 'DELETE',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async getNotificationStatus() {
+    return this.request('/notifications/status');
+  }
 }
 
 // Export singleton instance

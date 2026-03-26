@@ -9,6 +9,8 @@ export interface User {
   playerLevel: number;
   settings: UserSettings;
   friends: string[];
+  lastPlayedDate?: string;
+  currentPlayStreak?: number;
 }
 
 export interface UserSettings {

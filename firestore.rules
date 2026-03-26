@@ -79,5 +79,17 @@ service cloud.firestore {
       // Only backend can write (via Admin SDK)
       allow write: if false;
     }
+
+    // ============ PUSH NOTIFICATIONS ============
+
+    // Push tokens - server-only (Admin SDK)
+    match /push-tokens/{docId} {
+      allow read, write: if false;
+    }
+
+    // Notification logs - server-only (Admin SDK)
+    match /notification-logs/{docId} {
+      allow read, write: if false;
+    }
   }
 }

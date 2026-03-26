@@ -4,6 +4,7 @@ export * from './lib/types/game-state.types.js';
 export * from './lib/types/leaderboard.types.js';
 export * from './lib/types/achievement.types.js';
 export * from './lib/types/customization.types.js';
+export * from './lib/types/notification.types.js';
 
 // Constants
 export * from './lib/constants/achievements.js';

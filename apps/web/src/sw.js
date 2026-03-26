@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
     badge: '/icons/icon-192.png',
     tag: data.type || 'default',
     data: data,
-    sound: '/sounds/notification.mp3',
+    sound: '/sounds/notification.wav',
   });
 });
 

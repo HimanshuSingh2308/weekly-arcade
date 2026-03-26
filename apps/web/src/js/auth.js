@@ -20,6 +20,45 @@ class AuthManager {
     this.listeners = [];
     this.firebase = null;
     this.auth = null;
+    this._cacheKey = 'wa-cached-user';
+
+    // Restore cached user immediately (before Firebase loads)
+    this._restoreCachedUser();
+  }
+
+  _restoreCachedUser() {
+    try {
+      const cached = sessionStorage.getItem(this._cacheKey);
+      if (!cached) return;
+      const data = JSON.parse(cached);
+      // Create a lightweight user-like object for instant UI rendering
+      this.user = {
+        uid: data.uid,
+        email: data.email,
+        displayName: data.displayName,
+        photoURL: data.photoURL,
+        _cached: true, // flag so we know this isn't a real Firebase user
+      };
+    } catch (e) {
+      // Cache corrupted — ignore
+    }
+  }
+
+  _cacheUser(user) {
+    try {
+      if (user) {
+        sessionStorage.setItem(this._cacheKey, JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+        }));
+      } else {
+        sessionStorage.removeItem(this._cacheKey);
+      }
+    } catch (e) {
+      // sessionStorage unavailable (private browsing etc)
+    }
   }
 
   /**
@@ -243,6 +282,7 @@ class AuthManager {
     try {
       await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
       await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
     } catch (e) {
       console.warn('Failed to load Firebase SDK:', e);
     }

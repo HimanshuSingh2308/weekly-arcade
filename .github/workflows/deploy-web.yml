@@ -8,6 +8,15 @@ on:
       - '.github/workflows/deploy-web.yml'
 
   workflow_dispatch:
+    inputs:
+      new_game_id:
+        description: 'New game slug (triggers push notification to all users)'
+        required: false
+        type: string
+      new_game_name:
+        description: 'New game display name for notification'
+        required: false
+        type: string
 
 jobs:
   deploy:
@@ -38,3 +47,12 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: live
           projectId: weekly-arcade
+
+      - name: Send new game notification
+        if: ${{ github.event.inputs.new_game_id != '' && github.event.inputs.new_game_name != '' }}
+        run: |
+          curl -s -X POST \
+            https://weekly-arcade-api-5171085645.us-central1.run.app/api/notifications/new-game \
+            -H "Content-Type: application/json" \
+            -H "X-Api-Key: ${{ secrets.NOTIFICATIONS_API_KEY }}" \
+            -d "{\"gameId\": \"${{ github.event.inputs.new_game_id }}\", \"gameName\": \"${{ github.event.inputs.new_game_name }}\"}"
