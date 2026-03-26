@@ -3,57 +3,36 @@
   <!-- Homepage -->
   <url>
     <loc>https://weeklyarcade.games/</loc>
-    <lastmod>2024-03-16</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Games -->
   <url>
-    <loc>https://weeklyarcade.games/games/wordle/</loc>
-    <lastmod>2024-03-16</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://weeklyarcade.games/games/tiny-tycoon/</loc>
+    <lastmod>2026-03-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://weeklyarcade.games/games/snake/</loc>
-    <lastmod>2024-03-16</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://weeklyarcade.games/games/coin-cascade/</loc>
+    <lastmod>2026-03-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://weeklyarcade.games/games/solitaire-roguelite/</loc>
+    <lastmod>2026-03-21</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://weeklyarcade.games/games/2048/</loc>
-    <lastmod>2024-03-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://weeklyarcade.games/games/chaos-kitchen/</loc>
-    <lastmod>2024-03-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://weeklyarcade.games/games/memory-match/</loc>
-    <lastmod>2024-03-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://weeklyarcade.games/games/lumble/</loc>
-    <lastmod>2024-03-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://weeklyarcade.games/games/fieldstone/</loc>
-    <lastmod>2026-03-16</lastmod>
+    <loc>https://weeklyarcade.games/games/stack-tower/</loc>
+    <lastmod>2026-03-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -66,49 +45,62 @@
   </url>
 
   <url>
-    <loc>https://weeklyarcade.games/games/stack-tower/</loc>
-    <lastmod>2026-03-18</lastmod>
+    <loc>https://weeklyarcade.games/games/fieldstone/</loc>
+    <lastmod>2026-03-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://weeklyarcade.games/games/solitaire-roguelite/</loc>
-    <lastmod>2026-03-21</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://weeklyarcade.games/games/lumble/</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://weeklyarcade.games/games/coin-cascade/</loc>
-    <lastmod>2026-03-23</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://weeklyarcade.games/games/chaos-kitchen/</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://weeklyarcade.games/games/memory-match/</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://weeklyarcade.games/games/wordle/</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://weeklyarcade.games/games/tiny-tycoon/</loc>
-    <lastmod>2026-03-24</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <loc>https://weeklyarcade.games/games/snake/</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://weeklyarcade.games/games/2048/</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 
   <!-- Other Pages -->
   <url>
     <loc>https://weeklyarcade.games/leaderboard/</loc>
-    <lastmod>2024-03-16</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <url>
-    <loc>https://weeklyarcade.games/profile/</loc>
-    <lastmod>2024-03-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <!-- About -->
   <url>
     <loc>https://weeklyarcade.games/about/</loc>
     <lastmod>2026-03-17</lastmod>
