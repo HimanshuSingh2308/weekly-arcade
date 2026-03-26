@@ -521,6 +521,7 @@
     </div>
     <div class="header-right">
       <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
+      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=stack-tower'" title="Leaderboard">🏆</button>
       <button class="icon-btn" onclick="toggleSound()" id="soundBtn">🔊</button>
     </div>
   </header>
@@ -606,6 +607,16 @@
   <script src="/js/auth.js"></script>
 
   <script>
+  (function() {
+    'use strict';
+
+    // ============ HELPERS ============
+    function escapeHTML(str) {
+      var d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
     // ============ GAME CONSTANTS ============
     const BLOCK_HEIGHT = 20;
     const INITIAL_BLOCK_WIDTH = 200;
@@ -1334,7 +1345,7 @@
     function updateAuthUI() {
       const authBtn = document.getElementById('authBtn');
       if (currentUser) {
-        authBtn.textContent = currentUser.displayName?.split(' ')[0] || 'Player';
+        authBtn.innerHTML = escapeHTML(currentUser.displayName?.split(' ')[0] || 'Player');
         authBtn.onclick = null;
       } else {
         authBtn.textContent = 'Sign In';
@@ -1379,7 +1390,7 @@
             perfectRate: totalStacks > 0 ? ((perfectStacks / totalStacks) * 100).toFixed(1) : '0'
           }
         });
-        console.log('Score submitted');
+        // score submitted
       } catch (error) {
         console.error('Failed to submit score:', error);
       }
@@ -1401,7 +1412,7 @@
           }
         }
       } catch (error) {
-        console.log('Could not load cloud state');
+        // cloud state load failed silently
       }
     }
 
@@ -1431,7 +1442,7 @@
 
         checkAchievements(newState);
       } catch (error) {
-        console.log('Could not save cloud state');
+        // cloud state save failed silently
       }
     }
 
@@ -1465,12 +1476,20 @@
           await window.apiClient.unlockAchievement('score_5000', 'stack-tower');
         }
       } catch (error) {
-        console.log('Could not check achievements');
+        // achievement check failed silently
       }
     }
 
     // ============ START ============
     window.addEventListener('load', init);
+
+    // Expose functions needed by HTML onclick attributes
+    window.startGame = startGame;
+    window.toggleSound = toggleSound;
+    window.showAuthModal = showAuthModal;
+    window.hideAuthModal = hideAuthModal;
+    window.signInWithGoogle = signInWithGoogle;
+  })();
   </script>
 
   <!-- More Games Section -->

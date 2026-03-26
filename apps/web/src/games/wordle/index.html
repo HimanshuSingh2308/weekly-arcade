@@ -1325,6 +1325,7 @@
       <button class="hint-btn" id="hintBtn" onclick="useHint()">
         💡 Hint <span class="hint-count" id="hintCount">3</span>
       </button>
+      <button class="sound-btn" onclick="window.location.href='/leaderboard/?game=wordle'" title="Leaderboard">🏆</button>
       <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
       <button class="help-btn" onclick="showHelp()">?</button>
     </div>
@@ -1486,6 +1487,27 @@
   </div>
 
   <script>
+  (function() {
+    'use strict';
+
+    // Expose functions referenced by onclick attributes in HTML
+    window.handleAuthClick = function() { handleAuthClick(); };
+    window.useHint = function() { useHint(); };
+    window.toggleSound = function() { toggleSound(); };
+    window.showHelp = function() { showHelp(); };
+    window.hideGameModal = function() { hideGameModal(); };
+    window.shareResult = function() { shareResult(); };
+    window.playAgain = function() { playAgain(); };
+    window.hideHelp = function() { hideHelp(); };
+    window.hideAuthModal = function() { hideAuthModal(); };
+    window.signInWithGoogle = function() { signInWithGoogle(); };
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
     // Words organized by length (3-7 letters)
     const WORDS_BY_LENGTH = {
       3: ['ace', 'act', 'add', 'age', 'ago', 'aid', 'aim', 'air', 'all', 'and', 'ant', 'any', 'ape', 'arc', 'are', 'ark', 'arm', 'art', 'ask', 'ate', 'awl', 'axe', 'bad', 'bag', 'ban', 'bar', 'bat', 'bay', 'bed', 'bee', 'beg', 'bet', 'big', 'bin', 'bit', 'bow', 'box', 'boy', 'bud', 'bug', 'bun', 'bus', 'but', 'buy', 'cab', 'can', 'cap', 'car', 'cat', 'cob', 'cod', 'cog', 'cop', 'cot', 'cow', 'cry', 'cub', 'cup', 'cut', 'dad', 'dam', 'day', 'den', 'dew', 'did', 'die', 'dig', 'dim', 'dip', 'dog', 'dot', 'dry', 'dub', 'dud', 'due', 'dug', 'dye', 'ear', 'eat', 'eel', 'egg', 'ego', 'elf', 'elk', 'elm', 'emu', 'end', 'era', 'eve', 'ewe', 'eye', 'fan', 'far', 'fat', 'fax', 'fed', 'fee', 'few', 'fig', 'fin', 'fir', 'fit', 'fix', 'fly', 'foe', 'fog', 'for', 'fox', 'fry', 'fun', 'fur', 'gag', 'gap', 'gas', 'gel', 'gem', 'get', 'gig', 'gin', 'god', 'got', 'gum', 'gun', 'gut', 'guy', 'gym', 'had', 'ham', 'has', 'hat', 'hay', 'hen', 'her', 'hid', 'him', 'hip', 'his', 'hit', 'hog', 'hop', 'hot', 'how', 'hub', 'hue', 'hug', 'hum', 'hut', 'ice', 'icy', 'ill', 'imp', 'ink', 'inn', 'ion', 'irk', 'its', 'ivy', 'jab', 'jam', 'jar', 'jaw', 'jay', 'jet', 'jig', 'job', 'jog', 'jot', 'joy', 'jug', 'jut', 'keg', 'key', 'kid', 'kin', 'kit', 'lab', 'lad', 'lag', 'lap', 'law', 'lay', 'led', 'leg', 'let', 'lid', 'lie', 'lip', 'lit', 'log', 'lot', 'low', 'lug', 'mad', 'man', 'map', 'mar', 'mat', 'may', 'men', 'met', 'mid', 'mix', 'mob', 'mom', 'mop', 'mud', 'mug', 'nab', 'nag', 'nap', 'net', 'new', 'nil', 'nip', 'nit', 'nod', 'nor', 'not', 'now', 'nun', 'nut', 'oak', 'oar', 'oat', 'odd', 'off', 'oil', 'old', 'one', 'opt', 'orb', 'ore', 'our', 'out', 'owe', 'owl', 'own', 'pad', 'pal', 'pan', 'pap', 'par', 'pat', 'paw', 'pay', 'pea', 'peg', 'pen', 'pep', 'per', 'pet', 'pie', 'pig', 'pin', 'pit', 'ply', 'pod', 'pop', 'pot', 'pro', 'pry', 'pub', 'pug', 'pun', 'pup', 'put', 'rag', 'ram', 'ran', 'rap', 'rat', 'raw', 'ray', 'red', 'ref', 'rib', 'rid', 'rig', 'rim', 'rip', 'rob', 'rod', 'roe', 'rot', 'row', 'rub', 'rug', 'run', 'rut', 'rye', 'sad', 'sag', 'sap', 'sat', 'saw', 'say', 'sea', 'set', 'sew', 'she', 'shy', 'sin', 'sip', 'sir', 'sis', 'sit', 'six', 'ski', 'sky', 'sly', 'sob', 'sod', 'son', 'sop', 'sow', 'soy', 'spa', 'spy', 'sub', 'sum', 'sun', 'tab', 'tad', 'tag', 'tan', 'tap', 'tar', 'tax', 'tea', 'ten', 'the', 'thy', 'tie', 'tin', 'tip', 'toe', 'tom', 'ton', 'too', 'top', 'tow', 'toy', 'try', 'tub', 'tug', 'two', 'urn', 'use', 'van', 'vat', 'vet', 'via', 'vie', 'vow', 'wad', 'wag', 'war', 'was', 'wax', 'way', 'web', 'wed', 'wet', 'who', 'why', 'wig', 'win', 'wit', 'woe', 'wok', 'won', 'woo', 'wow', 'yak', 'yam', 'yap', 'yaw', 'yea', 'yes', 'yet', 'yew', 'you', 'zap', 'zed', 'zee', 'zen', 'zip', 'zoo'],
@@ -3710,14 +3732,20 @@
       if (currentUser) {
         const name = currentUser.displayName || 'User';
         const photo = currentUser.photoURL;
+        btn.textContent = '';
         if (photo) {
-          btn.innerHTML = `<img src="${photo}" class="user-avatar" alt="${name}"> ${name.split(' ')[0]}`;
+          const img = document.createElement('img');
+          img.src = photo;
+          img.className = 'user-avatar';
+          img.alt = name;
+          btn.appendChild(img);
+          btn.appendChild(document.createTextNode(' ' + name.split(' ')[0]));
         } else {
-          btn.innerHTML = `👤 ${name.split(' ')[0]}`;
+          btn.textContent = '\u{1F464} ' + name.split(' ')[0];
         }
         btn.classList.add('signed-in');
       } else {
-        btn.innerHTML = 'Sign In';
+        btn.textContent = 'Sign In';
         btn.classList.remove('signed-in');
       }
     }
@@ -3789,10 +3817,9 @@
             localStorage.setItem('wordle-total-xp', cloudState.additionalData.totalXP);
           }
 
-          console.log('Cloud state loaded');
         }
       } catch (error) {
-        console.log('Could not load cloud state:', error.message);
+        // Cloud state load failed silently
       }
     }
 
@@ -3815,9 +3842,8 @@
         };
 
         await window.apiClient.saveGameState('wordle', state);
-        console.log('Cloud state saved');
       } catch (error) {
-        console.log('Could not save cloud state:', error.message);
+        // Cloud state save failed silently
       }
     }
 
@@ -3830,16 +3856,15 @@
           score: scoreData.score,
           level: wordLength - MIN_LENGTH + 1,
           guessCount: scoreData.attempts,
-          timeMs: scoreData.timeMs || 0,
+          timeMs: Date.now() - gameStartTime,
           metadata: {
             hintsUsed: scoreData.hintsUsed || 0,
             perfectGame: scoreData.attempts === 1,
             streakBonus: Math.floor((scoreData.streakMultiplier - 1) * 50)
           }
         });
-        console.log('Score submitted to leaderboard');
       } catch (error) {
-        console.log('Could not submit score:', error.message);
+        // Score submission failed silently
       }
     }
 
@@ -3849,9 +3874,8 @@
 
       try {
         await window.apiClient.unlockAchievement(achievementId, 'wordle');
-        console.log('Achievement synced:', achievementId);
       } catch (error) {
-        console.log('Could not sync achievement:', error.message);
+        // Achievement sync failed silently
       }
     }
 
@@ -3896,6 +3920,7 @@
     }
 
     init();
+  })();
   </script>
 
   <!-- More Games Section -->

@@ -898,6 +898,7 @@
       </div>
     </div>
     <div class="header-right">
+      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=memory-match'" title="Leaderboard">🏆</button>
       <button class="icon-btn" id="soundBtn" title="Toggle Sound">&#128266;</button>
       <button class="icon-btn" id="menuBtn" title="Menu">&#9776;</button>
     </div>
@@ -993,6 +994,16 @@
   <script src="/js/auth.js"></script>
 
   <script>
+  (function() {
+    'use strict';
+
+    // HTML escape helper for safe rendering
+    function escapeHTML(str) {
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
     // Emoji sets for different themes
     const EMOJI_SETS = {
       animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵'],
@@ -1108,7 +1119,7 @@
 
       // Check for saved streak
       const savedStreak = localStorage.getItem('memory-match-streak') || '0';
-      streakBadge.innerHTML = `&#128293; ${savedStreak}`;
+      streakBadge.innerHTML = '&#128293; ' + escapeHTML(savedStreak);
     }
 
     // Get daily challenge data
@@ -1557,7 +1568,7 @@
         localStorage.setItem('memory-match-streak', '0');
         streak = 0;
       }
-      streakBadge.innerHTML = `&#128293; ${streak}`;
+      streakBadge.innerHTML = '&#128293; ' + escapeHTML(String(streak));
 
       // Daily challenge completion
       if (gameState.isDaily && won) {
@@ -1599,22 +1610,11 @@
 
     // Submit score
     async function submitScore(won) {
-      console.log('[Memory Match] submitScore called:', {
-        mode: gameState.mode,
-        score: gameState.score,
-        won,
-        hasApiClient: !!window.apiClient,
-        hasCurrentUser: !!currentUser,
-        currentUserEmail: currentUser?.email
-      });
-
-      if (gameState.mode === 'zen') {
-        console.log('[Memory Match] Skipping score submit (zen mode)');
-        return;
-      }
+      if (gameState.mode === 'zen') return;
 
       const scoreData = {
         score: gameState.score,
+        timeMs: Math.round(gameState.timer * 1000),
         metadata: {
           difficulty: gameState.difficulty,
           mode: gameState.mode,
@@ -1629,16 +1629,12 @@
       // Check if user is signed in
       if (window.apiClient && currentUser) {
         try {
-          console.log('[Memory Match] Submitting score to API...');
-          const result = await window.apiClient.submitScore('memory-match', scoreData);
-          console.log('[Memory Match] Score submitted successfully:', result);
+          await window.apiClient.submitScore('memory-match', scoreData);
         } catch (error) {
-          console.error('[Memory Match] Failed to submit score:', error);
           saveGuestScore(scoreData);
         }
       } else {
         saveGuestScore(scoreData);
-        console.log('[Memory Match] Score saved locally (not signed in)');
       }
     }
 
@@ -1674,6 +1670,7 @@
       try {
         await window.apiClient.submitScore('memory-match', {
           score: bestScore.score,
+          timeMs: bestScore.timeMs || Math.round((bestScore.metadata?.time || 0) * 1000),
           metadata: bestScore.metadata
         });
         localStorage.removeItem('memory-match-pending-scores');
@@ -1760,6 +1757,7 @@
       initMenu();
       initAuth();
     });
+  })();
   </script>
 
   <!-- More Games Section -->

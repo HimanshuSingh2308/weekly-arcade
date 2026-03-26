@@ -670,6 +670,7 @@
       <div class="header-icons">
         <button class="auth-btn" id="authBtn">Sign In</button>
         <button id="undoBtn" onclick="undoMove()" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--text-muted);font-size:0.75rem;cursor:pointer;display:none;" title="Undo">↩ <span id="undoCount">0</span></button>
+        <button class="help-btn" onclick="window.location.href='/leaderboard/?game=solitaire-roguelite'" title="Leaderboard">🏆</button>
         <button class="help-btn" onclick="showHelp()" title="How to Play">❓</button>
         <button class="help-btn" id="muteBtn" onclick="toggleMute()" title="Toggle sound">🔊</button>
       </div>
@@ -783,7 +784,7 @@
       <div id="bestScore"></div>
       <div style="margin-top:1rem;">
         <button class="modal-btn" onclick="startNewGame()">Play Again</button>
-        <button class="modal-btn secondary" onclick="window.location.href='../../leaderboard/'">Leaderboard</button>
+        <button class="modal-btn secondary" onclick="window.location.href='/leaderboard/?game=solitaire-roguelite'">Leaderboard</button>
       </div>
     </div>
   </div>
@@ -793,6 +794,16 @@
   <script src="../../js/auth.js"></script>
 
   <script>
+  (function() {
+  'use strict';
+
+  // ── SECURITY HELPERS ──────────────────────────────────────
+  function escapeHTML(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
   // ═══════════════════════════════════════════════════════════
   // SOLITAIRE ROGUELITE — Complete Game Engine
   // ═══════════════════════════════════════════════════════════
@@ -976,7 +987,7 @@
     moveHistory = [];
     undosUsed = 0;
     undoCharges = 0;
-    freeCells = [];
+    freeCells = []; window.freeCells = freeCells;
     cardsOnFoundation = 0;
     consecutiveFoundationPlacements = 0;
     lastFoundationTime = 0;
@@ -1111,7 +1122,7 @@
     waste = state.waste;
     foundations = state.foundations;
     tableau = state.tableau;
-    freeCells = state.freeCells;
+    freeCells = state.freeCells; window.freeCells = freeCells;
     score = state.score - 50; // Apply -50 penalty after restoring
     cardsOnFoundation = state.cardsOnFoundation;
     consecutiveFoundationPlacements = state.consecutiveFoundationPlacements;
@@ -1442,7 +1453,7 @@
     for (const fc of freeCells) {
       if (fc) allCards.push(fc);
     }
-    freeCells = freeCells.map(() => null);
+    freeCells = freeCells.map(() => null); window.freeCells = freeCells;
 
     shuffleDeck(allCards);
 
@@ -1764,7 +1775,7 @@
   // ── GAME END ─────────────────────────────────────────────
   let scoreSubmitted = false;
   function endGame(perfectClear) {
-    if (!gameActive && scoreSubmitted) return; // prevent duplicate calls
+    if (!gameActive || scoreSubmitted) return; // prevent duplicate calls
     gameActive = false;
     scoreSubmitted = true;
     if (timerInterval) clearInterval(timerInterval);
@@ -2117,6 +2128,25 @@
     }
   });
 
+  // Expose functions referenced by onclick attributes in HTML
+  window.undoMove = undoMove;
+  window.showHelp = showHelp;
+  window.hideHelp = hideHelp;
+  window.toggleMute = toggleMute;
+  window.startNewGame = startNewGame;
+  window.pickJoker = pickJoker;
+  window.closeShop = closeShop;
+  window.drawFromStock = drawFromStock;
+  window.selectCardAt = selectCardAt;
+  window.doubleClickCard = doubleClickCard;
+  window.handleFoundationClick = handleFoundationClick;
+  window.handleTableauColumnClick = handleTableauColumnClick;
+  window.handleEmptyColumnClick = handleEmptyColumnClick;
+  window.handleFreeCellClick = handleFreeCellClick;
+  window.getWasteTop = getWasteTop;
+  window.freeCells = freeCells;
+
+  })();
   </script>
 </body>
 </html>

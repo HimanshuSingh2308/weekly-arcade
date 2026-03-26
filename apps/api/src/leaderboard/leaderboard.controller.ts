@@ -7,6 +7,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Header,
 } from '@nestjs/common';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { LeaderboardService } from './leaderboard.service';
@@ -48,6 +49,7 @@ export class LeaderboardController {
   @Get(':gameId/:period')
   @Public()
   @SkipThrottle({ short: true }) // Skip short throttle for read operations
+  @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=30')
   async getLeaderboard(
     @Param('gameId') gameId: string,
     @Param('period') period: LeaderboardPeriod,

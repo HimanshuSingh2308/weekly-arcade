@@ -1589,6 +1589,7 @@
     <h1 class="title">Voidbreak</h1>
     <div class="header-right">
       <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=voidbreak'" title="Leaderboard">🏆</button>
       <button class="icon-btn" id="soundBtn" title="Toggle Sound">🔊</button>
       <button class="auth-btn" id="authBtn">Sign In</button>
     </div>
@@ -1877,9 +1878,19 @@
   <script src="../../js/auth.js"></script>
 
   <script>
+  (function() {
+    'use strict';
+
     // ==========================================
     // VOIDBREAK - Asteroid Roguelite
     // ==========================================
+
+    // HTML sanitization helper
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
 
     // Canvas setup
     const canvas = document.getElementById('gameCanvas');
@@ -2929,10 +2940,10 @@
         const card = document.createElement('div');
         card.className = `upgrade-card ${upgrade.rarity}`;
         card.innerHTML = `
-          <div class="upgrade-icon">${upgrade.icon}</div>
-          <div class="upgrade-name">${upgrade.name}</div>
-          <div class="upgrade-rarity">${upgrade.rarity}</div>
-          <div class="upgrade-desc">${upgrade.desc}</div>
+          <div class="upgrade-icon">${escapeHTML(upgrade.icon)}</div>
+          <div class="upgrade-name">${escapeHTML(upgrade.name)}</div>
+          <div class="upgrade-rarity">${escapeHTML(upgrade.rarity)}</div>
+          <div class="upgrade-desc">${escapeHTML(upgrade.desc)}</div>
         `;
         card.addEventListener('click', () => selectUpgrade(id, upgrade));
         container.appendChild(card);
@@ -3114,6 +3125,7 @@
         await window.apiClient.submitScore('voidbreak', {
           score: score,
           level: wave,
+          timeMs: Date.now() - gameStartTime,
           metadata: {
             upgradesTaken: upgradesTaken,
             livesLost: STARTING_LIVES - lives,
@@ -3163,7 +3175,7 @@
       try {
         cloudStateVoidbreak = await window.apiClient.getGameState('voidbreak');
       } catch (e) {
-        console.log('Could not load cloud state');
+        // cloud state unavailable
       }
     }
 
@@ -4905,7 +4917,7 @@
 
         ambientNodes = { bassOsc, bassGain, lfo, lfoGain, harmOsc, harmGain };
       } catch (e) {
-        console.log('Ambient music error:', e);
+        // ambient music init failed
       }
     }
 
@@ -5061,17 +5073,14 @@
       // If user is logged in, sync with backend
       if (currentUser && window.apiClient) {
         try {
-          console.log('[Customization] Loading from backend...');
           // Get inventory (coins + owned items)
           const inventory = await window.apiClient.getInventory();
-          console.log('[Customization] Inventory loaded:', inventory);
           customization.coins = inventory.coins || 0;
           customization.totalCoinsEarned = inventory.totalCoinsEarned || 0;
           customization.ownedItems = inventory.ownedItemIds || [];
 
           // Get equipped items
           const equipped = await window.apiClient.getEquipped('voidbreak');
-          console.log('[Customization] Equipped loaded:', equipped);
           if (equipped.equipped) {
             customization.equipped = { ...customization.equipped, ...equipped.equipped };
           }
@@ -5082,7 +5091,7 @@
           console.error('[Customization] Failed to load from backend:', e);
         }
       } else {
-        console.log('[Customization] Skipping backend load - not logged in or no apiClient');
+        // not logged in - using local customization data
       }
 
       // Mark free items as owned
@@ -5153,9 +5162,9 @@
                data-item-id="${item.id}" data-owned="${owned}" data-cost="${item.coinCost}">
             ${selected ? '<span class="loadout-item-check">✓</span>' : ''}
             ${!owned ? '<span class="loadout-item-lock">🔒</span>' : ''}
-            <div class="loadout-item-icon">${item.icon}</div>
-            <div class="loadout-item-name">${item.name}</div>
-            <div class="loadout-item-rarity ${item.rarity}">${item.rarity}</div>
+            <div class="loadout-item-icon">${escapeHTML(item.icon)}</div>
+            <div class="loadout-item-name">${escapeHTML(item.name)}</div>
+            <div class="loadout-item-rarity ${escapeHTML(item.rarity)}">${escapeHTML(item.rarity)}</div>
             ${!owned && item.unlockMethod === 'coins' ? `<div class="loadout-item-price">${item.coinCost} coins</div>` : ''}
             ${!owned && item.unlockMethod === 'achievement' ? `<div class="loadout-item-price">Achievement</div>` : ''}
           </div>
@@ -5313,8 +5322,6 @@
     async function addCoinsReward(amount, description) {
       if (amount <= 0) return;
 
-      console.log('[Coins] Adding reward:', { amount, description, currentUser: !!currentUser, apiClient: !!window.apiClient });
-
       coinsEarnedThisRun += amount;
 
       // Update local state
@@ -5327,14 +5334,12 @@
       // Sync with backend if logged in
       if (currentUser && window.apiClient) {
         try {
-          console.log('[Coins] Syncing to backend...');
-          const result = await window.apiClient.addCoins(amount, 'game_reward', 'voidbreak', description);
-          console.log('[Coins] Backend sync success:', result);
+          await window.apiClient.addCoins(amount, 'game_reward', 'voidbreak', description);
         } catch (e) {
           console.error('[Coins] Failed to sync to backend:', e);
         }
       } else {
-        console.log('[Coins] Skipping backend sync - not logged in or no apiClient');
+        // not logged in - skipping backend sync
       }
 
       updateCoinDisplays();
@@ -5443,6 +5448,7 @@
 
     // Start!
     init();
+  })();
   </script>
 </body>
 </html>

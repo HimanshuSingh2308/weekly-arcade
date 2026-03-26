@@ -10,6 +10,7 @@ const API_BASE_URL = window.location.hostname === 'localhost'
 class ApiClient {
   constructor() {
     this.token = null;
+    this._cache = new Map(); // key -> { data, expiry }
   }
 
   /**
@@ -158,11 +159,22 @@ class ApiClient {
       body: JSON.stringify(scoreData),
     });
     console.log(`[ApiClient] Score submitted for ${gameId}:`, result);
+    // Invalidate leaderboard cache for this game so fresh data loads
+    for (const key of this._cache.keys()) {
+      if (key.startsWith(`lb:${gameId}:`)) this._cache.delete(key);
+    }
     return result;
   }
 
   async getLeaderboard(gameId, period = 'daily', limit = 50) {
-    return this.request(`/leaderboard/${gameId}/${period}?limit=${limit}`);
+    const cacheKey = `lb:${gameId}:${period}:${limit}`;
+    const cached = this._cache.get(cacheKey);
+    if (cached && Date.now() < cached.expiry) {
+      return cached.data;
+    }
+    const data = await this.request(`/leaderboard/${gameId}/${period}?limit=${limit}`);
+    this._cache.set(cacheKey, { data, expiry: Date.now() + 60000 }); // 60s TTL
+    return data;
   }
 
   async getFriendsLeaderboard(gameId, period = 'daily') {

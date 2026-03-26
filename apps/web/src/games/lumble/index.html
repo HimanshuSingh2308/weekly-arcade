@@ -783,6 +783,7 @@
       <span>Lumble</span>
     </div>
     <div class="user-section" id="userSection">
+      <button class="sign-in-btn" onclick="window.location.href='/leaderboard/?game=lumble'" style="background:none;border:1px solid rgba(255,255,255,0.2);padding:0.3rem 0.5rem;border-radius:6px;cursor:pointer;font-size:1rem;" title="Leaderboard">🏆</button>
       <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
     </div>
   </header>
@@ -876,9 +877,14 @@
   <script src="/js/auth.js"></script>
 
   <script>
+    (function() {
+    'use strict';
+
     // ============================================
     // LUMBLE - 3D Web Platformer
     // ============================================
+
+    function escapeHTML(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
     // Game state
     const gameState = {
@@ -2907,17 +2913,10 @@
     // ============================================
 
     async function submitScore() {
-      console.log('[Lumble] submitScore called:', {
-        score: gameState.score,
-        sparks: gameState.sparksCollected,
-        time: gameState.elapsedTime,
-        hasApiClient: !!window.apiClient,
-        hasCurrentUser: !!currentUser
-      });
-
       const scoreData = {
         score: gameState.score,
         level: gameState.sparksCollected,
+        timeMs: Date.now() - gameState.startTime,
         metadata: {
           biome: gameState.biome,
           sparksCollected: gameState.sparksCollected,
@@ -2929,9 +2928,7 @@
 
       if (window.apiClient && currentUser) {
         try {
-          console.log('[Lumble] Submitting score to API...');
           const result = await window.apiClient.submitScore('lumble', scoreData);
-          console.log('[Lumble] Score submitted successfully:', result);
           loadLeaderboard();
         } catch (error) {
           console.error('[Lumble] Failed to submit score:', error);
@@ -2939,7 +2936,6 @@
         }
       } else {
         saveGuestScore(scoreData);
-        console.log('[Lumble] Score saved locally (not signed in)');
       }
     }
 
@@ -2950,6 +2946,7 @@
       const scoreData = {
         score: gameState.sparksCollected * 100,
         level: gameState.sparksCollected,
+        timeMs: Date.now() - gameState.startTime,
         metadata: {
           biome: gameState.biome,
           sparksCollected: gameState.sparksCollected,
@@ -2960,7 +2957,6 @@
 
       try {
         await window.apiClient.submitScore('lumble', scoreData);
-        console.log('[Lumble] Milestone score submitted:', gameState.sparksCollected);
       } catch (error) {
         console.error('[Lumble] Failed to submit milestone:', error);
       }
@@ -2982,10 +2978,13 @@
       const bestScore = pendingScores.reduce((best, curr) =>
         curr.score > best.score ? curr : best, pendingScores[0]);
 
+      if (!bestScore.timeMs && bestScore.metadata?.timeSeconds) {
+        bestScore.timeMs = bestScore.metadata.timeSeconds * 1000;
+      }
+
       try {
         await window.apiClient.submitScore('lumble', bestScore);
         localStorage.removeItem('lumble-pending-scores');
-        console.log('[Lumble] Guest scores synced');
         loadLeaderboard();
       } catch (error) {
         console.error('[Lumble] Failed to sync guest scores:', error);
@@ -3010,7 +3009,7 @@
 
         list.innerHTML = entries.map((entry, i) => {
           const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-          const displayName = entry.odName || entry.displayName || 'Player';
+          const displayName = escapeHTML(entry.odName || entry.displayName || 'Player');
           return `
             <li class="leaderboard-item">
               <span class="lb-rank ${rankClass}">${i + 1}</span>
@@ -3065,7 +3064,7 @@
       try {
         cloudStateLumble = await window.apiClient.getGameState('lumble');
       } catch (e) {
-        console.log('Could not load cloud state');
+        // silent fail
       }
     }
 
@@ -3079,7 +3078,7 @@
           await window.apiClient.unlockAchievement('ten_wins', 'lumble');
         }
       } catch (e) {
-        console.log('Could not check achievements');
+        // silent fail
       }
     }
 
@@ -3096,7 +3095,7 @@
             const userSection = document.getElementById('userSection');
             if (user) {
               userSection.innerHTML = `
-                <img class="user-avatar" src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" alt="User">
+                <img class="user-avatar" src="${escapeHTML(user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U'))}" alt="User">
               `;
               loadCloudState();
               syncGuestScores();
@@ -3161,6 +3160,13 @@
       initAuth();
       setupInputHandlers();
     });
+
+    // Expose functions used by onclick attributes in HTML
+    window.promptSignIn = promptSignIn;
+    window.returnToMenu = returnToMenu;
+    window.restartGame = restartGame;
+
+    })();
   </script>
 
   <!-- More Games Section -->

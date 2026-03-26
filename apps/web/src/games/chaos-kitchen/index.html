@@ -1099,7 +1099,10 @@
       <span class="title-icon">&#x1F468;&#x200D;&#x1F373;</span>
       <span>Chaos Kitchen</span>
     </h1>
-    <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
+    <div style="display:flex;gap:0.4rem;align-items:center;">
+      <button class="auth-btn" id="authBtn" onclick="showAuthModal()">Sign In</button>
+      <button class="auth-btn" onclick="window.location.href='/leaderboard/?game=chaos-kitchen'" title="Leaderboard" style="padding:0.3rem 0.5rem;min-width:auto;">🏆</button>
+    </div>
   </header>
 
   <div class="stats-bar">
@@ -1274,6 +1277,11 @@
   <script src="/js/auth.js"></script>
 
   <script>
+  (function() {
+    'use strict';
+
+    function escapeHTML(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
     // ============ GAME CONSTANTS ============
     const ROUND_TIME = 120;
     const ORDER_SPAWN_INTERVAL = 8000;
@@ -1335,6 +1343,7 @@
     let chaosInterval = null;
     let currentUser = null;
     let highScore = parseInt(localStorage.getItem('chaos-kitchen-high-score')) || 0;
+    let gameStartTime = null;
 
     // ============ DOM ELEMENTS ============
     const kitchenArea = document.getElementById('kitchenArea');
@@ -1389,6 +1398,7 @@
       heldEmoji = null;
       currentChaos = null;
       isPlaying = true;
+      gameStartTime = Date.now();
 
       chefHeldEl.style.display = 'none';
       chefFace.innerHTML = '😊';
@@ -1901,7 +1911,7 @@
     function updateAuthUI() {
       const authBtn = document.getElementById('authBtn');
       if (currentUser) {
-        authBtn.textContent = currentUser.displayName?.split(' ')[0] || 'Chef';
+        authBtn.textContent = escapeHTML(currentUser.displayName?.split(' ')[0] || 'Chef');
         authBtn.onclick = null;
       } else {
         authBtn.textContent = 'Sign In';
@@ -1919,6 +1929,7 @@
       const scoreData = {
         score: score,
         level: level,
+        timeMs: gameStartTime ? Date.now() - gameStartTime : 0,
         metadata: {
           ordersCompleted,
           chaosSurvived,
@@ -1927,13 +1938,10 @@
         }
       };
 
-      console.log('[Chaos Kitchen] Attempting score submit:', { score, level, currentUser: !!currentUser, apiClient: !!window.apiClient });
-
       // If signed in, submit directly
       if (currentUser && window.apiClient) {
         try {
-          const result = await window.apiClient.submitScore('chaos-kitchen', scoreData);
-          console.log('[Chaos Kitchen] Score submitted successfully:', result);
+          await window.apiClient.submitScore('chaos-kitchen', scoreData);
         } catch (e) {
           console.error('[Chaos Kitchen] Failed to submit score:', e);
           saveGuestScore(scoreData);
@@ -1941,7 +1949,6 @@
       } else {
         // Save for later sync
         saveGuestScore(scoreData);
-        console.log('[Chaos Kitchen] Score saved locally (guest mode)');
       }
     }
 
@@ -1969,8 +1976,6 @@
       const pendingScores = JSON.parse(localStorage.getItem('chaos-kitchen-pending-scores') || '[]');
       if (pendingScores.length === 0) return;
 
-      console.log(`Syncing ${pendingScores.length} pending Chaos Kitchen scores...`);
-
       // Submit the best score only
       const bestScore = pendingScores.reduce((best, curr) =>
         curr.score > best.score ? curr : best
@@ -1980,9 +1985,9 @@
         await window.apiClient.submitScore('chaos-kitchen', {
           score: bestScore.score,
           level: bestScore.level,
+          timeMs: bestScore.timeMs || 0,
           metadata: bestScore.metadata
         });
-        console.log('Guest scores synced successfully');
         localStorage.removeItem('chaos-kitchen-pending-scores');
       } catch (e) {
         console.error('Failed to sync guest scores:', e);
@@ -2028,7 +2033,7 @@
           localStorage.setItem('chaos-kitchen-high-score', highScore);
         }
       } catch (e) {
-        console.log('Could not load cloud state');
+        // Cloud state load failed silently
       }
     }
 
@@ -2042,12 +2047,21 @@
           await window.apiClient.unlockAchievement('ten_wins', 'chaos-kitchen');
         }
       } catch (e) {
-        console.log('Could not check achievements');
+        // Achievement check failed silently
       }
     }
 
     // ============ START ============
     window.addEventListener('load', init);
+
+    // Expose functions referenced by onclick attributes in HTML
+    window.showAuthModal = showAuthModal;
+    window.startGame = startGame;
+    window.useStation = useStation;
+    window.pickupIngredient = pickupIngredient;
+    window.deliverPlate = deliverPlate;
+    window.clearPlate = clearPlate;
+  })();
   </script>
 
   <!-- More Games Section -->

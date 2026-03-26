@@ -623,6 +623,7 @@
       <span>2048</span>
     </h1>
     <div class="user-section" id="userSection">
+      <button class="sign-in-btn" onclick="window.location.href='/leaderboard/?game=2048'" style="background:none;border:1px solid rgba(255,255,255,0.15);padding:0.3rem 0.5rem;border-radius:6px;cursor:pointer;font-size:1rem;" title="Leaderboard">🏆</button>
       <button class="sign-in-btn" id="signInBtn" onclick="promptSignIn()">Sign In</button>
     </div>
   </header>
@@ -731,6 +732,12 @@
   <script src="/js/auth.js"></script>
 
   <script>
+  (function() {
+    'use strict';
+
+    // HTML escaping helper for safe display of user-generated content
+    function escapeHTML(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
     // Game Constants
     const GRID_SIZE = 4;
     const WINNING_TILE = 2048;
@@ -747,6 +754,7 @@
     let previousState = null;
     let tileId = 0;
     let currentUser = null;
+    let gameStartTime = Date.now();
 
     // Audio System
     let soundEnabled = localStorage.getItem('2048-sound') !== 'false';
@@ -1233,6 +1241,7 @@
       continueAfterWin = false;
       previousState = null;
       tileId = 0;
+      gameStartTime = Date.now();
 
       addRandomTile();
       addRandomTile();
@@ -1347,15 +1356,22 @@
             currentUser = user;
             const userSection = document.getElementById('userSection');
             if (user) {
-              userSection.innerHTML = `
-                <img class="user-avatar" src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U')}" alt="User">
-              `;
+              userSection.innerHTML = '';
+              const avatarImg = document.createElement('img');
+              avatarImg.className = 'user-avatar';
+              const photoURL = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U');
+              avatarImg.src = photoURL.startsWith('https://') ? photoURL : 'https://ui-avatars.com/api/?name=U&background=random';
+              avatarImg.alt = 'User';
+              userSection.appendChild(avatarImg);
               loadCloudState();
               syncGuestScores(); // Sync any pending guest scores
             } else {
-              userSection.innerHTML = `
-                <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
-              `;
+              userSection.innerHTML = '';
+              const signInButton = document.createElement('button');
+              signInButton.className = 'sign-in-btn';
+              signInButton.textContent = 'Sign In';
+              signInButton.addEventListener('click', promptSignIn);
+              userSection.appendChild(signInButton);
             }
           });
         }
@@ -1373,13 +1389,13 @@
     }
 
     function submitMilestoneScore(milestone) {
-      console.log(`Milestone reached: ${milestone}`);
       submitScore(true);
     }
 
     async function submitScore(isMilestone = false) {
       const scoreData = {
         score: score,
+        timeMs: Date.now() - gameStartTime,
         level: Math.floor(Math.log2(highestTile || 2)),
         metadata: {
           highestTile,
@@ -1392,7 +1408,6 @@
       if (window.apiClient && currentUser) {
         try {
           await window.apiClient.submitScore('2048', scoreData);
-          console.log('Score submitted to server');
           loadLeaderboard();
         } catch (error) {
           console.error('Failed to submit score:', error);
@@ -1402,7 +1417,6 @@
       } else {
         // Save for later sync
         saveGuestScore(scoreData);
-        console.log('Score saved locally (guest mode)');
       }
     }
 
@@ -1430,7 +1444,6 @@
       const pendingScores = JSON.parse(localStorage.getItem('2048-pending-scores') || '[]');
       if (pendingScores.length === 0) return;
 
-      console.log(`Syncing ${pendingScores.length} pending scores...`);
 
       // Submit the best score only
       const bestScore = pendingScores.reduce((best, curr) =>
@@ -1443,7 +1456,6 @@
           level: bestScore.level,
           metadata: bestScore.metadata
         });
-        console.log('Guest scores synced successfully');
         localStorage.removeItem('2048-pending-scores');
         loadLeaderboard();
       } catch (error) {
@@ -1512,7 +1524,7 @@
           await window.apiClient.unlockAchievement('ten_wins', '2048');
         }
       } catch (error) {
-        console.log('Could not check achievements');
+        console.error('Could not check achievements:', error);
       }
     }
 
@@ -1532,28 +1544,57 @@
           return;
         }
 
-        list.innerHTML = entries.map((entry, i) => {
+        list.innerHTML = '';
+        entries.forEach((entry, i) => {
           const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
           const displayName = entry.odName || entry.displayName || 'Player';
-          const avatarUrl = entry.odAvatarUrl || entry.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+          const rawAvatarUrl = entry.odAvatarUrl || entry.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+          const avatarUrl = rawAvatarUrl.startsWith('https://') ? rawAvatarUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
 
-          return `
-            <li class="leaderboard-item">
-              <span class="lb-rank ${rankClass}">${i + 1}</span>
-              <img class="lb-avatar" src="${avatarUrl}" alt="">
-              <span class="lb-name">${displayName}</span>
-              <span class="lb-score">${entry.score.toLocaleString()}</span>
-            </li>
-          `;
-        }).join('');
+          const li = document.createElement('li');
+          li.className = 'leaderboard-item';
+
+          const rank = document.createElement('span');
+          rank.className = `lb-rank ${rankClass}`;
+          rank.textContent = i + 1;
+
+          const avatar = document.createElement('img');
+          avatar.className = 'lb-avatar';
+          avatar.src = avatarUrl;
+          avatar.alt = '';
+
+          const name = document.createElement('span');
+          name.className = 'lb-name';
+          name.textContent = displayName;
+
+          const scoreSpan = document.createElement('span');
+          scoreSpan.className = 'lb-score';
+          scoreSpan.textContent = entry.score.toLocaleString();
+
+          li.appendChild(rank);
+          li.appendChild(avatar);
+          li.appendChild(name);
+          li.appendChild(scoreSpan);
+          list.appendChild(li);
+        });
       } catch (error) {
         console.error('Failed to load leaderboard:', error);
         list.innerHTML = '<li class="leaderboard-item"><span class="lb-name" style="text-align:center;width:100%">Failed to load</span></li>';
       }
     }
 
+    // Expose functions needed by onclick attributes in HTML
+    window.promptSignIn = promptSignIn;
+    window.toggleSound = toggleSound;
+    window.undoMove = undoMove;
+    window.newGame = newGame;
+    window.hideOverlay = hideOverlay;
+    window.continueGame = continueGame;
+    window.startGame = newGame;
+
     // Start
     init();
+  })();
   </script>
 
   <!-- More Games Section -->

@@ -406,6 +406,7 @@
     <div class="game-title">&#x1FA99; Coin Cascade</div>
     <div class="header-right">
       <button class="auth-btn" id="authBtn">Sign In</button>
+      <button class="sound-btn" onclick="window.location.href='/leaderboard/?game=coin-cascade'" title="Leaderboard">🏆</button>
       <button class="sound-btn" id="soundToggle" aria-label="Toggle sound">&#x1F50A;</button>
     </div>
   </div>
@@ -578,6 +579,8 @@
     try { localStorage.setItem('coin-cascade-player', JSON.stringify(data)); } catch(e) {}
   }
 
+  function escapeHTML(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
   function checkAchievements(gameData) {
     const playerData = safeGetPlayer();
     const newOnes = [];
@@ -725,10 +728,10 @@
     toast.className = 'achievement-toast';
     toast.setAttribute('role', 'alert');
     toast.innerHTML = `
-      <span class="achievement-icon">${achievement.icon}</span>
+      <span class="achievement-icon">${escapeHTML(achievement.icon)}</span>
       <div class="achievement-info">
-        <div class="achievement-name">${achievement.name}</div>
-        <div class="achievement-desc">${achievement.desc}</div>
+        <div class="achievement-name">${escapeHTML(achievement.name)}</div>
+        <div class="achievement-desc">${escapeHTML(achievement.desc)}</div>
       </div>`;
     toast.style.top = (20 + activeToasts * 90) + 'px';
     activeToasts++;
@@ -815,7 +818,6 @@
           ...extras,
         },
       });
-      console.log('[Coin Cascade] Score submitted:', result);
     } catch (err) {
       console.error('[Coin Cascade] Score submit failed:', err);
     }
