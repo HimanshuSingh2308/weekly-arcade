@@ -55,12 +55,14 @@ class ApiClient {
         throw new Error(error.message || `API Error: ${response.status}`);
       }
 
-      // Handle 204 No Content
+      // Handle empty responses
       if (response.status === 204) {
         return null;
       }
 
-      return response.json();
+      const text = await response.text();
+      if (!text || text === 'null') return null;
+      return JSON.parse(text);
     } catch (error) {
       console.error(`[ApiClient] Request exception: ${endpoint}`, error);
       throw error;
