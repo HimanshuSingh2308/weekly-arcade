@@ -57,8 +57,9 @@ const NotificationManager = (() => {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') return false;
 
-      const swReg = await navigator.serviceWorker.getRegistration();
-      if (!swReg) return false;
+      // Wait for service worker to be fully active (pushManager requires active SW)
+      const swReg = await navigator.serviceWorker.ready;
+      if (!swReg || !swReg.pushManager) return false;
 
       const tokenOpts = { serviceWorkerRegistration: swReg };
       if (vapidKey) tokenOpts.vapidKey = vapidKey;
@@ -111,8 +112,8 @@ const NotificationManager = (() => {
     // Check token validity every 24 hours
     setInterval(async () => {
       try {
-        const swReg = await navigator.serviceWorker.getRegistration();
-        if (!swReg) return;
+        const swReg = await navigator.serviceWorker.ready;
+        if (!swReg || !swReg.pushManager) return;
 
         const tokenOpts = { serviceWorkerRegistration: swReg };
         if (vapidKey) tokenOpts.vapidKey = vapidKey;
