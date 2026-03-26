@@ -55,73 +55,8 @@
       overscroll-behavior: none;
     }
 
-    /* Header */
-    .header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      padding: 0.5rem 1rem;
-      padding-top: max(0.5rem, env(safe-area-inset-top));
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .back-btn {
-      color: var(--text-primary);
-      text-decoration: none;
-      font-size: 1.5rem;
-      padding: 0.5rem 0.8rem;
-      background: var(--bg-card);
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .back-btn:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .game-title {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.2rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .icon-btn {
-      background: none;
-      border: 2px solid var(--border);
-      color: var(--text-primary);
-      font-size: 1.2rem;
-      padding: 0.3rem 0.5rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .icon-btn:hover {
-      border-color: var(--accent);
-    }
-
-    .icon-btn.muted {
-      opacity: 0.5;
-    }
+    /* Header — provided by shared game-header.js */
+    #gameHeader { position: relative; z-index: 101; }
 
     /* Game Layout */
     .game-container {
@@ -1107,14 +1042,6 @@
         display: none;
       }
 
-      .header {
-        padding: 8px 12px;
-      }
-
-      .game-title {
-        font-size: 1rem;
-      }
-
       /* Show mobile UI */
       .mobile-ui {
         display: flex;
@@ -1335,14 +1262,7 @@
   </div>
 
   <!-- Header -->
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="game-title"><span>🏰</span><span>Fieldstone</span></h1>
-    <div class="header-right">
-      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔊</button>
-      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=fieldstone'" title="Leaderboard">🏆</button>
-    </div>
-  </header>
+  <header id="gameHeader"></header>
 
   <!-- Game Container -->
   <div class="game-container">
@@ -1567,6 +1487,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
+  <script src="/js/game-header.js"></script>
   <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}}b.onclick=function(){window.location.href='/profile/'};if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}}</script>
 
   <script>
@@ -1576,6 +1497,16 @@
     // ============================================
     // FIELDSTONE - Kingdom Builder Puzzle
     // ============================================
+
+    // Shared header
+    const headerApi = window.gameHeader.init({
+      title: 'Fieldstone',
+      icon: '🏰',
+      gameId: 'fieldstone',
+      buttons: ['sound', 'leaderboard'],
+      onSound: () => { toggleSound(); },
+      soundBtnId: 'soundBtn',
+    });
 
     // HTML sanitizer for user-supplied strings
     function escapeHTML(str) {
@@ -3137,9 +3068,7 @@
     // Sound toggle
     function toggleSound() {
       soundEnabled = !soundEnabled;
-      const btn = document.getElementById('soundBtn');
-      btn.textContent = soundEnabled ? '🔊' : '🔇';
-      btn.classList.toggle('muted', !soundEnabled);
+      headerApi.setSoundMuted(!soundEnabled);
     }
 
     // Cloud state

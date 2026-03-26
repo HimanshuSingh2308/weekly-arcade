@@ -112,71 +112,7 @@
       overscroll-behavior: none;
     }
 
-    /* Header */
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(26, 26, 46, 0.3);
-      backdrop-filter: blur(6px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 0.5rem 1rem;
-      padding-top: max(0.5rem, env(safe-area-inset-top));
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 100;
-    }
-
-    .back-btn {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 1.5rem;
-      padding: 0.5rem;
-      display: flex;
-      align-items: center;
-      transition: color 0.2s;
-    }
-
-    .back-btn:hover { color: var(--accent); }
-
-    .game-title {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.2rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .user-section {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid var(--accent);
-    }
-
-    .sign-in-btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 0.4rem 1rem;
-      border-radius: 16px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
+    /* Header — rendered by game-header.js */
 
     /* Game Container */
     #gameContainer {
@@ -828,18 +764,8 @@
     <button class="play-btn" id="playBtn">▶ Start Game</button>
   </div>
 
-  <!-- Header -->
-  <header class="header" id="gameHeader" style="display: none;">
-    <a href="/" class="back-btn">←</a>
-    <div class="game-title">
-      <span>🫧</span>
-      <span>Lumble</span>
-    </div>
-    <div class="user-section" id="userSection">
-      <button class="sign-in-btn" onclick="window.location.href='/leaderboard/?game=lumble'" style="background:none;border:1px solid rgba(255,255,255,0.2);padding:0.3rem 0.5rem;border-radius:6px;cursor:pointer;font-size:1rem;" title="Leaderboard">🏆</button>
-      <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
-    </div>
-  </header>
+  <!-- Header — rendered by game-header.js -->
+  <header id="gameHeader" style="display: none;"></header>
 
   <!-- HUD -->
   <div class="hud" id="gameHud" style="display: none;">
@@ -942,6 +868,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
+  <script src="/js/game-header.js"></script>
   <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}}b.onclick=function(){window.location.href='/profile/'};if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}}</script>
 
   <script>
@@ -4369,8 +4296,10 @@
     // Audio system with mobile support
     let audioCtx = null;
     let audioUnlocked = false;
+    let soundMuted = false;
 
     function getAudioContext() {
+      if (soundMuted) return null;
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -5029,22 +4958,15 @@
     function initAuth() {
       if (!window.gameCloud) return;
       window.gameCloud.initAuth({
+        authBtnId: 'authBtn',
         onSignIn: async (user) => {
           currentUser = user;
-          const userSection = document.getElementById('userSection');
-          userSection.innerHTML = `
-            <img class="user-avatar" src="${escapeHTML(user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U'))}" alt="User">
-          `;
           await loadCloudState();
           await window.gameCloud.syncGuestScores('lumble');
           if (typeof loadLeaderboard === 'function') loadLeaderboard();
         },
         onSignOut: () => {
           currentUser = null;
-          const userSection = document.getElementById('userSection');
-          userSection.innerHTML = `
-            <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
-          `;
         }
       });
     }
@@ -5096,6 +5018,25 @@
     // ============================================
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Shared header component
+      if (window.gameHeader) {
+        window.gameHeader.init({
+          title: 'Lumble',
+          icon: '🫧',
+          gameId: 'lumble',
+          buttons: ['sound', 'leaderboard', 'auth'],
+          onSound: () => {
+            soundMuted = !soundMuted;
+            if (soundMuted && audioCtx) {
+              audioCtx.suspend();
+            } else if (!soundMuted && audioCtx) {
+              audioCtx.resume();
+            }
+          },
+          authBtnId: 'authBtn',
+        });
+      }
+
       initMenu();
       initAuth();
       setupInputHandlers();

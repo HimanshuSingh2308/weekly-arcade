@@ -1,5 +1,59 @@
+// Firebase Cloud Messaging for push notifications
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: 'AIzaSyAFA4KwOaQpa0A-v2auCulStCrOgScrz-g',
+  projectId: 'loyal-curve-425715-h6',
+  messagingSenderId: '5171085645',
+  appId: '1:5171085645:web:b01fbc558d626f649e3704',
+});
+
+const messaging = firebase.messaging();
+
+// Handle background push messages (when app is not in focus)
+messaging.onBackgroundMessage((payload) => {
+  const data = payload.data || {};
+  const notification = payload.notification || {};
+
+  self.registration.showNotification(notification.title || 'Weekly Arcade', {
+    body: notification.body || '',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: data.type || 'default',
+    data: data,
+    sound: '/sounds/notification.mp3',
+  });
+});
+
+// Handle notification clicks — route to relevant page
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+
+  let url = '/';
+  if (data.type === 'new_game' && data.gameId) {
+    url = `/games/${data.gameId}/`;
+  } else if (data.type === 'leaderboard_update') {
+    url = '/leaderboard/';
+  } else if (data.type === 'achievement_unlocked') {
+    url = '/profile/';
+  }
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(url) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
+});
+
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 21;
+const CACHE_VERSION = 22;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -8,6 +62,7 @@ const ASSETS = [
   '/index.html',
   '/manifest.json',
   '/js/game-cloud.js',
+  '/js/game-header.js',
   '/leaderboard/',
   '/leaderboard/index.html',
   '/games/wordle/',

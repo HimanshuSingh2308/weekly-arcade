@@ -115,42 +115,7 @@
       overscroll-behavior: none;
     }
 
-    /* Header */
-    .header {
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding: 0.8rem 1rem;
-      padding-top: max(0.8rem, env(safe-area-inset-top));
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--bg-secondary);
-    }
-
-    .back-btn {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: color 0.2s;
-    }
-
-    .back-btn:hover { color: var(--text); }
-
-    .title-section { text-align: center; }
-
-    .game-title {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.5rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), #ff6b8a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
+    /* Badges (below header) */
     .badges-row {
       display: flex;
       gap: 0.5rem;
@@ -178,30 +143,6 @@
       background: linear-gradient(135deg, #e94560, #c73e54);
       color: #fff;
     }
-
-    .header-right {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .icon-btn {
-      background: none;
-      border: 2px solid rgba(255,255,255,0.2);
-      color: var(--text);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .icon-btn:hover {
-      border-color: var(--accent);
-      background: rgba(233, 69, 96, 0.1);
-    }
-
-    .icon-btn.muted { opacity: 0.5; }
 
     /* Stats Bar */
     .stats-bar {
@@ -646,10 +587,6 @@
 
     /* Responsive - Mobile Full Screen */
     @media (max-width: 600px) {
-      .header {
-        padding: 0.5rem;
-      }
-
       .stats-bar {
         padding: 0.5rem;
         gap: 0.8rem;
@@ -891,21 +828,11 @@
   </div>
 
   <!-- Game Screen -->
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <div class="title-section">
-      <h1 class="game-title"><span>🃏</span><span>Memory Match</span></h1>
-      <div class="badges-row">
-        <span class="badge combo-badge" id="comboBadge">x2 COMBO</span>
-        <span class="badge streak-badge" id="streakBadge">🔥 0</span>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="icon-btn" id="soundBtn" title="Toggle Sound">🔊</button>
-      <button class="icon-btn" onclick="window.location.href='/leaderboard/?game=memory-match'" title="Leaderboard">🏆</button>
-      <button class="icon-btn" id="menuBtn" title="Menu">☰</button>
-    </div>
-  </header>
+  <header id="gameHeader"></header>
+  <div class="badges-row">
+    <span class="badge combo-badge" id="comboBadge">x2 COMBO</span>
+    <span class="badge streak-badge" id="streakBadge">🔥 0</span>
+  </div>
 
   <div class="stats-bar">
     <div class="stat">
@@ -996,6 +923,7 @@
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/game-cloud.js"></script>
+  <script src="/js/game-header.js"></script>
   <script>if(!window.gameCloud){window.gameCloud={initAuth:function(o){var p=setInterval(function(){if(window.authManager&&window.authManager.isInitialized){clearInterval(p);window.authManager.onAuthStateChanged(function(u){var b=o.authBtnId?document.getElementById(o.authBtnId):null;if(u){if(b){if(u.photoURL){b.innerHTML='';b.style.cssText='padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px';var im=document.createElement('img');im.src=u.photoURL;im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';b.appendChild(im)}else{b.textContent=(u.displayName||'P').charAt(0);b.style.cssText='width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center'}}b.onclick=function(){window.location.href='/profile/'};if(o.onSignIn)o.onSignIn(u)}else{if(b){b.innerHTML='';b.removeAttribute('style');b.textContent='Sign In';b.onclick=function(){if(window.authManager)window.authManager.signInWithGoogle()}}if(o.onSignOut)o.onSignOut()}})},100)},submitScore:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},submitOrQueue:function(){if(window.authNudge)window.authNudge.show();return Promise.resolve(null)},loadState:function(){return Promise.resolve(null)},saveState:function(){return Promise.resolve(null)},saveGuestScore:function(){},syncGuestScores:function(){return Promise.resolve()},unlockAchievement:function(){return Promise.resolve()},getUser:function(){return null},isSignedIn:function(){return false}}}}</script>
 
   <script>
@@ -1101,12 +1029,6 @@
       // Start button
       document.getElementById('startBtn').addEventListener('click', startGame);
 
-      // Menu button
-      document.getElementById('menuBtn').addEventListener('click', showMenu);
-
-      // Sound button
-      document.getElementById('soundBtn').addEventListener('click', toggleSound);
-
       // Power-up buttons
       document.getElementById('peekBtn').addEventListener('click', usePeek);
       document.getElementById('shuffleBtn').addEventListener('click', useShuffle);
@@ -1170,7 +1092,8 @@
     // Toggle sound
     function toggleSound() {
       gameState.soundEnabled = !gameState.soundEnabled;
-      document.getElementById('soundBtn').classList.toggle('muted', !gameState.soundEnabled);
+      var btn = document.getElementById('ghSoundBtn');
+      if (btn) btn.classList.toggle('muted', !gameState.soundEnabled);
     }
 
     // Unlock audio for iOS - play/pause on user gesture
@@ -1684,6 +1607,7 @@
     function initAuth() {
       if (!window.gameCloud) return;
       window.gameCloud.initAuth({
+        authBtnId: 'authBtn',
         onSignIn: (user) => {
           currentUser = user;
           loadCloudState();
@@ -1698,6 +1622,18 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
+      if (window.gameHeader) {
+        window.gameHeader.init({
+          title: 'Memory Match',
+          icon: '\uD83C\uDCCF',
+          gameId: 'memory-match',
+          buttons: ['sound', 'leaderboard', 'menu', 'auth'],
+          onSound: () => toggleSound(),
+          onMenu: () => showMenu(),
+          soundBtnId: 'ghSoundBtn',
+          authBtnId: 'authBtn',
+        });
+      }
       initMenu();
       initAuth();
     });
