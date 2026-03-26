@@ -53,7 +53,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 22;
+const CACHE_VERSION = 23;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -61,8 +61,12 @@ const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/js/api-client.js',
+  '/js/auth.js',
+  '/js/sync.js',
   '/js/game-cloud.js',
   '/js/game-header.js',
+  '/js/notification-manager.js',
   '/leaderboard/',
   '/leaderboard/index.html',
   '/games/wordle/',

@@ -1049,20 +1049,21 @@
     }
     .pwa-update-dismiss:hover { color: white; }
 
-    /* ─── iOS Install Banner ─── */
-    .ios-install-banner {
+    /* ─── PWA Install Banner (shared by Android/Desktop + iOS) ─── */
+    .pwa-install-banner {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
       background: var(--bg-card-solid);
       border-top: 1px solid var(--border);
-      padding: 1rem;
+      padding: 1.25rem 1rem;
       display: none;
       align-items: center;
       gap: 1rem;
       z-index: 1000;
       animation: slideUp 0.3s ease-out;
+      backdrop-filter: blur(12px);
     }
 
     @keyframes slideUp {
@@ -1070,33 +1071,92 @@
       to { transform: translateY(0); }
     }
 
-    .ios-install-banner.show { display: flex; }
-    .ios-install-icon { font-size: 2.5rem; }
-    .ios-install-content { flex: 1; }
-    .ios-install-title { font-weight: 700; margin-bottom: 0.25rem; }
+    .pwa-install-banner.show { display: flex; }
 
-    .ios-install-text {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
+    .pwa-install-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #ff6b8a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
     }
 
-    .ios-install-text span {
+    .pwa-install-content { flex: 1; min-width: 0; }
+    .pwa-install-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.15rem; }
+
+    .pwa-install-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.3;
+    }
+
+    .pwa-install-subtitle span {
       display: inline-flex;
       align-items: center;
       background: var(--bg-secondary);
       padding: 0.1rem 0.4rem;
       border-radius: 4px;
-      margin: 0 0.2rem;
+      margin: 0 0.15rem;
+      font-size: 0.75rem;
     }
 
-    .ios-install-close {
+    .pwa-install-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .pwa-install-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .pwa-install-btn:hover { transform: scale(1.05); }
+    .pwa-install-btn:active { transform: scale(0.97); }
+
+    .pwa-install-close {
       background: none;
       border: none;
       color: var(--text-secondary);
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       cursor: pointer;
-      padding: 0.5rem;
+      padding: 0.3rem;
+      line-height: 1;
     }
+    .pwa-install-close:hover { color: var(--text-primary); }
+
+    /* ─── PWA Installed Toast ─── */
+    .pwa-installed-toast {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      background: var(--bg-card-solid);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      z-index: 2000;
+      transition: transform 0.3s ease-out;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .pwa-installed-toast.show { transform: translateX(-50%) translateY(0); }
 
     /* ─── No Results ─── */
     .no-results {
@@ -1582,16 +1642,24 @@
     <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
   </footer>
 
-  <!-- iOS Install Banner -->
-  <div class="ios-install-banner" id="iosInstallBanner">
-    <div class="ios-install-icon">🎮</div>
-    <div class="ios-install-content">
-      <div class="ios-install-title">Install Weekly Arcade</div>
-      <div class="ios-install-text">
-        Tap <span>⬆️ Share</span> then <span>➕ Add to Home Screen</span>
+  <!-- PWA Install Banner (Android/Desktop: shows Install button; iOS: shows instructions) -->
+  <div class="pwa-install-banner" id="pwaInstallBanner">
+    <div class="pwa-install-icon">🎮</div>
+    <div class="pwa-install-content">
+      <div class="pwa-install-title">Install Weekly Arcade</div>
+      <div class="pwa-install-subtitle" id="pwaInstallSubtitle">
+        Play offline, get notifications, and launch instantly from your home screen.
       </div>
     </div>
-    <button class="ios-install-close" onclick="dismissIOSBanner()">&times;</button>
+    <div class="pwa-install-actions">
+      <button class="pwa-install-btn" id="pwaInstallBtn">Install</button>
+      <button class="pwa-install-close" id="pwaInstallDismiss">&times;</button>
+    </div>
+  </div>
+
+  <!-- Installed confirmation toast -->
+  <div class="pwa-installed-toast" id="pwaInstalledToast">
+    <span>✅</span> Weekly Arcade installed! Open from your home screen.
   </div>
 
   <!-- PWA Update Banner -->
@@ -1710,7 +1778,11 @@
 
     updateDismiss.addEventListener('click', () => { hideUpdateBanner(); });
 
-    // ─── iOS PWA Install Banner ───
+    // ─── PWA Install Experience ───
+    const INSTALL_DISMISS_KEY = 'pwa-install-dismissed';
+    const INSTALL_DISMISS_DAYS = 14;
+    let deferredPrompt = null;
+
     function isIOS() {
       return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     }
@@ -1720,20 +1792,89 @@
              window.navigator.standalone === true;
     }
 
-    function showIOSInstallBanner() {
-      if (isIOS() && !isInStandaloneMode() && !localStorage.getItem('ios-banner-dismissed')) {
-        setTimeout(() => {
-          document.getElementById('iosInstallBanner').classList.add('show');
-        }, 3000);
+    function wasRecentlyDismissed() {
+      const dismissed = localStorage.getItem(INSTALL_DISMISS_KEY);
+      if (!dismissed) return false;
+      return Date.now() - parseInt(dismissed, 10) < INSTALL_DISMISS_DAYS * 86400000;
+    }
+
+    function showInstallBanner() {
+      if (isInStandaloneMode() || wasRecentlyDismissed()) return;
+      if (!deferredPrompt && !isIOS()) return;
+
+      const banner = document.getElementById('pwaInstallBanner');
+      const subtitle = document.getElementById('pwaInstallSubtitle');
+      const btn = document.getElementById('pwaInstallBtn');
+
+      if (isIOS()) {
+        subtitle.innerHTML = 'Tap <span>⬆️ Share</span> then <span>➕ Add to Home Screen</span>';
+        btn.textContent = 'Got it';
+        btn.onclick = dismissInstallBanner;
+      } else {
+        subtitle.textContent = 'Play offline, get notifications, and launch instantly from your home screen.';
+        btn.textContent = 'Install';
+        btn.onclick = triggerInstall;
+      }
+
+      banner.classList.add('show');
+    }
+
+    function dismissInstallBanner() {
+      document.getElementById('pwaInstallBanner').classList.remove('show');
+      localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+    }
+
+    async function triggerInstall() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('pwaInstallBanner').classList.remove('show');
+
+      if (outcome === 'accepted') {
+        localStorage.removeItem(INSTALL_DISMISS_KEY);
+        showInstalledToast();
       }
     }
 
-    function dismissIOSBanner() {
-      document.getElementById('iosInstallBanner').classList.remove('show');
-      localStorage.setItem('ios-banner-dismissed', 'true');
+    function showInstalledToast() {
+      const toast = document.getElementById('pwaInstalledToast');
+      toast.classList.add('show');
+      setTimeout(() => { toast.classList.remove('show'); }, 4000);
     }
 
-    window.addEventListener('load', showIOSInstallBanner);
+    // Capture the install prompt (Android/Desktop Chrome, Edge, etc.)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show after engagement delay (10s or scroll)
+      setTimeout(showInstallBanner, 10000);
+    });
+
+    // Show installed toast if app was just installed
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      document.getElementById('pwaInstallBanner').classList.remove('show');
+      showInstalledToast();
+    });
+
+    // iOS: show banner after scroll engagement (not immediately)
+    if (isIOS() && !isInStandaloneMode() && !wasRecentlyDismissed()) {
+      let iosShown = false;
+      const showOnScroll = () => {
+        if (!iosShown && window.scrollY > 200) {
+          iosShown = true;
+          showInstallBanner();
+          window.removeEventListener('scroll', showOnScroll);
+        }
+      };
+      window.addEventListener('scroll', showOnScroll, { passive: true });
+      // Fallback: show after 15s even without scroll
+      setTimeout(() => { if (!iosShown) { iosShown = true; showInstallBanner(); } }, 15000);
+    }
+
+    // Wire up dismiss button
+    document.getElementById('pwaInstallDismiss').addEventListener('click', dismissInstallBanner);
 
     // ─── Auth UI Functions ───
     function showAuthModal() { document.getElementById('authModal').classList.add('show'); }
