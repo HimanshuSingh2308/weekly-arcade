@@ -64,18 +64,27 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-primary: #0f0f1a;
-      --bg-secondary: #1a1a2e;
-      --bg-card: #16213e;
+      --bg-primary: #0a0a12;
+      --bg-secondary: #12121f;
+      --bg-card: rgba(22, 33, 62, 0.6);
+      --bg-card-solid: #16213e;
       --accent: #e94560;
       --accent-hover: #ff6b6b;
-      --text-primary: #eee;
-      --text-secondary: #888;
-      --border: #2a2a4a;
+      --accent-glow: rgba(233, 69, 96, 0.3);
+      --purple: #7c3aed;
+      --purple-glow: rgba(124, 58, 237, 0.2);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a8;
+      --border: rgba(255, 255, 255, 0.06);
+      --glass: rgba(255, 255, 255, 0.03);
       --gold: #ffd700;
+      --gold-glow: rgba(255, 215, 0, 0.15);
       --silver: #c0c0c0;
+      --silver-glow: rgba(192, 192, 192, 0.1);
       --bronze: #cd7f32;
-      --success: #4ade80;
+      --bronze-glow: rgba(205, 127, 50, 0.1);
+      --radius: 16px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     body {
@@ -83,47 +92,73 @@
       background: var(--bg-primary);
       color: var(--text-primary);
       min-height: 100vh;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
     }
 
-    /* Header */
+    /* ─── Header ─── */
     .header {
-      background: var(--bg-secondary);
+      background: rgba(18, 18, 31, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      padding: 0.8rem 1.5rem;
+      padding: 0.8rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 50;
     }
 
     .logo {
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       font-weight: 800;
-      color: var(--accent);
+      color: var(--text-primary);
       text-decoration: none;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      letter-spacing: -0.02em;
     }
 
-    .nav {
-      display: flex;
-      gap: 1.5rem;
+    .logo-icon { font-size: 1.6rem; }
+
+    .logo span.brand {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
+
+    .nav { display: flex; gap: 0.25rem; }
 
     .nav a {
       color: var(--text-secondary);
       text-decoration: none;
       font-weight: 500;
       font-size: 0.9rem;
-      transition: color 0.2s;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      transition: color var(--transition), background var(--transition);
     }
 
-    .nav a:hover, .nav a.active {
-      color: var(--accent);
+    .nav a:hover { color: var(--text-primary); background: var(--glass); }
+    .nav a.active { color: var(--accent); background: rgba(233, 69, 96, 0.08); }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      line-height: 1;
+      transition: border-color var(--transition);
     }
+    .mobile-menu-btn:hover { border-color: var(--accent); }
 
     .header-right {
       display: flex;
@@ -132,26 +167,23 @@
     }
 
     .auth-btn {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #c73e54);
       color: white;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
+      padding: 0.5rem 1.2rem;
+      border-radius: 12px;
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: transform var(--transition), box-shadow var(--transition);
     }
 
     .auth-btn:hover {
-      background: var(--accent-hover);
       transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(233, 69, 96, 0.3);
     }
 
-    .user-menu {
-      position: relative;
-      display: none;
-    }
+    .user-menu { position: relative; display: none; }
 
     .user-menu.signed-in {
       display: flex;
@@ -161,8 +193,8 @@
     }
 
     .user-avatar {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       border: 2px solid var(--accent);
       object-fit: cover;
@@ -172,11 +204,11 @@
       position: absolute;
       top: calc(100% + 0.5rem);
       right: 0;
-      background: var(--bg-card);
+      background: var(--bg-card-solid);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      min-width: 160px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      min-width: 170px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
       opacity: 0;
       visibility: hidden;
       transform: translateY(-10px);
@@ -198,229 +230,243 @@
       color: var(--text-primary);
       text-decoration: none;
       font-size: 0.85rem;
-      transition: background 0.2s;
+      transition: background var(--transition);
     }
 
-    .dropdown-item:hover {
-      background: var(--bg-secondary);
+    .dropdown-item:hover { background: rgba(255, 255, 255, 0.04); }
+    .dropdown-item:first-child { border-radius: 12px 12px 0 0; }
+    .dropdown-item:last-child { border-radius: 0 0 12px 12px; }
+    .dropdown-divider { height: 1px; background: var(--border); }
+    .dropdown-item.sign-out { color: var(--accent); }
+
+    /* ─── Page Header ─── */
+    .page-hero {
+      position: relative;
+      padding: 2.5rem 2rem 0;
+      overflow: hidden;
     }
 
-    .dropdown-divider {
-      height: 1px;
-      background: var(--border);
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 50% 0%, rgba(233, 69, 96, 0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 10%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+      pointer-events: none;
     }
 
-    .dropdown-item.sign-out {
-      color: var(--accent);
+    .page-hero-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      text-align: center;
     }
 
-    /* Main Layout */
-    .main-container {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      min-height: calc(100vh - 60px);
+    .page-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
     }
 
-    /* Games Sidebar */
-    .games-sidebar {
-      background: var(--bg-secondary);
-      border-right: 1px solid var(--border);
-      padding: 1.5rem;
-      overflow-y: auto;
+    .page-hero h1 .highlight {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .sidebar-title {
-      font-size: 0.75rem;
-      font-weight: 600;
+    .page-hero p {
       color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 1rem;
+      font-size: 1rem;
+      margin-bottom: 2rem;
     }
 
-    .games-list {
+    /* ─── Game Picker ─── */
+    .game-picker {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .game-picker-scroll {
       display: flex;
-      flex-direction: column;
       gap: 0.5rem;
+      overflow-x: auto;
+      padding: 0.5rem 0 1rem;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
+    .game-picker-scroll::-webkit-scrollbar { display: none; }
 
-    .game-item {
+    .game-chip {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .game-item:hover {
-      background: rgba(233, 69, 96, 0.1);
-      border-color: rgba(233, 69, 96, 0.3);
-    }
-
-    .game-item.active {
-      background: linear-gradient(135deg, rgba(233, 69, 96, 0.2), rgba(233, 69, 96, 0.1));
-      border-color: var(--accent);
-    }
-
-    .game-icon {
-      font-size: 1.5rem;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-card);
-      border-radius: 10px;
-    }
-
-    .game-item.active .game-icon {
-      background: var(--accent);
-    }
-
-    .game-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .game-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 0.15rem;
-    }
-
-    .game-players {
-      font-size: 0.75rem;
+      gap: 0.5rem;
+      padding: 0.55rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--glass);
       color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
     }
 
-    /* Leaderboard Content */
-    .leaderboard-content {
-      padding: 1.5rem 2rem;
-      max-width: 800px;
+    .game-chip:hover {
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
     }
 
-    .content-header {
+    .game-chip.active {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      border-color: transparent;
+      box-shadow: 0 2px 12px rgba(233, 69, 96, 0.3);
+    }
+
+    .game-chip-icon { font-size: 1.1rem; }
+
+    /* ─── Leaderboard Panel ─── */
+    .lb-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+    }
+
+    /* Controls Row */
+    .lb-controls {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
       flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .game-title {
-      display: flex;
-      align-items: center;
       gap: 0.75rem;
     }
 
-    .game-title-icon {
-      font-size: 2rem;
+    .lb-game-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
     }
 
-    .game-title h1 {
-      font-size: 1.5rem;
+    .lb-game-title-icon { font-size: 1.6rem; }
+
+    .lb-game-title h2 {
+      font-size: 1.3rem;
       font-weight: 700;
+      letter-spacing: -0.02em;
     }
 
-    .game-title p {
-      font-size: 0.85rem;
+    .lb-game-title .lb-subtitle {
+      font-size: 0.8rem;
       color: var(--text-secondary);
+      font-weight: 400;
     }
 
-    /* Period Tabs */
     .period-tabs {
       display: flex;
-      background: var(--bg-card);
-      border-radius: 10px;
-      padding: 0.25rem;
-      gap: 0.25rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.2rem;
+      gap: 0.15rem;
     }
 
     .period-tab {
       padding: 0.5rem 1rem;
       background: transparent;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       color: var(--text-secondary);
-      font-size: 0.85rem;
-      font-weight: 500;
+      font-size: 0.82rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition);
       white-space: nowrap;
     }
 
-    .period-tab:hover {
-      color: var(--text-primary);
-    }
+    .period-tab:hover { color: var(--text-primary); }
 
     .period-tab.active {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #c73e54);
       color: white;
+      box-shadow: 0 2px 8px rgba(233, 69, 96, 0.25);
     }
 
-    /* Your Rank Card */
+    /* ─── Your Rank Card ─── */
     .your-rank-card {
-      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
-      border: 1px solid var(--accent);
-      border-radius: 12px;
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(233, 69, 96, 0.2);
+      border-radius: var(--radius);
       padding: 1rem 1.25rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
       display: flex;
       align-items: center;
       gap: 1rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .your-rank-card:hover {
+      border-color: rgba(233, 69, 96, 0.35);
+      box-shadow: 0 0 20px rgba(233, 69, 96, 0.08);
     }
 
     .your-rank-badge {
-      width: 50px;
-      height: 50px;
-      background: var(--accent);
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 800;
+      flex-shrink: 0;
     }
 
-    .your-rank-info {
-      flex: 1;
-    }
+    .your-rank-info { flex: 1; min-width: 0; }
 
     .your-rank-info h3 {
       font-size: 0.9rem;
-      margin-bottom: 0.2rem;
+      font-weight: 700;
+      margin-bottom: 0.15rem;
     }
 
     .your-rank-info p {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
     }
 
-    .your-rank-score {
-      text-align: right;
-    }
+    .your-rank-score { text-align: right; }
 
     .your-rank-score .score {
-      font-size: 1.3rem;
-      font-weight: 700;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     .your-rank-score .label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-secondary);
+      font-weight: 500;
     }
 
     .sign-in-card {
       background: var(--bg-card);
-      border: 1px dashed var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 1.15rem 1.25rem;
+      margin-bottom: 1.25rem;
       display: flex;
       align-items: center;
       gap: 1rem;
@@ -429,130 +475,242 @@
     .sign-in-card p {
       flex: 1;
       color: var(--text-secondary);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
 
-    /* Leaderboard List */
-    .leaderboard-list {
+    /* ─── Podium (Top 3) ─── */
+    .podium {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 0 1rem;
+    }
+
+    .podium-slot {
+      flex: 1;
+      max-width: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 1.25rem 0.75rem 1rem;
       background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius);
+      cursor: default;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .podium-slot:hover {
+      transform: translateY(-4px);
+    }
+
+    .podium-slot[data-rank="1"] {
+      border-color: rgba(255, 215, 0, 0.2);
+      order: 2;
+      padding-bottom: 1.5rem;
+    }
+
+    .podium-slot[data-rank="1"]:hover {
+      box-shadow: 0 8px 32px var(--gold-glow);
+    }
+
+    .podium-slot[data-rank="2"] {
+      border-color: rgba(192, 192, 192, 0.15);
+      order: 1;
+    }
+
+    .podium-slot[data-rank="2"]:hover {
+      box-shadow: 0 8px 32px var(--silver-glow);
+    }
+
+    .podium-slot[data-rank="3"] {
+      border-color: rgba(205, 127, 50, 0.15);
+      order: 3;
+    }
+
+    .podium-slot[data-rank="3"]:hover {
+      box-shadow: 0 8px 32px var(--bronze-glow);
+    }
+
+    .podium-medal {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .podium-slot[data-rank="1"] .podium-medal { font-size: 2.2rem; }
+
+    .podium-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 0.5rem;
+    }
+
+    .podium-slot[data-rank="1"] .podium-avatar {
+      width: 64px;
+      height: 64px;
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 16px var(--gold-glow);
+    }
+
+    .podium-slot[data-rank="2"] .podium-avatar {
+      border: 2px solid var(--silver);
+    }
+
+    .podium-slot[data-rank="3"] .podium-avatar {
+      border: 2px solid var(--bronze);
+    }
+
+    .podium-name {
+      font-weight: 700;
+      font-size: 0.88rem;
+      margin-bottom: 0.2rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .podium-score {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .podium-slot[data-rank="1"] .podium-score {
+      color: var(--gold);
+    }
+
+    /* ─── Leaderboard List ─── */
+    .lb-list {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       overflow: hidden;
     }
 
-    .leaderboard-header-row {
+    .lb-header-row {
       display: grid;
-      grid-template-columns: 50px 1fr 100px;
-      padding: 0.75rem 1rem;
-      background: var(--bg-secondary);
-      font-size: 0.75rem;
-      font-weight: 600;
+      grid-template-columns: 48px 1fr 90px;
+      padding: 0.7rem 1.15rem;
+      background: rgba(255, 255, 255, 0.02);
+      font-size: 0.7rem;
+      font-weight: 700;
       color: var(--text-secondary);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
     }
 
-    .leaderboard-row {
+    .lb-row {
       display: grid;
-      grid-template-columns: 50px 1fr 100px;
-      padding: 0.75rem 1rem;
+      grid-template-columns: 48px 1fr 90px;
+      padding: 0.7rem 1.15rem;
       align-items: center;
       border-bottom: 1px solid var(--border);
-      transition: background 0.2s;
+      transition: background var(--transition);
     }
 
-    .leaderboard-row:last-child {
-      border-bottom: none;
-    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row:hover { background: rgba(255, 255, 255, 0.02); }
 
-    .leaderboard-row:hover {
-      background: rgba(233, 69, 96, 0.05);
-    }
-
-    .leaderboard-row.highlight {
-      background: rgba(233, 69, 96, 0.1);
+    .lb-row.highlight {
+      background: rgba(233, 69, 96, 0.06);
       border-left: 3px solid var(--accent);
+      padding-left: calc(1.15rem - 3px);
     }
 
     .rank {
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
     }
 
-    .rank.gold { color: var(--gold); }
-    .rank.silver { color: var(--silver); }
-    .rank.bronze { color: var(--bronze); }
-
-    .rank-medal {
-      font-size: 1.2rem;
-    }
+    .rank.top { color: var(--text-primary); }
 
     .player {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.7rem;
+      min-width: 0;
     }
 
     .player-avatar {
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid var(--border);
+      border: 1.5px solid var(--border);
+      flex-shrink: 0;
     }
+
+    .player-info { min-width: 0; }
 
     .player-name {
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .player-meta {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-secondary);
     }
 
     .score-cell {
       text-align: right;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.95rem;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
     }
 
-    /* States */
+    /* ─── States ─── */
     .loading-state, .empty-state {
       text-align: center;
-      padding: 3rem;
+      padding: 3rem 1.5rem;
       color: var(--text-secondary);
     }
 
     .loading-spinner {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border: 3px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
       margin: 0 auto 1rem;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-state h3 { color: var(--text-primary); margin-bottom: 0.4rem; }
+
+    .podium-empty {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-secondary);
+      display: none;
     }
 
-    .empty-icon {
-      font-size: 2.5rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .empty-state h3 {
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-
-    /* Auth Modal */
+    /* ─── Auth Modal ─── */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -562,31 +720,24 @@
       transition: all 0.3s;
     }
 
-    .modal-overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
+    .modal-overlay.show { opacity: 1; visibility: visible; }
 
     .modal {
-      background: var(--bg-card);
-      border-radius: 16px;
-      padding: 2rem;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
       width: 90%;
       max-width: 380px;
       text-align: center;
-      transform: scale(0.9);
+      transform: scale(0.9) translateY(20px);
       transition: transform 0.3s;
       position: relative;
     }
 
-    .modal-overlay.show .modal {
-      transform: scale(1);
-    }
+    .modal-overlay.show .modal { transform: scale(1) translateY(0); }
 
-    .modal h2 {
-      font-size: 1.4rem;
-      margin-bottom: 0.5rem;
-    }
+    .modal h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
 
     .modal p {
       color: var(--text-secondary);
@@ -603,7 +754,9 @@
       color: var(--text-secondary);
       font-size: 1.4rem;
       cursor: pointer;
+      transition: color var(--transition);
     }
+    .modal-close:hover { color: var(--text-primary); }
 
     .google-btn {
       display: flex;
@@ -615,175 +768,127 @@
       background: white;
       color: #333;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background var(--transition), transform var(--transition);
     }
 
-    .google-btn:hover {
-      background: #f5f5f5;
-      transform: scale(1.02);
+    .google-btn:hover { background: #f5f5f5; transform: scale(1.02); }
+    .google-btn img { width: 20px; height: 20px; }
+
+    /* ─── Footer ─── */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      border-top: 1px solid var(--border);
+      background: linear-gradient(180deg, transparent, rgba(18, 18, 31, 0.5));
     }
 
-    .google-btn img {
-      width: 20px;
-      height: 20px;
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
     }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      .main-container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
+    /* ─── Responsive: Tablet ─── */
+    @media (max-width: 768px) {
+      .header { padding: 0.7rem 1rem; }
+
+      .mobile-menu-btn {
+        display: block;
+        order: -1;
       }
 
-      .games-sidebar {
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-        padding: 0.75rem 1rem;
-        position: relative;
-      }
-
-      /* Scroll affordance — fade on right edge */
-      .games-sidebar::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 40px;
-        background: linear-gradient(to right, transparent, var(--bg-secondary));
-        pointer-events: none;
-        z-index: 1;
-      }
-
-      .games-list {
-        flex-direction: row;
-        overflow-x: auto;
-        gap: 0.5rem;
-        padding-bottom: 0.5rem;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .games-list::-webkit-scrollbar {
-        height: 4px;
-      }
-
-      .games-list::-webkit-scrollbar-thumb {
-        background: var(--border);
-        border-radius: 4px;
-      }
-
-      .game-item {
-        flex-shrink: 0;
-        padding: 0.6rem 0.8rem;
-      }
-
-      .game-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 1.2rem;
-      }
-
-      .game-players {
-        display: none;
-      }
-
-      .sidebar-title {
-        display: none;
-      }
-
-      .leaderboard-content {
-        padding: 1rem;
-      }
-
-      .content-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .period-tabs {
-        width: 100%;
-        overflow-x: auto;
-      }
-
-      /* Touch targets — 44px minimum */
-      .period-tab {
-        padding: 0.7rem 1rem;
-        min-height: 44px;
-      }
-
-      .auth-btn {
-        padding: 0.7rem 1.2rem;
-        min-height: 44px;
-      }
-
-      .sign-in-card .auth-btn {
-        padding: 0.7rem 1.2rem;
-        min-height: 44px;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .header {
-        padding: 0.6rem 1rem;
-      }
+      .logo { order: 0; flex: 1; }
+      .header-right { order: 1; }
 
       .nav {
         display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(18, 18, 31, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 0.5rem;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        z-index: 49;
       }
 
-      .game-title h1 {
-        font-size: 1.2rem;
+      .nav.open { display: flex; }
+      .nav a { padding: 0.8rem 1rem; border-radius: 8px; }
+
+      .page-hero { padding: 1.75rem 1.25rem 0; }
+      .page-hero h1 { font-size: 1.7rem; }
+      .page-hero p { margin-bottom: 1.25rem; }
+
+      .game-picker { padding: 0 1.25rem; }
+      .lb-container { padding: 1.25rem; }
+
+      .podium-slot { padding: 1rem 0.5rem 0.75rem; }
+      .podium-avatar { width: 44px; height: 44px; }
+      .podium-slot[data-rank="1"] .podium-avatar { width: 52px; height: 52px; }
+      .podium-name { font-size: 0.8rem; }
+    }
+
+    /* ─── Responsive: Phone ─── */
+    @media (max-width: 480px) {
+      .page-hero h1 { font-size: 1.5rem; }
+      .page-hero p { font-size: 0.9rem; }
+
+      .lb-controls { flex-direction: column; align-items: flex-start; }
+
+      .period-tabs { width: 100%; overflow-x: auto; }
+      .period-tab { flex: 1; text-align: center; padding: 0.6rem 0.75rem; min-height: 44px; }
+
+      .lb-header-row,
+      .lb-row {
+        grid-template-columns: 38px 1fr 68px;
+        padding: 0.6rem 0.85rem;
       }
 
-      .leaderboard-header-row,
-      .leaderboard-row {
-        grid-template-columns: 40px 1fr 70px;
-        padding: 0.6rem 0.75rem;
-      }
+      .player-avatar { width: 30px; height: 30px; }
+      .player-meta { display: none; }
+      .player-name { font-size: 0.82rem; }
+      .score-cell { font-size: 0.88rem; }
 
-      .player-avatar {
-        width: 30px;
-        height: 30px;
-      }
+      .your-rank-card { padding: 0.8rem 1rem; }
+      .your-rank-badge { width: 40px; height: 40px; font-size: 1rem; }
 
-      .player-meta {
-        display: none;
-      }
+      .podium { gap: 0.5rem; padding: 0; }
+      .podium-slot { padding: 0.75rem 0.4rem 0.65rem; border-radius: 12px; }
+      .podium-medal { font-size: 1.4rem; margin-bottom: 0.3rem; }
+      .podium-slot[data-rank="1"] .podium-medal { font-size: 1.6rem; }
+      .podium-avatar { width: 36px; height: 36px; }
+      .podium-slot[data-rank="1"] .podium-avatar { width: 44px; height: 44px; }
+      .podium-name { font-size: 0.75rem; }
+      .podium-score { font-size: 0.7rem; }
 
-      .your-rank-card {
-        padding: 0.75rem 1rem;
-      }
+      .sign-in-card { flex-direction: column; text-align: center; gap: 0.75rem; }
 
-      .your-rank-badge {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-      }
-
-      .modal-close {
-        min-width: 44px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+      .modal { padding: 1.75rem 1.5rem; }
+      .modal-close { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
     }
   </style>
 </head>
 <body>
   <header class="header">
     <a href="/" class="logo">
-      <span>🎮</span>
-      Weekly Arcade
+      <span class="logo-icon">🎮</span>
+      <span class="brand">Weekly Arcade</span>
     </a>
-    <nav class="nav">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
+    <nav class="nav" id="mobileNav">
       <a href="/">Games</a>
       <a href="/leaderboard/" class="active">Leaderboards</a>
-      <a href="/#about">About</a>
+      <a href="/about/">About</a>
     </nav>
     <div class="header-right">
       <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
@@ -798,65 +903,80 @@
     </div>
   </header>
 
-  <div class="main-container">
-    <!-- Games Sidebar -->
-    <aside class="games-sidebar">
-      <div class="sidebar-title">Select Game</div>
-      <div class="games-list" id="gamesList"></div>
-    </aside>
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="page-hero-inner">
+      <h1>Global <span class="highlight">Leaderboards</span></h1>
+      <p>Compete with players worldwide. Pick a game and claim your spot.</p>
+    </div>
+  </section>
 
-    <!-- Leaderboard Content -->
-    <main class="leaderboard-content">
-      <div class="content-header">
-        <div class="game-title" id="gameTitle">
-          <span class="game-title-icon">🎮</span>
-          <div>
-            <h1>Leaderboard</h1>
-            <p>Select a game to view rankings</p>
-          </div>
-        </div>
-        <div class="period-tabs" id="periodTabs">
-          <button class="period-tab active" data-period="daily">Today</button>
-          <button class="period-tab" data-period="weekly">Week</button>
-          <button class="period-tab" data-period="monthly">Month</button>
-          <button class="period-tab" data-period="allTime">All Time</button>
-        </div>
-      </div>
-
-      <!-- Your Rank -->
-      <div class="your-rank-card" id="yourRankCard" style="display: none;">
-        <div class="your-rank-badge" id="yourRankBadge">#-</div>
-        <div class="your-rank-info">
-          <h3>Your Rank</h3>
-          <p id="yourRankSubtitle">Keep playing to climb!</p>
-        </div>
-        <div class="your-rank-score">
-          <div class="score" id="yourScore">0</div>
-          <div class="label">points</div>
-        </div>
-      </div>
-
-      <div class="sign-in-card" id="signInCard">
-        <p>Sign in to track your rank and compete!</p>
-        <button class="auth-btn" onclick="showAuthModal()">Sign In</button>
-      </div>
-
-      <!-- Leaderboard List -->
-      <div class="leaderboard-list">
-        <div class="leaderboard-header-row">
-          <div>Rank</div>
-          <div>Player</div>
-          <div style="text-align: right;">Score</div>
-        </div>
-        <div id="leaderboardContent">
-          <div class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Loading...</p>
-          </div>
-        </div>
-      </div>
-    </main>
+  <!-- Game Picker -->
+  <div class="game-picker">
+    <div class="game-picker-scroll" id="gamePickerScroll"></div>
   </div>
+
+  <!-- Leaderboard -->
+  <main class="lb-container">
+    <div class="lb-controls">
+      <div class="lb-game-title" id="lbGameTitle">
+        <span class="lb-game-title-icon">🎮</span>
+        <div>
+          <h2>Leaderboard</h2>
+          <span class="lb-subtitle">Select a game above</span>
+        </div>
+      </div>
+      <div class="period-tabs" id="periodTabs">
+        <button class="period-tab active" data-period="daily">Today</button>
+        <button class="period-tab" data-period="weekly">Week</button>
+        <button class="period-tab" data-period="monthly">Month</button>
+        <button class="period-tab" data-period="allTime">All Time</button>
+      </div>
+    </div>
+
+    <!-- Your Rank -->
+    <div class="your-rank-card" id="yourRankCard" style="display: none;">
+      <div class="your-rank-badge" id="yourRankBadge">#-</div>
+      <div class="your-rank-info">
+        <h3>Your Rank</h3>
+        <p id="yourRankSubtitle">Keep playing to climb!</p>
+      </div>
+      <div class="your-rank-score">
+        <div class="score" id="yourScore">0</div>
+        <div class="label">points</div>
+      </div>
+    </div>
+
+    <div class="sign-in-card" id="signInCard">
+      <p>Sign in to track your rank and compete on the leaderboard!</p>
+      <button class="auth-btn" onclick="showAuthModal()">Sign In</button>
+    </div>
+
+    <!-- Podium -->
+    <div class="podium" id="podium" style="display: none;"></div>
+
+    <!-- Remaining ranks -->
+    <div class="lb-list" id="lbList">
+      <div class="lb-header-row">
+        <div>Rank</div>
+        <div>Player</div>
+        <div style="text-align: right;">Score</div>
+      </div>
+      <div id="leaderboardContent">
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading scores...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p><strong>Weekly Arcade</strong> &mdash; New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="/">Games</a> &nbsp;|&nbsp; <a href="/privacy/">Privacy</a> &nbsp;|&nbsp; <a href="/terms/">Terms</a>
+    </p>
+  </footer>
 
   <!-- Auth Modal -->
   <div class="modal-overlay" id="authModal">
@@ -878,7 +998,7 @@
   <script src="/js/auth.js"></script>
 
   <script>
-    // Game Configuration - Easy to scale by adding new games here
+    // ─── Game Configuration ───
     const GAMES = [
       { id: 'stack-tower', name: 'Stack Tower', icon: '🏗️', description: 'Timing arcade' },
       { id: 'voidbreak', name: 'Voidbreak', icon: '☄️', description: 'Asteroid roguelite' },
@@ -894,48 +1014,59 @@
       { id: 'tiny-tycoon', name: 'Tiny Tycoon', icon: '🧋', description: 'Boba shop simulator' }
     ];
 
-    // State
-    let currentGame = GAMES[0].id;
+    // Pre-select game from ?game= URL param if valid
+    const urlGame = new URLSearchParams(window.location.search).get('game');
+    let currentGame = (urlGame && GAMES.some(g => g.id === urlGame)) ? urlGame : GAMES[0].id;
     let currentPeriod = 'daily';
     let currentUser = null;
 
-    // Initialize Games List
-    function initGamesList() {
-      const container = document.getElementById('gamesList');
-      container.innerHTML = GAMES.map(game => `
-        <div class="game-item ${game.id === currentGame ? 'active' : ''}" data-game="${game.id}" onclick="selectGame('${game.id}')">
-          <div class="game-icon">${game.icon}</div>
-          <div class="game-info">
-            <div class="game-name">${game.name}</div>
-            <div class="game-players">${game.description}</div>
-          </div>
-        </div>
+    // ─── Build Game Picker Chips ───
+    function initGamePicker() {
+      const scroll = document.getElementById('gamePickerScroll');
+      scroll.innerHTML = GAMES.map(g => `
+        <button class="game-chip ${g.id === currentGame ? 'active' : ''}" data-game="${g.id}">
+          <span class="game-chip-icon">${g.icon}</span>
+          ${g.name}
+        </button>
       `).join('');
+
+      scroll.addEventListener('click', (e) => {
+        const chip = e.target.closest('.game-chip');
+        if (!chip) return;
+        selectGame(chip.dataset.game);
+      });
     }
 
-    // Initialize Period Tabs
+    // ─── Period Tabs ───
     function initPeriodTabs() {
       document.querySelectorAll('.period-tab').forEach(tab => {
         tab.addEventListener('click', () => selectPeriod(tab.dataset.period));
       });
     }
 
-    // Select Game
+    // ─── Select Game ───
     function selectGame(gameId) {
       currentGame = gameId;
       const game = GAMES.find(g => g.id === gameId);
 
-      // Update active state
-      document.querySelectorAll('.game-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.game === gameId);
+      // Update URL so the link is shareable
+      const url = new URL(window.location);
+      url.searchParams.set('game', gameId);
+      history.replaceState(null, '', url);
+
+      document.querySelectorAll('.game-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.game === gameId);
       });
 
-      // Update title
-      document.getElementById('gameTitle').innerHTML = `
-        <span class="game-title-icon">${game.icon}</span>
+      // Scroll active chip into view
+      const activeChip = document.querySelector('.game-chip.active');
+      if (activeChip) activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+      document.getElementById('lbGameTitle').innerHTML = `
+        <span class="lb-game-title-icon">${game.icon}</span>
         <div>
-          <h1>${game.name}</h1>
-          <p>${game.description}</p>
+          <h2>${game.name}</h2>
+          <span class="lb-subtitle">${game.description}</span>
         </div>
       `;
 
@@ -943,7 +1074,7 @@
       if (currentUser) loadUserRank();
     }
 
-    // Select Period
+    // ─── Select Period ───
     function selectPeriod(period) {
       currentPeriod = period;
       document.querySelectorAll('.period-tab').forEach(tab => {
@@ -953,20 +1084,28 @@
       if (currentUser) loadUserRank();
     }
 
-    // Load Leaderboard
+    // ─── Avatar URL helper ───
+    function avatarUrl(url, name) {
+      return url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'P')}&background=e94560&color=fff&size=72`;
+    }
+
+    function avatarErrorFallback(el) {
+      el.src = "https://ui-avatars.com/api/?name=P&background=e94560&color=fff";
+    }
+
+    // ─── Load Leaderboard ───
     async function loadLeaderboard() {
       const content = document.getElementById('leaderboardContent');
-      content.innerHTML = `
-        <div class="loading-state">
-          <div class="loading-spinner"></div>
-          <p>Loading...</p>
-        </div>
-      `;
+      const podiumEl = document.getElementById('podium');
+
+      content.innerHTML = `<div class="loading-state"><div class="loading-spinner"></div><p>Loading scores...</p></div>`;
+      podiumEl.style.display = 'none';
 
       try {
         const data = await window.apiClient.getLeaderboard(currentGame, currentPeriod, 50);
 
         if (!data || data.length === 0) {
+          podiumEl.style.display = 'none';
           content.innerHTML = `
             <div class="empty-state">
               <div class="empty-icon">🏆</div>
@@ -977,25 +1116,51 @@
           return;
         }
 
-        content.innerHTML = data.map((entry, index) => {
-          const rank = index + 1;
-          const odId = entry.odId || entry.userId;
-          const displayName = entry.odName || entry.displayName || 'Player';
-          const avatarUrl = entry.odAvatarUrl || entry.avatarUrl;
+        // Build podium (top 3)
+        const top3 = data.slice(0, 3);
+        const medals = ['🥇', '🥈', '🥉'];
+
+        if (top3.length >= 2) {
+          podiumEl.style.display = 'flex';
+          podiumEl.innerHTML = top3.map((entry, i) => {
+            const name = entry.odName || entry.displayName || 'Player';
+            const avatar = avatarUrl(entry.odAvatarUrl || entry.avatarUrl, name);
+            return `
+              <div class="podium-slot" data-rank="${i + 1}">
+                <div class="podium-medal">${medals[i]}</div>
+                <img class="podium-avatar" src="${avatar}" alt="${name}" onerror="avatarErrorFallback(this)">
+                <div class="podium-name">${name}</div>
+                <div class="podium-score">${entry.score?.toLocaleString() || 0} pts</div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          podiumEl.style.display = 'none';
+        }
+
+        // Build remaining rows (rank 4+)
+        const rest = data.slice(3);
+
+        if (rest.length === 0) {
+          content.innerHTML = '';
+          return;
+        }
+
+        content.innerHTML = rest.map((entry, index) => {
+          const rank = index + 4;
+          const odId = entry.odId || entry.odId;
+          const name = entry.odName || entry.displayName || 'Player';
+          const avatar = avatarUrl(entry.odAvatarUrl || entry.avatarUrl, name);
           const isCurrentUser = currentUser && odId === currentUser.uid;
-          const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
-          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
           const level = entry.level || 1;
 
           return `
-            <div class="leaderboard-row ${isCurrentUser ? 'highlight' : ''}">
-              <div class="rank ${rankClass}">
-                ${rank <= 3 ? `<span class="rank-medal">${medal}</span>` : medal}
-              </div>
+            <div class="lb-row ${isCurrentUser ? 'highlight' : ''}">
+              <div class="rank ${rank <= 10 ? 'top' : ''}">#${rank}</div>
               <div class="player">
-                <img class="player-avatar" src="${avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e94560&color=fff&size=72`}" alt="${displayName}" onerror="this.src='https://ui-avatars.com/api/?name=P&background=e94560&color=fff'">
-                <div>
-                  <div class="player-name">${displayName}</div>
+                <img class="player-avatar" src="${avatar}" alt="${name}" onerror="avatarErrorFallback(this)">
+                <div class="player-info">
+                  <div class="player-name">${name}</div>
                   <div class="player-meta">Level ${level}</div>
                 </div>
               </div>
@@ -1005,6 +1170,7 @@
         }).join('');
       } catch (error) {
         console.error('Failed to load leaderboard:', error);
+        podiumEl.style.display = 'none';
         content.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">😕</div>
@@ -1015,7 +1181,7 @@
       }
     }
 
-    // Load User Rank
+    // ─── Load User Rank ───
     async function loadUserRank() {
       if (!currentUser) return;
 
@@ -1040,17 +1206,16 @@
       }
     }
 
-    // Auth Functions
-    function showAuthModal() {
-      document.getElementById('authModal').classList.add('show');
-    }
+    // ─── Auth Functions ───
+    function showAuthModal() { document.getElementById('authModal').classList.add('show'); }
+    function hideAuthModal() { document.getElementById('authModal').classList.remove('show'); }
+    function toggleUserMenu() { document.getElementById('userMenu').classList.toggle('open'); }
 
-    function hideAuthModal() {
-      document.getElementById('authModal').classList.remove('show');
-    }
-
-    function toggleUserMenu() {
-      document.getElementById('userMenu').classList.toggle('open');
+    function toggleMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.toggle('open');
+      btn.textContent = nav.classList.contains('open') ? '\u2715' : '☰';
     }
 
     async function signInWithGoogle() {
@@ -1080,7 +1245,7 @@
       if (user) {
         signInBtn.style.display = 'none';
         userMenu.classList.add('signed-in');
-        userAvatar.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=e94560&color=fff`;
+        userAvatar.src = user.photoURL || avatarUrl(null, user.displayName || 'U');
         signInCard.style.display = 'none';
         yourRankCard.style.display = 'flex';
         loadUserRank();
@@ -1092,21 +1257,19 @@
       }
     }
 
-    // Click outside to close
+    // ─── Click Outside Handlers ───
     document.addEventListener('click', (e) => {
       const userMenu = document.getElementById('userMenu');
-      if (!userMenu.contains(e.target)) {
-        userMenu.classList.remove('open');
-      }
+      if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
     });
 
     document.getElementById('authModal').addEventListener('click', (e) => {
       if (e.target.id === 'authModal') hideAuthModal();
     });
 
-    // Initialize
+    // ─── Initialize ───
     window.addEventListener('load', () => {
-      initGamesList();
+      initGamePicker();
       initPeriodTabs();
       selectGame(currentGame);
 
