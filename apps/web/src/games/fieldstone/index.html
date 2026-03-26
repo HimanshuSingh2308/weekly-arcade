@@ -1027,10 +1027,12 @@
     }
 
     @media (max-width: 600px) {
-      /* Mobile-optimized cell size: fills width with small margins */
-      /* Available width ~= 100vw - 20px padding, divided by 10 cells */
+      /* Mobile-optimized cell size: fits both width AND height */
+      /* Width: (100vw - 24px) / 10.5 columns */
+      /* Height: (available height) / 22 rows (20 board + ~2 for HUD) */
+      /* Available height = 100dvh - 50px header - 70px mobile UI */
       :root {
-        --cell-size: clamp(18px, calc((100vw - 24px) / 10.5), 32px);
+        --cell-size: clamp(14px, min(calc((100vw - 24px) / 10.5), calc((100dvh - 130px) / 22)), 32px);
       }
 
       .left-panel, .right-panel {
