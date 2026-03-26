@@ -53,6 +53,7 @@
       font-size: 1.05rem;
       font-weight: 700;
       margin: 0;
+      color: #f0f0f5;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
