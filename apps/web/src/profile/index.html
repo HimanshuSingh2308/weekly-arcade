@@ -666,7 +666,7 @@
       <div class="stat-card"><div class="stat-icon">🎮</div><div class="stat-value" id="statGamesPlayed">0</div><div class="stat-label">Games Played</div></div>
       <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value" id="statWins">0</div><div class="stat-label">Wins</div></div>
       <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="statStreak">0</div><div class="stat-label">Best Streak</div></div>
-      <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value" id="statTotalScore">0</div><div class="stat-label">Total Score</div></div>
+      <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value" id="statGamesCount">0</div><div class="stat-label">Games Tried</div></div>
     </div>
 
     <div class="section-card">
@@ -714,21 +714,19 @@
   <script src="/js/auth.js"></script>
 
   <script>
-    // ─── Game metadata (complete list) ───
-    const GAME_META = {
-      wordle:               { icon: '🔤', name: 'Wordle' },
-      snake:                { icon: '🐍', name: 'Snake' },
-      '2048':               { icon: '🔢', name: '2048' },
-      'memory-match':       { icon: '🃏', name: 'Memory Match' },
-      'chaos-kitchen':      { icon: '👨‍🍳', name: 'Chaos Kitchen' },
-      voidbreak:            { icon: '☄️', name: 'Voidbreak' },
-      lumble:               { icon: '🪙', name: 'Lumble' },
-      fieldstone:           { icon: '🏰', name: 'Fieldstone' },
-      'stack-tower':        { icon: '🏗️', name: 'Stack Tower' },
-      'solitaire-roguelite':{ icon: '🃏', name: 'Solitaire Roguelite' },
-      'coin-cascade':       { icon: '🪙', name: 'Coin Cascade' },
-      'tiny-tycoon':        { icon: '🧋', name: 'Tiny Tycoon' },
-    };
+    // ─── Game metadata (loaded from API catalog) ───
+    let GAME_META = {}; // { gameId: { icon, name } }
+
+    async function loadGameMeta() {
+      try {
+        const catalog = await window.apiClient.getGameCatalog();
+        if (catalog && catalog.length > 0) {
+          catalog.forEach(g => { GAME_META[g.id] = { icon: g.icon, name: g.name }; });
+        }
+      } catch (e) {
+        console.warn('Failed to load game catalog for profile', e);
+      }
+    }
 
     let currentUser = null;
 
@@ -855,19 +853,18 @@
       try {
         gameStates = await window.apiClient.getAllGameStates().catch(() => []) || [];
 
-        let totalPlayed = 0, totalWins = 0, totalScore = 0, bestStreak = 0;
+        let totalPlayed = 0, totalWins = 0, bestStreak = 0;
 
         gameStates.forEach(g => {
           totalPlayed += g.gamesPlayed || 0;
           totalWins += g.gamesWon || 0;
-          totalScore += g.additionalData?.totalScore || g.additionalData?.score || 0;
           if ((g.bestStreak || 0) > bestStreak) bestStreak = g.bestStreak;
         });
 
         document.getElementById('statGamesPlayed').textContent = totalPlayed.toLocaleString();
         document.getElementById('statWins').textContent = totalWins.toLocaleString();
         document.getElementById('statStreak').textContent = bestStreak;
-        document.getElementById('statTotalScore').textContent = totalScore.toLocaleString();
+        document.getElementById('statGamesCount').textContent = gameStates.length;
       } catch (error) {
         console.error('Failed to load stats:', error);
       }
@@ -950,7 +947,8 @@
           const dateStr = formatDate(game.updatedAt || game.lastPlayedDate, 'short');
           const played = game.gamesPlayed || 0;
           const won = game.gamesWon || 0;
-          const score = game.additionalData?.totalScore || game.additionalData?.score || 0;
+          const winRate = played > 0 ? Math.round((won / played) * 100) : 0;
+          const streak = game.bestStreak || 0;
 
           return `
             <a href="/games/${game.gameId}/" class="game-history-item">
@@ -958,12 +956,12 @@
                 <div class="game-history-icon">${meta.icon}</div>
                 <div class="game-history-info">
                   <h4>${meta.name}</h4>
-                  <p>${dateStr ? dateStr + ' · ' : ''}${played} played · ${won} won</p>
+                  <p>${dateStr ? dateStr + ' · ' : ''}${played} played${won > 0 ? ` · ${won} won` : ''}</p>
                 </div>
               </div>
               <div class="game-history-score">
-                <div class="score-value">${score.toLocaleString()}</div>
-                <div class="score-label">points</div>
+                <div class="score-value">${winRate}%</div>
+                <div class="score-label">${streak > 0 ? `${streak} best streak` : 'win rate'}</div>
               </div>
             </a>
           `;
@@ -975,7 +973,9 @@
     }
 
     // ─── Initialize ───
-    window.addEventListener('load', () => {
+    window.addEventListener('load', async () => {
+      await loadGameMeta();
+
       const checkAuth = setInterval(() => {
         if (window.authManager?.isInitialized) {
           clearInterval(checkAuth);

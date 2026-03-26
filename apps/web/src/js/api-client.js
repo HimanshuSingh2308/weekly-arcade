@@ -121,6 +121,17 @@ class ApiClient {
     });
   }
 
+  // Game Catalog (public, no auth needed)
+  async getGameCatalog() {
+    const cacheKey = 'game-catalog';
+    const cached = this._cache.get(cacheKey);
+    if (cached && cached.expiry > Date.now()) return cached.data;
+
+    const data = await this.request('/games/catalog');
+    this._cache.set(cacheKey, { data, expiry: Date.now() + 3600000 }); // 1 hour
+    return data;
+  }
+
   // Game State endpoints
   async getGameState(gameId) {
     return this.request(`/games/${gameId}/state`);

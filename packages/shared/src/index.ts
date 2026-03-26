@@ -9,3 +9,4 @@ export * from './lib/types/customization.types.js';
 export * from './lib/constants/achievements.js';
 export * from './lib/constants/scoring.js';
 export * from './lib/constants/voidbreak-items.js';
+export * from './lib/constants/game-registry.js';
