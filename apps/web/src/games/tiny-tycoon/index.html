@@ -1101,7 +1101,32 @@
     }
 
     .customer.walking {
+      animation: walkBob 0.5s ease-in-out infinite;
+    }
+
+    .customer.entering {
+      animation: customerEnter 0.3s ease-out forwards, walkBob 0.5s ease-in-out 0.3s infinite;
+    }
+
+    @keyframes customerEnter {
+      0% { opacity: 0; transform: translateX(var(--tx, 0)) scale(0.7); }
+      100% { opacity: 1; transform: translateX(var(--tx, 0)) scale(1); }
+    }
+
+    .customer.leaving-happy {
       animation: walkBob 0.4s ease-in-out infinite;
+      opacity: 1;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .customer.leaving-angry {
+      animation: angryLeave 0.3s ease-in forwards;
+    }
+
+    @keyframes angryLeave {
+      0% { transform: translateX(var(--tx, 0)) scale(1); }
+      30% { transform: translateX(var(--tx, 0)) scale(1.1); }
+      100% { transform: translateX(var(--tx, 0)) scale(1); }
     }
 
     .customer-order {
@@ -1819,8 +1844,10 @@
     }
 
     @keyframes walkBob {
-      0%, 100% { transform: translateX(var(--tx, 0)) translateY(0); }
-      50% { transform: translateX(var(--tx, 0)) translateY(-3px); }
+      0%, 100% { transform: translateX(var(--tx, 0)) translateY(0) rotate(0deg); }
+      25% { transform: translateX(var(--tx, 0)) translateY(-1px) rotate(-1deg); }
+      50% { transform: translateX(var(--tx, 0)) translateY(-1.5px) rotate(0deg); }
+      75% { transform: translateX(var(--tx, 0)) translateY(-1px) rotate(1deg); }
     }
 
     @keyframes happyBounce {
@@ -2794,10 +2821,13 @@
 
   function createCustomerElement(c) {
     const el = document.createElement('div');
-    el.className = 'customer' + (c.isVip ? ' vip' : '') + ' type-' + c.type + ' walking';
+    el.className = 'customer' + (c.isVip ? ' vip' : '') + ' type-' + c.type + ' entering';
     el.dataset.id = c.id;
     el.style.transform = `translateX(${c.x}px)`;
+    el.style.setProperty('--tx', c.x + 'px');
     el.style.top = c.y + 'px';
+    // Switch from entrance to walking animation after entrance completes
+    setTimeout(() => { if (el.parentNode) el.className = el.className.replace('entering', 'walking'); }, 300);
 
     const color = CUSTOMER_TYPES[c.type].color;
 
@@ -2830,10 +2860,12 @@
 
   function createVipCustomerElement(c) {
     const el = document.createElement('div');
-    el.className = 'customer vip type-vip walking';
+    el.className = 'customer vip type-vip entering';
     el.dataset.id = c.id;
     el.style.transform = `translateX(${c.x}px)`;
+    el.style.setProperty('--tx', c.x + 'px');
     el.style.top = c.y + 'px';
+    setTimeout(() => { if (el.parentNode) el.className = el.className.replace('entering', 'walking'); }, 300);
     el.style.pointerEvents = 'none'; // VIP not tappable
 
     const color = CUSTOMER_TYPES.vip.color;
@@ -4272,12 +4304,12 @@
   // Expose functions needed by onclick handlers in dynamic HTML
   window.resumeGame = resumeGame;
   window.quitToMenu = quitToMenu;
-  window.showShop = showShop;
-  window.buyUpgrade = buyUpgrade;
-  window.startDay = startDay;
-  window.showTitle = showTitle;
-  window.newGame = newGame;
-  window.showStats = showStats;
+  // Expose only functions needed by inline onclick handlers.
+  // All other functions are private to the IIFE scope.
+  // Note: Client-side games cannot prevent console manipulation —
+  // server-side score validation is the real anti-cheat layer.
+  const _api = { showShop, buyUpgrade, startDay, showTitle, newGame, showStats, hideAllOverlays, showOverlay };
+  Object.entries(_api).forEach(([k, v]) => { window[k] = v; });
 
   // Pause button handler
   document.getElementById('pauseBtn').addEventListener('click', () => {

@@ -1,8 +1,8 @@
 # Post-Launch Plan: Tiny Tycoon
 
 **Created**: 2026-03-26
-**Last Updated**: 2026-03-26 (All Week 1+2 patches applied)
-**Status**: IN_PROGRESS
+**Last Updated**: 2026-03-26 (All 12 patches applied)
+**Status**: ALL_APPLIED
 
 ---
 
@@ -95,15 +95,15 @@ Ordered by improvement matrix score (highest first).
 
 ### Week 3+ — Depth & Content
 
-- [ ] **Global state cleanup** — Wrap in proper IIFE, remove window exposure of game functions
+- [x] **Global state cleanup** — Already in IIFE; consolidated window exports into single block with comment explaining client-side limitation
   - Category: BROKEN (security)
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (script structure)
-  - Applied:
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (window exports)
+  - Applied: 2026-03-26
 
-- [ ] **Customer walking animation** — Customers walk in from right instead of appearing
+- [x] **Customer walking animation** — Fade-in entrance animation, gentler walk sway (reduced bob, added subtle rotation), angry leave animation
   - Category: POLISH
-  - Files: `apps/web/src/games/tiny-tycoon/index.html` (customer spawn)
-  - Applied:
+  - Files: `apps/web/src/games/tiny-tycoon/index.html` (CSS keyframes, createCustomerElement)
+  - Applied: 2026-03-26
 
 ---
 
