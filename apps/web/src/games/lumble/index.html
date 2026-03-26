@@ -1176,7 +1176,7 @@
               // Trail from hub heading south - requires latch skills
               { x: 1, y: 1.5, z: 4 }, { x: 2, y: 2, z: 8 }, { x: 0, y: 5, z: 11 },
               { x: -3, y: 4, z: 14 }, { x: -2, y: 7, z: 17 }, { x: 5, y: 6, z: 18 },
-              { x: -5, y: 10, z: 20 }, { x: -4, y: 9, z: 24 }, { x: 3, y: 12, z: 26 },
+              { x: -3, y: 10, z: 21 }, { x: -4, y: 9, z: 24 }, { x: 5, y: 12, z: 27 },
               { x: 1, y: 11, z: 30 }, { x: -2, y: 14, z: 33 }, { x: -2, y: 15, z: 36 }
             ]
           },
@@ -1285,7 +1285,7 @@
             sparks: [
               { x: 1, y: 1.5, z: 5 }, { x: 2, y: 2, z: 10 }, { x: 0, y: 5, z: 13 },
               { x: -3, y: 4, z: 16 }, { x: -2, y: 7, z: 19 }, { x: 5, y: 6, z: 20 },
-              { x: -5, y: 10, z: 22 }, { x: -4, y: 9, z: 26 }, { x: 3, y: 12, z: 28 },
+              { x: -3, y: 10, z: 23 }, { x: -4, y: 9, z: 26 }, { x: 5, y: 12, z: 29 },
               { x: 1, y: 11, z: 32 }, { x: -2, y: 14, z: 35 }, { x: -2, y: 15, z: 38 }
             ]
           },
@@ -1390,7 +1390,7 @@
             sparks: [
               { x: 1, y: 1.5, z: 5 }, { x: 2, y: 2, z: 10 }, { x: 0, y: 5, z: 13 },
               { x: -3, y: 4, z: 16 }, { x: -2, y: 7, z: 19 }, { x: 5, y: 6, z: 20 },
-              { x: -5, y: 10, z: 22 }, { x: -4, y: 9, z: 26 }, { x: 3, y: 12, z: 28 },
+              { x: -3, y: 10, z: 23 }, { x: -4, y: 9, z: 26 }, { x: 5, y: 12, z: 29 },
               { x: 1, y: 11, z: 32 }, { x: -2, y: 14, z: 35 }, { x: -2, y: 15, z: 38 }
             ]
           },
@@ -2222,6 +2222,11 @@
           });
         }
       });
+
+      // Validate spark count
+      if (allSparkPositions.length < gameState.totalSparks) {
+        console.error('[LUMBLE] Only ' + allSparkPositions.length + ' spark positions defined, need ' + gameState.totalSparks);
+      }
 
       // Place sparks up to totalSparks count
       allSparkPositions.slice(0, gameState.totalSparks).forEach((pos, i) => {
