@@ -14,7 +14,9 @@ export type AchievementCategory =
   | 'level'
   | 'speed'
   | 'skill'
-  | 'voidbreak';
+  | 'voidbreak'
+  | 'stack-tower'
+  | 'tiny-tycoon';
 
 export interface AchievementRequirement {
   type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special';
