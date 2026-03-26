@@ -2400,6 +2400,18 @@
           o.start(now); o.stop(now + 0.2);
           break;
         }
+        case 'warning': {
+          // Rising alert tone for rush countdown
+          const ow = audioCtx.createOscillator();
+          const gw = audioCtx.createGain();
+          ow.type = 'sine'; ow.frequency.value = 600;
+          ow.frequency.linearRampToValueAtTime(900, now + 0.3);
+          gw.gain.setValueAtTime(vol * 0.12, now);
+          gw.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          ow.connect(gw).connect(audioCtx.destination);
+          ow.start(now); ow.stop(now + 0.35);
+          break;
+        }
         case 'rush': {
           [440, 659].forEach((f, i) => {
             const o = audioCtx.createOscillator();
@@ -3030,15 +3042,19 @@
     if (comboForgives < keeperLevel) {
       comboForgives++;
     } else {
-      const hadCombo = comboStreak > 0;
+      const prevCombo = comboStreak;
       // Soften combo loss: halve instead of reset to zero
       // Combo Keeper forgives entirely (handled above); this is the fallback
       comboStreak = Math.floor(comboStreak / 2);
       comboForgives = 0;
       updateComboDisplay();
-      // F. Combo lost flash (only if combo actually dropped)
-      if (hadCombo && comboStreak === 0) {
+      // F. Visual feedback for combo loss
+      if (prevCombo > 0 && comboStreak === 0) {
         showComboLostFlash();
+      } else if (prevCombo > comboStreak) {
+        // Combo halved but not lost — show brief indicator
+        hudCombo.classList.add('shake');
+        setTimeout(() => hudCombo.classList.remove('shake'), 400);
       }
     }
 
@@ -4301,14 +4317,11 @@
   showTitle();
   // M. Don't start game loop at init - only when entering PLAYING state
 
-  // Expose functions needed by onclick handlers in dynamic HTML
-  window.resumeGame = resumeGame;
-  window.quitToMenu = quitToMenu;
   // Expose only functions needed by inline onclick handlers.
   // All other functions are private to the IIFE scope.
   // Note: Client-side games cannot prevent console manipulation —
   // server-side score validation is the real anti-cheat layer.
-  const _api = { showShop, buyUpgrade, startDay, showTitle, newGame, showStats, hideAllOverlays, showOverlay };
+  const _api = { showShop, buyUpgrade, startDay, showTitle, newGame, showStats, hideAllOverlays, showOverlay, resumeGame, quitToMenu };
   Object.entries(_api).forEach(([k, v]) => { window[k] = v; });
 
   // Pause button handler
