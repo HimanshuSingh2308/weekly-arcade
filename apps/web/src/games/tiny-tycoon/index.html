@@ -1723,7 +1723,7 @@
       position: fixed;
       top: calc(90px + env(safe-area-inset-top, 0px));
       left: 50%;
-      transform: translateX(-50%) translateY(-100px);
+      transform: translateX(-50%) translateY(-200px);
       background: linear-gradient(135deg, var(--taro), #b09dd4);
       color: white;
       padding: 0.6rem 1.2rem;
@@ -1731,13 +1731,16 @@
       font-size: 0.8rem;
       font-weight: 700;
       z-index: 700;
-      transition: transform 0.4s ease-out;
+      transition: transform 0.4s ease-out, opacity 0.4s ease-out;
       box-shadow: 0 4px 15px rgba(155, 125, 184, 0.4);
       text-align: center;
       max-width: 300px;
+      opacity: 0;
+      pointer-events: none;
     }
     .achievement-toast.show {
       transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
     /* Pause overlay */
