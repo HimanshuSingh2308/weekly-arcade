@@ -75,6 +75,9 @@ self.addEventListener('message', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
+  // Only handle http/https requests — skip chrome-extension://, etc.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
   // Network-first for HTML pages (ensures fresh content)
   if (e.request.mode === 'navigate' || e.request.destination === 'document') {
     e.respondWith(

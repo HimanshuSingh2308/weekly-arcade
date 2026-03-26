@@ -649,6 +649,36 @@
       display: flex; align-items: center; justify-content: center;
     }
 
+    .daily-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #000;
+      padding: 0.15rem 0.5rem;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .btn-daily {
+      background: linear-gradient(135deg, #ffd700, #ff8c00) !important;
+      color: #000 !important;
+    }
+
+    .escalation-warning {
+      text-align: center;
+      color: #ef4444;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem;
+      animation: flashWarn 0.5s ease 2;
+    }
+
+    @keyframes flashWarn {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -771,6 +801,7 @@
       </div>
 
       <button class="help-close-btn" onclick="hideHelp()">Got it — Deal me in!</button>
+      <button class="help-close-btn btn-daily" onclick="hideHelp(); startDailyChallenge();" style="margin-top:0.5rem;">🎯 Daily Challenge</button>
     </div>
   </div>
 
@@ -792,6 +823,7 @@
       <div id="bestScore"></div>
       <div style="margin-top:1rem;">
         <button class="modal-btn" onclick="startNewGame()">Play Again</button>
+        <button class="modal-btn btn-daily" onclick="startDailyChallenge()">🎯 Daily Challenge</button>
         <button class="modal-btn secondary" onclick="window.location.href='/leaderboard/?game=solitaire-roguelite'">Leaderboard</button>
       </div>
     </div>
@@ -856,6 +888,71 @@
   let movesSinceLastDraw = 0; // for S10 Streak Master
   let stockCycleCount = 0; // track infinite stock cycling
 
+  // ── DAILY CHALLENGE ───────────────────────────────────
+  const DAILY_MODIFIERS = [
+    { id: 'time_crunch', name: 'Time Crunch', desc: 'Only 7 minutes!', icon: '⏱️', apply: () => { timerSeconds = 420; } },
+    { id: 'joker_flood', name: 'Joker Flood', desc: '5 Jokers per shop', icon: '🃏', shopSize: 5 },
+    { id: 'no_undo', name: 'No Undo', desc: 'Undo disabled', icon: '🚫', apply: () => { undoCharges = 0; } },
+    { id: 'speed_bonus', name: 'Speed Bonus', desc: '+3 pts per second remaining', icon: '⚡', timeBonusMult: 3 },
+    { id: 'blind_deal', name: 'Blind Start', desc: 'First column cards face-down', icon: '🙈', apply: () => { tableau.forEach((col, i) => { if (i < 3 && col.length > 1) col[col.length - 2].faceUp = false; }); render(); } },
+    { id: 'generous', name: 'Generous', desc: 'Start with a random Joker', icon: '🎁' },
+    { id: 'ultimate', name: 'Ultimate', desc: '7 min + no undo + 2x score', icon: '💀', apply: () => { timerSeconds = 420; undoCharges = 0; }, scoreMult: 2 },
+  ];
+
+  function getDailyModifier() {
+    const today = new Date();
+    const dayIndex = (today.getFullYear() * 366 + today.getMonth() * 31 + today.getDate()) % DAILY_MODIFIERS.length;
+    return DAILY_MODIFIERS[dayIndex];
+  }
+
+  let dailyModifier = null;
+  let isDailyChallenge = false;
+
+  // ── PRESTIGE ──────────────────────────────────────────
+  const PRESTIGE_KEY = 'solitaire-prestige';
+
+  function getPrestige() {
+    try { return JSON.parse(localStorage.getItem(PRESTIGE_KEY) || '{}'); } catch { return {}; }
+  }
+
+  function savePrestige(data) {
+    localStorage.setItem(PRESTIGE_KEY, JSON.stringify(data));
+  }
+
+  function getPrestigePoints() {
+    return getPrestige().points || 0;
+  }
+
+  function addPrestigePoints(pts) {
+    const p = getPrestige();
+    p.points = (p.points || 0) + pts;
+    p.totalRuns = (p.totalRuns || 0) + 1;
+    savePrestige(p);
+    return p.points;
+  }
+
+  const PRESTIGE_UNLOCKS = [
+    { id: 'speed_run', name: 'Speed Run', desc: '5-min timer, 1.5x score', cost: 5, icon: '⚡' },
+    { id: 'marathon', name: 'Marathon', desc: '15-min timer, 0.75x score', cost: 10, icon: '🏃' },
+    { id: 'double_down', name: 'Double Down', desc: 'Start with 2 Jokers, no shop until foundation 2', cost: 20, icon: '🎰' },
+  ];
+
+  function isUnlocked(unlockId) {
+    return (getPrestige().unlocks || []).includes(unlockId);
+  }
+
+  function unlockPrestige(unlockId) {
+    const p = getPrestige();
+    const unlock = PRESTIGE_UNLOCKS.find(u => u.id === unlockId);
+    if (!unlock || (p.points || 0) < unlock.cost) return false;
+    if (!p.unlocks) p.unlocks = [];
+    if (p.unlocks.includes(unlockId)) return false;
+    p.points -= unlock.cost;
+    p.unlocks.push(unlockId);
+    savePrestige(p);
+    return true;
+  }
+
   if (window.gameCloud) window.gameCloud.initAuth(user => {
     currentUser = user;
     const authBtn = document.getElementById('authBtn');
@@ -914,6 +1011,13 @@
 
   function hasJoker(id) { return activeJokers.some(j => j.id === id); }
   function getJoker(id) { return activeJokers.find(j => j.id === id); }
+
+  // ── ESCALATION HELPERS ────────────────────────────────
+  function getStockCycleLimit() {
+    if (foundationsCompleted >= 3) return 1;
+    if (foundationsCompleted >= 2) return 2;
+    return 3;
+  }
 
   // ── DECK ─────────────────────────────────────────────────
   function createDeck() {
@@ -1018,6 +1122,20 @@
     stock = deck.slice(idx).map(c => { c.faceUp = false; return c; });
 
     updateScoreDisplay();
+
+    // Apply daily challenge if active
+    if (isDailyChallenge) {
+      dailyModifier = getDailyModifier();
+      if (dailyModifier.apply) dailyModifier.apply();
+      if (dailyModifier.id === 'generous') {
+        // Give a random common Joker
+        const commons = Object.values(JOKERS).filter(j => j.rarity === 'common');
+        const freeJoker = commons[Math.floor(Math.random() * commons.length)];
+        activeJokers.push({ ...freeJoker });
+        renderJokersBar();
+      }
+    }
+
     startTimer();
     render();
   }
@@ -1439,9 +1557,9 @@
     }
 
     // Can still draw from stock (but cap cycling to prevent infinite loops)
-    if (stock.length > 0 && stockCycleCount < 3) return true;
+    if (stock.length > 0 && stockCycleCount < getStockCycleLimit()) return true;
     // Can recycle waste (limited cycles)
-    if (waste.length > 0 && stock.length === 0 && stockCycleCount < 3) return true;
+    if (waste.length > 0 && stock.length === 0 && stockCycleCount < getStockCycleLimit()) return true;
 
     return false;
   }
@@ -1489,7 +1607,9 @@
     const weights = available.map(j =>
       j.rarity === 'common' ? 55 : j.rarity === 'rare' ? 30 : 15
     );
-    const picks = weightedSample(available, weights, Math.min(3, available.length));
+    let shopSize = foundationsCompleted >= 3 ? 2 : 3;
+    if (isDailyChallenge && dailyModifier?.shopSize) shopSize = dailyModifier.shopSize;
+    const picks = weightedSample(available, weights, Math.min(shopSize, available.length));
 
     container.innerHTML = picks.map(j => `
       <div class="shop-card ${j.rarity}" onclick="pickJoker('${j.id}')">
@@ -1524,6 +1644,18 @@
 
   function closeShop() {
     document.getElementById('shopOverlay').classList.remove('show');
+
+    // Escalation: time penalty per foundation
+    const timePenalties = [0, 30, 45, 60];
+    const penalty = timePenalties[foundationsCompleted] || 0;
+    if (penalty > 0) {
+      timerSeconds = Math.max(30, timerSeconds - penalty); // never below 30s
+      // Flash timer red briefly
+      const timerEl = document.getElementById('timer');
+      timerEl.style.color = '#ef4444';
+      setTimeout(() => { timerEl.style.color = ''; }, 1000);
+    }
+
     if (gameActive) startTimer(); // resume timer after shop
   }
 
@@ -1786,12 +1918,18 @@
     if (timerInterval) clearInterval(timerInterval);
 
     // Time bonus
-    const timeBonus = timerSeconds;
+    const timeBonusMult = (isDailyChallenge && dailyModifier?.timeBonusMult) || 1;
+    const timeBonus = timerSeconds * timeBonusMult;
     score += timeBonus;
 
     // S7 Full Clear: triple total score on perfect clear
     if (perfectClear && hasJoker('S7')) {
       score = Math.round(score * 3);
+    }
+
+    // Daily modifier score multiplier
+    if (isDailyChallenge && dailyModifier?.scoreMult) {
+      score = Math.round(score * dailyModifier.scoreMult);
     }
     updateScoreDisplay();
 
@@ -1811,6 +1949,10 @@
 
     // XP
     addXP(Math.round(score / 10) + (perfectClear ? 200 : 25));
+
+    // Award prestige points based on performance
+    const prestigeEarned = foundationsCompleted + (perfectClear ? 3 : 0);
+    if (prestigeEarned > 0) addPrestigePoints(prestigeEarned);
 
     // Submit score
     window.gameCloud.submitScore(GAME_SLUG, {
@@ -1838,7 +1980,8 @@
         foundationsCompleted,
         cardsOnFoundation,
         timeBonus,
-        jokers: activeJokers
+        jokers: activeJokers,
+        prestigeEarned
       });
     }, perfectClear ? 200 : 500);
   }
@@ -1866,7 +2009,7 @@
     `;
     document.getElementById('jokersUsed').innerHTML = stats.jokers.map(j =>
       `<span class="joker-badge ${j.rarity}" style="font-size:0.65rem;">${j.icon} ${j.name}</span>`
-    ).join('');
+    ).join('') + (stats.prestigeEarned > 0 ? `<div style="width:100%;text-align:center;margin-top:0.5rem;color:var(--gold);font-size:0.85rem;font-weight:700;">⭐ +${stats.prestigeEarned} Prestige (Total: ${getPrestigePoints()})</div>` : '');
 
     // Best score
     const playerData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -1883,9 +2026,20 @@
   }
 
   function startNewGame() {
+    isDailyChallenge = false;
+    dailyModifier = null;
     document.getElementById('gameOverModal').classList.remove('show');
     dealGame();
     renderJokersBar();
+  }
+
+  function startDailyChallenge() {
+    isDailyChallenge = true;
+    document.getElementById('gameOverModal').classList.remove('show');
+    dealGame();
+    renderJokersBar();
+    render();
+    startTimer();
   }
 
   // ── SOUND ────────────────────────────────────────────────
@@ -2129,6 +2283,7 @@
   window.hideHelp = hideHelp;
   window.toggleMute = toggleMute;
   window.startNewGame = startNewGame;
+  window.startDailyChallenge = startDailyChallenge;
   window.pickJoker = pickJoker;
   window.closeShop = closeShop;
   window.drawFromStock = drawFromStock;
