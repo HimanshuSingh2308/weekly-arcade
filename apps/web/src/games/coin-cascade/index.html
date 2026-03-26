@@ -798,9 +798,9 @@
   }
 
   function resizeCanvas() {
-    const header = document.querySelector('.game-header');
+    const header = document.getElementById('gameHeader');
     const hud = document.querySelector('.hud');
-    const headerH = header.offsetHeight + hud.offsetHeight;
+    const headerH = (header?.offsetHeight || 0) + (hud?.offsetHeight || 0);
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - headerH;
     canvasRect = canvas.getBoundingClientRect();
