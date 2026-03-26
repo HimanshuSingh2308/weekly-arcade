@@ -3,6 +3,19 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { User, UserSettings } from '@weekly-arcade/shared';
 import { UpdateUserDto, UpdateSettingsDto } from './dto';
 
+// Convert Firestore Timestamps to ISO strings for JSON serialization
+function serializeDates<T extends object>(obj: T): T {
+  const result = { ...obj } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(result)) {
+    if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+      result[key] = (value as { toDate: () => Date }).toDate().toISOString();
+    } else if (value instanceof Date) {
+      result[key] = value.toISOString();
+    }
+  }
+  return result as T;
+}
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -19,7 +32,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return userDoc.data() as User;
+    return serializeDates(userDoc.data() as User);
   }
 
   async updateProfile(uid: string, updateDto: UpdateUserDto): Promise<User> {

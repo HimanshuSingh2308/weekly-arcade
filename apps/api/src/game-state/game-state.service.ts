@@ -10,6 +10,19 @@ function removeUndefined<T extends object>(obj: T): T {
   ) as T;
 }
 
+// Convert Firestore Timestamps to ISO strings for JSON serialization
+function serializeDates<T extends object>(obj: T): T {
+  const result = { ...obj } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(result)) {
+    if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+      result[key] = (value as { toDate: () => Date }).toDate().toISOString();
+    } else if (value instanceof Date) {
+      result[key] = value.toISOString();
+    }
+  }
+  return result as T;
+}
+
 @Injectable()
 export class GameStateService {
   private readonly logger = new Logger(GameStateService.name);
@@ -31,7 +44,7 @@ export class GameStateService {
       return null;
     }
 
-    return doc.data() as GameState;
+    return serializeDates(doc.data() as GameState);
   }
 
   async saveGameState(
@@ -79,7 +92,7 @@ export class GameStateService {
       .collection(`${this.usersCollection}/${uid}/${this.gameStatesSubcollection}`)
       .get();
 
-    return snapshot.docs.map((doc) => doc.data() as GameState);
+    return snapshot.docs.map((doc) => serializeDates(doc.data() as GameState));
   }
 
   async deleteGameState(uid: string, gameId: string): Promise<void> {
