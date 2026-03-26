@@ -2410,6 +2410,7 @@
     if (audioInitialized) return;
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       audioInitialized = true;
     } catch(e) { console.warn('Audio init failed', e); }
   }
@@ -2594,6 +2595,8 @@
 
   function startBgm() {
     if (!audioCtx || bgmPlaying || isMuted) return;
+    // Ensure AudioContext is running (browsers suspend until user gesture)
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     try {
       // Soft pad chord: C major 7 (C4, E4, G4, B4) with detuned oscillators
       const notes = [261.6, 329.6, 392.0, 493.9];
