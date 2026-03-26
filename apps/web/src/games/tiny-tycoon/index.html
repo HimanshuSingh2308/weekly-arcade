@@ -4217,7 +4217,7 @@
       localStorage.setItem('tt_best_score', dayRev.toString());
     }
 
-    if (!window.apiClient || !currentUser) return;
+    if (!window.apiClient || !currentUser) { if (window.authNudge) window.authNudge.show(); return; }
 
     try {
       await window.apiClient.submitScore('tiny-tycoon', {

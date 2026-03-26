@@ -806,7 +806,7 @@
 
   // ── SCORE SUBMISSION ─────────────────────────────────────
   async function submitScoreToCloud(scoreValue, extras = {}) {
-    if (!currentUser || !window.apiClient) return;
+    if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
     try {
       const result = await window.apiClient.submitScore('coin-cascade', {
         score: scoreValue,

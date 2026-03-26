@@ -3849,7 +3849,8 @@
 
     // Submit score to leaderboard
     async function submitScoreToCloud(scoreData, won) {
-      if (!currentUser || !window.apiClient || !won) return;
+      if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
+      if (!won) return;
 
       try {
         await window.apiClient.submitScore('wordle', {

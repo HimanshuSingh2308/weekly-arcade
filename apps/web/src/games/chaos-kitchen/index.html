@@ -1949,6 +1949,7 @@
       } else {
         // Save for later sync
         saveGuestScore(scoreData);
+        if (!isLevelUp && window.authNudge) window.authNudge.show();
       }
     }
 

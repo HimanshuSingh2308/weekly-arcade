@@ -3178,7 +3178,7 @@
     }
 
     async function submitScore() {
-      if (!currentUser || !window.apiClient) return;
+      if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
 
       try {
         await window.apiClient.submitScore('voidbreak', {

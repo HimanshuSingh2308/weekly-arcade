@@ -1417,6 +1417,7 @@
       } else {
         // Save for later sync
         saveGuestScore(scoreData);
+        if (!isMilestone && window.authNudge) window.authNudge.show();
       }
     }
 
