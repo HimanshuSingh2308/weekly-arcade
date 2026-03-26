@@ -1023,7 +1023,7 @@
     }
 
     /* Mobile UI - hidden on desktop */
-    .mobile-ui, .mobile-controls {
+    .mobile-ui {
       display: none;
     }
 
@@ -1099,66 +1099,74 @@
         border-radius: 12px;
       }
 
-      /* Mobile Touch Controls */
-      .mobile-controls {
+      /* Adjust game container for mobile — full height, no controls footer */
+      .game-container {
+        height: calc(100dvh - 50px);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* Gesture hint overlay (shown once on first mobile play) */
+      .gesture-hint {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 500;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
-        padding: 12px;
-        padding-bottom: max(12px, env(safe-area-inset-bottom));
-        background: var(--bg-secondary);
-        border-top: 1px solid var(--border);
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
-      }
-
-      .mobile-controls-row {
-        display: flex;
-        gap: 12px;
-      }
-
-      .mobile-btn {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        border: 2px solid var(--border);
-        background: var(--bg-card);
+        justify-content: center;
+        gap: 1.5rem;
         color: var(--text-primary);
-        font-size: 1.5rem;
+        padding: 2rem;
+        text-align: center;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .gesture-hint-title {
+        font-size: 1.3rem;
         font-weight: 700;
-        cursor: pointer;
+      }
+
+      .gesture-hint-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        font-size: 1rem;
+      }
+
+      .gesture-hint-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .gesture-hint-icon {
+        font-size: 1.5rem;
+        width: 48px;
+        height: 48px;
+        background: var(--bg-card);
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.1s;
-        -webkit-tap-highlight-color: transparent;
-        user-select: none;
+        flex-shrink: 0;
       }
 
-      .mobile-btn:active {
+      .gesture-hint-dismiss {
         background: var(--accent);
-        transform: scale(0.95);
+        color: white;
+        border: none;
+        padding: 0.6rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 0.5rem;
       }
 
-      .mobile-btn-drop {
-        background: var(--bg-secondary);
-      }
-
-      .mobile-btn-hard {
-        width: 80px;
-        border-radius: 28px;
-        background: var(--accent);
-        color: var(--bg-primary);
-      }
-
-      /* Adjust game container for mobile */
-      .game-container {
-        height: calc(100dvh - 50px);
-        padding-bottom: calc(160px + env(safe-area-inset-bottom));
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
       .board-container {
@@ -1356,19 +1364,16 @@
     </div>
   </div>
 
-  <!-- Mobile Touch Controls -->
-  <div class="mobile-controls">
-    <div class="mobile-controls-row">
-      <button class="mobile-btn" id="btnRotate">↻</button>
+  <!-- Gesture Hint (shown once on first mobile play) -->
+  <div class="gesture-hint" id="gestureHint" style="display: none;">
+    <div class="gesture-hint-title">Touch Controls</div>
+    <div class="gesture-hint-items">
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👆</div><span>Tap to rotate</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👈👉</div><span>Swipe left/right to move</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👇</div><span>Swipe down to hard drop</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👆</div><span>Swipe up to rotate</span></div>
     </div>
-    <div class="mobile-controls-row">
-      <button class="mobile-btn" id="btnLeft">←</button>
-      <button class="mobile-btn mobile-btn-drop" id="btnDrop">▼</button>
-      <button class="mobile-btn" id="btnRight">→</button>
-    </div>
-    <div class="mobile-controls-row">
-      <button class="mobile-btn mobile-btn-hard" id="btnHardDrop">⏬</button>
-    </div>
+    <button class="gesture-hint-dismiss" id="gestureHintDismiss">Got it</button>
   </div>
 
   <!-- Toast Container -->
@@ -1465,7 +1470,7 @@
           <div class="control-item"><kbd>↓</kbd> Soft Drop</div>
           <div class="control-item"><kbd>Space</kbd> Hard Drop</div>
         </div>
-        <p style="margin-top: 0.5rem; font-size: 0.8rem;">📱 <em>Touch: Tap to rotate, swipe left/right to move, swipe down to drop</em></p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">📱 <em>Touch: Tap to rotate, swipe left/right to move, swipe down to hard drop, swipe up to rotate</em></p>
       </div>
 
       <div class="tutorial-section">
@@ -2908,14 +2913,22 @@
       let touchStartY = 0;
       let touchStartTime = 0;
 
-      document.getElementById('gameBoard').addEventListener('touchstart', (e) => {
+      // Gesture controls — full game container (not just board)
+      const touchZone = document.querySelector('.game-container');
+
+      touchZone.addEventListener('touchstart', (e) => {
+        // Don't intercept touches on buttons/modals/UI elements
+        if (e.target.closest('button, .mobile-ui, .shop-modal, .attack-overlay, .menu-modal, .game-over-modal, .tutorial-modal, a')) return;
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
         e.preventDefault();
       }, { passive: false });
 
-      document.getElementById('gameBoard').addEventListener('touchend', (e) => {
+      touchZone.addEventListener('touchend', (e) => {
+        if (e.target.closest('button, .mobile-ui, .shop-modal, .attack-overlay, .menu-modal, .game-over-modal, .tutorial-modal, a')) return;
+        if (gameState.gameOver) return;
+
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
         const dt = Date.now() - touchStartTime;
@@ -2937,32 +2950,16 @@
         }
       });
 
-      // Mobile button controls
-      const btnLeft = document.getElementById('btnLeft');
-      const btnRight = document.getElementById('btnRight');
-      const btnRotate = document.getElementById('btnRotate');
-      const btnDrop = document.getElementById('btnDrop');
-      const btnHardDrop = document.getElementById('btnHardDrop');
+      // Gesture hint — show once on first mobile visit
+      if ('ontouchstart' in window && !localStorage.getItem('fieldstone-gesture-hint-seen')) {
+        const hint = document.getElementById('gestureHint');
+        hint.style.display = 'flex';
+        document.getElementById('gestureHintDismiss').addEventListener('click', () => {
+          hint.style.display = 'none';
+          localStorage.setItem('fieldstone-gesture-hint-seen', '1');
+        });
+      }
 
-      const handleMobileBtn = (action) => {
-        if (gameState.gameOver) return;
-        if (document.getElementById('shopModal').classList.contains('show')) return;
-        if (document.getElementById('attackOverlay').classList.contains('show')) return;
-        action();
-      };
-
-      btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(() => movePiece(-1)); });
-      btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(() => movePiece(1)); });
-      btnRotate.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(rotatePiece); });
-      btnDrop.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(dropPiece); });
-      btnHardDrop.addEventListener('touchstart', (e) => { e.preventDefault(); handleMobileBtn(hardDrop); });
-
-      // Also support click for testing on desktop
-      btnLeft.addEventListener('click', () => handleMobileBtn(() => movePiece(-1)));
-      btnRight.addEventListener('click', () => handleMobileBtn(() => movePiece(1)));
-      btnRotate.addEventListener('click', () => handleMobileBtn(rotatePiece));
-      btnDrop.addEventListener('click', () => handleMobileBtn(dropPiece));
-      btnHardDrop.addEventListener('click', () => handleMobileBtn(hardDrop));
     }
 
     // Start game
