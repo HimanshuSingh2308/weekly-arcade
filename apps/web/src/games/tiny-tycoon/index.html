@@ -1383,6 +1383,18 @@
       will-change: transform, opacity;
     }
 
+    .coin-to-wallet {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold) 0%, #DAA520 60%, #B8860B 100%);
+      box-shadow: 0 0 6px rgba(245,197,66,0.6);
+      pointer-events: none;
+      z-index: 3000;
+      will-change: transform, opacity;
+    }
+
     .floating-text {
       position: absolute;
       font-size: 16px;
@@ -1751,6 +1763,39 @@
       100% { transform: scale(1.05); }
     }
 
+    .personal-best-banner {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 3000;
+      pointer-events: none;
+      animation: bestBannerFade 2.5s ease-out forwards;
+    }
+    .personal-best-banner .pb-label {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 2px 12px rgba(245,197,66,0.6), 0 0 40px rgba(245,197,66,0.3);
+      animation: bestBannerScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .personal-best-banner .pb-score {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      margin-top: 0.3rem;
+      animation: bestBannerScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+    }
+    @keyframes bestBannerScale {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes bestBannerFade {
+      0%, 60% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
     @keyframes baristaIdle {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-1px); }
@@ -2029,6 +2074,11 @@
     <div class="modal shop-modal" id="shopModal"></div>
   </div>
 
+  <!-- Stats Overlay -->
+  <div class="overlay" id="statsOverlay" role="dialog" aria-modal="true" aria-label="Player statistics">
+    <div class="modal" id="statsModal"></div>
+  </div>
+
   <!-- Pause Overlay -->
   <div class="overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-label="Game paused">
     <div class="modal pause-content">
@@ -2130,6 +2180,20 @@
   // GAME STATE
   // ==========================================
   let gameState = 'TITLE';
+  let cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0 };
+
+  // Daily challenge system
+  const DAILY_CHALLENGES = [
+    { desc: 'Serve {n} customers', field: 'customersServed', target: 20, bonus: 50 },
+    { desc: 'Earn {n} coins in one day', field: 'dayRevenue', target: 300, bonus: 75 },
+    { desc: 'Reach a {n}-streak combo', field: 'peakCombo', target: 10, bonus: 60 },
+    { desc: 'Lose 0 customers', field: 'customersLost', target: 0, bonus: 100, compare: 'eq' },
+    { desc: 'Serve {n} customers', field: 'customersServed', target: 25, bonus: 75 },
+    { desc: 'Earn {n} coins in one day', field: 'dayRevenue', target: 500, bonus: 100 },
+    { desc: 'Reach a {n}-streak combo', field: 'peakCombo', target: 15, bonus: 100 },
+  ];
+  let dailyChallenge = null;
+  let dailyChallengeComplete = false;
   let wallet = 0;
   let bestScore = 0;
   let currentDay = 1;
@@ -2142,6 +2206,7 @@
   let dayTimer = 0;
   let dayRevenue = 0;
   let dayPenalties = 0;
+  let dayStartTime = 0;
   let customersServed = 0;
   let customersLost = 0;
   let comboStreak = 0;
@@ -2158,6 +2223,7 @@
   let rushCustomerIds = new Set();
   let rushLostAny = false;
   let rushHadEvent = false;
+  let rushWarningShown = false;
   let lastFrameTime = 0;
   let animFrameId = null;
   let customerIdCounter = 0;
@@ -2205,6 +2271,7 @@
     localStorage.setItem('tt_current_day', currentDay.toString());
     localStorage.setItem('tt_upgrades', JSON.stringify(upgradeLevels));
     localStorage.setItem('tt_achievements', JSON.stringify([...unlockedAchievements]));
+    localStorage.setItem('tt_stats', JSON.stringify(cumulativeStats));
   }
 
   function loadGame() {
@@ -2213,12 +2280,13 @@
     currentDay = parseInt(localStorage.getItem('tt_current_day') || '1') || 1;
     try { upgradeLevels = JSON.parse(localStorage.getItem('tt_upgrades') || '{}'); } catch(e) { upgradeLevels = {}; }
     try { unlockedAchievements = new Set(JSON.parse(localStorage.getItem('tt_achievements') || '[]')); } catch(e) { unlockedAchievements = new Set(); }
+    try { cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0, ...JSON.parse(localStorage.getItem('tt_stats') || '{}') }; } catch(e) {}
     masterVolume = parseFloat(localStorage.getItem('tt_volume') || '0.5') || 0.5;
     isMuted = localStorage.getItem('tt_muted') === 'true';
   }
 
   function resetGame() {
-    ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements'].forEach(k => localStorage.removeItem(k));
+    ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements', 'tt_stats'].forEach(k => localStorage.removeItem(k));
     loadGame();
   }
 
@@ -2504,6 +2572,11 @@
     for (const id in upgradeLevels) {
       total += (upgradeLevels[id] || 0);
     }
+    // Day milestones also contribute to shop visual evolution
+    // so the shop progresses even if player hasn't bought upgrades yet
+    if (currentDay >= 20) total += 4;
+    else if (currentDay >= 10) total += 2;
+    else if (currentDay >= 5) total += 1;
     return total;
   }
 
@@ -2632,6 +2705,11 @@
       type = 'vip';
       const available = getAvailableDrinks(currentDay);
       order = available[Math.floor(Math.random() * available.length)];
+      // Show VIP tutorial on first VIP customer ever
+      if (!localStorage.getItem('tt_vip_tutorial_seen')) {
+        localStorage.setItem('tt_vip_tutorial_seen', 'true');
+        showVipTutorial();
+      }
     } else {
       const weights = getCustomerTypeWeights(currentDay);
       type = weightedRandom(weights);
@@ -2921,11 +2999,13 @@
       comboForgives++;
     } else {
       const hadCombo = comboStreak > 0;
-      comboStreak = 0;
+      // Soften combo loss: halve instead of reset to zero
+      // Combo Keeper forgives entirely (handled above); this is the fallback
+      comboStreak = Math.floor(comboStreak / 2);
       comboForgives = 0;
       updateComboDisplay();
-      // F. Combo lost flash
-      if (hadCombo) {
+      // F. Combo lost flash (only if combo actually dropped)
+      if (hadCombo && comboStreak === 0) {
         showComboLostFlash();
       }
     }
@@ -3000,6 +3080,8 @@
       queueArea.appendChild(coin);
       setTimeout(() => coin.remove(), 800);
     }
+    // Trail one coin to the wallet HUD
+    spawnCoinTrailToWallet(c);
   }
 
   function spawnCoinAnimationInArea(c, area) {
@@ -3015,6 +3097,41 @@
       area.appendChild(coin);
       setTimeout(() => coin.remove(), 800);
     }
+    spawnCoinTrailToWallet(c);
+  }
+
+  function spawnCoinTrailToWallet(c) {
+    const walletEl = document.getElementById('hudCoins');
+    if (!walletEl) return;
+    const walletRect = walletEl.getBoundingClientRect();
+    const gameRect = gameWrap.getBoundingClientRect();
+
+    const startX = gameRect.left + c.x + 20;
+    const startY = gameRect.top + (c.y || 40) + 10;
+    const endX = walletRect.left + walletRect.width / 2;
+    const endY = walletRect.top + walletRect.height / 2;
+
+    const coin = document.createElement('div');
+    coin.className = 'coin-to-wallet';
+    coin.textContent = '';
+    coin.style.left = startX + 'px';
+    coin.style.top = startY + 'px';
+    document.body.appendChild(coin);
+
+    coin.animate([
+      { left: startX + 'px', top: startY + 'px', opacity: 1, transform: 'scale(1)' },
+      { left: endX + 'px', top: endY + 'px', opacity: 0.8, transform: 'scale(0.5)', offset: 0.8 },
+      { left: endX + 'px', top: endY + 'px', opacity: 0, transform: 'scale(0)' }
+    ], {
+      duration: 450,
+      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      delay: 150
+    }).onfinish = () => {
+      coin.remove();
+      // Pulse the wallet display on arrival
+      walletEl.parentElement.classList.add('pulse');
+      setTimeout(() => walletEl.parentElement.classList.remove('pulse'), 200);
+    };
   }
 
   function spawnFloatingText(c, text) {
@@ -3258,12 +3375,20 @@
       createCustomer();
     }
 
-    // Rush hour logic
+    // Rush hour logic — 3-second countdown warning before rush starts
     if (rushScheduled && !rushActive) {
       const elapsed = DAY_DURATION - dayTimer;
+      const timeUntilRush = rushStartTime - elapsed;
+      if (timeUntilRush <= 3000 && timeUntilRush > 0 && !rushWarningShown) {
+        rushWarningShown = true;
+        rushBanner.textContent = '\u26A1 RUSH INCOMING! \u26A1';
+        rushBanner.classList.add('visible');
+        playSound('warning');
+      }
       if (elapsed >= rushStartTime) {
         rushActive = true;
         rushTimer = 10000;
+        rushBanner.textContent = '\u26A1 RUSH HOUR! \u26A1';
         rushBanner.classList.add('visible');
         playSound('rush');
         triggerScreenShake();
@@ -3441,6 +3566,7 @@
   function startDay() {
     initAudio();
     gameState = 'PLAYING';
+    dayStartTime = Date.now();
     dayTimer = DAY_DURATION;
     dayRevenue = 0;
     dayPenalties = 0;
@@ -3456,6 +3582,7 @@
     rushLostAny = false;
     rushCustomerIds = new Set();
     rushHadEvent = false;
+    rushWarningShown = false;
     spawnTimer = 1000;
     lastFrameTime = 0;
 
@@ -3480,6 +3607,10 @@
     } else {
       rushScheduled = false;
     }
+
+    // Daily challenge — pick based on day number (deterministic rotation)
+    dailyChallenge = DAILY_CHALLENGES[(currentDay - 1) % DAILY_CHALLENGES.length];
+    dailyChallengeComplete = false;
 
     // UI
     hideAllOverlays();
@@ -3537,16 +3668,27 @@
     const finalRevenue = Math.max(0, dayRevenue - dayPenalties);
     const isNewBest = finalRevenue > bestScore;
 
+    submitScore(finalRevenue);
+
     if (isNewBest) {
       playSound('newBest');
       triggerScreenShake();
       // J. Confetti celebration
       spawnConfetti();
-      submitScore(finalRevenue);
       bestScore = finalRevenue;
+      // Show prominent full-screen personal best banner
+      showPersonalBestBanner(finalRevenue);
     }
 
     wallet += finalRevenue;
+
+    // Update cumulative stats
+    cumulativeStats.totalServed += customersServed;
+    cumulativeStats.totalLost += customersLost;
+    cumulativeStats.totalCoinsEarned += finalRevenue;
+    cumulativeStats.daysPlayed++;
+    if (peakCombo > cumulativeStats.bestCombo) cumulativeStats.bestCombo = peakCombo;
+
     saveGame();
 
     let rushSurvivorEarned = false;
@@ -3570,15 +3712,40 @@
     currentDay++;
     saveGame();
 
+    // Check daily challenge
+    let challengeBonus = 0;
+    if (dailyChallenge && !dailyChallengeComplete) {
+      const val = dailyChallenge.field === 'dayRevenue' ? finalRevenue
+        : dailyChallenge.field === 'customersServed' ? customersServed
+        : dailyChallenge.field === 'customersLost' ? customersLost
+        : dailyChallenge.field === 'peakCombo' ? peakCombo : 0;
+      const met = dailyChallenge.compare === 'eq' ? val === dailyChallenge.target : val >= dailyChallenge.target;
+      if (met) {
+        dailyChallengeComplete = true;
+        challengeBonus = dailyChallenge.bonus;
+        wallet += challengeBonus;
+        playSound('achievement');
+      }
+    }
+
     // Announce to screen readers
     const sr = document.getElementById('srAnnounce');
     if (sr) sr.textContent = `Day ${currentDay} complete. Revenue: ${finalRevenue} coins. Served: ${customersServed}. Lost: ${customersLost}.`;
 
-    setTimeout(() => showDayEnd(finalRevenue, isNewBest, dayPenalties), 1000);
+    setTimeout(() => showDayEnd(finalRevenue, isNewBest, dayPenalties, challengeBonus), 1000);
   }
 
-  function showDayEnd(revenue, isNewBest, penalties) {
+  function showDayEnd(revenue, isNewBest, penalties, challengeBonus = 0) {
     const modal = document.getElementById('dayEndModal');
+    const ch = dailyChallenge;
+    const challengeDesc = ch ? ch.desc.replace('{n}', ch.target) : '';
+    const challengeHtml = ch ? `
+      <div class="modal-row" style="border-top:1px dashed rgba(0,0,0,0.1);margin-top:0.4rem;padding-top:0.4rem;">
+        <span>🎯 ${challengeDesc}</span>
+        <span style="color:${challengeBonus > 0 ? 'var(--matcha)' : 'var(--coral)'}; font-weight:700;">
+          ${challengeBonus > 0 ? `+${challengeBonus} 🪙` : 'Not yet'}
+        </span>
+      </div>` : '';
     modal.innerHTML = `
       <h2>☀️ Day ${currentDay - 1} Complete!</h2>
       <div class="modal-row"><span>Revenue</span><span>💰 ${formatCoins(revenue)}</span></div>
@@ -3586,6 +3753,7 @@
       <div class="modal-row"><span>Served</span><span>🧋 ${customersServed}</span></div>
       <div class="modal-row"><span>Lost</span><span>😤 ${customersLost}</span></div>
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${Math.min(3.0, 1.0 + peakCombo * 0.1).toFixed(1)}</span></div>
+      ${challengeHtml}
       ${isNewBest ? '<div class="new-best">⭐ NEW PERSONAL BEST! ⭐</div>' : ''}
       <br>
       <button class="btn" onclick="showShop()">Continue</button>
@@ -3722,7 +3890,10 @@
   // SCORE SUBMISSION
   // ==========================================
   async function submitScore(dayRev) {
-    localStorage.setItem('tt_best_score', dayRev.toString());
+    const storedBest = parseInt(localStorage.getItem('tt_best_score') || '0', 10);
+    if (dayRev > storedBest) {
+      localStorage.setItem('tt_best_score', dayRev.toString());
+    }
 
     if (!window.apiClient || !currentUser) return;
 
@@ -3730,7 +3901,7 @@
       await window.apiClient.submitScore('tiny-tycoon', {
         score: dayRev,
         level: currentDay,
-        timeMs: DAY_DURATION,
+        timeMs: Date.now() - dayStartTime,
         metadata: {
           day: currentDay,
           customersServed,
@@ -3839,17 +4010,43 @@
     const btns = document.getElementById('titleButtons');
     const hasSave = parseInt(localStorage.getItem('tt_current_day') || '1') > 1;
 
+    const statsBtn = hasSave ? `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showStats()">📊 Stats</button>` : '';
     btns.innerHTML = hasSave
       ? `<button class="btn" onclick="showShop()">Continue (Day ${currentDay})</button><br>
-         <button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="newGame()">New Game</button>`
+         <button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="newGame()">New Game</button>
+         ${statsBtn}`
       : `<button class="btn" onclick="startDay()">Start Day</button>`;
 
     showOverlay('titleOverlay');
     dayBadge.textContent = `Day ${currentDay}`;
   }
 
+  function showStats() {
+    const s = cumulativeStats;
+    const achievCount = unlockedAchievements.size;
+    const totalAch = Object.keys(ACHIEVEMENTS).length;
+    const bestMult = Math.min(3.0, 1.0 + s.bestCombo * 0.1).toFixed(1);
+    const modal = document.getElementById('statsModal');
+    modal.innerHTML = `
+      <h2>📊 Career Stats</h2>
+      <div class="modal-row"><span>Days Played</span><span>☀️ ${s.daysPlayed}</span></div>
+      <div class="modal-row"><span>Total Served</span><span>🧋 ${s.totalServed.toLocaleString()}</span></div>
+      <div class="modal-row"><span>Total Lost</span><span>😤 ${s.totalLost.toLocaleString()}</span></div>
+      <div class="modal-row"><span>Serve Rate</span><span>${s.totalServed + s.totalLost > 0 ? Math.round(s.totalServed / (s.totalServed + s.totalLost) * 100) : 0}%</span></div>
+      <div class="modal-row"><span>Total Coins Earned</span><span>💰 ${s.totalCoinsEarned.toLocaleString()}</span></div>
+      <div class="modal-row"><span>Best Day Revenue</span><span>⭐ ${formatCoins(bestScore)}</span></div>
+      <div class="modal-row"><span>Best Combo</span><span>🔥 x${bestMult} (${s.bestCombo} streak)</span></div>
+      <div class="modal-row"><span>Achievements</span><span>🏆 ${achievCount}/${totalAch}</span></div>
+      <br>
+      <button class="btn" onclick="hideAllOverlays(); showOverlay('titleOverlay');">Back</button>
+    `;
+    hideAllOverlays();
+    showOverlay('statsOverlay');
+  }
+
   function newGame() {
     if (!confirm('Reset all progress?')) return;
+    cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0 };
     resetGame();
     showTitle();
   }
@@ -4004,6 +4201,20 @@
     setTimeout(dismiss, 3000);
   }
 
+  function showVipTutorial() {
+    const overlay = document.createElement('div');
+    overlay.className = 'tutorial-overlay';
+    overlay.innerHTML = `
+      <div style="font-size:2rem;">👑</div>
+      <div class="tutorial-text">VIP customer! They sit in the lounge and your waiter serves them automatically for 2x coins!</div>
+    `;
+    document.body.appendChild(overlay);
+    function dismiss() { if (overlay.parentNode) overlay.remove(); }
+    overlay.addEventListener('click', dismiss);
+    overlay.addEventListener('touchstart', dismiss, { passive: true });
+    setTimeout(dismiss, 4000);
+  }
+
   // ==========================================
   // J. NEW BEST CONFETTI CELEBRATION
   // ==========================================
@@ -4037,6 +4248,17 @@
     }
   }
 
+  function showPersonalBestBanner(score) {
+    const banner = document.createElement('div');
+    banner.className = 'personal-best-banner';
+    banner.innerHTML = `
+      <div class="pb-label">⭐ NEW PERSONAL BEST! ⭐</div>
+      <div class="pb-score">💰 ${formatCoins(score)}</div>
+    `;
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 2600);
+  }
+
   // ==========================================
   // INIT
   // ==========================================
@@ -4055,6 +4277,7 @@
   window.startDay = startDay;
   window.showTitle = showTitle;
   window.newGame = newGame;
+  window.showStats = showStats;
 
   // Pause button handler
   document.getElementById('pauseBtn').addEventListener('click', () => {
