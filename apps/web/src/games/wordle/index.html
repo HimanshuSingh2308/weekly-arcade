@@ -3450,7 +3450,7 @@
       hintsContainer.innerHTML = '';
       hintsContainer.classList.remove('show');
       document.getElementById('hintBtn').disabled = false;
-      document.getElementById('hintCount').textContent = MAX_HINTS;
+      document.getElementById('hintCount').textContent = getMaxHints();
 
       // Reset keyboard
       document.querySelectorAll('.key').forEach(key => {
@@ -3470,11 +3470,12 @@
     }
 
     // Hint system
-    const MAX_HINTS = 3;
+    function getMaxHints() { return Math.min(3, wordLength - 1); } // Never reveal all letters
+    const MAX_HINTS = 3; // Base max — actual limit is getMaxHints()
     let lettersHintElement = null;
 
     function useHint() {
-      if (gameOver || hintsUsed >= MAX_HINTS) return;
+      if (gameOver || hintsUsed >= getMaxHints()) return;
 
       const hintsContainer = document.getElementById('hintsContainer');
       hintsUsed++;
@@ -3525,10 +3526,10 @@
     function updateHintButton() {
       const hintBtn = document.getElementById('hintBtn');
       const hintCount = document.getElementById('hintCount');
-      const remaining = MAX_HINTS - hintsUsed;
+      const remaining = getMaxHints() - hintsUsed;
       hintCount.textContent = remaining;
 
-      if (remaining === 0) {
+      if (remaining <= 0) {
         hintBtn.disabled = true;
       }
     }
@@ -3726,7 +3727,7 @@
         lastPlayedDate: new Date().toISOString(),
         additionalData: {
           totalXP: parseInt(localStorage.getItem('wordle-total-xp')) || 0,
-          hintsRemaining: MAX_HINTS - hintsUsed
+          hintsRemaining: getMaxHints() - hintsUsed
         }
       };
 
