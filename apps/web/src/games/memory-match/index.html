@@ -992,6 +992,7 @@
   <!-- Auth & API Scripts -->
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -1608,7 +1609,11 @@
       resultsModal.classList.add('show');
     }
 
-    // Submit score
+    // Auth state management
+    let currentUser = null;
+    let cloudStateMemory = null;
+
+    // Submit score via gameCloud (handles guest queueing automatically)
     async function submitScore(won) {
       if (gameState.mode === 'zen') return;
 
@@ -1626,131 +1631,64 @@
         }
       };
 
-      // Check if user is signed in
-      if (window.apiClient && currentUser) {
-        try {
-          await window.apiClient.submitScore('memory-match', scoreData);
-        } catch (error) {
-          saveGuestScore(scoreData);
-        }
-      } else {
-        saveGuestScore(scoreData);
-        if (window.authNudge) window.authNudge.show();
-      }
+      await window.gameCloud.submitOrQueue('memory-match', scoreData);
     }
-
-    function saveGuestScore(scoreData) {
-      const pendingScores = JSON.parse(localStorage.getItem('memory-match-pending-scores') || '[]');
-      const existing = pendingScores.findIndex(s =>
-        s.metadata?.difficulty === scoreData.metadata?.difficulty &&
-        s.metadata?.mode === scoreData.metadata?.mode
-      );
-
-      if (existing >= 0) {
-        if (scoreData.score > pendingScores[existing].score) {
-          pendingScores[existing] = { ...scoreData, timestamp: Date.now() };
-        }
-      } else {
-        pendingScores.push({ ...scoreData, timestamp: Date.now() });
-      }
-
-      const trimmed = pendingScores.slice(-10);
-      localStorage.setItem('memory-match-pending-scores', JSON.stringify(trimmed));
-    }
-
-    // Sync guest scores when user signs in
-    async function syncGuestScores() {
-      if (!window.apiClient || !currentUser) return;
-
-      const pendingScores = JSON.parse(localStorage.getItem('memory-match-pending-scores') || '[]');
-      if (pendingScores.length === 0) return;
-
-      const bestScore = pendingScores.reduce((best, curr) =>
-        curr.score > best.score ? curr : best, pendingScores[0]);
-
-      try {
-        await window.apiClient.submitScore('memory-match', {
-          score: bestScore.score,
-          timeMs: bestScore.timeMs || Math.round((bestScore.metadata?.time || 0) * 1000),
-          metadata: bestScore.metadata
-        });
-        localStorage.removeItem('memory-match-pending-scores');
-      } catch (error) {
-        console.error('Failed to sync guest scores:', error);
-      }
-    }
-
-    // Auth state management
-    let currentUser = null;
-    let cloudStateMemory = null;
 
     // Cloud state functions
     async function saveCloudState(won) {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        const prevGamesPlayed = cloudStateMemory?.gamesPlayed || 0;
-        const prevGamesWon = cloudStateMemory?.gamesWon || 0;
-        const prevBestStreak = cloudStateMemory?.bestStreak || 0;
+      if (!currentUser) return;
 
-        const state = {
-          currentLevel: 1,
-          currentStreak: 0,
-          bestStreak: Math.max(prevBestStreak, gameState.maxCombo),
-          gamesPlayed: prevGamesPlayed + 1,
-          gamesWon: prevGamesWon + (won ? 1 : 0),
-          lastPlayedDate: new Date().toISOString().split('T')[0],
-          additionalData: {
-            bestScore: Math.max(cloudStateMemory?.additionalData?.bestScore || 0, gameState.score),
-            bestTime: Math.min(cloudStateMemory?.additionalData?.bestTime || 9999, gameState.timer),
-            bestMoves: Math.min(cloudStateMemory?.additionalData?.bestMoves || 9999, gameState.moves)
-          }
-        };
-        await window.apiClient.saveGameState('memory-match', state);
-        cloudStateMemory = state;
+      const prevGamesPlayed = cloudStateMemory?.gamesPlayed || 0;
+      const prevGamesWon = cloudStateMemory?.gamesWon || 0;
+      const prevBestStreak = cloudStateMemory?.bestStreak || 0;
 
-        // Check achievements
-        checkAchievementsMemory(state);
-      } catch (e) {
-        console.error('Failed to save cloud state:', e);
-      }
+      const state = {
+        currentLevel: 1,
+        currentStreak: 0,
+        bestStreak: Math.max(prevBestStreak, gameState.maxCombo),
+        gamesPlayed: prevGamesPlayed + 1,
+        gamesWon: prevGamesWon + (won ? 1 : 0),
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        additionalData: {
+          bestScore: Math.max(cloudStateMemory?.additionalData?.bestScore || 0, gameState.score),
+          bestTime: Math.min(cloudStateMemory?.additionalData?.bestTime || 9999, gameState.timer),
+          bestMoves: Math.min(cloudStateMemory?.additionalData?.bestMoves || 9999, gameState.moves)
+        }
+      };
+
+      await window.gameCloud.saveState('memory-match', state);
+      cloudStateMemory = state;
+
+      // Check achievements
+      checkAchievementsMemory(state);
     }
 
     async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        cloudStateMemory = await window.apiClient.getGameState('memory-match');
-      } catch (e) {
-        console.log('Could not load cloud state');
-      }
+      cloudStateMemory = await window.gameCloud.loadState('memory-match');
     }
 
     async function checkAchievementsMemory(state) {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        if (state.gamesPlayed === 1) {
-          await window.apiClient.unlockAchievement('first_word', 'memory-match');
-        }
-        if (state.gamesWon >= 10) {
-          await window.apiClient.unlockAchievement('ten_wins', 'memory-match');
-        }
-      } catch (e) {
-        console.log('Could not check achievements');
+      if (!currentUser) return;
+      if (state.gamesPlayed === 1) {
+        await window.gameCloud.unlockAchievement('first_word', 'memory-match');
+      }
+      if (state.gamesWon >= 10) {
+        await window.gameCloud.unlockAchievement('ten_wins', 'memory-match');
       }
     }
 
     function initAuth() {
-      const checkAuth = setInterval(() => {
-        if (window.authManager?.isInitialized) {
-          clearInterval(checkAuth);
-          window.authManager.onAuthStateChanged(user => {
-            currentUser = user;
-            if (user) {
-              loadCloudState();
-              syncGuestScores();
-            }
-          });
+      window.gameCloud.initAuth({
+        onSignIn: (user) => {
+          currentUser = user;
+          loadCloudState();
+          window.gameCloud.syncGuestScores('memory-match');
+        },
+        onSignOut: () => {
+          currentUser = null;
+          cloudStateMemory = null;
         }
-      }, 100);
+      });
     }
 
     // Initialize

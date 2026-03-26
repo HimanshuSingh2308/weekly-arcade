@@ -792,6 +792,7 @@
   <!-- Firebase SDK -->
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
+  <script src="../../js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -846,22 +847,17 @@
   let movesSinceLastDraw = 0; // for S10 Streak Master
   let stockCycleCount = 0; // track infinite stock cycling
 
-  const authCheckInterval = setInterval(() => {
-    if (window.authManager?.isInitialized) {
-      clearInterval(authCheckInterval);
-      window.authManager.onAuthStateChanged(user => {
-        currentUser = user;
-        const authBtn = document.getElementById('authBtn');
-        if (user) {
-          authBtn.textContent = user.displayName?.split(' ')[0] || 'Player';
-          authBtn.onclick = () => window.location.href = '/profile/';
-        } else {
-          authBtn.textContent = 'Sign In';
-          authBtn.onclick = () => window.authManager.signInWithGoogle();
-        }
-      });
+  gameCloud.initAuth(user => {
+    currentUser = user;
+    const authBtn = document.getElementById('authBtn');
+    if (user) {
+      authBtn.textContent = user.displayName?.split(' ')[0] || 'Player';
+      authBtn.onclick = () => window.location.href = '/profile/';
+    } else {
+      authBtn.textContent = 'Sign In';
+      authBtn.onclick = () => window.authManager.signInWithGoogle();
     }
-  }, 100);
+  });
 
   // ── JOKER DEFINITIONS ───────────────────────────────────
   const JOKERS = {
@@ -1808,7 +1804,7 @@
     addXP(Math.round(score / 10) + (perfectClear ? 200 : 25));
 
     // Submit score
-    submitScoreToCloud(score, {
+    gameCloud.submitScore(GAME_SLUG, score, {
       level: foundationsCompleted,
       timeMs: elapsedMs,
       metadata: {
@@ -2092,18 +2088,7 @@
     }
   }
 
-  // ── SCORE SUBMISSION ─────────────────────────────────────
-  async function submitScoreToCloud(scoreValue, extras = {}) {
-    if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
-    try {
-      await window.apiClient.submitScore(GAME_SLUG, {
-        score: scoreValue,
-        ...extras
-      });
-    } catch (err) {
-      console.error('[Solitaire Roguelite] Score submit failed:', err);
-    }
-  }
+  // ── SCORE SUBMISSION (delegated to game-cloud.js) ───────
 
   // ── HELP MODAL ────────────────────────────────────────────
   function showHelp() {

@@ -730,6 +730,7 @@
   <!-- Scripts -->
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -1349,33 +1350,39 @@
 
     // Auth & API
     function updateAuthUI() {
-      const checkAuth = setInterval(() => {
-        if (window.authManager?.isInitialized) {
-          clearInterval(checkAuth);
-          window.authManager.onAuthStateChanged((user) => {
-            currentUser = user;
-            const userSection = document.getElementById('userSection');
-            if (user) {
-              userSection.innerHTML = '';
-              const avatarImg = document.createElement('img');
-              avatarImg.className = 'user-avatar';
-              const photoURL = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U');
-              avatarImg.src = photoURL.startsWith('https://') ? photoURL : 'https://ui-avatars.com/api/?name=U&background=random';
-              avatarImg.alt = 'User';
-              userSection.appendChild(avatarImg);
-              loadCloudState();
-              syncGuestScores(); // Sync any pending guest scores
-            } else {
-              userSection.innerHTML = '';
-              const signInButton = document.createElement('button');
-              signInButton.className = 'sign-in-btn';
-              signInButton.textContent = 'Sign In';
-              signInButton.addEventListener('click', promptSignIn);
-              userSection.appendChild(signInButton);
-            }
-          });
+      window.gameCloud.initAuth({
+        authBtnId: null, // 2048 manages its own user section
+        onSignIn: async (user) => {
+          currentUser = user;
+          // Update user section UI manually (2048 has custom avatar rendering)
+          const userSection = document.getElementById('userSection');
+          userSection.innerHTML = '';
+          const avatarImg = document.createElement('img');
+          avatarImg.className = 'user-avatar';
+          avatarImg.src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U');
+          avatarImg.alt = 'User';
+          userSection.appendChild(avatarImg);
+
+          cloudState2048 = await window.gameCloud.loadState('2048');
+          if (cloudState2048?.additionalData?.bestScore > bestScore) {
+            bestScore = cloudState2048.additionalData.bestScore;
+            localStorage.setItem('2048-best-score', bestScore);
+            bestScoreEl.textContent = bestScore;
+          }
+          await window.gameCloud.syncGuestScores('2048');
+          loadLeaderboard();
+        },
+        onSignOut: () => {
+          currentUser = null;
+          const userSection = document.getElementById('userSection');
+          userSection.innerHTML = '';
+          const signInButton = document.createElement('button');
+          signInButton.className = 'sign-in-btn';
+          signInButton.textContent = 'Sign In';
+          signInButton.addEventListener('click', promptSignIn);
+          userSection.appendChild(signInButton);
         }
-      }, 100);
+      });
     }
 
     function promptSignIn() {
@@ -1397,136 +1404,34 @@
         score: score,
         timeMs: Date.now() - gameStartTime,
         level: Math.floor(Math.log2(highestTile || 2)),
-        metadata: {
-          highestTile,
-          moves,
-          isMilestone
-        }
+        metadata: { highestTile, moves, isMilestone }
       };
-
-      // If signed in, submit directly
-      if (window.apiClient && currentUser) {
-        try {
-          await window.apiClient.submitScore('2048', scoreData);
-          loadLeaderboard();
-        } catch (error) {
-          console.error('Failed to submit score:', error);
-          // Save locally as backup
-          saveGuestScore(scoreData);
-        }
-      } else {
-        // Save for later sync
-        saveGuestScore(scoreData);
-        if (!isMilestone && window.authNudge) window.authNudge.show();
-      }
-    }
-
-    function saveGuestScore(scoreData) {
-      const pendingScores = JSON.parse(localStorage.getItem('2048-pending-scores') || '[]');
-
-      // Only keep the best score to avoid spam
-      const existingIdx = pendingScores.findIndex(s => s.metadata?.highestTile === scoreData.metadata?.highestTile);
-      if (existingIdx >= 0) {
-        if (scoreData.score > pendingScores[existingIdx].score) {
-          pendingScores[existingIdx] = { ...scoreData, timestamp: Date.now() };
-        }
-      } else {
-        pendingScores.push({ ...scoreData, timestamp: Date.now() });
-      }
-
-      // Keep only last 10 scores
-      const trimmed = pendingScores.slice(-10);
-      localStorage.setItem('2048-pending-scores', JSON.stringify(trimmed));
-    }
-
-    async function syncGuestScores() {
-      if (!window.apiClient || !currentUser) return;
-
-      const pendingScores = JSON.parse(localStorage.getItem('2048-pending-scores') || '[]');
-      if (pendingScores.length === 0) return;
-
-
-      // Submit the best score only
-      const bestScore = pendingScores.reduce((best, curr) =>
-        curr.score > best.score ? curr : best
-      , pendingScores[0]);
-
-      try {
-        await window.apiClient.submitScore('2048', {
-          score: bestScore.score,
-          level: bestScore.level,
-          metadata: bestScore.metadata
-        });
-        localStorage.removeItem('2048-pending-scores');
-        loadLeaderboard();
-      } catch (error) {
-        console.error('Failed to sync guest scores:', error);
-      }
+      const result = await window.gameCloud.submitOrQueue('2048', scoreData, { silent: isMilestone });
+      if (result) loadLeaderboard();
     }
 
     // Store cloud state for incremental updates
     let cloudState2048 = null;
 
     async function saveCloudState() {
-      if (!window.apiClient || !currentUser) return;
+      const prev = cloudState2048 || {};
+      const state = {
+        currentLevel: Math.floor(Math.log2(highestTile || 2)),
+        currentStreak: 0,
+        bestStreak: Math.max(prev.bestStreak || 0, Math.floor(Math.log2(highestTile || 2))),
+        gamesPlayed: (prev.gamesPlayed || 0) + 1,
+        gamesWon: (prev.gamesWon || 0) + (won ? 1 : 0),
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        additionalData: { bestScore, highestTile, totalMoves: moves }
+      };
+      await window.gameCloud.saveState('2048', state);
+      cloudState2048 = state;
 
-      try {
-        // Increment from existing cloud state
-        const prevGamesPlayed = cloudState2048?.gamesPlayed || 0;
-        const prevGamesWon = cloudState2048?.gamesWon || 0;
-        const prevBestStreak = cloudState2048?.bestStreak || 0;
-
-        const state = {
-          currentLevel: Math.floor(Math.log2(highestTile || 2)),
-          currentStreak: 0,
-          bestStreak: Math.max(prevBestStreak, Math.floor(Math.log2(highestTile || 2))),
-          gamesPlayed: prevGamesPlayed + 1,
-          gamesWon: prevGamesWon + (won ? 1 : 0),
-          lastPlayedDate: new Date().toISOString().split('T')[0],
-          additionalData: {
-            bestScore,
-            highestTile,
-            totalMoves: moves
-          }
-        };
-        await window.apiClient.saveGameState('2048', state);
-        cloudState2048 = state;
-
-        // Check achievements
-        checkAchievements2048(state);
-      } catch (error) {
-        console.error('Failed to save cloud state:', error);
-      }
-    }
-
-    async function loadCloudState() {
-      if (!window.apiClient || !currentUser) return;
-
-      try {
-        cloudState2048 = await window.apiClient.getGameState('2048');
-        if (cloudState2048?.additionalData?.bestScore > bestScore) {
-          bestScore = cloudState2048.additionalData.bestScore;
-          localStorage.setItem('2048-best-score', bestScore);
-          bestScoreEl.textContent = bestScore;
-        }
-      } catch (error) {
-        console.error('Failed to load cloud state:', error);
-      }
-    }
-
-    async function checkAchievements2048(state) {
-      if (!window.apiClient || !currentUser) return;
-
-      try {
-        if (state.gamesPlayed === 1) {
-          await window.apiClient.unlockAchievement('first_word', '2048');
-        }
-        if (state.gamesWon >= 10) {
-          await window.apiClient.unlockAchievement('ten_wins', '2048');
-        }
-      } catch (error) {
-        console.error('Could not check achievements:', error);
-      }
+      // Check achievements (preserve game-specific achievement IDs)
+      await window.gameCloud.checkAchievements('2048', [
+        { id: 'first_word', condition: state.gamesPlayed === 1 },
+        { id: 'ten_wins', condition: state.gamesWon >= 10 }
+      ]);
     }
 
     async function loadLeaderboard() {

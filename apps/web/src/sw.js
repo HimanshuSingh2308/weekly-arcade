@@ -1,5 +1,5 @@
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 19;
+const CACHE_VERSION = 20;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -7,6 +7,7 @@ const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/js/game-cloud.js',
   '/leaderboard/',
   '/leaderboard/index.html',
   '/games/wordle/',

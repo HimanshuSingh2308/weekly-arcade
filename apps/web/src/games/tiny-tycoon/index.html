@@ -2672,27 +2672,15 @@
   }
 
   // ==========================================
-  // AUTH
+  // AUTH (delegated to game-cloud.js)
   // ==========================================
   function setupAuth() {
-    let authAttempts = 0;
-    const checkAuth = setInterval(() => {
-      if (++authAttempts > 100) { clearInterval(checkAuth); return; }
-      if (window.authManager?.isInitialized) {
-        clearInterval(checkAuth);
-        window.authManager.onAuthStateChanged(user => {
-          currentUser = user;
-          const authBtn = document.getElementById('authBtn');
-          if (user) {
-            authBtn.textContent = user.displayName?.split(' ')[0] || 'Player';
-            authBtn.onclick = () => window.location.href = '/profile/';
-          } else {
-            authBtn.textContent = 'Sign In';
-            authBtn.onclick = () => window.authManager.signInWithGoogle();
-          }
-        });
-      }
-    }, 100);
+    window.gameCloud.initAuth({
+      authBtnId: 'authBtn',
+      signInStyle: 'name',
+      onSignIn: (user) => { currentUser = user; },
+      onSignOut: () => { currentUser = null; }
+    });
   }
 
   // ==========================================
@@ -4209,7 +4197,7 @@
   }
 
   // ==========================================
-  // SCORE SUBMISSION
+  // SCORE SUBMISSION (delegated to game-cloud.js)
   // ==========================================
   async function submitScore(dayRev) {
     const storedBest = parseInt(localStorage.getItem('tt_best_score') || '0', 10);
@@ -4217,24 +4205,18 @@
       localStorage.setItem('tt_best_score', dayRev.toString());
     }
 
-    if (!window.apiClient || !currentUser) { if (window.authNudge) window.authNudge.show(); return; }
-
-    try {
-      await window.apiClient.submitScore('tiny-tycoon', {
-        score: dayRev,
-        level: currentDay,
-        timeMs: Date.now() - dayStartTime,
-        metadata: {
-          day: currentDay,
-          customersServed,
-          customersLost,
-          peakCombo,
-          upgradeLevels: { ...upgradeLevels }
-        }
-      });
-    } catch (err) {
-      console.error('Score submission failed:', err);
-    }
+    await window.gameCloud.submitScore('tiny-tycoon', {
+      score: dayRev,
+      level: currentDay,
+      timeMs: Date.now() - dayStartTime,
+      metadata: {
+        day: currentDay,
+        customersServed,
+        customersLost,
+        peakCombo,
+        upgradeLevels: { ...upgradeLevels }
+      }
+    });
   }
 
   // ==========================================
@@ -4268,13 +4250,7 @@
     saveGame();
     showAchievementToast(id);
 
-    if (window.apiClient && currentUser) {
-      try {
-        window.apiClient.unlockAchievement(id, 'tiny-tycoon', {
-          metadata: { day: currentDay }
-        });
-      } catch(e) { /* ignore */ }
-    }
+    window.gameCloud.unlockAchievement(id, 'tiny-tycoon');
   }
 
   const achievementQueue = [];
@@ -4668,5 +4644,6 @@
   <!-- Firebase + Auth -->
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
+  <script src="../../js/game-cloud.js"></script>
 </body>
 </html>

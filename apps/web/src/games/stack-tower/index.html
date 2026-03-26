@@ -605,6 +605,7 @@
   <!-- API & Auth Scripts -->
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -1329,28 +1330,26 @@
     }
 
     // ============ AUTH & CLOUD ============
-    function initAuth() {
-      const checkAuth = setInterval(() => {
-        if (window.authManager?.isInitialized) {
-          clearInterval(checkAuth);
-          window.authManager.onAuthStateChanged(user => {
-            currentUser = user;
-            updateAuthUI();
-            if (user) loadCloudState();
-          });
-        }
-      }, 100);
-    }
+    let cloudState = null;
 
-    function updateAuthUI() {
-      const authBtn = document.getElementById('authBtn');
-      if (currentUser) {
-        authBtn.innerHTML = escapeHTML(currentUser.displayName?.split(' ')[0] || 'Player');
-        authBtn.onclick = null;
-      } else {
-        authBtn.textContent = 'Sign In';
-        authBtn.onclick = showAuthModal;
-      }
+    function initAuth() {
+      window.gameCloud.initAuth({
+        authBtnId: 'authBtn',
+        signInStyle: 'name',
+        onSignIn: async () => {
+          currentUser = window.gameCloud.getUser();
+          cloudState = await window.gameCloud.loadState('stack-tower');
+          if (cloudState && cloudState.additionalData?.highScore) {
+            const cloudHighScore = cloudState.additionalData.highScore;
+            if (cloudHighScore > highScore) {
+              highScore = cloudHighScore;
+              localStorage.setItem('stack-tower-best', highScore);
+              document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+          }
+        },
+        onSignOut: () => { currentUser = null; }
+      });
     }
 
     function showAuthModal() {
@@ -1375,109 +1374,45 @@
     });
 
     async function submitScore() {
-      if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
-
-      try {
-        const timeMs = Date.now() - gameStartTime;
-        await window.apiClient.submitScore('stack-tower', {
-          score: score,
-          level: height,
-          timeMs: timeMs,
-          metadata: {
-            blocksPlaced: totalStacks,
-            perfectStacks: perfectStacks,
-            maxCombo: maxCombo,
-            perfectRate: totalStacks > 0 ? ((perfectStacks / totalStacks) * 100).toFixed(1) : '0'
-          }
-        });
-        // score submitted
-      } catch (error) {
-        console.error('Failed to submit score:', error);
-      }
-    }
-
-    let cloudState = null;
-
-    async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
-
-      try {
-        cloudState = await window.apiClient.getGameState('stack-tower');
-        if (cloudState && cloudState.additionalData?.highScore) {
-          const cloudHighScore = cloudState.additionalData.highScore;
-          if (cloudHighScore > highScore) {
-            highScore = cloudHighScore;
-            localStorage.setItem('stack-tower-best', highScore);
-            document.getElementById('highScoreDisplay').textContent = highScore;
-          }
+      await window.gameCloud.submitScore('stack-tower', {
+        score: score,
+        level: height,
+        timeMs: Date.now() - gameStartTime,
+        metadata: {
+          blocksPlaced: totalStacks,
+          perfectStacks: perfectStacks,
+          maxCombo: maxCombo,
+          perfectRate: totalStacks > 0 ? ((perfectStacks / totalStacks) * 100).toFixed(1) : '0'
         }
-      } catch (error) {
-        // cloud state load failed silently
-      }
+      });
     }
 
     async function saveCloudState() {
-      if (!currentUser || !window.apiClient) return;
+      const prev = cloudState || {};
+      const newState = {
+        currentLevel: height,
+        currentStreak: 0,
+        bestStreak: Math.max(prev.bestStreak || 0, maxCombo),
+        gamesPlayed: (prev.gamesPlayed || 0) + 1,
+        gamesWon: 0,
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        additionalData: {
+          highScore: highScore,
+          lastScore: score,
+          lastHeight: height
+        }
+      };
+      await window.gameCloud.saveState('stack-tower', newState);
+      cloudState = newState;
 
-      try {
-        const prevGamesPlayed = cloudState?.gamesPlayed || 0;
-        const prevBestStreak = cloudState?.bestStreak || 0;
-
-        const newState = {
-          currentLevel: height,
-          currentStreak: 0,
-          bestStreak: Math.max(prevBestStreak, maxCombo),
-          gamesPlayed: prevGamesPlayed + 1,
-          gamesWon: 0,
-          lastPlayedDate: new Date().toISOString().split('T')[0],
-          additionalData: {
-            highScore: highScore,
-            lastScore: score,
-            lastHeight: height
-          }
-        };
-
-        await window.apiClient.saveGameState('stack-tower', newState);
-        cloudState = newState;
-
-        checkAchievements(newState);
-      } catch (error) {
-        // cloud state save failed silently
-      }
-    }
-
-    async function checkAchievements(state) {
-      if (!currentUser || !window.apiClient) return;
-
-      try {
-        // First game
-        if (state.gamesPlayed === 1) {
-          await window.apiClient.unlockAchievement('first_stack', 'stack-tower');
-        }
-        // Height achievements
-        if (height >= 10) {
-          await window.apiClient.unlockAchievement('tower_10', 'stack-tower');
-        }
-        if (height >= 25) {
-          await window.apiClient.unlockAchievement('tower_25', 'stack-tower');
-        }
-        if (height >= 50) {
-          await window.apiClient.unlockAchievement('skyscraper', 'stack-tower');
-        }
-        // Combo achievements
-        if (maxCombo >= 10) {
-          await window.apiClient.unlockAchievement('combo_master', 'stack-tower');
-        }
-        // Score achievements
-        if (score >= 1000) {
-          await window.apiClient.unlockAchievement('score_1000', 'stack-tower');
-        }
-        if (score >= 5000) {
-          await window.apiClient.unlockAchievement('score_5000', 'stack-tower');
-        }
-      } catch (error) {
-        // achievement check failed silently
-      }
+      // Achievement checks
+      if (newState.gamesPlayed === 1) window.gameCloud.unlockAchievement('first_stack', 'stack-tower');
+      if (height >= 10) window.gameCloud.unlockAchievement('tower_10', 'stack-tower');
+      if (height >= 25) window.gameCloud.unlockAchievement('tower_25', 'stack-tower');
+      if (height >= 50) window.gameCloud.unlockAchievement('skyscraper', 'stack-tower');
+      if (maxCombo >= 10) window.gameCloud.unlockAchievement('combo_master', 'stack-tower');
+      if (score >= 1000) window.gameCloud.unlockAchievement('score_1000', 'stack-tower');
+      if (score >= 5000) window.gameCloud.unlockAchievement('score_5000', 'stack-tower');
     }
 
     // ============ START ============

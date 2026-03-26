@@ -1306,6 +1306,7 @@
   <!-- API Client -->
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
+  <script src="../../js/game-cloud.js"></script>
   <script src="../../js/sync.js"></script>
 </head>
 <body>
@@ -3703,63 +3704,10 @@
     updateSoundButton();
 
     // ============================================
-    // CLOUD SYNC INTEGRATION
+    // CLOUD SYNC INTEGRATION (via game-cloud.js)
     // ============================================
 
     let currentUser = null;
-
-    function initCloudSync() {
-      // Use the global authManager from auth.js
-      if (window.authManager) {
-        window.authManager.onAuthStateChanged(handleAuthStateChanged);
-      }
-    }
-
-    function handleAuthStateChanged(user) {
-      currentUser = user;
-      updateAuthButton();
-
-      if (user) {
-        // Load cloud state after sign in
-        loadCloudState();
-      }
-    }
-
-    function updateAuthButton() {
-      const btn = document.getElementById('authBtn');
-      if (!btn) return;
-
-      if (currentUser) {
-        const name = currentUser.displayName || 'User';
-        const photo = currentUser.photoURL;
-        btn.textContent = '';
-        if (photo) {
-          const img = document.createElement('img');
-          img.src = photo;
-          img.className = 'user-avatar';
-          img.alt = name;
-          btn.appendChild(img);
-          btn.appendChild(document.createTextNode(' ' + name.split(' ')[0]));
-        } else {
-          btn.textContent = '\u{1F464} ' + name.split(' ')[0];
-        }
-        btn.classList.add('signed-in');
-      } else {
-        btn.textContent = 'Sign In';
-        btn.classList.remove('signed-in');
-      }
-    }
-
-    function handleAuthClick() {
-      if (currentUser) {
-        // Show user menu or sign out
-        if (confirm('Sign out?')) {
-          window.authManager?.signOut();
-        }
-      } else {
-        showAuthModal();
-      }
-    }
 
     function showAuthModal() {
       document.getElementById('authModal').classList.add('show');
@@ -3782,102 +3730,56 @@
 
     // Cloud State Management
     async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
+      const cloudState = await gameCloud.loadState('wordle');
+      if (!cloudState) return;
 
-      try {
-        const cloudState = await window.apiClient.getGameState('wordle');
-        if (cloudState) {
-          // Merge cloud state with local (prefer higher values)
-          const localStats = JSON.parse(localStorage.getItem('wordle-stats') || '{}');
+      // Merge cloud state with local (prefer higher values)
+      const localStats = JSON.parse(localStorage.getItem('wordle-stats') || '{}');
 
-          // Cloud state uses gamesPlayed/gamesWon, local uses played/won
-          const cloudPlayed = cloudState.gamesPlayed || 0;
-          const cloudWon = cloudState.gamesWon || 0;
+      // Cloud state uses gamesPlayed/gamesWon, local uses played/won
+      const cloudPlayed = cloudState.gamesPlayed || 0;
+      const cloudWon = cloudState.gamesWon || 0;
 
-          // Use cloud if it has better stats
-          if (cloudPlayed > (localStats.played || 0)) {
-            const mergedStats = {
-              played: cloudPlayed,
-              won: cloudWon,
-              streak: cloudState.currentStreak || 0,
-              maxStreak: cloudState.bestStreak || 0,
-              distribution: cloudState.guessDistribution || {}
-            };
-            localStorage.setItem('wordle-stats', JSON.stringify(mergedStats));
-            stats = mergedStats;
-          }
+      // Use cloud if it has better stats
+      if (cloudPlayed > (localStats.played || 0)) {
+        const mergedStats = {
+          played: cloudPlayed,
+          won: cloudWon,
+          streak: cloudState.currentStreak || 0,
+          maxStreak: cloudState.bestStreak || 0,
+          distribution: cloudState.guessDistribution || {}
+        };
+        localStorage.setItem('wordle-stats', JSON.stringify(mergedStats));
+        stats = mergedStats;
+      }
 
-          // Sync level
-          if ((cloudState.currentLevel || 1) > (parseInt(localStorage.getItem('wordle-level')) || 1)) {
-            localStorage.setItem('wordle-level', cloudState.currentLevel);
-          }
+      // Sync level
+      if ((cloudState.currentLevel || 1) > (parseInt(localStorage.getItem('wordle-level')) || 1)) {
+        localStorage.setItem('wordle-level', cloudState.currentLevel);
+      }
 
-          // Sync XP
-          if ((cloudState.additionalData?.totalXP || 0) > (parseInt(localStorage.getItem('wordle-total-xp')) || 0)) {
-            localStorage.setItem('wordle-total-xp', cloudState.additionalData.totalXP);
-          }
-
-        }
-      } catch (error) {
-        // Cloud state load failed silently
+      // Sync XP
+      if ((cloudState.additionalData?.totalXP || 0) > (parseInt(localStorage.getItem('wordle-total-xp')) || 0)) {
+        localStorage.setItem('wordle-total-xp', cloudState.additionalData.totalXP);
       }
     }
 
     async function saveCloudState() {
-      if (!currentUser || !window.apiClient) return;
+      const state = {
+        currentLevel: parseInt(localStorage.getItem('wordle-level')) || 1,
+        currentStreak: stats.streak || 0,
+        bestStreak: stats.maxStreak || 0,
+        gamesPlayed: stats.played || 0,
+        gamesWon: stats.won || 0,
+        guessDistribution: stats.distribution || {},
+        lastPlayedDate: new Date().toISOString(),
+        additionalData: {
+          totalXP: parseInt(localStorage.getItem('wordle-total-xp')) || 0,
+          hintsRemaining: MAX_HINTS - hintsUsed
+        }
+      };
 
-      try {
-        const state = {
-          currentLevel: parseInt(localStorage.getItem('wordle-level')) || 1,
-          currentStreak: stats.streak || 0,
-          bestStreak: stats.maxStreak || 0,
-          gamesPlayed: stats.played || 0,
-          gamesWon: stats.won || 0,
-          guessDistribution: stats.distribution || {},
-          lastPlayedDate: new Date().toISOString(),
-          additionalData: {
-            totalXP: parseInt(localStorage.getItem('wordle-total-xp')) || 0,
-            hintsRemaining: MAX_HINTS - hintsUsed
-          }
-        };
-
-        await window.apiClient.saveGameState('wordle', state);
-      } catch (error) {
-        // Cloud state save failed silently
-      }
-    }
-
-    // Submit score to leaderboard
-    async function submitScoreToCloud(scoreData, won) {
-      if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
-      if (!won) return;
-
-      try {
-        await window.apiClient.submitScore('wordle', {
-          score: scoreData.score,
-          level: wordLength - MIN_LENGTH + 1,
-          guessCount: scoreData.attempts,
-          timeMs: Date.now() - gameStartTime,
-          metadata: {
-            hintsUsed: scoreData.hintsUsed || 0,
-            perfectGame: scoreData.attempts === 1,
-            streakBonus: Math.floor((scoreData.streakMultiplier - 1) * 50)
-          }
-        });
-      } catch (error) {
-        // Score submission failed silently
-      }
-    }
-
-    // Sync achievement unlock
-    async function syncAchievementToCloud(achievementId) {
-      if (!currentUser || !window.apiClient) return;
-
-      try {
-        await window.apiClient.unlockAchievement(achievementId, 'wordle');
-      } catch (error) {
-        // Achievement sync failed silently
-      }
+      await gameCloud.saveState('wordle', state);
     }
 
     // Patch the original checkGameEnd to include cloud sync
@@ -3890,7 +3792,17 @@
         const won = _ws.equals(guess);
         if (won) {
           const scoreData = calculateScore();
-          submitScoreToCloud(scoreData, won);
+          gameCloud.submitScore('wordle', {
+            score: scoreData.score,
+            level: wordLength - MIN_LENGTH + 1,
+            guessCount: scoreData.attempts,
+            timeMs: Date.now() - gameStartTime,
+            metadata: {
+              hintsUsed: scoreData.hintsUsed || 0,
+              perfectGame: scoreData.attempts === 1,
+              streakBonus: Math.floor((scoreData.streakMultiplier - 1) * 50)
+            }
+          });
         }
         saveCloudState();
       }
@@ -3905,7 +3817,7 @@
         // Sync each new achievement to cloud
         if (achievements && achievements.length > 0) {
           achievements.forEach(ach => {
-            syncAchievementToCloud(ach.id);
+            gameCloud.unlockAchievement(ach.id, 'wordle');
           });
         }
 
@@ -3913,12 +3825,18 @@
       };
     }
 
-    // Initialize cloud sync when page loads
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initCloudSync);
-    } else {
-      setTimeout(initCloudSync, 100); // Small delay to ensure auth.js is ready
-    }
+    // Initialize cloud sync via game-cloud.js
+    gameCloud.initAuth({
+      authBtnId: 'authBtn',
+      signInStyle: 'name',
+      onSignIn: (user) => {
+        currentUser = user;
+        loadCloudState();
+      },
+      onSignOut: () => {
+        currentUser = null;
+      }
+    });
 
     init();
   })();

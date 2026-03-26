@@ -1275,6 +1275,7 @@
   <!-- Scripts -->
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -1892,20 +1893,27 @@
     }
 
     // ============ AUTH & API ============
+    let cloudStateKitchen = null;
+
     function initAuth() {
-      const checkAuth = setInterval(() => {
-        if (window.authManager?.isInitialized) {
-          clearInterval(checkAuth);
-          window.authManager.onAuthStateChanged(user => {
-            currentUser = user;
-            updateAuthUI();
-            if (user) {
-              loadCloudState();
-              syncGuestScores(); // Sync any pending guest scores
-            }
-          });
+      window.gameCloud.initAuth({
+        authBtnId: 'authBtn',
+        signInStyle: 'name',
+        onSignIn: async () => {
+          currentUser = window.gameCloud.getUser();
+          updateAuthUI();
+          cloudStateKitchen = await window.gameCloud.loadState('chaos-kitchen');
+          if (cloudStateKitchen?.additionalData?.highScore > highScore) {
+            highScore = cloudStateKitchen.additionalData.highScore;
+            localStorage.setItem('chaos-kitchen-high-score', highScore);
+          }
+          await window.gameCloud.syncGuestScores('chaos-kitchen');
+        },
+        onSignOut: () => {
+          currentUser = null;
+          updateAuthUI();
         }
-      }, 100);
+      });
     }
 
     function updateAuthUI() {
@@ -1926,80 +1934,16 @@
     }
 
     async function submitScore(isLevelUp = false) {
-      const scoreData = {
+      await window.gameCloud.submitOrQueue('chaos-kitchen', {
         score: score,
         level: level,
         timeMs: gameStartTime ? Date.now() - gameStartTime : 0,
-        metadata: {
-          ordersCompleted,
-          chaosSurvived,
-          multiplier,
-          isLevelUp
-        }
-      };
-
-      // If signed in, submit directly
-      if (currentUser && window.apiClient) {
-        try {
-          await window.apiClient.submitScore('chaos-kitchen', scoreData);
-        } catch (e) {
-          console.error('[Chaos Kitchen] Failed to submit score:', e);
-          saveGuestScore(scoreData);
-        }
-      } else {
-        // Save for later sync
-        saveGuestScore(scoreData);
-        if (!isLevelUp && window.authNudge) window.authNudge.show();
-      }
+        metadata: { ordersCompleted, chaosSurvived, multiplier, isLevelUp }
+      }, { silent: isLevelUp });
     }
-
-    function saveGuestScore(scoreData) {
-      const pendingScores = JSON.parse(localStorage.getItem('chaos-kitchen-pending-scores') || '[]');
-
-      // Only keep higher scores at same level
-      const existingIdx = pendingScores.findIndex(s => s.level === scoreData.level);
-      if (existingIdx >= 0) {
-        if (scoreData.score > pendingScores[existingIdx].score) {
-          pendingScores[existingIdx] = { ...scoreData, timestamp: Date.now() };
-        }
-      } else {
-        pendingScores.push({ ...scoreData, timestamp: Date.now() });
-      }
-
-      // Keep only last 10 scores
-      const trimmed = pendingScores.slice(-10);
-      localStorage.setItem('chaos-kitchen-pending-scores', JSON.stringify(trimmed));
-    }
-
-    async function syncGuestScores() {
-      if (!currentUser || !window.apiClient) return;
-
-      const pendingScores = JSON.parse(localStorage.getItem('chaos-kitchen-pending-scores') || '[]');
-      if (pendingScores.length === 0) return;
-
-      // Submit the best score only
-      const bestScore = pendingScores.reduce((best, curr) =>
-        curr.score > best.score ? curr : best
-      , pendingScores[0]);
-
-      try {
-        await window.apiClient.submitScore('chaos-kitchen', {
-          score: bestScore.score,
-          level: bestScore.level,
-          timeMs: bestScore.timeMs || 0,
-          metadata: bestScore.metadata
-        });
-        localStorage.removeItem('chaos-kitchen-pending-scores');
-      } catch (e) {
-        console.error('Failed to sync guest scores:', e);
-      }
-    }
-
-    // Store cloud state for incremental updates
-    let cloudStateKitchen = null;
 
     async function saveCloudState() {
-      if (!currentUser || !window.apiClient) return;
+      if (!currentUser) return;
       try {
         const prevGamesPlayed = cloudStateKitchen?.gamesPlayed || 0;
         const prevGamesWon = cloudStateKitchen?.gamesWon || 0;
@@ -2015,40 +1959,18 @@
           lastPlayedDate: new Date().toISOString().split('T')[0],
           additionalData: { highScore, bestOrders: ordersCompleted }
         };
-        await window.apiClient.saveGameState('chaos-kitchen', state);
+        await window.gameCloud.saveState('chaos-kitchen', state);
         cloudStateKitchen = state;
 
         // Check achievements
-        checkAchievementsKitchen(state);
-      } catch (e) {
-        console.error('Failed to save state:', e);
-      }
-    }
-
-    async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        cloudStateKitchen = await window.apiClient.getGameState('chaos-kitchen');
-        if (cloudStateKitchen?.additionalData?.highScore > highScore) {
-          highScore = cloudStateKitchen.additionalData.highScore;
-          localStorage.setItem('chaos-kitchen-high-score', highScore);
-        }
-      } catch (e) {
-        // Cloud state load failed silently
-      }
-    }
-
-    async function checkAchievementsKitchen(state) {
-      if (!currentUser || !window.apiClient) return;
-      try {
         if (state.gamesPlayed === 1) {
-          await window.apiClient.unlockAchievement('first_word', 'chaos-kitchen');
+          await window.gameCloud.unlockAchievement('first_word', 'chaos-kitchen');
         }
         if (state.gamesWon >= 10) {
-          await window.apiClient.unlockAchievement('ten_wins', 'chaos-kitchen');
+          await window.gameCloud.unlockAchievement('ten_wins', 'chaos-kitchen');
         }
       } catch (e) {
-        // Achievement check failed silently
+        console.error('Failed to save state:', e);
       }
     }
 

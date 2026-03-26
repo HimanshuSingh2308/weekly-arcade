@@ -535,27 +535,6 @@
   // ── AUTH ──────────────────────────────────────────────────
   let currentUser = null;
 
-  function initAuth() {
-    let authAttempts = 0;
-    const checkAuth = setInterval(() => {
-      if (++authAttempts > 100) { clearInterval(checkAuth); return; }
-      if (window.authManager?.isInitialized) {
-        clearInterval(checkAuth);
-        window.authManager.onAuthStateChanged(user => {
-          currentUser = user;
-          const authBtn = document.getElementById('authBtn');
-          if (user) {
-            authBtn.textContent = user.displayName?.split(' ')[0] || 'Player';
-            authBtn.onclick = () => window.location.href = '/profile/';
-          } else {
-            authBtn.textContent = 'Sign In';
-            authBtn.onclick = () => window.authManager.signInWithGoogle();
-          }
-        });
-      }
-    }, 100);
-  }
-
   // ── ACHIEVEMENTS ──────────────────────────────────────────
   const ACHIEVEMENTS = {
     'first_cascade':  { name: 'First Drop',     desc: 'Complete your first round',       icon: '\uD83C\uDFAF', xp: 100 },
@@ -804,24 +783,7 @@
     });
   }
 
-  // ── SCORE SUBMISSION ─────────────────────────────────────
-  async function submitScoreToCloud(scoreValue, extras = {}) {
-    if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
-    try {
-      const result = await window.apiClient.submitScore('coin-cascade', {
-        score: scoreValue,
-        timeMs: Date.now() - gameStartTime,
-        metadata: {
-          coinsDropped: totalDropped,
-          coinsCollected: totalCollected,
-          maxCombo: maxCombo,
-          ...extras,
-        },
-      });
-    } catch (err) {
-      console.error('[Coin Cascade] Score submit failed:', err);
-    }
-  }
+  // ── SCORE SUBMISSION (via game-cloud.js) ─────────────────
 
   // ── COIN PHYSICS OBJECT ──────────────────────────────────
   function createCoin(x, y, type) {
@@ -861,7 +823,11 @@
     ctx = canvas.getContext('2d');
     try { bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0'); } catch(e) { bestScore = 0; }
     document.getElementById('hudBest').textContent = bestScore.toLocaleString();
-    initAuth();
+    gameCloud.initAuth({
+      authBtnId: 'authBtn',
+      onSignIn: u => { currentUser = u; },
+      onSignOut: () => { currentUser = null; },
+    });
 
     resizeCanvas();
     mouseX = gameWidth / 2;
@@ -1498,7 +1464,11 @@
 
     // Submit score if signed in
     if (currentUser) {
-      submitScoreToCloud(score);
+      gameCloud.submitScore('coin-cascade', {
+        score,
+        timeMs: Date.now() - gameStartTime,
+        metadata: { coinsDropped: totalDropped, coinsCollected: totalCollected, maxCombo: maxCombo },
+      });
     }
 
     // Show game over modal
@@ -1521,5 +1491,6 @@
 
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
+  <script src="../../js/game-cloud.js"></script>
 </body>
 </html>

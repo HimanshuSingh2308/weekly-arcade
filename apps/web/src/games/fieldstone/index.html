@@ -1560,6 +1560,7 @@
   <!-- Firebase -->
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -2737,20 +2738,15 @@
 
     // Submit score to leaderboard
     async function submitScore() {
-      if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
-      try {
-        await window.apiClient.submitScore('fieldstone', {
-          score: gameState.score,
-          level: gameState.wave,
-          timeMs: Date.now() - gameState.startTime,
-          metadata: {
-            wave: gameState.wave,
-            deck: gameState.selectedDeck
-          }
-        });
-      } catch (e) {
-        // score submission failed
-      }
+      await window.gameCloud.submitScore('fieldstone', {
+        score: gameState.score,
+        level: gameState.wave,
+        timeMs: Date.now() - gameState.startTime,
+        metadata: {
+          wave: gameState.wave,
+          deck: gameState.selectedDeck
+        }
+      });
     }
 
     // Start game loop
@@ -3143,77 +3139,50 @@
     let cloudStateFieldstone = null;
 
     async function saveCloudState() {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        const prevGamesPlayed = cloudStateFieldstone?.gamesPlayed || 0;
-        const prevGamesWon = cloudStateFieldstone?.gamesWon || 0;
-        const prevBestStreak = cloudStateFieldstone?.bestStreak || 0;
-        const didWin = gameState.wave >= 10;
+      const prevGamesPlayed = cloudStateFieldstone?.gamesPlayed || 0;
+      const prevGamesWon = cloudStateFieldstone?.gamesWon || 0;
+      const prevBestStreak = cloudStateFieldstone?.bestStreak || 0;
+      const didWin = gameState.wave >= 10;
 
-        const state = {
-          currentLevel: gameState.wave,
-          currentStreak: 0,
-          bestStreak: Math.max(prevBestStreak, gameState.wave),
-          gamesPlayed: prevGamesPlayed + 1,
-          gamesWon: prevGamesWon + (didWin ? 1 : 0),
-          lastPlayedDate: new Date().toISOString().split('T')[0],
-          additionalData: {
-            bestScore: Math.max(cloudStateFieldstone?.additionalData?.bestScore || 0, gameState.score),
-            bestWave: Math.max(cloudStateFieldstone?.additionalData?.bestWave || 0, gameState.wave)
-          }
-        };
-        await window.apiClient.saveGameState('fieldstone', state);
-        cloudStateFieldstone = state;
+      const state = {
+        currentLevel: gameState.wave,
+        currentStreak: 0,
+        bestStreak: Math.max(prevBestStreak, gameState.wave),
+        gamesPlayed: prevGamesPlayed + 1,
+        gamesWon: prevGamesWon + (didWin ? 1 : 0),
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        additionalData: {
+          bestScore: Math.max(cloudStateFieldstone?.additionalData?.bestScore || 0, gameState.score),
+          bestWave: Math.max(cloudStateFieldstone?.additionalData?.bestWave || 0, gameState.wave)
+        }
+      };
+      await window.gameCloud.saveState('fieldstone', state);
+      cloudStateFieldstone = state;
 
-        checkAchievementsFieldstone(state);
-      } catch (e) {
-        console.error('Failed to save cloud state:', e);
+      // Check achievements
+      if (state.gamesPlayed === 1) {
+        await window.gameCloud.unlockAchievement('first_word', 'fieldstone');
+      }
+      if (state.gamesWon >= 10) {
+        await window.gameCloud.unlockAchievement('ten_wins', 'fieldstone');
       }
     }
 
     async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        cloudStateFieldstone = await window.apiClient.getGameState('fieldstone');
-      } catch (e) {
-        // could not load cloud state
-      }
+      cloudStateFieldstone = await window.gameCloud.loadState('fieldstone');
     }
 
-    async function checkAchievementsFieldstone(state) {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        if (state.gamesPlayed === 1) {
-          await window.apiClient.unlockAchievement('first_word', 'fieldstone');
-        }
-        if (state.gamesWon >= 10) {
-          await window.apiClient.unlockAchievement('ten_wins', 'fieldstone');
-        }
-      } catch (e) {
-        // could not check achievements
+    // Auth integration via gameCloud
+    window.gameCloud.initAuth({
+      signInStyle: 'name',
+      onSignIn: (user) => {
+        currentUser = user;
+        loadCloudState();
+      },
+      onSignOut: () => {
+        currentUser = null;
       }
-    }
-
-    // Auth integration
-    function initAuth() {
-      if (window.authManager) {
-        window.authManager.onAuthStateChanged(user => {
-          currentUser = user;
-          if (user) {
-            // user signed in
-            loadCloudState();
-          }
-        });
-      }
-    }
-
-    // Initialize auth when ready
-    const authCheckInterval = setInterval(() => {
-      if (window.authManager?.isInitialized) {
-        clearInterval(authCheckInterval);
-        initAuth();
-      }
-    }, 100);
+    });
 
     // Expose functions used by inline onclick handlers
     window.toggleSound = toggleSound;

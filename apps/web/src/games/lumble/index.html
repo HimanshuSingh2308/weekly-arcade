@@ -875,6 +875,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="/js/api-client.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/game-cloud.js"></script>
 
   <script>
     (function() {
@@ -2926,24 +2927,11 @@
         }
       };
 
-      if (window.apiClient && currentUser) {
-        try {
-          const result = await window.apiClient.submitScore('lumble', scoreData);
-          loadLeaderboard();
-        } catch (error) {
-          console.error('[Lumble] Failed to submit score:', error);
-          saveGuestScore(scoreData);
-        }
-      } else {
-        saveGuestScore(scoreData);
-        if (window.authNudge) window.authNudge.show();
-      }
+      await window.gameCloud.submitOrQueue('lumble', scoreData);
+      if (typeof loadLeaderboard === 'function') loadLeaderboard();
     }
 
     async function submitMilestoneScore() {
-      // Submit intermediate score at milestones
-      if (!window.apiClient || !currentUser) return;
-
       const scoreData = {
         score: gameState.sparksCollected * 100,
         level: gameState.sparksCollected,
@@ -2956,40 +2944,7 @@
         }
       };
 
-      try {
-        await window.apiClient.submitScore('lumble', scoreData);
-      } catch (error) {
-        console.error('[Lumble] Failed to submit milestone:', error);
-      }
-    }
-
-    function saveGuestScore(scoreData) {
-      const pendingScores = JSON.parse(localStorage.getItem('lumble-pending-scores') || '[]');
-      pendingScores.push({ ...scoreData, timestamp: Date.now() });
-      const trimmed = pendingScores.slice(-10);
-      localStorage.setItem('lumble-pending-scores', JSON.stringify(trimmed));
-    }
-
-    async function syncGuestScores() {
-      if (!window.apiClient || !currentUser) return;
-
-      const pendingScores = JSON.parse(localStorage.getItem('lumble-pending-scores') || '[]');
-      if (pendingScores.length === 0) return;
-
-      const bestScore = pendingScores.reduce((best, curr) =>
-        curr.score > best.score ? curr : best, pendingScores[0]);
-
-      if (!bestScore.timeMs && bestScore.metadata?.timeSeconds) {
-        bestScore.timeMs = bestScore.metadata.timeSeconds * 1000;
-      }
-
-      try {
-        await window.apiClient.submitScore('lumble', bestScore);
-        localStorage.removeItem('lumble-pending-scores');
-        loadLeaderboard();
-      } catch (error) {
-        console.error('[Lumble] Failed to sync guest scores:', error);
-      }
+      await window.gameCloud.submitScore('lumble', scoreData);
     }
 
     async function loadLeaderboard() {
@@ -3032,7 +2987,7 @@
     let cloudStateLumble = null;
 
     async function saveCloudState() {
-      if (!currentUser || !window.apiClient) return;
+      if (!currentUser) return;
       try {
         const prevGamesPlayed = cloudStateLumble?.gamesPlayed || 0;
         const prevGamesWon = cloudStateLumble?.gamesWon || 0;
@@ -3051,7 +3006,7 @@
             bestSparks: Math.max(cloudStateLumble?.additionalData?.bestSparks || 0, gameState.sparksCollected)
           }
         };
-        await window.apiClient.saveGameState('lumble', state);
+        await window.gameCloud.saveState('lumble', state);
         cloudStateLumble = state;
 
         checkAchievementsLumble(state);
@@ -3061,22 +3016,22 @@
     }
 
     async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
+      if (!currentUser) return;
       try {
-        cloudStateLumble = await window.apiClient.getGameState('lumble');
+        cloudStateLumble = await window.gameCloud.loadState('lumble');
       } catch (e) {
         // silent fail
       }
     }
 
     async function checkAchievementsLumble(state) {
-      if (!currentUser || !window.apiClient) return;
+      if (!currentUser) return;
       try {
         if (state.gamesPlayed === 1) {
-          await window.apiClient.unlockAchievement('first_word', 'lumble');
+          await window.gameCloud.unlockAchievement('first_word', 'lumble');
         }
         if (state.gamesWon >= 10) {
-          await window.apiClient.unlockAchievement('ten_wins', 'lumble');
+          await window.gameCloud.unlockAchievement('ten_wins', 'lumble');
         }
       } catch (e) {
         // silent fail
@@ -3088,26 +3043,25 @@
     // ============================================
 
     function initAuth() {
-      const checkAuth = setInterval(() => {
-        if (window.authManager?.isInitialized) {
-          clearInterval(checkAuth);
-          window.authManager.onAuthStateChanged(user => {
-            currentUser = user;
-            const userSection = document.getElementById('userSection');
-            if (user) {
-              userSection.innerHTML = `
-                <img class="user-avatar" src="${escapeHTML(user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U'))}" alt="User">
-              `;
-              loadCloudState();
-              syncGuestScores();
-            } else {
-              userSection.innerHTML = `
-                <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
-              `;
-            }
-          });
+      window.gameCloud.initAuth({
+        onSignIn: async (user) => {
+          currentUser = user;
+          const userSection = document.getElementById('userSection');
+          userSection.innerHTML = `
+            <img class="user-avatar" src="${escapeHTML(user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U'))}" alt="User">
+          `;
+          await loadCloudState();
+          await window.gameCloud.syncGuestScores('lumble');
+          if (typeof loadLeaderboard === 'function') loadLeaderboard();
+        },
+        onSignOut: () => {
+          currentUser = null;
+          const userSection = document.getElementById('userSection');
+          userSection.innerHTML = `
+            <button class="sign-in-btn" onclick="promptSignIn()">Sign In</button>
+          `;
         }
-      }, 100);
+      });
     }
 
     function promptSignIn() {

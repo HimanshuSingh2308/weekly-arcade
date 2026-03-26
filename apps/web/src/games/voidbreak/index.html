@@ -1933,6 +1933,7 @@
   <!-- API Client -->
   <script src="../../js/api-client.js"></script>
   <script src="../../js/auth.js"></script>
+  <script src="../../js/game-cloud.js"></script>
 
   <script>
   (function() {
@@ -2620,26 +2621,21 @@
     }
 
     function setupAuth() {
-      if (window.authManager) {
-        window.authManager.onAuthStateChanged(user => {
+      window.gameCloud.initAuth({
+        authBtnId: 'authBtn',
+        signInStyle: 'button',
+        onSignIn: (user) => {
           currentUser = user;
-          const authBtn = document.getElementById('authBtn');
-          if (user) {
-            authBtn.textContent = user.displayName || 'Profile';
-            authBtn.onclick = () => window.location.href = '/profile/';
-            // Load cloud state and customization data on login
-            loadCloudState();
-            loadCustomizationData();
-          } else {
-            authBtn.textContent = 'Sign In';
-            authBtn.onclick = () => window.authManager.signIn();
-            // Reset customization to local state
-            customization.coins = 0;
-            customization.totalCoinsEarned = 0;
-            document.getElementById('menuCoinDisplay').style.display = 'none';
-          }
-        });
-      }
+          loadCloudState();
+          loadCustomizationData();
+        },
+        onSignOut: () => {
+          currentUser = null;
+          customization.coins = 0;
+          customization.totalCoinsEarned = 0;
+          document.getElementById('menuCoinDisplay').style.display = 'none';
+        }
+      });
     }
 
     // ==========================================
@@ -3178,64 +3174,49 @@
     }
 
     async function submitScore() {
-      if (!currentUser || !window.apiClient) { if (window.authNudge) window.authNudge.show(); return; }
-
-      try {
-        await window.apiClient.submitScore('voidbreak', {
-          score: score,
-          level: wave,
-          timeMs: Date.now() - gameStartTime,
-          metadata: {
-            upgradesTaken: upgradesTaken,
-            livesLost: STARTING_LIVES - lives,
-            perfectWaves: perfectWaves,
-            highestCombo: highestCombo,
-            totalKills: totalKills
-          }
-        });
-      } catch (err) {
-        console.error('Failed to submit score:', err);
-      }
+      await window.gameCloud.submitScore('voidbreak', {
+        score: score,
+        level: wave,
+        timeMs: Date.now() - gameStartTime,
+        metadata: {
+          upgradesTaken: upgradesTaken,
+          livesLost: STARTING_LIVES - lives,
+          perfectWaves: perfectWaves,
+          highestCombo: highestCombo,
+          totalKills: totalKills
+        }
+      });
     }
 
     // Cloud state for tracking game progress
     let cloudStateVoidbreak = null;
 
     async function saveCloudState() {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        const prevGamesPlayed = cloudStateVoidbreak?.gamesPlayed || 0;
-        const prevGamesWon = cloudStateVoidbreak?.gamesWon || 0;
-        const prevBestStreak = cloudStateVoidbreak?.bestStreak || 0;
-        const didWin = wave >= 10;
+      const prevGamesPlayed = cloudStateVoidbreak?.gamesPlayed || 0;
+      const prevGamesWon = cloudStateVoidbreak?.gamesWon || 0;
+      const prevBestStreak = cloudStateVoidbreak?.bestStreak || 0;
+      const didWin = wave >= 10;
 
-        const state = {
-          currentLevel: wave,
-          currentStreak: getPlayStreak(),
-          bestStreak: Math.max(prevBestStreak, getPlayStreak(), wave),
-          gamesPlayed: prevGamesPlayed + 1,
-          gamesWon: prevGamesWon + (didWin ? 1 : 0),
-          lastPlayedDate: new Date().toISOString().split('T')[0],
-          additionalData: {
-            bestScore: Math.max(cloudStateVoidbreak?.additionalData?.bestScore || 0, score),
-            bestWave: Math.max(cloudStateVoidbreak?.additionalData?.bestWave || 0, wave),
-            totalKills: (cloudStateVoidbreak?.additionalData?.totalKills || 0) + totalKills
-          }
-        };
-        await window.apiClient.saveGameState('voidbreak', state);
-        cloudStateVoidbreak = state;
-      } catch (e) {
-        console.error('Failed to save cloud state:', e);
-      }
+      const state = {
+        currentLevel: wave,
+        currentStreak: getPlayStreak(),
+        bestStreak: Math.max(prevBestStreak, getPlayStreak(), wave),
+        gamesPlayed: prevGamesPlayed + 1,
+        gamesWon: prevGamesWon + (didWin ? 1 : 0),
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        additionalData: {
+          bestScore: Math.max(cloudStateVoidbreak?.additionalData?.bestScore || 0, score),
+          bestWave: Math.max(cloudStateVoidbreak?.additionalData?.bestWave || 0, wave),
+          totalKills: (cloudStateVoidbreak?.additionalData?.totalKills || 0) + totalKills
+        }
+      };
+      const saved = await window.gameCloud.saveState('voidbreak', state);
+      if (saved !== null) cloudStateVoidbreak = state;
     }
 
     async function loadCloudState() {
-      if (!currentUser || !window.apiClient) return;
-      try {
-        cloudStateVoidbreak = await window.apiClient.getGameState('voidbreak');
-      } catch (e) {
-        // cloud state unavailable
-      }
+      const loaded = await window.gameCloud.loadState('voidbreak');
+      if (loaded !== null) cloudStateVoidbreak = loaded;
     }
 
     async function checkAchievements() {
@@ -3282,12 +3263,8 @@
       }
 
       for (const achievementId of achievements) {
-        try {
-          await window.apiClient.unlockAchievement(achievementId, 'voidbreak');
-          showAchievementToast(achievementId);
-        } catch (err) {
-          // Achievement might already be unlocked
-        }
+        await window.gameCloud.unlockAchievement(achievementId, 'voidbreak');
+        showAchievementToast(achievementId);
       }
     }
 
