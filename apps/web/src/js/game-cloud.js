@@ -50,11 +50,26 @@
     if (!btn) return;
 
     if (currentUser) {
-      btn.textContent = (opts.signInStyle === 'button')
-        ? 'Profile'
-        : (currentUser.displayName?.split(' ')[0] || 'Player');
+      // Show avatar (like 2048) — compact, works on mobile
+      const photo = currentUser.photoURL;
+      const name = currentUser.displayName || 'Player';
+      if (photo) {
+        btn.innerHTML = '';
+        btn.style.cssText = 'padding:0;background:none;border:2px solid var(--accent,#e94560);border-radius:50%;width:32px;height:32px;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;min-width:32px;';
+        const img = document.createElement('img');
+        img.src = photo;
+        img.alt = name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+        img.onerror = () => { btn.textContent = name.charAt(0); btn.style.cssText = 'width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;'; };
+        btn.appendChild(img);
+      } else {
+        btn.textContent = name.charAt(0);
+        btn.style.cssText = 'width:32px;height:32px;border-radius:50%;background:var(--accent,#e94560);color:#fff;border:none;font-weight:700;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+      }
       btn.onclick = () => { window.location.href = '/profile/'; };
     } else {
+      btn.innerHTML = '';
+      btn.removeAttribute('style');
       btn.textContent = 'Sign In';
       btn.onclick = () => {
         if (window.authManager) window.authManager.signInWithGoogle();
@@ -64,6 +79,34 @@
 
   function getUser() { return currentUser; }
   function isSignedIn() { return !!currentUser; }
+
+  // ─── Screen Wake Lock ───
+  // Prevents screen from sleeping during gameplay on mobile
+  let wakeLock = null;
+
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (e) {
+      // Wake lock request failed (e.g. low battery, background tab)
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  }
+
+  // Re-acquire wake lock when tab becomes visible again
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !wakeLock) {
+      requestWakeLock();
+    }
+  });
+
+  // Auto-acquire on load (game pages)
+  requestWakeLock();
 
   // ─── Score Submission ───
 
@@ -192,5 +235,7 @@
     saveGuestScore,
     syncGuestScores,
     unlockAchievement,
+    requestWakeLock,
+    releaseWakeLock,
   };
 })();
