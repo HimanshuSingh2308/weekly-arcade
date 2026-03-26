@@ -28,9 +28,14 @@ class AuthManager {
 
   _restoreCachedUser() {
     try {
-      const cached = sessionStorage.getItem(this._cacheKey);
+      const cached = localStorage.getItem(this._cacheKey);
       if (!cached) return;
       const data = JSON.parse(cached);
+      // Expire after 24 hours to prevent stale sessions
+      if (data._ts && Date.now() - data._ts > 86400000) {
+        localStorage.removeItem(this._cacheKey);
+        return;
+      }
       // Create a lightweight user-like object for instant UI rendering
       this.user = {
         uid: data.uid,
@@ -41,23 +46,25 @@ class AuthManager {
       };
     } catch (e) {
       // Cache corrupted — ignore
+      localStorage.removeItem(this._cacheKey);
     }
   }
 
   _cacheUser(user) {
     try {
       if (user) {
-        sessionStorage.setItem(this._cacheKey, JSON.stringify({
+        localStorage.setItem(this._cacheKey, JSON.stringify({
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
           photoURL: user.photoURL,
+          _ts: Date.now(),
         }));
       } else {
-        sessionStorage.removeItem(this._cacheKey);
+        localStorage.removeItem(this._cacheKey);
       }
     } catch (e) {
-      // sessionStorage unavailable (private browsing etc)
+      // Storage unavailable (private browsing etc)
     }
   }
 
