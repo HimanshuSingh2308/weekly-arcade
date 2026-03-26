@@ -823,7 +823,7 @@
     ctx = canvas.getContext('2d');
     try { bestScore = parseInt(localStorage.getItem('coin-cascade-best') || '0'); } catch(e) { bestScore = 0; }
     document.getElementById('hudBest').textContent = bestScore.toLocaleString();
-    gameCloud.initAuth({
+    window.gameCloud.initAuth({
       authBtnId: 'authBtn',
       onSignIn: u => { currentUser = u; },
       onSignOut: () => { currentUser = null; },
@@ -1462,14 +1462,12 @@
     // Show achievement toasts
     showNewAchievements(newAchievements);
 
-    // Submit score if signed in
-    if (currentUser) {
-      gameCloud.submitScore('coin-cascade', {
-        score,
-        timeMs: Date.now() - gameStartTime,
-        metadata: { coinsDropped: totalDropped, coinsCollected: totalCollected, maxCombo: maxCombo },
-      });
-    }
+    // Submit score (gameCloud handles auth guard + guest nudge)
+    window.gameCloud.submitScore('coin-cascade', {
+      score,
+      timeMs: Date.now() - gameStartTime,
+      metadata: { coinsDropped: totalDropped, coinsCollected: totalCollected, maxCombo: maxCombo },
+    });
 
     // Show game over modal
     document.getElementById('goTitle').textContent = isNewBest ? 'New Record!' : 'Round Over!';

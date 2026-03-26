@@ -848,7 +848,7 @@
   let movesSinceLastDraw = 0; // for S10 Streak Master
   let stockCycleCount = 0; // track infinite stock cycling
 
-  gameCloud.initAuth(user => {
+  window.gameCloud.initAuth(user => {
     currentUser = user;
     const authBtn = document.getElementById('authBtn');
     if (user) {
@@ -1805,7 +1805,8 @@
     addXP(Math.round(score / 10) + (perfectClear ? 200 : 25));
 
     // Submit score
-    gameCloud.submitScore(GAME_SLUG, score, {
+    window.gameCloud.submitScore(GAME_SLUG, {
+      score,
       level: foundationsCompleted,
       timeMs: elapsedMs,
       metadata: {

@@ -3731,7 +3731,7 @@
 
     // Cloud State Management
     async function loadCloudState() {
-      const cloudState = await gameCloud.loadState('wordle');
+      const cloudState = await window.gameCloud.loadState('wordle');
       if (!cloudState) return;
 
       // Merge cloud state with local (prefer higher values)
@@ -3780,7 +3780,7 @@
         }
       };
 
-      await gameCloud.saveState('wordle', state);
+      await window.gameCloud.saveState('wordle', state);
     }
 
     // Patch the original checkGameEnd to include cloud sync
@@ -3793,7 +3793,7 @@
         const won = _ws.equals(guess);
         if (won) {
           const scoreData = calculateScore();
-          gameCloud.submitScore('wordle', {
+          window.gameCloud.submitScore('wordle', {
             score: scoreData.score,
             level: wordLength - MIN_LENGTH + 1,
             guessCount: scoreData.attempts,
@@ -3818,7 +3818,7 @@
         // Sync each new achievement to cloud
         if (achievements && achievements.length > 0) {
           achievements.forEach(ach => {
-            gameCloud.unlockAchievement(ach.id, 'wordle');
+            window.gameCloud.unlockAchievement(ach.id, 'wordle');
           });
         }
 
@@ -3827,7 +3827,7 @@
     }
 
     // Initialize cloud sync via game-cloud.js
-    gameCloud.initAuth({
+    window.gameCloud.initAuth({
       authBtnId: 'authBtn',
       signInStyle: 'name',
       onSignIn: (user) => {
