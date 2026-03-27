@@ -111,6 +111,8 @@ export class NotificationsService {
       const result = results[i];
       if (result.status === 'rejected') {
         const errorCode = (result.reason as { code?: string })?.code;
+        const errorMsg = (result.reason as { message?: string })?.message;
+        this.logger.warn(`FCM send failed for user ${uid}: code=${errorCode}, message=${errorMsg}`);
         if (
           errorCode === 'messaging/registration-token-not-registered' ||
           errorCode === 'messaging/invalid-registration-token'
@@ -122,7 +124,7 @@ export class NotificationsService {
 
     if (staleTokens.length > 0) {
       await Promise.all(staleTokens.map((token) => this.removeToken(uid, token)));
-      this.logger.log(`Cleaned up ${staleTokens.length} stale tokens for user ${uid}`);
+      this.logger.warn(`Cleaned up ${staleTokens.length} stale tokens for user ${uid}`);
     }
 
     const successCount = results.filter((r) => r.status === 'fulfilled').length;
