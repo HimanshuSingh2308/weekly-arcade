@@ -231,22 +231,55 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     },
   },
   // Tiny Tycoon: Boba shop idle simulator — 60-second timed days
-  // Max score: ~40 customers × 30 base (sparkling) × 2 (VIP) × 3.0 (combo) + 13 tip = ~7,500 theoretical
+  // Max score: ~40 customers × 75 base (signature) × 2 (VIP) × 3.0 (combo) × 2 (prestige bridge) + tip = ~18,000 theoretical
   'tiny-tycoon': {
-    maxScore: 15000, // generous buffer for edge cases
-    maxScorePerSecond: 250,
+    maxScore: 30000, // generous buffer for prestige perks + bridge multiplier
+    maxScorePerSecond: 500,
     minTimeMs: 55000, // days are 60 seconds, allow 5s tolerance
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
-        const lost = dto.metadata.customersLost as number;
         // Max ~75 serves theoretical (60s / 0.8s fastest serve)
         if (served !== undefined && served > 80) {
           return { valid: false, reason: 'Too many customers served' };
         }
-        // Revenue per customer sanity check
-        if (served !== undefined && served > 0 && dto.score / served > 250) {
+        // Revenue per customer sanity check (higher with new drinks + prestige)
+        if (served !== undefined && served > 0 && dto.score / served > 500) {
           return { valid: false, reason: 'Revenue per customer too high' };
+        }
+      }
+      return { valid: true };
+    },
+  },
+
+  // Tiny Tycoon: Bean & Brew (coffee store)
+  // Max: ~40 customers × 65 base (affogato) × 2 (VIP) × 3.0 (combo) × 2 (bridge) = ~15,600 theoretical
+  'tiny-tycoon-bean-brew': {
+    maxScore: 30000,
+    maxScorePerSecond: 500,
+    minTimeMs: 55000,
+    customValidation: (dto) => {
+      if (dto.metadata) {
+        const served = dto.metadata.customersServed as number;
+        if (served !== undefined && served > 80) {
+          return { valid: false, reason: 'Too many customers served' };
+        }
+      }
+      return { valid: true };
+    },
+  },
+
+  // Tiny Tycoon: Juice Junction (tropical store)
+  // Max: ~40 customers × 80 base (superfood) × 2 (VIP) × 3.0 (combo) × 2 (bridge) = ~19,200 theoretical
+  'tiny-tycoon-juice-junction': {
+    maxScore: 35000,
+    maxScorePerSecond: 500,
+    minTimeMs: 55000,
+    customValidation: (dto) => {
+      if (dto.metadata) {
+        const served = dto.metadata.customersServed as number;
+        if (served !== undefined && served > 80) {
+          return { valid: false, reason: 'Too many customers served' };
         }
       }
       return { valid: true };
