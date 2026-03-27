@@ -2676,29 +2676,61 @@
     showOverlay('shopOverlay');
   }
 
+  let shopTab = 'upgrades';
+
   function renderShop() {
     const modal = document.getElementById('shopModal');
+    const config = STORE_CONFIGS[activeStoreId];
 
-    const stations = getAutoServeStations();
-    let machinesHtml = '';
-    for (let i = 0; i < stations.length; i++) {
-      machinesHtml += '<div class="shop-preview-machine"></div>';
-    }
+    // Tab bar — scalable for future tabs
+    const tabs = [
+      { id: 'upgrades', label: '⚡ Upgrades', always: true },
+      { id: 'tier2', label: '✨ Tier 2', show: prestigeLevel >= 1 },
+      { id: 'decor', label: '🎨 Decor', always: true },
+    ];
+    const tabHtml = tabs.filter(t => t.always || t.show).map(t =>
+      `<button class="shop-tab${shopTab === t.id ? ' active' : ''}" onclick="setShopTab('${t.id}')">${t.label}</button>`
+    ).join('');
 
-    const vipLevel = upgradeLevels.vip_lounge || 0;
-
+    // Wallet header
+    const storeEmoji = config ? config.emoji : '🧋';
     let html = `
-      <div class="shop-preview">
-        <div class="shop-preview-rope"></div>
-        <div class="shop-preview-vip${vipLevel > 0 ? ' active' : ''}"></div>
-        <div class="shop-preview-machines">${machinesHtml}</div>
-        <div class="shop-preview-counter"></div>
-        <div class="shop-preview-label">Your Shop</div>
+      <div class="shop-header">
+        <div class="shop-wallet">${storeEmoji} <strong>${formatCoins(wallet)}</strong> coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.65rem;">✨P${prestigeLevel}</span>` : ''}</div>
+        <div class="shop-tab-bar">${tabHtml}</div>
       </div>
-      <div class="shop-wallet">💰 Wallet: ${formatCoins(wallet)} coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.7rem;font-weight:700;">✨ P${prestigeLevel} (+${prestigeLevel * 5}%)</span>` : ''}</div>
+      <div class="shop-content">
     `;
 
-    // Find recommended upgrade (cheapest affordable non-maxed)
+    if (shopTab === 'upgrades') {
+      html += renderUpgradesTab();
+    } else if (shopTab === 'tier2') {
+      html += renderTier2Content();
+    } else if (shopTab === 'decor') {
+      html += renderDecorContent();
+    }
+
+    html += '</div>'; // close shop-content
+
+    const prestigeBtn = allUpgradesMaxed() ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()">✨ Prestige</button>` : '';
+    const hubBtn = getUnlockedStores().length >= 2 ? `<button class="btn btn-secondary btn-small" onclick="showHub()">🏢 Hub</button>` : '';
+
+    html += `
+      <div class="shop-actions">
+        <button class="btn" onclick="startDay()">▶ Day ${currentDay}</button>
+        ${prestigeBtn}
+        ${hubBtn}
+        <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
+      </div>
+    `;
+
+    modal.innerHTML = html;
+  }
+
+  function renderUpgradesTab() {
+    let html = '';
+
+    // Find recommended
     let recommendedId = null;
     let recommendedCost = Infinity;
     for (const [id, upgrade] of Object.entries(UPGRADES)) {
@@ -2707,12 +2739,8 @@
       const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
       if (locked) continue;
       const cost = upgrade.costFn(level);
-      if (cost <= wallet && cost < recommendedCost) {
-        recommendedCost = cost;
-        recommendedId = id;
-      }
+      if (cost <= wallet && cost < recommendedCost) { recommendedCost = cost; recommendedId = id; }
     }
-    // If nothing affordable, recommend the cheapest overall
     if (!recommendedId) {
       for (const [id, upgrade] of Object.entries(UPGRADES)) {
         const level = upgradeLevels[id] || 0;
@@ -2733,83 +2761,74 @@
       const canAfford = wallet >= cost && !maxed;
       const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
 
-      // K. Skip locked upgrades from main list; show first as teaser below
-      if (locked) {
-        if (!firstLockedTeaser) {
-          firstLockedTeaser = { id, upgrade };
-        }
-        continue;
-      }
+      if (locked) { if (!firstLockedTeaser) firstLockedTeaser = { id, upgrade }; continue; }
+      if (maxed) { maxedUpgrades.push(upgrade.icon); continue; }
 
-      // Collapse maxed upgrades into summary
-      if (maxed) {
-        maxedUpgrades.push(upgrade.icon);
-        continue;
-      }
-
-      let cardClass = 'upgrade-card';
-      if (maxed) cardClass += ' maxed';
-      else if (canAfford) cardClass += ' affordable';
-      else cardClass += ' too-expensive';
-
-      const visibleTag = upgrade.visible ? '<div class="upgrade-visible-tag">Shows in shop!</div>' : '';
       const isRecommended = id === recommendedId;
+      let cardClass = 'upgrade-card' + (canAfford ? ' affordable' : ' too-expensive') + (isRecommended ? ' recommended' : '');
 
       html += `
-        <div class="${cardClass}${isRecommended ? ' recommended' : ''}">
-          ${isRecommended ? '<div style="position:absolute;top:-6px;right:8px;background:var(--matcha);color:#fff;font-size:0.5rem;font-weight:700;padding:1px 6px;border-radius:4px;">⭐ BEST VALUE</div>' : ''}
+        <div class="${cardClass}">
+          ${isRecommended ? '<div class="shop-badge">⭐ BEST VALUE</div>' : ''}
           <div class="upgrade-icon">${upgrade.icon}</div>
           <div class="upgrade-info">
             <div class="upgrade-name">${upgrade.name}</div>
             <div class="upgrade-desc">${upgrade.desc}</div>
             <div class="upgrade-level">Lv ${level}/${upgrade.maxLevel}</div>
-            ${visibleTag}
           </div>
-          ${maxed ? '<span style="color:var(--gold);font-weight:700;font-size:0.8rem;border:1px solid var(--gold);padding:2px 8px;border-radius:6px;">MAX</span>' :
-            `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}"
-              ${canAfford ? '' : 'disabled'}
-              onclick="buyUpgrade('${id}')">${formatCoins(cost)} 🪙</button>`
-          }
-        </div>
-      `;
+          <button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${id}')">${formatCoins(cost)} 🪙</button>
+        </div>`;
     }
 
-    // Maxed upgrades collapsed summary
     if (maxedUpgrades.length > 0) {
-      html += `<div style="text-align:center;font-size:0.7rem;color:var(--gold);padding:0.3rem;opacity:0.7;">${maxedUpgrades.join(' ')} — ${maxedUpgrades.length} maxed</div>`;
+      html += `<div class="shop-maxed-summary">${maxedUpgrades.join(' ')} — ${maxedUpgrades.length} maxed</div>`;
     }
-
-    // K. Next unlock teaser card
     if (firstLockedTeaser) {
       const { upgrade } = firstLockedTeaser;
-      html += `
-        <div class="upgrade-card teaser">
-          <div class="upgrade-icon">${upgrade.icon}</div>
-          <div class="upgrade-info">
-            <div class="upgrade-name">${upgrade.name}</div>
-            <div class="upgrade-desc">${upgrade.desc}</div>
-          </div>
-          <span style="color:#999;font-size:0.7rem;">&#128274; Requires: ${UPGRADES[upgrade.requires].name}</span>
-        </div>
-      `;
+      html += `<div class="upgrade-card teaser"><div class="upgrade-icon">${upgrade.icon}</div><div class="upgrade-info"><div class="upgrade-name">${upgrade.name}</div><div class="upgrade-desc">${upgrade.desc}</div></div><span style="color:#999;font-size:0.7rem;">🔒 Requires: ${UPGRADES[upgrade.requires].name}</span></div>`;
     }
+    return html;
+  }
 
-    html += renderTier2Tab();
-    html += renderDecorTab();
+  function renderTier2Content() {
+    if (prestigeLevel < 1) return '<div style="text-align:center;color:#999;padding:2rem;font-size:0.85rem;">🔒 Prestige to unlock Tier 2 upgrades</div>';
+    showFirstTimeTooltip('tier2', 'Tier 2 unlocked! Advanced upgrades with polynomial pricing — each level costs more.');
+    let html = '';
+    for (const [id, upg] of Object.entries(TIER2_UPGRADES)) {
+      const level = getTier2Level(id);
+      const isMaxed = level >= upg.maxLevel;
+      const cost = isMaxed ? 0 : upg.costFn(level);
+      const canAfford = !isMaxed && wallet >= cost;
+      html += `<div class="upgrade-card${canAfford ? ' affordable' : ''}${isMaxed ? ' maxed' : ''}">
+        <div class="upgrade-icon">${upg.icon}</div>
+        <div class="upgrade-info">
+          <div class="upgrade-name">${upg.name} ${isMaxed ? '<span style="color:var(--gold);">MAX</span>' : `Lv${level}`}</div>
+          <div class="upgrade-desc">${upg.desc}</div>
+        </div>
+        ${isMaxed ? '' : `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? `onclick="buyTier2('${id}')"` : 'disabled'}>${formatCoins(cost)} 🪙</button>`}
+      </div>`;
+    }
+    return html;
+  }
 
-    const prestigeBtn = allUpgradesMaxed() ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()">✨ Prestige</button>` : '';
-    const hubBtn = getUnlockedStores().length >= 2 ? `<button class="btn btn-secondary btn-small" onclick="showHub()">🏢 Hub</button>` : '';
-
-    html += `
-      <div class="shop-actions">
-        <button class="btn" onclick="startDay()">Start Day ${currentDay}</button>
-        ${prestigeBtn}
-        ${hubBtn}
-        <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
-      </div>
-    `;
-
-    modal.innerHTML = html;
+  function renderDecorContent() {
+    showFirstTimeTooltip('decor', 'Decorations are cosmetic — they make your shop look great and persist across prestige!');
+    const decos = STORE_DECORATIONS[activeStoreId] || [];
+    if (decos.length === 0) return '<div style="text-align:center;color:#999;padding:2rem;">No decorations for this store yet</div>';
+    const owned = getOwnedDecorations();
+    let html = `<div class="shop-decor-progress">${owned.length}/${decos.length} owned</div>`;
+    html += '<div class="shop-decor-grid">';
+    for (const d of decos) {
+      const isOwned = owned.includes(d.id);
+      const canAfford = !isOwned && wallet >= d.cost;
+      html += `<div class="decor-card${isOwned ? ' owned' : ''}${canAfford ? ' affordable' : ''}">
+        <div class="decor-preview">${d.icon}</div>
+        <div class="decor-name">${d.name}</div>
+        ${isOwned ? '<div class="decor-owned">Owned ✓</div>' : `<div class="decor-price">💰 ${formatCoins(d.cost)}</div><button class="btn btn-small decor-buy" ${canAfford ? `onclick="buyDecor('${d.id}')"` : 'disabled'}>Buy</button>`}
+      </div>`;
+    }
+    html += '</div>';
+    return html;
   }
 
   function buyUpgrade(id) {
@@ -3236,21 +3255,6 @@
   // ==========================================
   // TIER 2 UPGRADES (per store, in shop)
   // ==========================================
-  function renderTier2Tab() {
-    if (prestigeLevel < 1) return '';
-    showFirstTimeTooltip('tier2', 'Tier 2 unlocked! These advanced upgrades use polynomial pricing — each level costs more.');
-    let html = '<div style="margin-top:1rem;border-top:2px solid var(--gold);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--gold);margin-bottom:0.5rem;">✨ Tier 2 Upgrades</h3>';
-    for (const [id, upg] of Object.entries(TIER2_UPGRADES)) {
-      const level = getTier2Level(id);
-      const isMaxed = level >= upg.maxLevel;
-      const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
-      const canAfford = !isMaxed && wallet >= upg.costFn(level);
-      html += `<div class="upgrade-card" style="opacity:${canAfford||isMaxed?1:0.6};"><span class="upgrade-icon">${upg.icon}</span><div class="upgrade-info"><div class="upgrade-name">${upg.name} ${isMaxed?'<span style="color:var(--gold);">MAX</span>':`Lv${level}`}</div><div class="upgrade-desc">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small upgrade-btn" ${canAfford?`onclick="buyTier2('${id}')"`:'disabled'} style="opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
-    }
-    html += '</div>';
-    return html;
-  }
-
   function buyTier2(id) {
     const upg = TIER2_UPGRADES[id];
     const level = getTier2Level(id);
@@ -3270,24 +3274,6 @@
     saveGame();
     playSound('upgrade');
     renderShop();
-  }
-
-  // ==========================================
-  // DECORATIONS (per store, in shop)
-  // ==========================================
-  function renderDecorTab() {
-    const decos = STORE_DECORATIONS[activeStoreId] || [];
-    if (decos.length === 0) return '';
-    showFirstTimeTooltip('decor', 'Decorations are cosmetic — they make your shop look great but don\'t affect gameplay. Persist across prestige!');
-    const owned = getOwnedDecorations();
-    let html = '<div style="margin-top:1rem;border-top:2px solid var(--taro);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--taro);margin-bottom:0.3rem;">🎨 Decorations</h3><div style="font-size:0.65rem;color:var(--taupe);margin-bottom:0.5rem;">' + owned.length + '/' + decos.length + ' owned</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;">';
-    for (const d of decos) {
-      const isOwned = owned.includes(d.id);
-      const canAfford = !isOwned && wallet >= d.cost;
-      html += `<div style="background:rgba(0,0,0,${isOwned?'0.02':'0.06'});border-radius:8px;padding:0.5rem;text-align:center;opacity:${isOwned||canAfford?1:0.5};"><div style="font-size:1.4rem;margin-bottom:2px;">${d.icon}</div><div style="font-size:0.7rem;font-weight:700;color:var(--brown);">${d.name}</div>${isOwned?'<div style="font-size:0.6rem;color:var(--matcha);font-weight:600;">Owned ✓</div>':`<div style="font-size:0.6rem;color:var(--taupe);margin-top:1px;">💰 ${formatCoins(d.cost)}</div><button class="btn btn-small" ${canAfford?`onclick="buyDecor('${d.id}')"`:'disabled'} style="font-size:0.6rem;margin-top:3px;min-height:44px;opacity:${canAfford?1:0.4};">Buy</button>`}</div>`;
-    }
-    html += '</div></div>';
-    return html;
   }
 
   function buyDecor(decorId) {
@@ -3776,7 +3762,8 @@
   // All other functions are private to the IIFE scope.
   // Note: Client-side games cannot prevent console manipulation —
   // server-side score validation is the real anti-cheat layer.
-  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu, showHub, switchStore, unlockStore, hireManager, collectOfflineEarnings, showHQ, buyHqUpgrade, buyTier2, buyDecor, showManagerUpgrades, upgradeManagerTier, buyManagerUpgrade };
+  function setShopTab(tab) { shopTab = tab; renderShop(); }
+  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu, showHub, switchStore, unlockStore, hireManager, collectOfflineEarnings, showHQ, buyHqUpgrade, buyTier2, buyDecor, showManagerUpgrades, upgradeManagerTier, buyManagerUpgrade, setShopTab };
   Object.entries(_api).forEach(([k, v]) => { window[k] = v; });
 
   // Pause button handler
