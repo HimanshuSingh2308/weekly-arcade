@@ -270,10 +270,43 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   },
 
   // Tiny Tycoon: Juice Junction (tropical store)
-  // Max: ~40 customers × 80 base (superfood) × 2 (VIP) × 3.0 (combo) × 2 (bridge) = ~19,200 theoretical
   'tiny-tycoon-juice-junction': {
     maxScore: 35000,
     maxScorePerSecond: 500,
+    minTimeMs: 55000,
+    customValidation: (dto) => {
+      if (dto.metadata) {
+        const served = dto.metadata.customersServed as number;
+        if (served !== undefined && served > 80) {
+          return { valid: false, reason: 'Too many customers served' };
+        }
+      }
+      return { valid: true };
+    },
+  },
+
+  // Tiny Tycoon: Sweet Tooth (bakery)
+  // Max: ~40 × 100 (tasting plate) × 2 × 3.0 × 2 = ~48,000 theoretical
+  'tiny-tycoon-sweet-tooth': {
+    maxScore: 60000,
+    maxScorePerSecond: 800,
+    minTimeMs: 55000,
+    customValidation: (dto) => {
+      if (dto.metadata) {
+        const served = dto.metadata.customersServed as number;
+        if (served !== undefined && served > 80) {
+          return { valid: false, reason: 'Too many customers served' };
+        }
+      }
+      return { valid: true };
+    },
+  },
+
+  // Tiny Tycoon: Golden Lounge (luxury bar)
+  // Max: ~40 × 200 (diamond) × 2 × 3.0 × 2 = ~96,000 theoretical
+  'tiny-tycoon-golden-lounge': {
+    maxScore: 120000,
+    maxScorePerSecond: 1500,
     minTimeMs: 55000,
     customValidation: (dto) => {
       if (dto.metadata) {

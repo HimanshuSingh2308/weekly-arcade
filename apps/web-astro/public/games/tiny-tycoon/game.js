@@ -285,6 +285,42 @@
     star:        { name: 'Star Manager', cost: 100000, efficiency: 0.85, icon: '⭐', minPrestige: 5 },
   };
 
+  // HQ global upgrades (cross-store bonuses)
+  const HQ_UPGRADES = {
+    franchise_bonus:    { name: 'Franchise Bonus',    icon: '🏢', desc: '+5% revenue ALL stores/lv', maxLevel: 5, costFn: (l) => 10000 + l * 8000,  effect: (l) => l * 0.05 },
+    supply_chain:       { name: 'Supply Chain',       icon: '📦', desc: '-10% serve time ALL/lv',    maxLevel: 3, costFn: (l) => 15000 + l * 12000, effect: (l) => l * 0.10 },
+    brand_recognition:  { name: 'Brand Recognition',  icon: '📢', desc: '+15% patience ALL/lv',      maxLevel: 3, costFn: (l) => 12000 + l * 10000, effect: (l) => l * 0.15 },
+    loyalty_network:    { name: 'Loyalty Network',    icon: '💳', desc: '+10% VIP rate ALL/lv',       maxLevel: 3, costFn: (l) => 20000 + l * 15000, effect: (l) => l * 0.10 },
+    corporate_training: { name: 'Corporate Training', icon: '🎓', desc: '+10% manager eff ALL/lv',   maxLevel: 3, costFn: (l) => 25000 + l * 20000, effect: (l) => l * 0.10 },
+  };
+
+  // Tier 2 upgrades (per store, prestige-gated)
+  const TIER2_UPGRADES = {
+    golden_touch:    { name: 'Golden Touch',    icon: '✨', desc: '+15% coins/lv (multiplicative)', maxLevel: 5, costFn: (l) => Math.floor(2000 * Math.pow(l + 1, 1.5)) },
+    quick_hands:     { name: 'Quick Hands',     icon: '🤲', desc: '-10% manual serve time/lv',      maxLevel: 3, costFn: (l) => Math.floor(3000 * Math.pow(l + 1, 1.5)) },
+    double_shot:     { name: 'Double Shot',     icon: '🎯', desc: '15/25/35% chance 2x coins',      maxLevel: 3, costFn: (l) => Math.floor(5000 * Math.pow(l + 1, 1.5)) },
+    loyalty_program: { name: 'Loyalty Program', icon: '💝', desc: 'Returning customers +tip',       maxLevel: 3, costFn: (l) => Math.floor(4000 * Math.pow(l + 1, 1.5)) },
+    express_lane:    { name: 'Express Lane',    icon: '🏎️', desc: '4th auto-serve at 1.0x speed',   maxLevel: 1, costFn: () => 15000 },
+  };
+
+  // Decorations per store theme
+  const STORE_DECORATIONS = {
+    boba_shop:      [{ id: 'neon_sign', name: 'Neon Sign', cost: 500, icon: '💡' }, { id: 'plants', name: 'Potted Plants', cost: 750, icon: '🌿' }, { id: 'fairy_lights', name: 'Fairy Lights', cost: 1000, icon: '✨' }, { id: 'flooring', name: 'Premium Flooring', cost: 1500, icon: '🪵' }, { id: 'jukebox', name: 'Jukebox', cost: 2000, icon: '🎵' }, { id: 'aquarium', name: 'Aquarium', cost: 3000, icon: '🐠' }, { id: 'chandelier', name: 'Chandelier', cost: 4000, icon: '💎' }, { id: 'gold_counter', name: 'Gold Counter', cost: 5000, icon: '🥇' }],
+    bean_brew:      [{ id: 'chalkboard', name: 'Chalkboard Menu', cost: 600, icon: '📋' }, { id: 'clock', name: 'Vintage Clock', cost: 900, icon: '🕐' }, { id: 'edison', name: 'Edison Bulbs', cost: 1200, icon: '💡' }, { id: 'leather', name: 'Leather Seats', cost: 2000, icon: '💺' }, { id: 'art_wall', name: 'Coffee Art Wall', cost: 3000, icon: '🎨' }, { id: 'espresso_machine', name: 'Espresso Machine', cost: 4500, icon: '☕' }, { id: 'record', name: 'Record Player', cost: 5500, icon: '🎶' }, { id: 'copper', name: 'Copper Pipes', cost: 7000, icon: '🔧' }],
+    juice_junction: [{ id: 'surfboard', name: 'Surfboard', cost: 800, icon: '🏄' }, { id: 'palms', name: 'Tropical Plants', cost: 1200, icon: '🌴' }, { id: 'tiki', name: 'Tiki Torches', cost: 1800, icon: '🔥' }, { id: 'bamboo', name: 'Bamboo Counter', cost: 2500, icon: '🎋' }, { id: 'fruit_wall', name: 'Fruit Wall', cost: 3500, icon: '🍊' }, { id: 'waterfall', name: 'Waterfall Feature', cost: 5000, icon: '💧' }, { id: 'parrot', name: 'Parrot Perch', cost: 6000, icon: '🦜' }, { id: 'sand', name: 'Sand Floor', cost: 8000, icon: '🏖️' }],
+    sweet_tooth:    [{ id: 'candy_jars', name: 'Candy Jars', cost: 700, icon: '🍬' }, { id: 'macaron', name: 'Macaron Tower', cost: 1100, icon: '🧁' }, { id: 'donut_wall', name: 'Donut Wall', cost: 1600, icon: '🍩' }, { id: 'pink_oven', name: 'Pink Oven', cost: 2500, icon: '🔥' }, { id: 'candy_cane', name: 'Candy Pillars', cost: 3500, icon: '🍭' }, { id: 'gingerbread', name: 'Gingerbread Trim', cost: 5000, icon: '🏠' }, { id: 'cotton_candy', name: 'Cotton Candy', cost: 6500, icon: '🍥' }, { id: 'crystal_cake', name: 'Crystal Cake Stand', cost: 8500, icon: '💎' }],
+    golden_lounge:  [{ id: 'velvet_rope', name: 'Velvet Rope', cost: 1000, icon: '🪢' }, { id: 'mirror', name: 'Art Deco Mirror', cost: 2000, icon: '🪞' }, { id: 'crystal_chand', name: 'Crystal Chandelier', cost: 3000, icon: '💎' }, { id: 'pillars', name: 'Marble Pillars', cost: 5000, icon: '🏛️' }, { id: 'piano', name: 'Grand Piano', cost: 8000, icon: '🎹' }, { id: 'champagne_fountain', name: 'Champagne Fountain', cost: 12000, icon: '🍾' }, { id: 'star_ceiling', name: 'Starlight Ceiling', cost: 15000, icon: '⭐' }, { id: 'diamond_bar', name: 'Diamond Bar Top', cost: 20000, icon: '💎' }],
+  };
+
+  // Manager upgrades (per manager)
+  const MANAGER_UPGRADES = {
+    training_1:      { name: 'Training I',       cost: 3000,  effect: 0.05, icon: '📚', desc: '+5% efficiency' },
+    training_2:      { name: 'Training II',      cost: 8000,  effect: 0.10, icon: '📖', desc: '+10% efficiency' },
+    training_3:      { name: 'Training III',     cost: 20000, effect: 0.15, icon: '🎓', desc: '+15% efficiency' },
+    motivation:      { name: 'Motivation Bonus', cost: 10000, effect: 0.02, icon: '🌟', desc: '+2%/login day eff' },
+    night_shift:     { name: 'Night Shift',      cost: 25000, effect: 0,    icon: '🌙', desc: 'Accrual cap 36h' },
+  };
+
   // ==========================================
   // GAME STATE
   // ==========================================
@@ -859,13 +895,31 @@
       if (day >= row.minDay) p = row.patience;
     }
     const patienceBonus = 1 + (upgradeLevels.patience_plus || 0) * 0.10;
-    return p * patienceBonus * (relaxedMode ? RELAXED.patienceMult : 1);
+    const hqBrand = 1 + getHqLevel('brand_recognition') * 0.15;
+    return p * patienceBonus * hqBrand * (relaxedMode ? RELAXED.patienceMult : 1);
+  }
+
+  function getHqLevel(upgradeId) {
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      return ((empire.global || {}).hqUpgrades || {})[upgradeId] || 0;
+    } catch(e) { return 0; }
+  }
+
+  function getTier2Level(upgradeId) {
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      const store = (empire.stores || {})[activeStoreId] || {};
+      return (store.tier2Levels || {})[upgradeId] || 0;
+    } catch(e) { return 0; }
   }
 
   function getServeTime(drinkKey) {
     const base = DRINK_TYPES[drinkKey].serveTime;
     const level = upgradeLevels.speed_boost || 0;
-    return base * Math.pow(0.95, level);
+    const hqSupplyChain = getHqLevel('supply_chain') * 0.10;
+    const t2QuickHands = getTier2Level('quick_hands') * 0.10;
+    return base * Math.pow(0.95, level) * (1 - hqSupplyChain) * (1 - t2QuickHands);
   }
 
   function getAutoServeTimeForStation(stationIndex, drinkKey) {
@@ -1055,8 +1109,9 @@
     ).length;
 
     const vipLevel = upgradeLevels.vip_lounge || 0;
-    const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0; // P3 perk: VIP Magnet
-    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05 + vipMagnetBonus) : 0;
+    const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0;
+    const hqLoyalty = getHqLevel('loyalty_network') * 0.10;
+    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05 + vipMagnetBonus + hqLoyalty) : 0;
     let isVip = Math.random() < vipChance;
 
     // If VIP, check for available table
@@ -1299,9 +1354,13 @@
     }
 
     const prestigeMultiplier = 1 + prestigeLevel * 0.05;
-    const bridgeMultiplier = (prestigeBridgeDays > 0) ? 2 : 1; // Prestige bridge: 2x for 3 days
-    const rushMasterMultiplier = (prestigeLevel >= 4 && rushActive) ? 2 : 1; // P4 perk: Rush Master
-    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier) + tipBonus;
+    const bridgeMultiplier = (prestigeBridgeDays > 0) ? 2 : 1;
+    const rushMasterMultiplier = (prestigeLevel >= 4 && rushActive) ? 2 : 1;
+    const hqFranchise = 1 + getHqLevel('franchise_bonus') * 0.05;
+    const t2Golden = 1 + getTier2Level('golden_touch') * 0.15;
+    const t2DoubleShot = getTier2Level('double_shot');
+    const doubleShotMultiplier = (t2DoubleShot > 0 && Math.random() < (0.10 + t2DoubleShot * 0.05)) ? 2 : 1; // 15/20/25% at lv 1/2/3 (shifted from plan's 15/25/35 for balance)
+    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier) + tipBonus;
     dayRevenue += totalCoins;
     customersServed++;
 
@@ -2285,12 +2344,20 @@
       `;
     }
 
+    // Tier 2 upgrades (prestige-gated)
+    html += renderTier2Tab();
+
+    // Decorations
+    html += renderDecorTab();
+
     const prestigeBtn = allUpgradesMaxed() ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()">✨ Prestige</button>` : '';
+    const hubBtn = getUnlockedStores().length >= 2 ? `<button class="btn btn-secondary btn-small" onclick="showHub()">🏢 Hub</button>` : '';
 
     html += `
       <div class="shop-actions">
         <button class="btn" onclick="startDay()">Start Day ${currentDay}</button>
         ${prestigeBtn}
+        ${hubBtn}
         <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
       </div>
     `;
@@ -2710,12 +2777,265 @@
       </div>
       <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
         <button class="btn btn-small" onclick="switchStore('${activeStoreId}'); showShop();">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button>
+        ${prestigeLevel >= 2 ? '<button class="btn btn-secondary btn-small" onclick="showHQ()">🏢 HQ</button>' : ''}
         <button class="btn btn-secondary btn-small" onclick="showStats()">📊 Stats</button>
         <button class="btn btn-secondary btn-small" onclick="showAchievements()">🏆</button>
       </div>
     `;
 
     showOverlay('hubOverlay');
+  }
+
+  // ==========================================
+  // HQ UPGRADES UI
+  // ==========================================
+  function showHQ() {
+    const modal = document.getElementById('hubModal');
+    let html = '<h2 style="text-align:center;">🏢 Headquarters</h2>';
+    html += '<div style="font-size:0.75rem;color:#999;text-align:center;margin-bottom:0.75rem;">Global bonuses for all stores</div>';
+
+    for (const [id, upg] of Object.entries(HQ_UPGRADES)) {
+      const level = getHqLevel(id);
+      const isMaxed = level >= upg.maxLevel;
+      const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
+      const canAfford = !isMaxed && wallet >= upg.costFn(level);
+
+      html += `
+        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,${canAfford ? '0.03' : '0.01'});border-radius:8px;margin-bottom:0.4rem;">
+          <span style="font-size:1.3rem;">${upg.icon}</span>
+          <div style="flex:1;">
+            <div style="font-size:0.8rem;font-weight:700;">${upg.name} ${isMaxed ? '<span style="color:var(--gold);">MAX</span>' : `Lv${level}`}</div>
+            <div style="font-size:0.65rem;color:#888;">${upg.desc}</div>
+          </div>
+          ${isMaxed ? '' : `<button class="btn btn-small" ${canAfford ? `onclick="buyHqUpgrade('${id}')"` : 'disabled'} style="font-size:0.7rem;min-height:32px;opacity:${canAfford ? 1 : 0.5};">💰 ${cost}</button>`}
+        </div>
+      `;
+    }
+
+    html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
+    modal.innerHTML = html;
+    hideAllOverlays();
+    showOverlay('hubOverlay');
+  }
+
+  function buyHqUpgrade(id) {
+    const upg = HQ_UPGRADES[id];
+    const level = getHqLevel(id);
+    if (!upg || level >= upg.maxLevel) return;
+    const cost = upg.costFn(level);
+    if (wallet < cost) return;
+
+    wallet -= cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (!empire.global) empire.global = {};
+      if (!empire.global.hqUpgrades) empire.global.hqUpgrades = {};
+      empire.global.hqUpgrades[id] = level + 1;
+      localStorage.setItem('tt_empire', JSON.stringify(empire));
+    } catch(e) {}
+
+    saveGame();
+    playSound('upgrade');
+    showHQ();
+  }
+
+  // ==========================================
+  // TIER 2 UPGRADES (per store, in shop)
+  // ==========================================
+  function renderTier2Tab() {
+    if (prestigeLevel < 1) return '';
+    let html = '<div style="margin-top:1rem;border-top:2px solid var(--gold);padding-top:0.75rem;">';
+    html += '<h3 style="font-size:0.85rem;color:var(--gold);margin-bottom:0.5rem;">✨ Tier 2 Upgrades</h3>';
+
+    for (const [id, upg] of Object.entries(TIER2_UPGRADES)) {
+      const level = getTier2Level(id);
+      const isMaxed = level >= upg.maxLevel;
+      const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
+      const canAfford = !isMaxed && wallet >= upg.costFn(level);
+
+      html += `
+        <div class="upgrade-card" style="opacity:${canAfford || isMaxed ? 1 : 0.6};">
+          <span class="upgrade-icon">${upg.icon}</span>
+          <div class="upgrade-info">
+            <div class="upgrade-name">${upg.name} ${isMaxed ? '<span style="color:var(--gold);">MAX</span>' : `Lv${level}`}</div>
+            <div class="upgrade-desc">${upg.desc}</div>
+          </div>
+          ${isMaxed ? '' : `<button class="btn btn-small upgrade-btn" ${canAfford ? `onclick="buyTier2('${id}')"` : 'disabled'} style="opacity:${canAfford ? 1 : 0.5};">💰 ${cost}</button>`}
+        </div>
+      `;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function buyTier2(id) {
+    const upg = TIER2_UPGRADES[id];
+    const level = getTier2Level(id);
+    if (!upg || level >= upg.maxLevel) return;
+    const cost = upg.costFn(level);
+    if (wallet < cost) return;
+
+    wallet -= cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      const store = (empire.stores || {})[activeStoreId];
+      if (store) {
+        if (!store.tier2Levels) store.tier2Levels = {};
+        store.tier2Levels[id] = level + 1;
+        localStorage.setItem('tt_empire', JSON.stringify(empire));
+      }
+    } catch(e) {}
+
+    saveGame();
+    playSound('upgrade');
+    renderShop();
+  }
+
+  // ==========================================
+  // DECORATIONS (per store, in shop)
+  // ==========================================
+  function getOwnedDecorations() {
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      return ((empire.stores || {})[activeStoreId] || {}).decorations || [];
+    } catch(e) { return []; }
+  }
+
+  function renderDecorTab() {
+    const decos = STORE_DECORATIONS[activeStoreId] || [];
+    if (decos.length === 0) return '';
+    const owned = getOwnedDecorations();
+
+    let html = '<div style="margin-top:1rem;border-top:2px solid var(--taro);padding-top:0.75rem;">';
+    html += '<h3 style="font-size:0.85rem;color:var(--taro);margin-bottom:0.5rem;">🎨 Decorations</h3>';
+    html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;">';
+
+    for (const d of decos) {
+      const isOwned = owned.includes(d.id);
+      const canAfford = !isOwned && wallet >= d.cost;
+      html += `
+        <div style="background:rgba(0,0,0,${isOwned ? '0.02' : '0.04'});border-radius:8px;padding:0.4rem;text-align:center;opacity:${isOwned || canAfford ? 1 : 0.5};">
+          <div style="font-size:1.3rem;">${d.icon}</div>
+          <div style="font-size:0.7rem;font-weight:600;">${d.name}</div>
+          ${isOwned ? '<div style="font-size:0.6rem;color:var(--matcha);">Owned ✓</div>' :
+            `<button class="btn btn-small" ${canAfford ? `onclick="buyDecor('${d.id}')"` : 'disabled'} style="font-size:0.6rem;margin-top:2px;min-height:28px;opacity:${canAfford ? 1 : 0.5};">💰 ${formatCoins(d.cost)}</button>`}
+        </div>
+      `;
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function buyDecor(decorId) {
+    const decos = STORE_DECORATIONS[activeStoreId] || [];
+    const deco = decos.find(d => d.id === decorId);
+    if (!deco || wallet < deco.cost) return;
+
+    wallet -= deco.cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      const store = (empire.stores || {})[activeStoreId];
+      if (store) {
+        if (!store.decorations) store.decorations = [];
+        if (!store.decorations.includes(decorId)) store.decorations.push(decorId);
+        localStorage.setItem('tt_empire', JSON.stringify(empire));
+      }
+    } catch(e) {}
+
+    saveGame();
+    playSound('upgrade');
+    renderShop();
+  }
+
+  // ==========================================
+  // MANAGER UPGRADES (per manager, in hub)
+  // ==========================================
+  function showManagerUpgrades(storeId) {
+    const managers = getManagers();
+    const mgr = managers[storeId];
+    if (!mgr) return;
+
+    const modal = document.getElementById('hubModal');
+    const config = STORE_CONFIGS[storeId];
+    let html = `<h2 style="text-align:center;">${config?.emoji || '🏪'} ${config?.name || storeId} Manager</h2>`;
+    html += `<div style="text-align:center;font-size:0.8rem;color:#888;margin-bottom:0.75rem;">Tier: ${MANAGER_TIERS[mgr.tier]?.name || mgr.tier}</div>`;
+
+    // Upgrade tier
+    const currentTierKeys = Object.keys(MANAGER_TIERS);
+    const currentIdx = currentTierKeys.indexOf(mgr.tier);
+    if (currentIdx < currentTierKeys.length - 1) {
+      const nextKey = currentTierKeys[currentIdx + 1];
+      const nextTier = MANAGER_TIERS[nextKey];
+      if (prestigeLevel >= nextTier.minPrestige) {
+        const canAfford = wallet >= nextTier.cost;
+        html += `
+          <div style="background:rgba(0,0,0,0.04);border-radius:8px;padding:0.5rem;margin-bottom:0.5rem;">
+            <div style="font-size:0.8rem;font-weight:700;">Upgrade to ${nextTier.icon} ${nextTier.name}</div>
+            <div style="font-size:0.65rem;color:#888;">Efficiency: ${Math.round(nextTier.efficiency * 100)}%</div>
+            <button class="btn btn-small" ${canAfford ? `onclick="upgradeManagerTier('${storeId}', '${nextKey}')"` : 'disabled'} style="margin-top:4px;font-size:0.7rem;opacity:${canAfford ? 1 : 0.5};">💰 ${formatCoins(nextTier.cost)}</button>
+          </div>
+        `;
+      }
+    }
+
+    // Manager training upgrades
+    const mgrUpgrades = mgr.upgrades || {};
+    for (const [id, upg] of Object.entries(MANAGER_UPGRADES)) {
+      const owned = !!mgrUpgrades[id];
+      const canAfford = !owned && wallet >= upg.cost;
+      html += `
+        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem;background:rgba(0,0,0,0.02);border-radius:8px;margin-bottom:0.3rem;opacity:${owned || canAfford ? 1 : 0.5};">
+          <span style="font-size:1.1rem;">${upg.icon}</span>
+          <div style="flex:1;">
+            <div style="font-size:0.75rem;font-weight:600;">${upg.name} ${owned ? '<span style="color:var(--matcha);">✓</span>' : ''}</div>
+            <div style="font-size:0.6rem;color:#888;">${upg.desc}</div>
+          </div>
+          ${owned ? '' : `<button class="btn btn-small" ${canAfford ? `onclick="buyManagerUpgrade('${storeId}', '${id}')"` : 'disabled'} style="font-size:0.65rem;min-height:28px;opacity:${canAfford ? 1 : 0.5};">💰 ${formatCoins(upg.cost)}</button>`}
+        </div>
+      `;
+    }
+
+    html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
+    modal.innerHTML = html;
+    hideAllOverlays();
+    showOverlay('hubOverlay');
+  }
+
+  function upgradeManagerTier(storeId, newTier) {
+    const tier = MANAGER_TIERS[newTier];
+    if (!tier || wallet < tier.cost) return;
+    wallet -= tier.cost;
+
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (empire.global?.managers?.[storeId]) {
+        empire.global.managers[storeId].tier = newTier;
+        localStorage.setItem('tt_empire', JSON.stringify(empire));
+      }
+    } catch(e) {}
+
+    saveGame();
+    playSound('upgrade');
+    showManagerUpgrades(storeId);
+  }
+
+  function buyManagerUpgrade(storeId, upgradeId) {
+    const upg = MANAGER_UPGRADES[upgradeId];
+    if (!upg || wallet < upg.cost) return;
+    wallet -= upg.cost;
+
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (empire.global?.managers?.[storeId]) {
+        if (!empire.global.managers[storeId].upgrades) empire.global.managers[storeId].upgrades = {};
+        empire.global.managers[storeId].upgrades[upgradeId] = true;
+        localStorage.setItem('tt_empire', JSON.stringify(empire));
+      }
+    } catch(e) {}
+
+    saveGame();
+    playSound('upgrade');
+    showManagerUpgrades(storeId);
   }
 
   function showTitle() {
@@ -3094,7 +3414,7 @@
   // All other functions are private to the IIFE scope.
   // Note: Client-side games cannot prevent console manipulation —
   // server-side score validation is the real anti-cheat layer.
-  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu, showHub, switchStore, unlockStore, hireManager, collectOfflineEarnings };
+  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu, showHub, switchStore, unlockStore, hireManager, collectOfflineEarnings, showHQ, buyHqUpgrade, buyTier2, buyDecor, showManagerUpgrades, upgradeManagerTier, buyManagerUpgrade };
   Object.entries(_api).forEach(([k, v]) => { window[k] = v; });
 
   // Pause button handler
