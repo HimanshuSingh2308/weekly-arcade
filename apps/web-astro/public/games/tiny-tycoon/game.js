@@ -2,7 +2,7 @@
   // ==========================================
   // GAME CONSTANTS
   // ==========================================
-  const DRINK_TYPES = {
+  let DRINK_TYPES = {
     basic_tea:    { emoji: '🍵', name: 'Basic Tea',         baseCoins: 5,  serveTime: 800,  unlockDay: 1 },
     boba_milk:    { emoji: '🧋', name: 'Boba Milk Tea',     baseCoins: 10, serveTime: 1200, unlockDay: 1 },
     iced_coffee:  { emoji: '☕', name: 'Iced Coffee',        baseCoins: 8,  serveTime: 1000, unlockDay: 3 },
@@ -14,7 +14,7 @@
     signature:    { emoji: '🏆', name: 'Signature Boba',   baseCoins: 75, serveTime: 4000, unlockDay: 25 }
   };
 
-  const CUSTOMER_TYPES = {
+  let CUSTOMER_TYPES = {
     regular:    { color: '#8B9DC3', patienceMod: 1.0, orderPool: ['basic_tea', 'boba_milk'],             earlyWeight: 60, lateWeight: 25 },
     student:    { color: '#FFB347', patienceMod: 1.2, orderPool: ['basic_tea', 'iced_coffee'],           earlyWeight: 30, lateWeight: 15 },
     business:   { color: '#708090', patienceMod: 0.7, orderPool: ['iced_coffee', 'boba_milk'],           earlyWeight: 10, lateWeight: 20 },
@@ -23,7 +23,7 @@
     vip:        { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL',                                 earlyWeight: 0,  lateWeight: 0  }
   };
 
-  const UPGRADES = {
+  let UPGRADES = {
     speed_boost:  { name: 'Speed Boost',         icon: '⚡', desc: 'Reduce serve time by 5%', maxLevel: 10, costFn: (l) => 80 + (l * 40),  requires: null, visible: false },
     patience_plus:{ name: 'Patience Plus',        icon: '😊', desc: 'Customers wait 10% longer', maxLevel: 8,  costFn: (l) => 100 + (l * 50), requires: null, visible: false },
     tip_jar:      { name: 'Tip Jar',              icon: '🫙', desc: 'Higher speed bonus tips (+1/lv)', maxLevel: 8,  costFn: (l) => 60 + (l * 30),  requires: null, visible: false },
@@ -60,7 +60,7 @@
     5: { id: 'golden_start', name: 'Golden Start',   desc: 'Start each day with 50 bonus coins',   icon: '💎' },
   };
 
-  const SPAWN_TABLE = [
+  let SPAWN_TABLE = [
     { minDay: 1,  interval: 3000, maxQueue: 4 },
     { minDay: 2,  interval: 2700, maxQueue: 4 },
     { minDay: 3,  interval: 2400, maxQueue: 5 },
@@ -75,7 +75,7 @@
     { minDay: 30, interval: 800,  maxQueue: 10 }
   ];
 
-  const PATIENCE_TABLE = [
+  let PATIENCE_TABLE = [
     { minDay: 1,  patience: 12000 },
     { minDay: 3,  patience: 10000 },
     { minDay: 5,  patience: 8000 },
@@ -95,6 +95,126 @@
     { x: 180, y: 50 },  // table 1 (center)
     { x: 300, y: 30 }   // table 2 (right)
   ];
+
+  // ==========================================
+  // STORE CONFIGS & EMPIRE SYSTEMS
+  // ==========================================
+  const BOBA_DRINKS = { ...DRINK_TYPES };
+  const BOBA_CUSTOMERS = JSON.parse(JSON.stringify(CUSTOMER_TYPES));
+  const BOBA_UPGRADES = JSON.parse(JSON.stringify(UPGRADES));
+  const BOBA_SPAWN = [...SPAWN_TABLE];
+  const BOBA_PATIENCE = [...PATIENCE_TABLE];
+
+  const STORE_CONFIGS = {
+    boba_shop: {
+      id: 'boba_shop', name: 'Boba Bliss', emoji: '🧋', unlockCost: 0, unlockPrestige: 0,
+      theme: { '--cream': '#FFF8F0', '--taupe': '#C4A882', '--brown': '#5C3D2E', '--matcha': '#7FB069', '--coral': '#E8836B', '--gold': '#F5C542', '--taro': '#9B7CB8', '--wall-top': '#FFF5EB', '--wall-bottom': '#F5E6D0', '--floor': '#D4A87C' },
+      getDrinks: () => BOBA_DRINKS, getCustomers: () => BOBA_CUSTOMERS, getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
+    },
+    bean_brew: {
+      id: 'bean_brew', name: 'Bean & Brew', emoji: '☕', unlockCost: 5000, unlockPrestige: 1,
+      theme: { '--cream': '#F5F0E8', '--taupe': '#8B6F47', '--brown': '#3E2723', '--matcha': '#B87333', '--coral': '#D84315', '--gold': '#FFB300', '--taro': '#6D4C41', '--wall-top': '#E8DCC8', '--wall-bottom': '#D4C4A8', '--floor': '#A0845C' },
+      getDrinks: () => ({ drip_coffee: { emoji: '☕', name: 'Drip Coffee', baseCoins: 8, serveTime: 700, unlockDay: 1 }, cappuccino: { emoji: '🫘', name: 'Cappuccino', baseCoins: 15, serveTime: 1100, unlockDay: 1 }, espresso: { emoji: '⚡', name: 'Espresso Shot', baseCoins: 12, serveTime: 500, unlockDay: 3 }, caramel_latte: { emoji: '🍯', name: 'Caramel Latte', baseCoins: 22, serveTime: 1400, unlockDay: 5 }, mocha_frappe: { emoji: '🍫', name: 'Mocha Frappe', baseCoins: 35, serveTime: 1800, unlockDay: 8 }, pour_over: { emoji: '🏆', name: 'Pour-Over Special', baseCoins: 50, serveTime: 2200, unlockDay: 12 }, affogato: { emoji: '🍨', name: 'Affogato', baseCoins: 65, serveTime: 2800, unlockDay: 18 } }),
+      getCustomers: () => ({ regular: { color: '#A1887F', patienceMod: 1.0, orderPool: ['drip_coffee', 'cappuccino'], earlyWeight: 50, lateWeight: 20 }, student: { color: '#FFB347', patienceMod: 1.2, orderPool: ['drip_coffee', 'espresso'], earlyWeight: 30, lateWeight: 15 }, business: { color: '#546E7A', patienceMod: 0.6, orderPool: ['espresso', 'cappuccino', 'pour_over'], earlyWeight: 15, lateWeight: 30 }, foodie: { color: '#CE93D8', patienceMod: 0.9, orderPool: ['caramel_latte', 'mocha_frappe', 'affogato'], earlyWeight: 0, lateWeight: 25 }, influencer: { color: '#FF69B4', patienceMod: 0.5, orderPool: ['affogato', 'pour_over'], earlyWeight: 0, lateWeight: 10 }, vip: { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL', earlyWeight: 0, lateWeight: 0 } }),
+      getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
+    },
+    juice_junction: {
+      id: 'juice_junction', name: 'Juice Junction', emoji: '🍊', unlockCost: 15000, unlockPrestige: 2,
+      theme: { '--cream': '#E0F7FA', '--taupe': '#00897B', '--brown': '#004D40', '--matcha': '#FF8C42', '--coral': '#FF5722', '--gold': '#FFC107', '--taro': '#26A69A', '--wall-top': '#B2DFDB', '--wall-bottom': '#80CBC4', '--floor': '#FFE0B2' },
+      getDrinks: () => ({ orange_juice: { emoji: '🍊', name: 'Orange Juice', baseCoins: 10, serveTime: 800, unlockDay: 1 }, berry_blast: { emoji: '🫐', name: 'Berry Blast', baseCoins: 18, serveTime: 1200, unlockDay: 1 }, green_smooth: { emoji: '🥬', name: 'Green Smoothie', baseCoins: 15, serveTime: 1000, unlockDay: 3 }, acai_bowl: { emoji: '🟣', name: 'Açaí Bowl', baseCoins: 30, serveTime: 1600, unlockDay: 6 }, tropical: { emoji: '🥭', name: 'Tropical Fusion', baseCoins: 45, serveTime: 2000, unlockDay: 10 }, dragon_fruit: { emoji: '🐉', name: 'Dragon Fruit Elixir', baseCoins: 60, serveTime: 2500, unlockDay: 15 }, superfood: { emoji: '💎', name: 'Superfood Supreme', baseCoins: 80, serveTime: 3200, unlockDay: 20 } }),
+      getCustomers: () => ({ regular: { color: '#81D4FA', patienceMod: 1.0, orderPool: ['orange_juice', 'berry_blast'], earlyWeight: 50, lateWeight: 20 }, student: { color: '#AED581', patienceMod: 1.3, orderPool: ['orange_juice', 'green_smooth'], earlyWeight: 30, lateWeight: 15 }, business: { color: '#90A4AE', patienceMod: 0.7, orderPool: ['green_smooth', 'acai_bowl'], earlyWeight: 10, lateWeight: 20 }, foodie: { color: '#F48FB1', patienceMod: 0.9, orderPool: ['acai_bowl', 'tropical', 'dragon_fruit', 'superfood'], earlyWeight: 0, lateWeight: 30 }, influencer: { color: '#FF69B4', patienceMod: 0.5, orderPool: ['dragon_fruit', 'superfood'], earlyWeight: 0, lateWeight: 10 }, vip: { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL', earlyWeight: 0, lateWeight: 0 } }),
+      getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
+    },
+    sweet_tooth: {
+      id: 'sweet_tooth', name: 'Sweet Tooth', emoji: '🧁', unlockCost: 40000, unlockPrestige: 3,
+      theme: { '--cream': '#FFF0F5', '--taupe': '#D4A0A0', '--brown': '#8B4513', '--matcha': '#B76E79', '--coral': '#FF6B81', '--gold': '#FFB6C1', '--taro': '#C9A0DC', '--wall-top': '#FFE4EC', '--wall-bottom': '#FFD1DC', '--floor': '#98FB98' },
+      getDrinks: () => ({ cookie: { emoji: '🍪', name: 'Cookie', baseCoins: 12, serveTime: 600, unlockDay: 1 }, cupcake: { emoji: '🧁', name: 'Cupcake', baseCoins: 20, serveTime: 1000, unlockDay: 1 }, croissant: { emoji: '🥐', name: 'Croissant', baseCoins: 16, serveTime: 900, unlockDay: 3 }, cake_slice: { emoji: '🍰', name: 'Slice of Cake', baseCoins: 35, serveTime: 1500, unlockDay: 6 }, cream_puff: { emoji: '🏰', name: 'Cream Puff Tower', baseCoins: 50, serveTime: 2200, unlockDay: 10 }, tiramisu: { emoji: '🇮🇹', name: 'Tiramisu', baseCoins: 70, serveTime: 2800, unlockDay: 15 }, tasting_plate: { emoji: '👨‍🍳', name: "Chef's Tasting", baseCoins: 100, serveTime: 3500, unlockDay: 20 } }),
+      getCustomers: () => ({ regular: { color: '#F8BBD0', patienceMod: 1.1, orderPool: ['cookie', 'cupcake'], earlyWeight: 50, lateWeight: 20 }, student: { color: '#CE93D8', patienceMod: 1.3, orderPool: ['cookie', 'croissant'], earlyWeight: 30, lateWeight: 10 }, business: { color: '#90A4AE', patienceMod: 0.7, orderPool: ['croissant', 'cake_slice'], earlyWeight: 10, lateWeight: 20 }, foodie: { color: '#FFB74D', patienceMod: 0.8, orderPool: ['cake_slice', 'cream_puff', 'tiramisu', 'tasting_plate'], earlyWeight: 0, lateWeight: 35 }, influencer: { color: '#FF69B4', patienceMod: 0.5, orderPool: ['tiramisu', 'tasting_plate'], earlyWeight: 0, lateWeight: 10 }, vip: { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL', earlyWeight: 0, lateWeight: 0 } }),
+      getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
+    },
+    golden_lounge: {
+      id: 'golden_lounge', name: 'Golden Lounge', emoji: '🥂', unlockCost: 100000, unlockPrestige: 5,
+      theme: { '--cream': '#1B1B3A', '--taupe': '#C9B037', '--brown': '#F5F5DC', '--matcha': '#FFD700', '--coral': '#FF4444', '--gold': '#FFD700', '--taro': '#9B59B6', '--wall-top': '#1B1B3A', '--wall-bottom': '#0D0D2B', '--floor': '#0D0D0D' },
+      getDrinks: () => ({ sparkling_water: { emoji: '💧', name: 'Sparkling Water', baseCoins: 20, serveTime: 500, unlockDay: 1 }, cocktail: { emoji: '🍸', name: 'Classic Cocktail', baseCoins: 40, serveTime: 1200, unlockDay: 1 }, wine: { emoji: '🍷', name: 'Wine Glass', baseCoins: 35, serveTime: 1000, unlockDay: 3 }, signature_mix: { emoji: '🌟', name: 'Signature Mix', baseCoins: 60, serveTime: 1800, unlockDay: 6 }, champagne: { emoji: '🍾', name: 'Champagne Tower', baseCoins: 90, serveTime: 2500, unlockDay: 10 }, royal_reserve: { emoji: '👑', name: 'Royal Reserve', baseCoins: 120, serveTime: 3200, unlockDay: 15 }, diamond: { emoji: '💎', name: 'Diamond Collection', baseCoins: 200, serveTime: 4000, unlockDay: 20 } }),
+      getCustomers: () => ({ regular: { color: '#B0BEC5', patienceMod: 0.9, orderPool: ['sparkling_water', 'cocktail'], earlyWeight: 40, lateWeight: 15 }, student: { color: '#7986CB', patienceMod: 1.0, orderPool: ['sparkling_water', 'wine'], earlyWeight: 20, lateWeight: 10 }, business: { color: '#455A64', patienceMod: 0.5, orderPool: ['cocktail', 'wine', 'signature_mix'], earlyWeight: 25, lateWeight: 25 }, foodie: { color: '#CE93D8', patienceMod: 0.8, orderPool: ['signature_mix', 'champagne', 'royal_reserve', 'diamond'], earlyWeight: 0, lateWeight: 30 }, influencer: { color: '#FF80AB', patienceMod: 0.4, orderPool: ['royal_reserve', 'diamond'], earlyWeight: 0, lateWeight: 15 }, vip: { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL', earlyWeight: 0, lateWeight: 0 } }),
+      getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
+    },
+  };
+
+  let activeStoreId = 'boba_shop';
+
+  function switchStore(storeId) {
+    const config = STORE_CONFIGS[storeId];
+    if (!config) return;
+    saveGame();
+    activeStoreId = storeId;
+    DRINK_TYPES = config.getDrinks();
+    CUSTOMER_TYPES = config.getCustomers();
+    UPGRADES = config.getUpgrades();
+    SPAWN_TABLE = config.getSpawnTable();
+    PATIENCE_TABLE = config.getPatienceTable();
+    const raw = localStorage.getItem('tt_empire');
+    if (raw) {
+      try {
+        const empire = JSON.parse(raw);
+        const store = (empire.stores || {})[storeId];
+        if (store) { currentDay = store.currentDay || 1; upgradeLevels = store.upgradeLevels || {}; }
+        else { currentDay = 1; upgradeLevels = {}; }
+        empire.activeStoreId = storeId;
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      } catch(e) {}
+    }
+    const root = document.documentElement;
+    for (const [prop, val] of Object.entries(config.theme)) root.style.setProperty(prop, val);
+    updateShopEnvironment();
+  }
+
+  const MANAGER_TIERS = {
+    trainee: { name: 'Trainee', cost: 5000, efficiency: 0.40, icon: '👤', minPrestige: 1 },
+    experienced: { name: 'Experienced', cost: 20000, efficiency: 0.60, icon: '👨‍💼', minPrestige: 2 },
+    expert: { name: 'Expert', cost: 50000, efficiency: 0.80, icon: '🧑‍🔬', minPrestige: 3 },
+    star: { name: 'Star Manager', cost: 100000, efficiency: 0.85, icon: '⭐', minPrestige: 5 },
+  };
+
+  const HQ_UPGRADES = {
+    franchise_bonus: { name: 'Franchise Bonus', icon: '🏢', desc: '+5% revenue ALL stores/lv', maxLevel: 5, costFn: (l) => 10000 + l * 8000, effect: (l) => l * 0.05 },
+    supply_chain: { name: 'Supply Chain', icon: '📦', desc: '-10% serve time ALL/lv', maxLevel: 3, costFn: (l) => 15000 + l * 12000, effect: (l) => l * 0.10 },
+    brand_recognition: { name: 'Brand Recognition', icon: '📢', desc: '+15% patience ALL/lv', maxLevel: 3, costFn: (l) => 12000 + l * 10000, effect: (l) => l * 0.15 },
+    loyalty_network: { name: 'Loyalty Network', icon: '💳', desc: '+10% VIP rate ALL/lv', maxLevel: 3, costFn: (l) => 20000 + l * 15000, effect: (l) => l * 0.10 },
+    corporate_training: { name: 'Corporate Training', icon: '🎓', desc: '+10% manager eff ALL/lv', maxLevel: 3, costFn: (l) => 25000 + l * 20000, effect: (l) => l * 0.10 },
+  };
+
+  const TIER2_UPGRADES = {
+    golden_touch: { name: 'Golden Touch', icon: '✨', desc: '+15% coins/lv', maxLevel: 5, costFn: (l) => Math.floor(2000 * Math.pow(l + 1, 1.5)) },
+    quick_hands: { name: 'Quick Hands', icon: '🤲', desc: '-10% manual serve time/lv', maxLevel: 3, costFn: (l) => Math.floor(3000 * Math.pow(l + 1, 1.5)) },
+    double_shot: { name: 'Double Shot', icon: '🎯', desc: '15/25/35% chance 2x coins', maxLevel: 3, costFn: (l) => Math.floor(5000 * Math.pow(l + 1, 1.5)) },
+    loyalty_program: { name: 'Loyalty Program', icon: '💝', desc: 'Returning customers +tip', maxLevel: 3, costFn: (l) => Math.floor(4000 * Math.pow(l + 1, 1.5)) },
+    express_lane: { name: 'Express Lane', icon: '🏎️', desc: '4th auto-serve at 1.0x speed', maxLevel: 1, costFn: () => 15000 },
+    extra_waiter: { name: 'Extra Waiter', icon: '🧑‍🍳', desc: '+1 VIP waiter (up to 3)', maxLevel: 2, costFn: (l) => Math.floor(8000 * Math.pow(l + 1, 1.5)) },
+    vip_tables: { name: 'VIP Tables', icon: '🪑', desc: '+2 VIP tables/lv', maxLevel: 3, costFn: (l) => Math.floor(5000 * Math.pow(l + 1, 1.5)) },
+    waiter_speed: { name: 'Waiter Speed', icon: '💨', desc: '-10% waiter serve time/lv', maxLevel: 5, costFn: (l) => Math.floor(3000 * Math.pow(l + 1, 1.5)) },
+    vip_attraction: { name: 'VIP Attraction', icon: '🧲', desc: '+10% VIP spawn/lv', maxLevel: 3, costFn: (l) => Math.floor(6000 * Math.pow(l + 1, 1.5)) },
+    concierge: { name: 'Concierge', icon: '🎩', desc: 'VIPs never leave angry', maxLevel: 1, costFn: () => 25000 },
+    station_speed: { name: 'Station Speed', icon: '⚡', desc: '-10% auto-serve time/lv', maxLevel: 5, costFn: (l) => Math.floor(2000 * Math.pow(l + 1, 1.5)) },
+    station_range: { name: 'Station Range', icon: '📏', desc: 'Auto-serve higher drinks', maxLevel: 3, costFn: (l) => Math.floor(4000 * Math.pow(l + 1, 1.5)) },
+    dual_prep: { name: 'Dual Prep', icon: '👥', desc: 'Station serves 2 at once', maxLevel: 1, costFn: () => 15000 },
+  };
+
+  const STORE_DECORATIONS = {
+    boba_shop: [{ id: 'neon_sign', name: 'Neon Sign', cost: 500, icon: '💡' }, { id: 'plants', name: 'Potted Plants', cost: 750, icon: '🌿' }, { id: 'fairy_lights', name: 'Fairy Lights', cost: 1000, icon: '✨' }, { id: 'flooring', name: 'Premium Flooring', cost: 1500, icon: '🪵' }, { id: 'jukebox', name: 'Jukebox', cost: 2000, icon: '🎵' }, { id: 'aquarium', name: 'Aquarium', cost: 3000, icon: '🐠' }, { id: 'chandelier', name: 'Chandelier', cost: 4000, icon: '💎' }, { id: 'gold_counter', name: 'Gold Counter', cost: 5000, icon: '🥇' }],
+    bean_brew: [{ id: 'chalkboard', name: 'Chalkboard Menu', cost: 600, icon: '📋' }, { id: 'clock', name: 'Vintage Clock', cost: 900, icon: '🕐' }, { id: 'edison', name: 'Edison Bulbs', cost: 1200, icon: '💡' }, { id: 'leather', name: 'Leather Seats', cost: 2000, icon: '💺' }, { id: 'art_wall', name: 'Coffee Art Wall', cost: 3000, icon: '🎨' }, { id: 'espresso_machine', name: 'Espresso Machine', cost: 4500, icon: '☕' }, { id: 'record', name: 'Record Player', cost: 5500, icon: '🎶' }, { id: 'copper', name: 'Copper Pipes', cost: 7000, icon: '🔧' }],
+    juice_junction: [{ id: 'surfboard', name: 'Surfboard', cost: 800, icon: '🏄' }, { id: 'palms', name: 'Tropical Plants', cost: 1200, icon: '🌴' }, { id: 'tiki', name: 'Tiki Torches', cost: 1800, icon: '🔥' }, { id: 'bamboo', name: 'Bamboo Counter', cost: 2500, icon: '🎋' }, { id: 'fruit_wall', name: 'Fruit Wall', cost: 3500, icon: '🍊' }, { id: 'waterfall', name: 'Waterfall Feature', cost: 5000, icon: '💧' }, { id: 'parrot', name: 'Parrot Perch', cost: 6000, icon: '🦜' }, { id: 'sand', name: 'Sand Floor', cost: 8000, icon: '🏖️' }],
+    sweet_tooth: [{ id: 'candy_jars', name: 'Candy Jars', cost: 700, icon: '🍬' }, { id: 'macaron', name: 'Macaron Tower', cost: 1100, icon: '🧁' }, { id: 'donut_wall', name: 'Donut Wall', cost: 1600, icon: '🍩' }, { id: 'pink_oven', name: 'Pink Oven', cost: 2500, icon: '🔥' }, { id: 'candy_cane', name: 'Candy Pillars', cost: 3500, icon: '🍭' }, { id: 'gingerbread', name: 'Gingerbread Trim', cost: 5000, icon: '🏠' }, { id: 'cotton_candy', name: 'Cotton Candy', cost: 6500, icon: '🍥' }, { id: 'crystal_cake', name: 'Crystal Cake Stand', cost: 8500, icon: '💎' }],
+    golden_lounge: [{ id: 'velvet_rope', name: 'Velvet Rope', cost: 1000, icon: '🪢' }, { id: 'mirror', name: 'Art Deco Mirror', cost: 2000, icon: '🪞' }, { id: 'crystal_chand', name: 'Crystal Chandelier', cost: 3000, icon: '💎' }, { id: 'pillars', name: 'Marble Pillars', cost: 5000, icon: '🏛️' }, { id: 'piano', name: 'Grand Piano', cost: 8000, icon: '🎹' }, { id: 'champagne_fountain', name: 'Champagne Fountain', cost: 12000, icon: '🍾' }, { id: 'star_ceiling', name: 'Starlight Ceiling', cost: 15000, icon: '⭐' }, { id: 'diamond_bar', name: 'Diamond Bar Top', cost: 20000, icon: '💎' }],
+  };
+
+  const MANAGER_UPGRADES = {
+    training_1: { name: 'Training I', cost: 3000, effect: 0.05, icon: '📚', desc: '+5% efficiency' },
+    training_2: { name: 'Training II', cost: 8000, effect: 0.10, icon: '📖', desc: '+10% efficiency' },
+    training_3: { name: 'Training III', cost: 20000, effect: 0.15, icon: '🎓', desc: '+15% efficiency' },
+    motivation: { name: 'Motivation Bonus', cost: 10000, effect: 0.02, icon: '🌟', desc: '+2%/login day eff' },
+    night_shift: { name: 'Night Shift', cost: 25000, effect: 0, icon: '🌙', desc: 'Accrual cap 36h' },
+  };
 
   // ==========================================
   // GAME STATE
@@ -131,6 +251,7 @@
   let prestigeLevel = 0;
   let prestigeBridgeDays = 0;
   let loginStreak = { lastLoginDate: null, count: 0, longestStreak: 0 };
+  let collectedMilestones = new Set();
   let tutorialsSeen = { main: false, vip: false };
   let masterVolume = 0.5;
   let isMuted = false;
@@ -199,9 +320,28 @@
   // SAVE / LOAD (v2 — tt_empire blob)
   // ==========================================
   function saveGame() {
+    // Load existing empire to preserve ALL state (hqUpgrades, managers, tier2, decorations)
+    let prev = {};
+    try { prev = JSON.parse(localStorage.getItem('tt_empire') || '{}'); } catch(e) {}
+    const existingStores = prev.stores || {};
+    const existingGlobal = prev.global || {};
+
+    // Update active store (preserve tier2Levels, decorations etc.)
+    existingStores[activeStoreId] = {
+      ...(existingStores[activeStoreId] || {}),
+      unlocked: true,
+      currentDay,
+      upgradeLevels: { ...upgradeLevels },
+      bestDayRevenue: Math.max((existingStores[activeStoreId] || {}).bestDayRevenue || 0, bestScore),
+    };
+    if (!existingStores.boba_shop) {
+      existingStores.boba_shop = { unlocked: true, currentDay: 1, upgradeLevels: {}, bestDayRevenue: 0 };
+    }
+
     const empire = {
       version: 2,
       global: {
+        ...existingGlobal, // Preserve hqUpgrades, managers, etc.
         wallet,
         prestigeLevel,
         bestScore,
@@ -210,16 +350,10 @@
         loginStreak,
         lastPlayedTimestamp: Date.now(),
         prestigeBridgeDays: prestigeBridgeDays || 0,
+        collectedMilestones: [...collectedMilestones],
       },
-      stores: {
-        boba_shop: {
-          unlocked: true,
-          currentDay,
-          upgradeLevels: { ...upgradeLevels },
-          bestDayRevenue: bestScore,
-        }
-      },
-      activeStoreId: 'boba_shop',
+      stores: existingStores,
+      activeStoreId,
       settings: {
         muted: isMuted,
         volume: masterVolume,
@@ -230,7 +364,7 @@
         }
       }
     };
-    localStorage.setItem('tt_empire', JSON.stringify(empire));
+    localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
   }
 
   function loadGame() {
@@ -261,6 +395,17 @@
       cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0, ...(g.cumulativeStats || {}) };
       loginStreak = g.loginStreak || { lastLoginDate: null, count: 0, longestStreak: 0 };
       prestigeBridgeDays = g.prestigeBridgeDays || 0;
+      collectedMilestones = new Set(g.collectedMilestones || []);
+
+      activeStoreId = empire.activeStoreId || 'boba_shop';
+      const storeConfig = STORE_CONFIGS[activeStoreId];
+      if (storeConfig) {
+        DRINK_TYPES = storeConfig.getDrinks();
+        CUSTOMER_TYPES = storeConfig.getCustomers();
+        UPGRADES = storeConfig.getUpgrades();
+        SPAWN_TABLE = storeConfig.getSpawnTable();
+        PATIENCE_TABLE = storeConfig.getPatienceTable();
+      }
 
       const store = (empire.stores || {})[(empire.activeStoreId || 'boba_shop')] || {};
       currentDay = store.currentDay || 1;
@@ -308,7 +453,7 @@
         }
       }
     };
-    localStorage.setItem('tt_empire', JSON.stringify(empire));
+    localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
     // Clean up old keys
     ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements',
      'tt_stats', 'tt_prestige', 'tt_volume', 'tt_muted', 'tt_relaxed_mode',
@@ -316,7 +461,7 @@
   }
 
   function resetGame() {
-    localStorage.removeItem('tt_empire');
+    localStorage.removeItem('tt_empire'); invalidateEmpireCache();
     loadGame();
   }
 
@@ -646,24 +791,71 @@
       if (day >= row.minDay) p = row.patience;
     }
     const patienceBonus = 1 + (upgradeLevels.patience_plus || 0) * 0.10;
-    return p * patienceBonus * (relaxedMode ? RELAXED.patienceMult : 1);
+    const hqBrand = 1 + getHqLevel('brand_recognition') * 0.15;
+    return p * patienceBonus * hqBrand * (relaxedMode ? RELAXED.patienceMult : 1);
+  }
+
+  // Empire cache — avoids re-parsing localStorage on every hot-path call
+  let _empireCache = null;
+  function getEmpire() {
+    if (!_empireCache) {
+      try { _empireCache = JSON.parse(localStorage.getItem('tt_empire') || '{}'); }
+      catch(e) { _empireCache = {}; }
+    }
+    return _empireCache;
+  }
+  function invalidateEmpireCache() { _empireCache = null; }
+
+  function getHqLevel(upgradeId) {
+    const empire = getEmpire();
+    return ((empire.global || {}).hqUpgrades || {})[upgradeId] || 0;
+  }
+
+  function getTier2Level(upgradeId) {
+    const empire = getEmpire();
+    const store = (empire.stores || {})[activeStoreId] || {};
+    return (store.tier2Levels || {})[upgradeId] || 0;
+  }
+
+  function getManagers() {
+    const empire = getEmpire();
+    return (empire.global || {}).managers || {};
+  }
+
+  function getUnlockedStores() {
+    const stores = [];
+    const empire = getEmpire();
+    for (const [id, store] of Object.entries(empire.stores || {})) {
+      if (store.unlocked) stores.push(id);
+    }
+    if (stores.length === 0) stores.push('boba_shop');
+    return stores;
+  }
+
+  function getOwnedDecorations() {
+    const empire = getEmpire();
+    return ((empire.stores || {})[activeStoreId] || {}).decorations || [];
   }
 
   function getServeTime(drinkKey) {
     const base = DRINK_TYPES[drinkKey].serveTime;
     const level = upgradeLevels.speed_boost || 0;
-    return base * Math.pow(0.95, level);
+    const hqSupplyChain = getHqLevel('supply_chain') * 0.10;
+    const t2QuickHands = getTier2Level('quick_hands') * 0.10;
+    return base * Math.pow(0.95, level) * (1 - hqSupplyChain) * (1 - t2QuickHands);
   }
 
   function getAutoServeTimeForStation(stationIndex, drinkKey) {
     const manual = getServeTime(drinkKey);
-    if (stationIndex === 2) return manual * 1.25;
-    return manual * 1.5;
+    const stationSpeedBonus = getTier2Level('station_speed') * 0.10;
+    const baseMultiplier = stationIndex === 2 ? 1.25 : 1.5;
+    return manual * baseMultiplier * (1 - stationSpeedBonus);
   }
 
   function getWaiterServeTime(drinkKey) {
     const manual = getServeTime(drinkKey);
-    return manual * 1.5;
+    const waiterSpeedBonus = getTier2Level('waiter_speed') * 0.10;
+    return manual * 1.5 * (1 - waiterSpeedBonus);
   }
 
   function getDrinkCoins(drinkKey) {
@@ -842,8 +1034,13 @@
     ).length;
 
     const vipLevel = upgradeLevels.vip_lounge || 0;
-    const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0; // P3 perk: VIP Magnet
-    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05 + vipMagnetBonus) : 0;
+    let vipChance = 0;
+    if (vipLevel > 0) {
+      const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0;
+      const hqLoyalty = getHqLevel('loyalty_network') * 0.10;
+      const t2VipAttraction = getTier2Level('vip_attraction') * 0.10;
+      vipChance = 0.05 + vipLevel * 0.05 + vipMagnetBonus + hqLoyalty + t2VipAttraction;
+    }
     let isVip = Math.random() < vipChance;
 
     // If VIP, check for available table
@@ -1086,9 +1283,13 @@
     }
 
     const prestigeMultiplier = 1 + prestigeLevel * 0.05;
-    const bridgeMultiplier = (prestigeBridgeDays > 0) ? 2 : 1; // Prestige bridge: 2x for 3 days
-    const rushMasterMultiplier = (prestigeLevel >= 4 && rushActive) ? 2 : 1; // P4 perk: Rush Master
-    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier) + tipBonus;
+    const bridgeMultiplier = (prestigeBridgeDays > 0) ? 2 : 1;
+    const rushMasterMultiplier = (prestigeLevel >= 4 && rushActive) ? 2 : 1;
+    const hqFranchise = 1 + getHqLevel('franchise_bonus') * 0.05;
+    const t2Golden = 1 + getTier2Level('golden_touch') * 0.15;
+    const t2DoubleShot = getTier2Level('double_shot');
+    const doubleShotMultiplier = (t2DoubleShot > 0 && Math.random() < (0.10 + t2DoubleShot * 0.05)) ? 2 : 1;
+    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier) + tipBonus;
     dayRevenue += totalCoins;
     customersServed++;
 
@@ -2072,12 +2273,17 @@
       `;
     }
 
+    html += renderTier2Tab();
+    html += renderDecorTab();
+
     const prestigeBtn = allUpgradesMaxed() ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()">✨ Prestige</button>` : '';
+    const hubBtn = getUnlockedStores().length >= 2 ? `<button class="btn btn-secondary btn-small" onclick="showHub()">🏢 Hub</button>` : '';
 
     html += `
       <div class="shop-actions">
         <button class="btn" onclick="startDay()">Start Day ${currentDay}</button>
         ${prestigeBtn}
+        ${hubBtn}
         <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
       </div>
     `;
@@ -2149,7 +2355,9 @@
   function doPrestige() {
     prestigeLevel++;
     // Reset progression but keep achievements, stats, best score
-    wallet = 0;
+    // Prestige bridge: 500 starter coins + 3 days of 2x earnings
+    wallet = 500;
+    prestigeBridgeDays = 3;
     currentDay = 1;
     upgradeLevels = {};
     // Clear VIP tutorial so it re-shows
@@ -2176,7 +2384,8 @@
       saveGame();
     }
 
-    await window.gameCloud.submitScore('tiny-tycoon', {
+    const scoreGameId = activeStoreId === 'boba_shop' ? 'tiny-tycoon' : `tiny-tycoon-${activeStoreId.replace(/_/g, '-')}`;
+    await window.gameCloud.submitScore(scoreGameId, {
       score: dayRev,
       level: currentDay,
       timeMs: Date.now() - dayStartTime,
@@ -2258,6 +2467,330 @@
     document.getElementById(id).classList.add('visible');
   }
 
+  // ==========================================
+  // MANAGERS & OFFLINE EARNINGS
+  // ==========================================
+  function hireManager(storeId, tierKey) {
+    const tier = MANAGER_TIERS[tierKey];
+    if (!tier || wallet < tier.cost || prestigeLevel < tier.minPrestige) return;
+    if (!getUnlockedStores().includes(storeId)) return;
+    wallet -= tier.cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (!empire.global) empire.global = {};
+      if (!empire.global.managers) empire.global.managers = {};
+      empire.global.managers[storeId] = { tier: tierKey };
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+    } catch(e) {}
+    saveGame();
+    playSound('upgrade');
+    showHub();
+  }
+
+  function calculateStoreDamage(hoursOffline) {
+    if (hoursOffline <= 36) return { level: 'none', repairCost: 0 };
+    const empire = getEmpire();
+    if ((empire.settings || {}).vacationMode) return { level: 'none', repairCost: 0 };
+    const rm = relaxedMode ? 0.5 : 1;
+    if (hoursOffline <= 48) return { level: 'minor', repairCost: 0, desc: 'Dusty shelves' };
+    if (hoursOffline <= 72) return { level: 'moderate', repairCost: Math.floor(200 * rm), desc: '1 station offline' };
+    if (hoursOffline <= 168) return { level: 'major', repairCost: Math.floor(500 * rm), desc: '2 stations offline' };
+    return { level: 'closed', repairCost: Math.floor(1000 * rm), desc: 'Store closed', grandReopening: true };
+  }
+
+  function calculateOfflineEarnings() {
+    const unlockedStores = getUnlockedStores();
+    if (unlockedStores.length < 2) return null;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      const managers = (empire.global || {}).managers || {};
+      const lastPlayed = (empire.global || {}).lastPlayedTimestamp;
+      if (!lastPlayed) return null;
+      const hoursOffline = Math.min(24, (Date.now() - lastPlayed) / 3600000);
+      if (hoursOffline < 0.1) return null;
+      const earnings = [];
+      let totalEarned = 0;
+      for (const [storeId, mgr] of Object.entries(managers)) {
+        const storeData = (empire.stores || {})[storeId];
+        if (!storeData || !storeData.unlocked) continue;
+        const tier = MANAGER_TIERS[mgr.tier];
+        if (!tier) continue;
+        const upgradeCount = Object.values(storeData.upgradeLevels || {}).reduce((a, b) => a + b, 0);
+        const dayFactor = Math.min(storeData.currentDay || 1, 30);
+        const estimatedDailyRev = 100 + dayFactor * 50 + upgradeCount * 30;
+        const offlineRev = Math.floor(estimatedDailyRev * tier.efficiency * hoursOffline / 24);
+        const daysAdvanced = Math.floor(hoursOffline);
+        if (offlineRev > 0) {
+          earnings.push({ storeId, storeName: STORE_CONFIGS[storeId]?.name || storeId, revenue: offlineRev, daysAdvanced });
+          totalEarned += offlineRev;
+          storeData.currentDay = (storeData.currentDay || 1) + daysAdvanced;
+        }
+      }
+      if (totalEarned === 0) return null;
+      const streakBonus = Math.min(loginStreak.count, 7) * 0.05;
+      const streakEarnings = Math.floor(totalEarned * streakBonus);
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      return { earnings, totalEarned, streakBonus: streakEarnings, hoursOffline: Math.round(hoursOffline), grandTotal: totalEarned + streakEarnings };
+    } catch(e) { return null; }
+  }
+
+  function showWelcomeBack(offlineData) {
+    if (!offlineData) return false;
+    const damage = calculateStoreDamage(offlineData.hoursOffline);
+    const totalRepair = damage.repairCost * offlineData.earnings.length;
+    const modal = document.getElementById('hubModal');
+    let earningsHtml = '';
+    for (const e of offlineData.earnings) {
+      const config = STORE_CONFIGS[e.storeId];
+      earningsHtml += `<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(0,0,0,0.06);"><div><span style="font-size:1.2rem;">${config?.emoji||'🏪'}</span> <span style="font-size:0.8rem;font-weight:600;">${e.storeName}</span> <span style="font-size:0.6rem;color:#999;">+${e.daysAdvanced}d</span></div><span style="font-size:0.85rem;font-weight:700;color:var(--matcha);">💰 ${formatCoins(e.revenue)}</span></div>`;
+    }
+    const damageHtml = damage.repairCost > 0 ? `<div style="background:rgba(255,100,100,0.08);border-radius:8px;padding:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;"><div style="font-weight:700;color:var(--coral);">🔧 Maintenance Needed</div><div style="color:#888;">${damage.desc} — Repair: 💰 ${formatCoins(totalRepair)}</div>${damage.grandReopening?'<div style="color:var(--matcha);">🎉 Grand Re-Opening: 2x customers next day!</div>':''}</div>` : '';
+    const netTotal = offlineData.grandTotal - totalRepair;
+    modal.innerHTML = `<div style="text-align:center;"><div style="font-size:2rem;">☀️</div><h2>Welcome Back!</h2><div style="font-size:0.75rem;color:#999;margin-bottom:0.75rem;">Away for ${offlineData.hoursOffline}h</div></div><div style="margin-bottom:0.75rem;">${earningsHtml}</div>${damageHtml}<div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;font-size:0.8rem;"><div style="display:flex;justify-content:space-between;"><span>Offline Earnings</span><span>💰 ${formatCoins(offlineData.totalEarned)}</span></div>${offlineData.streakBonus>0?`<div style="display:flex;justify-content:space-between;color:var(--coral);"><span>🔥 Streak Bonus</span><span>💰 ${formatCoins(offlineData.streakBonus)}</span></div>`:''}${totalRepair>0?`<div style="display:flex;justify-content:space-between;color:#c00;"><span>🔧 Repairs</span><span>-💰 ${formatCoins(totalRepair)}</span></div>`:''}<div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid rgba(0,0,0,0.1);padding-top:0.3rem;margin-top:0.3rem;"><span>Net Total</span><span>💰 ${formatCoins(Math.max(0,netTotal))}</span></div></div><button class="btn" onclick="collectOfflineEarnings(${Math.max(0,netTotal)})" style="width:100%;min-height:48px;">${totalRepair>0?'Repair & Collect':'Collect & Play'}</button>`;
+    hideAllOverlays();
+    showOverlay('hubOverlay');
+    return true;
+  }
+
+  function collectOfflineEarnings(amount) {
+    wallet += amount;
+    playSound('coin');
+    saveGame();
+    showHub();
+  }
+
+  // ==========================================
+  // STORE HUB
+  // ==========================================
+  function canUnlockStore(storeId) {
+    const config = STORE_CONFIGS[storeId];
+    if (!config) return false;
+    return prestigeLevel >= config.unlockPrestige && wallet >= config.unlockCost;
+  }
+
+  function unlockStore(storeId) {
+    const config = STORE_CONFIGS[storeId];
+    if (!config || !canUnlockStore(storeId)) return;
+    wallet -= config.unlockCost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (!empire.stores) empire.stores = {};
+      empire.stores[storeId] = { unlocked: true, currentDay: 1, upgradeLevels: {}, bestDayRevenue: 0 };
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+    } catch(e) {}
+    saveGame();
+    playSound('upgrade');
+    spawnConfetti();
+    showHub();
+  }
+
+  function showHub() {
+    gameState = 'HUB';
+    if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+    hideAllOverlays();
+    hudEl.style.display = 'none';
+    checkDailyLogin();
+    const unlockedStores = getUnlockedStores();
+    const modal = document.getElementById('hubModal');
+    let storeCardsHtml = '';
+    for (const id of Object.keys(STORE_CONFIGS)) {
+      const config = STORE_CONFIGS[id];
+      const isUnlocked = unlockedStores.includes(id);
+      if (isUnlocked) {
+        let empire = {};
+        try { empire = JSON.parse(localStorage.getItem('tt_empire') || '{}'); } catch(e) {}
+        const storeData = (empire.stores || {})[id] || {};
+        const day = storeData.currentDay || 1;
+        const mgr = (empire.global || {}).managers && (empire.global.managers[id]);
+        const mgrBadge = mgr ? `<div style="font-size:0.6rem;margin-top:2px;">👨‍💼 ${MANAGER_TIERS[mgr.tier]?.name||mgr.tier}</div>` : '';
+        storeCardsHtml += `<div style="cursor:pointer;background:linear-gradient(135deg,${config.theme['--cream']},${config.theme['--wall-bottom']});border:2px solid ${id===activeStoreId?config.theme['--gold']:'rgba(0,0,0,0.1)'};border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;" onclick="switchStore('${id}'); showShop();"><div style="font-size:2rem;">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:${config.theme['--brown']};">${config.name}</div><div style="font-size:0.65rem;color:${config.theme['--taupe']};">Day ${day}</div>${mgrBadge}${mgr?'':'<div style="font-size:0.55rem;color:#bbb;margin-top:2px;">No manager</div>'}</div>`;
+      } else {
+        const canUnlock = canUnlockStore(id);
+        const req = config.unlockPrestige > prestigeLevel ? `P${config.unlockPrestige} required` : `💰 ${formatCoins(config.unlockCost)}`;
+        storeCardsHtml += `<div style="background:rgba(0,0,0,0.04);border:2px dashed rgba(0,0,0,0.15);border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;opacity:${canUnlock?1:0.5};"><div style="font-size:2rem;filter:grayscale(0.6);">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:#999;">${config.name}</div><div style="font-size:0.6rem;color:#aaa;">${req}</div>${canUnlock?`<button class="btn btn-small" style="margin-top:6px;font-size:0.7rem;min-height:32px;" onclick="event.stopPropagation(); unlockStore('${id}');">Unlock</button>`:'<div style="font-size:0.8rem;margin-top:4px;">🔒</div>'}</div>`;
+      }
+    }
+    modal.innerHTML = `<h2 style="text-align:center;margin-bottom:0.3rem;">👑 Tiny Tycoon Empire</h2><div style="text-align:center;font-size:0.8rem;color:var(--brown);margin-bottom:0.5rem;">💰 ${formatCoins(wallet)}${prestigeLevel>0?` <span style="color:var(--gold);">✨ P${prestigeLevel}</span>`:''}${loginStreak.count>1?` <span style="color:var(--coral);">🔥 ${loginStreak.count}d</span>`:''}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:1rem;">${storeCardsHtml}</div><div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;"><button class="btn btn-small" onclick="switchStore('${activeStoreId}'); showShop();">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button>${prestigeLevel>=2?'<button class="btn btn-secondary btn-small" onclick="showHQ()">🏢 HQ</button>':''}<button class="btn btn-secondary btn-small" onclick="showStats()">📊</button><button class="btn btn-secondary btn-small" onclick="showAchievements()">🏆</button></div>`;
+    showOverlay('hubOverlay');
+  }
+
+  // ==========================================
+  // HQ UPGRADES UI
+  // ==========================================
+  function showHQ() {
+    const modal = document.getElementById('hubModal');
+    let html = '<h2 style="text-align:center;">🏢 Headquarters</h2><div style="font-size:0.75rem;color:#999;text-align:center;margin-bottom:0.75rem;">Global bonuses for all stores</div>';
+    for (const [id, upg] of Object.entries(HQ_UPGRADES)) {
+      const level = getHqLevel(id);
+      const isMaxed = level >= upg.maxLevel;
+      const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
+      const canAfford = !isMaxed && wallet >= upg.costFn(level);
+      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,${canAfford?'0.03':'0.01'});border-radius:8px;margin-bottom:0.4rem;"><span style="font-size:1.3rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.8rem;font-weight:700;">${upg.name} ${isMaxed?'<span style="color:var(--gold);">MAX</span>':`Lv${level}`}</div><div style="font-size:0.65rem;color:#888;">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small" ${canAfford?`onclick="buyHqUpgrade('${id}')"`:'disabled'} style="font-size:0.7rem;min-height:32px;opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
+    }
+    html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
+    modal.innerHTML = html;
+    hideAllOverlays();
+    showOverlay('hubOverlay');
+  }
+
+  function buyHqUpgrade(id) {
+    const upg = HQ_UPGRADES[id];
+    const level = getHqLevel(id);
+    if (!upg || level >= upg.maxLevel) return;
+    const cost = upg.costFn(level);
+    if (wallet < cost) return;
+    wallet -= cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (!empire.global) empire.global = {};
+      if (!empire.global.hqUpgrades) empire.global.hqUpgrades = {};
+      empire.global.hqUpgrades[id] = level + 1;
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+    } catch(e) {}
+    saveGame();
+    playSound('upgrade');
+    showHQ();
+  }
+
+  // ==========================================
+  // TIER 2 UPGRADES (per store, in shop)
+  // ==========================================
+  function renderTier2Tab() {
+    if (prestigeLevel < 1) return '';
+    let html = '<div style="margin-top:1rem;border-top:2px solid var(--gold);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--gold);margin-bottom:0.5rem;">✨ Tier 2 Upgrades</h3>';
+    for (const [id, upg] of Object.entries(TIER2_UPGRADES)) {
+      const level = getTier2Level(id);
+      const isMaxed = level >= upg.maxLevel;
+      const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
+      const canAfford = !isMaxed && wallet >= upg.costFn(level);
+      html += `<div class="upgrade-card" style="opacity:${canAfford||isMaxed?1:0.6};"><span class="upgrade-icon">${upg.icon}</span><div class="upgrade-info"><div class="upgrade-name">${upg.name} ${isMaxed?'<span style="color:var(--gold);">MAX</span>':`Lv${level}`}</div><div class="upgrade-desc">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small upgrade-btn" ${canAfford?`onclick="buyTier2('${id}')"`:'disabled'} style="opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function buyTier2(id) {
+    const upg = TIER2_UPGRADES[id];
+    const level = getTier2Level(id);
+    if (!upg || level >= upg.maxLevel) return;
+    const cost = upg.costFn(level);
+    if (wallet < cost) return;
+    wallet -= cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      const store = (empire.stores || {})[activeStoreId];
+      if (store) {
+        if (!store.tier2Levels) store.tier2Levels = {};
+        store.tier2Levels[id] = level + 1;
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      }
+    } catch(e) {}
+    saveGame();
+    playSound('upgrade');
+    renderShop();
+  }
+
+  // ==========================================
+  // DECORATIONS (per store, in shop)
+  // ==========================================
+  function renderDecorTab() {
+    const decos = STORE_DECORATIONS[activeStoreId] || [];
+    if (decos.length === 0) return '';
+    const owned = getOwnedDecorations();
+    let html = '<div style="margin-top:1rem;border-top:2px solid var(--taro);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--taro);margin-bottom:0.5rem;">🎨 Decorations</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;">';
+    for (const d of decos) {
+      const isOwned = owned.includes(d.id);
+      const canAfford = !isOwned && wallet >= d.cost;
+      html += `<div style="background:rgba(0,0,0,${isOwned?'0.02':'0.04'});border-radius:8px;padding:0.4rem;text-align:center;opacity:${isOwned||canAfford?1:0.5};"><div style="font-size:1.3rem;">${d.icon}</div><div style="font-size:0.7rem;font-weight:600;">${d.name}</div>${isOwned?'<div style="font-size:0.6rem;color:var(--matcha);">Owned ✓</div>':`<button class="btn btn-small" ${canAfford?`onclick="buyDecor('${d.id}')"`:'disabled'} style="font-size:0.6rem;margin-top:2px;min-height:28px;opacity:${canAfford?1:0.5};">💰 ${formatCoins(d.cost)}</button>`}</div>`;
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function buyDecor(decorId) {
+    const decos = STORE_DECORATIONS[activeStoreId] || [];
+    const deco = decos.find(d => d.id === decorId);
+    if (!deco || wallet < deco.cost) return;
+    wallet -= deco.cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      const store = (empire.stores || {})[activeStoreId];
+      if (store) {
+        if (!store.decorations) store.decorations = [];
+        if (!store.decorations.includes(decorId)) store.decorations.push(decorId);
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      }
+    } catch(e) {}
+    saveGame();
+    playSound('upgrade');
+    renderShop();
+  }
+
+  // ==========================================
+  // MANAGER UPGRADES (per manager, in hub)
+  // ==========================================
+  function showManagerUpgrades(storeId) {
+    const managers = getManagers();
+    const mgr = managers[storeId];
+    if (!mgr) return;
+    const config = STORE_CONFIGS[storeId];
+    const modal = document.getElementById('hubModal');
+    let html = `<h2 style="text-align:center;">${config?.emoji||'🏪'} ${config?.name||storeId} Manager</h2><div style="text-align:center;font-size:0.8rem;color:#888;margin-bottom:0.75rem;">Tier: ${MANAGER_TIERS[mgr.tier]?.name||mgr.tier}</div>`;
+    const currentTierKeys = Object.keys(MANAGER_TIERS);
+    const currentIdx = currentTierKeys.indexOf(mgr.tier);
+    if (currentIdx < currentTierKeys.length - 1) {
+      const nextKey = currentTierKeys[currentIdx + 1];
+      const nextTier = MANAGER_TIERS[nextKey];
+      if (prestigeLevel >= nextTier.minPrestige) {
+        const canAfford = wallet >= nextTier.cost;
+        html += `<div style="background:rgba(0,0,0,0.04);border-radius:8px;padding:0.5rem;margin-bottom:0.5rem;"><div style="font-size:0.8rem;font-weight:700;">Upgrade to ${nextTier.icon} ${nextTier.name}</div><div style="font-size:0.65rem;color:#888;">Efficiency: ${Math.round(nextTier.efficiency*100)}%</div><button class="btn btn-small" ${canAfford?`onclick="upgradeManagerTier('${storeId}','${nextKey}')"`:'disabled'} style="margin-top:4px;font-size:0.7rem;opacity:${canAfford?1:0.5};">💰 ${formatCoins(nextTier.cost)}</button></div>`;
+      }
+    }
+    const mgrUpgrades = mgr.upgrades || {};
+    for (const [id, upg] of Object.entries(MANAGER_UPGRADES)) {
+      const isOwned = !!mgrUpgrades[id];
+      const canAfford = !isOwned && wallet >= upg.cost;
+      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem;background:rgba(0,0,0,0.02);border-radius:8px;margin-bottom:0.3rem;opacity:${isOwned||canAfford?1:0.5};"><span style="font-size:1.1rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.75rem;font-weight:600;">${upg.name} ${isOwned?'<span style="color:var(--matcha);">✓</span>':''}</div><div style="font-size:0.6rem;color:#888;">${upg.desc}</div></div>${isOwned?'':`<button class="btn btn-small" ${canAfford?`onclick="buyManagerUpgrade('${storeId}','${id}')"`:'disabled'} style="font-size:0.65rem;min-height:28px;opacity:${canAfford?1:0.5};">💰 ${formatCoins(upg.cost)}</button>`}</div>`;
+    }
+    html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
+    modal.innerHTML = html;
+    hideAllOverlays();
+    showOverlay('hubOverlay');
+  }
+
+  function upgradeManagerTier(storeId, newTier) {
+    const tier = MANAGER_TIERS[newTier];
+    if (!tier || wallet < tier.cost) return;
+    wallet -= tier.cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (empire.global?.managers?.[storeId]) {
+        empire.global.managers[storeId].tier = newTier;
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      }
+    } catch(e) {}
+    saveGame();
+    playSound('upgrade');
+    showManagerUpgrades(storeId);
+  }
+
+  function buyManagerUpgrade(storeId, upgradeId) {
+    const upg = MANAGER_UPGRADES[upgradeId];
+    if (!upg || wallet < upg.cost) return;
+    wallet -= upg.cost;
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if (empire.global?.managers?.[storeId]) {
+        if (!empire.global.managers[storeId].upgrades) empire.global.managers[storeId].upgrades = {};
+        empire.global.managers[storeId].upgrades[upgradeId] = true;
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      }
+    } catch(e) {}
+    saveGame();
+    playSound('upgrade');
+    showManagerUpgrades(storeId);
+  }
+
   function showTitle() {
     gameState = 'TITLE';
     // M. Cancel game loop
@@ -2273,8 +2806,12 @@
     // Update shop environment visuals
     updateShopEnvironment();
 
+    // Check daily login streak
+    checkDailyLogin();
+
     const bestEl = document.getElementById('titleBest');
-    bestEl.textContent = bestScore > 0 ? `Best Day: 💰 ${formatCoins(bestScore)}` : '';
+    bestEl.innerHTML = (bestScore > 0 ? `Best Day: 💰 ${formatCoins(bestScore)}` : '') +
+      (loginStreak.count > 1 ? `<div style="margin-top:4px;font-size:0.75rem;color:var(--gold);">🔥 ${loginStreak.count}-day streak</div>` : '');
 
     const btns = document.getElementById('titleButtons');
     const hasSave = currentDay > 1;
@@ -2285,9 +2822,13 @@
       <input type="checkbox" id="relaxedToggle" ${relaxedMode ? 'checked' : ''} onchange="toggleRelaxedMode(this.checked)" style="width:18px;height:18px;cursor:pointer;">
       Relaxed Mode <span style="font-size:0.75rem;opacity:0.7;">(more patience, slower spawns)</span>
     </label>`;
+    const hasMultipleStores = getUnlockedStores().length >= 2;
+    const hubBtnTitle = hasMultipleStores ? `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showHub()">🏢 Hub</button>` : '';
+    const continueAction = hasMultipleStores ? 'showHub()' : 'showShop()';
     btns.innerHTML = hasSave
-      ? `<button class="btn" onclick="showShop()">Continue (Day ${currentDay})</button><br>
+      ? `<button class="btn" onclick="${continueAction}">Continue (Day ${currentDay})</button><br>
          <button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="newGame()">New Game</button>
+         ${hubBtnTitle}
          ${statsBtn}
          ${achBtn}
          ${relaxedToggle}`
@@ -2316,6 +2857,8 @@
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${bestMult} (${s.bestCombo} streak)</span></div>
       <div class="modal-row"><span>Achievements</span><span>🏆 ${achievCount}/${totalAch}</span></div>
       ${prestigeLevel > 0 ? `<div class="modal-row"><span>Prestige Level</span><span>✨ ${prestigeLevel} (+${prestigeLevel * 5}% coins)</span></div>` : ''}
+      <div class="modal-row"><span>Login Streak</span><span>🔥 ${loginStreak.count} day${loginStreak.count !== 1 ? 's' : ''}</span></div>
+      <div class="modal-row"><span>Longest Streak</span><span>🏅 ${loginStreak.longestStreak} day${loginStreak.longestStreak !== 1 ? 's' : ''}</span></div>
       <br>
       <button class="btn" onclick="hideAllOverlays(); showOverlay('titleOverlay');">Back</button>
     `;
@@ -2608,14 +3151,20 @@
     updateSoundBtn();
   };
   updateShopEnvironment();
-  showTitle();
+  checkDailyLogin();
+  const offlineData = calculateOfflineEarnings();
+  if (offlineData && showWelcomeBack(offlineData)) {
+    // Welcome back screen shown
+  } else {
+    showTitle();
+  }
   // M. Don't start game loop at init - only when entering PLAYING state
 
   // Expose only functions needed by inline onclick handlers.
   // All other functions are private to the IIFE scope.
   // Note: Client-side games cannot prevent console manipulation —
   // server-side score validation is the real anti-cheat layer.
-  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu };
+  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu, showHub, switchStore, unlockStore, hireManager, collectOfflineEarnings, showHQ, buyHqUpgrade, buyTier2, buyDecor, showManagerUpgrades, upgradeManagerTier, buyManagerUpgrade };
   Object.entries(_api).forEach(([k, v]) => { window[k] = v; });
 
   // Pause button handler
