@@ -2832,7 +2832,7 @@
           <div class="upgrade-info">
             <div class="upgrade-name">${upgrade.name} ${isRecommended ? '<span class="chip chip-recommended">Best Value</span>' : ''}</div>
             <div class="upgrade-desc">${upgrade.desc}</div>
-            <div class="upgrade-level">Lv ${level}/${upgrade.maxLevel}</div>
+            <div class="upgrade-level">Lv ${level + 1}/${upgrade.maxLevel}</div>
           </div>
           <button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${id}')">${formatCoins(cost)} 💰</button>
         </div>`;
@@ -2860,7 +2860,7 @@
       html += `<div class="upgrade-card${canAfford ? ' affordable' : ''}${isMaxed ? ' maxed' : ''}">
         <div class="upgrade-icon">${upg.icon}</div>
         <div class="upgrade-info">
-          <div class="upgrade-name">${upg.name} ${isMaxed ? '<span class="chip chip-maxed">MAX</span>' : `Lv${level}`}</div>
+          <div class="upgrade-name">${upg.name} ${isMaxed ? '<span class="chip chip-maxed">MAX</span>' : `Lv${level + 1}`}</div>
           <div class="upgrade-desc">${upg.desc}</div>
         </div>
         ${isMaxed ? '' : `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? `onclick="buyTier2('${id}')"` : 'disabled'}>${formatCoins(cost)} 💰</button>`}
