@@ -14,3 +14,4 @@ export default defineConfig({
     },
   },
 });
+// Astro migration: 2026-03-27

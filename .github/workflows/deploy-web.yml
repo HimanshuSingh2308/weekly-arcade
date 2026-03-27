@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'apps/web-astro/**'
+      - 'package-lock.json'
       - '.github/workflows/deploy-web.yml'
 
   workflow_dispatch:
