@@ -2247,14 +2247,14 @@
 
     /* Flooring — wood planks */
     .decor-floor {
-      z-index: 1;
+      z-index: 3;
       background:
         repeating-linear-gradient(90deg,
           #8B6F47 0px, #8B6F47 18px,
           #7A5E3A 18px, #7A5E3A 19px,
           #A0845C 19px, #A0845C 38px,
           #8B7045 38px, #8B7045 39px);
-      opacity: 0.35;
+      opacity: 0.7;
     }
     .decor-floor::before {
       content: ''; position: absolute; inset: 0;
@@ -2307,9 +2307,11 @@
 
     /* Gold counter — metallic with sweeping shine */
     .decor-gold-counter {
-      z-index: 11; overflow: hidden;
+      z-index: 12; overflow: hidden;
       background: linear-gradient(90deg, #FFD700 0%, #FFF8DC 30%, #FFD700 50%, #FFF8DC 70%, #FFD700 100%);
-      box-shadow: 0 1px 4px rgba(255,215,0,0.4);
+      box-shadow: 0 2px 8px rgba(255,215,0,0.5), 0 -1px 4px rgba(255,215,0,0.3);
+      border-top: 1px solid rgba(255,255,255,0.5);
+      border-bottom: 1px solid rgba(184,134,11,0.5);
     }
     .decor-gold-counter::after {
       content: ''; position: absolute; top: -2px; width: 30%; height: 8px;

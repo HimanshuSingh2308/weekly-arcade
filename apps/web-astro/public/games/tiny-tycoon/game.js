@@ -1135,7 +1135,7 @@
       },
       gold_counter: {
         html: '<div class="shop-decor decor-gold-counter"></div>',
-        css: 'position:absolute;top:26%;left:0;right:0;height:5px;z-index:12;'
+        css: 'position:absolute;top:25.5%;left:0;right:0;height:8px;z-index:12;'
       },
 
       // ── Bean & Brew ──
