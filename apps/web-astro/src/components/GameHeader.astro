@@ -1,0 +1,86 @@
+---
+/**
+ * GameHeader — static HTML shell for the game header.
+ * The JS-powered gameHeader.init() replaces this content at runtime,
+ * but this provides instant visual rendering before JS loads.
+ */
+interface Props {
+  title: string;
+  icon?: string;
+}
+
+const { title, icon } = Astro.props;
+---
+
+<header id="gameHeader">
+  <a href="/" class="gh-back-static">&#8592;</a>
+  <h1 class="gh-title-static">
+    {icon && <span>{icon}</span>}
+    <span>{title}</span>
+  </h1>
+  <div class="gh-right-static"></div>
+</header>
+
+<style>
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    padding-top: max(0.55rem, env(safe-area-inset-top));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    background: var(--bg-secondary, #1a1a2e);
+    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+    z-index: 40;
+  }
+
+  .gh-back-static {
+    color: var(--text-secondary, #888);
+    text-decoration: none;
+    font-size: 1.3rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .gh-back-static:hover {
+    color: var(--accent, #e94560);
+  }
+
+  .gh-title-static {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+    color: #f0f0f5;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+    margin-left: 0.25rem;
+  }
+
+  .gh-right-static {
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 600px) {
+    .gh-title-static {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      flex: none;
+      margin-left: 0;
+      pointer-events: none;
+    }
+    header {
+      position: relative;
+    }
+  }
+</style>

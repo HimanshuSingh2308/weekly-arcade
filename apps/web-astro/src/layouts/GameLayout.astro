@@ -1,0 +1,111 @@
+---
+/**
+ * GameLayout — wraps every game page.
+ *
+ * Provides: BaseLayout, SEOHead, GameHeader, shared body styles,
+ * shared JS modules (api-client, auth, game-cloud, game-header),
+ * gameCloud fallback, and MoreGames section.
+ *
+ * Games only need to provide their specific HTML, CSS, and game logic.
+ */
+import BaseLayout from './BaseLayout.astro';
+import SEOHead from '../components/SEOHead.astro';
+import GameHeader from '../components/GameHeader.astro';
+import GameCloudFallback from '../components/GameCloudFallback.astro';
+import MoreGames from '../components/MoreGames.astro';
+
+interface Props {
+  /** Page <title> */
+  title: string;
+  /** Game display name */
+  gameName: string;
+  /** Game ID for leaderboard/cloud (e.g. 'snake') */
+  gameId: string;
+  /** Emoji icon shown in header */
+  icon?: string;
+  /** Meta description */
+  description: string;
+  /** Meta keywords */
+  keywords: string;
+  /** URL path (e.g. '/games/snake/') */
+  url: string;
+  /** Theme color for PWA / meta */
+  themeColor: string;
+  /** Schema.org genres */
+  genres: string[];
+  /** Accent color CSS variable override */
+  accentColor?: string;
+  /** Schema.org rating */
+  ratingValue?: string;
+  ratingCount?: string;
+}
+
+const {
+  title,
+  gameName,
+  gameId,
+  icon,
+  description,
+  keywords,
+  url,
+  themeColor,
+  genres,
+  accentColor,
+  ratingValue,
+  ratingCount,
+} = Astro.props;
+---
+
+<BaseLayout title={title}>
+  <Fragment slot="head">
+    <SEOHead
+      title={title}
+      description={description}
+      keywords={keywords}
+      url={url}
+      themeColor={themeColor}
+      gameName={gameName}
+      genres={genres}
+      ratingValue={ratingValue}
+      ratingCount={ratingCount}
+    />
+    <!-- Game-specific head content (custom CSS vars, extra styles) -->
+    <slot name="head" />
+  </Fragment>
+
+  <GameHeader title={gameName} icon={icon} />
+
+  <!-- Game-specific body content -->
+  <slot />
+
+  <MoreGames exclude={gameId} />
+
+  <!-- Shared JS modules (order matters) -->
+  <script is:inline src="/js/api-client.js"></script>
+  <script is:inline src="/js/auth.js"></script>
+  <script is:inline src="/js/game-cloud.js"></script>
+  <script is:inline src="/js/game-header.js"></script>
+
+  <!-- Fallback polyfill (single instance, was duplicated in every game) -->
+  <GameCloudFallback />
+
+  <!-- Game-specific scripts -->
+  <slot name="scripts" />
+</BaseLayout>
+
+<style is:global define:vars={{ accentColor: accentColor || '#e94560' }}>
+  /* ── Shared game body styles (eliminates ~30 duplicated lines per game) ── */
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+    background: var(--bg-primary, #0f0f1a);
+    color: var(--text-primary, #eee);
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    overflow: hidden;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    overscroll-behavior: none;
+  }
+</style>

@@ -1,0 +1,107 @@
+---
+/**
+ * SEOHead — generates all meta, OG, Twitter, structured data tags from props.
+ * Eliminates ~80 lines of duplicated boilerplate per game.
+ */
+interface Props {
+  title: string;
+  description: string;
+  keywords: string;
+  url: string;
+  themeColor: string;
+  gameName: string;
+  genres: string[];
+  ratingValue?: string;
+  ratingCount?: string;
+}
+
+const {
+  title,
+  description,
+  keywords,
+  url,
+  themeColor,
+  gameName,
+  genres,
+  ratingValue = '4.8',
+  ratingCount = '500',
+} = Astro.props;
+
+const siteUrl = 'https://weeklyarcade.games';
+const ogImage = `${siteUrl}/og-image.png`;
+
+const videoGameSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'VideoGame',
+  name: gameName,
+  url: `${siteUrl}${url}`,
+  description,
+  genre: genres,
+  playMode: 'SinglePlayer',
+  applicationCategory: 'Game',
+  operatingSystem: 'Web Browser',
+  gamePlatform: 'Web Browser',
+  inLanguage: 'en',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+  },
+  author: {
+    '@type': 'Organization',
+    name: 'Weekly Arcade',
+    url: siteUrl,
+  },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue,
+    ratingCount,
+    bestRating: '5',
+    worstRating: '1',
+  },
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'Games', item: `${siteUrl}/#new` },
+    { '@type': 'ListItem', position: 3, name: gameName, item: `${siteUrl}${url}` },
+  ],
+};
+---
+
+<!-- Preconnect -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+
+<!-- SEO -->
+<meta name="description" content={description}>
+<meta name="keywords" content={keywords}>
+<link rel="canonical" href={`${siteUrl}${url}`}>
+
+<!-- Open Graph -->
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:type" content="website">
+<meta property="og:url" content={`${siteUrl}${url}`}>
+<meta property="og:image" content={ogImage}>
+<meta property="og:site_name" content="Weekly Arcade">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content={`${gameName} | Weekly Arcade`}>
+<meta name="twitter:description" content={description}>
+<meta name="twitter:image" content={ogImage}>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content={themeColor}>
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+<!-- Structured Data -->
+<script type="application/ld+json" set:html={JSON.stringify(videoGameSchema)} />
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />

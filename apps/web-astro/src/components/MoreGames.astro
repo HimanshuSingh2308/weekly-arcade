@@ -1,0 +1,93 @@
+---
+/**
+ * MoreGames — "More Games to Play" section shown on desktop.
+ * Pass `exclude` to filter out the current game.
+ */
+interface GameLink {
+  href: string;
+  icon: string;
+  name: string;
+}
+
+interface Props {
+  exclude?: string;
+}
+
+const { exclude } = Astro.props;
+
+const allGames: GameLink[] = [
+  { href: '/games/wordle/', icon: '\u{1F524}', name: 'Wordle' },
+  { href: '/games/snake/', icon: '\u{1F40D}', name: 'Snake' },
+  { href: '/games/2048/', icon: '\u{1F522}', name: '2048' },
+  { href: '/games/chaos-kitchen/', icon: '\u{1F468}\u{200D}\u{1F373}', name: 'Chaos Kitchen' },
+  { href: '/games/memory-match/', icon: '\u{1F0CF}', name: 'Memory Match' },
+  { href: '/games/coin-cascade/', icon: '\u{1FA99}', name: 'Coin Cascade' },
+  { href: '/games/stack-tower/', icon: '\u{1F3D7}', name: 'Stack Tower' },
+];
+
+const games = allGames.filter((g) => g.href !== `/games/${exclude}/`).slice(0, 4);
+---
+
+<section class="more-games">
+  <h2 class="more-games-title">More Games to Play</h2>
+  <div class="more-games-grid">
+    {games.map((game) => (
+      <a href={game.href} class="more-game-link">
+        <span>{game.icon}</span>
+        <span>{game.name}</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .more-games {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-top: auto;
+  }
+
+  .more-games-title {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .more-games-grid {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .more-game-link {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .more-game-link:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+
+  .more-game-link span:first-child {
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 768px) {
+    .more-games {
+      display: none;
+    }
+  }
+</style>

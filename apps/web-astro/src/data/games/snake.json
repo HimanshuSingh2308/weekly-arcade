@@ -1,0 +1,16 @@
+{
+  "id": "snake",
+  "name": "Snake",
+  "icon": "🐍",
+  "title": "Snake | Weekly Arcade - Classic Arcade Game",
+  "description": "Play Snake free online. Classic arcade game - eat food, grow longer, don't hit the walls! No download required.",
+  "keywords": "snake game, arcade game, classic snake, browser game, free game, retro game",
+  "url": "/games/snake/",
+  "themeColor": "#4ade80",
+  "accentColor": "#4ade80",
+  "genres": ["Arcade", "Classic"],
+  "ratingValue": "4.7",
+  "ratingCount": "850",
+  "category": "arcade",
+  "rendering": "canvas"
+}

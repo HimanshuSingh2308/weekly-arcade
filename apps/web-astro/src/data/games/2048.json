@@ -1,0 +1,16 @@
+{
+  "id": "2048",
+  "name": "2048",
+  "icon": "🔢",
+  "title": "2048 | Weekly Arcade - Free Puzzle Game Online",
+  "description": "Play 2048 free online. Slide tiles and merge numbers to reach 2048! Classic puzzle game, no download required.",
+  "keywords": "2048, puzzle game, number game, tile game, free 2048, browser game, math game",
+  "url": "/games/2048/",
+  "themeColor": "#e94560",
+  "accentColor": "#e94560",
+  "genres": ["Puzzle", "Strategy"],
+  "ratingValue": "4.9",
+  "ratingCount": "1200",
+  "category": "puzzle",
+  "rendering": "dom"
+}

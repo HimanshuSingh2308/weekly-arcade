@@ -1,0 +1,16 @@
+{
+  "id": "tiny-tycoon",
+  "name": "Tiny Tycoon",
+  "icon": "🧋",
+  "title": "Tiny Tycoon | Weekly Arcade - Boba Tea Shop Simulator",
+  "description": "Play Tiny Tycoon free online. Run a cozy boba tea shop in 60-second days — tap to serve customers, earn coins, upgrade your shop, and chase the highest single-day revenue on the leaderboard. No download required.",
+  "keywords": "tiny tycoon, boba tea game, idle game, time management, arcade game, browser game, free game, shop simulator",
+  "url": "/games/tiny-tycoon/",
+  "themeColor": "#FFF8F0",
+  "accentColor": "#F5C542",
+  "genres": ["Idle", "Time Management", "Simulation", "Arcade"],
+  "ratingValue": "4.8",
+  "ratingCount": "600",
+  "category": "idle",
+  "rendering": "dom"
+}

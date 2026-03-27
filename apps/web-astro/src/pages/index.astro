@@ -1,0 +1,55 @@
+---
+/**
+ * Placeholder index — the full landing page migration comes later.
+ * For now, just link to the two migrated games.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Weekly Arcade">
+  <main>
+    <h1>Weekly Arcade (Astro POC)</h1>
+    <p>Proof of concept — two games migrated to Astro.</p>
+    <nav>
+      <a href="/games/snake/">Snake</a>
+      <a href="/games/2048/">2048</a>
+    </nav>
+  </main>
+</BaseLayout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #0f0f1a;
+    color: #eee;
+    font-family: system-ui, sans-serif;
+    gap: 1.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  nav {
+    display: flex;
+    gap: 1rem;
+  }
+
+  a {
+    background: #e94560;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+
+  a:hover {
+    opacity: 0.85;
+  }
+</style>
