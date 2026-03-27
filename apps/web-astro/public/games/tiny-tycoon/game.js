@@ -49,16 +49,41 @@
     tt_max_upgrade:   { name: 'Fully Loaded',      desc: 'Max out any upgrade',               xp: 75 },
     tt_day_10:        { name: 'Veteran Barista',   desc: 'Reach Day 10',                      xp: 50 },
     tt_rush_survivor: { name: 'Rush Survivor',     desc: 'Survive Rush Hour perfectly',       xp: 100 },
-    tt_prestige:      { name: 'New Beginnings',   desc: 'Prestige for the first time',       xp: 150 }
+    tt_prestige:      { name: 'New Beginnings',   desc: 'Prestige for the first time',       xp: 150 },
+    tt_second_store:  { name: 'Franchise Owner',  desc: 'Open your second store',            xp: 100 },
+    tt_three_stores:  { name: 'Chain Operator',   desc: 'Open 3 stores',                     xp: 200 },
+    tt_five_stores:   { name: 'Empire Builder',   desc: 'Open all 5 stores',                 xp: 500 },
+    tt_first_manager: { name: 'Delegation',       desc: 'Hire your first manager',           xp: 75  },
+    tt_all_managers:  { name: 'Full Staff',       desc: 'All stores have managers',          xp: 300 },
+    tt_50k_coins:     { name: 'Money Bags',       desc: 'Earn 50K lifetime coins',           xp: 150 },
+    tt_250k_coins:    { name: 'Quarter Million',  desc: 'Earn 250K lifetime coins',          xp: 250 },
+    tt_1m_coins:      { name: 'Millionaire',      desc: 'Earn 1M lifetime coins',            xp: 500 },
+    tt_hq_upgrade:    { name: 'Corporate HQ',     desc: 'Purchase first HQ upgrade',         xp: 100 },
+    tt_streak_7:      { name: 'Weekly Regular',   desc: '7-day login streak',                xp: 100 },
+    tt_streak_30:     { name: 'Dedicated Owner',  desc: '30-day login streak',               xp: 300 },
+    tt_critic_served: { name: 'Rave Review',      desc: 'Serve food critic perfectly',       xp: 75  },
+    tt_prestige_3:    { name: 'Master Barista',   desc: 'Reach Prestige 3',                  xp: 200 },
+    tt_prestige_5:    { name: 'Grand Master',     desc: 'Reach Prestige 5',                  xp: 400 },
+    tt_day_25:        { name: 'Quarter Century',  desc: 'Reach Day 25 in any store',         xp: 75  },
+    tt_day_50:        { name: 'Half Century',     desc: 'Reach Day 50 in any store',         xp: 150 },
+    tt_day_75:        { name: 'Diamond Barista',  desc: 'Reach Day 75 in any store',         xp: 200 },
+    tt_day_100:       { name: 'Centurion',        desc: 'Reach Day 100 in any store',        xp: 300 }
   };
 
   const PRESTIGE_PERKS = {
-    1: { id: 'tier2_unlock', name: 'Tier 2 Access',  desc: 'Unlock Tier 2 upgrades (coming soon)', icon: '🔓' },
+    1: { id: 'tier2_unlock', name: 'Tier 2 Access',  desc: 'Unlock Tier 2 upgrades', icon: '🔓' },
     2: { id: 'auto_combo',   name: 'Auto Combo',     desc: 'Start each day at 2x combo',           icon: '🔥' },
     3: { id: 'vip_magnet',   name: 'VIP Magnet',     desc: '+15% VIP spawn chance',                icon: '🧲' },
     4: { id: 'rush_master',  name: 'Rush Master',    desc: 'Rush Hour = 2x coins',                 icon: '⚡' },
     5: { id: 'golden_start', name: 'Golden Start',   desc: 'Start each day with 50 bonus coins',   icon: '💎' },
   };
+
+  const MILESTONES = [
+    { day: 25,  bonus: 500,   achievement: 'tt_day_25'  },
+    { day: 50,  bonus: 1500,  achievement: 'tt_day_50'  },
+    { day: 75,  bonus: 3000,  achievement: 'tt_day_75'  },
+    { day: 100, bonus: 5000,  achievement: 'tt_day_100' },
+  ];
 
   let SPAWN_TABLE = [
     { minDay: 1,  interval: 3000, maxQueue: 4 },
@@ -269,7 +294,7 @@
   let customers = [];
   let spawnTimer = 0;
   let manualServing = null;
-  let autoServing = [null, null, null];
+  let autoServing = [null, null, null, null];
   let rushActive = false;
   let rushTimer = 0;
   let rushStartTime = 0;
@@ -278,6 +303,12 @@
   let rushLostAny = false;
   let rushHadEvent = false;
   let rushWarningShown = false;
+  // Extended events
+  let happyHourActive = false;
+  let happyHourTimer = 0;
+  let criticActive = false;
+  let criticCustomerId = null;
+  let eventPityCounter = 0;
   let lastFrameTime = 0;
   let animFrameId = null;
   let customerIdCounter = 0;
@@ -881,14 +912,16 @@
   function getAutoServeTimeForStation(stationIndex, drinkKey) {
     const manual = getServeTime(drinkKey);
     const stationSpeedBonus = getTier2Level('station_speed') * 0.10;
-    const baseMultiplier = stationIndex === 2 ? 1.25 : 1.5;
-    return manual * baseMultiplier * (1 - stationSpeedBonus);
+    const dualPrepBonus = getTier2Level('dual_prep') > 0 ? 0.30 : 0; // 30% faster with dual prep
+    const baseMultiplier = stationIndex === 3 ? 1.0 : (stationIndex === 2 ? 1.25 : 1.5); // Express lane = 1.0x
+    return manual * baseMultiplier * (1 - stationSpeedBonus) * (1 - dualPrepBonus);
   }
 
   function getWaiterServeTime(drinkKey) {
     const manual = getServeTime(drinkKey);
     const waiterSpeedBonus = getTier2Level('waiter_speed') * 0.10;
-    return manual * 1.5 * (1 - waiterSpeedBonus);
+    const extraWaiters = getTier2Level('extra_waiter'); // 0-2: each extra waiter = 20% faster
+    return manual * 1.5 * (1 - waiterSpeedBonus) * (1 - extraWaiters * 0.20);
   }
 
   function getDrinkCoins(drinkKey) {
@@ -966,7 +999,8 @@
   // ==========================================
   function getVipTableCount() {
     const vipLevel = upgradeLevels.vip_lounge || 0;
-    return Math.min(vipLevel, 3);
+    const t2Tables = getTier2Level('vip_tables') * 2; // +2 tables per level
+    return Math.min(vipLevel + t2Tables, 9); // Cap at 9 tables
   }
 
   function initVipTables() {
@@ -1133,7 +1167,7 @@
   // ==========================================
   // CUSTOMER MANAGEMENT
   // ==========================================
-  function createCustomer() {
+  function createCustomer(isCritic) {
     const config = getSpawnConfig(currentDay);
     // Count only non-VIP customers for queue limit
     const queuedCount = customers.filter(c =>
@@ -1226,6 +1260,8 @@
         type,
         order,
         isVip: false,
+        isCritic: !!isCritic,
+        isCelebrity: false, // set below
         maxPatience: patience,
         patience,
         state: 'walking_to_queue',
@@ -1236,6 +1272,21 @@
         serveTime: 0,
         el: null
       };
+
+      // Celebrity: rare 3x coins, 0.5x patience (Day 15+, 5%)
+      if (!isCritic && currentDay >= 15 && Math.random() < 0.05) {
+        customer.isCelebrity = true;
+        customer.maxPatience = patience * 0.5;
+        customer.patience = patience * 0.5;
+      }
+      // Critic: high risk/reward, 0.8x patience
+      if (isCritic) {
+        customer.maxPatience = patience * 0.8;
+        customer.patience = patience * 0.8;
+        type = 'business';
+        customer.type = type;
+        customer.order = pickOrder('foodie', currentDay);
+      }
 
       customers.push(customer);
       createCustomerElement(customer);
@@ -1388,6 +1439,9 @@
     } else if (patienceRatio > 0.75) {
       tipBonus = 2 + tipLevel;
     }
+    // Loyalty Program: extra tip bonus per level
+    const loyaltyLevel = getTier2Level('loyalty_program');
+    if (loyaltyLevel > 0) tipBonus += loyaltyLevel * 3;
 
     const prestigeMultiplier = 1 + prestigeLevel * 0.05;
     const bridgeMultiplier = (prestigeBridgeDays > 0) ? 2 : 1;
@@ -1396,7 +1450,19 @@
     const t2Golden = 1 + getTier2Level('golden_touch') * 0.15;
     const t2DoubleShot = getTier2Level('double_shot');
     const doubleShotMultiplier = (t2DoubleShot > 0 && Math.random() < (0.10 + t2DoubleShot * 0.05)) ? 2 : 1;
-    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier) + tipBonus;
+    const happyHourMultiplier = happyHourActive ? 2 : 1;
+    const celebrityMultiplier = c.isCelebrity ? 3 : 1;
+    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier * happyHourMultiplier * celebrityMultiplier) + tipBonus;
+
+    // Critic bonus: serve >80% patience for +200
+    if (c.isCritic) {
+      if ((c.patience / c.maxPatience) > 0.8) {
+        dayRevenue += 200;
+        spawnFloatingText(c, '+200 Rave Review!');
+      }
+      criticCustomerId = null;
+    }
+
     dayRevenue += totalCoins;
     customersServed++;
 
@@ -1467,7 +1533,8 @@
 
   function customerAngry(c) {
     customersLost++;
-    dayPenalties += 5;
+    dayPenalties += c.isCritic ? 50 : 5;
+    if (c.isCritic) criticCustomerId = null;
 
     const keeperLevel = upgradeLevels.combo_keeper || 0;
     if (comboForgives < keeperLevel) {
@@ -1655,9 +1722,11 @@
   // ==========================================
   function getAutoServeStations() {
     const stations = [];
-    if (upgradeLevels.auto_serve_1) stations.push({ index: 0, maxBaseCoins: 10 });
-    if (upgradeLevels.auto_serve_2) stations.push({ index: 1, maxBaseCoins: 20 });
+    const rangeBonus = getTier2Level('station_range'); // 0-3: expands which drinks each station handles
+    if (upgradeLevels.auto_serve_1) stations.push({ index: 0, maxBaseCoins: 10 + rangeBonus * 10 });
+    if (upgradeLevels.auto_serve_2) stations.push({ index: 1, maxBaseCoins: 20 + rangeBonus * 15 });
     if (upgradeLevels.auto_serve_3) stations.push({ index: 2, maxBaseCoins: 999 });
+    if (getTier2Level('express_lane') > 0) stations.push({ index: 3, maxBaseCoins: 999 }); // 4th station at 1.0x speed
     return stations;
   }
 
@@ -1885,6 +1954,37 @@
       }
     }
 
+    // Happy Hour logic
+    if (happyHourTimer > 0 && !happyHourActive) {
+      const elapsed = DAY_DURATION - dayTimer;
+      if (elapsed >= happyHourTimer) {
+        happyHourActive = true;
+        happyHourTimer = 15000;
+        rushBanner.textContent = '🎉 HAPPY HOUR! 2x Coins! 🎉';
+        rushBanner.classList.add('visible');
+        playSound('rush');
+      }
+    }
+    if (happyHourActive) {
+      happyHourTimer -= dt;
+      const hhSecs = Math.max(0, Math.ceil(happyHourTimer / 1000));
+      rushBanner.textContent = `🎉 HAPPY HOUR! 2x Coins! ${hhSecs}s 🎉`;
+      if (happyHourTimer <= 0) {
+        happyHourActive = false;
+        rushBanner.classList.remove('visible');
+      }
+    }
+
+    // Critic Visit — spawn mid-day
+    if (criticActive && !criticCustomerId) {
+      const elapsed = DAY_DURATION - dayTimer;
+      if (elapsed > 20000 && elapsed < 40000 && Math.random() < 0.02) {
+        criticCustomerId = 'pending';
+        createCustomer(true);
+        criticActive = false;
+      }
+    }
+
     // Update customers
     for (const c of customers) {
       // Regular customer states
@@ -1926,6 +2026,8 @@
       // VIP seated - patience ticks, waiting for waiter
       if (c.state === 'seated' || c.state === 'waiter_coming') {
         c.patience -= dt;
+        // Concierge upgrade: VIPs never leave angry
+        if (getTier2Level('concierge') > 0 && c.patience < 100) c.patience = 100;
         updatePatienceBar(c);
         if (c.patience <= 0) {
           customerAngry(c);
@@ -2063,7 +2165,7 @@
     peakCombo = 0;
     comboForgives = 0;
     manualServing = null;
-    autoServing = [null, null, null];
+    autoServing = [null, null, null, null];
     rushActive = false;
     rushTimer = 0;
     rushLostAny = false;
@@ -2086,18 +2188,50 @@
     // Init VIP tables
     initVipTables();
 
-    // Rush hour scheduling
-    if (currentDay >= 5 && Math.random() < 0.3) {
-      rushScheduled = true;
-      rushStartTime = 15000 + Math.random() * 30000;
-      rushHadEvent = true;
-    } else {
-      rushScheduled = false;
+    // Event scheduling (Rush Hour, Happy Hour, Critic Visit)
+    happyHourActive = false;
+    happyHourTimer = 0;
+    criticActive = false;
+    criticCustomerId = null;
+    rushScheduled = false;
+    const guaranteeEvent = eventPityCounter >= 3;
+    let eventPicked = false;
+    if (currentDay >= 5) {
+      if (Math.random() < 0.30 || guaranteeEvent) {
+        rushScheduled = true;
+        rushStartTime = 15000 + Math.random() * 30000;
+        rushHadEvent = true;
+        eventPicked = true;
+      }
     }
+    if (!eventPicked && currentDay >= 10) {
+      if (Math.random() < 0.15 || (guaranteeEvent && !eventPicked)) {
+        happyHourTimer = 20000 + Math.random() * 25000;
+        eventPicked = true;
+      }
+    }
+    if (!eventPicked && currentDay >= 15) {
+      if (Math.random() < 0.10) {
+        criticActive = true;
+        eventPicked = true;
+      }
+    }
+    eventPityCounter = eventPicked ? 0 : eventPityCounter + 1;
 
     // P5 perk: Golden Start — 50 bonus coins at day start
     if (prestigeLevel >= 5) {
       dayRevenue += 50;
+    }
+
+    // Milestone check
+    for (const m of MILESTONES) {
+      if (currentDay >= m.day && !collectedMilestones.has(m.day)) {
+        collectedMilestones.add(m.day);
+        wallet += m.bonus;
+        if (m.achievement && !unlockedAchievements.has(m.achievement)) unlockAchievement(m.achievement);
+        spawnConfetti();
+        playSound('newBest');
+      }
     }
 
     // Prestige bridge: 2x earnings for first 3 days after prestige
@@ -2522,7 +2656,21 @@
       'tt_upgrade_first': () => stats.upgraded,
       'tt_max_upgrade':   () => stats.upgraded && stats.upgradeLevel >= stats.maxLevel,
       'tt_day_10':        () => stats.dayNumber && currentDay >= 10,
-      'tt_rush_survivor': () => stats.rushSurvivor
+      'tt_rush_survivor': () => stats.rushSurvivor,
+      'tt_second_store':  () => getUnlockedStores().length >= 2,
+      'tt_three_stores':  () => getUnlockedStores().length >= 3,
+      'tt_five_stores':   () => getUnlockedStores().length >= 5,
+      'tt_first_manager': () => Object.keys(getManagers()).length >= 1,
+      'tt_all_managers':  () => { const m = getManagers(); const s = getUnlockedStores(); return s.length >= 2 && s.every(id => m[id]); },
+      'tt_50k_coins':     () => cumulativeStats.totalCoinsEarned >= 50000,
+      'tt_250k_coins':    () => cumulativeStats.totalCoinsEarned >= 250000,
+      'tt_1m_coins':      () => cumulativeStats.totalCoinsEarned >= 1000000,
+      'tt_hq_upgrade':    () => { const e = getEmpire(); return Object.values((e.global||{}).hqUpgrades||{}).some(v=>v>0); },
+      'tt_streak_7':      () => loginStreak.count >= 7,
+      'tt_streak_30':     () => loginStreak.count >= 30,
+      'tt_critic_served': () => stats.criticServed,
+      'tt_prestige_3':    () => prestigeLevel >= 3,
+      'tt_prestige_5':    () => prestigeLevel >= 5,
     };
 
     for (const [id, condition] of Object.entries(checks)) {
