@@ -2769,7 +2769,10 @@
       const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
 
       if (locked) { if (!firstLockedTeaser) firstLockedTeaser = { id, upgrade }; continue; }
-      if (maxed) { maxedUpgrades.push(upgrade.icon); continue; }
+      if (maxed) {
+        maxedUpgrades.push(`<div class="upgrade-card maxed"><div class="upgrade-icon">${upgrade.icon}</div><div class="upgrade-info"><div class="upgrade-name">${upgrade.name} <span class="chip chip-maxed">MAX</span></div><div class="upgrade-level">Lv ${upgrade.maxLevel}/${upgrade.maxLevel}</div></div></div>`);
+        continue;
+      }
 
       const isRecommended = id === recommendedId;
       let cardClass = 'upgrade-card' + (canAfford ? ' affordable' : ' too-expensive') + (isRecommended ? ' recommended' : '');
@@ -2787,7 +2790,7 @@
     }
 
     if (maxedUpgrades.length > 0) {
-      html += `<div class="shop-maxed-bar"><div class="shop-maxed-icons">${maxedUpgrades.join('')}</div><span class="chip chip-maxed">${maxedUpgrades.length} maxed</span></div>`;
+      html += maxedUpgrades.join('');
     }
     if (firstLockedTeaser) {
       const { upgrade } = firstLockedTeaser;

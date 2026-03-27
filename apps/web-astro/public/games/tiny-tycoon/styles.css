@@ -1684,7 +1684,12 @@
     }
     .upgrade-card.affordable { border-color: var(--matcha); background: rgba(125,184,125,0.05); }
     .upgrade-card.recommended { border-color: var(--matcha); box-shadow: 0 0 8px rgba(127,176,105,0.3); position: relative; }
-    .upgrade-card.maxed { border-color: var(--gold); opacity: 0.8; }
+    .upgrade-card.maxed {
+      border-color: rgba(245,197,66,0.3);
+      background: linear-gradient(135deg, rgba(245,197,66,0.06), rgba(245,197,66,0.02));
+      opacity: 0.75;
+      padding: 0.5rem 0.75rem;
+    }
     .upgrade-card.locked { opacity: 0.5; }
     .upgrade-card.too-expensive { border-color: #ddd; opacity: 0.7; }
 
