@@ -2625,13 +2625,13 @@
       <div class="modal-row" style="border-top:1px dashed rgba(0,0,0,0.1);margin-top:0.4rem;padding-top:0.4rem;">
         <span>🎯 ${challengeDesc}</span>
         <span style="color:${challengeBonus > 0 ? 'var(--matcha)' : 'var(--coral)'}; font-weight:700;">
-          ${challengeBonus > 0 ? `+${challengeBonus} 🪙` : 'Not yet'}
+          ${challengeBonus > 0 ? `+${challengeBonus} 💰` : 'Not yet'}
         </span>
       </div>` : '';
     modal.innerHTML = `
       <h2>☀️ Day ${currentDay - 1} Complete!</h2>
       <div class="modal-row"><span>Revenue</span><span>💰 ${formatCoins(revenue)}</span></div>
-      ${penalties > 0 ? `<div class="modal-row" style="color:var(--coral);font-size:0.8rem;"><span>Penalties (${customersLost} lost)</span><span>-${penalties} 🪙</span></div>` : ''}
+      ${penalties > 0 ? `<div class="modal-row" style="color:var(--coral);font-size:0.8rem;"><span>Penalties (${customersLost} lost)</span><span>-${penalties} 💰</span></div>` : ''}
       <div class="modal-row"><span>Served</span><span>🧋 ${customersServed}</span></div>
       <div class="modal-row"><span>Lost</span><span>😤 ${customersLost}</span></div>
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${Math.min(3.0, 1.0 + peakCombo * 0.1).toFixed(1)}</span></div>
@@ -2834,7 +2834,7 @@
             <div class="upgrade-desc">${upgrade.desc}</div>
             <div class="upgrade-level">Lv ${level}/${upgrade.maxLevel}</div>
           </div>
-          <button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${id}')">${formatCoins(cost)} 🪙</button>
+          <button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${id}')">${formatCoins(cost)} 💰</button>
         </div>`;
     }
 
@@ -2863,7 +2863,7 @@
           <div class="upgrade-name">${upg.name} ${isMaxed ? '<span class="chip chip-maxed">MAX</span>' : `Lv${level}`}</div>
           <div class="upgrade-desc">${upg.desc}</div>
         </div>
-        ${isMaxed ? '' : `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? `onclick="buyTier2('${id}')"` : 'disabled'}>${formatCoins(cost)} 🪙</button>`}
+        ${isMaxed ? '' : `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? `onclick="buyTier2('${id}')"` : 'disabled'}>${formatCoins(cost)} 💰</button>`}
       </div>`;
     }
     return html;
