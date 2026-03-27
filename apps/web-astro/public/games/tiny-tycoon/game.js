@@ -295,7 +295,7 @@
           upgradeLevels = {};
         }
         empire.activeStoreId = storeId;
-        localStorage.setItem('tt_empire', JSON.stringify(empire));
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
       } catch(e) {}
     }
 
@@ -428,7 +428,6 @@
   let happyHourTimer = 0;
   let criticActive = false;
   let criticCustomerId = null;
-  let specialOrderCount = 0;
   let eventPityCounter = 0; // Guarantee event after 3 days without one
   let lastFrameTime = 0;
   let animFrameId = null;
@@ -472,14 +471,13 @@
   // SAVE / LOAD (v2 — tt_empire blob)
   // ==========================================
   function saveGame() {
-    // Load existing empire to preserve other stores' state
-    let existingStores = {};
-    try {
-      const prev = JSON.parse(localStorage.getItem('tt_empire') || '{}');
-      existingStores = prev.stores || {};
-    } catch(e) {}
+    // Load existing empire to preserve ALL state (hqUpgrades, managers, tier2, decorations)
+    let prev = {};
+    try { prev = JSON.parse(localStorage.getItem('tt_empire') || '{}'); } catch(e) {}
+    const existingStores = prev.stores || {};
+    const existingGlobal = prev.global || {};
 
-    // Update active store's state
+    // Update active store's state (preserve tier2Levels, decorations etc.)
     existingStores[activeStoreId] = {
       ...(existingStores[activeStoreId] || {}),
       unlocked: true,
@@ -496,6 +494,7 @@
     const empire = {
       version: 2,
       global: {
+        ...existingGlobal, // Preserve hqUpgrades, managers, and any other fields
         wallet,
         prestigeLevel,
         bestScore,
@@ -504,6 +503,7 @@
         loginStreak,
         lastPlayedTimestamp: Date.now(),
         prestigeBridgeDays: prestigeBridgeDays || 0,
+        collectedMilestones: [...collectedMilestones],
       },
       stores: existingStores,
       activeStoreId,
@@ -517,7 +517,7 @@
         }
       }
     };
-    localStorage.setItem('tt_empire', JSON.stringify(empire));
+    localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
   }
 
   function loadGame() {
@@ -548,6 +548,7 @@
       cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0, ...(g.cumulativeStats || {}) };
       loginStreak = g.loginStreak || { lastLoginDate: null, count: 0, longestStreak: 0 };
       prestigeBridgeDays = g.prestigeBridgeDays || 0;
+      collectedMilestones = new Set(g.collectedMilestones || []);
 
       activeStoreId = empire.activeStoreId || 'boba_shop';
       const storeConfig = STORE_CONFIGS[activeStoreId];
@@ -605,7 +606,7 @@
         }
       }
     };
-    localStorage.setItem('tt_empire', JSON.stringify(empire));
+    localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
     // Clean up old keys
     ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements',
      'tt_stats', 'tt_prestige', 'tt_volume', 'tt_muted', 'tt_relaxed_mode',
@@ -613,7 +614,7 @@
   }
 
   function resetGame() {
-    localStorage.removeItem('tt_empire');
+    localStorage.removeItem('tt_empire'); invalidateEmpireCache();
     loadGame();
   }
 
@@ -947,19 +948,26 @@
     return p * patienceBonus * hqBrand * (relaxedMode ? RELAXED.patienceMult : 1);
   }
 
+  // Empire cache — avoids re-parsing localStorage on every hot-path call
+  let _empireCache = null;
+  function getEmpire() {
+    if (!_empireCache) {
+      try { _empireCache = JSON.parse(localStorage.getItem('tt_empire') || '{}'); }
+      catch(e) { _empireCache = {}; }
+    }
+    return _empireCache;
+  }
+  function invalidateEmpireCache() { _empireCache = null; }
+
   function getHqLevel(upgradeId) {
-    try {
-      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
-      return ((empire.global || {}).hqUpgrades || {})[upgradeId] || 0;
-    } catch(e) { return 0; }
+    const empire = getEmpire();
+    return ((empire.global || {}).hqUpgrades || {})[upgradeId] || 0;
   }
 
   function getTier2Level(upgradeId) {
-    try {
-      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
-      const store = (empire.stores || {})[activeStoreId] || {};
-      return (store.tier2Levels || {})[upgradeId] || 0;
-    } catch(e) { return 0; }
+    const empire = getEmpire();
+    const store = (empire.stores || {})[activeStoreId] || {};
+    return (store.tier2Levels || {})[upgradeId] || 0;
   }
 
   function getServeTime(drinkKey) {
@@ -2710,10 +2718,8 @@
   // MANAGERS & OFFLINE EARNINGS
   // ==========================================
   function getManagers() {
-    try {
-      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
-      return (empire.global || {}).managers || {};
-    } catch(e) { return {}; }
+    const empire = getEmpire();
+    return (empire.global || {}).managers || {};
   }
 
   function hireManager(storeId, tierKey) {
@@ -2729,7 +2735,7 @@
       if (!empire.global) empire.global = {};
       if (!empire.global.managers) empire.global.managers = {};
       empire.global.managers[storeId] = { tier: tierKey };
-      localStorage.setItem('tt_empire', JSON.stringify(empire));
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
     } catch(e) {}
 
     saveGame();
@@ -2741,10 +2747,8 @@
     // 36h grace, then accumulating damage
     if (hoursOffline <= 36) return { level: 'none', repairCost: 0 };
     // Check vacation mode
-    try {
-      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
-      if ((empire.settings || {}).vacationMode) return { level: 'none', repairCost: 0 };
-    } catch(e) {}
+    const empire = getEmpire();
+    if ((empire.settings || {}).vacationMode) return { level: 'none', repairCost: 0 };
 
     const relaxedMultiplier = relaxedMode ? 0.5 : 1;
 
@@ -2805,7 +2809,7 @@
       const streakEarnings = Math.floor(totalEarned * streakBonus);
 
       // Save updated store days
-      localStorage.setItem('tt_empire', JSON.stringify(empire));
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
 
       return { earnings, totalEarned, streakBonus: streakEarnings, hoursOffline: Math.round(hoursOffline), grandTotal: totalEarned + streakEarnings };
     } catch(e) { return null; }
@@ -2880,12 +2884,10 @@
   // ==========================================
   function getUnlockedStores() {
     const stores = [];
-    try {
-      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
-      for (const [id, store] of Object.entries(empire.stores || {})) {
-        if (store.unlocked) stores.push(id);
-      }
-    } catch(e) {}
+    const empire = getEmpire();
+    for (const [id, store] of Object.entries(empire.stores || {})) {
+      if (store.unlocked) stores.push(id);
+    }
     if (stores.length === 0) stores.push('boba_shop');
     return stores;
   }
@@ -2906,7 +2908,7 @@
       const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
       if (!empire.stores) empire.stores = {};
       empire.stores[storeId] = { unlocked: true, currentDay: 1, upgradeLevels: {}, bestDayRevenue: 0 };
-      localStorage.setItem('tt_empire', JSON.stringify(empire));
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
     } catch(e) {}
 
     saveGame();
@@ -3034,7 +3036,7 @@
       if (!empire.global) empire.global = {};
       if (!empire.global.hqUpgrades) empire.global.hqUpgrades = {};
       empire.global.hqUpgrades[id] = level + 1;
-      localStorage.setItem('tt_empire', JSON.stringify(empire));
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
     } catch(e) {}
 
     saveGame();
@@ -3085,7 +3087,7 @@
       if (store) {
         if (!store.tier2Levels) store.tier2Levels = {};
         store.tier2Levels[id] = level + 1;
-        localStorage.setItem('tt_empire', JSON.stringify(empire));
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
       }
     } catch(e) {}
 
@@ -3098,10 +3100,8 @@
   // DECORATIONS (per store, in shop)
   // ==========================================
   function getOwnedDecorations() {
-    try {
-      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
-      return ((empire.stores || {})[activeStoreId] || {}).decorations || [];
-    } catch(e) { return []; }
+    const empire = getEmpire();
+    return ((empire.stores || {})[activeStoreId] || {}).decorations || [];
   }
 
   function renderDecorTab() {
@@ -3141,7 +3141,7 @@
       if (store) {
         if (!store.decorations) store.decorations = [];
         if (!store.decorations.includes(decorId)) store.decorations.push(decorId);
-        localStorage.setItem('tt_empire', JSON.stringify(empire));
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
       }
     } catch(e) {}
 
@@ -3213,7 +3213,7 @@
       const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
       if (empire.global?.managers?.[storeId]) {
         empire.global.managers[storeId].tier = newTier;
-        localStorage.setItem('tt_empire', JSON.stringify(empire));
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
       }
     } catch(e) {}
 
@@ -3232,7 +3232,7 @@
       if (empire.global?.managers?.[storeId]) {
         if (!empire.global.managers[storeId].upgrades) empire.global.managers[storeId].upgrades = {};
         empire.global.managers[storeId].upgrades[upgradeId] = true;
-        localStorage.setItem('tt_empire', JSON.stringify(empire));
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
       }
     } catch(e) {}
 
