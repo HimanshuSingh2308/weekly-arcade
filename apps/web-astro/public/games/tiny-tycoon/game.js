@@ -125,8 +125,8 @@
   // STORE CONFIGS & EMPIRE SYSTEMS
   // ==========================================
   const BOBA_DRINKS = { ...DRINK_TYPES };
-  const BOBA_CUSTOMERS = JSON.parse(JSON.stringify(CUSTOMER_TYPES));
-  const BOBA_UPGRADES = JSON.parse(JSON.stringify(UPGRADES));
+  const BOBA_CUSTOMERS = Object.fromEntries(Object.entries(CUSTOMER_TYPES).map(([k, v]) => [k, { ...v }]));
+  const BOBA_UPGRADES = Object.fromEntries(Object.entries(UPGRADES).map(([k, v]) => [k, { ...v }]));
   const BOBA_SPAWN = [...SPAWN_TABLE];
   const BOBA_PATIENCE = [...PATIENCE_TABLE];
 
@@ -2595,22 +2595,36 @@
 
   function doPrestige() {
     prestigeLevel++;
-    // Reset progression but keep achievements, stats, best score
-    // Prestige bridge: 500 starter coins + 3 days of 2x earnings
+    // Reset progression but keep achievements, stats, best score, store unlocks, decorations, managers
     wallet = 500;
     prestigeBridgeDays = 3;
     currentDay = 1;
     upgradeLevels = {};
-    // Clear VIP tutorial so it re-shows
+    collectedMilestones = new Set();
     tutorialsSeen.vip = false;
+
+    // Reset all stores' upgradeLevels and day counters (keep unlocks, decorations, managers)
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      for (const [id, store] of Object.entries(empire.stores || {})) {
+        if (store.unlocked) {
+          store.currentDay = 1;
+          store.upgradeLevels = {};
+          // Keep: unlocked, decorations, tier2Levels, bestDayRevenue
+        }
+      }
+      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+    } catch(e) {}
+
+    // Re-apply active store config
+    switchStore(activeStoreId);
+
     saveGame();
     playSound('newBest');
     spawnConfetti();
-    // Achievement for first prestige
     if (prestigeLevel === 1 && !unlockedAchievements.has('tt_prestige')) {
       unlockAchievement('tt_prestige');
     }
-    // Show confirmation then go to shop
     setTimeout(() => {
       renderShop();
     }, 1500);
