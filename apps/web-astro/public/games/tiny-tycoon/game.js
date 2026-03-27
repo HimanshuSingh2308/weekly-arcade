@@ -49,7 +49,30 @@
     tt_max_upgrade:   { name: 'Fully Loaded',      desc: 'Max out any upgrade',               xp: 75 },
     tt_day_10:        { name: 'Veteran Barista',   desc: 'Reach Day 10',                      xp: 50 },
     tt_rush_survivor: { name: 'Rush Survivor',     desc: 'Survive Rush Hour perfectly',       xp: 100 },
-    tt_prestige:      { name: 'New Beginnings',   desc: 'Prestige for the first time',       xp: 150 }
+    tt_prestige:      { name: 'New Beginnings',   desc: 'Prestige for the first time',       xp: 150 },
+    // Empire achievements
+    tt_second_store:  { name: 'Franchise Owner',  desc: 'Open your second store',            xp: 100 },
+    tt_three_stores:  { name: 'Chain Operator',   desc: 'Open 3 stores',                     xp: 200 },
+    tt_five_stores:   { name: 'Empire Builder',   desc: 'Open all 5 stores',                 xp: 500 },
+    tt_first_manager: { name: 'Delegation',       desc: 'Hire your first manager',           xp: 75  },
+    tt_all_managers:  { name: 'Full Staff',       desc: 'All stores have managers',          xp: 300 },
+    // Economy achievements
+    tt_50k_coins:     { name: 'Money Bags',       desc: 'Earn 50K lifetime coins',           xp: 150 },
+    tt_250k_coins:    { name: 'Quarter Million',  desc: 'Earn 250K lifetime coins',          xp: 250 },
+    tt_1m_coins:      { name: 'Millionaire',      desc: 'Earn 1M lifetime coins',            xp: 500 },
+    tt_hq_upgrade:    { name: 'Corporate HQ',     desc: 'Purchase first HQ upgrade',         xp: 100 },
+    // Engagement achievements
+    tt_streak_7:      { name: 'Weekly Regular',   desc: '7-day login streak',                xp: 100 },
+    tt_streak_30:     { name: 'Dedicated Owner',  desc: '30-day login streak',               xp: 300 },
+    tt_critic_served: { name: 'Rave Review',      desc: 'Serve food critic perfectly',       xp: 75  },
+    // Prestige achievements
+    tt_prestige_3:    { name: 'Master Barista',   desc: 'Reach Prestige 3',                  xp: 200 },
+    tt_prestige_5:    { name: 'Grand Master',     desc: 'Reach Prestige 5',                  xp: 400 },
+    // Milestone achievements
+    tt_day_25:        { name: 'Quarter Century',  desc: 'Reach Day 25 in any store',         xp: 75  },
+    tt_day_50:        { name: 'Half Century',     desc: 'Reach Day 50 in any store',         xp: 150 },
+    tt_day_75:        { name: 'Diamond Barista',  desc: 'Reach Day 75 in any store',         xp: 200 },
+    tt_day_100:       { name: 'Centurion',        desc: 'Reach Day 100 in any store',        xp: 300 }
   };
 
   const PRESTIGE_PERKS = {
@@ -59,6 +82,14 @@
     4: { id: 'rush_master',  name: 'Rush Master',    desc: 'Rush Hour = 2x coins',                 icon: '⚡' },
     5: { id: 'golden_start', name: 'Golden Start',   desc: 'Start each day with 50 bonus coins',   icon: '💎' },
   };
+
+  const MILESTONES = [
+    { day: 25,  bonus: 500,   achievement: 'tt_day_25'  },
+    { day: 50,  bonus: 1500,  achievement: 'tt_day_50'  },
+    { day: 75,  bonus: 3000,  achievement: 'tt_day_75'  },
+    { day: 100, bonus: 5000,  achievement: 'tt_day_100' },
+  ];
+  let collectedMilestones = new Set();
 
   let SPAWN_TABLE = [
     { minDay: 1,  interval: 3000, maxQueue: 4 },
@@ -301,6 +332,16 @@
     double_shot:     { name: 'Double Shot',     icon: '🎯', desc: '15/25/35% chance 2x coins',      maxLevel: 3, costFn: (l) => Math.floor(5000 * Math.pow(l + 1, 1.5)) },
     loyalty_program: { name: 'Loyalty Program', icon: '💝', desc: 'Returning customers +tip',       maxLevel: 3, costFn: (l) => Math.floor(4000 * Math.pow(l + 1, 1.5)) },
     express_lane:    { name: 'Express Lane',    icon: '🏎️', desc: '4th auto-serve at 1.0x speed',   maxLevel: 1, costFn: () => 15000 },
+    // VIP zone expansion
+    extra_waiter:    { name: 'Extra Waiter',    icon: '🧑‍🍳', desc: '+1 VIP waiter (up to 3)',       maxLevel: 2, costFn: (l) => Math.floor(8000 * Math.pow(l + 1, 1.5)) },
+    vip_tables:      { name: 'VIP Tables',      icon: '🪑', desc: '+2 VIP tables/lv (up to 9)',     maxLevel: 3, costFn: (l) => Math.floor(5000 * Math.pow(l + 1, 1.5)) },
+    waiter_speed:    { name: 'Waiter Speed',    icon: '💨', desc: '-10% waiter serve time/lv',       maxLevel: 5, costFn: (l) => Math.floor(3000 * Math.pow(l + 1, 1.5)) },
+    vip_attraction:  { name: 'VIP Attraction',  icon: '🧲', desc: '+10% VIP spawn rate/lv',          maxLevel: 3, costFn: (l) => Math.floor(6000 * Math.pow(l + 1, 1.5)) },
+    concierge:       { name: 'Concierge',       icon: '🎩', desc: 'VIP customers never leave angry', maxLevel: 1, costFn: () => 25000 },
+    // Per-auto-server upgrades
+    station_speed:   { name: 'Station Speed',   icon: '⚡', desc: '-10% auto-serve time/lv',          maxLevel: 5, costFn: (l) => Math.floor(2000 * Math.pow(l + 1, 1.5)) },
+    station_range:   { name: 'Station Range',   icon: '📏', desc: 'Auto-serve higher-tier drinks',    maxLevel: 3, costFn: (l) => Math.floor(4000 * Math.pow(l + 1, 1.5)) },
+    dual_prep:       { name: 'Dual Prep',       icon: '👥', desc: 'Station serves 2 simultaneously',  maxLevel: 1, costFn: () => 15000 },
   };
 
   // Decorations per store theme
@@ -382,6 +423,13 @@
   let rushLostAny = false;
   let rushHadEvent = false;
   let rushWarningShown = false;
+  // Extended events
+  let happyHourActive = false;
+  let happyHourTimer = 0;
+  let criticActive = false;
+  let criticCustomerId = null;
+  let specialOrderCount = 0;
+  let eventPityCounter = 0; // Guarantee event after 3 days without one
   let lastFrameTime = 0;
   let animFrameId = null;
   let customerIdCounter = 0;
@@ -924,13 +972,15 @@
 
   function getAutoServeTimeForStation(stationIndex, drinkKey) {
     const manual = getServeTime(drinkKey);
-    if (stationIndex === 2) return manual * 1.25;
-    return manual * 1.5;
+    const stationSpeedBonus = getTier2Level('station_speed') * 0.10;
+    const baseMultiplier = stationIndex === 2 ? 1.25 : 1.5;
+    return manual * baseMultiplier * (1 - stationSpeedBonus);
   }
 
   function getWaiterServeTime(drinkKey) {
     const manual = getServeTime(drinkKey);
-    return manual * 1.5;
+    const waiterSpeedBonus = getTier2Level('waiter_speed') * 0.10;
+    return manual * 1.5 * (1 - waiterSpeedBonus);
   }
 
   function getDrinkCoins(drinkKey) {
@@ -1101,7 +1151,7 @@
   // ==========================================
   // CUSTOMER MANAGEMENT
   // ==========================================
-  function createCustomer() {
+  function createCustomer(isCritic) {
     const config = getSpawnConfig(currentDay);
     // Count only non-VIP customers for queue limit
     const queuedCount = customers.filter(c =>
@@ -1111,7 +1161,8 @@
     const vipLevel = upgradeLevels.vip_lounge || 0;
     const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0;
     const hqLoyalty = getHqLevel('loyalty_network') * 0.10;
-    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05 + vipMagnetBonus + hqLoyalty) : 0;
+    const t2VipAttraction = getTier2Level('vip_attraction') * 0.10;
+    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05 + vipMagnetBonus + hqLoyalty + t2VipAttraction) : 0;
     let isVip = Math.random() < vipChance;
 
     // If VIP, check for available table
@@ -1185,13 +1236,25 @@
       // Regular customer flow
       const queueX = getNextQueueX();
 
+      // Critic override: special customer with high risk/reward
+      const isCriticCustomer = !!isCritic;
+      if (isCriticCustomer) {
+        type = 'business'; // Use business visuals
+        order = pickOrder('foodie', currentDay); // Order premium drinks
+      }
+
+      // Celebrity: rare high-value customer (Day 15+, 5% chance)
+      const isCelebrity = !isCriticCustomer && currentDay >= 15 && Math.random() < 0.05;
+
       const customer = {
         id: customerIdCounter++,
         type,
         order,
         isVip: false,
-        maxPatience: patience,
-        patience,
+        isCritic: isCriticCustomer,
+        isCelebrity,
+        maxPatience: isCelebrity ? patience * 0.5 : (isCriticCustomer ? patience * 0.8 : patience),
+        patience: isCelebrity ? patience * 0.5 : (isCriticCustomer ? patience * 0.8 : patience),
         state: 'walking_to_queue',
         x: areaWidth + 20,
         targetX: queueX,
@@ -1359,8 +1422,21 @@
     const hqFranchise = 1 + getHqLevel('franchise_bonus') * 0.05;
     const t2Golden = 1 + getTier2Level('golden_touch') * 0.15;
     const t2DoubleShot = getTier2Level('double_shot');
-    const doubleShotMultiplier = (t2DoubleShot > 0 && Math.random() < (0.10 + t2DoubleShot * 0.05)) ? 2 : 1; // 15/20/25% at lv 1/2/3 (shifted from plan's 15/25/35 for balance)
-    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier) + tipBonus;
+    const doubleShotMultiplier = (t2DoubleShot > 0 && Math.random() < (0.10 + t2DoubleShot * 0.05)) ? 2 : 1;
+    const happyHourMultiplier = happyHourActive ? 2 : 1;
+    const celebrityMultiplier = c.isCelebrity ? 3 : 1;
+    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier * happyHourMultiplier * celebrityMultiplier) + tipBonus;
+
+    // Critic bonus: serve with >80% patience for +200, angry = -50
+    if (c.isCritic) {
+      const criticRatio = c.patience / c.maxPatience;
+      if (criticRatio > 0.8) {
+        dayRevenue += 200;
+        spawnFloatingText(c, '+200 Rave Review!');
+      }
+      criticCustomerId = null;
+    }
+
     dayRevenue += totalCoins;
     customersServed++;
 
@@ -1431,7 +1507,8 @@
 
   function customerAngry(c) {
     customersLost++;
-    dayPenalties += 5;
+    dayPenalties += c.isCritic ? 50 : 5; // Critic leaving angry = -50 penalty
+    if (c.isCritic) criticCustomerId = null;
 
     const keeperLevel = upgradeLevels.combo_keeper || 0;
     if (comboForgives < keeperLevel) {
@@ -1849,6 +1926,38 @@
       }
     }
 
+    // Happy Hour logic
+    if (happyHourTimer > 0 && !happyHourActive) {
+      const elapsed = DAY_DURATION - dayTimer;
+      if (elapsed >= happyHourTimer) {
+        happyHourActive = true;
+        happyHourTimer = 15000; // 15 second duration
+        rushBanner.textContent = '🎉 HAPPY HOUR! 2x Coins! 🎉';
+        rushBanner.classList.add('visible');
+        playSound('rush');
+      }
+    }
+    if (happyHourActive) {
+      happyHourTimer -= dt;
+      const hhSecs = Math.max(0, Math.ceil(happyHourTimer / 1000));
+      rushBanner.textContent = `🎉 HAPPY HOUR! 2x Coins! ${hhSecs}s 🎉`;
+      if (happyHourTimer <= 0) {
+        happyHourActive = false;
+        rushBanner.classList.remove('visible');
+      }
+    }
+
+    // Critic Visit — spawn a special critic customer mid-day
+    if (criticActive && !criticCustomerId) {
+      const elapsed = DAY_DURATION - dayTimer;
+      if (elapsed > 20000 && elapsed < 40000 && Math.random() < 0.02) { // Random spawn window
+        criticCustomerId = 'pending'; // Will be set when customer is created
+        // Spawn a critic — special customer with hat icon, high reward/risk
+        createCustomer(true); // isCritic=true
+        criticActive = false;
+      }
+    }
+
     // Update customers
     for (const c of customers) {
       // Regular customer states
@@ -2050,18 +2159,56 @@
     // Init VIP tables
     initVipTables();
 
-    // Rush hour scheduling
-    if (currentDay >= 5 && Math.random() < 0.3) {
-      rushScheduled = true;
-      rushStartTime = 15000 + Math.random() * 30000;
-      rushHadEvent = true;
-    } else {
-      rushScheduled = false;
+    // Event scheduling (Rush Hour, Happy Hour, Critic Visit)
+    happyHourActive = false;
+    happyHourTimer = 0;
+    criticActive = false;
+    criticCustomerId = null;
+    rushScheduled = false;
+
+    const guaranteeEvent = eventPityCounter >= 3;
+    let eventPicked = false;
+
+    if (currentDay >= 5) {
+      const roll = Math.random();
+      if (roll < 0.30 || guaranteeEvent) {
+        rushScheduled = true;
+        rushStartTime = 15000 + Math.random() * 30000;
+        rushHadEvent = true;
+        eventPicked = true;
+      }
     }
+    if (!eventPicked && currentDay >= 10) {
+      if (Math.random() < 0.15 || (guaranteeEvent && !eventPicked)) {
+        // Happy Hour — scheduled like rush
+        happyHourTimer = 20000 + Math.random() * 25000; // triggers 20-45s into day
+        eventPicked = true;
+      }
+    }
+    if (!eventPicked && currentDay >= 15) {
+      if (Math.random() < 0.10) {
+        criticActive = true; // Will spawn a critic customer mid-day
+        eventPicked = true;
+      }
+    }
+    eventPityCounter = eventPicked ? 0 : eventPityCounter + 1;
 
     // P5 perk: Golden Start — 50 bonus coins at day start
     if (prestigeLevel >= 5) {
       dayRevenue += 50;
+    }
+
+    // Milestone check
+    for (const m of MILESTONES) {
+      if (currentDay >= m.day && !collectedMilestones.has(m.day)) {
+        collectedMilestones.add(m.day);
+        wallet += m.bonus;
+        if (m.achievement && !unlockedAchievements.has(m.achievement)) {
+          unlockAchievement(m.achievement);
+        }
+        spawnConfetti();
+        playSound('newBest');
+      }
     }
 
     // Prestige bridge: 2x earnings for first 3 days after prestige
@@ -2489,7 +2636,25 @@
       'tt_upgrade_first': () => stats.upgraded,
       'tt_max_upgrade':   () => stats.upgraded && stats.upgradeLevel >= stats.maxLevel,
       'tt_day_10':        () => stats.dayNumber && currentDay >= 10,
-      'tt_rush_survivor': () => stats.rushSurvivor
+      'tt_rush_survivor': () => stats.rushSurvivor,
+      // Empire achievements
+      'tt_second_store':  () => getUnlockedStores().length >= 2,
+      'tt_three_stores':  () => getUnlockedStores().length >= 3,
+      'tt_five_stores':   () => getUnlockedStores().length >= 5,
+      'tt_first_manager': () => Object.keys(getManagers()).length >= 1,
+      'tt_all_managers':  () => { const m = getManagers(); return getUnlockedStores().length >= 2 && getUnlockedStores().every(s => m[s]); },
+      // Economy achievements
+      'tt_50k_coins':     () => cumulativeStats.totalCoinsEarned >= 50000,
+      'tt_250k_coins':    () => cumulativeStats.totalCoinsEarned >= 250000,
+      'tt_1m_coins':      () => cumulativeStats.totalCoinsEarned >= 1000000,
+      'tt_hq_upgrade':    () => { try { const e = JSON.parse(localStorage.getItem('tt_empire')||'{}'); return Object.values((e.global||{}).hqUpgrades||{}).some(v=>v>0); } catch(e){return false;} },
+      // Engagement
+      'tt_streak_7':      () => loginStreak.count >= 7,
+      'tt_streak_30':     () => loginStreak.count >= 30,
+      'tt_critic_served': () => stats.criticServed,
+      // Prestige
+      'tt_prestige_3':    () => prestigeLevel >= 3,
+      'tt_prestige_5':    () => prestigeLevel >= 5,
     };
 
     for (const [id, condition] of Object.entries(checks)) {
@@ -2572,6 +2737,28 @@
     showHub();
   }
 
+  function calculateStoreDamage(hoursOffline) {
+    // 36h grace, then accumulating damage
+    if (hoursOffline <= 36) return { level: 'none', repairCost: 0 };
+    // Check vacation mode
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      if ((empire.settings || {}).vacationMode) return { level: 'none', repairCost: 0 };
+    } catch(e) {}
+
+    const relaxedMultiplier = relaxedMode ? 0.5 : 1;
+
+    if (hoursOffline <= 48) {
+      return { level: 'minor', repairCost: 0, desc: 'Dusty shelves' }; // Auto-cleans
+    } else if (hoursOffline <= 72) {
+      return { level: 'moderate', repairCost: Math.floor(200 * relaxedMultiplier), desc: '1 station offline' };
+    } else if (hoursOffline <= 168) { // 7 days
+      return { level: 'major', repairCost: Math.floor(500 * relaxedMultiplier), desc: '2 stations offline' };
+    } else {
+      return { level: 'closed', repairCost: Math.floor(1000 * relaxedMultiplier), desc: 'Store closed', grandReopening: true };
+    }
+  }
+
   function calculateOfflineEarnings() {
     const unlockedStores = getUnlockedStores();
     if (unlockedStores.length < 2) return null; // Offline only with 2+ stores
@@ -2627,6 +2814,9 @@
   function showWelcomeBack(offlineData) {
     if (!offlineData) return false;
 
+    const damage = calculateStoreDamage(offlineData.hoursOffline);
+    const totalRepair = damage.repairCost * offlineData.earnings.length;
+
     const modal = document.getElementById('hubModal');
     let earningsHtml = '';
     for (const e of offlineData.earnings) {
@@ -2643,6 +2833,17 @@
       `;
     }
 
+    const damageHtml = damage.level !== 'none' && damage.repairCost > 0 ? `
+      <div style="background:rgba(255,100,100,0.08);border-radius:8px;padding:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;">
+        <div style="font-weight:700;color:var(--coral);">🔧 Store Maintenance Needed</div>
+        <div style="color:#888;margin-top:2px;">${damage.desc} — ${damage.level} wear</div>
+        <div>Repair: 💰 ${formatCoins(totalRepair)}</div>
+        ${damage.grandReopening ? '<div style="color:var(--matcha);margin-top:4px;">🎉 Grand Re-Opening bonus: 2x customers on next active day!</div>' : ''}
+      </div>
+    ` : '';
+
+    const netTotal = offlineData.grandTotal - totalRepair;
+
     modal.innerHTML = `
       <div style="text-align:center;">
         <div style="font-size:2rem;margin-bottom:0.3rem;">☀️</div>
@@ -2652,12 +2853,14 @@
       <div style="margin-bottom:0.75rem;">
         ${earningsHtml}
       </div>
+      ${damageHtml}
       <div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;font-size:0.8rem;">
         <div style="display:flex;justify-content:space-between;"><span>Offline Earnings</span><span>💰 ${formatCoins(offlineData.totalEarned)}</span></div>
         ${offlineData.streakBonus > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--coral);"><span>🔥 Streak Bonus (+${Math.round(loginStreak.count * 5)}%)</span><span>💰 ${formatCoins(offlineData.streakBonus)}</span></div>` : ''}
-        <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid rgba(0,0,0,0.1);padding-top:0.3rem;margin-top:0.3rem;"><span>Total</span><span>💰 ${formatCoins(offlineData.grandTotal)}</span></div>
+        ${totalRepair > 0 ? `<div style="display:flex;justify-content:space-between;color:#c00;"><span>🔧 Repairs</span><span>-💰 ${formatCoins(totalRepair)}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid rgba(0,0,0,0.1);padding-top:0.3rem;margin-top:0.3rem;"><span>Net Total</span><span>💰 ${formatCoins(Math.max(0, netTotal))}</span></div>
       </div>
-      <button class="btn" onclick="collectOfflineEarnings(${offlineData.grandTotal})" style="width:100%;min-height:48px;">Collect & Play</button>
+      <button class="btn" onclick="collectOfflineEarnings(${Math.max(0, netTotal)})" style="width:100%;min-height:48px;">${totalRepair > 0 ? 'Repair & Collect' : 'Collect & Play'}</button>
     `;
 
     hideAllOverlays();
