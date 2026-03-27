@@ -1287,12 +1287,7 @@
       animation: goldenFlash 0.3s ease-out forwards;
     }
 
-    /* K. Locked upgrade teaser */
-    .upgrade-card.teaser {
-      opacity: 0.45;
-      border-color: #ccc;
-      border-style: dashed;
-    }
+    /* K. Locked upgrade teaser (deprecated — use .locked) */
 
     .customer-face {
       position: absolute;
@@ -1756,7 +1751,12 @@
       opacity: 0.75;
       padding: 0.5rem 0.75rem;
     }
-    .upgrade-card.locked { opacity: 0.5; }
+    .upgrade-card.locked {
+      opacity: 0.6;
+      border-color: #e0e0e0;
+      border-style: solid;
+      background: rgba(0,0,0,0.02);
+    }
     .upgrade-card.too-expensive { border-color: #ddd; opacity: 0.7; }
 
     .upgrade-icon {

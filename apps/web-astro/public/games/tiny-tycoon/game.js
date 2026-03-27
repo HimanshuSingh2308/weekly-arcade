@@ -2843,7 +2843,7 @@
     }
     if (firstLockedTeaser) {
       const { upgrade } = firstLockedTeaser;
-      html += `<div class="upgrade-card teaser"><div class="upgrade-icon">${upgrade.icon}</div><div class="upgrade-info"><div class="upgrade-name">${upgrade.name}</div><div class="upgrade-desc">${upgrade.desc}</div></div><span style="color:#999;font-size:0.7rem;">🔒 Requires: ${UPGRADES[upgrade.requires].name}</span></div>`;
+      html += `<div class="upgrade-card locked"><div class="upgrade-icon" style="opacity:0.4;filter:grayscale(1);">${upgrade.icon}</div><div class="upgrade-info"><div class="upgrade-name">${upgrade.name} <span class="chip chip-locked">Locked</span></div><div class="upgrade-desc">${upgrade.desc}</div><div class="upgrade-level" style="color:#aaa;">Requires: ${UPGRADES[upgrade.requires].name}</div></div></div>`;
     }
     return html;
   }
