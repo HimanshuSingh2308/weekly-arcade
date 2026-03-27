@@ -1888,6 +1888,24 @@
       outline-offset: 2px;
     }
 
+    /* Decoration animations */
+    @keyframes neonPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    @keyframes fairyTwinkle {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    @keyframes jukeboxBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    @keyframes fishSwim {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(8px); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
