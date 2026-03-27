@@ -1934,76 +1934,14 @@
 
     /* ===== DECORATION CSS ART ===== */
 
-    /* Potted plants */
-    .pot-plant { display:flex;flex-direction:column;align-items:center; }
-    .pot-leaves { width:14px;height:10px;background:radial-gradient(ellipse at center,#4CAF50,#2E7D32);border-radius:50% 50% 30% 30%;position:relative; }
-    .pot-leaves::before,.pot-leaves::after { content:'';position:absolute;width:8px;height:7px;background:#66BB6A;border-radius:50%;top:-3px; }
-    .pot-leaves::before { left:-3px;transform:rotate(-20deg); }
-    .pot-leaves::after { right:-3px;transform:rotate(20deg); }
-    .pot-leaves.small { width:10px;height:7px; }
-    .pot-base { width:10px;height:8px;background:linear-gradient(180deg,#8D6E63,#6D4C41);border-radius:0 0 3px 3px;clip-path:polygon(10% 0%,90% 0%,100% 100%,0% 100%); }
-    .pot-base.small { width:8px;height:6px; }
-
-    /* Aquarium */
-    .aq-tank { width:36px;height:22px;background:rgba(100,200,255,0.15);border:2px solid rgba(100,200,255,0.3);border-radius:3px;position:relative;overflow:hidden; }
-    .aq-water { position:absolute;inset:0;background:linear-gradient(180deg,rgba(100,200,255,0.1),rgba(50,150,220,0.25));  }
-    .aq-fish { position:absolute;width:6px;height:4px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;animation:fishSwim 3s ease-in-out infinite; }
-    .aq-fish.f1 { background:#FF6B35;top:6px;left:5px; }
-    .aq-fish.f2 { background:#FFD700;top:12px;left:18px;animation-delay:-1.5s;animation-direction:reverse; }
-    .aq-fish::after { content:'';position:absolute;right:-3px;top:1px;border-left:4px solid currentColor;border-top:2px solid transparent;border-bottom:2px solid transparent; }
-    .aq-fish.f1::after { border-left-color:#FF6B35; }
-    .aq-fish.f2::after { border-left-color:#FFD700; }
-    .aq-plant { position:absolute;bottom:0;left:50%;width:3px;height:10px;background:linear-gradient(180deg,#66BB6A,#388E3C);border-radius:2px 2px 0 0;transform:translateX(-50%); }
-
-    /* Chandelier */
-    .ch-chain { width:2px;height:6px;background:#888;margin:0 auto; }
-    .ch-body { width:24px;height:8px;background:linear-gradient(180deg,#C9B037,#FFD700,#C9B037);border-radius:0 0 50% 50%;position:relative;margin:0 auto;box-shadow:0 2px 8px rgba(255,215,0,0.3); }
-    .ch-arm { position:absolute;top:-2px;width:8px;height:2px;background:#C9B037; }
-    .ch-arm.left { left:-4px;transform:rotate(-15deg); }
-    .ch-arm.right { right:-4px;transform:rotate(15deg); }
-    .ch-crystal { position:absolute;bottom:-6px;width:3px;height:5px;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(200,200,255,0.6));border-radius:0 0 50% 50%;animation:fairyTwinkle 2s ease-in-out infinite; }
-    .ch-crystal.c1 { left:4px;animation-delay:0s; }
-    .ch-crystal.c2 { left:50%;transform:translateX(-50%);animation-delay:0.6s; }
-    .ch-crystal.c3 { right:4px;animation-delay:1.2s; }
-
-    /* Fairy light bulbs */
-    .fairy-bulb {
-      display: inline-block;
-      width: 5px;
-      height: 7px;
-      background: var(--c, #FFD93D);
-      border-radius: 50% 50% 40% 40%;
-      box-shadow: 0 0 4px var(--c, #FFD93D), 0 0 8px var(--c, #FFD93D);
-      animation: fairyTwinkle 2.5s ease-in-out infinite;
-      animation-delay: var(--d, 0s);
-      position: relative;
-    }
-    .fairy-bulb::before {
-      content: '';
-      position: absolute;
-      top: -3px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 3px;
-      height: 3px;
-      background: #555;
-      border-radius: 1px;
-    }
-    .decor-fairy::before {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: #444;
-      z-index: -1;
-    }
-
-    /* Decoration animations */
+    /* ---------- SHARED ANIMATIONS ---------- */
     @keyframes neonPulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.6; }
+    }
+    @keyframes neonFlicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; text-shadow: 0 0 6px #FF69B4, 0 0 12px #FF1493, 0 0 20px #FF69B4; }
+      20%, 24%, 55% { opacity: 0.4; text-shadow: none; }
     }
     @keyframes fairyTwinkle {
       0%, 100% { opacity: 0.5; }
@@ -2016,6 +1954,807 @@
     @keyframes fishSwim {
       0%, 100% { transform: translateX(0); }
       50% { transform: translateX(8px); }
+    }
+    @keyframes decoSway {
+      0%, 100% { transform: rotate(-2deg); }
+      50% { transform: rotate(2deg); }
+    }
+    @keyframes decoGlow {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+    @keyframes decoSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes decoPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    @keyframes shimmerSweep {
+      0% { left: -40%; }
+      100% { left: 140%; }
+    }
+    @keyframes steamRise {
+      0% { opacity: 0.7; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-10px) scale(1.5); }
+    }
+    @keyframes flameFlicker {
+      0%, 100% { transform: scaleY(1) scaleX(1); }
+      25% { transform: scaleY(1.1) scaleX(0.9); }
+      50% { transform: scaleY(0.9) scaleX(1.1); }
+      75% { transform: scaleY(1.05) scaleX(0.95); }
+    }
+    @keyframes clockTick {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes noteFloat {
+      0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(-12px) rotate(20deg); }
+    }
+    @keyframes waterfallFlow {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 20px; }
+    }
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes dustFloat {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      20% { opacity: 0.4; }
+      80% { opacity: 0.3; }
+      100% { transform: translateY(-40px) translateX(15px); opacity: 0; }
+    }
+    @keyframes champagneDrip {
+      0% { top: 0; opacity: 1; }
+      100% { top: 10px; opacity: 0; }
+    }
+    @keyframes twinkleStar {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+    @keyframes diamondCatch {
+      0%, 80%, 100% { opacity: 0.3; }
+      40% { opacity: 1; }
+    }
+
+    /* ---------- BOBA BLISS ---------- */
+
+    /* Neon sign — tube-style lettering with flicker */
+    .decor-neon { z-index: 7; }
+    .decor-neon .neon-tube {
+      display: block; padding: 3px 8px; border: 2px solid #FF69B4; border-radius: 6px;
+      background: rgba(255,105,180,0.08); font-size: 0.55rem; font-weight: 900;
+      color: #FF69B4; letter-spacing: 3px;
+      text-shadow: 0 0 6px #FF69B4, 0 0 12px #FF1493, 0 0 20px #FF69B4;
+      animation: neonFlicker 4s ease-in-out infinite;
+    }
+    .decor-neon .neon-tube::before {
+      content: ''; position: absolute; inset: -1px; border: 1px solid rgba(255,105,180,0.3);
+      border-radius: 7px; pointer-events: none;
+    }
+
+    /* Plants (kept from original) */
+    .pot-plant { display: flex; flex-direction: column; align-items: center; }
+    .pot-leaves { width: 14px; height: 10px; background: radial-gradient(ellipse at center, #4CAF50, #2E7D32); border-radius: 50% 50% 30% 30%; position: relative; animation: decoSway 3s ease-in-out infinite; }
+    .pot-leaves::before, .pot-leaves::after { content: ''; position: absolute; width: 8px; height: 7px; background: #66BB6A; border-radius: 50%; top: -3px; }
+    .pot-leaves::before { left: -3px; transform: rotate(-20deg); }
+    .pot-leaves::after { right: -3px; transform: rotate(20deg); }
+    .pot-leaves.small { width: 10px; height: 7px; }
+    .pot-base { width: 10px; height: 8px; background: linear-gradient(180deg, #8D6E63, #6D4C41); border-radius: 0 0 3px 3px; clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%); }
+    .pot-base.small { width: 8px; height: 6px; }
+
+    /* Fairy lights (kept from original) */
+    .fairy-bulb {
+      display: inline-block; width: 5px; height: 7px;
+      background: var(--c, #FFD93D); border-radius: 50% 50% 40% 40%;
+      box-shadow: 0 0 4px var(--c, #FFD93D), 0 0 8px var(--c, #FFD93D);
+      animation: fairyTwinkle 2.5s ease-in-out infinite;
+      animation-delay: var(--d, 0s); position: relative;
+    }
+    .fairy-bulb::before {
+      content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+      width: 3px; height: 3px; background: #555; border-radius: 1px;
+    }
+    .decor-fairy::before {
+      content: ''; position: absolute; top: 3px; left: 0; right: 0;
+      height: 1px; background: #444; z-index: -1;
+    }
+
+    /* Flooring — wood planks */
+    .decor-floor {
+      z-index: 1;
+      background:
+        repeating-linear-gradient(90deg,
+          #8B6F47 0px, #8B6F47 18px,
+          #7A5E3A 18px, #7A5E3A 19px,
+          #A0845C 19px, #A0845C 38px,
+          #8B7045 38px, #8B7045 39px);
+      opacity: 0.35;
+    }
+    .decor-floor::before {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent 0px, transparent 14px, rgba(0,0,0,0.06) 14px, rgba(0,0,0,0.06) 15px);
+    }
+
+    /* Jukebox */
+    .decor-jukebox { z-index: 11; }
+    .jukebox-body {
+      width: 20px; height: 28px; background: linear-gradient(180deg, #5C3D2E, #8B5E3C, #5C3D2E);
+      border-radius: 6px 6px 2px 2px; position: relative; overflow: visible;
+    }
+    .jukebox-body::before {
+      content: ''; position: absolute; top: 3px; left: 3px; right: 3px; height: 6px;
+      background: linear-gradient(180deg, #FF6B35, #FFD700); border-radius: 3px;
+      animation: decoGlow 2s ease-in-out infinite;
+    }
+    .jukebox-body::after {
+      content: ''; position: absolute; top: 12px; left: 4px; right: 4px; height: 10px;
+      background: repeating-radial-gradient(circle, #3E2723 0px, #3E2723 1px, transparent 1px, transparent 3px);
+      border-radius: 2px;
+    }
+    .jukebox-note {
+      position: absolute; top: -4px; right: -2px; width: 5px; height: 5px;
+      font-size: 7px; line-height: 1; color: #FFD700;
+      animation: noteFloat 2s ease-out infinite;
+    }
+
+    /* Aquarium (kept + improved) */
+    .aq-tank { width: 36px; height: 22px; background: rgba(100,200,255,0.15); border: 2px solid rgba(100,200,255,0.3); border-radius: 3px; position: relative; overflow: hidden; }
+    .aq-water { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(100,200,255,0.1), rgba(50,150,220,0.25)); }
+    .aq-fish { position: absolute; width: 6px; height: 4px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; animation: fishSwim 3s ease-in-out infinite; }
+    .aq-fish.f1 { background: #FF6B35; top: 6px; left: 5px; }
+    .aq-fish.f2 { background: #FFD700; top: 12px; left: 18px; animation-delay: -1.5s; animation-direction: reverse; }
+    .aq-fish::after { content: ''; position: absolute; right: -3px; top: 1px; border-left: 4px solid currentColor; border-top: 2px solid transparent; border-bottom: 2px solid transparent; }
+    .aq-fish.f1::after { border-left-color: #FF6B35; }
+    .aq-fish.f2::after { border-left-color: #FFD700; }
+    .aq-plant { position: absolute; bottom: 0; left: 50%; width: 3px; height: 10px; background: linear-gradient(180deg, #66BB6A, #388E3C); border-radius: 2px 2px 0 0; transform: translateX(-50%); animation: decoSway 4s ease-in-out infinite; }
+
+    /* Chandelier (kept from original) */
+    .ch-chain { width: 2px; height: 6px; background: #888; margin: 0 auto; }
+    .ch-body { width: 24px; height: 8px; background: linear-gradient(180deg, #C9B037, #FFD700, #C9B037); border-radius: 0 0 50% 50%; position: relative; margin: 0 auto; box-shadow: 0 2px 8px rgba(255,215,0,0.3); }
+    .ch-arm { position: absolute; top: -2px; width: 8px; height: 2px; background: #C9B037; }
+    .ch-arm.left { left: -4px; transform: rotate(-15deg); }
+    .ch-arm.right { right: -4px; transform: rotate(15deg); }
+    .ch-crystal { position: absolute; bottom: -6px; width: 3px; height: 5px; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(200,200,255,0.6)); border-radius: 0 0 50% 50%; animation: fairyTwinkle 2s ease-in-out infinite; }
+    .ch-crystal.c1 { left: 4px; animation-delay: 0s; }
+    .ch-crystal.c2 { left: 50%; transform: translateX(-50%); animation-delay: 0.6s; }
+    .ch-crystal.c3 { right: 4px; animation-delay: 1.2s; }
+
+    /* Gold counter — metallic with sweeping shine */
+    .decor-gold-counter {
+      z-index: 11; overflow: hidden;
+      background: linear-gradient(90deg, #FFD700 0%, #FFF8DC 30%, #FFD700 50%, #FFF8DC 70%, #FFD700 100%);
+      box-shadow: 0 1px 4px rgba(255,215,0,0.4);
+    }
+    .decor-gold-counter::after {
+      content: ''; position: absolute; top: -2px; width: 30%; height: 8px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      animation: shimmerSweep 3s ease-in-out infinite;
+    }
+
+    /* ---------- BEAN & BREW ---------- */
+
+    /* Chalkboard */
+    .decor-chalk { z-index: 5; }
+    .chalk-board {
+      width: 30px; height: 22px; background: #2C2C2C; border: 2px solid #DEB887;
+      border-radius: 1px; position: relative; overflow: hidden;
+    }
+    .chalk-board::before {
+      content: ''; position: absolute; top: 4px; left: 4px; right: 4px;
+      height: 1px; background: rgba(255,255,255,0.25);
+      box-shadow: 0 5px 0 rgba(255,255,255,0.2), 0 10px 0 rgba(255,255,255,0.15);
+    }
+    .chalk-board::after {
+      content: ''; position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%);
+      width: 10px; height: 2px; background: #F5F5DC; border-radius: 1px;
+    }
+
+    /* Clock */
+    .decor-clock { z-index: 5; }
+    .clock-face {
+      width: 18px; height: 18px; background: #FFF8E7; border: 2px solid #5C3D2E;
+      border-radius: 50%; position: relative;
+    }
+    .clock-face::before {
+      content: ''; position: absolute; top: 2px; left: 50%; width: 1px; height: 6px;
+      background: #333; transform-origin: bottom center; transform: translateX(-50%);
+      animation: clockTick 43200s linear infinite;
+    }
+    .clock-face::after {
+      content: ''; position: absolute; top: 3px; left: 50%; width: 1px; height: 5px;
+      background: #333; transform-origin: bottom center; transform: translateX(-50%) rotate(90deg);
+      animation: clockTick 3600s linear infinite;
+    }
+    .clock-dot {
+      position: absolute; top: 50%; left: 50%; width: 2px; height: 2px;
+      background: #333; border-radius: 50%; transform: translate(-50%, -50%); z-index: 1;
+    }
+
+    /* Edison bulbs */
+    .decor-edison { z-index: 5; }
+    .edison-row { display: flex; justify-content: space-around; width: 100%; }
+    .edison-bulb {
+      width: 8px; height: 12px; position: relative; display: flex; flex-direction: column; align-items: center;
+    }
+    .edison-bulb .eb-wire { width: 1px; height: 5px; background: #444; }
+    .edison-bulb .eb-glass {
+      width: 7px; height: 9px; background: radial-gradient(ellipse at center, #FFE0A0, #FFB347);
+      border-radius: 40% 40% 50% 50%; box-shadow: 0 0 6px rgba(255,179,71,0.5), 0 0 12px rgba(255,179,71,0.2);
+      animation: fairyTwinkle 3s ease-in-out infinite;
+    }
+    .edison-bulb:nth-child(2) .eb-glass { animation-delay: 1s; }
+    .edison-bulb:nth-child(3) .eb-glass { animation-delay: 2s; }
+
+    /* Leather booth */
+    .decor-leather { z-index: 11; }
+    .leather-seat {
+      width: 22px; height: 14px; background: linear-gradient(180deg, #8B4513, #6B3410);
+      border-radius: 4px 4px 2px 2px; position: relative;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+    }
+    .leather-seat::before {
+      content: ''; position: absolute; top: 3px; left: 4px;
+      width: 3px; height: 3px; background: rgba(255,255,255,0.15); border-radius: 50%;
+      box-shadow: 6px 0 0 rgba(255,255,255,0.15), 12px 0 0 rgba(255,255,255,0.15),
+                  3px 5px 0 rgba(255,255,255,0.15), 9px 5px 0 rgba(255,255,255,0.15);
+    }
+    .leather-seat::after {
+      content: ''; position: absolute; top: -6px; left: 0; right: 0; height: 6px;
+      background: linear-gradient(180deg, #7B3B10, #8B4513); border-radius: 3px 3px 0 0;
+    }
+
+    /* Art wall */
+    .decor-art { z-index: 5; }
+    .art-frame {
+      width: 20px; height: 16px; border: 2px solid #8B6914; position: relative; background: #FFF;
+    }
+    .art-frame::before {
+      content: ''; position: absolute; inset: 2px;
+      background: linear-gradient(135deg, #E74C3C, #3498DB, #F1C40F, #2ECC71);
+    }
+    .art-frame::after {
+      content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+      width: 6px; height: 2px; background: #8B6914; border-radius: 1px;
+    }
+
+    /* Espresso machine */
+    .decor-espresso { z-index: 11; }
+    .espresso-body {
+      width: 20px; height: 18px; background: linear-gradient(180deg, #C0C0C0, #A0A0A0, #C0C0C0);
+      border-radius: 2px; position: relative;
+    }
+    .espresso-body::before {
+      content: ''; position: absolute; top: 3px; left: 3px; right: 3px; height: 4px;
+      background: #333; border-radius: 1px;
+    }
+    .espresso-body::after {
+      content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+      width: 2px; height: 5px; background: #666;
+    }
+    .espresso-steam {
+      position: absolute; top: -4px; left: 50%; width: 3px; height: 4px;
+      background: rgba(255,255,255,0.4); border-radius: 50%;
+      animation: steamRise 1.5s ease-out infinite;
+    }
+    .espresso-steam:nth-child(2) { left: calc(50% + 4px); animation-delay: 0.5s; }
+
+    /* Record */
+    .decor-record { z-index: 11; }
+    .record-disc {
+      width: 18px; height: 18px; background: radial-gradient(circle, #FFD700 3px, #222 3px, #222 4px, #111 4px);
+      border-radius: 50%; border: 1px solid #333;
+      animation: decoSpin 3s linear infinite;
+    }
+    .record-disc::before {
+      content: ''; position: absolute; inset: 2px;
+      border-radius: 50%; background: transparent;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 0 0 3px rgba(255,255,255,0.03);
+    }
+
+    /* Copper pipe */
+    .decor-copper { z-index: 2; }
+    .copper-pipe {
+      width: 6px; height: 100%; position: relative;
+      background: linear-gradient(90deg, #B87333, #CD853F, #B87333);
+    }
+    .copper-pipe::before {
+      content: ''; position: absolute; top: 20%; left: -2px; width: 10px; height: 4px;
+      background: linear-gradient(90deg, #A0622A, #CD853F, #A0622A); border-radius: 1px;
+    }
+    .copper-pipe::after {
+      content: ''; position: absolute; top: 60%; left: -2px; width: 10px; height: 4px;
+      background: linear-gradient(90deg, #A0622A, #CD853F, #A0622A); border-radius: 1px;
+    }
+
+    /* ---------- JUICE JUNCTION ---------- */
+
+    /* Surfboard */
+    .decor-surfboard { z-index: 5; }
+    .surfboard-shape {
+      width: 10px; height: 36px; border-radius: 50% / 20%;
+      background: linear-gradient(180deg, #FF6B6B 0%, #FFF 25%, #4ECDC4 50%, #FFF 75%, #FFE66D 100%);
+      transform: rotate(-15deg); position: relative;
+      animation: decoSway 4s ease-in-out infinite;
+    }
+    .surfboard-shape::before {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 2px; height: 70%; background: rgba(255,255,255,0.4);
+    }
+
+    /* Palm trees */
+    .decor-palms { z-index: 11; }
+    .palm-tree { display: inline-flex; flex-direction: column; align-items: center; }
+    .palm-trunk {
+      width: 5px; height: 20px; position: relative;
+      background: repeating-linear-gradient(180deg, #8B6914 0px, #8B6914 3px, #6B4F10 3px, #6B4F10 4px);
+    }
+    .palm-fronds {
+      width: 20px; height: 10px; position: relative;
+    }
+    .palm-fronds::before, .palm-fronds::after {
+      content: ''; position: absolute; bottom: 0; width: 12px; height: 6px;
+      background: #2E7D32; border-radius: 0 80% 0 80%;
+    }
+    .palm-fronds::before { left: -2px; transform: rotate(-30deg); }
+    .palm-fronds::after { right: -2px; transform: rotate(30deg) scaleX(-1); }
+    .palm-frond-mid {
+      position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+      width: 14px; height: 5px; background: #388E3C; border-radius: 50% 50% 0 0;
+    }
+
+    /* Tiki torch */
+    .decor-tiki { z-index: 11; }
+    .tiki-torch { display: flex; flex-direction: column; align-items: center; }
+    .tiki-flame {
+      width: 8px; height: 10px; background: radial-gradient(ellipse at bottom, #FF6B00 30%, #FF0000 60%, transparent 100%);
+      border-radius: 50% 50% 30% 30%; position: relative;
+      animation: flameFlicker 0.5s ease-in-out infinite;
+    }
+    .tiki-flame::after {
+      content: ''; position: absolute; inset: 2px; background: radial-gradient(ellipse at bottom, #FFD700 20%, transparent 70%);
+      border-radius: 50%;
+    }
+    .tiki-post {
+      width: 5px; height: 18px;
+      background: repeating-linear-gradient(180deg, #6B4F10 0px, #6B4F10 3px, #8B6914 3px, #8B6914 5px);
+    }
+
+    /* Bamboo counter */
+    .decor-bamboo { z-index: 4; }
+    .bamboo-bar {
+      height: 6px; background: #6B8E23; position: relative; border-radius: 3px;
+    }
+    .bamboo-bar::before {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(90deg, transparent 0px, transparent 14px, #556B2F 14px, #556B2F 16px);
+      border-radius: 3px;
+    }
+    .bamboo-bar::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Fruit wall */
+    .decor-fruit-wall { z-index: 5; }
+    .fruit-row { display: flex; gap: 4px; align-items: center; }
+    .css-fruit {
+      width: 10px; height: 10px; border-radius: 50%; position: relative;
+      animation: decoPulse 3s ease-in-out infinite;
+    }
+    .css-fruit.orange { background: radial-gradient(circle at 35% 35%, #FFA500, #E67E00); }
+    .css-fruit.lemon { background: radial-gradient(circle at 35% 35%, #FFE44D, #F5C800); border-radius: 50% 50% 50% 45%; }
+    .css-fruit.grape { background: radial-gradient(circle at 35% 35%, #8E44AD, #6B2D8B); }
+    .css-fruit.lime { background: radial-gradient(circle at 35% 35%, #7EC850, #4CAF50); }
+    .css-fruit::after {
+      content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+      width: 3px; height: 2px; background: #4A7C1F; border-radius: 50%;
+    }
+    .css-fruit:nth-child(2) { animation-delay: 0.5s; }
+    .css-fruit:nth-child(3) { animation-delay: 1s; }
+    .css-fruit:nth-child(4) { animation-delay: 1.5s; }
+
+    /* Waterfall */
+    .decor-waterfall { z-index: 5; }
+    .waterfall-stream {
+      width: 14px; height: 30px; position: relative; overflow: hidden; border-radius: 4px;
+      background: repeating-linear-gradient(180deg,
+        rgba(100,180,255,0.4) 0px, rgba(100,180,255,0.2) 4px,
+        rgba(150,210,255,0.5) 4px, rgba(150,210,255,0.3) 8px);
+      background-size: 14px 20px;
+      animation: waterfallFlow 0.8s linear infinite;
+    }
+    .waterfall-stream::after {
+      content: ''; position: absolute; bottom: 0; left: -2px; right: -2px; height: 4px;
+      background: rgba(255,255,255,0.5); border-radius: 50%;
+    }
+
+    /* Parrot */
+    .decor-parrot { z-index: 6; }
+    .parrot-body {
+      width: 10px; height: 14px; position: relative;
+      background: linear-gradient(180deg, #FF0000 0%, #FF6600 30%, #00AA00 60%, #0066FF 100%);
+      border-radius: 50% 50% 30% 30%;
+      animation: jukeboxBob 2.5s ease-in-out infinite;
+    }
+    .parrot-body::before {
+      content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+      width: 8px; height: 7px; background: #FF0000; border-radius: 50%;
+    }
+    .parrot-body::after {
+      content: ''; position: absolute; top: -2px; left: 50%; transform: translateX(-30%);
+      width: 4px; height: 3px; background: #FFD700;
+      clip-path: polygon(0 50%, 100% 0, 100% 100%);
+    }
+    .parrot-perch {
+      width: 16px; height: 2px; background: #8B6914; border-radius: 1px;
+      margin-top: -1px; margin-left: -3px;
+    }
+
+    /* Sand floor */
+    .decor-sand { z-index: 1; }
+    .sand-floor {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, #F5DEB3, #DEB887); opacity: 0.4;
+    }
+    .sand-floor::before {
+      content: ''; position: absolute; bottom: 4px; left: 15%;
+      width: 5px; height: 4px; background: #D2B48C; border-radius: 50% 50% 50% 20%;
+      box-shadow: 20px 2px 0 3px #C4A882, 40px -1px 0 2px #D2B48C;
+    }
+
+    /* ---------- SWEET TOOTH ---------- */
+
+    /* Candy jars */
+    .decor-candy-jars { z-index: 5; }
+    .candy-jar-row { display: flex; gap: 3px; }
+    .candy-jar {
+      width: 10px; height: 14px; background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4); border-radius: 3px 3px 2px 2px;
+      position: relative; overflow: hidden;
+    }
+    .candy-jar::before {
+      content: ''; position: absolute; top: -1px; left: 1px; right: 1px; height: 3px;
+      background: rgba(200,200,200,0.5); border-radius: 1px;
+    }
+    .candy-jar .candy-dots {
+      position: absolute; bottom: 2px; left: 2px;
+      width: 3px; height: 3px; border-radius: 50%;
+      box-shadow: 3px 0 0 0 var(--candy-c2, #FFB6C1), 0 -3px 0 0 var(--candy-c1, #FF69B4), 3px -3px 0 0 var(--candy-c2, #FFB6C1);
+    }
+    .candy-jar:nth-child(1) .candy-dots { background: #FF69B4; --candy-c1: #FF1493; --candy-c2: #FFB6C1; }
+    .candy-jar:nth-child(2) .candy-dots { background: #87CEEB; --candy-c1: #4FC3F7; --candy-c2: #B3E5FC; }
+    .candy-jar:nth-child(3) .candy-dots { background: #98FB98; --candy-c1: #66BB6A; --candy-c2: #C8E6C9; }
+
+    /* Macaron tower */
+    .decor-macaron { z-index: 5; }
+    .macaron-stack { display: flex; flex-direction: column; align-items: center; gap: 1px; animation: decoPulse 4s ease-in-out infinite; }
+    .macaron-piece {
+      width: 14px; height: 5px; border-radius: 50%; position: relative;
+    }
+    .macaron-piece::after {
+      content: ''; position: absolute; bottom: -1px; left: 2px; right: 2px; height: 2px;
+      background: rgba(255,255,255,0.5); border-radius: 1px;
+    }
+    .macaron-piece.pink { background: #FFB6C1; }
+    .macaron-piece.mint { background: #98FF98; }
+    .macaron-piece.lavender { background: #D8B4FE; }
+
+    /* Donut wall */
+    .decor-donut-wall { z-index: 5; }
+    .donut-row { display: flex; gap: 3px; align-items: center; }
+    .css-donut {
+      width: 12px; height: 12px; border-radius: 50%; position: relative;
+      animation: decoPulse 3.5s ease-in-out infinite;
+    }
+    .css-donut::before {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 4px; height: 4px; background: var(--shop-wall-top, #F5EDE2); border-radius: 50%;
+    }
+    .css-donut.d-pink { background: #FF69B4; }
+    .css-donut.d-choc { background: #8B4513; }
+    .css-donut.d-blue { background: #87CEEB; }
+    .css-donut::after {
+      content: ''; position: absolute; top: 1px; left: 3px;
+      width: 2px; height: 2px; border-radius: 50%; background: #FFD700;
+      box-shadow: 3px 2px 0 #FF69B4, -1px 3px 0 #87CEEB;
+    }
+    .css-donut:nth-child(2) { animation-delay: 0.8s; }
+    .css-donut:nth-child(3) { animation-delay: 1.6s; }
+
+    /* Pink oven */
+    .decor-pink-oven { z-index: 11; }
+    .oven-body {
+      width: 22px; height: 20px; background: linear-gradient(180deg, #FF69B4, #FF85C2);
+      border-radius: 4px; position: relative;
+    }
+    .oven-body::before {
+      content: ''; position: absolute; top: 4px; left: 3px; right: 3px; height: 10px;
+      background: rgba(0,0,0,0.15); border-radius: 2px; border: 1px solid rgba(255,255,255,0.2);
+    }
+    .oven-window {
+      position: absolute; top: 5px; left: 4px; right: 4px; height: 8px;
+      background: radial-gradient(ellipse at center, #FF8C00, #CC5500); border-radius: 1px;
+      animation: decoGlow 2s ease-in-out infinite; opacity: 0.7;
+    }
+    .oven-body::after {
+      content: ''; position: absolute; top: 2px; right: 2px; width: 4px; height: 2px;
+      background: #FFF; border-radius: 1px;
+    }
+
+    /* Candy cane */
+    .decor-candy-cane { z-index: 11; }
+    .cane-shape {
+      width: 6px; height: 24px; position: relative;
+      background: repeating-linear-gradient(180deg, #FF0000 0px, #FF0000 3px, #FFF 3px, #FFF 6px);
+      border-radius: 0 0 2px 2px;
+    }
+    .cane-shape::before {
+      content: ''; position: absolute; top: -6px; left: 0; width: 12px; height: 12px;
+      border: 3px solid transparent; border-top: 3px solid #FF0000; border-right: 3px solid #FFF;
+      border-radius: 50%; clip-path: inset(0 0 50% 0);
+    }
+
+    /* Gingerbread trim */
+    .decor-gingerbread { z-index: 3; }
+    .gingerbread-trim {
+      height: 6px; position: relative;
+      background: #8B4513;
+    }
+    .gingerbread-trim::before {
+      content: ''; position: absolute; top: -3px; left: 0; right: 0; height: 6px;
+      background: repeating-linear-gradient(90deg,
+        transparent 0px, transparent 6px,
+        #D2691E 6px, #D2691E 7px,
+        transparent 7px, transparent 12px);
+    }
+    .gingerbread-trim::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: repeating-linear-gradient(90deg,
+        #FFF 0px, #FFF 4px,
+        transparent 4px, transparent 8px);
+      opacity: 0.5;
+    }
+
+    /* Cotton candy */
+    .decor-cotton-candy { z-index: 11; }
+    .cotton-candy-shape {
+      display: flex; flex-direction: column; align-items: center;
+      animation: jukeboxBob 3s ease-in-out infinite;
+    }
+    .cotton-candy-fluff {
+      width: 18px; height: 16px; position: relative;
+      background: radial-gradient(ellipse at 40% 40%, #FFB6C1, #FF69B4);
+      border-radius: 50%;
+      box-shadow: -3px 2px 0 #FF85C2, 3px -2px 0 #FFC1CC, 0 3px 0 #FF69B4;
+    }
+    .cotton-candy-stick {
+      width: 2px; height: 10px; background: #DEB887;
+    }
+
+    /* Crystal cake stand */
+    .decor-crystal-cake { z-index: 5; }
+    .cake-stand {
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .cake-tier {
+      height: 4px; background: linear-gradient(180deg, #E8E8E8, #C0C0C0);
+      border-radius: 1px; margin-bottom: 1px;
+    }
+    .cake-tier.t1 { width: 10px; }
+    .cake-tier.t2 { width: 16px; }
+    .cake-tier.t3 { width: 22px; }
+    .cake-stand-base {
+      width: 14px; height: 3px; background: linear-gradient(180deg, #C0C0C0, #A0A0A0);
+      border-radius: 0 0 2px 2px;
+    }
+    .cake-sparkle {
+      position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+      width: 4px; height: 4px;
+      background: radial-gradient(circle, #FFD700, transparent 70%);
+      animation: sparkle 2s ease-in-out infinite;
+    }
+
+    /* ---------- GOLDEN LOUNGE ---------- */
+
+    /* Velvet rope */
+    .decor-velvet-rope { z-index: 11; }
+    .velvet-rope-set {
+      display: flex; align-items: flex-end; gap: 16px; position: relative;
+    }
+    .rope-post {
+      width: 4px; height: 18px;
+      background: linear-gradient(180deg, #FFD700, #DAA520, #FFD700);
+      border-radius: 2px;
+    }
+    .rope-post::before {
+      content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+      width: 6px; height: 3px; background: #FFD700; border-radius: 50%;
+    }
+    .rope-line {
+      position: absolute; top: 6px; left: 4px; right: 4px; height: 3px;
+      background: #8B0000; border-radius: 1px;
+      border-bottom: 1px solid #A00000;
+    }
+
+    /* Mirror */
+    .decor-mirror { z-index: 5; }
+    .mirror-frame {
+      width: 22px; height: 28px; border: 3px solid #DAA520; border-radius: 2px;
+      position: relative; background: linear-gradient(135deg, #E8E8E8, #F5F5F5, #D0D0D0);
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.05);
+    }
+    .mirror-frame::before {
+      content: ''; position: absolute; inset: -1px; border: 1px solid #B8860B;
+      border-radius: 3px; pointer-events: none;
+    }
+    .mirror-frame::after {
+      content: ''; position: absolute; top: 2px; left: 2px; width: 8px; height: 12px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.5), transparent);
+      border-radius: 1px;
+    }
+    .mirror-corner {
+      position: absolute; width: 4px; height: 4px; background: #FFD700; border-radius: 1px;
+    }
+    .mirror-corner.tl { top: -1px; left: -1px; }
+    .mirror-corner.tr { top: -1px; right: -1px; }
+    .mirror-corner.bl { bottom: -1px; left: -1px; }
+    .mirror-corner.br { bottom: -1px; right: -1px; }
+
+    /* Crystal chandelier (enhanced) */
+    .decor-crystal-chand { z-index: 6; }
+    .cc-chain { width: 2px; height: 6px; background: #AAA; margin: 0 auto; }
+    .cc-body {
+      width: 30px; height: 10px; margin: 0 auto; position: relative;
+      background: linear-gradient(180deg, #E8E8E8, #FFD700, #E8E8E8);
+      border-radius: 0 0 50% 50%;
+      box-shadow: 0 2px 12px rgba(255,215,0,0.4);
+    }
+    .cc-crystal {
+      position: absolute; bottom: -8px; width: 3px; height: 7px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(200,200,255,0.6));
+      border-radius: 0 0 50% 50%;
+      animation: fairyTwinkle 2s ease-in-out infinite;
+    }
+    .cc-crystal::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255,100,100,0.3), rgba(100,255,100,0.3), rgba(100,100,255,0.3), transparent);
+      animation: sparkle 3s ease-in-out infinite;
+    }
+    .cc-crystal:nth-child(1) { left: 2px; animation-delay: 0s; }
+    .cc-crystal:nth-child(2) { left: 7px; animation-delay: 0.4s; height: 9px; }
+    .cc-crystal:nth-child(3) { left: 50%; transform: translateX(-50%); animation-delay: 0.8s; height: 10px; }
+    .cc-crystal:nth-child(4) { right: 7px; animation-delay: 1.2s; height: 9px; }
+    .cc-crystal:nth-child(5) { right: 2px; animation-delay: 1.6s; }
+    .cc-arm { position: absolute; top: -2px; width: 10px; height: 2px; background: #DAA520; }
+    .cc-arm.left { left: -6px; transform: rotate(-15deg); }
+    .cc-arm.right { right: -6px; transform: rotate(15deg); }
+
+    /* Pillars */
+    .decor-pillars { z-index: 11; }
+    .pillar-col {
+      width: 10px; display: flex; flex-direction: column; align-items: center;
+    }
+    .pillar-capital {
+      width: 14px; height: 4px; background: linear-gradient(180deg, #DAA520, #B8860B);
+      border-radius: 1px;
+    }
+    .pillar-shaft {
+      width: 8px; height: 22px;
+      background: repeating-linear-gradient(90deg, #E8D5A0 0px, #E8D5A0 2px, #D4C48A 2px, #D4C48A 3px);
+    }
+    .pillar-base {
+      width: 14px; height: 3px; background: linear-gradient(180deg, #B8860B, #8B6914);
+      border-radius: 0 0 1px 1px;
+    }
+
+    /* Piano */
+    .decor-piano { z-index: 11; }
+    .piano-body {
+      width: 28px; height: 16px; position: relative;
+      background: #111; border-radius: 0 12px 2px 2px;
+    }
+    .piano-keys {
+      position: absolute; bottom: 0; left: 2px; right: 8px; height: 5px;
+      background: repeating-linear-gradient(90deg,
+        #FFF 0px, #FFF 3px, #111 3px, #111 4px);
+      border-radius: 0 0 1px 1px;
+    }
+    .piano-body::after {
+      content: ''; position: absolute; top: 2px; right: 4px; width: 1px; height: 8px;
+      background: #333;
+    }
+
+    /* Champagne fountain */
+    .decor-champagne { z-index: 5; }
+    .champagne-tower { position: relative; display: flex; flex-direction: column; align-items: center; }
+    .champagne-tier {
+      height: 5px; background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+      border: 1px solid rgba(255,215,0,0.3); border-radius: 1px 1px 0 0; margin-bottom: 1px;
+    }
+    .champagne-tier.ct1 { width: 8px; }
+    .champagne-tier.ct2 { width: 14px; }
+    .champagne-tier.ct3 { width: 20px; }
+    .champagne-drop {
+      position: absolute; width: 2px; height: 2px; background: #FFD700;
+      border-radius: 50%; animation: champagneDrip 1.5s ease-in infinite;
+    }
+    .champagne-drop:nth-child(4) { left: 30%; animation-delay: 0s; top: 4px; }
+    .champagne-drop:nth-child(5) { left: 60%; animation-delay: 0.5s; top: 8px; }
+    .champagne-drop:nth-child(6) { left: 45%; animation-delay: 1s; top: 2px; }
+
+    /* Star ceiling */
+    .decor-star-ceiling { z-index: 5; }
+    .star-field { position: relative; width: 100%; height: 100%; }
+    .mini-star {
+      position: absolute; width: 2px; height: 2px; background: #FFD700;
+      border-radius: 50%; animation: twinkleStar 2s ease-in-out infinite;
+    }
+
+    /* Diamond bar */
+    .decor-diamond-bar { z-index: 4; }
+    .diamond-surface {
+      height: 6px; position: relative;
+      background: linear-gradient(90deg, #FFD700, #FFF8DC, #FFD700, #FFF8DC, #FFD700);
+    }
+    .diamond-gem {
+      position: absolute; top: 1px; width: 4px; height: 4px;
+      background: linear-gradient(135deg, #FFF, #87CEEB, #FFF); border-radius: 1px;
+      transform: rotate(45deg);
+      animation: diamondCatch 3s ease-in-out infinite;
+    }
+    .diamond-gem:nth-child(1) { left: 15%; animation-delay: 0s; }
+    .diamond-gem:nth-child(2) { left: 40%; animation-delay: 1s; }
+    .diamond-gem:nth-child(3) { left: 65%; animation-delay: 2s; }
+    .diamond-gem:nth-child(4) { left: 85%; animation-delay: 0.5s; }
+
+    /* ---------- VIBE / ATMOSPHERE SYSTEM ---------- */
+
+    .shop-bg.vibe-bare { /* no extra effect */ }
+
+    .shop-bg.vibe-cozy {
+      box-shadow: inset 0 0 30px rgba(255,200,100,0.03);
+    }
+    .shop-bg.vibe-cozy::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 20;
+      background: radial-gradient(circle at 30% 80%, rgba(255,200,100,0.03), transparent 60%);
+    }
+
+    .shop-bg.vibe-premium {
+      box-shadow: inset 0 0 40px rgba(255,200,100,0.06);
+    }
+    .shop-bg.vibe-premium::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 20;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(255,215,0,0.06), transparent 50%),
+        radial-gradient(circle at 30% 80%, rgba(255,200,100,0.04), transparent 60%);
+    }
+
+    .shop-bg.vibe-luxurious {
+      box-shadow: inset 0 0 50px rgba(255,200,100,0.08);
+    }
+    .shop-bg.vibe-luxurious::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 20;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(255,215,0,0.09), transparent 50%),
+        radial-gradient(circle at 50% 50%, transparent 60%, rgba(0,0,0,0.06) 100%);
+    }
+
+    /* Dust motes for vibe */
+    .vibe-mote {
+      position: absolute; width: 2px; height: 2px; background: rgba(255,215,0,0.4);
+      border-radius: 50%; pointer-events: none; z-index: 21;
+      animation: dustFloat 6s ease-in-out infinite;
+    }
+    .vibe-sparkle {
+      position: absolute; width: 3px; height: 3px;
+      background: radial-gradient(circle, #FFD700, transparent 70%);
+      border-radius: 50%; pointer-events: none; z-index: 21;
+      animation: sparkle 2.5s ease-in-out infinite;
     }
 
     @media (prefers-reduced-motion: reduce) {

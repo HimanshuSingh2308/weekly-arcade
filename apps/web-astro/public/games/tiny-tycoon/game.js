@@ -1089,58 +1089,186 @@
     const shopBg = document.querySelector('.shop-bg');
     if (!shopBg) return;
 
-    // Remove existing decoration elements
-    shopBg.querySelectorAll('.shop-decor').forEach(el => el.remove());
+    // Remove existing decoration elements and vibe elements
+    shopBg.querySelectorAll('.shop-decor,.vibe-mote,.vibe-sparkle').forEach(el => el.remove());
+    shopBg.classList.remove('vibe-bare', 'vibe-cozy', 'vibe-premium', 'vibe-luxurious');
 
     const owned = getOwnedDecorations();
-    if (owned.length === 0) return;
+    if (owned.length === 0) {
+      shopBg.classList.add('vibe-bare');
+      return;
+    }
 
     const decoVisuals = {
-      // Boba Bliss
-      neon_sign:    { html: '<div class="shop-decor decor-neon"><span style="display:block;padding:2px 6px;border:2px solid #FF69B4;border-radius:4px;background:rgba(255,105,180,0.1);">BOBA</span></div>', css: 'position:absolute;top:6px;right:10px;font-size:0.55rem;font-weight:900;color:#FF69B4;text-shadow:0 0 6px #FF69B4,0 0 12px #FF1493,0 0 20px #FF69B4;letter-spacing:3px;animation:neonPulse 2s ease-in-out infinite;z-index:7;' },
-      plants:       { html: '<div class="shop-decor decor-plants"><div class="pot-plant"><div class="pot-leaves"></div><div class="pot-base"></div></div><div class="pot-plant" style="margin-left:8px;"><div class="pot-leaves small"></div><div class="pot-base small"></div></div></div>', css: 'position:absolute;top:14%;left:6px;display:flex;gap:2px;z-index:11;' },
-      fairy_lights: { html: '<div class="shop-decor decor-fairy"><span class="fairy-bulb" style="--d:0s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:0.4s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:0.8s;--c:#6BCB77;"></span><span class="fairy-bulb" style="--d:1.2s;--c:#4D96FF;"></span><span class="fairy-bulb" style="--d:1.6s;--c:#FF6BD6;"></span><span class="fairy-bulb" style="--d:2.0s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:2.4s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:2.8s;--c:#6BCB77;"></span></div>', css: 'position:absolute;top:1px;left:5%;right:5%;display:flex;justify-content:space-between;z-index:7;' },
-      flooring:     { html: '<div class="shop-decor decor-floor"></div>', css: 'position:absolute;bottom:0;left:0;right:0;height:30px;background:repeating-linear-gradient(90deg,#8B6F47 0px,#8B6F47 20px,#A0845C 20px,#A0845C 40px);opacity:0.3;z-index:1;' },
-      jukebox:      { html: '<div class="shop-decor decor-jukebox">🎵</div>', css: 'position:absolute;top:17%;right:8px;font-size:1.2rem;z-index:11;animation:jukeboxBob 2s ease-in-out infinite;' },
-      aquarium:     { html: '<div class="shop-decor decor-aquarium"><div class="aq-tank"><div class="aq-water"></div><div class="aq-fish f1"></div><div class="aq-fish f2"></div><div class="aq-plant"></div></div></div>', css: 'position:absolute;top:6px;left:6px;z-index:7;' },
-      chandelier:   { html: '<div class="shop-decor decor-chandelier"><div class="ch-chain"></div><div class="ch-body"><div class="ch-arm left"></div><div class="ch-arm right"></div><div class="ch-crystal c1"></div><div class="ch-crystal c2"></div><div class="ch-crystal c3"></div></div></div>', css: 'position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:7;' },
-      gold_counter: { html: '<div class="shop-decor decor-gold-counter"></div>', css: 'position:absolute;top:25.5%;left:0;right:0;height:4px;background:linear-gradient(90deg,#FFD700 0%,#FFF8DC 30%,#FFD700 50%,#FFF8DC 70%,#FFD700 100%);box-shadow:0 1px 4px rgba(255,215,0,0.4);z-index:11;' },
-      // Bean & Brew
-      chalkboard:   { html: '<div class="shop-decor decor-chalk">📋</div>', css: 'position:absolute;top:12px;right:10px;font-size:1rem;z-index:5;' },
-      clock:        { html: '<div class="shop-decor decor-clock2">🕐</div>', css: 'position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:0.9rem;z-index:5;' },
-      edison:       { html: '<div class="shop-decor decor-edison">💡💡💡</div>', css: 'position:absolute;top:0;left:15%;right:15%;text-align:center;font-size:0.5rem;letter-spacing:12px;opacity:0.7;z-index:5;' },
-      leather:      { html: '<div class="shop-decor decor-leather">💺</div>', css: 'position:absolute;top:17%;right:12px;font-size:0.9rem;z-index:11;' },
-      art_wall:     { html: '<div class="shop-decor decor-art">🎨</div>', css: 'position:absolute;top:14px;left:12px;font-size:0.8rem;z-index:5;' },
-      espresso_machine: { html: '<div class="shop-decor decor-espresso">☕</div>', css: 'position:absolute;top:15%;left:55%;font-size:0.9rem;z-index:11;' },
-      record:       { html: '<div class="shop-decor decor-record">🎶</div>', css: 'position:absolute;top:17%;left:12px;font-size:0.9rem;z-index:11;animation:jukeboxBob 3s ease-in-out infinite;' },
-      copper:       { html: '<div class="shop-decor decor-copper"></div>', css: 'position:absolute;top:0;right:0;width:6px;height:100%;background:linear-gradient(180deg,#B87333,#CD853F,#B87333);opacity:0.4;z-index:2;' },
-      // Juice Junction
-      surfboard:    { html: '<div class="shop-decor">🏄</div>', css: 'position:absolute;top:10px;right:8px;font-size:1rem;transform:rotate(-15deg);z-index:5;' },
-      palms:        { html: '<div class="shop-decor">🌴🌴</div>', css: 'position:absolute;top:16%;left:4px;font-size:0.8rem;letter-spacing:4px;z-index:11;' },
-      tiki:         { html: '<div class="shop-decor">🔥</div>', css: 'position:absolute;top:17%;right:8px;font-size:0.7rem;z-index:11;animation:neonPulse 2s ease-in-out infinite;' },
-      bamboo:       { html: '<div class="shop-decor"></div>', css: 'position:absolute;bottom:28px;left:0;right:0;height:6px;background:linear-gradient(90deg,#8BC34A,#689F38,#8BC34A);z-index:4;' },
-      fruit_wall:   { html: '<div class="shop-decor">🍊🍋🥭🍇</div>', css: 'position:absolute;top:12px;left:8px;font-size:0.5rem;letter-spacing:3px;z-index:5;' },
-      waterfall:    { html: '<div class="shop-decor">💧</div>', css: 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:0.8rem;z-index:5;animation:fairyTwinkle 2s ease-in-out infinite;' },
-      parrot:       { html: '<div class="shop-decor">🦜</div>', css: 'position:absolute;top:6px;left:10px;font-size:0.9rem;z-index:6;animation:jukeboxBob 2.5s ease-in-out infinite;' },
-      sand:         { html: '<div class="shop-decor"></div>', css: 'position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(180deg,#F5DEB3,#DEB887);opacity:0.4;z-index:1;' },
-      // Sweet Tooth
-      candy_jars:   { html: '<div class="shop-decor">🍬🍬🍬</div>', css: 'position:absolute;top:12px;right:8px;font-size:0.5rem;letter-spacing:3px;z-index:5;' },
-      macaron:      { html: '<div class="shop-decor">🧁</div>', css: 'position:absolute;top:18px;left:10px;font-size:0.8rem;z-index:5;' },
-      donut_wall:   { html: '<div class="shop-decor">🍩🍩🍩</div>', css: 'position:absolute;top:8px;left:30%;font-size:0.45rem;letter-spacing:4px;z-index:5;' },
-      pink_oven:    { html: '<div class="shop-decor">🔥</div>', css: 'position:absolute;top:15%;right:10px;font-size:0.8rem;z-index:11;' },
-      candy_cane:   { html: '<div class="shop-decor">🍭</div>', css: 'position:absolute;top:16%;left:6px;font-size:0.9rem;z-index:11;' },
-      gingerbread:  { html: '<div class="shop-decor"></div>', css: 'position:absolute;top:0;left:0;right:0;height:4px;background:repeating-linear-gradient(90deg,#8B4513 0px,#8B4513 8px,#D2691E 8px,#D2691E 16px);z-index:3;' },
-      cotton_candy: { html: '<div class="shop-decor">🍥</div>', css: 'position:absolute;top:17%;left:50%;font-size:1rem;z-index:11;animation:jukeboxBob 3s ease-in-out infinite;' },
-      crystal_cake: { html: '<div class="shop-decor">💎🍰</div>', css: 'position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:0.6rem;z-index:5;letter-spacing:2px;' },
-      // Golden Lounge
-      velvet_rope:  { html: '<div class="shop-decor">🪢</div>', css: 'position:absolute;top:18%;left:30%;font-size:0.7rem;z-index:11;' },
-      mirror:       { html: '<div class="shop-decor">🪞</div>', css: 'position:absolute;top:10px;right:10px;font-size:0.9rem;z-index:5;' },
-      crystal_chand:{ html: '<div class="shop-decor">💎</div>', css: 'position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:1.1rem;z-index:6;filter:drop-shadow(0 0 8px rgba(255,215,0,0.6));animation:neonPulse 3s ease-in-out infinite;' },
-      pillars:      { html: '<div class="shop-decor">🏛️</div>', css: 'position:absolute;top:14%;left:4px;font-size:1rem;z-index:11;' },
-      piano:        { html: '<div class="shop-decor">🎹</div>', css: 'position:absolute;top:17%;right:6px;font-size:1rem;z-index:11;' },
-      champagne_fountain: { html: '<div class="shop-decor">🍾</div>', css: 'position:absolute;top:16px;left:10px;font-size:0.9rem;z-index:5;animation:fairyTwinkle 2.5s ease-in-out infinite;' },
-      star_ceiling: { html: '<div class="shop-decor">⭐⭐⭐</div>', css: 'position:absolute;top:1px;left:15%;right:15%;text-align:center;font-size:0.4rem;letter-spacing:10px;z-index:5;animation:fairyTwinkle 4s ease-in-out infinite;' },
-      diamond_bar:  { html: '<div class="shop-decor"></div>', css: 'position:absolute;bottom:28px;left:0;right:0;height:6px;background:linear-gradient(90deg,#FFD700,#FFF8DC,#FFD700,#FFF8DC,#FFD700);z-index:4;' },
+      // ── Boba Bliss ──
+      neon_sign: {
+        html: '<div class="shop-decor decor-neon"><span class="neon-tube">BOBA</span></div>',
+        css: 'position:absolute;top:6px;right:10px;'
+      },
+      plants: {
+        html: '<div class="shop-decor decor-plants"><div class="pot-plant"><div class="pot-leaves"></div><div class="pot-base"></div></div><div class="pot-plant" style="margin-left:8px;"><div class="pot-leaves small"></div><div class="pot-base small"></div></div></div>',
+        css: 'position:absolute;top:14%;left:6px;display:flex;gap:2px;z-index:11;'
+      },
+      fairy_lights: {
+        html: '<div class="shop-decor decor-fairy"><span class="fairy-bulb" style="--d:0s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:0.4s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:0.8s;--c:#6BCB77;"></span><span class="fairy-bulb" style="--d:1.2s;--c:#4D96FF;"></span><span class="fairy-bulb" style="--d:1.6s;--c:#FF6BD6;"></span><span class="fairy-bulb" style="--d:2.0s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:2.4s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:2.8s;--c:#6BCB77;"></span></div>',
+        css: 'position:absolute;top:1px;left:5%;right:5%;display:flex;justify-content:space-between;z-index:7;'
+      },
+      flooring: {
+        html: '<div class="shop-decor decor-floor"></div>',
+        css: 'position:absolute;bottom:0;left:0;right:0;height:30px;'
+      },
+      jukebox: {
+        html: '<div class="shop-decor decor-jukebox"><div class="jukebox-body"><span class="jukebox-note">&#9835;</span></div></div>',
+        css: 'position:absolute;top:17%;right:8px;'
+      },
+      aquarium: {
+        html: '<div class="shop-decor decor-aquarium"><div class="aq-tank"><div class="aq-water"></div><div class="aq-fish f1"></div><div class="aq-fish f2"></div><div class="aq-plant"></div></div></div>',
+        css: 'position:absolute;top:6px;left:6px;z-index:7;'
+      },
+      chandelier: {
+        html: '<div class="shop-decor decor-chandelier"><div class="ch-chain"></div><div class="ch-body"><div class="ch-arm left"></div><div class="ch-arm right"></div><div class="ch-crystal c1"></div><div class="ch-crystal c2"></div><div class="ch-crystal c3"></div></div></div>',
+        css: 'position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:7;'
+      },
+      gold_counter: {
+        html: '<div class="shop-decor decor-gold-counter"></div>',
+        css: 'position:absolute;top:25.5%;left:0;right:0;height:4px;'
+      },
+
+      // ── Bean & Brew ──
+      chalkboard: {
+        html: '<div class="shop-decor decor-chalk"><div class="chalk-board"></div></div>',
+        css: 'position:absolute;top:8px;right:8px;'
+      },
+      clock: {
+        html: '<div class="shop-decor decor-clock"><div class="clock-face"><div class="clock-dot"></div></div></div>',
+        css: 'position:absolute;top:6px;left:50%;transform:translateX(-50%);'
+      },
+      edison: {
+        html: '<div class="shop-decor decor-edison"><div class="edison-row"><div class="edison-bulb"><div class="eb-wire"></div><div class="eb-glass"></div></div><div class="edison-bulb"><div class="eb-wire"></div><div class="eb-glass"></div></div><div class="edison-bulb"><div class="eb-wire"></div><div class="eb-glass"></div></div></div></div>',
+        css: 'position:absolute;top:0;left:15%;right:15%;'
+      },
+      leather: {
+        html: '<div class="shop-decor decor-leather"><div class="leather-seat"></div></div>',
+        css: 'position:absolute;top:17%;right:10px;'
+      },
+      art_wall: {
+        html: '<div class="shop-decor decor-art"><div class="art-frame"></div></div>',
+        css: 'position:absolute;top:10px;left:10px;'
+      },
+      espresso_machine: {
+        html: '<div class="shop-decor decor-espresso"><div class="espresso-body"><div class="espresso-steam"></div><div class="espresso-steam"></div></div></div>',
+        css: 'position:absolute;top:15%;left:55%;'
+      },
+      record: {
+        html: '<div class="shop-decor decor-record"><div class="record-disc"></div></div>',
+        css: 'position:absolute;top:17%;left:10px;'
+      },
+      copper: {
+        html: '<div class="shop-decor decor-copper"><div class="copper-pipe"></div></div>',
+        css: 'position:absolute;top:0;right:0;width:6px;height:100%;opacity:0.5;'
+      },
+
+      // ── Juice Junction ──
+      surfboard: {
+        html: '<div class="shop-decor decor-surfboard"><div class="surfboard-shape"></div></div>',
+        css: 'position:absolute;top:4px;right:6px;'
+      },
+      palms: {
+        html: '<div class="shop-decor decor-palms"><div class="palm-tree"><div class="palm-fronds"><div class="palm-frond-mid"></div></div><div class="palm-trunk"></div></div><div class="palm-tree" style="margin-left:6px;"><div class="palm-fronds"><div class="palm-frond-mid"></div></div><div class="palm-trunk"></div></div></div>',
+        css: 'position:absolute;top:2%;left:4px;display:flex;'
+      },
+      tiki: {
+        html: '<div class="shop-decor decor-tiki"><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div></div>',
+        css: 'position:absolute;top:10%;right:8px;'
+      },
+      bamboo: {
+        html: '<div class="shop-decor decor-bamboo"><div class="bamboo-bar"></div></div>',
+        css: 'position:absolute;bottom:28px;left:0;right:0;'
+      },
+      fruit_wall: {
+        html: '<div class="shop-decor decor-fruit-wall"><div class="fruit-row"><div class="css-fruit orange"></div><div class="css-fruit lemon"></div><div class="css-fruit grape"></div><div class="css-fruit lime"></div></div></div>',
+        css: 'position:absolute;top:10px;left:6px;'
+      },
+      waterfall: {
+        html: '<div class="shop-decor decor-waterfall"><div class="waterfall-stream"></div></div>',
+        css: 'position:absolute;top:12px;left:50%;transform:translateX(-50%);'
+      },
+      parrot: {
+        html: '<div class="shop-decor decor-parrot"><div class="parrot-body"></div><div class="parrot-perch"></div></div>',
+        css: 'position:absolute;top:6px;left:8px;'
+      },
+      sand: {
+        html: '<div class="shop-decor decor-sand"><div class="sand-floor"></div></div>',
+        css: 'position:absolute;bottom:0;left:0;right:0;height:30px;'
+      },
+
+      // ── Sweet Tooth ──
+      candy_jars: {
+        html: '<div class="shop-decor decor-candy-jars"><div class="candy-jar-row"><div class="candy-jar"><div class="candy-dots"></div></div><div class="candy-jar"><div class="candy-dots"></div></div><div class="candy-jar"><div class="candy-dots"></div></div></div></div>',
+        css: 'position:absolute;top:8px;right:6px;'
+      },
+      macaron: {
+        html: '<div class="shop-decor decor-macaron"><div class="macaron-stack"><div class="macaron-piece pink"></div><div class="macaron-piece mint"></div><div class="macaron-piece lavender"></div></div></div>',
+        css: 'position:absolute;top:12px;left:8px;'
+      },
+      donut_wall: {
+        html: '<div class="shop-decor decor-donut-wall"><div class="donut-row"><div class="css-donut d-pink"></div><div class="css-donut d-choc"></div><div class="css-donut d-blue"></div></div></div>',
+        css: 'position:absolute;top:6px;left:28%;'
+      },
+      pink_oven: {
+        html: '<div class="shop-decor decor-pink-oven"><div class="oven-body"><div class="oven-window"></div></div></div>',
+        css: 'position:absolute;top:15%;right:8px;'
+      },
+      candy_cane: {
+        html: '<div class="shop-decor decor-candy-cane"><div class="cane-shape"></div></div>',
+        css: 'position:absolute;top:12%;left:6px;'
+      },
+      gingerbread: {
+        html: '<div class="shop-decor decor-gingerbread"><div class="gingerbread-trim"></div></div>',
+        css: 'position:absolute;top:0;left:0;right:0;'
+      },
+      cotton_candy: {
+        html: '<div class="shop-decor decor-cotton-candy"><div class="cotton-candy-shape"><div class="cotton-candy-fluff"></div><div class="cotton-candy-stick"></div></div></div>',
+        css: 'position:absolute;top:17%;left:50%;'
+      },
+      crystal_cake: {
+        html: '<div class="shop-decor decor-crystal-cake"><div class="cake-stand" style="position:relative;"><div class="cake-sparkle"></div><div class="cake-tier t1"></div><div class="cake-tier t2"></div><div class="cake-tier t3"></div><div class="cake-stand-base"></div></div></div>',
+        css: 'position:absolute;top:10px;left:50%;transform:translateX(-50%);'
+      },
+
+      // ── Golden Lounge ──
+      velvet_rope: {
+        html: '<div class="shop-decor decor-velvet-rope"><div class="velvet-rope-set"><div class="rope-post"></div><div class="rope-line"></div><div class="rope-post"></div></div></div>',
+        css: 'position:absolute;top:16%;left:25%;'
+      },
+      mirror: {
+        html: '<div class="shop-decor decor-mirror"><div class="mirror-frame"><div class="mirror-corner tl"></div><div class="mirror-corner tr"></div><div class="mirror-corner bl"></div><div class="mirror-corner br"></div></div></div>',
+        css: 'position:absolute;top:6px;right:8px;'
+      },
+      crystal_chand: {
+        html: '<div class="shop-decor decor-crystal-chand"><div class="cc-chain"></div><div class="cc-body"><div class="cc-arm left"></div><div class="cc-arm right"></div><div class="cc-crystal"></div><div class="cc-crystal"></div><div class="cc-crystal"></div><div class="cc-crystal"></div><div class="cc-crystal"></div></div></div>',
+        css: 'position:absolute;top:0;left:50%;transform:translateX(-50%);'
+      },
+      pillars: {
+        html: '<div class="shop-decor decor-pillars"><div class="pillar-col"><div class="pillar-capital"></div><div class="pillar-shaft"></div><div class="pillar-base"></div></div></div>',
+        css: 'position:absolute;top:5%;left:4px;'
+      },
+      piano: {
+        html: '<div class="shop-decor decor-piano"><div class="piano-body"><div class="piano-keys"></div></div></div>',
+        css: 'position:absolute;top:17%;right:4px;'
+      },
+      champagne_fountain: {
+        html: '<div class="shop-decor decor-champagne"><div class="champagne-tower"><div class="champagne-tier ct1"></div><div class="champagne-tier ct2"></div><div class="champagne-tier ct3"></div><div class="champagne-drop"></div><div class="champagne-drop"></div><div class="champagne-drop"></div></div></div>',
+        css: 'position:absolute;top:10px;left:8px;'
+      },
+      star_ceiling: {
+        html: '<div class="shop-decor decor-star-ceiling"><div class="star-field"><div class="mini-star" style="top:2px;left:10%;animation-delay:0s;"></div><div class="mini-star" style="top:4px;left:30%;animation-delay:0.7s;"></div><div class="mini-star" style="top:1px;left:50%;animation-delay:1.4s;"></div><div class="mini-star" style="top:3px;left:70%;animation-delay:0.3s;"></div><div class="mini-star" style="top:2px;left:85%;animation-delay:2.1s;"></div><div class="mini-star" style="top:5px;left:20%;animation-delay:1.8s;"></div><div class="mini-star" style="top:4px;left:60%;animation-delay:0.9s;"></div></div></div>',
+        css: 'position:absolute;top:0;left:5%;right:5%;height:10px;'
+      },
+      diamond_bar: {
+        html: '<div class="shop-decor decor-diamond-bar"><div class="diamond-surface"><div class="diamond-gem"></div><div class="diamond-gem"></div><div class="diamond-gem"></div><div class="diamond-gem"></div></div></div>',
+        css: 'position:absolute;bottom:28px;left:0;right:0;'
+      },
     };
 
     for (const id of owned) {
@@ -1153,6 +1281,42 @@
         el.style.cssText = visual.css;
         shopBg.appendChild(el);
       }
+    }
+
+    // ── Vibe / Atmosphere system ──
+    const vibeScore = Math.min(100, owned.length * 12.5);
+    let vibeClass = 'vibe-bare';
+    let moteCount = 0;
+    let sparkleCount = 0;
+
+    if (vibeScore > 75) {
+      vibeClass = 'vibe-luxurious';
+      moteCount = 4;
+      sparkleCount = 3;
+    } else if (vibeScore > 50) {
+      vibeClass = 'vibe-premium';
+      moteCount = 3;
+    } else if (vibeScore > 25) {
+      vibeClass = 'vibe-cozy';
+      moteCount = 2;
+    }
+
+    shopBg.classList.add(vibeClass);
+
+    // Add floating dust motes
+    for (let i = 0; i < moteCount; i++) {
+      const mote = document.createElement('div');
+      mote.className = 'vibe-mote';
+      mote.style.cssText = 'left:' + (15 + Math.random() * 70) + '%;bottom:' + (10 + Math.random() * 40) + '%;animation-delay:' + (i * 1.5) + 's;animation-duration:' + (5 + Math.random() * 3) + 's;';
+      shopBg.appendChild(mote);
+    }
+
+    // Add sparkle particles for luxurious vibe
+    for (let i = 0; i < sparkleCount; i++) {
+      const sp = document.createElement('div');
+      sp.className = 'vibe-sparkle';
+      sp.style.cssText = 'left:' + (10 + Math.random() * 80) + '%;top:' + (10 + Math.random() * 60) + '%;animation-delay:' + (i * 0.8) + 's;';
+      shopBg.appendChild(sp);
     }
   }
 
