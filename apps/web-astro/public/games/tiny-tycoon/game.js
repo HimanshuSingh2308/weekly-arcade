@@ -2780,7 +2780,7 @@
     }
 
     if (maxedUpgrades.length > 0) {
-      html += `<div class="shop-maxed-summary">${maxedUpgrades.join(' ')} — ${maxedUpgrades.length} maxed</div>`;
+      html += `<div class="shop-maxed-bar"><div class="shop-maxed-icons">${maxedUpgrades.join('')}</div><span class="chip chip-maxed">${maxedUpgrades.length} maxed</span></div>`;
     }
     if (firstLockedTeaser) {
       const { upgrade } = firstLockedTeaser;
