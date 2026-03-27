@@ -2703,7 +2703,7 @@
     const storeEmoji = config ? config.emoji : '🧋';
     let html = `
       <div class="shop-header">
-        <div class="shop-wallet">${storeEmoji} <strong>${formatCoins(wallet)}</strong> coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.65rem;">✨P${prestigeLevel}</span>` : ''}</div>
+        <div class="shop-wallet">💰 <strong>${formatCoins(wallet)}</strong> coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.65rem;">✨P${prestigeLevel}</span>` : ''}</div>
         <div class="shop-tab-bar">${tabHtml}</div>
       </div>
       <div class="shop-content">
