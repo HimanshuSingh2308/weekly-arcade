@@ -1,0 +1,14 @@
+{
+  "id": "wordle",
+  "name": "Wordle",
+  "icon": "💎",
+  "title": "Wordle | Weekly Arcade - Free Daily Word Game",
+  "description": "Play Wordle free online. Guess words from 3-7 letters with progressive difficulty. A new word every day! No download required.",
+  "keywords": "wordle, word game, puzzle game, daily word game, free wordle, browser game, guess the word",
+  "url": "/games/wordle/",
+  "themeColor": "#538d4e",
+  "accentColor": "#538d4e",
+  "genres": ["Puzzle", "Word Game"],
+  "ratingValue": "4.8",
+  "ratingCount": "1000"
+}

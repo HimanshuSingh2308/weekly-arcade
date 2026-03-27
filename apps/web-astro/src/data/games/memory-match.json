@@ -1,0 +1,14 @@
+{
+  "id": "memory-match",
+  "name": "Memory Match",
+  "icon": "🃏",
+  "title": "Memory Match | Weekly Arcade - Free Brain Training Game",
+  "description": "Play Memory Match free online. Test your memory by matching pairs of cards. Multiple difficulty modes, power-ups, and daily challenges!",
+  "keywords": "memory game, matching game, brain training, puzzle game, free game, browser game, card matching",
+  "url": "/games/memory-match/",
+  "themeColor": "#e94560",
+  "accentColor": "#e94560",
+  "genres": ["Casual", "Memory", "Brain Training"],
+  "ratingValue": "4.5",
+  "ratingCount": "500"
+}

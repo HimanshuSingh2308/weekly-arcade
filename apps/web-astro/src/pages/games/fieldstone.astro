@@ -1,0 +1,4580 @@
+---
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/fieldstone.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+>
+  <!-- Menu Screen -->
+  <div class="menu-screen" id="menuScreen">
+    <div class="menu-icon">🏰</div>
+    <h1 class="menu-title">Fieldstone</h1>
+    <p class="menu-subtitle">Build your kingdom, one tile at a time</p>
+
+    <div class="menu-meta" id="menuMeta">
+      <div class="meta-hearthstones">🔥 <span id="menuHearthstones">0</span> Hearthstones</div>
+      <div class="meta-rank">Rank: <span id="menuRank">Peasant</span></div>
+      <div class="meta-stats">Runs: <span id="menuRuns">0</span> | Wins: <span id="menuWins">0</span> | Best: <span id="menuBest">0</span></div>
+    </div>
+
+    <button class="menu-btn" id="startBtn">Start Game</button>
+    <button class="menu-btn" id="tutorialBtn" style="background: var(--bg-card); border: 2px solid var(--border);">How to Play</button>
+
+    <div class="deck-select">
+      <button class="deck-btn selected" data-deck="farmer">
+        <div class="deck-icon">🌾</div>
+        <div class="deck-name">Farmer</div>
+        <div class="deck-desc">Food focused</div>
+      </button>
+      <button class="deck-btn" data-deck="mason">
+        <div class="deck-icon">🪨</div>
+        <div class="deck-name">Mason</div>
+        <div class="deck-desc">Stone & Walls</div>
+      </button>
+      <button class="deck-btn" data-deck="merchant">
+        <div class="deck-icon">💰</div>
+        <div class="deck-name">Merchant</div>
+        <div class="deck-desc">Gold heavy</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Header -->
+
+  <!-- Game Container -->
+  <div class="game-container">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <div class="panel-section">
+        <div class="panel-title">Resources</div>
+        <div class="resources-grid">
+          <div class="resource">
+            <div class="resource-icon">🪵</div>
+            <div class="resource-value" id="lumber">0</div>
+            <div class="resource-name">Lumber</div>
+          </div>
+          <div class="resource">
+            <div class="resource-icon">🌾</div>
+            <div class="resource-value" id="food">0</div>
+            <div class="resource-name">Food</div>
+          </div>
+          <div class="resource">
+            <div class="resource-icon">🪨</div>
+            <div class="resource-value" id="stone">0</div>
+            <div class="resource-name">Stone</div>
+          </div>
+          <div class="resource">
+            <div class="resource-icon">💰</div>
+            <div class="resource-value" id="gold">0</div>
+            <div class="resource-name">Gold</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section wave-info">
+        <div class="panel-title">Wave</div>
+        <div class="wave-number" id="waveNumber">1</div>
+        <div class="wave-progress">
+          <div class="wave-progress-fill" id="waveProgress" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="panel-section cards-section">
+        <div class="panel-title">Cards</div>
+        <div id="cardsList"></div>
+      </div>
+
+      <div class="panel-section jokers-section" id="jokersSection" style="display: none;">
+        <div class="panel-title">⭐ Jokers</div>
+        <div id="jokersList"></div>
+      </div>
+    </div>
+
+    <!-- Board -->
+    <div class="board-container">
+      <div class="game-board" id="gameBoard"></div>
+
+      <div class="next-piece">
+        <div class="next-label">NEXT</div>
+        <div class="next-preview" id="nextPreview"></div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div class="panel-section score-section">
+        <div class="score-value" id="score">0</div>
+        <div class="score-label">Score</div>
+      </div>
+
+      <div class="panel-section enemy-section">
+        <div class="panel-title">Incoming</div>
+        <div id="enemyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile UI -->
+  <div class="mobile-ui">
+    <div class="mobile-stats">
+      <div class="mobile-stat">
+        <span class="mobile-score" id="mobileScore">0</span>
+        <span class="mobile-label">Score</span>
+      </div>
+      <div class="mobile-stat">
+        <span class="mobile-wave">Wave <span id="mobileWave">1</span>/10</span>
+      </div>
+    </div>
+    <div class="mobile-resources">
+      <div class="mobile-res">🪵<span id="mobileLumber">0</span></div>
+      <div class="mobile-res">🌾<span id="mobileFood">0</span></div>
+      <div class="mobile-res">🪨<span id="mobileStone">0</span></div>
+      <div class="mobile-res">💰<span id="mobileGold">0</span></div>
+    </div>
+  </div>
+
+  <!-- Gesture Hint (shown once on first mobile play) -->
+  <div class="gesture-hint" id="gestureHint" style="display: none;">
+    <div class="gesture-hint-title">Touch Controls</div>
+    <div class="gesture-hint-items">
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👆</div><span>Tap to rotate</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👈👉</div><span>Swipe left/right to move</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👇</div><span>Swipe down to hard drop</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👆</div><span>Swipe up to rotate</span></div>
+    </div>
+    <button class="gesture-hint-dismiss" id="gestureHintDismiss">Got it</button>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Controls Hint -->
+  <div class="controls-hint">
+    <kbd>←→</kbd> Move <kbd>↑</kbd> Rotate <kbd>↓</kbd> Drop <kbd>Space</kbd> Hard Drop
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="shop-modal" id="shopModal">
+    <div class="shop-content">
+      <h2 class="shop-title">🛒 Card Shop</h2>
+      <div class="shop-cards" id="shopCards"></div>
+      <button class="shop-skip" id="shopSkip">Skip (+2 Gold)</button>
+    </div>
+  </div>
+
+  <!-- Attack Phase Overlay -->
+  <div class="attack-overlay" id="attackOverlay">
+    <div class="attack-content">
+      <div class="attack-title">⚔️ ATTACK PHASE ⚔️</div>
+      <div class="attack-enemies" id="attackEnemies"></div>
+      <div class="attack-vs">VS</div>
+      <div class="attack-defence" id="attackDefence">Your Defence: 0</div>
+      <div class="attack-result" id="attackResult"></div>
+      <button class="attack-btn" id="attackContinue">Continue</button>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div class="gameover-modal" id="gameoverModal">
+    <div class="gameover-content">
+      <div class="gameover-icon" id="gameoverIcon">💀</div>
+      <div class="gameover-title" id="gameoverTitle">Kingdom Fallen</div>
+      <div class="gameover-score" id="gameoverScore">0</div>
+      <div class="gameover-wave" id="gameoverWave">Reached Wave 1</div>
+
+      <div class="gameover-meta">
+        <div class="gameover-hearthstones" id="gameoverHearthstones">+0 🔥 Hearthstones</div>
+        <div class="gameover-total" id="gameoverTotal">Total: 0 🔥</div>
+        <div class="gameover-tier" id="gameoverTier">Rank: Peasant</div>
+        <div class="gameover-next-tier" id="gameoverNextTier">Next: Apprentice (50 🔥)</div>
+      </div>
+
+      <div class="gameover-unlocks" id="gameoverUnlocks" style="display: none;"></div>
+
+      <button class="gameover-btn" onclick="returnToMenu()">Play Again</button>
+      <button class="gameover-btn" style="background: var(--bg-card);" onclick="window.location='/'">Home</button>
+    </div>
+  </div>
+
+  <!-- Tutorial Modal -->
+  <div class="tutorial-modal" id="tutorialModal">
+    <div class="tutorial-content">
+      <div class="tutorial-header">
+        <h2 class="tutorial-title">📖 How to Play</h2>
+        <button class="tutorial-close" onclick="closeTutorial()">&times;</button>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🎯 Objective</h3>
+        <p>Build and defend your kingdom! Place terrain tiles to harvest resources, then use those resources to defend against enemy waves. Survive 10 waves to win!</p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🧩 Gameplay Loop</h3>
+        <p><strong>1. Place Tiles:</strong> Tetris-style pieces fall from the top. Move and rotate them to fill the board.</p>
+        <p><strong>2. Complete Rows:</strong> Fill an entire row to <em>harvest</em> it! Unlike Tetris, rows STAY on the board as permanent kingdom land (shown with golden glow). You gain resources based on the terrain types.</p>
+        <p><strong>3. Survive Attacks:</strong> After placing 10 tiles, enemies attack! Your defence (from walls + units) must beat enemy power or you lose tiles.</p>
+        <p><strong>4. Shop & Upgrade:</strong> Between waves, buy cards to boost resource production or add defence units.</p>
+        <p style="margin-top: 0.5rem; background: rgba(255,215,0,0.1); padding: 8px; border-radius: 6px; border-left: 3px solid var(--gold);">
+          <strong>Key Insight:</strong> Group same terrain types together before completing a row for bonus resources!
+        </p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🌍 Terrain Types</h3>
+        <div class="tutorial-terrains">
+          <div class="terrain-item"><span>🌲</span> Forest = 🪵 Lumber</div>
+          <div class="terrain-item"><span>🌾</span> Plains = 🌾 Food</div>
+          <div class="terrain-item"><span>⛰️</span> Mountain = 🪨 Stone</div>
+          <div class="terrain-item"><span>💧</span> River = 💰 Gold</div>
+          <div class="terrain-item"><span>🏠</span> Settlement = All</div>
+        </div>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>⌨️ Controls</h3>
+        <div class="tutorial-controls">
+          <div class="control-item"><kbd>←</kbd><kbd>→</kbd> Move</div>
+          <div class="control-item"><kbd>↑</kbd> Rotate</div>
+          <div class="control-item"><kbd>↓</kbd> Soft Drop</div>
+          <div class="control-item"><kbd>Space</kbd> Hard Drop</div>
+        </div>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">📱 <em>Touch: Tap to rotate, swipe left/right to move, swipe down to hard drop, swipe up to rotate</em></p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>💡 Pro Tips</h3>
+        <ul class="tutorial-tips">
+          <li>Place same terrain types adjacent to each other before completing a row = more resources!</li>
+          <li>Clear multiple rows at once for big score bonuses (2 rows = 30pts, 3 = 60pts, 4 = 100pts!)</li>
+          <li>Buy unit cards (🗡️🏹🐴) before tough waves - they add to your defence</li>
+          <li>Building cards give permanent bonuses (Lumber Mill = +50% lumber forever)</li>
+          <li>Watch the "NEXT" preview to plan where to place your current piece</li>
+        </ul>
+      </div>
+
+      <button class="tutorial-start-btn" onclick="closeTutorial()">Got it!</button>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+
+  <script is:inline>
+  (function() {
+    'use strict';
+
+    // ============================================
+    // FIELDSTONE - Kingdom Builder Puzzle
+    // ============================================
+
+    // Shared header
+    const headerApi = window.gameHeader.init({
+      title: 'Fieldstone',
+      icon: '🏰',
+      gameId: 'fieldstone',
+      buttons: ['sound', 'leaderboard'],
+      onSound: () => { toggleSound(); },
+      soundBtnId: 'soundBtn',
+    });
+
+    // HTML sanitizer for user-supplied strings
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    // Sound System using Web Audio API
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let soundEnabled = true;
+    let audioUnlocked = false;
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      if (audioCtx) {
+        // Play silent buffer to fully unlock on iOS
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+      }
+      audioUnlocked = true;
+    }
+
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
+
+    // Auth state
+    let currentUser = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        try {
+          audioCtx = new AudioCtx();
+        } catch(e) {
+          // audio not supported
+          soundEnabled = false;
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      if (!audioCtx) initAudio();
+      if (!audioCtx) return;
+
+      try {
+        const now = audioCtx.currentTime;
+
+        switch(type) {
+          case 'move': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 200;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
+            break;
+          }
+
+          case 'rotate': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+            break;
+          }
+
+          case 'drop': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 150;
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+            break;
+          }
+
+          case 'lock': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 100;
+            osc.type = 'square';
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+          }
+
+          case 'clear':
+            [400, 500, 600, 800].forEach((freq, i) => {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.frequency.value = freq;
+              osc.type = 'sine';
+              gain.gain.setValueAtTime(0.12, now + i * 0.08);
+              gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.15);
+              osc.start(now + i * 0.08);
+              osc.stop(now + i * 0.08 + 0.15);
+            });
+            break;
+
+          case 'hardDrop': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+            break;
+          }
+
+          case 'attack': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 60;
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+            break;
+          }
+
+          case 'victory':
+            [523, 659, 784, 1047].forEach((freq, i) => {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.frequency.value = freq;
+              osc.type = 'sine';
+              gain.gain.setValueAtTime(0.15, now + i * 0.15);
+              gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.4);
+              osc.start(now + i * 0.15);
+              osc.stop(now + i * 0.15 + 0.4);
+            });
+            break;
+
+          case 'defeat': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+            break;
+          }
+
+          case 'buy': {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.setValueAtTime(800, now + 0.05);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+          }
+        }
+      } catch(e) {
+        // sound playback error
+      }
+    }
+
+    // Game Constants
+    const BOARD_WIDTH = 10;
+    const BOARD_HEIGHT = 20;
+    const TILES_PER_ROUND = 10;
+
+    // Terrain Types
+    const TERRAIN = {
+      EMPTY: 0,
+      FOREST: 1,
+      PLAINS: 2,
+      MOUNTAIN: 3,
+      RIVER: 4,
+      SETTLEMENT: 5,
+      WALL: 6,
+      CURSED: 7  // Negative terrain - reduces adjacent output (wave 6+)
+    };
+
+    const TERRAIN_COLORS = {
+      [TERRAIN.FOREST]: 'forest',
+      [TERRAIN.PLAINS]: 'plains',
+      [TERRAIN.MOUNTAIN]: 'mountain',
+      [TERRAIN.RIVER]: 'river',
+      [TERRAIN.SETTLEMENT]: 'settlement',
+      [TERRAIN.WALL]: 'wall',
+      [TERRAIN.CURSED]: 'cursed'
+    };
+
+    const TERRAIN_ICONS = {
+      [TERRAIN.FOREST]: '🌲',
+      [TERRAIN.PLAINS]: '🌾',
+      [TERRAIN.MOUNTAIN]: '⛰️',
+      [TERRAIN.RIVER]: '💧',
+      [TERRAIN.SETTLEMENT]: '🏠',
+      [TERRAIN.WALL]: '🧱',
+      [TERRAIN.CURSED]: '💀'
+    };
+
+    // Tetromino Shapes
+    const TETROMINOES = [
+      [[1,1,1,1]], // I
+      [[1,1],[1,1]], // O
+      [[0,1,1],[1,1,0]], // S
+      [[1,1,0],[0,1,1]], // Z
+      [[1,0,0],[1,1,1]], // J
+      [[0,0,1],[1,1,1]], // L
+      [[0,1,0],[1,1,1]]  // T
+    ];
+
+    // Card Definitions
+    const ALL_CARDS = [
+      // Buildings (6 total)
+      { id: 'lumber_mill', name: 'Lumber Mill', icon: '🪚', type: 'building', desc: '+50% Lumber production', cost: { gold: 3 }, effect: 'lumber_bonus' },
+      { id: 'granary', name: 'Granary', icon: '🏪', type: 'building', desc: '+50% Food production', cost: { gold: 3 }, effect: 'food_bonus' },
+      { id: 'quarry', name: 'Quarry', icon: '⛏️', type: 'building', desc: '+50% Stone production', cost: { gold: 3 }, effect: 'stone_bonus' },
+      { id: 'treasury', name: 'Treasury', icon: '🏦', type: 'building', desc: '+10% Gold per round', cost: { gold: 5 }, effect: 'gold_bonus' },
+      { id: 'watchtower', name: 'Watchtower', icon: '🗼', type: 'building', desc: '+20 Defence', cost: { stone: 5 }, effect: 'defence_bonus' },
+      { id: 'mill', name: 'Water Mill', icon: '💧', type: 'building', desc: '+50% Gold from Rivers', cost: { gold: 4 }, effect: 'river_bonus' },
+      // Units (8 total)
+      { id: 'spearmen', name: 'Spearmen', icon: '🗡️', type: 'unit', desc: 'Block 30 damage', cost: { food: 4 }, power: 30 },
+      { id: 'archers', name: 'Archers', icon: '🏹', type: 'unit', desc: 'Deal 40 damage', cost: { lumber: 4 }, power: 40 },
+      { id: 'knights', name: 'Knights', icon: '🐴', type: 'unit', desc: 'Block 60 damage', cost: { food: 6, gold: 4 }, power: 60 },
+      { id: 'catapult', name: 'Catapult', icon: '💥', type: 'unit', desc: 'Deal 80 damage', cost: { stone: 8, lumber: 4 }, power: 80 },
+      { id: 'general', name: 'General', icon: '⚔️', type: 'unit', desc: 'All units +50% power', cost: { gold: 12 }, power: 0, effect: 'unit_boost' },
+      { id: 'pikemen', name: 'Pikemen', icon: '🔱', type: 'unit', desc: 'Block 45 damage', cost: { food: 5, lumber: 2 }, power: 45 },
+      { id: 'crossbowmen', name: 'Crossbowmen', icon: '🎯', type: 'unit', desc: 'Deal 55 damage', cost: { lumber: 6, gold: 2 }, power: 55 },
+      { id: 'cavalry', name: 'Cavalry', icon: '🏇', type: 'unit', desc: 'Deal 70 damage', cost: { food: 8, gold: 3 }, power: 70 },
+      // Spells (4 total)
+      { id: 'terraform', name: 'Terraform', icon: '🔄', type: 'spell', desc: 'Change tile terrain', cost: { gold: 5 }, effect: 'terraform' },
+      { id: 'harvest_bonus', name: 'Bountiful Harvest', icon: '✨', type: 'spell', desc: 'Double next harvest', cost: { gold: 4 }, effect: 'double_harvest' },
+      { id: 'reinforcements', name: 'Reinforcements', icon: '🛡️', type: 'spell', desc: '+50 Defence this wave', cost: { gold: 6 }, effect: 'temp_defence' },
+      { id: 'siege_break', name: 'Siege Break', icon: '🔥', type: 'spell', desc: 'Destroy 50 enemy power', cost: { gold: 10 }, effect: 'siege_break' },
+      // Jokers (2 total) - Rare permanent run modifiers
+      { id: 'gold_rush', name: 'Gold Rush', icon: '🏔️', type: 'joker', desc: 'Mountains also produce +1 Gold', cost: { gold: 15 }, effect: 'gold_rush' },
+      { id: 'feudal_lord', name: 'Feudal Lord', icon: '👑', type: 'joker', desc: 'Settlements count as all terrains', cost: { gold: 15 }, effect: 'feudal_lord' }
+    ];
+
+    // Starting Decks
+    const STARTING_DECKS = {
+      farmer: ['granary', 'spearmen', 'spearmen', 'harvest_bonus'],
+      mason: ['quarry', 'watchtower', 'catapult', 'reinforcements'],
+      merchant: ['treasury', 'archers', 'knights', 'terraform']
+    };
+
+    // Game State
+    let gameState = {
+      board: [],
+      harvestedRows: [],  // Track which rows have been harvested (they stay but can't harvest again)
+      currentPiece: null,
+      nextPiece: null,
+      pieceX: 0,
+      pieceY: 0,
+      resources: { lumber: 10, food: 10, stone: 10, gold: 5 },
+      score: 0,
+      wave: 1,
+      tilesPlaced: 0,
+      cards: [],
+      buildings: [],
+      jokers: [],        // Permanent run modifiers
+      tempEffects: [],
+      gameOver: false,
+      selectedDeck: 'farmer',
+      dropInterval: null,
+      lastDrop: 0,
+      startTime: 0
+    };
+
+    // ============================================
+    // META-PROGRESSION SYSTEM (Hearthstones)
+    // ============================================
+
+    const META_STORAGE_KEY = 'fieldstone_meta';
+
+    // Unlock tiers per PRD
+    const UNLOCK_TIERS = [
+      { tier: 1, cost: 50, name: 'Apprentice', reward: 'Unlocks Water Mill card', unlocks: ['mill'] },
+      { tier: 2, cost: 150, name: 'Builder', reward: 'Unlocks 2 new Jokers', unlocks: ['gold_rush', 'feudal_lord'] },
+      { tier: 3, cost: 300, name: 'Commander', reward: 'Unlocks General + Cavalry', unlocks: ['general', 'cavalry'] },
+      { tier: 4, cost: 500, name: 'Warlord', reward: 'Unlocks all Units', unlocks: ['pikemen', 'crossbowmen'] },
+      { tier: 5, cost: 1000, name: 'Legend', reward: 'All cards unlocked!', unlocks: ['siege_break'] }
+    ];
+
+    // Load meta progress from localStorage
+    function loadMetaProgress() {
+      try {
+        const saved = localStorage.getItem(META_STORAGE_KEY);
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        // failed to load meta progress
+      }
+      return {
+        hearthstones: 0,
+        totalHearthstones: 0,
+        highScore: 0,
+        totalRuns: 0,
+        victories: 0,
+        currentTier: 0,
+        unlockedCards: []
+      };
+    }
+
+    // Save meta progress to localStorage
+    function saveMetaProgress(meta) {
+      try {
+        localStorage.setItem(META_STORAGE_KEY, JSON.stringify(meta));
+      } catch (e) {
+        // failed to save meta progress
+      }
+    }
+
+    // Calculate Hearthstones earned from a run
+    function calculateHearthstones(score, wave, victory) {
+      let earned = Math.floor(score / 10); // Base: 1 hearthstone per 10 points
+      if (victory) earned += 50;            // Victory bonus
+      earned += wave * 5;                   // Wave bonus
+      return earned;
+    }
+
+    // Check and apply unlocks
+    function checkUnlocks(meta) {
+      let newUnlocks = [];
+      UNLOCK_TIERS.forEach(tier => {
+        if (meta.totalHearthstones >= tier.cost && meta.currentTier < tier.tier) {
+          meta.currentTier = tier.tier;
+          tier.unlocks.forEach(cardId => {
+            if (!meta.unlockedCards.includes(cardId)) {
+              meta.unlockedCards.push(cardId);
+              newUnlocks.push(cardId);
+            }
+          });
+        }
+      });
+      return newUnlocks;
+    }
+
+    // Get current tier info
+    function getCurrentTierInfo(meta) {
+      const currentTier = UNLOCK_TIERS.find(t => t.tier === meta.currentTier) || { name: 'Peasant', tier: 0 };
+      const nextTier = UNLOCK_TIERS.find(t => t.tier === meta.currentTier + 1);
+      return { current: currentTier, next: nextTier };
+    }
+
+    // Get all cards that require unlocking
+    const LOCKED_CARDS = UNLOCK_TIERS.flatMap(tier => tier.unlocks);
+
+    // Check if a card is available (base card or unlocked)
+    function isCardAvailable(cardId) {
+      if (!LOCKED_CARDS.includes(cardId)) return true; // Base card
+      return metaProgress.unlockedCards.includes(cardId); // Check if unlocked
+    }
+
+    let metaProgress = loadMetaProgress();
+
+    // Initialize Board
+    function initBoard() {
+      gameState.board = Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(TERRAIN.EMPTY));
+      gameState.harvestedRows = []; // Reset harvested rows for new game
+      gameState.jokers = [];        // Reset jokers for new run
+      renderBoard();
+    }
+
+    // Create random terrain piece
+    function createPiece() {
+      const shape = TETROMINOES[Math.floor(Math.random() * TETROMINOES.length)];
+
+      // Normal terrains
+      let terrains = [TERRAIN.FOREST, TERRAIN.PLAINS, TERRAIN.MOUNTAIN, TERRAIN.RIVER, TERRAIN.SETTLEMENT];
+
+      // Wave 6+: 20% chance of cursed tile
+      if (gameState.wave >= 6 && Math.random() < 0.2) {
+        return {
+          shape: shape.map(row => row.map(cell => cell ? TERRAIN.CURSED : 0)),
+          terrain: TERRAIN.CURSED
+        };
+      }
+
+      const terrain = terrains[Math.floor(Math.random() * terrains.length)];
+
+      return {
+        shape: shape.map(row => row.map(cell => cell ? terrain : 0)),
+        terrain: terrain
+      };
+    }
+
+    // Spawn new piece
+    function spawnPiece() {
+      if (gameState.nextPiece) {
+        gameState.currentPiece = gameState.nextPiece;
+      } else {
+        gameState.currentPiece = createPiece();
+      }
+      gameState.nextPiece = createPiece();
+
+      gameState.pieceX = Math.floor((BOARD_WIDTH - gameState.currentPiece.shape[0].length) / 2);
+      gameState.pieceY = 0;
+
+      renderNextPiece();
+
+      if (!canPlace(gameState.pieceX, gameState.pieceY, gameState.currentPiece.shape)) {
+        endGame(false);
+      }
+    }
+
+    // Check if piece can be placed
+    function canPlace(x, y, shape) {
+      for (let row = 0; row < shape.length; row++) {
+        for (let col = 0; col < shape[row].length; col++) {
+          if (shape[row][col]) {
+            const boardX = x + col;
+            const boardY = y + row;
+
+            if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
+              return false;
+            }
+            if (boardY >= 0 && gameState.board[boardY][boardX] !== TERRAIN.EMPTY) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    // Move piece
+    function movePiece(dx) {
+      if (!gameState.currentPiece) return;
+
+      const newX = gameState.pieceX + dx;
+      if (canPlace(newX, gameState.pieceY, gameState.currentPiece.shape)) {
+        gameState.pieceX = newX;
+        try { playSound('move'); } catch(e) {}
+        renderBoard();
+      }
+    }
+
+    // Rotate piece
+    function rotatePiece() {
+      if (!gameState.currentPiece) return;
+
+      const shape = gameState.currentPiece.shape;
+      const rotated = shape[0].map((_, i) => shape.map(row => row[i]).reverse());
+
+      if (canPlace(gameState.pieceX, gameState.pieceY, rotated)) {
+        gameState.currentPiece.shape = rotated;
+        try { playSound('rotate'); } catch(e) {}
+        renderBoard();
+      }
+    }
+
+    // Drop piece one row
+    function dropPiece() {
+      if (!gameState.currentPiece) return false;
+
+      if (canPlace(gameState.pieceX, gameState.pieceY + 1, gameState.currentPiece.shape)) {
+        gameState.pieceY++;
+        renderBoard();
+        return true;
+      } else {
+        lockPiece();
+        return false;
+      }
+    }
+
+    // Hard drop
+    function hardDrop() {
+      if (!gameState.currentPiece) return;
+      try { playSound('hardDrop'); } catch(e) {}
+      while (gameState.currentPiece && dropPiece()) {}
+    }
+
+    // Lock piece in place
+    function lockPiece() {
+      if (!gameState.currentPiece) return;
+
+      try {
+        playSound('lock');
+      } catch(e) {}
+
+      const shape = gameState.currentPiece.shape;
+
+      // Place piece on board
+      for (let row = 0; row < shape.length; row++) {
+        for (let col = 0; col < shape[row].length; col++) {
+          if (shape[row][col]) {
+            const boardY = gameState.pieceY + row;
+            const boardX = gameState.pieceX + col;
+            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+              gameState.board[boardY][boardX] = shape[row][col];
+            }
+          }
+        }
+      }
+
+      // Clear current piece
+      gameState.currentPiece = null;
+
+      gameState.tilesPlaced++;
+      updateWaveProgress();
+      renderBoard();
+
+      // Check for completed rows
+      const clearedCount = checkRows();
+
+      // Continue game after short delay
+      setTimeout(() => {
+        if (gameState.tilesPlaced >= TILES_PER_ROUND) {
+          startAttackPhase();
+        } else {
+          spawnPiece();
+          renderBoard();
+        }
+      }, clearedCount > 0 ? 350 : 50);
+    }
+
+    // Check and harvest completed rows, returns count
+    // PRD: Rows stay on board after harvest - they become permanent kingdom land
+    function checkRows() {
+      let newHarvestedRows = [];
+
+      for (let row = 0; row < BOARD_HEIGHT; row++) {
+        // Skip already harvested rows
+        if (gameState.harvestedRows.includes(row)) continue;
+
+        if (gameState.board[row].every(cell => cell !== TERRAIN.EMPTY)) {
+          newHarvestedRows.push(row);
+        }
+      }
+
+      if (newHarvestedRows.length > 0) {
+        harvestRows(newHarvestedRows);
+      }
+
+      return newHarvestedRows.length;
+    }
+
+    // Harvest resources from completed rows
+    function harvestRows(rows) {
+      // Sort rows from bottom to top for proper removal
+      rows.sort((a, b) => b - a);
+
+      // Track total resources gained for toast
+      let gained = { lumber: 0, food: 0, stone: 0, gold: 0 };
+      let cursedPenalty = 0;
+
+      rows.forEach(rowIndex => {
+        // Add harvesting animation
+        const cells = document.querySelectorAll(`[data-row="${rowIndex}"]`);
+        cells.forEach(cell => cell.classList.add('harvesting'));
+
+        // Calculate resources with adjacency bonuses
+        const row = gameState.board[rowIndex];
+
+        // Count cursed tiles - each cursed tile reduces output by 25%
+        const cursedCount = row.filter(cell => cell === TERRAIN.CURSED).length;
+        const cursePenaltyMultiplier = Math.max(0, 1 - (cursedCount * 0.25));
+        if (cursedCount > 0) cursedPenalty += cursedCount;
+
+        let clusters = findClusters(row);
+
+        clusters.forEach(cluster => {
+          // Skip cursed tiles - they produce nothing
+          if (cluster.terrain === TERRAIN.CURSED) return;
+
+          const baseOutput = getBaseOutput(cluster.terrain);
+          const clusterBonus = cluster.size - 1; // +1 per adjacent same terrain
+          const buildingMultiplier = getBuildingMultiplier(cluster.terrain);
+
+          // Apply curse penalty
+          const totalOutput = Math.floor((baseOutput + clusterBonus) * cluster.size * buildingMultiplier * cursePenaltyMultiplier);
+
+          // Gold Rush joker: Mountains also produce +1 Gold per tile
+          const bonusGold = getJokerBonusGold(cluster.terrain) * cluster.size;
+
+          // Track what we're gaining
+          switch(cluster.terrain) {
+            case TERRAIN.FOREST: gained.lumber += totalOutput; break;
+            case TERRAIN.PLAINS: gained.food += totalOutput; break;
+            case TERRAIN.MOUNTAIN:
+              gained.stone += totalOutput;
+              if (bonusGold > 0) gained.gold += bonusGold;
+              break;
+            case TERRAIN.RIVER: gained.gold += totalOutput; break;
+            case TERRAIN.SETTLEMENT:
+              // Feudal Lord joker: Settlements produce more (count as all terrains)
+              const feudalBonus = hasFeudallord() ? 1.5 : 1;
+              gained.lumber += Math.floor(totalOutput / 4 * feudalBonus);
+              gained.food += Math.floor(totalOutput / 4 * feudalBonus);
+              gained.stone += Math.floor(totalOutput / 4 * feudalBonus);
+              gained.gold += Math.floor(totalOutput / 4 * feudalBonus);
+              break;
+          }
+
+          addResource(cluster.terrain, totalOutput);
+          if (bonusGold > 0) {
+            gameState.resources.gold += bonusGold;
+          }
+        });
+      });
+
+      // Score for harvesting (bonus for multiple rows)
+      const rowBonus = rows.length === 1 ? 10 : rows.length === 2 ? 30 : rows.length === 3 ? 60 : 100;
+      gameState.score += rowBonus;
+
+      if (gameState.tempEffects.includes('double_harvest')) {
+        gameState.score += rowBonus;
+        gameState.tempEffects = gameState.tempEffects.filter(e => e !== 'double_harvest');
+      }
+
+      // Play clear sound
+      playSound('clear');
+
+      // Show toast with what was gained
+      let toastParts = [];
+      if (gained.lumber > 0) toastParts.push(`+${gained.lumber} 🪵`);
+      if (gained.food > 0) toastParts.push(`+${gained.food} 🌾`);
+      if (gained.stone > 0) toastParts.push(`+${gained.stone} 🪨`);
+      if (gained.gold > 0) toastParts.push(`+${gained.gold} 💰`);
+
+      if (toastParts.length > 0) {
+        let harvestMsg = `${rows.length} row${rows.length > 1 ? 's' : ''} harvested! ${toastParts.join(' ')}`;
+        if (cursedPenalty > 0) {
+          harvestMsg += ` (💀 -${Math.round(cursedPenalty * 25)}% curse)`;
+        }
+        showToast(harvestMsg, 'harvest');
+      }
+      showToast(`+${rowBonus} points!`, 'score');
+
+      // PRD: Rows STAY on board - mark them as harvested (permanent kingdom land)
+      rows.forEach(rowIndex => {
+        if (!gameState.harvestedRows.includes(rowIndex)) {
+          gameState.harvestedRows.push(rowIndex);
+        }
+      });
+
+      updateUI();
+      renderBoard();
+    }
+
+    // Find clusters of same terrain in a row
+    function findClusters(row) {
+      let clusters = [];
+      let current = null;
+
+      for (let i = 0; i < row.length; i++) {
+        if (row[i] !== TERRAIN.EMPTY) {
+          if (current && current.terrain === row[i]) {
+            current.size++;
+          } else {
+            if (current) clusters.push(current);
+            current = { terrain: row[i], size: 1 };
+          }
+        }
+      }
+      if (current) clusters.push(current);
+
+      return clusters;
+    }
+
+    // Get base resource output for terrain
+    function getBaseOutput(terrain) {
+      switch(terrain) {
+        case TERRAIN.FOREST: return 2; // Lumber
+        case TERRAIN.PLAINS: return 2; // Food
+        case TERRAIN.MOUNTAIN: return 2; // Stone
+        case TERRAIN.RIVER: return 1; // Gold
+        case TERRAIN.SETTLEMENT: return 1; // All
+        default: return 0;
+      }
+    }
+
+    // Get building multiplier
+    function getBuildingMultiplier(terrain) {
+      let multiplier = 1;
+      if (terrain === TERRAIN.FOREST && gameState.buildings.includes('lumber_mill')) multiplier *= 1.5;
+      if (terrain === TERRAIN.PLAINS && gameState.buildings.includes('granary')) multiplier *= 1.5;
+      if (terrain === TERRAIN.MOUNTAIN && gameState.buildings.includes('quarry')) multiplier *= 1.5;
+      if (terrain === TERRAIN.RIVER && gameState.buildings.includes('mill')) multiplier *= 1.5;
+      return multiplier;
+    }
+
+    // Get bonus gold from Gold Rush joker (Mountains produce +1 Gold)
+    function getJokerBonusGold(terrain) {
+      if (terrain === TERRAIN.MOUNTAIN && gameState.jokers.includes('gold_rush')) {
+        return 1;
+      }
+      return 0;
+    }
+
+    // Check if Feudal Lord joker is active (Settlements count as all terrains)
+    function hasFeudallord() {
+      return gameState.jokers.includes('feudal_lord');
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'harvest') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 2000);
+    }
+
+    // Add resource
+    function addResource(terrain, amount) {
+      switch(terrain) {
+        case TERRAIN.FOREST:
+          gameState.resources.lumber += amount;
+          break;
+        case TERRAIN.PLAINS:
+          gameState.resources.food += amount;
+          break;
+        case TERRAIN.MOUNTAIN:
+          gameState.resources.stone += amount;
+          break;
+        case TERRAIN.RIVER:
+          gameState.resources.gold += amount;
+          break;
+        case TERRAIN.SETTLEMENT:
+          gameState.resources.lumber += Math.floor(amount / 4);
+          gameState.resources.food += Math.floor(amount / 4);
+          gameState.resources.stone += Math.floor(amount / 4);
+          gameState.resources.gold += Math.floor(amount / 4);
+          break;
+      }
+    }
+
+    // Update wave progress
+    function updateWaveProgress() {
+      const progress = (gameState.tilesPlaced / TILES_PER_ROUND) * 100;
+      document.getElementById('waveProgress').style.width = progress + '%';
+    }
+
+    // Start attack phase
+    function startAttackPhase() {
+      clearInterval(gameState.dropInterval);
+      playSound('attack');
+
+      let enemyPower = calculateEnemyPower();
+      const siegeBreakReduction = calculateSiegeBreak();
+      enemyPower = Math.max(0, enemyPower - siegeBreakReduction);
+
+      const playerDefence = calculatePlayerDefence();
+
+      // Display attack phase
+      renderAttackPhase(enemyPower, playerDefence, siegeBreakReduction);
+      document.getElementById('attackOverlay').classList.add('show');
+    }
+
+    // Enemy Types per PRD
+    const ENEMY_TYPES = {
+      infantry: { icon: '🗡️', name: 'Infantry', power: 10 },
+      archer: { icon: '🏹', name: 'Archers', power: 15 },
+      cavalry: { icon: '🐴', name: 'Cavalry', power: 25 },
+      siege: { icon: '💥', name: 'Siege', power: 40 },
+      elite: { icon: '👑', name: 'Elite', power: 50 }
+    };
+
+    // Generate enemy composition based on wave
+    function generateEnemies() {
+      const wave = gameState.wave;
+      let enemies = [];
+
+      if (wave <= 3) {
+        // Waves 1-3: Infantry only
+        const count = 2 + wave;
+        for (let i = 0; i < count; i++) enemies.push('infantry');
+      } else if (wave <= 6) {
+        // Waves 4-6: Infantry + Archers
+        const infantryCount = Math.floor(wave / 2) + 1;
+        const archerCount = wave - 3;
+        for (let i = 0; i < infantryCount; i++) enemies.push('infantry');
+        for (let i = 0; i < archerCount; i++) enemies.push('archer');
+      } else if (wave <= 8) {
+        // Waves 7-8: All types
+        enemies.push('infantry', 'infantry', 'archer', 'archer', 'cavalry');
+        if (wave === 8) enemies.push('siege');
+      } else if (wave === 9) {
+        // Wave 9: Elite + Siege
+        enemies.push('infantry', 'archer', 'cavalry', 'siege', 'elite');
+      } else {
+        // Wave 10: Full assault
+        enemies.push('infantry', 'infantry', 'archer', 'archer', 'cavalry', 'cavalry', 'siege', 'elite');
+      }
+
+      return enemies;
+    }
+
+    // Calculate enemy power based on wave
+    function calculateEnemyPower() {
+      const enemies = generateEnemies();
+      let totalPower = 0;
+      enemies.forEach(type => {
+        totalPower += ENEMY_TYPES[type].power;
+      });
+      // Add some variance
+      const variance = Math.floor(Math.random() * 10) - 5;
+      return Math.max(10, totalPower + variance);
+    }
+
+    // Get enemy breakdown for display
+    function getEnemyBreakdown() {
+      const enemies = generateEnemies();
+      const counts = {};
+      enemies.forEach(type => {
+        counts[type] = (counts[type] || 0) + 1;
+      });
+      return counts;
+    }
+
+    // Calculate player defence
+    function calculatePlayerDefence() {
+      let defence = 0;
+
+      // Base defence from walls on board
+      gameState.board.forEach(row => {
+        row.forEach(cell => {
+          if (cell === TERRAIN.WALL) defence += 5;
+        });
+      });
+
+      // Building bonuses
+      if (gameState.buildings.includes('watchtower')) defence += 20;
+
+      // Check if General is in cards (gives +50% to all units)
+      const hasGeneral = gameState.cards.includes('general');
+      const unitMultiplier = hasGeneral ? 1.5 : 1;
+
+      // Unit cards
+      gameState.cards.forEach(card => {
+        const cardDef = ALL_CARDS.find(c => c.id === card);
+        if (cardDef && cardDef.type === 'unit' && cardDef.power > 0) {
+          defence += Math.floor(cardDef.power * unitMultiplier);
+        }
+      });
+
+      // Temp effects
+      if (gameState.tempEffects.includes('temp_defence')) {
+        defence += 50;
+        gameState.tempEffects = gameState.tempEffects.filter(e => e !== 'temp_defence');
+      }
+
+      return defence;
+    }
+
+    // Calculate siege break bonus (reduces enemy power)
+    function calculateSiegeBreak() {
+      if (gameState.tempEffects.includes('siege_break')) {
+        gameState.tempEffects = gameState.tempEffects.filter(e => e !== 'siege_break');
+        return 50; // Reduce enemy power by 50
+      }
+      return 0;
+    }
+
+    // Render attack phase
+    function renderAttackPhase(enemyPower, playerDefence, siegeBreakUsed = 0) {
+      const enemyList = document.getElementById('attackEnemies');
+      const breakdown = getEnemyBreakdown();
+
+      // Show each enemy type
+      let enemyHTML = '';
+      for (const [type, count] of Object.entries(breakdown)) {
+        const enemy = ENEMY_TYPES[type];
+        enemyHTML += `
+          <div class="attack-enemy">
+            <div class="attack-enemy-icon">${enemy.icon}</div>
+            <div class="attack-enemy-count">×${count}</div>
+            <div class="attack-enemy-type">${enemy.name}</div>
+          </div>
+        `;
+      }
+
+      // Show total power
+      enemyHTML += `
+        <div class="attack-enemy total">
+          <div class="attack-enemy-icon">⚔️</div>
+          <div class="attack-enemy-count">${enemyPower}${siegeBreakUsed > 0 ? ` <span style="color:#4CAF50">(-${siegeBreakUsed})</span>` : ''}</div>
+          <div class="attack-enemy-type">Total Power</div>
+        </div>
+      `;
+
+      enemyList.innerHTML = enemyHTML;
+
+      document.getElementById('attackDefence').textContent = `Your Defence: ${playerDefence}`;
+
+      const result = document.getElementById('attackResult');
+      if (playerDefence >= enemyPower) {
+        result.className = 'attack-result victory';
+        result.textContent = '✓ Wave Repelled! +50 Score';
+        gameState.score += 50;
+        setTimeout(() => playSound('victory'), 500);
+      } else {
+        const breach = enemyPower - playerDefence;
+        result.className = 'attack-result breach';
+        result.textContent = `✗ Breach! -${breach} Border Tiles`;
+        setTimeout(() => playSound('defeat'), 500);
+        // Remove some tiles from right edge
+        for (let i = 0; i < Math.min(breach / 10, 5); i++) {
+          removeBorderTile();
+        }
+      }
+    }
+
+    // Remove a border tile
+    function removeBorderTile() {
+      for (let row = BOARD_HEIGHT - 1; row >= 0; row--) {
+        for (let col = BOARD_WIDTH - 1; col >= 0; col--) {
+          if (gameState.board[row][col] !== TERRAIN.EMPTY) {
+            gameState.board[row][col] = TERRAIN.EMPTY;
+            return;
+          }
+        }
+      }
+    }
+
+    // Continue after attack
+    function continueAfterAttack() {
+      document.getElementById('attackOverlay').classList.remove('show');
+
+      // Clear used unit cards
+      gameState.cards = gameState.cards.filter(card => {
+        const cardDef = ALL_CARDS.find(c => c.id === card);
+        return cardDef && cardDef.type !== 'unit';
+      });
+
+      // Gold interest from treasury
+      if (gameState.buildings.includes('treasury')) {
+        gameState.resources.gold += Math.floor(gameState.resources.gold * 0.1);
+      }
+
+      // Check for game over (too many breaches)
+      const filledCount = gameState.board.flat().filter(c => c !== TERRAIN.EMPTY).length;
+      if (filledCount < 20 && gameState.wave > 3) {
+        endGame(false);
+        return;
+      }
+
+      // Open shop
+      openShop();
+    }
+
+    // Open card shop
+    function openShop() {
+      const shopCards = document.getElementById('shopCards');
+
+      // Filter available cards (exclude already owned buildings, jokers, and locked cards)
+      const regularCards = ALL_CARDS.filter(card =>
+        card.type !== 'joker' &&
+        !gameState.buildings.includes(card.id) &&
+        isCardAvailable(card.id)
+      );
+
+      // Jokers: available only if wave >= 3, max 1 per shop, 25% chance, AND unlocked
+      const availableJokers = ALL_CARDS.filter(card =>
+        card.type === 'joker' &&
+        !gameState.jokers.includes(card.id) &&
+        isCardAvailable(card.id)
+      );
+
+      const showJoker = gameState.wave >= 3 && availableJokers.length > 0 && Math.random() < 0.25;
+
+      // Shuffle and pick cards
+      const shuffledRegular = regularCards.sort(() => Math.random() - 0.5);
+      let offered = shuffledRegular.slice(0, showJoker ? 2 : 3);
+
+      // Add a joker if showing one
+      if (showJoker) {
+        const joker = availableJokers[Math.floor(Math.random() * availableJokers.length)];
+        offered.push(joker);
+      }
+
+      shopCards.innerHTML = offered.map((card, i) => {
+        const costText = Object.entries(card.cost || {}).map(([res, amt]) => `${amt} ${res}`).join(', ');
+        const canAfford = canAffordCard(card);
+        const isJoker = card.type === 'joker';
+
+        return `
+          <div class="shop-card ${i === 0 && !isJoker ? 'free' : ''} ${isJoker ? 'joker' : ''} ${canAfford || (i === 0 && !isJoker) ? '' : 'disabled'}"
+               onclick="buyCard('${card.id}', ${i === 0 && !isJoker})"
+               data-card="${card.id}">
+            <div class="shop-card-icon">${card.icon}</div>
+            <div class="shop-card-name">${card.name}</div>
+            ${isJoker ? '<div class="shop-card-type">⭐ JOKER</div>' : ''}
+            <div class="shop-card-desc">${card.desc}</div>
+            <div class="shop-card-cost">${i === 0 && !isJoker ? 'FREE' : costText}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('shopModal').classList.add('show');
+    }
+
+    // Check if can afford card
+    function canAffordCard(card) {
+      if (!card.cost) return true;
+      for (let [res, amt] of Object.entries(card.cost)) {
+        if (gameState.resources[res] < amt) return false;
+      }
+      return true;
+    }
+
+    // Buy card
+    function buyCard(cardId, isFree) {
+      const card = ALL_CARDS.find(c => c.id === cardId);
+      if (!card) return;
+
+      if (!isFree) {
+        if (!canAffordCard(card)) return;
+        for (let [res, amt] of Object.entries(card.cost)) {
+          gameState.resources[res] -= amt;
+        }
+      }
+
+      playSound('buy');
+
+      if (card.type === 'building') {
+        gameState.buildings.push(cardId);
+        showToast(`Built ${card.name}!`, 'score');
+      } else if (card.type === 'joker') {
+        gameState.jokers.push(cardId);
+        showToast(`👑 ${card.name} activated!`, 'score');
+      } else if (card.type === 'spell') {
+        // Spells add temp effects
+        if (card.effect) {
+          gameState.tempEffects.push(card.effect);
+        }
+        showToast(`Cast ${card.name}!`, 'score');
+      } else {
+        gameState.cards.push(cardId);
+      }
+
+      closeShop();
+    }
+
+    // Skip shop
+    function skipShop() {
+      gameState.resources.gold += 2;
+      gameState.score += 10; // Bonus for discipline
+      closeShop();
+    }
+
+    // Close shop and start next wave
+    function closeShop() {
+      document.getElementById('shopModal').classList.remove('show');
+      gameState.wave++;
+      gameState.tilesPlaced = 0;
+      updateUI();
+
+      if (gameState.wave > 10) {
+        endGame(true);
+      } else {
+        startGameLoop();
+      }
+    }
+
+    // End game
+    function endGame(victory) {
+      gameState.gameOver = true;
+      clearInterval(gameState.dropInterval);
+
+      playSound(victory ? 'victory' : 'defeat');
+
+      if (victory) gameState.score += 500;
+
+      // Award Hearthstones
+      const earnedHearthstones = calculateHearthstones(gameState.score, gameState.wave, victory);
+      metaProgress.hearthstones += earnedHearthstones;
+      metaProgress.totalHearthstones += earnedHearthstones;
+      metaProgress.totalRuns++;
+      if (victory) metaProgress.victories++;
+      if (gameState.score > metaProgress.highScore) {
+        metaProgress.highScore = gameState.score;
+      }
+
+      // Check for new unlocks
+      const newUnlocks = checkUnlocks(metaProgress);
+      saveMetaProgress(metaProgress);
+
+      const modal = document.getElementById('gameoverModal');
+      document.getElementById('gameoverIcon').textContent = victory ? '👑' : '💀';
+      document.getElementById('gameoverTitle').textContent = victory ? 'Victory!' : 'Kingdom Fallen';
+      document.getElementById('gameoverScore').textContent = gameState.score;
+      document.getElementById('gameoverWave').textContent = `Reached Wave ${gameState.wave}`;
+
+      // Show Hearthstones earned
+      document.getElementById('gameoverHearthstones').textContent = `+${earnedHearthstones} 🔥 Hearthstones`;
+      document.getElementById('gameoverTotal').textContent = `Total: ${metaProgress.totalHearthstones} 🔥`;
+
+      // Show new unlocks if any
+      const unlocksEl = document.getElementById('gameoverUnlocks');
+      if (newUnlocks.length > 0) {
+        const unlockNames = newUnlocks.map(id => {
+          const card = ALL_CARDS.find(c => c.id === id);
+          return card ? `${escapeHTML(card.icon)} ${escapeHTML(card.name)}` : escapeHTML(id);
+        }).join(', ');
+        unlocksEl.innerHTML = `<div class="new-unlock">🎉 NEW UNLOCK: ${unlockNames}</div>`;
+        unlocksEl.style.display = 'block';
+      } else {
+        unlocksEl.style.display = 'none';
+      }
+
+      // Show tier progress
+      const tierInfo = getCurrentTierInfo(metaProgress);
+      document.getElementById('gameoverTier').textContent = `Rank: ${tierInfo.current.name}`;
+      if (tierInfo.next) {
+        document.getElementById('gameoverNextTier').textContent = `Next: ${tierInfo.next.name} (${tierInfo.next.cost} 🔥)`;
+      } else {
+        document.getElementById('gameoverNextTier').textContent = 'Max Rank Achieved!';
+      }
+
+      modal.classList.add('show');
+
+      // Submit score and save state
+      submitScore();
+      saveCloudState();
+    }
+
+    // Submit score to leaderboard
+    async function submitScore() {
+      await window.gameCloud.submitScore('fieldstone', {
+        score: gameState.score,
+        level: gameState.wave,
+        timeMs: Date.now() - gameState.startTime,
+        metadata: {
+          wave: gameState.wave,
+          deck: gameState.selectedDeck
+        }
+      });
+    }
+
+    // Start game loop
+    function startGameLoop() {
+      spawnPiece();
+      gameState.dropInterval = setInterval(() => {
+        if (!gameState.gameOver && gameState.currentPiece) {
+          dropPiece();
+        }
+      }, 1000);
+    }
+
+    // Render board
+    function renderBoard() {
+      const boardEl = document.getElementById('gameBoard');
+
+      // Create cells if not exists
+      if (boardEl.children.length === 0) {
+        for (let row = 0; row < BOARD_HEIGHT; row++) {
+          for (let col = 0; col < BOARD_WIDTH; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            boardEl.appendChild(cell);
+          }
+        }
+      }
+
+      // Update cell states
+      const cells = boardEl.querySelectorAll('.cell');
+      cells.forEach(cell => {
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+        const terrain = gameState.board[row][col];
+
+        cell.className = 'cell';
+        if (terrain !== TERRAIN.EMPTY) {
+          cell.classList.add(TERRAIN_COLORS[terrain]);
+          cell.textContent = TERRAIN_ICONS[terrain];
+
+          // Mark harvested rows (permanent kingdom land)
+          if (gameState.harvestedRows.includes(row)) {
+            cell.classList.add('harvested');
+          }
+        } else {
+          cell.textContent = '';
+        }
+      });
+
+      // Render current piece
+      if (gameState.currentPiece) {
+        const shape = gameState.currentPiece.shape;
+        for (let row = 0; row < shape.length; row++) {
+          for (let col = 0; col < shape[row].length; col++) {
+            if (shape[row][col]) {
+              const boardY = gameState.pieceY + row;
+              const boardX = gameState.pieceX + col;
+              if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                const cell = boardEl.querySelector(`[data-row="${boardY}"][data-col="${boardX}"]`);
+                if (cell) {
+                  cell.classList.add(TERRAIN_COLORS[shape[row][col]]);
+                  cell.textContent = TERRAIN_ICONS[shape[row][col]];
+                }
+              }
+            }
+          }
+        }
+
+        // Render ghost piece
+        let ghostY = gameState.pieceY;
+        while (canPlace(gameState.pieceX, ghostY + 1, shape)) {
+          ghostY++;
+        }
+        if (ghostY !== gameState.pieceY) {
+          for (let row = 0; row < shape.length; row++) {
+            for (let col = 0; col < shape[row].length; col++) {
+              if (shape[row][col]) {
+                const boardY = ghostY + row;
+                const boardX = gameState.pieceX + col;
+                if (boardY >= 0 && boardY < BOARD_HEIGHT) {
+                  const cell = boardEl.querySelector(`[data-row="${boardY}"][data-col="${boardX}"]`);
+                  if (cell && !cell.classList.contains(TERRAIN_COLORS[shape[row][col]])) {
+                    cell.classList.add('ghost', TERRAIN_COLORS[shape[row][col]]);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Render next piece preview
+    function renderNextPiece() {
+      const preview = document.getElementById('nextPreview');
+      preview.innerHTML = '';
+
+      if (!gameState.nextPiece) return;
+
+      const shape = gameState.nextPiece.shape;
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'preview-cell';
+          if (shape[row] && shape[row][col]) {
+            const terrain = shape[row][col];
+            cell.classList.add(TERRAIN_COLORS[terrain]);
+            cell.textContent = TERRAIN_ICONS[terrain];
+          }
+          preview.appendChild(cell);
+        }
+      }
+    }
+
+    // Update UI
+    function updateUI() {
+      document.getElementById('lumber').textContent = gameState.resources.lumber;
+      document.getElementById('food').textContent = gameState.resources.food;
+      document.getElementById('stone').textContent = gameState.resources.stone;
+      document.getElementById('gold').textContent = gameState.resources.gold;
+      document.getElementById('score').textContent = gameState.score;
+      document.getElementById('waveNumber').textContent = gameState.wave;
+
+      // Update mobile UI
+      document.getElementById('mobileLumber').textContent = gameState.resources.lumber;
+      document.getElementById('mobileFood').textContent = gameState.resources.food;
+      document.getElementById('mobileStone').textContent = gameState.resources.stone;
+      document.getElementById('mobileGold').textContent = gameState.resources.gold;
+      document.getElementById('mobileScore').textContent = gameState.score;
+      document.getElementById('mobileWave').textContent = gameState.wave;
+
+      // Update cards list
+      const cardsList = document.getElementById('cardsList');
+      cardsList.innerHTML = gameState.cards.map(cardId => {
+        const card = ALL_CARDS.find(c => c.id === cardId);
+        if (!card) return '';
+        return `
+          <div class="card">
+            <div class="card-header">
+              <span class="card-name">${card.icon} ${card.name}</span>
+            </div>
+            <div class="card-desc">${card.desc}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Update jokers display
+      const jokersSection = document.getElementById('jokersSection');
+      const jokersList = document.getElementById('jokersList');
+      if (gameState.jokers.length > 0) {
+        jokersSection.style.display = 'block';
+        jokersList.innerHTML = gameState.jokers.map(jokerId => {
+          const joker = ALL_CARDS.find(c => c.id === jokerId);
+          if (!joker) return '';
+          return `
+            <div class="card joker-card">
+              <div class="card-header">
+                <span class="card-name">${joker.icon} ${joker.name}</span>
+              </div>
+              <div class="card-desc">${joker.desc}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        jokersSection.style.display = 'none';
+      }
+
+      // Update enemy preview with type breakdown
+      const enemyPower = calculateEnemyPower();
+      const breakdown = getEnemyBreakdown();
+      const typeIcons = Object.entries(breakdown).map(([type, count]) =>
+        `${ENEMY_TYPES[type].icon}×${count}`
+      ).join(' ');
+
+      document.getElementById('enemyList').innerHTML = `
+        <div class="enemy-wave">
+          <div>
+            <div class="enemy-count">~${enemyPower} Power</div>
+            <div class="enemy-type">Wave ${gameState.wave}: ${typeIcons}</div>
+          </div>
+        </div>
+      `;
+
+      renderBoard();
+    }
+
+    // Input handling
+    function setupInput() {
+      document.addEventListener('keydown', (e) => {
+        if (gameState.gameOver) return;
+        if (document.getElementById('shopModal').classList.contains('show')) return;
+        if (document.getElementById('attackOverlay').classList.contains('show')) return;
+
+        switch(e.key) {
+          case 'ArrowLeft':
+            e.preventDefault();
+            movePiece(-1);
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            movePiece(1);
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            rotatePiece();
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            dropPiece();
+            break;
+          case ' ':
+            e.preventDefault();
+            hardDrop();
+            break;
+        }
+      });
+
+      // Touch controls
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+
+      // Gesture controls — full game container (not just board)
+      const touchZone = document.querySelector('.game-container');
+
+      touchZone.addEventListener('touchstart', (e) => {
+        // Don't intercept touches on buttons/modals/UI elements
+        if (e.target.closest('button, .mobile-ui, .shop-modal, .attack-overlay, .menu-modal, .game-over-modal, .tutorial-modal, a')) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        e.preventDefault();
+      }, { passive: false });
+
+      touchZone.addEventListener('touchend', (e) => {
+        if (e.target.closest('button, .mobile-ui, .shop-modal, .attack-overlay, .menu-modal, .game-over-modal, .tutorial-modal, a')) return;
+        if (gameState.gameOver) return;
+
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        const dt = Date.now() - touchStartTime;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Tap to rotate (small movement, quick tap)
+        if (distance < 20 && dt < 300) {
+          rotatePiece();
+          return;
+        }
+
+        // Swipe gestures
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx > 30) movePiece(1);
+          else if (dx < -30) movePiece(-1);
+        } else {
+          if (dy > 50) hardDrop();
+          else if (dy < -30) rotatePiece();
+        }
+      });
+
+      // Gesture hint — show once on first mobile visit
+      if ('ontouchstart' in window && !localStorage.getItem('fieldstone-gesture-hint-seen')) {
+        const hint = document.getElementById('gestureHint');
+        hint.style.display = 'flex';
+        document.getElementById('gestureHintDismiss').addEventListener('click', () => {
+          hint.style.display = 'none';
+          localStorage.setItem('fieldstone-gesture-hint-seen', '1');
+        });
+      }
+
+    }
+
+    // Start game
+    function startGame() {
+      // Initialize audio on user interaction
+      initAudio();
+
+      document.getElementById('menuScreen').classList.add('hidden');
+
+      gameState.startTime = Date.now();
+
+      // Initialize with selected deck
+      gameState.cards = [...STARTING_DECKS[gameState.selectedDeck]];
+
+      initBoard();
+      updateUI();
+      setupInput();
+      startGameLoop();
+    }
+
+    // Update menu with meta progress
+    function updateMenuMeta() {
+      const tierInfo = getCurrentTierInfo(metaProgress);
+      document.getElementById('menuHearthstones').textContent = metaProgress.totalHearthstones;
+      document.getElementById('menuRank').textContent = tierInfo.current.name;
+      document.getElementById('menuRuns').textContent = metaProgress.totalRuns;
+      document.getElementById('menuWins').textContent = metaProgress.victories;
+      document.getElementById('menuBest').textContent = metaProgress.highScore;
+    }
+
+    // Return to menu after game over
+    function returnToMenu() {
+      // Hide game over modal
+      document.getElementById('gameoverModal').classList.remove('show');
+
+      // Clear the game board display
+      document.getElementById('gameBoard').innerHTML = '';
+      document.getElementById('nextPreview').innerHTML = '';
+
+      // Reset game state
+      gameState.board = [];
+      gameState.harvestedRows = [];
+      gameState.currentPiece = null;
+      gameState.nextPiece = null;
+      gameState.pieceX = 0;
+      gameState.pieceY = 0;
+      gameState.resources = { lumber: 10, food: 10, stone: 10, gold: 5 };
+      gameState.score = 0;
+      gameState.wave = 1;
+      gameState.tilesPlaced = 0;
+      gameState.cards = [];
+      gameState.buildings = [];
+      gameState.jokers = [];
+      gameState.tempEffects = [];
+      gameState.gameOver = false;
+
+      // Clear any running intervals
+      if (gameState.dropInterval) {
+        clearInterval(gameState.dropInterval);
+        gameState.dropInterval = null;
+      }
+
+      // Reload meta progress from localStorage (in case it was updated)
+      metaProgress = loadMetaProgress();
+
+      // Update and show menu
+      updateMenuMeta();
+      document.getElementById('menuScreen').classList.remove('hidden');
+    }
+
+    // Initialize
+    document.getElementById('startBtn').addEventListener('click', startGame);
+
+    document.querySelectorAll('.deck-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.deck-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        gameState.selectedDeck = btn.dataset.deck;
+      });
+    });
+
+    document.getElementById('shopSkip').addEventListener('click', skipShop);
+    document.getElementById('attackContinue').addEventListener('click', continueAfterAttack);
+
+    // Make buyCard global
+    window.buyCard = buyCard;
+
+    // Initialize menu with meta progress
+    updateMenuMeta();
+
+    // Tutorial functions
+    function openTutorial() {
+      document.getElementById('tutorialModal').classList.add('show');
+    }
+
+    function closeTutorial() {
+      document.getElementById('tutorialModal').classList.remove('show');
+    }
+
+    document.getElementById('tutorialBtn').addEventListener('click', openTutorial);
+    window.closeTutorial = closeTutorial;
+
+    // Sound toggle
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      headerApi.setSoundMuted(!soundEnabled);
+    }
+
+    // Cloud state
+    let cloudStateFieldstone = null;
+
+    async function saveCloudState() {
+      const prevGamesPlayed = cloudStateFieldstone?.gamesPlayed || 0;
+      const prevGamesWon = cloudStateFieldstone?.gamesWon || 0;
+      const prevBestStreak = cloudStateFieldstone?.bestStreak || 0;
+      const didWin = gameState.wave >= 10;
+
+      const state = {
+        currentLevel: gameState.wave,
+        currentStreak: 0,
+        bestStreak: Math.max(prevBestStreak, gameState.wave),
+        gamesPlayed: prevGamesPlayed + 1,
+        gamesWon: prevGamesWon + (didWin ? 1 : 0),
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        additionalData: {
+          bestScore: Math.max(cloudStateFieldstone?.additionalData?.bestScore || 0, gameState.score),
+          bestWave: Math.max(cloudStateFieldstone?.additionalData?.bestWave || 0, gameState.wave)
+        }
+      };
+      await window.gameCloud.saveState('fieldstone', state);
+      cloudStateFieldstone = state;
+
+      // Check achievements
+      if (state.gamesPlayed === 1) {
+        await window.gameCloud.unlockAchievement('first_word', 'fieldstone');
+      }
+      if (state.gamesWon >= 10) {
+        await window.gameCloud.unlockAchievement('ten_wins', 'fieldstone');
+      }
+    }
+
+    async function loadCloudState() {
+      cloudStateFieldstone = await window.gameCloud.loadState('fieldstone');
+    }
+
+    // Auth integration via gameCloud
+    if (window.gameCloud) window.gameCloud.initAuth({
+      signInStyle: 'name',
+      onSignIn: (user) => {
+        currentUser = user;
+        loadCloudState();
+      },
+      onSignOut: () => {
+        currentUser = null;
+      }
+    });
+
+    // Expose functions used by inline onclick handlers
+    window.toggleSound = toggleSound;
+    window.returnToMenu = returnToMenu;
+    window.closeTutorial = closeTutorial;
+    window.buyCard = buyCard;
+  })();
+  </script>
+</body>
+
+  <Fragment slot="scripts">
+    <script is:inline>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Fieldstone | Weekly Arcade</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Play Fieldstone free online. A Tetris-like kingdom builder! Place terrain tiles, harvest resources, build your army, and defend against waves of enemies.">
+  <meta name="keywords" content="puzzle game, strategy game, tetris-like, kingdom builder, free game, browser game">
+  <link rel="canonical" href="https://weeklyarcade.games/games/fieldstone/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weeklyarcade.games/games/fieldstone/">
+  <meta property="og:title" content="Fieldstone | Kingdom Builder Puzzle">
+  <meta property="og:description" content="Tetris meets kingdom building! Place terrain tiles and defend your realm.">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2d5a27">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { scrollbar-width: none; -ms-overflow-style: none; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #0f3460;
+      --accent: #e94560;
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+      --forest: #228B22;
+      --plains: #DAA520;
+      --mountain: #708090;
+      --river: #4169E1;
+      --settlement: #CD853F;
+      --gold: #FFD700;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    /* Header — provided by shared game-header.js */
+    #gameHeader { position: relative; z-index: 101; }
+
+    /* Game Layout */
+    .game-container {
+      display: flex;
+      height: calc(100dvh - 50px);
+      height: calc(-webkit-fill-available - 50px);
+      gap: 10px;
+      padding: 10px;
+    }
+
+    /* Left Panel - Resources & Cards */
+    .left-panel {
+      width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .panel-title {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Resources */
+    .resources-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .resource {
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .resource-icon { font-size: 1.2rem; }
+    .resource-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .resource-name {
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+    }
+
+    /* Wave Info */
+    .wave-info {
+      text-align: center;
+    }
+
+    .wave-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .wave-progress {
+      height: 6px;
+      background: var(--bg-card);
+      border-radius: 3px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .wave-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #ff6b6b);
+      transition: width 0.3s;
+    }
+
+    /* Cards Hand */
+    .cards-section {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .card {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--gold);
+      transform: translateX(3px);
+    }
+
+    .card.joker-card {
+      background: linear-gradient(135deg, #2d1b4e, var(--bg-secondary));
+      border-color: #9333ea;
+    }
+
+    .card.joker-card:hover {
+      border-color: #a855f7;
+    }
+
+    .jokers-section {
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+
+    .jokers-section .panel-title {
+      color: #a855f7;
+    }
+
+    .card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .card-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .card-cost {
+      font-size: 0.65rem;
+      color: var(--gold);
+    }
+
+    .card-desc {
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+    }
+
+    /* Main Game Board */
+    .board-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Responsive cell size: min 16px, preferred based on viewport, max 28px */
+    :root {
+      --cell-size: clamp(16px, min(2.8vw, 2.8vh), 28px);
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(10, var(--cell-size));
+      grid-template-rows: repeat(20, var(--cell-size));
+      gap: 1px;
+      background: var(--border);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: 2px;
+    }
+
+    .cell {
+      position: relative;
+      width: var(--cell-size);
+      height: var(--cell-size);
+      background: var(--bg-card);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.5rem, 1.5vw, 0.8rem);
+      transition: background 0.1s;
+    }
+
+    .cell.forest { background: var(--forest); }
+    .cell.plains { background: var(--plains); }
+    .cell.mountain { background: var(--mountain); }
+    .cell.river { background: var(--river); }
+    .cell.settlement { background: var(--settlement); }
+    .cell.wall { background: #4a4a4a; }
+    .cell.cursed {
+      background: linear-gradient(135deg, #2d1b4e, #1a0a2e);
+      animation: cursed-pulse 2s infinite;
+    }
+
+    @keyframes cursed-pulse {
+      0%, 100% { box-shadow: inset 0 0 10px rgba(128, 0, 128, 0.5); }
+      50% { box-shadow: inset 0 0 20px rgba(128, 0, 128, 0.8); }
+    }
+
+    .cell.ghost {
+      opacity: 0.4;
+    }
+
+    .cell.harvesting {
+      animation: harvest-flash 0.5s ease-out;
+    }
+
+    @keyframes harvest-flash {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(2); }
+    }
+
+    @keyframes land-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .board-shake {
+      animation: land-shake 0.15s ease-out;
+    }
+
+    @keyframes cell-pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    .cell.just-placed {
+      animation: cell-pop 0.2s ease-out;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 5px currentColor; }
+      50% { box-shadow: 0 0 15px currentColor, 0 0 25px currentColor; }
+    }
+
+    .cell.harvesting {
+      animation: harvest-flash 0.3s ease-out, glow-pulse 0.3s ease-out;
+    }
+
+    /* Harvested rows - permanent kingdom land (subtle indicator) */
+    .cell.harvested {
+      box-shadow: inset 0 0 3px rgba(255, 215, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+    }
+
+    /* Next Piece Preview */
+    .next-piece {
+      margin-top: 10px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .next-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .next-preview {
+      display: grid;
+      grid-template-columns: repeat(4, 24px);
+      grid-template-rows: repeat(4, 24px);
+      gap: 2px;
+      justify-content: center;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .preview-cell {
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      background: transparent;
+    }
+
+    .preview-cell.forest { background: var(--forest); }
+    .preview-cell.plains { background: var(--plains); }
+    .preview-cell.mountain { background: var(--mountain); }
+    .preview-cell.river { background: var(--river); }
+    .preview-cell.settlement { background: var(--settlement); }
+
+    /* Right Panel - Enemy Info */
+    .right-panel {
+      width: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .enemy-section {
+      flex: 1;
+    }
+
+    .enemy-wave {
+      background: var(--bg-card);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .enemy-icon { font-size: 1.2rem; }
+    .enemy-count {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .enemy-type {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+    }
+
+    /* Score Display */
+    .score-section {
+      text-align: center;
+    }
+
+    .score-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .score-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    /* Controls */
+    .controls-hint {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .controls-hint kbd {
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin: 0 2px;
+    }
+
+    /* Menu Screen */
+    .menu-screen {
+      position: fixed;
+      inset: 0;
+      top: 48px;
+      background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: safe center;
+      z-index: 100;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: clamp(0.75rem, 3vh, 2rem) 1rem;
+      gap: clamp(0.3rem, 1.5vh, 0.75rem);
+    }
+
+    .menu-screen.hidden {
+      display: none;
+    }
+
+    .menu-icon {
+      font-size: clamp(2.5rem, 8vh, 5rem);
+    }
+
+    .menu-title {
+      font-size: clamp(1.5rem, 5vh, 2.5rem);
+      font-weight: 800;
+    }
+
+    .menu-meta {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: clamp(0.5rem, 1.5vh, 1rem) 1.5rem;
+      text-align: center;
+    }
+
+    .meta-hearthstones {
+      font-size: clamp(1rem, 2.5vh, 1.3rem);
+      color: #ff6b35;
+      font-weight: 700;
+    }
+
+    .meta-rank {
+      color: #a855f7;
+      font-weight: 600;
+      margin: 0.15rem 0;
+    }
+
+    .meta-stats {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .menu-subtitle {
+      color: var(--text-secondary);
+    }
+
+    .menu-btn {
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      border: none;
+      color: white;
+      font-size: clamp(1rem, 2.5vh, 1.2rem);
+      font-weight: 700;
+      padding: clamp(0.6rem, 1.5vh, 1rem) 3rem;
+      border-radius: 30px;
+      cursor: pointer;
+      width: min(80%, 300px);
+    }
+
+    .menu-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .deck-select {
+      display: flex;
+      gap: 10px;
+    }
+
+    .deck-btn {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      padding: clamp(0.5rem, 1.5vh, 1rem);
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      width: clamp(80px, 25vw, 120px);
+    }
+
+    .deck-btn:hover, .deck-btn.selected {
+      border-color: var(--gold);
+    }
+
+    .deck-icon { font-size: clamp(1.3rem, 4vh, 2rem); }
+    .deck-name { font-weight: 600; font-size: clamp(0.75rem, 2vh, 0.9rem); }
+    .deck-desc { font-size: 0.65rem; color: var(--text-secondary); }
+
+    /* Shop Modal */
+    .shop-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .shop-modal.show {
+      display: flex;
+    }
+
+    .shop-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    .shop-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .shop-cards {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .shop-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      width: 150px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .shop-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-5px);
+    }
+
+    .shop-card.free {
+      border-color: #4CAF50;
+    }
+
+    .shop-card.joker {
+      border-color: #9333ea;
+      background: linear-gradient(135deg, var(--bg-card) 0%, #2d1b4e 100%);
+      box-shadow: 0 0 15px rgba(147, 51, 234, 0.3);
+    }
+
+    .shop-card.joker:hover {
+      border-color: #a855f7;
+      box-shadow: 0 0 25px rgba(147, 51, 234, 0.5);
+    }
+
+    .shop-card-type {
+      font-size: 0.7rem;
+      color: #a855f7;
+      text-align: center;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+    }
+
+    .shop-card-icon { font-size: 2rem; text-align: center; }
+    .shop-card-name { font-weight: 700; text-align: center; margin: 8px 0; }
+    .shop-card-desc { font-size: 0.75rem; color: var(--text-secondary); text-align: center; }
+    .shop-card-cost {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--gold);
+    }
+
+    .shop-skip {
+      display: block;
+      margin: 0 auto;
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.5rem 2rem;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .shop-skip:hover {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+
+    /* Attack Phase Overlay */
+    .attack-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 150;
+    }
+
+    .attack-overlay.show {
+      display: flex;
+    }
+
+    .attack-content {
+      text-align: center;
+    }
+
+    .attack-title {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .attack-enemies {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
+    }
+
+    .attack-enemy {
+      background: var(--bg-card);
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      text-align: center;
+      min-width: 70px;
+    }
+
+    .attack-enemy.total {
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      border: 2px solid var(--accent);
+    }
+
+    .attack-enemy-icon { font-size: 1.8rem; }
+    .attack-enemy-count { font-size: 1.2rem; font-weight: 700; }
+    .attack-enemy-type { font-size: 0.7rem; color: var(--text-secondary); }
+    .attack-enemy.total .attack-enemy-type { color: white; }
+
+    .attack-vs {
+      font-size: 2rem;
+      margin: 1rem 0;
+      color: var(--text-secondary);
+    }
+
+    .attack-defence {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .attack-result {
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .attack-result.victory {
+      background: rgba(76, 175, 80, 0.3);
+      color: #4CAF50;
+    }
+
+    .attack-result.breach {
+      background: rgba(233, 69, 96, 0.3);
+      color: var(--accent);
+    }
+
+    .attack-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.8rem 2rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* Tutorial Modal */
+    .tutorial-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .tutorial-modal.show {
+      display: flex;
+    }
+
+    .tutorial-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .tutorial-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .tutorial-title {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tutorial-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .tutorial-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .tutorial-section h3 {
+      color: var(--accent);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tutorial-section p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+
+    .tutorial-terrains {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .terrain-item {
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+
+    .terrain-item span:first-child {
+      font-size: 1.2rem;
+    }
+
+    .tutorial-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .control-item {
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    .control-item kbd {
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-right: 6px;
+    }
+
+    .tutorial-tips {
+      background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), transparent);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .tutorial-tips li {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      list-style: none;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .tutorial-tips li::before {
+      content: '💡';
+      position: absolute;
+      left: 0;
+      font-size: 0.7rem;
+    }
+
+    .tutorial-start-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.8rem 2rem;
+      border-radius: 20px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    /* Game Over */
+    .gameover-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+
+    .gameover-modal.show {
+      display: flex;
+    }
+
+    .gameover-content {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .gameover-icon { font-size: 4rem; }
+    .gameover-title { font-size: 2rem; margin: 1rem 0; }
+    .gameover-score { font-size: 3rem; color: var(--gold); font-weight: 700; }
+    .gameover-wave { color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+    .gameover-meta {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .gameover-hearthstones {
+      font-size: 1.3rem;
+      color: #ff6b35;
+      font-weight: 700;
+    }
+
+    .gameover-total {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.3rem;
+    }
+
+    .gameover-tier {
+      font-size: 1rem;
+      color: #a855f7;
+      margin-top: 0.5rem;
+      font-weight: 600;
+    }
+
+    .gameover-next-tier {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .gameover-unlocks {
+      margin: 1rem 0;
+    }
+
+    .new-unlock {
+      background: linear-gradient(135deg, #4CAF50, #2e7d32);
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-weight: 600;
+      animation: unlock-glow 1s infinite alternate;
+    }
+
+    @keyframes unlock-glow {
+      from { box-shadow: 0 0 5px #4CAF50; }
+      to { box-shadow: 0 0 20px #4CAF50; }
+    }
+
+    .gameover-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.8rem 2rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 0.5rem;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 1.5s forwards;
+      white-space: nowrap;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    .toast.harvest {
+      border-color: #4CAF50;
+      color: #4CAF50;
+    }
+
+    .toast.score {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      :root {
+        --cell-size: clamp(16px, min(2.5vw, 2.5vh), 24px);
+      }
+
+      .game-container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .left-panel, .right-panel {
+        flex-direction: row;
+        width: 100%;
+        max-width: 500px;
+      }
+
+      .left-panel { order: 1; }
+      .board-container { order: 2; }
+      .right-panel { order: 3; }
+    }
+
+    /* Mobile UI - hidden on desktop */
+    .mobile-ui {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      /* Mobile-optimized cell size: fits both width AND height */
+      /* Width: (100vw - 24px) / 10.5 columns */
+      /* Height: (available height) / 22 rows (20 board + ~2 for HUD) */
+      /* Available height = 100dvh - 50px header - 70px mobile UI */
+      :root {
+        --cell-size: clamp(14px, min(calc((100vw - 24px) / 10.5), calc((100dvh - 130px) / 22)), 32px);
+      }
+
+      .left-panel, .right-panel {
+        display: none;
+      }
+
+      .controls-hint {
+        display: none;
+      }
+
+      /* Show mobile UI */
+      .mobile-ui {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .mobile-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .mobile-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .mobile-score {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      .mobile-label {
+        font-size: 0.6rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+      }
+
+      .mobile-wave {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .mobile-resources {
+        display: flex;
+        justify-content: space-around;
+        gap: 8px;
+      }
+
+      .mobile-res {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: var(--bg-card);
+        padding: 4px 10px;
+        border-radius: 12px;
+      }
+
+      /* Adjust game container for mobile — full height, no controls footer */
+      .game-container {
+        height: calc(100dvh - 50px);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* Gesture hint overlay (shown once on first mobile play) */
+      .gesture-hint {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 500;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        color: var(--text-primary);
+        padding: 2rem;
+        text-align: center;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .gesture-hint-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+      }
+
+      .gesture-hint-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        font-size: 1rem;
+      }
+
+      .gesture-hint-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .gesture-hint-icon {
+        font-size: 1.5rem;
+        width: 48px;
+        height: 48px;
+        background: var(--bg-card);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .gesture-hint-dismiss {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.6rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 0.5rem;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      .board-container {
+        margin-top: 8px;
+      }
+
+      .next-piece {
+        margin-top: 8px;
+        padding: 8px;
+        min-width: 100px;
+      }
+
+      .next-preview {
+        grid-template-columns: repeat(4, 20px);
+        grid-template-rows: repeat(4, 20px);
+      }
+
+      .next-label {
+        font-size: 0.7rem;
+      }
+
+      /* Adjust modals for mobile */
+      .shop-content {
+        width: 95%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .shop-cards {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .shop-card {
+        width: 100%;
+      }
+
+      .deck-btn {
+        width: clamp(70px, 28vw, 110px);
+      }
+    }
+
+    /* Accessibility: Respect reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu Screen -->
+  <div class="menu-screen" id="menuScreen">
+    <div class="menu-icon">🏰</div>
+    <h1 class="menu-title">Fieldstone</h1>
+    <p class="menu-subtitle">Build your kingdom, one tile at a time</p>
+
+    <div class="menu-meta" id="menuMeta">
+      <div class="meta-hearthstones">🔥 <span id="menuHearthstones">0</span> Hearthstones</div>
+      <div class="meta-rank">Rank: <span id="menuRank">Peasant</span></div>
+      <div class="meta-stats">Runs: <span id="menuRuns">0</span> | Wins: <span id="menuWins">0</span> | Best: <span id="menuBest">0</span></div>
+    </div>
+
+    <button class="menu-btn" id="startBtn">Start Game</button>
+    <button class="menu-btn" id="tutorialBtn" style="background: var(--bg-card); border: 2px solid var(--border);">How to Play</button>
+
+    <div class="deck-select">
+      <button class="deck-btn selected" data-deck="farmer">
+        <div class="deck-icon">🌾</div>
+        <div class="deck-name">Farmer</div>
+        <div class="deck-desc">Food focused</div>
+      </button>
+      <button class="deck-btn" data-deck="mason">
+        <div class="deck-icon">🪨</div>
+        <div class="deck-name">Mason</div>
+        <div class="deck-desc">Stone & Walls</div>
+      </button>
+      <button class="deck-btn" data-deck="merchant">
+        <div class="deck-icon">💰</div>
+        <div class="deck-name">Merchant</div>
+        <div class="deck-desc">Gold heavy</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header id="gameHeader" style="display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;background:var(--bg-secondary,#1a1a2e);border-bottom:1px solid var(--border,rgba(255,255,255,0.06));"><a href="/" style="color:#888;text-decoration:none;font-size:1.3rem;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;">←</a><span style="font-weight:700;font-size:1.05rem;">🏰 Fieldstone</span><span></span></header>
+
+  <!-- Game Container -->
+  <div class="game-container">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <div class="panel-section">
+        <div class="panel-title">Resources</div>
+        <div class="resources-grid">
+          <div class="resource">
+            <div class="resource-icon">🪵</div>
+            <div class="resource-value" id="lumber">0</div>
+            <div class="resource-name">Lumber</div>
+          </div>
+          <div class="resource">
+            <div class="resource-icon">🌾</div>
+            <div class="resource-value" id="food">0</div>
+            <div class="resource-name">Food</div>
+          </div>
+          <div class="resource">
+            <div class="resource-icon">🪨</div>
+            <div class="resource-value" id="stone">0</div>
+            <div class="resource-name">Stone</div>
+          </div>
+          <div class="resource">
+            <div class="resource-icon">💰</div>
+            <div class="resource-value" id="gold">0</div>
+            <div class="resource-name">Gold</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section wave-info">
+        <div class="panel-title">Wave</div>
+        <div class="wave-number" id="waveNumber">1</div>
+        <div class="wave-progress">
+          <div class="wave-progress-fill" id="waveProgress" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="panel-section cards-section">
+        <div class="panel-title">Cards</div>
+        <div id="cardsList"></div>
+      </div>
+
+      <div class="panel-section jokers-section" id="jokersSection" style="display: none;">
+        <div class="panel-title">⭐ Jokers</div>
+        <div id="jokersList"></div>
+      </div>
+    </div>
+
+    <!-- Board -->
+    <div class="board-container">
+      <div class="game-board" id="gameBoard"></div>
+
+      <div class="next-piece">
+        <div class="next-label">NEXT</div>
+        <div class="next-preview" id="nextPreview"></div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div class="panel-section score-section">
+        <div class="score-value" id="score">0</div>
+        <div class="score-label">Score</div>
+      </div>
+
+      <div class="panel-section enemy-section">
+        <div class="panel-title">Incoming</div>
+        <div id="enemyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile UI -->
+  <div class="mobile-ui">
+    <div class="mobile-stats">
+      <div class="mobile-stat">
+        <span class="mobile-score" id="mobileScore">0</span>
+        <span class="mobile-label">Score</span>
+      </div>
+      <div class="mobile-stat">
+        <span class="mobile-wave">Wave <span id="mobileWave">1</span>/10</span>
+      </div>
+    </div>
+    <div class="mobile-resources">
+      <div class="mobile-res">🪵<span id="mobileLumber">0</span></div>
+      <div class="mobile-res">🌾<span id="mobileFood">0</span></div>
+      <div class="mobile-res">🪨<span id="mobileStone">0</span></div>
+      <div class="mobile-res">💰<span id="mobileGold">0</span></div>
+    </div>
+  </div>
+
+  <!-- Gesture Hint (shown once on first mobile play) -->
+  <div class="gesture-hint" id="gestureHint" style="display: none;">
+    <div class="gesture-hint-title">Touch Controls</div>
+    <div class="gesture-hint-items">
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👆</div><span>Tap to rotate</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👈👉</div><span>Swipe left/right to move</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👇</div><span>Swipe down to hard drop</span></div>
+      <div class="gesture-hint-item"><div class="gesture-hint-icon">👆</div><span>Swipe up to rotate</span></div>
+    </div>
+    <button class="gesture-hint-dismiss" id="gestureHintDismiss">Got it</button>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Controls Hint -->
+  <div class="controls-hint">
+    <kbd>←→</kbd> Move <kbd>↑</kbd> Rotate <kbd>↓</kbd> Drop <kbd>Space</kbd> Hard Drop
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="shop-modal" id="shopModal">
+    <div class="shop-content">
+      <h2 class="shop-title">🛒 Card Shop</h2>
+      <div class="shop-cards" id="shopCards"></div>
+      <button class="shop-skip" id="shopSkip">Skip (+2 Gold)</button>
+    </div>
+  </div>
+
+  <!-- Attack Phase Overlay -->
+  <div class="attack-overlay" id="attackOverlay">
+    <div class="attack-content">
+      <div class="attack-title">⚔️ ATTACK PHASE ⚔️</div>
+      <div class="attack-enemies" id="attackEnemies"></div>
+      <div class="attack-vs">VS</div>
+      <div class="attack-defence" id="attackDefence">Your Defence: 0</div>
+      <div class="attack-result" id="attackResult"></div>
+      <button class="attack-btn" id="attackContinue">Continue</button>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div class="gameover-modal" id="gameoverModal">
+    <div class="gameover-content">
+      <div class="gameover-icon" id="gameoverIcon">💀</div>
+      <div class="gameover-title" id="gameoverTitle">Kingdom Fallen</div>
+      <div class="gameover-score" id="gameoverScore">0</div>
+      <div class="gameover-wave" id="gameoverWave">Reached Wave 1</div>
+
+      <div class="gameover-meta">
+        <div class="gameover-hearthstones" id="gameoverHearthstones">+0 🔥 Hearthstones</div>
+        <div class="gameover-total" id="gameoverTotal">Total: 0 🔥</div>
+        <div class="gameover-tier" id="gameoverTier">Rank: Peasant</div>
+        <div class="gameover-next-tier" id="gameoverNextTier">Next: Apprentice (50 🔥)</div>
+      </div>
+
+      <div class="gameover-unlocks" id="gameoverUnlocks" style="display: none;"></div>
+
+      <button class="gameover-btn" onclick="returnToMenu()">Play Again</button>
+      <button class="gameover-btn" style="background: var(--bg-card);" onclick="window.location='/'">Home</button>
+    </div>
+  </div>
+
+  <!-- Tutorial Modal -->
+  <div class="tutorial-modal" id="tutorialModal">
+    <div class="tutorial-content">
+      <div class="tutorial-header">
+        <h2 class="tutorial-title">📖 How to Play</h2>
+        <button class="tutorial-close" onclick="closeTutorial()">&times;</button>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🎯 Objective</h3>
+        <p>Build and defend your kingdom! Place terrain tiles to harvest resources, then use those resources to defend against enemy waves. Survive 10 waves to win!</p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🧩 Gameplay Loop</h3>
+        <p><strong>1. Place Tiles:</strong> Tetris-style pieces fall from the top. Move and rotate them to fill the board.</p>
+        <p><strong>2. Complete Rows:</strong> Fill an entire row to <em>harvest</em> it! Unlike Tetris, rows STAY on the board as permanent kingdom land (shown with golden glow). You gain resources based on the terrain types.</p>
+        <p><strong>3. Survive Attacks:</strong> After placing 10 tiles, enemies attack! Your defence (from walls + units) must beat enemy power or you lose tiles.</p>
+        <p><strong>4. Shop & Upgrade:</strong> Between waves, buy cards to boost resource production or add defence units.</p>
+        <p style="margin-top: 0.5rem; background: rgba(255,215,0,0.1); padding: 8px; border-radius: 6px; border-left: 3px solid var(--gold);">
+          <strong>Key Insight:</strong> Group same terrain types together before completing a row for bonus resources!
+        </p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>🌍 Terrain Types</h3>
+        <div class="tutorial-terrains">
+          <div class="terrain-item"><span>🌲</span> Forest = 🪵 Lumber</div>
+          <div class="terrain-item"><span>🌾</span> Plains = 🌾 Food</div>
+          <div class="terrain-item"><span>⛰️</span> Mountain = 🪨 Stone</div>
+          <div class="terrain-item"><span>💧</span> River = 💰 Gold</div>
+          <div class="terrain-item"><span>🏠</span> Settlement = All</div>
+        </div>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>⌨️ Controls</h3>
+        <div class="tutorial-controls">
+          <div class="control-item"><kbd>←</kbd><kbd>→</kbd> Move</div>
+          <div class="control-item"><kbd>↑</kbd> Rotate</div>
+          <div class="control-item"><kbd>↓</kbd> Soft Drop</div>
+          <div class="control-item"><kbd>Space</kbd> Hard Drop</div>
+        </div>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">📱 <em>Touch: Tap to rotate, swipe left/right to move, swipe down to hard drop, swipe up to rotate</em></p>
+      </div>
+
+      <div class="tutorial-section">
+        <h3>💡 Pro Tips</h3>
+        <ul class="tutorial-tips">
+          <li>Place same terrain types adjacent to each other before completing a row = more resources!</li>
+          <li>Clear multiple rows at once for big score bonuses (2 rows = 30pts, 3 = 60pts, 4 = 100pts!)</li>
+          <li>Buy unit cards (🗡️🏹🐴) before tough waves - they add to your defence</li>
+          <li>Building cards give permanent bonuses (Lumber Mill = +50% lumber forever)</li>
+          <li>Watch the "NEXT" preview to plan where to place your current piece</li>
+        </ul>
+      </div>
+
+      <button class="tutorial-start-btn" onclick="closeTutorial()">Got it!</button>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+    </script>
+
+  </Fragment>
+</GameLayout>
+
+<style is:global>
+
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #0f3460;
+      --accent: #e94560;
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --border: #2a2a4a;
+      --forest: #228B22;
+      --plains: #DAA520;
+      --mountain: #708090;
+      --river: #4169E1;
+      --settlement: #CD853F;
+      --gold: #FFD700;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    /* Header — provided by shared game-header.js */
+    #gameHeader { position: relative; z-index: 101; }
+
+    /* Game Layout */
+    .game-container {
+      display: flex;
+      height: calc(100dvh - 50px);
+      height: calc(-webkit-fill-available - 50px);
+      gap: 10px;
+      padding: 10px;
+    }
+
+    /* Left Panel - Resources & Cards */
+    .left-panel {
+      width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .panel-title {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Resources */
+    .resources-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .resource {
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .resource-icon { font-size: 1.2rem; }
+    .resource-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .resource-name {
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+    }
+
+    /* Wave Info */
+    .wave-info {
+      text-align: center;
+    }
+
+    .wave-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .wave-progress {
+      height: 6px;
+      background: var(--bg-card);
+      border-radius: 3px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .wave-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #ff6b6b);
+      transition: width 0.3s;
+    }
+
+    /* Cards Hand */
+    .cards-section {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .card {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--gold);
+      transform: translateX(3px);
+    }
+
+    .card.joker-card {
+      background: linear-gradient(135deg, #2d1b4e, var(--bg-secondary));
+      border-color: #9333ea;
+    }
+
+    .card.joker-card:hover {
+      border-color: #a855f7;
+    }
+
+    .jokers-section {
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+
+    .jokers-section .panel-title {
+      color: #a855f7;
+    }
+
+    .card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .card-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .card-cost {
+      font-size: 0.65rem;
+      color: var(--gold);
+    }
+
+    .card-desc {
+      font-size: 0.6rem;
+      color: var(--text-secondary);
+    }
+
+    /* Main Game Board */
+    .board-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Responsive cell size: min 16px, preferred based on viewport, max 28px */
+    :root {
+      --cell-size: clamp(16px, min(2.8vw, 2.8vh), 28px);
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(10, var(--cell-size));
+      grid-template-rows: repeat(20, var(--cell-size));
+      gap: 1px;
+      background: var(--border);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: 2px;
+    }
+
+    .cell {
+      position: relative;
+      width: var(--cell-size);
+      height: var(--cell-size);
+      background: var(--bg-card);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.5rem, 1.5vw, 0.8rem);
+      transition: background 0.1s;
+    }
+
+    .cell.forest { background: var(--forest); }
+    .cell.plains { background: var(--plains); }
+    .cell.mountain { background: var(--mountain); }
+    .cell.river { background: var(--river); }
+    .cell.settlement { background: var(--settlement); }
+    .cell.wall { background: #4a4a4a; }
+    .cell.cursed {
+      background: linear-gradient(135deg, #2d1b4e, #1a0a2e);
+      animation: cursed-pulse 2s infinite;
+    }
+
+    @keyframes cursed-pulse {
+      0%, 100% { box-shadow: inset 0 0 10px rgba(128, 0, 128, 0.5); }
+      50% { box-shadow: inset 0 0 20px rgba(128, 0, 128, 0.8); }
+    }
+
+    .cell.ghost {
+      opacity: 0.4;
+    }
+
+    .cell.harvesting {
+      animation: harvest-flash 0.5s ease-out;
+    }
+
+    @keyframes harvest-flash {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(2); }
+    }
+
+    @keyframes land-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .board-shake {
+      animation: land-shake 0.15s ease-out;
+    }
+
+    @keyframes cell-pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    .cell.just-placed {
+      animation: cell-pop 0.2s ease-out;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 5px currentColor; }
+      50% { box-shadow: 0 0 15px currentColor, 0 0 25px currentColor; }
+    }
+
+    .cell.harvesting {
+      animation: harvest-flash 0.3s ease-out, glow-pulse 0.3s ease-out;
+    }
+
+    /* Harvested rows - permanent kingdom land (subtle indicator) */
+    .cell.harvested {
+      box-shadow: inset 0 0 3px rgba(255, 215, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+    }
+
+    /* Next Piece Preview */
+    .next-piece {
+      margin-top: 10px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .next-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .next-preview {
+      display: grid;
+      grid-template-columns: repeat(4, 24px);
+      grid-template-rows: repeat(4, 24px);
+      gap: 2px;
+      justify-content: center;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .preview-cell {
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      background: transparent;
+    }
+
+    .preview-cell.forest { background: var(--forest); }
+    .preview-cell.plains { background: var(--plains); }
+    .preview-cell.mountain { background: var(--mountain); }
+    .preview-cell.river { background: var(--river); }
+    .preview-cell.settlement { background: var(--settlement); }
+
+    /* Right Panel - Enemy Info */
+    .right-panel {
+      width: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .enemy-section {
+      flex: 1;
+    }
+
+    .enemy-wave {
+      background: var(--bg-card);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .enemy-icon { font-size: 1.2rem; }
+    .enemy-count {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .enemy-type {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+    }
+
+    /* Score Display */
+    .score-section {
+      text-align: center;
+    }
+
+    .score-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .score-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    /* Controls */
+    .controls-hint {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .controls-hint kbd {
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin: 0 2px;
+    }
+
+    /* Menu Screen */
+    .menu-screen {
+      position: fixed;
+      inset: 0;
+      top: 48px;
+      background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: safe center;
+      z-index: 100;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: clamp(0.75rem, 3vh, 2rem) 1rem;
+      gap: clamp(0.3rem, 1.5vh, 0.75rem);
+    }
+
+    .menu-screen.hidden {
+      display: none;
+    }
+
+    .menu-icon {
+      font-size: clamp(2.5rem, 8vh, 5rem);
+    }
+
+    .menu-title {
+      font-size: clamp(1.5rem, 5vh, 2.5rem);
+      font-weight: 800;
+    }
+
+    .menu-meta {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: clamp(0.5rem, 1.5vh, 1rem) 1.5rem;
+      text-align: center;
+    }
+
+    .meta-hearthstones {
+      font-size: clamp(1rem, 2.5vh, 1.3rem);
+      color: #ff6b35;
+      font-weight: 700;
+    }
+
+    .meta-rank {
+      color: #a855f7;
+      font-weight: 600;
+      margin: 0.15rem 0;
+    }
+
+    .meta-stats {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .menu-subtitle {
+      color: var(--text-secondary);
+    }
+
+    .menu-btn {
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      border: none;
+      color: white;
+      font-size: clamp(1rem, 2.5vh, 1.2rem);
+      font-weight: 700;
+      padding: clamp(0.6rem, 1.5vh, 1rem) 3rem;
+      border-radius: 30px;
+      cursor: pointer;
+      width: min(80%, 300px);
+    }
+
+    .menu-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .deck-select {
+      display: flex;
+      gap: 10px;
+    }
+
+    .deck-btn {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      padding: clamp(0.5rem, 1.5vh, 1rem);
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      width: clamp(80px, 25vw, 120px);
+    }
+
+    .deck-btn:hover, .deck-btn.selected {
+      border-color: var(--gold);
+    }
+
+    .deck-icon { font-size: clamp(1.3rem, 4vh, 2rem); }
+    .deck-name { font-weight: 600; font-size: clamp(0.75rem, 2vh, 0.9rem); }
+    .deck-desc { font-size: 0.65rem; color: var(--text-secondary); }
+
+    /* Shop Modal */
+    .shop-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .shop-modal.show {
+      display: flex;
+    }
+
+    .shop-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    .shop-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .shop-cards {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .shop-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      width: 150px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .shop-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-5px);
+    }
+
+    .shop-card.free {
+      border-color: #4CAF50;
+    }
+
+    .shop-card.joker {
+      border-color: #9333ea;
+      background: linear-gradient(135deg, var(--bg-card) 0%, #2d1b4e 100%);
+      box-shadow: 0 0 15px rgba(147, 51, 234, 0.3);
+    }
+
+    .shop-card.joker:hover {
+      border-color: #a855f7;
+      box-shadow: 0 0 25px rgba(147, 51, 234, 0.5);
+    }
+
+    .shop-card-type {
+      font-size: 0.7rem;
+      color: #a855f7;
+      text-align: center;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+    }
+
+    .shop-card-icon { font-size: 2rem; text-align: center; }
+    .shop-card-name { font-weight: 700; text-align: center; margin: 8px 0; }
+    .shop-card-desc { font-size: 0.75rem; color: var(--text-secondary); text-align: center; }
+    .shop-card-cost {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--gold);
+    }
+
+    .shop-skip {
+      display: block;
+      margin: 0 auto;
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.5rem 2rem;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .shop-skip:hover {
+      border-color: var(--text-primary);
+      color: var(--text-primary);
+    }
+
+    /* Attack Phase Overlay */
+    .attack-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 150;
+    }
+
+    .attack-overlay.show {
+      display: flex;
+    }
+
+    .attack-content {
+      text-align: center;
+    }
+
+    .attack-title {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .attack-enemies {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
+    }
+
+    .attack-enemy {
+      background: var(--bg-card);
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      text-align: center;
+      min-width: 70px;
+    }
+
+    .attack-enemy.total {
+      background: linear-gradient(135deg, var(--accent), #ff6b6b);
+      border: 2px solid var(--accent);
+    }
+
+    .attack-enemy-icon { font-size: 1.8rem; }
+    .attack-enemy-count { font-size: 1.2rem; font-weight: 700; }
+    .attack-enemy-type { font-size: 0.7rem; color: var(--text-secondary); }
+    .attack-enemy.total .attack-enemy-type { color: white; }
+
+    .attack-vs {
+      font-size: 2rem;
+      margin: 1rem 0;
+      color: var(--text-secondary);
+    }
+
+    .attack-defence {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .attack-result {
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .attack-result.victory {
+      background: rgba(76, 175, 80, 0.3);
+      color: #4CAF50;
+    }
+
+    .attack-result.breach {
+      background: rgba(233, 69, 96, 0.3);
+      color: var(--accent);
+    }
+
+    .attack-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.8rem 2rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* Tutorial Modal */
+    .tutorial-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 400;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .tutorial-modal.show {
+      display: flex;
+    }
+
+    .tutorial-content {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .tutorial-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .tutorial-title {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tutorial-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .tutorial-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .tutorial-section h3 {
+      color: var(--accent);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tutorial-section p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+
+    .tutorial-terrains {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .terrain-item {
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+
+    .terrain-item span:first-child {
+      font-size: 1.2rem;
+    }
+
+    .tutorial-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .control-item {
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    .control-item kbd {
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-right: 6px;
+    }
+
+    .tutorial-tips {
+      background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), transparent);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .tutorial-tips li {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      list-style: none;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .tutorial-tips li::before {
+      content: '💡';
+      position: absolute;
+      left: 0;
+      font-size: 0.7rem;
+    }
+
+    .tutorial-start-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.8rem 2rem;
+      border-radius: 20px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    /* Game Over */
+    .gameover-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+
+    .gameover-modal.show {
+      display: flex;
+    }
+
+    .gameover-content {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .gameover-icon { font-size: 4rem; }
+    .gameover-title { font-size: 2rem; margin: 1rem 0; }
+    .gameover-score { font-size: 3rem; color: var(--gold); font-weight: 700; }
+    .gameover-wave { color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+    .gameover-meta {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .gameover-hearthstones {
+      font-size: 1.3rem;
+      color: #ff6b35;
+      font-weight: 700;
+    }
+
+    .gameover-total {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.3rem;
+    }
+
+    .gameover-tier {
+      font-size: 1rem;
+      color: #a855f7;
+      margin-top: 0.5rem;
+      font-weight: 600;
+    }
+
+    .gameover-next-tier {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .gameover-unlocks {
+      margin: 1rem 0;
+    }
+
+    .new-unlock {
+      background: linear-gradient(135deg, #4CAF50, #2e7d32);
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-weight: 600;
+      animation: unlock-glow 1s infinite alternate;
+    }
+
+    @keyframes unlock-glow {
+      from { box-shadow: 0 0 5px #4CAF50; }
+      to { box-shadow: 0 0 20px #4CAF50; }
+    }
+
+    .gameover-btn {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.8rem 2rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 0.5rem;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 1.5s forwards;
+      white-space: nowrap;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    .toast.harvest {
+      border-color: #4CAF50;
+      color: #4CAF50;
+    }
+
+    .toast.score {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      :root {
+        --cell-size: clamp(16px, min(2.5vw, 2.5vh), 24px);
+      }
+
+      .game-container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .left-panel, .right-panel {
+        flex-direction: row;
+        width: 100%;
+        max-width: 500px;
+      }
+
+      .left-panel { order: 1; }
+      .board-container { order: 2; }
+      .right-panel { order: 3; }
+    }
+
+    /* Mobile UI - hidden on desktop */
+    .mobile-ui {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      /* Mobile-optimized cell size: fits both width AND height */
+      /* Width: (100vw - 24px) / 10.5 columns */
+      /* Height: (available height) / 22 rows (20 board + ~2 for HUD) */
+      /* Available height = 100dvh - 50px header - 70px mobile UI */
+      :root {
+        --cell-size: clamp(14px, min(calc((100vw - 24px) / 10.5), calc((100dvh - 130px) / 22)), 32px);
+      }
+
+      .left-panel, .right-panel {
+        display: none;
+      }
+
+      .controls-hint {
+        display: none;
+      }
+
+      /* Show mobile UI */
+      .mobile-ui {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .mobile-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .mobile-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .mobile-score {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      .mobile-label {
+        font-size: 0.6rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+      }
+
+      .mobile-wave {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .mobile-resources {
+        display: flex;
+        justify-content: space-around;
+        gap: 8px;
+      }
+
+      .mobile-res {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: var(--bg-card);
+        padding: 4px 10px;
+        border-radius: 12px;
+      }
+
+      /* Adjust game container for mobile — full height, no controls footer */
+      .game-container {
+        height: calc(100dvh - 50px);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* Gesture hint overlay (shown once on first mobile play) */
+      .gesture-hint {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 500;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        color: var(--text-primary);
+        padding: 2rem;
+        text-align: center;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .gesture-hint-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+      }
+
+      .gesture-hint-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        font-size: 1rem;
+      }
+
+      .gesture-hint-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .gesture-hint-icon {
+        font-size: 1.5rem;
+        width: 48px;
+        height: 48px;
+        background: var(--bg-card);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .gesture-hint-dismiss {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.6rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 0.5rem;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      .board-container {
+        margin-top: 8px;
+      }
+
+      .next-piece {
+        margin-top: 8px;
+        padding: 8px;
+        min-width: 100px;
+      }
+
+      .next-preview {
+        grid-template-columns: repeat(4, 20px);
+        grid-template-rows: repeat(4, 20px);
+      }
+
+      .next-label {
+        font-size: 0.7rem;
+      }
+
+      /* Adjust modals for mobile */
+      .shop-content {
+        width: 95%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .shop-cards {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .shop-card {
+        width: 100%;
+      }
+
+      .deck-btn {
+        width: clamp(70px, 28vw, 110px);
+      }
+    }
+
+    /* Accessibility: Respect reduced motion preferences */</style>

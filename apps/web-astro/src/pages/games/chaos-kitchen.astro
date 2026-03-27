@@ -1,0 +1,1897 @@
+---
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/chaos-kitchen.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+>
+
+  <div class="stats-bar">
+    <div class="stat-group">
+      <div class="stat">
+        <div class="stat-value" id="scoreDisplay">0</div>
+        <div class="stat-label">Score</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value multiplier" id="multiplierDisplay">1.0x</div>
+        <div class="stat-label">Combo</div>
+      </div>
+    </div>
+    <div class="timer-container">
+      <div class="timer-bar">
+        <div class="timer-fill" id="timerFill"></div>
+      </div>
+      <div class="timer-text" id="timerLabel">2:00</div>
+    </div>
+    <div class="stat-group right">
+      <div class="stat">
+        <div class="stat-value" id="ordersDisplay">0</div>
+        <div class="stat-label">Served</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="levelDisplay">1</div>
+        <div class="stat-label">Level</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chaos-banner" id="chaosBanner">CHAOS EVENT!</div>
+  <div class="served-banner" id="servedBanner">🍽️ ORDER SERVED!</div>
+
+  <div class="game-container">
+    <div class="kitchen-area" id="kitchenArea">
+      <div class="kitchen-floor"></div>
+
+      <!-- Chef Character -->
+      <div class="chef" id="chef" style="left: calc(50% - 30px); top: calc(50% - 40px);">
+        <div class="chef-body">
+          <div class="chef-hat"></div>
+          <div class="chef-head">
+            <div class="chef-face">&#x1F60A;</div>
+          </div>
+          <div class="chef-torso">
+            <div class="chef-apron"></div>
+          </div>
+          <div class="chef-held-item" id="chefHeldItem" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- Cooking Stations -->
+      <div class="stations-top">
+        <div class="station" id="chopStation" onclick="useStation('chop')">
+          <div class="station-icon">&#x1F52A;</div>
+          <div class="station-label">Chop</div>
+          <div class="station-progress" id="chopProgress">
+            <div class="station-progress-fill"></div>
+          </div>
+        </div>
+        <div class="station stove" id="cookStation" onclick="useStation('cook')">
+          <div class="station-icon">&#x1F373;</div>
+          <div class="station-label">Cook</div>
+          <div class="station-progress" id="cookProgress">
+            <div class="station-progress-fill"></div>
+          </div>
+        </div>
+        <div class="station" id="mixStation" onclick="useStation('mix')">
+          <div class="station-icon">&#x1F963;</div>
+          <div class="station-label">Mix</div>
+          <div class="station-progress" id="mixProgress">
+            <div class="station-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingredient Shelf -->
+      <div class="ingredient-shelf" id="ingredientShelf">
+        <div class="ingredient" onclick="pickupIngredient('tomato', '&#x1F345;')">
+          <span>&#x1F345;</span>
+          <span class="ingredient-label">Tomato</span>
+        </div>
+        <div class="ingredient" onclick="pickupIngredient('lettuce', '&#x1F96C;')">
+          <span>&#x1F96C;</span>
+          <span class="ingredient-label">Lettuce</span>
+        </div>
+        <div class="ingredient" onclick="pickupIngredient('meat', '&#x1F969;')">
+          <span>&#x1F969;</span>
+          <span class="ingredient-label">Meat</span>
+        </div>
+        <div class="ingredient" onclick="pickupIngredient('cheese', '&#x1F9C0;')">
+          <span>&#x1F9C0;</span>
+          <span class="ingredient-label">Cheese</span>
+        </div>
+        <div class="ingredient" onclick="pickupIngredient('bread', '&#x1F35E;')">
+          <span>&#x1F35E;</span>
+          <span class="ingredient-label">Bread</span>
+        </div>
+        <div class="ingredient" onclick="pickupIngredient('egg', '&#x1F95A;')">
+          <span>&#x1F95A;</span>
+          <span class="ingredient-label">Egg</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="side-panel">
+      <!-- Delivery Zone -->
+      <div class="panel-section delivery-zone" onclick="deliverPlate()">
+        <div class="delivery-icon">&#x1F37D;&#xFE0F;</div>
+        <div class="delivery-label">SERVE ORDER</div>
+      </div>
+
+      <!-- Current Plate -->
+      <div class="panel-section">
+        <div class="panel-title">&#x1F958; Current Plate</div>
+        <div class="plate-container" id="plateContainer">
+          <div class="plate-empty">Click ingredients to add</div>
+        </div>
+        <button class="clear-plate-btn" onclick="clearPlate()">&#x1F5D1; Clear Plate</button>
+      </div>
+
+      <!-- Orders -->
+      <div class="panel-section" style="flex: 1; overflow: hidden;">
+        <div class="panel-title">&#x1F4CB; Orders</div>
+        <div class="orders-list" id="ordersList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Overlay -->
+  <div class="game-overlay" id="startOverlay">
+    <div class="overlay-content">
+      <div class="overlay-icon">&#x1F468;&#x200D;&#x1F373;</div>
+      <h2 class="overlay-title">Chaos Kitchen</h2>
+      <p class="overlay-subtitle">Run a chaotic kitchen! Fulfill orders before time runs out while surviving crazy chaos events!</p>
+      <button class="play-btn" onclick="startGame()">&#x1F525; Start Cooking!</button>
+      <div class="how-to-play">
+        <h4>How to Play</h4>
+        <p>1. Click ingredients to pick them up<br>
+           2. Use stations to chop, cook, or mix<br>
+           3. Serve complete orders to earn points<br>
+           4. Watch out for chaos events!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div class="game-overlay hidden" id="gameOverOverlay">
+    <div class="overlay-content">
+      <div class="overlay-icon" id="endIcon">&#x2B50;</div>
+      <h2 class="overlay-title" id="endTitle">Kitchen Closed!</h2>
+      <div class="stars-display" id="starsDisplay">&#x2B50;&#x2B50;&#x2B50;</div>
+      <div class="overlay-score" id="finalScore">0</div>
+      <div class="overlay-stats">
+        <div class="overlay-stat">
+          <div class="overlay-stat-value" id="finalOrders">0</div>
+          <div class="overlay-stat-label">Orders Served</div>
+        </div>
+        <div class="overlay-stat">
+          <div class="overlay-stat-value" id="finalChaos">0</div>
+          <div class="overlay-stat-label">Chaos Survived</div>
+        </div>
+      </div>
+      <button class="play-btn" onclick="startGame()">&#x1F504; Play Again</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+
+  <script is:inline>
+  (function() {
+    'use strict';
+
+    function escapeHTML(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+    // ============ GAME CONSTANTS ============
+    const ROUND_TIME = 120;
+    const ORDER_SPAWN_INTERVAL = 8000;
+    const ORDER_TIME_LIMIT = 30;
+    const CHAOS_INTERVAL = 25000;
+    const CHAOS_DURATION = 10000;
+    const PROCESS_TIME = 2000;
+
+    // ============ RECIPES ============
+    const RECIPES = {
+      'Salad': { ingredients: ['lettuce', 'tomato'], stations: ['chop'], points: 80, icon: '🥗' },
+      'Burger': { ingredients: ['bread', 'meat', 'lettuce'], stations: ['chop', 'cook'], points: 120, icon: '🍔' },
+      'Omelette': { ingredients: ['egg', 'cheese'], stations: ['mix', 'cook'], points: 100, icon: '🍳' },
+      'Sandwich': { ingredients: ['bread', 'cheese', 'tomato'], stations: ['chop'], points: 90, icon: '🥪' },
+      'Steak': { ingredients: ['meat'], stations: ['cook'], points: 70, icon: '🥩' },
+      'Scrambled Eggs': { ingredients: ['egg'], stations: ['mix', 'cook'], points: 60, icon: '🥚' }
+    };
+
+    const CHAOS_EVENTS = [
+      { name: 'Floor Butter!', class: 'chaos-butter', message: '🧈 Floor is slippery!' },
+      { name: 'Kitchen Fire!', class: 'chaos-fire', message: '🔥 Stove on fire! Cook faster!' },
+      { name: 'Tiny Hands!', class: 'chaos-tiny', message: '🤏 Ingredients are tiny!' },
+      { name: 'Rush Hour!', class: 'chaos-rush', message: '⚡ Orders come faster!' },
+      { name: 'VIP Customer!', class: 'chaos-vip', message: '👑 VIP wants perfect service!' }
+    ];
+
+    const EMOJI_MAP = {
+      // Raw ingredients
+      'tomato': '🍅', 'lettuce': '🥬', 'meat': '🥩',
+      'cheese': '🧀', 'bread': '🍞', 'egg': '🥚',
+      // Chopped items
+      'chopped_tomato': '🫑', 'chopped_lettuce': '🥗', 'chopped_meat': '🥓',
+      // Cooked items
+      'cooked_meat': '🍖', 'cooked_egg': '🍳',
+      // Mixed items
+      'mixed_egg': '🥣', 'mixed_cheese': '🧀',
+      // Cooked after mixed
+      'cooked_mixed_egg': '🍳'
+    };
+
+    const STATION_ICONS = { chop: '🔪', cook: '🍳', mix: '🥣' };
+
+    // ============ GAME STATE ============
+    let score = 0;
+    let level = 1;
+    let multiplier = 1.0;
+    let ordersCompleted = 0;
+    let chaosSurvived = 0;
+    let timeRemaining = ROUND_TIME;
+    let isPlaying = false;
+    let heldItem = null;
+    let heldEmoji = null;
+    let currentPlate = [];
+    let plateStations = [];
+    let orders = [];
+    let currentChaos = null;
+    let gameTimerInterval = null;
+    let orderSpawnInterval = null;
+    let chaosInterval = null;
+    let currentUser = null;
+    let highScore = parseInt(localStorage.getItem('chaos-kitchen-high-score')) || 0;
+    let gameStartTime = null;
+
+    // ============ DOM ELEMENTS ============
+    const kitchenArea = document.getElementById('kitchenArea');
+    const chefEl = document.getElementById('chef');
+    const chefHeldEl = document.getElementById('chefHeldItem');
+    const plateContainer = document.getElementById('plateContainer');
+    const ordersList = document.getElementById('ordersList');
+    const chaosBannerEl = document.getElementById('chaosBanner');
+    const chefFace = document.querySelector('.chef-face');
+
+    // ============ INITIALIZATION ============
+    function init() {
+      document.addEventListener('click', handleKitchenClick);
+      window.gameHeader.init({
+        title: 'Chaos Kitchen',
+        icon: '👨‍🍳',
+        gameId: 'chaos-kitchen',
+        buttons: ['leaderboard', 'auth'],
+        onSignIn: async (user) => {
+          currentUser = user;
+          cloudStateKitchen = await window.gameCloud.loadState('chaos-kitchen');
+          if (cloudStateKitchen?.additionalData?.highScore > highScore) {
+            highScore = cloudStateKitchen.additionalData.highScore;
+            localStorage.setItem('chaos-kitchen-high-score', highScore);
+          }
+          await window.gameCloud.syncGuestScores('chaos-kitchen');
+        },
+        onSignOut: () => {
+          currentUser = null;
+        }
+      });
+    }
+
+    function handleKitchenClick(e) {
+      if (!isPlaying) return;
+
+      // Move chef to click position within kitchen area
+      const kitchen = kitchenArea.getBoundingClientRect();
+      const x = e.clientX - kitchen.left;
+      const y = e.clientY - kitchen.top;
+
+      // Don't move if clicking on UI elements
+      if (e.target.closest('.station, .ingredient, .side-panel, .stations-top, .ingredient-shelf')) return;
+
+      // Keep chef within bounds
+      const maxX = kitchen.width - 60;
+      const maxY = kitchen.height - 80;
+      const newX = Math.max(0, Math.min(x - 30, maxX));
+      const newY = Math.max(0, Math.min(y - 40, maxY));
+
+      chefEl.style.left = newX + 'px';
+      chefEl.style.top = newY + 'px';
+    }
+
+    // ============ GAME CONTROLS ============
+    function startGame() {
+      document.getElementById('startOverlay').classList.add('hidden');
+      document.getElementById('gameOverOverlay').classList.add('hidden');
+
+      score = 0;
+      multiplier = 1.0;
+      ordersCompleted = 0;
+      chaosSurvived = 0;
+      timeRemaining = ROUND_TIME;
+      currentPlate = [];
+      plateStations = [];
+      orders = [];
+      heldItem = null;
+      heldEmoji = null;
+      currentChaos = null;
+      isPlaying = true;
+      gameStartTime = Date.now();
+
+      chefHeldEl.style.display = 'none';
+      chefFace.innerHTML = '😊';
+      kitchenArea.className = 'kitchen-area';
+
+      renderPlate();
+      updateDisplay();
+
+      spawnOrder();
+      spawnOrder();
+
+      gameTimerInterval = setInterval(gameTick, 1000);
+      orderSpawnInterval = setInterval(spawnOrder, ORDER_SPAWN_INTERVAL);
+      chaosInterval = setInterval(triggerChaos, CHAOS_INTERVAL);
+    }
+
+    function gameTick() {
+      timeRemaining--;
+
+      // Check if game should end BEFORE processing order expirations
+      // This ensures the displayed score matches the final score
+      if (timeRemaining <= 0) {
+        updateDisplay();
+        endGame();
+        return;
+      }
+
+      // Process order expirations only if game is still active
+      orders.forEach(order => {
+        order.timeLeft--;
+        if (order.timeLeft <= 0) {
+          expireOrder(order);
+        }
+      });
+
+      updateDisplay();
+      renderOrders();
+    }
+
+    function endGame() {
+      isPlaying = false;
+      clearInterval(gameTimerInterval);
+      clearInterval(orderSpawnInterval);
+      clearInterval(chaosInterval);
+
+      let stars = 1;
+      if (ordersCompleted >= 5) stars = 2;
+      if (ordersCompleted >= 10) stars = 3;
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('chaos-kitchen-high-score', highScore);
+      }
+
+      document.getElementById('endIcon').textContent = stars >= 2 ? '🎉' : '😅';
+      document.getElementById('endTitle').textContent = stars >= 2 ? 'Great Service!' : 'Kitchen Closed';
+      document.getElementById('starsDisplay').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+      document.getElementById('finalScore').textContent = score.toLocaleString();
+      document.getElementById('finalOrders').textContent = ordersCompleted;
+      document.getElementById('finalChaos').textContent = chaosSurvived;
+      document.getElementById('gameOverOverlay').classList.remove('hidden');
+
+      submitScore();
+      saveCloudState();
+    }
+
+    // ============ INGREDIENTS & COOKING ============
+    function pickupIngredient(name, emoji) {
+      if (!isPlaying) return;
+
+      // If already holding something, add to plate
+      if (heldItem) {
+        addToPlate(heldItem);
+      }
+
+      heldItem = name;
+      heldEmoji = emoji;
+      chefHeldEl.innerHTML = emoji;
+      chefHeldEl.style.display = 'block';
+      chefFace.innerHTML = '😃';
+
+      playSound('pickup');
+    }
+
+    function addToPlate(item) {
+      if (currentPlate.length >= 4) return;
+      currentPlate.push(item);
+      renderPlate();
+      playSound('place');
+    }
+
+    function getCompletedDish() {
+      // Check if current plate matches a completed recipe
+      for (const [name, recipe] of Object.entries(RECIPES)) {
+        // Check if all required stations have been used
+        const hasAllStations = recipe.stations.every(s => plateStations.includes(s));
+        if (!hasAllStations) continue;
+
+        // Check if ingredients match (ignoring processing prefixes)
+        const plateIngredients = currentPlate.map(i =>
+          i.replace('chopped_', '').replace('cooked_', '').replace('mixed_', '')
+        ).sort();
+        const recipeIngredients = [...recipe.ingredients].sort();
+
+        if (plateIngredients.length === recipeIngredients.length &&
+            plateIngredients.every((ing, idx) => ing === recipeIngredients[idx])) {
+          return { name, icon: recipe.icon };
+        }
+      }
+      return null;
+    }
+
+    function renderPlate() {
+      if (currentPlate.length === 0) {
+        plateContainer.innerHTML = '<div class="plate-empty">Click ingredients to add</div>';
+      } else {
+        // Check if plate matches a completed dish
+        const completedDish = getCompletedDish();
+        if (completedDish) {
+          plateContainer.innerHTML = `
+            <span class="plate-item completed-dish">${completedDish.icon}</span>
+            <span class="dish-name">${completedDish.name}</span>
+          `;
+        } else {
+          plateContainer.innerHTML = currentPlate.map(item =>
+            `<span class="plate-item">${EMOJI_MAP[item] || '❓'}</span>`
+          ).join('');
+        }
+      }
+    }
+
+    function clearPlate() {
+      currentPlate = [];
+      plateStations = [];
+      heldItem = null;
+      heldEmoji = null;
+      chefHeldEl.style.display = 'none';
+      chefFace.innerHTML = '😊';
+      renderPlate();
+      playSound('clear');
+    }
+
+    function useStation(stationType) {
+      if (!isPlaying) return;
+
+      // If holding item, add to plate first
+      if (heldItem) {
+        addToPlate(heldItem);
+        heldItem = null;
+        heldEmoji = null;
+        chefHeldEl.style.display = 'none';
+      }
+
+      if (currentPlate.length === 0) return;
+
+      if (!plateStations.includes(stationType)) {
+        processAtStation(stationType);
+      }
+    }
+
+    function processAtStation(stationType) {
+      const stationEl = document.getElementById(stationType + 'Station');
+      const progressEl = document.getElementById(stationType + 'Progress');
+
+      stationEl.classList.add('active');
+      progressEl.classList.add('show');
+      chefFace.innerHTML = '😤';
+
+      let progress = 0;
+      const processInterval = setInterval(() => {
+        progress += 100 / (PROCESS_TIME / 100);
+        progressEl.querySelector('.station-progress-fill').style.width = progress + '%';
+
+        if (progress >= 100) {
+          clearInterval(processInterval);
+          stationEl.classList.remove('active');
+          progressEl.classList.remove('show');
+          progressEl.querySelector('.station-progress-fill').style.width = '0%';
+
+          plateStations.push(stationType);
+          chefFace.innerHTML = '😊';
+          playSound('complete');
+
+          currentPlate = currentPlate.map(item => {
+            if (stationType === 'chop' && ['tomato', 'lettuce', 'meat'].includes(item)) {
+              return 'chopped_' + item;
+            }
+            if (stationType === 'cook' && ['meat', 'egg', 'chopped_meat', 'mixed_egg'].includes(item)) {
+              return 'cooked_' + item.replace('chopped_', '').replace('mixed_', '');
+            }
+            if (stationType === 'mix' && ['egg', 'cheese'].includes(item)) {
+              return 'mixed_' + item;
+            }
+            return item;
+          });
+          renderPlate();
+        }
+      }, 100);
+    }
+
+    // ============ ORDERS ============
+    function spawnOrder() {
+      if (!isPlaying || orders.length >= 4) return;
+
+      const recipeNames = Object.keys(RECIPES);
+      const availableRecipes = level >= 2 ? recipeNames : recipeNames.filter(r => RECIPES[r].ingredients.length <= 2);
+      const recipeName = availableRecipes[Math.floor(Math.random() * availableRecipes.length)];
+
+      const order = {
+        id: Date.now(),
+        name: recipeName,
+        recipe: RECIPES[recipeName],
+        timeLeft: ORDER_TIME_LIMIT
+      };
+
+      orders.push(order);
+      renderOrders();
+    }
+
+    function renderOrders() {
+      if (orders.length === 0) {
+        ordersList.innerHTML = '<div class="plate-empty" style="padding: 20px;">No orders yet!</div>';
+        return;
+      }
+
+      ordersList.innerHTML = orders.map(order => `
+        <div class="order-card ${order.timeLeft < 10 ? 'urgent' : ''}">
+          <div class="order-header">
+            <span class="order-name">${order.recipe.icon} ${order.name}</span>
+            <span class="order-timer ${order.timeLeft < 10 ? 'danger' : ''}">${order.timeLeft}s</span>
+          </div>
+          <div class="order-items">
+            ${order.recipe.ingredients.map(ing => `<span class="order-item">${EMOJI_MAP[ing]} ${ing}</span>`).join('')}
+          </div>
+          <div class="order-stations">
+            ${order.recipe.stations.map(s => `<span class="order-station">${STATION_ICONS[s]}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deliverPlate() {
+      if (!isPlaying) return;
+
+      // Add held item to plate before serving
+      if (heldItem) {
+        addToPlate(heldItem);
+        heldItem = null;
+        heldEmoji = null;
+        chefHeldEl.style.display = 'none';
+      }
+
+      if (currentPlate.length === 0) return;
+
+      let matchedOrder = null;
+      let matchScore = 0;
+
+      for (const order of orders) {
+        const recipe = order.recipe;
+        let matches = 0;
+
+        const plateIngredients = currentPlate.map(i => i.replace('chopped_', '').replace('cooked_', '').replace('mixed_', ''));
+        const requiredIngredients = [...recipe.ingredients];
+
+        for (const ing of plateIngredients) {
+          const idx = requiredIngredients.indexOf(ing);
+          if (idx !== -1) {
+            matches++;
+            requiredIngredients.splice(idx, 1);
+          }
+        }
+
+        const stationsUsed = recipe.stations.every(s => plateStations.includes(s));
+
+        if (matches === recipe.ingredients.length && requiredIngredients.length === 0 && stationsUsed) {
+          matchedOrder = order;
+          matchScore = recipe.points;
+          break;
+        }
+      }
+
+      if (matchedOrder) {
+        const bonus = matchedOrder.timeLeft > 15 ? 50 : 0;
+        const totalPoints = Math.floor((matchScore + bonus) * multiplier);
+
+        score += totalPoints;
+        ordersCompleted++;
+        multiplier = Math.min(2.5, multiplier + 0.2);
+
+        orders = orders.filter(o => o.id !== matchedOrder.id);
+
+        chefFace.innerHTML = '🤩';
+        showFloatingScore(totalPoints, true);
+        showServedBanner(true, matchedOrder.name);
+        playSound('success');
+
+        if (ordersCompleted % 5 === 0) {
+          level++;
+          submitScore(true); // Submit on level up
+        }
+
+        setTimeout(() => { if (isPlaying) chefFace.innerHTML = '😊'; }, 1000);
+      } else {
+        const penalty = -30;
+        score = Math.max(0, score + penalty);
+        multiplier = Math.max(1.0, multiplier - 0.3);
+
+        chefFace.innerHTML = '😰';
+        showFloatingScore(penalty, false);
+        showServedBanner(false);
+        playSound('fail');
+
+        setTimeout(() => { if (isPlaying) chefFace.innerHTML = '😊'; }, 1000);
+      }
+
+      currentPlate = [];
+      plateStations = [];
+      renderPlate();
+      renderOrders();
+      updateDisplay();
+    }
+
+    function expireOrder(order) {
+      orders = orders.filter(o => o.id !== order.id);
+      score = Math.max(0, score - 50);
+      multiplier = Math.max(1.0, multiplier - 0.2);
+      chefFace.innerHTML = '😟';
+      showFloatingScore(-50, false);
+      playSound('fail');
+      updateDisplay();
+      setTimeout(() => { if (isPlaying) chefFace.innerHTML = '😊'; }, 1000);
+    }
+
+    // ============ CHAOS EVENTS ============
+    function triggerChaos() {
+      if (!isPlaying || currentChaos) return;
+
+      const chaos = CHAOS_EVENTS[Math.floor(Math.random() * CHAOS_EVENTS.length)];
+      currentChaos = chaos;
+
+      kitchenArea.classList.add(chaos.class);
+      chaosBannerEl.textContent = chaos.message;
+      chaosBannerEl.classList.add('show');
+      chefFace.innerHTML = '😱';
+
+      playSound('chaos');
+
+      setTimeout(() => {
+        kitchenArea.classList.remove(chaos.class);
+        chaosBannerEl.classList.remove('show');
+        currentChaos = null;
+        chaosSurvived++;
+        score += 75;
+        chefFace.innerHTML = '😎';
+        showFloatingScore(75, true);
+        updateDisplay();
+        setTimeout(() => { if (isPlaying) chefFace.innerHTML = '😊'; }, 1000);
+      }, CHAOS_DURATION);
+    }
+
+    // ============ UI UPDATES ============
+    function updateDisplay() {
+      document.getElementById('scoreDisplay').textContent = score.toLocaleString();
+      document.getElementById('multiplierDisplay').textContent = multiplier.toFixed(1) + 'x';
+      document.getElementById('ordersDisplay').textContent = ordersCompleted;
+      document.getElementById('levelDisplay').textContent = level;
+
+      const timerPercent = (timeRemaining / ROUND_TIME) * 100;
+      const timerFill = document.getElementById('timerFill');
+      timerFill.style.width = timerPercent + '%';
+      timerFill.classList.remove('warning', 'danger');
+      if (timerPercent < 20) timerFill.classList.add('danger');
+      else if (timerPercent < 40) timerFill.classList.add('warning');
+
+      const mins = Math.floor(timeRemaining / 60);
+      const secs = timeRemaining % 60;
+      document.getElementById('timerLabel').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function showFloatingScore(points, positive) {
+      const el = document.createElement('div');
+      el.className = `floating-score ${positive ? 'positive' : 'negative'}`;
+      el.textContent = (positive ? '+' : '') + points;
+      el.style.left = '50%';
+      el.style.top = '45%';
+      el.style.transform = 'translateX(-50%)';
+      kitchenArea.appendChild(el);
+      setTimeout(() => el.remove(), 1000);
+    }
+
+    function showServedBanner(success, orderName) {
+      const banner = document.getElementById('servedBanner');
+      banner.className = 'served-banner';
+
+      if (success) {
+        banner.textContent = `🍽️ ${orderName} SERVED!`;
+        banner.classList.remove('fail');
+      } else {
+        banner.textContent = '❌ WRONG ORDER!';
+        banner.classList.add('fail');
+      }
+
+      // Force reflow to restart animation
+      void banner.offsetWidth;
+      banner.classList.add('show');
+
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 1200);
+    }
+
+    // ============ SOUND ============
+    let audioCtx = null;
+    let audioUnlocked = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+      // Play silent buffer to fully unlock on iOS
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlocked = true;
+    }
+
+    ['touchstart', 'mousedown', 'keydown'].forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true });
+    });
+
+    function playSound(type) {
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        gainNode.gain.value = 0.08;
+
+        switch (type) {
+          case 'pickup':
+            oscillator.frequency.value = 600;
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.05);
+            break;
+          case 'place':
+            oscillator.frequency.value = 450;
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.08);
+            break;
+          case 'complete':
+            oscillator.frequency.value = 700;
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.12);
+            break;
+          case 'success':
+            oscillator.frequency.value = 880;
+            oscillator.start();
+            setTimeout(() => oscillator.frequency.value = 1100, 80);
+            oscillator.stop(ctx.currentTime + 0.2);
+            break;
+          case 'fail':
+            oscillator.frequency.value = 220;
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.25);
+            break;
+          case 'chaos':
+            oscillator.frequency.value = 330;
+            oscillator.type = 'sawtooth';
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.35);
+            break;
+          case 'clear':
+            oscillator.frequency.value = 380;
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.1);
+            break;
+        }
+      } catch (e) {}
+    }
+
+    // ============ AUTH & API ============
+    let cloudStateKitchen = null;
+
+    async function submitScore(isLevelUp = false) {
+      await window.gameCloud.submitOrQueue('chaos-kitchen', {
+        score: score,
+        level: level,
+        timeMs: gameStartTime ? Date.now() - gameStartTime : 0,
+        metadata: { ordersCompleted, chaosSurvived, multiplier, isLevelUp }
+      }, { silent: isLevelUp });
+    }
+
+    async function saveCloudState() {
+      if (!currentUser) return;
+      try {
+        const prevGamesPlayed = cloudStateKitchen?.gamesPlayed || 0;
+        const prevGamesWon = cloudStateKitchen?.gamesWon || 0;
+        const prevBestStreak = cloudStateKitchen?.bestStreak || 0;
+        const didWin = ordersCompleted >= 5;
+
+        const state = {
+          currentLevel: level,
+          currentStreak: 0,
+          bestStreak: Math.max(prevBestStreak, level),
+          gamesPlayed: prevGamesPlayed + 1,
+          gamesWon: prevGamesWon + (didWin ? 1 : 0),
+          lastPlayedDate: new Date().toISOString().split('T')[0],
+          additionalData: { highScore, bestOrders: ordersCompleted }
+        };
+        await window.gameCloud.saveState('chaos-kitchen', state);
+        cloudStateKitchen = state;
+
+        // Check achievements
+        if (state.gamesPlayed === 1) {
+          await window.gameCloud.unlockAchievement('first_word', 'chaos-kitchen');
+        }
+        if (state.gamesWon >= 10) {
+          await window.gameCloud.unlockAchievement('ten_wins', 'chaos-kitchen');
+        }
+      } catch (e) {
+        console.error('Failed to save state:', e);
+      }
+    }
+
+    // ============ START ============
+    window.addEventListener('load', init);
+
+    // Expose functions referenced by onclick attributes in HTML
+    window.startGame = startGame;
+    window.useStation = useStation;
+    window.pickupIngredient = pickupIngredient;
+    window.deliverPlate = deliverPlate;
+    window.clearPlate = clearPlate;
+  })();
+  </script>
+
+  <!-- More Games Section -->
+</body>
+
+  <Fragment slot="scripts">
+    <script is:inline>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Chaos Kitchen | Weekly Arcade - Free Cooking Game Online</title>
+
+  <!-- Preconnect for faster loading -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+
+  <!-- SEO -->
+  <meta name="description" content="Play Chaos Kitchen free online. Run a chaotic kitchen, fulfill orders, survive chaos events, and become a master chef! No download required.">
+  <meta name="keywords" content="cooking game, kitchen game, time management game, chaos kitchen, free game, browser game, restaurant game">
+  <link rel="canonical" href="https://weeklyarcade.games/games/chaos-kitchen/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Chaos Kitchen | Weekly Arcade - Free Cooking Game">
+  <meta property="og:description" content="Run a chaotic kitchen! Fulfill orders and survive chaos events. Play free online.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weeklyarcade.games/games/chaos-kitchen/">
+  <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+  <meta property="og:site_name" content="Weekly Arcade">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Chaos Kitchen | Weekly Arcade">
+  <meta name="twitter:description" content="Run a chaotic kitchen! Fulfill orders and survive chaos events. Play free online.">
+  <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#ff6b35">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Chaos Kitchen",
+    "url": "https://weeklyarcade.games/games/chaos-kitchen/",
+    "description": "Play Chaos Kitchen free online. Run a chaotic kitchen, fulfill orders, survive chaos events, and become a master chef!",
+    "genre": ["Action", "Time Management", "Cooking"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "gamePlatform": "Web Browser",
+    "inLanguage": "en",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Weekly Arcade",
+      "url": "https://weeklyarcade.games/"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.6",
+      "ratingCount": "650",
+      "bestRating": "5",
+      "worstRating": "1"
+    }
+  }
+    </script>
+
+  </Fragment>
+</GameLayout>
+
+<style is:global>
+
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #0f3460;
+      --accent: #ff6b35;
+      --accent-light: #ff8c5a;
+      --success: #4ade80;
+      --danger: #ef4444;
+      --warning: #fbbf24;
+      --text-primary: #fff;
+      --text-secondary: #94a3b8;
+      --border: #334155;
+      --kitchen-floor: #3d3d5c;
+      --kitchen-counter: #4a4a6a;
+      --wood: #8b5a2b;
+      --wood-light: #a67c52;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
+      padding: 0.6rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      height: 55px;
+    }
+
+    .stat-group {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .stat-group.right { justify-content: flex-end; }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .multiplier {
+      background: linear-gradient(135deg, var(--warning), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .timer-container {
+      text-align: center;
+    }
+
+    .timer-bar {
+      width: 140px;
+      height: 10px;
+      background: var(--bg-card);
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+    }
+
+    .timer-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), #22c55e);
+      transition: width 0.1s linear, background 0.3s;
+    }
+
+    .timer-fill.warning { background: linear-gradient(90deg, var(--warning), #f59e0b); }
+    .timer-fill.danger { background: linear-gradient(90deg, var(--danger), #dc2626); }
+
+    .timer-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+
+    /* Chaos Event Banner */
+    .chaos-banner {
+      position: fixed;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: linear-gradient(135deg, #e94560, #ff6b35);
+      padding: 0.6rem 2rem;
+      border-radius: 25px;
+      font-weight: 700;
+      font-size: 1rem;
+      z-index: 100;
+      opacity: 0;
+      transition: all 0.3s;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.5);
+    }
+
+    .chaos-banner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Game Container */
+    .game-container {
+      position: relative;
+      height: calc(100dvh - 105px);
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* Kitchen Area */
+    .kitchen-area {
+      flex: 1;
+      position: relative;
+      background:
+        linear-gradient(135deg, #2d2d44 0%, #252540 100%);
+      overflow: hidden;
+    }
+
+    /* Checkered Floor Pattern */
+    .kitchen-floor {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.03) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.03) 75%);
+      background-size: 50px 50px;
+      background-position: 0 0, 0 25px, 25px -25px, -25px 0px;
+      pointer-events: none;
+    }
+
+    /* Chef Character */
+    .chef {
+      position: absolute;
+      width: 60px;
+      height: 80px;
+      transition: left 0.15s ease-out, top 0.15s ease-out;
+      z-index: 50;
+      cursor: pointer;
+    }
+
+    .chef-body {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .chef-head {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 45px;
+      height: 45px;
+      background: #ffdbac;
+      border-radius: 50%;
+      border: 3px solid #e6c39a;
+    }
+
+    .chef-hat {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 35px;
+      background: white;
+      border-radius: 8px 8px 0 0;
+      border: 2px solid #eee;
+    }
+
+    .chef-hat::before {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: -5px;
+      right: -5px;
+      height: 12px;
+      background: white;
+      border-radius: 3px;
+      border: 2px solid #eee;
+    }
+
+    .chef-face {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .chef-torso {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 35px;
+      background: white;
+      border-radius: 8px;
+      border: 2px solid #eee;
+    }
+
+    .chef-apron {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 25px;
+      background: var(--accent);
+      border-radius: 3px;
+    }
+
+    .chef-held-item {
+      position: absolute;
+      top: -10px;
+      right: -15px;
+      font-size: 1.8rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      animation: bob 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes bob {
+      to { transform: translateY(-3px); }
+    }
+
+    /* Kitchen Stations - Top Row */
+    .stations-top {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+    }
+
+    .station {
+      width: clamp(60px, 12vw, 100px);
+      height: clamp(60px, 12vw, 100px);
+      background: linear-gradient(135deg, var(--bg-card), #1a4a7a);
+      border: 3px solid var(--border);
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .station:hover {
+      border-color: var(--accent);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+    }
+
+    .station.active {
+      border-color: var(--success);
+      box-shadow: 0 0 25px rgba(74, 222, 128, 0.5);
+      animation: station-pulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes station-pulse {
+      to { transform: scale(1.08); }
+    }
+
+    .station-icon {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      margin-bottom: 5px;
+    }
+
+    .station-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .station-progress {
+      position: absolute;
+      bottom: 5px;
+      left: 10px;
+      right: 10px;
+      height: 6px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .station-progress.show { opacity: 1; }
+
+    .station-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), #22c55e);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* Ingredient Shelf - Bottom */
+    .ingredient-shelf {
+      position: absolute;
+      bottom: max(15px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--wood), var(--wood-light));
+      border: 3px solid #6b4423;
+      border-radius: 15px;
+      padding: 12px 20px;
+      display: flex;
+      gap: clamp(6px, 2vw, 12px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    }
+
+    .ingredient {
+      width: clamp(48px, 10vw, 65px);
+      height: clamp(48px, 10vw, 65px);
+      background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+      border: 3px solid #ccc;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: clamp(1.2rem, 3vw, 2rem);
+    }
+
+    .ingredient:hover {
+      transform: scale(1.15) translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .ingredient:active {
+      transform: scale(0.95);
+    }
+
+    .ingredient-label {
+      font-size: 0.6rem;
+      color: #666;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Side Panel */
+    .side-panel {
+      width: 200px;
+      background: var(--bg-secondary);
+      border-left: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+      max-height: calc(100vh - 105px);
+      overflow-y: auto;
+    }
+
+    .panel-section {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Delivery Zone */
+    .delivery-zone {
+      background: linear-gradient(135deg, var(--success), #22c55e);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 3px dashed white;
+    }
+
+    .delivery-zone:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+    }
+
+    .delivery-icon {
+      font-size: 2.5rem;
+    }
+
+    .delivery-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+
+    /* Current Plate */
+    .plate-container {
+      background: #f5f5f5;
+      border-radius: 50%;
+      width: 90px;
+      height: 90px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 8px;
+      border: 3px solid #ddd;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .plate-item {
+      font-size: 1.2rem;
+    }
+
+    .plate-item.completed-dish {
+      font-size: 2rem;
+      animation: dishReady 0.5s ease;
+    }
+
+    @keyframes dishReady {
+      0% { transform: scale(0.5); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .dish-name {
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .plate-empty {
+      color: #999;
+      font-size: 0.55rem;
+      text-align: center;
+    }
+
+    .clear-plate-btn {
+      margin-top: 10px;
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .clear-plate-btn:hover {
+      background: #dc2626;
+    }
+
+    /* Orders Section */
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 130px;
+      max-height: 160px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    .orders-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .orders-list::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .order-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .order-card.urgent {
+      border-color: var(--danger);
+      animation: pulse-urgent 0.5s infinite alternate;
+    }
+
+    @keyframes pulse-urgent {
+      to {
+        border-color: var(--warning);
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+      }
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .order-name {
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    .order-timer {
+      background: var(--warning);
+      color: #000;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .order-timer.danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .order-items {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+      font-size: 0.7rem;
+    }
+
+    .order-item {
+      background: var(--bg-card);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 0.7rem;
+    }
+
+    .order-stations {
+      margin-top: 6px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .order-station {
+      font-size: 0.9rem;
+      opacity: 0.6;
+    }
+
+    /* Floating Score */
+    .floating-score {
+      position: absolute;
+      font-size: 1.8rem;
+      font-weight: 800;
+      pointer-events: none;
+      animation: float-up 1s ease-out forwards;
+      z-index: 100;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .floating-score.positive { color: var(--success); }
+    .floating-score.negative { color: var(--danger); }
+
+    @keyframes float-up {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+    }
+
+    /* Served Banner */
+    .served-banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: linear-gradient(135deg, var(--success), #22c55e);
+      padding: 1.5rem 3rem;
+      border-radius: 20px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: white;
+      z-index: 150;
+      box-shadow: 0 10px 40px rgba(74, 222, 128, 0.5);
+      opacity: 0;
+      transition: none;
+    }
+
+    .served-banner.show {
+      animation: served-pop 1.2s ease-out forwards;
+    }
+
+    .served-banner.fail {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.5);
+    }
+
+    @keyframes served-pop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      40% { transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+
+    /* Chaos Effects */
+    .kitchen-area.chaos-butter {
+      animation: shake 0.3s ease-in-out infinite;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .kitchen-area.chaos-fire .station.stove {
+      animation: on-fire 0.15s ease-in-out infinite alternate;
+    }
+
+    @keyframes on-fire {
+      to { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8), inset 0 0 20px rgba(255, 100, 0, 0.3); }
+    }
+
+    .kitchen-area.chaos-tiny .ingredient {
+      transform: scale(0.7);
+    }
+
+    /* Game Overlays */
+    .game-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(5px);
+    }
+
+    .game-overlay.hidden { display: none; }
+
+    .overlay-content {
+      text-align: center;
+      padding: 2.5rem;
+      max-width: 420px;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+      border-radius: 25px;
+      border: 3px solid var(--accent);
+      box-shadow: 0 20px 60px rgba(255, 107, 53, 0.3);
+    }
+
+    .overlay-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: bounce-in 0.5s ease-out;
+    }
+
+    @keyframes bounce-in {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .overlay-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--warning));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .overlay-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .overlay-score {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--success);
+      margin-bottom: 0.5rem;
+      text-shadow: 0 4px 20px rgba(74, 222, 128, 0.5);
+    }
+
+    .overlay-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .overlay-stat {
+      text-align: center;
+    }
+
+    .overlay-stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--warning);
+    }
+
+    .overlay-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .stars-display {
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .play-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border: none;
+      padding: 1rem 3.5rem;
+      border-radius: 30px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 5px 20px rgba(255, 107, 53, 0.4);
+    }
+
+    .play-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 30px rgba(255, 107, 53, 0.6);
+    }
+
+    /* How to Play */
+    .how-to-play {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .how-to-play h4 {
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .how-to-play p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .side-panel {
+        width: 160px;
+        padding: 8px;
+        gap: 8px;
+      }
+
+      .plate-container {
+        width: 70px;
+        height: 70px;
+        padding: 6px;
+      }
+
+      .plate-item { font-size: 1rem; }
+      .plate-item.completed-dish { font-size: 1.6rem; }
+
+      .orders-list {
+        min-height: 120px;
+        max-height: 140px;
+      }
+
+      .stations-top {
+        gap: clamp(8px, 2vw, 20px);
+      }
+
+      /* Station and ingredient sizes handled by clamp() */
+      .station-label { font-size: 0.6rem; }
+
+      .ingredient-shelf {
+        padding: 8px 12px;
+      }
+
+      .chef {
+        width: 50px;
+        height: 70px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .game-container {
+        flex-direction: column;
+      }
+
+      .side-panel {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        height: auto;
+        max-height: none;
+        padding: 8px;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        gap: 8px;
+      }
+
+      .panel-section {
+        flex: 1;
+        min-width: 140px;
+        padding: 8px;
+      }
+
+      .plate-container {
+        width: 60px;
+        height: 60px;
+      }
+
+      .orders-list {
+        max-height: 100px;
+      }
+
+      .kitchen-area {
+        height: 55dvh;
+      }
+    }
+
+    @media (max-height: 700px) {
+      .orders-list {
+        min-height: 110px;
+        max-height: 130px;
+      }
+
+      .plate-container {
+        width: 70px;
+        height: 70px;
+      }
+
+      .panel-section {
+        padding: 8px;
+      }
+
+      .panel-title {
+        margin-bottom: 6px;
+        font-size: 0.65rem;
+      }
+    }
+
+    /* More Games Section */
+    .more-games {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      margin-top: auto;
+    }
+
+    .more-games-title {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .more-games-grid {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .more-game-link {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .more-game-link:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .more-game-link span:first-child {
+      font-size: 1.2rem;
+    }
+
+    @media (max-width: 768px) {
+      .more-games { display: none; }
+    }
+
+    /* Accessibility: Respect reduced motion preferences */</style>

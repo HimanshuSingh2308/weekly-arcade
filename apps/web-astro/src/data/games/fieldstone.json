@@ -1,0 +1,14 @@
+{
+  "id": "fieldstone",
+  "name": "Fieldstone",
+  "icon": "🏰",
+  "title": "Fieldstone | Weekly Arcade",
+  "description": "Play Fieldstone free online. A Tetris-like kingdom builder! Place terrain tiles, harvest resources, build your army, and defend against waves of enemies.",
+  "keywords": "puzzle game, strategy game, tetris-like, kingdom builder, free game, browser game",
+  "url": "/games/fieldstone/",
+  "themeColor": "#2d5a27",
+  "accentColor": "#2d5a27",
+  "genres": ["Arcade"],
+  "ratingValue": "4.8",
+  "ratingCount": "500"
+}
