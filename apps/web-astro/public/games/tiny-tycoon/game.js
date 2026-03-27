@@ -2689,30 +2689,38 @@
     if (_shopSwipeSetup) return;
     _shopSwipeSetup = true;
     const modal = document.getElementById('shopModal');
-    let startX = 0, startY = 0, swiping = false;
+    let startX = 0, startY = 0, isHorizontal = null;
 
     modal.addEventListener('touchstart', (e) => {
       if (gameState !== 'UPGRADE_SHOP') return;
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
-      swiping = true;
+      isHorizontal = null;
     }, { passive: true });
 
+    modal.addEventListener('touchmove', (e) => {
+      if (gameState !== 'UPGRADE_SHOP' || isHorizontal === false) return;
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (isHorizontal === null && (dx > 10 || dy > 10)) {
+        isHorizontal = dx > dy * 1.2;
+      }
+      if (isHorizontal) e.preventDefault(); // Lock horizontal — prevent scroll
+    }, { passive: false });
+
     modal.addEventListener('touchend', (e) => {
-      if (!swiping || gameState !== 'UPGRADE_SHOP') return;
-      swiping = false;
+      if (gameState !== 'UPGRADE_SHOP' || !isHorizontal) return;
       const dx = e.changedTouches[0].clientX - startX;
-      const dy = e.changedTouches[0].clientY - startY;
-      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.7) return; // Too short or too vertical
+      if (Math.abs(dx) < 50) return;
 
       const tabs = getVisibleShopTabs();
       const idx = tabs.indexOf(shopTab);
       if (idx < 0) return;
 
-      if (dx < -60 && idx < tabs.length - 1) {
-        setShopTab(tabs[idx + 1]); // Swipe left → next tab
-      } else if (dx > 60 && idx > 0) {
-        setShopTab(tabs[idx - 1]); // Swipe right → prev tab
+      if (dx < -50 && idx < tabs.length - 1) {
+        setShopTab(tabs[idx + 1]);
+      } else if (dx > 50 && idx > 0) {
+        setShopTab(tabs[idx - 1]);
       }
     }, { passive: true });
   }

@@ -1592,12 +1592,7 @@
     }
     /* Swipe hint indicator on tab bar */
     .shop-tab-bar::after {
-      content: '← swipe →';
-      position: absolute;
-      right: 0;
-      top: 100%;
-      font-size: 0.5rem;
-      color: #ccc;
+      content: none;
       padding: 2px 4px;
     }
     /* Chips/Tags */
