@@ -291,6 +291,7 @@
   let customersServed = 0;
   let customersLost = 0;
   let adaptivePatienceBoost = 0; // +% patience when player is struggling
+  let grandReopeningActive = false; // 2x customers for 1 day after major damage
   let comboStreak = 0;
   let peakCombo = 0;
   let comboForgives = 0;
@@ -848,7 +849,8 @@
       if (day >= row.minDay) config = row;
     }
     const queueBonus = (upgradeLevels.queue_expand || 0) * 2;
-    const interval = config.interval * (relaxedMode ? RELAXED.spawnMult : 1);
+    const reopeningMult = grandReopeningActive ? 0.5 : 1; // 2x customers = half interval
+    const interval = config.interval * (relaxedMode ? RELAXED.spawnMult : 1) * reopeningMult;
     return { interval, maxQueue: config.maxQueue + queueBonus };
   }
 
@@ -2191,6 +2193,7 @@
     peakCombo = 0;
     comboForgives = 0;
     adaptivePatienceBoost = 0;
+    grandReopeningActive = false; // Only lasts 1 day
     manualServing = null;
     autoServing = [null, null, null, null];
     rushActive = false;
@@ -2244,6 +2247,13 @@
       }
     }
     eventPityCounter = eventPicked ? 0 : eventPityCounter + 1;
+
+    // Grand Re-Opening banner
+    if (grandReopeningActive) {
+      rushBanner.textContent = '🎉 GRAND RE-OPENING! 2x Customers! 🎉';
+      rushBanner.classList.add('visible');
+      setTimeout(() => { if (!rushActive && !happyHourActive) rushBanner.classList.remove('visible'); }, 5000);
+    }
 
     // P5 perk: Golden Start — 50 bonus coins at day start
     if (prestigeLevel >= 5) {
@@ -2423,6 +2433,16 @@
         return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎯 Day ${m.day} milestone in ${m.day - currentDay} days! (+${formatCoins(m.bonus)} bonus)</div>`;
       }
     }
+    // Check for upcoming drink unlocks
+    for (const [key, drink] of Object.entries(DRINK_TYPES)) {
+      if (drink.unlockDay > currentDay && drink.unlockDay <= currentDay + 3) {
+        return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🆕 Day ${drink.unlockDay} unlocks ${drink.emoji} ${drink.name}!</div>`;
+      }
+    }
+    // Check for upcoming event unlocks
+    if (currentDay < 5 && currentDay >= 3) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">⚡ Day 5 unlocks Rush Hour events!</div>`;
+    if (currentDay < 10 && currentDay >= 8) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎉 Day 10 unlocks Happy Hour events!</div>`;
+    if (currentDay < 15 && currentDay >= 13) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎩 Day 15 unlocks Critic visits & celebrities!</div>`;
     return '';
   }
 
@@ -2541,6 +2561,7 @@
     }
 
     let firstLockedTeaser = null;
+    const maxedUpgrades = [];
     for (const [id, upgrade] of Object.entries(UPGRADES)) {
       const level = upgradeLevels[id] || 0;
       const maxed = level >= upgrade.maxLevel;
@@ -2553,6 +2574,12 @@
         if (!firstLockedTeaser) {
           firstLockedTeaser = { id, upgrade };
         }
+        continue;
+      }
+
+      // Collapse maxed upgrades into summary
+      if (maxed) {
+        maxedUpgrades.push(upgrade.icon);
         continue;
       }
 
@@ -2581,6 +2608,11 @@
           }
         </div>
       `;
+    }
+
+    // Maxed upgrades collapsed summary
+    if (maxedUpgrades.length > 0) {
+      html += `<div style="text-align:center;font-size:0.7rem;color:var(--gold);padding:0.3rem;opacity:0.7;">${maxedUpgrades.join(' ')} — ${maxedUpgrades.length} maxed</div>`;
     }
 
     // K. Next unlock teaser card
@@ -2901,14 +2933,15 @@
     }
     const damageHtml = damage.repairCost > 0 ? `<div style="background:rgba(255,100,100,0.08);border-radius:8px;padding:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;"><div style="font-weight:700;color:var(--coral);">🔧 Maintenance Needed</div><div style="color:#888;">${damage.desc} — Repair: 💰 ${formatCoins(totalRepair)}</div>${damage.grandReopening?'<div style="color:var(--matcha);">🎉 Grand Re-Opening: 2x customers next day!</div>':''}</div>` : '';
     const netTotal = offlineData.grandTotal - totalRepair;
-    modal.innerHTML = `<div style="text-align:center;"><div style="font-size:2rem;">☀️</div><h2>Welcome Back!</h2><div style="font-size:0.75rem;color:#999;margin-bottom:0.75rem;">Away for ${offlineData.hoursOffline}h</div></div><div style="margin-bottom:0.75rem;">${earningsHtml}</div>${damageHtml}<div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;font-size:0.8rem;"><div style="display:flex;justify-content:space-between;"><span>Offline Earnings</span><span>💰 ${formatCoins(offlineData.totalEarned)}</span></div>${offlineData.streakBonus>0?`<div style="display:flex;justify-content:space-between;color:var(--coral);"><span>🔥 Streak Bonus</span><span>💰 ${formatCoins(offlineData.streakBonus)}</span></div>`:''}${totalRepair>0?`<div style="display:flex;justify-content:space-between;color:#c00;"><span>🔧 Repairs</span><span>-💰 ${formatCoins(totalRepair)}</span></div>`:''}<div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid rgba(0,0,0,0.1);padding-top:0.3rem;margin-top:0.3rem;"><span>Net Total</span><span>💰 ${formatCoins(Math.max(0,netTotal))}</span></div></div><button class="btn" onclick="collectOfflineEarnings(${Math.max(0,netTotal)})" style="width:100%;min-height:48px;">${totalRepair>0?'Repair & Collect':'Collect & Play'}</button>`;
+    modal.innerHTML = `<div style="text-align:center;"><div style="font-size:2rem;">☀️</div><h2>Welcome Back!</h2><div style="font-size:0.75rem;color:#999;margin-bottom:0.75rem;">Away for ${offlineData.hoursOffline}h</div></div><div style="margin-bottom:0.75rem;">${earningsHtml}</div>${damageHtml}<div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;font-size:0.8rem;"><div style="display:flex;justify-content:space-between;"><span>Offline Earnings</span><span>💰 ${formatCoins(offlineData.totalEarned)}</span></div>${offlineData.streakBonus>0?`<div style="display:flex;justify-content:space-between;color:var(--coral);"><span>🔥 Streak Bonus</span><span>💰 ${formatCoins(offlineData.streakBonus)}</span></div>`:''}${totalRepair>0?`<div style="display:flex;justify-content:space-between;color:#c00;"><span>🔧 Repairs</span><span>-💰 ${formatCoins(totalRepair)}</span></div>`:''}<div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid rgba(0,0,0,0.1);padding-top:0.3rem;margin-top:0.3rem;"><span>Net Total</span><span>💰 ${formatCoins(Math.max(0,netTotal))}</span></div></div><button class="btn" onclick="collectOfflineEarnings(${Math.max(0,netTotal)}, ${!!damage.grandReopening})" style="width:100%;min-height:48px;">${totalRepair>0?'Repair & Collect':'Collect & Play'}</button>`;
     hideAllOverlays();
     showOverlay('hubOverlay');
     return true;
   }
 
-  function collectOfflineEarnings(amount) {
+  function collectOfflineEarnings(amount, hasGrandReopening) {
     wallet += amount;
+    if (hasGrandReopening) grandReopeningActive = true;
     playSound('coin');
     saveGame();
     showHub();
@@ -2939,12 +2972,40 @@
     showHub();
   }
 
+  // First-time tooltips
+  const _tooltipsShown = {};
+  function showFirstTimeTooltip(key, message) {
+    if (_tooltipsShown[key]) return;
+    try {
+      const empire = getEmpire();
+      const seen = (empire.settings || {}).tooltipsSeen || {};
+      if (seen[key]) { _tooltipsShown[key] = true; return; }
+    } catch(e) {}
+    _tooltipsShown[key] = true;
+    const tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 16px;border-radius:10px;font-size:0.75rem;max-width:300px;text-align:center;z-index:800;animation:fadeIn 0.3s ease;pointer-events:auto;';
+    tip.innerHTML = `💡 ${message}<div style="margin-top:6px;font-size:0.6rem;opacity:0.6;">Tap to dismiss</div>`;
+    tip.onclick = () => {
+      tip.remove();
+      try {
+        const emp = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+        if (!emp.settings) emp.settings = {};
+        if (!emp.settings.tooltipsSeen) emp.settings.tooltipsSeen = {};
+        emp.settings.tooltipsSeen[key] = true;
+        localStorage.setItem('tt_empire', JSON.stringify(emp)); invalidateEmpireCache();
+      } catch(e) {}
+    };
+    document.body.appendChild(tip);
+    setTimeout(() => { if (tip.parentNode) tip.remove(); }, 6000);
+  }
+
   function showHub() {
     gameState = 'HUB';
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
     hideAllOverlays();
     hudEl.style.display = 'none';
     checkDailyLogin();
+    showFirstTimeTooltip('hub', 'Welcome to your Empire Hub! Tap a store to play, or unlock new ones.');
     const unlockedStores = getUnlockedStores();
     const modal = document.getElementById('hubModal');
     let storeCardsHtml = '';
@@ -2973,6 +3034,7 @@
   // HQ UPGRADES UI
   // ==========================================
   function showHQ() {
+    showFirstTimeTooltip('hq', 'HQ upgrades boost ALL your stores at once. Invest here for empire-wide bonuses!');
     const modal = document.getElementById('hubModal');
     let html = '<h2 style="text-align:center;">🏢 Headquarters</h2><div style="font-size:0.75rem;color:#999;text-align:center;margin-bottom:0.75rem;">Global bonuses for all stores</div>';
     for (const [id, upg] of Object.entries(HQ_UPGRADES)) {
@@ -3012,6 +3074,7 @@
   // ==========================================
   function renderTier2Tab() {
     if (prestigeLevel < 1) return '';
+    showFirstTimeTooltip('tier2', 'Tier 2 unlocked! These advanced upgrades use polynomial pricing — each level costs more.');
     let html = '<div style="margin-top:1rem;border-top:2px solid var(--gold);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--gold);margin-bottom:0.5rem;">✨ Tier 2 Upgrades</h3>';
     for (const [id, upg] of Object.entries(TIER2_UPGRADES)) {
       const level = getTier2Level(id);
@@ -3051,6 +3114,7 @@
   function renderDecorTab() {
     const decos = STORE_DECORATIONS[activeStoreId] || [];
     if (decos.length === 0) return '';
+    showFirstTimeTooltip('decor', 'Decorations are cosmetic — they make your shop look great but don\'t affect gameplay. Persist across prestige!');
     const owned = getOwnedDecorations();
     let html = '<div style="margin-top:1rem;border-top:2px solid var(--taro);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--taro);margin-bottom:0.3rem;">🎨 Decorations</h3><div style="font-size:0.65rem;color:var(--taupe);margin-bottom:0.5rem;">' + owned.length + '/' + decos.length + ' owned</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;">';
     for (const d of decos) {
@@ -3085,6 +3149,7 @@
   // MANAGER UPGRADES (per manager, in hub)
   // ==========================================
   function showManagerUpgrades(storeId) {
+    showFirstTimeTooltip('manager', 'Managers run your stores while you\'re away. Higher tiers earn more offline coins!');
     const managers = getManagers();
     const mgr = managers[storeId];
     if (!mgr) return;
@@ -3262,6 +3327,25 @@
     if (gameState !== 'PLAYING') return;
     gameState = 'PAUSED';
     stopBgm();
+    // Show vacation toggle only when 2+ stores (offline exists)
+    const vacLabel = document.getElementById('vacationToggleLabel');
+    const vacToggle = document.getElementById('vacationToggle');
+    if (vacLabel && getUnlockedStores().length >= 2) {
+      vacLabel.style.display = 'block';
+      const empire = getEmpire();
+      vacToggle.checked = !!((empire.settings || {}).vacationMode);
+      vacToggle.onchange = () => {
+        try {
+          const emp = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+          if (!emp.settings) emp.settings = {};
+          emp.settings.vacationMode = vacToggle.checked;
+          localStorage.setItem('tt_empire', JSON.stringify(emp)); invalidateEmpireCache();
+        } catch(e) {}
+        saveGame();
+      };
+    } else if (vacLabel) {
+      vacLabel.style.display = 'none';
+    }
     showOverlay('pauseOverlay');
   }
 
