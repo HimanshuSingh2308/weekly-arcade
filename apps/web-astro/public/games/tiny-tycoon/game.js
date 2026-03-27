@@ -365,6 +365,39 @@
       }
     };
     localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+
+    // Cloud sync (non-blocking) — save empire to backend for cross-device persistence
+    if (window.gameCloud && window.gameCloud.isSignedIn()) {
+      window.gameCloud.saveState('tiny-tycoon', {
+        additionalData: empire,
+        lastPlayedDate: new Date().toISOString().split('T')[0],
+        gamesPlayed: cumulativeStats.daysPlayed || 0,
+      }).catch(() => {}); // Silent fail — localStorage is primary
+    }
+  }
+
+  async function loadCloudState() {
+    if (!window.gameCloud || !window.gameCloud.isSignedIn()) return false;
+    try {
+      const cloudState = await window.gameCloud.loadState('tiny-tycoon');
+      if (!cloudState || !cloudState.additionalData) return false;
+
+      const cloudEmpire = cloudState.additionalData;
+      const localRaw = localStorage.getItem('tt_empire');
+      const localEmpire = localRaw ? JSON.parse(localRaw) : null;
+
+      // Merge strategy: use whichever has more progress (higher lifetime coins)
+      const cloudCoins = (cloudEmpire.global || {}).cumulativeStats?.totalCoinsEarned || 0;
+      const localCoins = localEmpire ? ((localEmpire.global || {}).cumulativeStats?.totalCoinsEarned || 0) : 0;
+
+      if (cloudCoins > localCoins) {
+        localStorage.setItem('tt_empire', JSON.stringify(cloudEmpire)); invalidateEmpireCache();
+        return true; // Cloud was newer — reload from localStorage
+      }
+      return false; // Local is ahead or equal
+    } catch(e) {
+      return false;
+    }
   }
 
   function loadGame() {
@@ -3145,7 +3178,15 @@
       gameId: 'tiny-tycoon',
       buttons: ['sound', 'leaderboard', 'auth'],
       onSound: () => toggleSound(),
-      onSignIn: (user) => { currentUser = user; },
+      onSignIn: async (user) => {
+        currentUser = user;
+        // Try to load cloud state — if cloud has more progress, reload
+        const cloudWasNewer = await loadCloudState();
+        if (cloudWasNewer) {
+          loadGame();
+          showTitle();
+        }
+      },
       onSignOut: () => { currentUser = null; }
     });
     updateSoundBtn();
