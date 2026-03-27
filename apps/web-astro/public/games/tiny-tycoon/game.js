@@ -2153,7 +2153,7 @@
     currentDay = 1;
     upgradeLevels = {};
     // Clear VIP tutorial so it re-shows
-    localStorage.removeItem('tt_vip_tutorial_seen');
+    tutorialsSeen.vip = false;
     saveGame();
     playSound('newBest');
     spawnConfetti();
@@ -2171,9 +2171,9 @@
   // SCORE SUBMISSION (delegated to game-cloud.js)
   // ==========================================
   async function submitScore(dayRev) {
-    const storedBest = parseInt(localStorage.getItem('tt_best_score') || '0', 10);
-    if (dayRev > storedBest) {
-      localStorage.setItem('tt_best_score', dayRev.toString());
+    if (dayRev > bestScore) {
+      bestScore = dayRev;
+      saveGame();
     }
 
     await window.gameCloud.submitScore('tiny-tycoon', {
@@ -2277,7 +2277,7 @@
     bestEl.textContent = bestScore > 0 ? `Best Day: 💰 ${formatCoins(bestScore)}` : '';
 
     const btns = document.getElementById('titleButtons');
-    const hasSave = parseInt(localStorage.getItem('tt_current_day') || '1') > 1;
+    const hasSave = currentDay > 1;
 
     const statsBtn = hasSave ? `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showStats()">📊 Stats</button>` : '';
     const achBtn = `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showAchievements()">🏆 Achievements</button>`;
@@ -2396,7 +2396,7 @@
   function toggleSound() {
     initAudio();
     isMuted = !isMuted;
-    localStorage.setItem('tt_muted', isMuted.toString());
+    saveGame();
     updateSoundBtn();
     if (isMuted) {
       stopBgm();
@@ -2411,7 +2411,7 @@
 
   window.toggleRelaxedMode = function(on) {
     relaxedMode = on;
-    localStorage.setItem('tt_relaxed_mode', on ? 'true' : 'false');
+    saveGame();
   };
 
   // ==========================================
@@ -2521,7 +2521,8 @@
       ${!isTouch ? '<div class="tutorial-text" style="font-size:0.75rem;margin-top:6px;opacity:0.8;">or press SPACEBAR</div>' : ''}
     `;
     document.body.appendChild(overlay);
-    localStorage.setItem('tt_tutorial_seen', 'true');
+    tutorialsSeen.main = true;
+    saveGame();
 
     function dismiss() {
       if (overlay.parentNode) overlay.remove();
