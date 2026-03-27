@@ -1,0 +1,939 @@
+:root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #0f3460;
+      --accent: #ff6b35;
+      --accent-light: #ff8c5a;
+      --success: #4ade80;
+      --danger: #ef4444;
+      --warning: #fbbf24;
+      --text-primary: #fff;
+      --text-secondary: #94a3b8;
+      --border: #334155;
+      --kitchen-floor: #3d3d5c;
+      --kitchen-counter: #4a4a6a;
+      --wood: #8b5a2b;
+      --wood-light: #a67c52;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
+      padding: 0.6rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      height: 55px;
+    }
+
+    .stat-group {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .stat-group.right { justify-content: flex-end; }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .multiplier {
+      background: linear-gradient(135deg, var(--warning), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .timer-container {
+      text-align: center;
+    }
+
+    .timer-bar {
+      width: 140px;
+      height: 10px;
+      background: var(--bg-card);
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+    }
+
+    .timer-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), #22c55e);
+      transition: width 0.1s linear, background 0.3s;
+    }
+
+    .timer-fill.warning { background: linear-gradient(90deg, var(--warning), #f59e0b); }
+    .timer-fill.danger { background: linear-gradient(90deg, var(--danger), #dc2626); }
+
+    .timer-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+
+    /* Chaos Event Banner */
+    .chaos-banner {
+      position: fixed;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: linear-gradient(135deg, #e94560, #ff6b35);
+      padding: 0.6rem 2rem;
+      border-radius: 25px;
+      font-weight: 700;
+      font-size: 1rem;
+      z-index: 100;
+      opacity: 0;
+      transition: all 0.3s;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.5);
+    }
+
+    .chaos-banner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Game Container */
+    .game-container {
+      position: relative;
+      height: calc(100dvh - 105px);
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* Kitchen Area */
+    .kitchen-area {
+      flex: 1;
+      position: relative;
+      background:
+        linear-gradient(135deg, #2d2d44 0%, #252540 100%);
+      overflow: hidden;
+    }
+
+    /* Checkered Floor Pattern */
+    .kitchen-floor {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.03) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.03) 75%);
+      background-size: 50px 50px;
+      background-position: 0 0, 0 25px, 25px -25px, -25px 0px;
+      pointer-events: none;
+    }
+
+    /* Chef Character */
+    .chef {
+      position: absolute;
+      width: 60px;
+      height: 80px;
+      transition: left 0.15s ease-out, top 0.15s ease-out;
+      z-index: 50;
+      cursor: pointer;
+    }
+
+    .chef-body {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .chef-head {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 45px;
+      height: 45px;
+      background: #ffdbac;
+      border-radius: 50%;
+      border: 3px solid #e6c39a;
+    }
+
+    .chef-hat {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 35px;
+      background: white;
+      border-radius: 8px 8px 0 0;
+      border: 2px solid #eee;
+    }
+
+    .chef-hat::before {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: -5px;
+      right: -5px;
+      height: 12px;
+      background: white;
+      border-radius: 3px;
+      border: 2px solid #eee;
+    }
+
+    .chef-face {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .chef-torso {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 35px;
+      background: white;
+      border-radius: 8px;
+      border: 2px solid #eee;
+    }
+
+    .chef-apron {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 25px;
+      background: var(--accent);
+      border-radius: 3px;
+    }
+
+    .chef-held-item {
+      position: absolute;
+      top: -10px;
+      right: -15px;
+      font-size: 1.8rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      animation: bob 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes bob {
+      to { transform: translateY(-3px); }
+    }
+
+    /* Kitchen Stations - Top Row */
+    .stations-top {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+    }
+
+    .station {
+      width: clamp(60px, 12vw, 100px);
+      height: clamp(60px, 12vw, 100px);
+      background: linear-gradient(135deg, var(--bg-card), #1a4a7a);
+      border: 3px solid var(--border);
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .station:hover {
+      border-color: var(--accent);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+    }
+
+    .station.active {
+      border-color: var(--success);
+      box-shadow: 0 0 25px rgba(74, 222, 128, 0.5);
+      animation: station-pulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes station-pulse {
+      to { transform: scale(1.08); }
+    }
+
+    .station-icon {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      margin-bottom: 5px;
+    }
+
+    .station-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .station-progress {
+      position: absolute;
+      bottom: 5px;
+      left: 10px;
+      right: 10px;
+      height: 6px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .station-progress.show { opacity: 1; }
+
+    .station-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), #22c55e);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* Ingredient Shelf - Bottom */
+    .ingredient-shelf {
+      position: absolute;
+      bottom: max(15px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--wood), var(--wood-light));
+      border: 3px solid #6b4423;
+      border-radius: 15px;
+      padding: 12px 20px;
+      display: flex;
+      gap: clamp(6px, 2vw, 12px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    }
+
+    .ingredient {
+      width: clamp(48px, 10vw, 65px);
+      height: clamp(48px, 10vw, 65px);
+      background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+      border: 3px solid #ccc;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: clamp(1.2rem, 3vw, 2rem);
+    }
+
+    .ingredient:hover {
+      transform: scale(1.15) translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .ingredient:active {
+      transform: scale(0.95);
+    }
+
+    .ingredient-label {
+      font-size: 0.6rem;
+      color: #666;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Side Panel */
+    .side-panel {
+      width: 200px;
+      background: var(--bg-secondary);
+      border-left: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+      max-height: calc(100vh - 105px);
+      overflow-y: auto;
+    }
+
+    .panel-section {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Delivery Zone */
+    .delivery-zone {
+      background: linear-gradient(135deg, var(--success), #22c55e);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 3px dashed white;
+    }
+
+    .delivery-zone:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+    }
+
+    .delivery-icon {
+      font-size: 2.5rem;
+    }
+
+    .delivery-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+
+    /* Current Plate */
+    .plate-container {
+      background: #f5f5f5;
+      border-radius: 50%;
+      width: 90px;
+      height: 90px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 8px;
+      border: 3px solid #ddd;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .plate-item {
+      font-size: 1.2rem;
+    }
+
+    .plate-item.completed-dish {
+      font-size: 2rem;
+      animation: dishReady 0.5s ease;
+    }
+
+    @keyframes dishReady {
+      0% { transform: scale(0.5); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .dish-name {
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .plate-empty {
+      color: #999;
+      font-size: 0.55rem;
+      text-align: center;
+    }
+
+    .clear-plate-btn {
+      margin-top: 10px;
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .clear-plate-btn:hover {
+      background: #dc2626;
+    }
+
+    /* Orders Section */
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 130px;
+      max-height: 160px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    .orders-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .orders-list::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .order-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .order-card.urgent {
+      border-color: var(--danger);
+      animation: pulse-urgent 0.5s infinite alternate;
+    }
+
+    @keyframes pulse-urgent {
+      to {
+        border-color: var(--warning);
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+      }
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .order-name {
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    .order-timer {
+      background: var(--warning);
+      color: #000;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .order-timer.danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .order-items {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+      font-size: 0.7rem;
+    }
+
+    .order-item {
+      background: var(--bg-card);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 0.7rem;
+    }
+
+    .order-stations {
+      margin-top: 6px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .order-station {
+      font-size: 0.9rem;
+      opacity: 0.6;
+    }
+
+    /* Floating Score */
+    .floating-score {
+      position: absolute;
+      font-size: 1.8rem;
+      font-weight: 800;
+      pointer-events: none;
+      animation: float-up 1s ease-out forwards;
+      z-index: 100;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .floating-score.positive { color: var(--success); }
+    .floating-score.negative { color: var(--danger); }
+
+    @keyframes float-up {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+    }
+
+    /* Served Banner */
+    .served-banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: linear-gradient(135deg, var(--success), #22c55e);
+      padding: 1.5rem 3rem;
+      border-radius: 20px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: white;
+      z-index: 150;
+      box-shadow: 0 10px 40px rgba(74, 222, 128, 0.5);
+      opacity: 0;
+      transition: none;
+    }
+
+    .served-banner.show {
+      animation: served-pop 1.2s ease-out forwards;
+    }
+
+    .served-banner.fail {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.5);
+    }
+
+    @keyframes served-pop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      40% { transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+
+    /* Chaos Effects */
+    .kitchen-area.chaos-butter {
+      animation: shake 0.3s ease-in-out infinite;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .kitchen-area.chaos-fire .station.stove {
+      animation: on-fire 0.15s ease-in-out infinite alternate;
+    }
+
+    @keyframes on-fire {
+      to { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8), inset 0 0 20px rgba(255, 100, 0, 0.3); }
+    }
+
+    .kitchen-area.chaos-tiny .ingredient {
+      transform: scale(0.7);
+    }
+
+    /* Game Overlays */
+    .game-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(5px);
+    }
+
+    .game-overlay.hidden { display: none; }
+
+    .overlay-content {
+      text-align: center;
+      padding: 2.5rem;
+      max-width: 420px;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+      border-radius: 25px;
+      border: 3px solid var(--accent);
+      box-shadow: 0 20px 60px rgba(255, 107, 53, 0.3);
+    }
+
+    .overlay-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: bounce-in 0.5s ease-out;
+    }
+
+    @keyframes bounce-in {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .overlay-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--warning));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .overlay-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .overlay-score {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--success);
+      margin-bottom: 0.5rem;
+      text-shadow: 0 4px 20px rgba(74, 222, 128, 0.5);
+    }
+
+    .overlay-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .overlay-stat {
+      text-align: center;
+    }
+
+    .overlay-stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--warning);
+    }
+
+    .overlay-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .stars-display {
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .play-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border: none;
+      padding: 1rem 3.5rem;
+      border-radius: 30px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 5px 20px rgba(255, 107, 53, 0.4);
+    }
+
+    .play-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 30px rgba(255, 107, 53, 0.6);
+    }
+
+    /* How to Play */
+    .how-to-play {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .how-to-play h4 {
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .how-to-play p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .side-panel {
+        width: 160px;
+        padding: 8px;
+        gap: 8px;
+      }
+
+      .plate-container {
+        width: 70px;
+        height: 70px;
+        padding: 6px;
+      }
+
+      .plate-item { font-size: 1rem; }
+      .plate-item.completed-dish { font-size: 1.6rem; }
+
+      .orders-list {
+        min-height: 120px;
+        max-height: 140px;
+      }
+
+      .stations-top {
+        gap: clamp(8px, 2vw, 20px);
+      }
+
+      /* Station and ingredient sizes handled by clamp() */
+      .station-label { font-size: 0.6rem; }
+
+      .ingredient-shelf {
+        padding: 8px 12px;
+      }
+
+      .chef {
+        width: 50px;
+        height: 70px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .game-container {
+        flex-direction: column;
+      }
+
+      .side-panel {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        height: auto;
+        max-height: none;
+        padding: 8px;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        gap: 8px;
+      }
+
+      .panel-section {
+        flex: 1;
+        min-width: 140px;
+        padding: 8px;
+      }
+
+      .plate-container {
+        width: 60px;
+        height: 60px;
+      }
+
+      .orders-list {
+        max-height: 100px;
+      }
+
+      .kitchen-area {
+        height: 55dvh;
+      }
+    }
+
+    @media (max-height: 700px) {
+      .orders-list {
+        min-height: 110px;
+        max-height: 130px;
+      }
+
+      .plate-container {
+        width: 70px;
+        height: 70px;
+      }
+
+      .panel-section {
+        padding: 8px;
+      }
+
+      .panel-title {
+        margin-bottom: 6px;
+        font-size: 0.65rem;
+      }
+    }
+
+    /* More Games Section */
+    .more-games {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      margin-top: auto;
+    }
+
+    .more-games-title {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .more-games-grid {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .more-game-link {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .more-game-link:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .more-game-link span:first-child {
+      font-size: 1.2rem;
+    }
+
+    @media (max-width: 768px) {
+      .more-games { display: none; }
+    }
+
+    /* Accessibility: Respect reduced motion preferences */

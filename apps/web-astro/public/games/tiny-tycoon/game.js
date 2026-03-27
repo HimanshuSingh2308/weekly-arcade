@@ -176,6 +176,62 @@
       getSpawnTable: () => BOBA_SPAWN,
       getPatienceTable: () => BOBA_PATIENCE,
     },
+    sweet_tooth: {
+      id: 'sweet_tooth',
+      name: 'Sweet Tooth',
+      emoji: '🧁',
+      unlockCost: 40000,
+      unlockPrestige: 3,
+      theme: { '--cream': '#FFF0F5', '--taupe': '#D4A0A0', '--brown': '#8B4513', '--matcha': '#B76E79', '--coral': '#FF6B81', '--gold': '#FFB6C1', '--taro': '#C9A0DC', '--wall-top': '#FFE4EC', '--wall-bottom': '#FFD1DC', '--floor': '#98FB98' },
+      getDrinks: () => ({
+        cookie:        { emoji: '🍪', name: 'Cookie',            baseCoins: 12,  serveTime: 600,  unlockDay: 1 },
+        cupcake:       { emoji: '🧁', name: 'Cupcake',           baseCoins: 20,  serveTime: 1000, unlockDay: 1 },
+        croissant:     { emoji: '🥐', name: 'Croissant',         baseCoins: 16,  serveTime: 900,  unlockDay: 3 },
+        cake_slice:    { emoji: '🍰', name: 'Slice of Cake',     baseCoins: 35,  serveTime: 1500, unlockDay: 6 },
+        cream_puff:    { emoji: '🏰', name: 'Cream Puff Tower',  baseCoins: 50,  serveTime: 2200, unlockDay: 10 },
+        tiramisu:      { emoji: '🇮🇹', name: 'Tiramisu',          baseCoins: 70,  serveTime: 2800, unlockDay: 15 },
+        tasting_plate: { emoji: '👨‍🍳', name: "Chef's Tasting",    baseCoins: 100, serveTime: 3500, unlockDay: 20 },
+      }),
+      getCustomers: () => ({
+        regular:    { color: '#F8BBD0', patienceMod: 1.1, orderPool: ['cookie', 'cupcake'],                    earlyWeight: 50, lateWeight: 20 },
+        student:    { color: '#CE93D8', patienceMod: 1.3, orderPool: ['cookie', 'croissant'],                  earlyWeight: 30, lateWeight: 10 },
+        business:   { color: '#90A4AE', patienceMod: 0.7, orderPool: ['croissant', 'cake_slice'],              earlyWeight: 10, lateWeight: 20 },
+        foodie:     { color: '#FFB74D', patienceMod: 0.8, orderPool: ['cake_slice', 'cream_puff', 'tiramisu', 'tasting_plate'], earlyWeight: 0, lateWeight: 35 },
+        influencer: { color: '#FF69B4', patienceMod: 0.5, orderPool: ['tiramisu', 'tasting_plate'],            earlyWeight: 0,  lateWeight: 10 },
+        vip:        { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL',                                   earlyWeight: 0,  lateWeight: 0  }
+      }),
+      getUpgrades: () => BOBA_UPGRADES,
+      getSpawnTable: () => BOBA_SPAWN,
+      getPatienceTable: () => BOBA_PATIENCE,
+    },
+    golden_lounge: {
+      id: 'golden_lounge',
+      name: 'Golden Lounge',
+      emoji: '🥂',
+      unlockCost: 100000,
+      unlockPrestige: 5,
+      theme: { '--cream': '#1B1B3A', '--taupe': '#C9B037', '--brown': '#F5F5DC', '--matcha': '#FFD700', '--coral': '#FF4444', '--gold': '#FFD700', '--taro': '#9B59B6', '--wall-top': '#1B1B3A', '--wall-bottom': '#0D0D2B', '--floor': '#0D0D0D' },
+      getDrinks: () => ({
+        sparkling_water: { emoji: '💧', name: 'Sparkling Water',  baseCoins: 20,  serveTime: 500,  unlockDay: 1 },
+        cocktail:        { emoji: '🍸', name: 'Classic Cocktail', baseCoins: 40,  serveTime: 1200, unlockDay: 1 },
+        wine:            { emoji: '🍷', name: 'Wine Glass',       baseCoins: 35,  serveTime: 1000, unlockDay: 3 },
+        signature_mix:   { emoji: '🌟', name: 'Signature Mix',    baseCoins: 60,  serveTime: 1800, unlockDay: 6 },
+        champagne:       { emoji: '🍾', name: 'Champagne Tower',  baseCoins: 90,  serveTime: 2500, unlockDay: 10 },
+        royal_reserve:   { emoji: '👑', name: 'Royal Reserve',    baseCoins: 120, serveTime: 3200, unlockDay: 15 },
+        diamond:         { emoji: '💎', name: 'Diamond Collection', baseCoins: 200, serveTime: 4000, unlockDay: 20 },
+      }),
+      getCustomers: () => ({
+        regular:    { color: '#B0BEC5', patienceMod: 0.9, orderPool: ['sparkling_water', 'cocktail'],          earlyWeight: 40, lateWeight: 15 },
+        student:    { color: '#7986CB', patienceMod: 1.0, orderPool: ['sparkling_water', 'wine'],              earlyWeight: 20, lateWeight: 10 },
+        business:   { color: '#455A64', patienceMod: 0.5, orderPool: ['cocktail', 'wine', 'signature_mix'],    earlyWeight: 25, lateWeight: 25 },
+        foodie:     { color: '#CE93D8', patienceMod: 0.8, orderPool: ['signature_mix', 'champagne', 'royal_reserve', 'diamond'], earlyWeight: 0, lateWeight: 30 },
+        influencer: { color: '#FF80AB', patienceMod: 0.4, orderPool: ['royal_reserve', 'diamond'],             earlyWeight: 0,  lateWeight: 15 },
+        vip:        { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL',                                   earlyWeight: 0,  lateWeight: 0  }
+      }),
+      getUpgrades: () => BOBA_UPGRADES,
+      getSpawnTable: () => BOBA_SPAWN,
+      getPatienceTable: () => BOBA_PATIENCE,
+    },
   };
 
   let activeStoreId = 'boba_shop';
