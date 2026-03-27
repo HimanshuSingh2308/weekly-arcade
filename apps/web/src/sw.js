@@ -1,30 +1,35 @@
 // Firebase Cloud Messaging for push notifications
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+// Wrapped in try-catch so FCM failures don't kill the entire service worker
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-firebase.initializeApp({
-  apiKey: 'AIzaSyAFA4KwOaQpa0A-v2auCulStCrOgScrz-g',
-  projectId: 'loyal-curve-425715-h6',
-  messagingSenderId: '5171085645',
-  appId: '1:5171085645:web:b01fbc558d626f649e3704',
-});
-
-const messaging = firebase.messaging();
-
-// Handle background push messages (when app is not in focus)
-messaging.onBackgroundMessage((payload) => {
-  const data = payload.data || {};
-  const notification = payload.notification || {};
-
-  self.registration.showNotification(notification.title || 'Weekly Arcade', {
-    body: notification.body || '',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
-    tag: data.type || 'default',
-    data: data,
-    sound: '/sounds/notification.wav',
+  firebase.initializeApp({
+    apiKey: 'AIzaSyAFA4KwOaQpa0A-v2auCulStCrOgScrz-g',
+    projectId: 'loyal-curve-425715-h6',
+    messagingSenderId: '5171085645',
+    appId: '1:5171085645:web:b01fbc558d626f649e3704',
   });
-});
+
+  const messaging = firebase.messaging();
+
+  // Handle background push messages (when app is not in focus)
+  messaging.onBackgroundMessage((payload) => {
+    const data = payload.data || {};
+    const notification = payload.notification || {};
+
+    self.registration.showNotification(notification.title || 'Weekly Arcade', {
+      body: notification.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: data.type || 'default',
+      data: data,
+      sound: '/sounds/notification.wav',
+    });
+  });
+} catch (e) {
+  console.warn('[SW] Firebase messaging setup failed:', e);
+}
 
 // Handle notification clicks — route to relevant page
 self.addEventListener('notificationclick', (event) => {
