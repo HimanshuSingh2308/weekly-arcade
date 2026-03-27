@@ -1682,6 +1682,26 @@
       bottom: auto !important;
       margin: 0 auto;
     }
+    /* Full-width overlays need explicit sizing in preview */
+    .decor-preview-art .decor-floor {
+      width: 90% !important;
+      height: 30px !important;
+      border-radius: 4px;
+      opacity: 1 !important;
+    }
+    .decor-preview-art .decor-gold-counter {
+      width: 90% !important;
+      height: 10px !important;
+      border-radius: 4px;
+    }
+    .decor-preview-art .decor-bamboo,
+    .decor-preview-art .decor-sand,
+    .decor-preview-art .decor-gingerbread,
+    .decor-preview-art .decor-diamond-bar {
+      width: 90% !important;
+      height: 20px !important;
+      border-radius: 4px;
+    }
     .decor-name { font-size: 0.7rem; font-weight: 700; color: #5C3D2E; }
     .decor-price { display: none; }
     .decor-owned {
