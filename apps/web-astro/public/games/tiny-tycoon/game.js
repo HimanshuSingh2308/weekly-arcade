@@ -1111,7 +1111,7 @@
       },
       plants: {
         html: '<div class="shop-decor decor-plants"><div class="pot-plant"><div class="pot-leaves"></div><div class="pot-base"></div></div><div class="pot-plant" style="margin-left:8px;"><div class="pot-leaves small"></div><div class="pot-base small"></div></div></div>',
-        css: 'position:absolute;top:14%;left:6px;display:flex;gap:2px;z-index:11;'
+        css: 'position:absolute;top:21%;left:8px;display:flex;gap:2px;z-index:11;'
       },
       fairy_lights: {
         html: '<div class="shop-decor decor-fairy"><span class="fairy-bulb" style="--d:0s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:0.4s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:0.8s;--c:#6BCB77;"></span><span class="fairy-bulb" style="--d:1.2s;--c:#4D96FF;"></span><span class="fairy-bulb" style="--d:1.6s;--c:#FF6BD6;"></span><span class="fairy-bulb" style="--d:2.0s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:2.4s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:2.8s;--c:#6BCB77;"></span></div>',
@@ -1123,11 +1123,11 @@
       },
       jukebox: {
         html: '<div class="shop-decor decor-jukebox"><div class="jukebox-body"><span class="jukebox-note">&#9835;</span></div></div>',
-        css: 'position:absolute;top:17%;right:8px;'
+        css: 'position:absolute;top:36%;right:8px;z-index:11;'
       },
       aquarium: {
         html: '<div class="shop-decor decor-aquarium"><div class="aq-tank"><div class="aq-water"></div><div class="aq-fish f1"></div><div class="aq-fish f2"></div><div class="aq-plant"></div></div></div>',
-        css: 'position:absolute;top:6px;left:6px;z-index:7;'
+        css: 'position:absolute;top:10%;left:8px;z-index:7;'
       },
       chandelier: {
         html: '<div class="shop-decor decor-chandelier"><div class="ch-chain"></div><div class="ch-body"><div class="ch-arm left"></div><div class="ch-arm right"></div><div class="ch-crystal c1"></div><div class="ch-crystal c2"></div><div class="ch-crystal c3"></div></div></div>',
@@ -1153,7 +1153,7 @@
       },
       leather: {
         html: '<div class="shop-decor decor-leather"><div class="leather-seat"></div></div>',
-        css: 'position:absolute;top:17%;right:10px;'
+        css: 'position:absolute;top:34%;right:10px;z-index:11;'
       },
       art_wall: {
         html: '<div class="shop-decor decor-art"><div class="art-frame"></div></div>',
@@ -1161,11 +1161,11 @@
       },
       espresso_machine: {
         html: '<div class="shop-decor decor-espresso"><div class="espresso-body"><div class="espresso-steam"></div><div class="espresso-steam"></div></div></div>',
-        css: 'position:absolute;top:15%;left:55%;'
+        css: 'position:absolute;top:20%;left:55%;z-index:11;'
       },
       record: {
         html: '<div class="shop-decor decor-record"><div class="record-disc"></div></div>',
-        css: 'position:absolute;top:17%;left:10px;'
+        css: 'position:absolute;top:34%;left:10px;z-index:11;'
       },
       copper: {
         html: '<div class="shop-decor decor-copper"><div class="copper-pipe"></div></div>',
@@ -1179,11 +1179,11 @@
       },
       palms: {
         html: '<div class="shop-decor decor-palms"><div class="palm-tree"><div class="palm-fronds"><div class="palm-frond-mid"></div></div><div class="palm-trunk"></div></div><div class="palm-tree" style="margin-left:6px;"><div class="palm-fronds"><div class="palm-frond-mid"></div></div><div class="palm-trunk"></div></div></div>',
-        css: 'position:absolute;top:2%;left:4px;display:flex;'
+        css: 'position:absolute;top:8%;left:4px;display:flex;z-index:6;'
       },
       tiki: {
         html: '<div class="shop-decor decor-tiki"><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div></div>',
-        css: 'position:absolute;top:10%;right:8px;'
+        css: 'position:absolute;top:30%;right:8px;z-index:11;'
       },
       bamboo: {
         html: '<div class="shop-decor decor-bamboo"><div class="bamboo-bar"></div></div>',
@@ -1213,7 +1213,7 @@
       },
       macaron: {
         html: '<div class="shop-decor decor-macaron"><div class="macaron-stack"><div class="macaron-piece pink"></div><div class="macaron-piece mint"></div><div class="macaron-piece lavender"></div></div></div>',
-        css: 'position:absolute;top:12px;left:8px;'
+        css: 'position:absolute;top:19%;left:8px;z-index:11;'
       },
       donut_wall: {
         html: '<div class="shop-decor decor-donut-wall"><div class="donut-row"><div class="css-donut d-pink"></div><div class="css-donut d-choc"></div><div class="css-donut d-blue"></div></div></div>',
@@ -1221,11 +1221,11 @@
       },
       pink_oven: {
         html: '<div class="shop-decor decor-pink-oven"><div class="oven-body"><div class="oven-window"></div></div></div>',
-        css: 'position:absolute;top:15%;right:8px;'
+        css: 'position:absolute;top:32%;right:8px;z-index:11;'
       },
       candy_cane: {
         html: '<div class="shop-decor decor-candy-cane"><div class="cane-shape"></div></div>',
-        css: 'position:absolute;top:12%;left:6px;'
+        css: 'position:absolute;top:28%;left:6px;z-index:11;'
       },
       gingerbread: {
         html: '<div class="shop-decor decor-gingerbread"><div class="gingerbread-trim"></div></div>',
@@ -1233,17 +1233,17 @@
       },
       cotton_candy: {
         html: '<div class="shop-decor decor-cotton-candy"><div class="cotton-candy-shape"><div class="cotton-candy-fluff"></div><div class="cotton-candy-stick"></div></div></div>',
-        css: 'position:absolute;top:17%;left:50%;'
+        css: 'position:absolute;top:34%;left:50%;z-index:11;'
       },
       crystal_cake: {
         html: '<div class="shop-decor decor-crystal-cake"><div class="cake-stand" style="position:relative;"><div class="cake-sparkle"></div><div class="cake-tier t1"></div><div class="cake-tier t2"></div><div class="cake-tier t3"></div><div class="cake-stand-base"></div></div></div>',
-        css: 'position:absolute;top:10px;left:50%;transform:translateX(-50%);'
+        css: 'position:absolute;top:19%;left:50%;transform:translateX(-50%);z-index:11;'
       },
 
       // ── Golden Lounge ──
       velvet_rope: {
         html: '<div class="shop-decor decor-velvet-rope"><div class="velvet-rope-set"><div class="rope-post"></div><div class="rope-line"></div><div class="rope-post"></div></div></div>',
-        css: 'position:absolute;top:16%;left:25%;'
+        css: 'position:absolute;top:34%;left:25%;z-index:11;'
       },
       mirror: {
         html: '<div class="shop-decor decor-mirror"><div class="mirror-frame"><div class="mirror-corner tl"></div><div class="mirror-corner tr"></div><div class="mirror-corner bl"></div><div class="mirror-corner br"></div></div></div>',
@@ -1255,15 +1255,15 @@
       },
       pillars: {
         html: '<div class="shop-decor decor-pillars"><div class="pillar-col"><div class="pillar-capital"></div><div class="pillar-shaft"></div><div class="pillar-base"></div></div></div>',
-        css: 'position:absolute;top:5%;left:4px;'
+        css: 'position:absolute;top:5%;left:4px;height:42%;z-index:6;'
       },
       piano: {
         html: '<div class="shop-decor decor-piano"><div class="piano-body"><div class="piano-keys"></div></div></div>',
-        css: 'position:absolute;top:17%;right:4px;'
+        css: 'position:absolute;top:36%;right:4px;z-index:11;'
       },
       champagne_fountain: {
         html: '<div class="shop-decor decor-champagne"><div class="champagne-tower"><div class="champagne-tier ct1"></div><div class="champagne-tier ct2"></div><div class="champagne-tier ct3"></div><div class="champagne-drop"></div><div class="champagne-drop"></div><div class="champagne-drop"></div></div></div>',
-        css: 'position:absolute;top:10px;left:8px;'
+        css: 'position:absolute;top:19%;left:8px;z-index:11;'
       },
       star_ceiling: {
         html: '<div class="shop-decor decor-star-ceiling"><div class="star-field"><div class="mini-star" style="top:2px;left:10%;animation-delay:0s;"></div><div class="mini-star" style="top:4px;left:30%;animation-delay:0.7s;"></div><div class="mini-star" style="top:1px;left:50%;animation-delay:1.4s;"></div><div class="mini-star" style="top:3px;left:70%;animation-delay:0.3s;"></div><div class="mini-star" style="top:2px;left:85%;animation-delay:2.1s;"></div><div class="mini-star" style="top:5px;left:20%;animation-delay:1.8s;"></div><div class="mini-star" style="top:4px;left:60%;animation-delay:0.9s;"></div></div></div>',
