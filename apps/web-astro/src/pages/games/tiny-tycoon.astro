@@ -294,7 +294,7 @@ import gameData from '../../data/games/tiny-tycoon.json';
   // GAME STATE
   // ==========================================
   let gameState = 'TITLE';
-  let relaxedMode = localStorage.getItem('tt_relaxed_mode') === 'true';
+  let relaxedMode = false;
   const RELAXED = { patienceMult: 1.5, spawnMult: 1.3 };
   let cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0 };
 

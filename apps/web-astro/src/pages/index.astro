@@ -1,55 +1,1681 @@
 ---
-/**
- * Placeholder index — the full landing page migration comes later.
- * For now, just link to the two migrated games.
- */
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Weekly Arcade">
-  <main>
-    <h1>Weekly Arcade (Astro POC)</h1>
-    <p>Proof of concept — two games migrated to Astro.</p>
-    <nav>
-      <a href="/games/snake/">Snake</a>
-      <a href="/games/2048/">2048</a>
+<BaseLayout title="Weekly Arcade | New Free Browser Games Every Week">
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#e94560">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  </Fragment>
+
+  <header class="header">
+    <a href="/" class="logo">
+      <span class="logo-icon">🎮</span>
+      <span>Weekly Arcade</span>
+    </a>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
+    <nav class="nav" id="mobileNav">
+      <a href="/" class="active">Games</a>
+      <a href="/leaderboard/">Leaderboards</a>
+      <a href="/about/">About</a>
     </nav>
+    <div class="header-right">
+      <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
+      <div class="user-menu" id="userMenu" onclick="toggleUserMenu()">
+        <img class="user-avatar" id="userAvatar" src="" alt="User">
+        <span class="user-name" id="userName"></span>
+        <span class="dropdown-arrow">▼</span>
+        <div class="user-dropdown">
+          <a href="/profile/" class="dropdown-item">
+            <span>👤</span> My Profile
+          </a>
+          <a href="/leaderboard/" class="dropdown-item">
+            <span>🏆</span> Leaderboards
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item sign-out" onclick="handleSignOut(event)">
+            <span>🚪</span> Sign Out
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <h1>New <span class="highlight">Free Browser Games</span> Every Week</h1>
+        <p class="hero-desc">Play 12+ games instantly in your browser — no downloads, no signup. New games added weekly.</p>
+        <div class="hero-featured">
+          <div class="hero-badge">NEW THIS WEEK</div>
+          <h2 class="hero-game-name">Tiny Tycoon</h2>
+          <p class="hero-game-desc">Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!</p>
+          <div class="hero-tags">
+            <span class="hero-tag">Simulation</span>
+            <span class="hero-tag">Idle</span>
+            <span class="hero-tag">Casual</span>
+          </div>
+        </div>
+        <a href="/games/tiny-tycoon/" class="hero-cta">
+          Play Tiny Tycoon <span class="hero-cta-arrow">→</span>
+        </a>
+      </div>
+      <a href="/games/tiny-tycoon/" class="hero-thumb">
+        <img src="/images/thumbnails/tiny-tycoon.svg" alt="Tiny Tycoon - free boba tea shop simulator game">
+      </a>
+    </div>
+  </section>
+
+  <!-- Stats Banner -->
+  <div class="stats-banner">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <span class="stat-icon">🎮</span>
+        <span class="stat-value">12</span> Games
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-icon">💰</span>
+        <span class="stat-value">100%</span> Free
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-icon">🔥</span>
+        <span class="stat-value">New</span> Every Week
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-icon">⚡</span>
+        <span class="stat-value">Zero</span> Downloads
+      </div>
+    </div>
+  </div>
+
+  <!-- Genre Filters -->
+  <div class="filters">
+    <div class="filter-row" id="filterRow">
+      <button class="filter-chip active" data-filter="all">All Games</button>
+      <button class="filter-chip" data-filter="arcade">Arcade</button>
+      <button class="filter-chip" data-filter="puzzle">Puzzle</button>
+      <button class="filter-chip" data-filter="strategy">Strategy</button>
+      <button class="filter-chip" data-filter="action">Action</button>
+      <button class="filter-chip" data-filter="card">Card</button>
+      <button class="filter-chip" data-filter="simulation">Simulation</button>
+      <button class="filter-chip" data-filter="casual">Casual</button>
+      <button class="filter-chip" data-filter="3d">3D</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <div class="section-header">
+      <h2 class="section-title">Free Browser Games to Play Now</h2>
+      <span class="game-count" id="gameCount">12 games</span>
+    </div>
+
+    <div class="games-grid" id="gamesGrid">
+      <!-- Coin Cascade -->
+      <a href="/games/coin-cascade/" class="game-card" data-genres="arcade,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/coin-cascade.svg" alt="Coin Cascade - free physics coin pusher arcade game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Coin Cascade</div>
+          <div class="game-desc">Drop coins onto a physics pusher to cascade prizes off the edge!</div>
+          <div class="game-tags">
+            <span class="tag">Arcade</span>
+            <span class="tag">Physics</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Solitaire Roguelite -->
+      <a href="/games/solitaire-roguelite/" class="game-card" data-genres="card,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/solitaire-roguelite.svg" alt="Solitaire Roguelite - free card game with Joker powers" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Solitaire Roguelite</div>
+          <div class="game-desc">Classic Solitaire with rule-breaking Joker cards. How high can you score?</div>
+          <div class="game-tags">
+            <span class="tag">Card</span>
+            <span class="tag">Roguelite</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Stack Tower -->
+      <a href="/games/stack-tower/" class="game-card" data-genres="arcade,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/stack-tower.svg" alt="Stack Tower - free block stacking arcade game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Stack Tower</div>
+          <div class="game-desc">Stack blocks with perfect timing to build the tallest tower!</div>
+          <div class="game-tags">
+            <span class="tag">Arcade</span>
+            <span class="tag">Timing</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Voidbreak -->
+      <a href="/games/voidbreak/" class="game-card" data-genres="action,arcade">
+        <div class="game-thumb"><img src="/images/thumbnails/voidbreak.svg" alt="Voidbreak - free asteroid shooter roguelite game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Voidbreak</div>
+          <div class="game-desc">Smash asteroids, upgrade your ship, go deeper. How far can you get?</div>
+          <div class="game-tags">
+            <span class="tag">Action</span>
+            <span class="tag">Roguelite</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Fieldstone -->
+      <a href="/games/fieldstone/" class="game-card" data-genres="strategy,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/fieldstone.svg" alt="Fieldstone - free Tetris kingdom builder strategy game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Fieldstone</div>
+          <div class="game-desc">Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!</div>
+          <div class="game-tags">
+            <span class="tag">Strategy</span>
+            <span class="tag">Puzzle</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Wordle -->
+      <a href="/games/wordle/" class="game-card" data-genres="puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/wordle.svg" alt="Wordle - free daily word puzzle game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Wordle</div>
+          <div class="game-desc">Guess the 5-letter word in 6 tries. A new word every day!</div>
+          <div class="game-tags">
+            <span class="tag">Puzzle</span>
+            <span class="tag">Daily</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Snake -->
+      <a href="/games/snake/" class="game-card" data-genres="arcade">
+        <div class="game-thumb"><img src="/images/thumbnails/snake.svg" alt="Snake - free classic arcade game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Snake</div>
+          <div class="game-desc">Classic snake game. Eat, grow, don't hit the walls!</div>
+          <div class="game-tags">
+            <span class="tag">Arcade</span>
+            <span class="tag">Classic</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 2048 -->
+      <a href="/games/2048/" class="game-card" data-genres="puzzle,strategy">
+        <div class="game-thumb"><img src="/images/thumbnails/2048.svg" alt="2048 - free number merge puzzle game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">2048</div>
+          <div class="game-desc">Slide tiles and merge numbers to reach 2048.</div>
+          <div class="game-tags">
+            <span class="tag">Puzzle</span>
+            <span class="tag">Strategy</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Chaos Kitchen -->
+      <a href="/games/chaos-kitchen/" class="game-card" data-genres="action,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/chaos-kitchen.svg" alt="Chaos Kitchen - free cooking time management game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Chaos Kitchen</div>
+          <div class="game-desc">Run a chaotic kitchen! Fulfill orders and survive chaos events!</div>
+          <div class="game-tags">
+            <span class="tag">Action</span>
+            <span class="tag">Time Management</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Memory Match -->
+      <a href="/games/memory-match/" class="game-card" data-genres="casual,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/memory-match.svg" alt="Memory Match - free card matching puzzle game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Memory Match</div>
+          <div class="game-desc">Flip cards and find matching pairs. Test your memory!</div>
+          <div class="game-tags">
+            <span class="tag">Casual</span>
+            <span class="tag">Memory</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Lumble -->
+      <a href="/games/lumble/" class="game-card" data-genres="3d,action">
+        <div class="game-thumb"><img src="/images/thumbnails/lumble.svg" alt="Lumble - free 3D platformer browser game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Lumble</div>
+          <div class="game-desc">3D platformer! Latch, swing, and collect 50 Sparks!</div>
+          <div class="game-tags">
+            <span class="tag">3D</span>
+            <span class="tag">Platformer</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Tiny Tycoon (also in grid) -->
+      <a href="/games/tiny-tycoon/" class="game-card" data-genres="simulation,casual">
+        <div class="game-thumb">
+          <span class="thumb-badge">NEW</span>
+          <img src="/images/thumbnails/tiny-tycoon.svg" alt="Tiny Tycoon - free boba tea shop simulator game" loading="lazy">
+        </div>
+        <div class="game-info">
+          <div class="game-title">Tiny Tycoon</div>
+          <div class="game-desc">Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!</div>
+          <div class="game-tags">
+            <span class="tag">Simulation</span>
+            <span class="tag">Idle</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- No Results Message -->
+      <div class="no-results" id="noResults">
+        <div class="no-results-icon">🔍</div>
+        <div class="no-results-text">No games match this filter</div>
+      </div>
+    </div>
   </main>
+
+  <!-- FAQ Section -->
+  <section class="faq-section">
+    <h2 class="faq-title">Frequently Asked Questions</h2>
+    <div class="faq-list">
+      <div class="faq-item open">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Are all the games on Weekly Arcade free?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes, every game on Weekly Arcade is 100% free to play. No hidden paywalls, no premium tiers. Sign-in is optional and only needed for leaderboards and cloud saves.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Do I need to download or install anything?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">No downloads or installations required. All games run directly in your browser on any device — desktop, tablet, or phone. Just open the page and play.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          How often are new games added?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">We release a new game every week. Each game is a unique, polished browser game — from puzzles and card games to arcade and simulation games.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Can I play on my phone?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes, all Weekly Arcade games are designed mobile-first with touch controls, responsive layouts, and optimized performance for phones and tablets.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer" id="about">
+    <p><strong>Weekly Arcade</strong> - New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">Built with ❤️ | Free browser games, no downloads required.</p>
+    <p style="margin-top: 0.3rem; font-size: 0.75rem;">Play Wordle, Snake, 2048, and more classic arcade games online.</p>
+    <p style="margin-top: 1rem;">
+      <a href="/privacy/">Privacy Policy</a> &nbsp;|&nbsp; <a href="/terms/">Terms of Service</a>
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
+  </footer>
+
+  <!-- PWA Install Banner (Android/Desktop: shows Install button; iOS: shows instructions) -->
+  <div class="pwa-install-banner" id="pwaInstallBanner">
+    <div class="pwa-install-icon">🎮</div>
+    <div class="pwa-install-content">
+      <div class="pwa-install-title">Install Weekly Arcade</div>
+      <div class="pwa-install-subtitle" id="pwaInstallSubtitle">
+        Play offline, get notifications, and launch instantly from your home screen.
+      </div>
+    </div>
+    <div class="pwa-install-actions">
+      <button class="pwa-install-btn" id="pwaInstallBtn">Install</button>
+      <button class="pwa-install-close" id="pwaInstallDismiss">&times;</button>
+    </div>
+  </div>
+
+  <!-- Installed confirmation toast -->
+  <div class="pwa-installed-toast" id="pwaInstalledToast">
+    <span>✅</span> Weekly Arcade installed! Open from your home screen.
+  </div>
+
+  <!-- PWA Update Banner -->
+  <div class="pwa-update-banner" id="pwaUpdateBanner">
+    <span class="pwa-update-icon">🚀</span>
+    <span class="pwa-update-text">New version available!</span>
+    <button class="pwa-update-btn" id="pwaUpdateBtn">Update</button>
+    <button class="pwa-update-dismiss" id="pwaUpdateDismiss">&times;</button>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="auth-modal-overlay" id="authModal">
+    <div class="auth-modal">
+      <button class="auth-modal-close" onclick="hideAuthModal()">&times;</button>
+      <h2>Welcome to Weekly Arcade</h2>
+      <p>Sign in to unlock all features</p>
+      <ul class="auth-benefits">
+        <li>Save your progress across devices</li>
+        <li>Compete on global leaderboards</li>
+        <li>Earn achievements and XP</li>
+        <li>Challenge your friends</li>
+      </ul>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+      <p class="auth-skip">
+        <a href="#" onclick="hideAuthModal(); return false;">Maybe later</a> - You can still play as guest
+      </p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+
+  <!-- API & Auth Scripts -->
+
+
+  <script is:inline src="/js/api-client.js"></script>
+  <script is:inline src="/js/auth.js"></script>
+      <script is:inline src="/js/sync.js"></script>
+
+  <script is:inline>
+    // ─── Genre Filter ───
+    const filterRow = document.getElementById('filterRow');
+    const gamesGrid = document.getElementById('gamesGrid');
+    const gameCount = document.getElementById('gameCount');
+    const noResults = document.getElementById('noResults');
+
+    filterRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+
+      filterRow.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      const filter = chip.dataset.filter;
+      const cards = gamesGrid.querySelectorAll('.game-card');
+      let visible = 0;
+
+      cards.forEach(card => {
+        const genres = card.dataset.genres || '';
+        const show = filter === 'all' || genres.includes(filter);
+        card.dataset.hidden = !show;
+        if (show) visible++;
+      });
+
+      gameCount.textContent = visible + (visible === 1 ? ' game' : ' games');
+      noResults.classList.toggle('show', visible === 0);
+    });
+
+    // ─── Service Worker with Update Detection ───
+    let newWorker;
+    const updateBanner = document.getElementById('pwaUpdateBanner');
+    const updateBtn = document.getElementById('pwaUpdateBtn');
+    const updateDismiss = document.getElementById('pwaUpdateDismiss');
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => {
+            console.log('SW registered');
+            reg.update();
+            setInterval(() => reg.update(), 60 * 60 * 1000);
+
+            if (reg.waiting) {
+              newWorker = reg.waiting;
+              showUpdateBanner();
+            }
+
+            reg.addEventListener('updatefound', () => {
+              newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateBanner();
+                }
+              });
+            });
+          })
+          .catch(err => console.log('SW registration failed:', err));
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+      });
+    }
+
+    function showUpdateBanner() { updateBanner.classList.add('show'); }
+    function hideUpdateBanner() { updateBanner.classList.remove('show'); }
+
+    updateBtn.addEventListener('click', () => {
+      if (newWorker) newWorker.postMessage({ type: 'SKIP_WAITING' });
+      hideUpdateBanner();
+    });
+
+    updateDismiss.addEventListener('click', () => { hideUpdateBanner(); });
+
+    // ─── PWA Install Experience ───
+    const INSTALL_DISMISS_KEY = 'pwa-install-dismissed';
+    const INSTALL_DISMISS_DAYS = 14;
+    let deferredPrompt = null;
+
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    function isInStandaloneMode() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true;
+    }
+
+    function wasRecentlyDismissed() {
+      const dismissed = localStorage.getItem(INSTALL_DISMISS_KEY);
+      if (!dismissed) return false;
+      return Date.now() - parseInt(dismissed, 10) < INSTALL_DISMISS_DAYS * 86400000;
+    }
+
+    function showInstallBanner() {
+      if (isInStandaloneMode() || wasRecentlyDismissed()) return;
+      if (!deferredPrompt && !isIOS()) return;
+
+      const banner = document.getElementById('pwaInstallBanner');
+      const subtitle = document.getElementById('pwaInstallSubtitle');
+      const btn = document.getElementById('pwaInstallBtn');
+
+      if (isIOS()) {
+        subtitle.innerHTML = 'Tap <span>⬆️ Share</span> then <span>➕ Add to Home Screen</span>';
+        btn.textContent = 'Got it';
+        btn.onclick = dismissInstallBanner;
+      } else {
+        subtitle.textContent = 'Play offline, get notifications, and launch instantly from your home screen.';
+        btn.textContent = 'Install';
+        btn.onclick = triggerInstall;
+      }
+
+      banner.classList.add('show');
+    }
+
+    function dismissInstallBanner() {
+      document.getElementById('pwaInstallBanner').classList.remove('show');
+      localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+    }
+
+    async function triggerInstall() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('pwaInstallBanner').classList.remove('show');
+
+      if (outcome === 'accepted') {
+        localStorage.removeItem(INSTALL_DISMISS_KEY);
+        showInstalledToast();
+      }
+    }
+
+    function showInstalledToast() {
+      const toast = document.getElementById('pwaInstalledToast');
+      toast.classList.add('show');
+      setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    }
+
+    // Capture the install prompt (Android/Desktop Chrome, Edge, etc.)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show after engagement delay (10s or scroll)
+      setTimeout(showInstallBanner, 10000);
+    });
+
+    // Show installed toast if app was just installed
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      document.getElementById('pwaInstallBanner').classList.remove('show');
+      showInstalledToast();
+    });
+
+    // iOS: show banner after scroll engagement (not immediately)
+    if (isIOS() && !isInStandaloneMode() && !wasRecentlyDismissed()) {
+      let iosShown = false;
+      const showOnScroll = () => {
+        if (!iosShown && window.scrollY > 200) {
+          iosShown = true;
+          showInstallBanner();
+          window.removeEventListener('scroll', showOnScroll);
+        }
+      };
+      window.addEventListener('scroll', showOnScroll, { passive: true });
+      // Fallback: show after 15s even without scroll
+      setTimeout(() => { if (!iosShown) { iosShown = true; showInstallBanner(); } }, 15000);
+    }
+
+    // Wire up dismiss button
+    document.getElementById('pwaInstallDismiss').addEventListener('click', dismissInstallBanner);
+
+    // ─── Auth UI Functions ───
+    function showAuthModal() { document.getElementById('authModal').classList.add('show'); }
+    function hideAuthModal() { document.getElementById('authModal').classList.remove('show'); }
+    function toggleUserMenu() { document.getElementById('userMenu').classList.toggle('open'); }
+
+    function toggleMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.toggle('open');
+      btn.textContent = nav.classList.contains('open') ? '\u2715' : '☰';
+    }
+
+    function closeMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.remove('open');
+      btn.textContent = '☰';
+    }
+
+    document.addEventListener('click', (e) => {
+      const userMenu = document.getElementById('userMenu');
+      if (!userMenu.contains(e.target)) userMenu.classList.remove('open');
+    });
+
+    document.getElementById('authModal').addEventListener('click', (e) => {
+      if (e.target.id === 'authModal') hideAuthModal();
+    });
+
+    async function signInWithGoogle() {
+      try {
+        await window.authManager.signInWithGoogle();
+        hideAuthModal();
+      } catch (error) {
+        console.error('Sign in failed:', error);
+        alert('Sign in failed. Please try again.');
+      }
+    }
+
+    function handleSignOut(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.authManager.signOut();
+      document.getElementById('userMenu').classList.remove('open');
+    }
+
+    function showProfile(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      alert('Profile page coming soon!');
+    }
+
+    function showLeaderboards(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      alert('Leaderboards page coming soon!');
+    }
+
+    function updateAuthUI(user) {
+      const signInBtn = document.getElementById('signInBtn');
+      const userMenu = document.getElementById('userMenu');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+
+      if (user) {
+        signInBtn.style.display = 'none';
+        userMenu.classList.add('signed-in');
+        userAvatar.src = user.photoURL || 'https://via.placeholder.com/36?text=' + (user.displayName?.[0] || 'U');
+        userName.textContent = user.displayName || user.email?.split('@')[0] || 'Player';
+      } else {
+        signInBtn.style.display = 'block';
+        userMenu.classList.remove('signed-in');
+      }
+    }
+
+    window.addEventListener('load', () => {
+      const checkAuth = setInterval(() => {
+        if (window.authManager?.isInitialized) {
+          clearInterval(checkAuth);
+          window.authManager.onAuthStateChanged(updateAuthUI);
+        }
+      }, 100);
+    });
+  </script>
+
 </BaseLayout>
 
-<style>
-  main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: #0f0f1a;
-    color: #eee;
-    font-family: system-ui, sans-serif;
-    gap: 1.5rem;
-  }
+<style is:global>
 
-  h1 {
-    font-size: 2rem;
-  }
+    :root {
+      --bg-primary: #0a0a12;
+      --bg-secondary: #12121f;
+      --bg-card: rgba(22, 33, 62, 0.6);
+      --bg-card-solid: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --accent-glow: rgba(233, 69, 96, 0.3);
+      --purple: #7c3aed;
+      --purple-glow: rgba(124, 58, 237, 0.2);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a8;
+      --border: rgba(255, 255, 255, 0.06);
+      --glass: rgba(255, 255, 255, 0.03);
+      --radius: 16px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-  nav {
-    display: flex;
-    gap: 1rem;
-  }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
 
-  a {
-    background: #e94560;
-    color: #fff;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: opacity 0.2s;
-  }
+    /* ─── Header ─── */
+    .header {
+      background: rgba(18, 18, 31, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.8rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-  a:hover {
-    opacity: 0.85;
-  }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-icon { font-size: 1.6rem; }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav { display: flex; gap: 0.25rem; }
+
+    .nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      transition: color var(--transition), background var(--transition);
+    }
+
+    .nav a:hover { color: var(--text-primary); background: var(--glass); }
+    .nav a.active { color: var(--accent); background: rgba(233, 69, 96, 0.08); }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      line-height: 1;
+      transition: border-color var(--transition);
+    }
+    .mobile-menu-btn:hover { border-color: var(--accent); }
+
+    /* ─── Featured Hero ─── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 3rem 2rem 2rem;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(233, 69, 96, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 3rem;
+      position: relative;
+    }
+
+    .hero-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.35rem 1rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      animation: badge-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes badge-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0); }
+      50% { box-shadow: 0 0 20px 4px rgba(233, 69, 96, 0.25); }
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+      max-width: 460px;
+    }
+
+    .hero-featured {
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-game-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-game-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.6rem;
+      max-width: 380px;
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-tag {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.75rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-secondary);
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.9rem 2rem;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .hero-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(233, 69, 96, 0.35);
+    }
+    .hero-cta:active { transform: translateY(0); }
+
+    .hero-cta-arrow {
+      transition: transform var(--transition);
+    }
+    .hero-cta:hover .hero-cta-arrow { transform: translateX(3px); }
+
+    .hero-thumb {
+      flex: 0 0 340px;
+      height: 240px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px var(--accent-glow);
+      position: relative;
+    }
+
+    .hero-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hero-thumb:hover img { transform: scale(1.05); }
+
+    /* ─── Stats Banner ─── */
+    .stats-banner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .stats-inner {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1.25rem 2rem;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-top: 2rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .stat-icon { font-size: 1.2rem; }
+
+    .stat-value {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    /* ─── Filter Chips ─── */
+    .filters {
+      max-width: 1100px;
+      margin: 2.5rem auto 0;
+      padding: 0 2rem;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .filter-chip {
+      flex-shrink: 0;
+      padding: 0.5rem 1.15rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--glass);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .filter-chip:hover {
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .filter-chip.active {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      border-color: transparent;
+      box-shadow: 0 2px 12px rgba(233, 69, 96, 0.3);
+    }
+
+    /* ─── Games Grid ─── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.75rem 2rem 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .game-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ─── Game Card ─── */
+    .game-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 0 24px var(--accent-glow);
+      border-color: rgba(233, 69, 96, 0.15);
+    }
+
+    .game-card[data-hidden="true"] {
+      display: none;
+    }
+
+    .game-thumb {
+      height: 160px;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card-solid));
+    }
+
+    .game-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .game-card:hover .game-thumb img {
+      transform: scale(1.08);
+    }
+
+    .thumb-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+
+    .game-info {
+      padding: 1rem 1.15rem;
+    }
+
+    .game-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      letter-spacing: -0.01em;
+    }
+
+    .game-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      line-height: 1.45;
+    }
+
+    .game-tags {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.68rem;
+      padding: 0.2rem 0.6rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      text-align: center;
+      padding: 2.5rem 2rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+      background: linear-gradient(180deg, transparent, rgba(18, 18, 31, 0.5));
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    .footer a:hover { color: var(--accent-hover); }
+
+    /* ─── Auth Button & User Menu ─── */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .auth-btn {
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .auth-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(233, 69, 96, 0.3);
+    }
+
+    .user-menu {
+      position: relative;
+      display: none;
+    }
+
+    .user-menu.signed-in {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dropdown-arrow {
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+    }
+
+    .user-menu.open .dropdown-arrow { transform: rotate(180deg); }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 0;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-width: 180px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s;
+      z-index: 100;
+    }
+
+    .user-menu.open .user-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background var(--transition);
+    }
+
+    .dropdown-item:hover { background: rgba(255, 255, 255, 0.04); }
+    .dropdown-item:first-child { border-radius: 12px 12px 0 0; }
+    .dropdown-item:last-child { border-radius: 0 0 12px 12px; }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.25rem 0;
+    }
+
+    .dropdown-item.sign-out { color: var(--accent); }
+
+    /* ─── Auth Modal ─── */
+    .auth-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .auth-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .auth-modal {
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s;
+      position: relative;
+    }
+
+    .auth-modal-overlay.show .auth-modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .auth-modal h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-modal p {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-benefits {
+      text-align: left;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .auth-benefits li {
+      list-style: none;
+      padding: 0.4rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .auth-benefits li::before {
+      content: '\2713  ';
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: white;
+      color: #333;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
+    }
+
+    .google-btn:hover {
+      background: #f5f5f5;
+      transform: scale(1.02);
+    }
+
+    .google-btn img { width: 20px; height: 20px; }
+
+    .auth-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+      transition: color var(--transition);
+    }
+    .auth-modal-close:hover { color: var(--text-primary); }
+
+    .auth-skip {
+      margin-top: 1rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .auth-skip a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ─── PWA Update Banner ─── */
+    .pwa-update-banner {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      border-radius: 14px;
+      padding: 0.8rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 2000;
+      box-shadow: 0 4px 24px rgba(233, 69, 96, 0.4);
+      transition: transform 0.3s ease-out;
+      max-width: 90%;
+    }
+
+    .pwa-update-banner.show { transform: translateX(-50%) translateY(0); }
+    .pwa-update-icon { font-size: 1.5rem; }
+    .pwa-update-text { font-size: 0.9rem; font-weight: 500; }
+
+    .pwa-update-btn {
+      background: white;
+      color: var(--accent);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform var(--transition);
+    }
+    .pwa-update-btn:hover { transform: scale(1.05); }
+
+    .pwa-update-dismiss {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.2rem;
+      line-height: 1;
+    }
+    .pwa-update-dismiss:hover { color: white; }
+
+    /* ─── PWA Install Banner (shared by Android/Desktop + iOS) ─── */
+    .pwa-install-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card-solid);
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 1rem;
+      display: none;
+      align-items: center;
+      gap: 1rem;
+      z-index: 1000;
+      animation: slideUp 0.3s ease-out;
+      backdrop-filter: blur(12px);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .pwa-install-banner.show { display: flex; }
+
+    .pwa-install-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #ff6b8a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .pwa-install-content { flex: 1; min-width: 0; }
+    .pwa-install-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.15rem; }
+
+    .pwa-install-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.3;
+    }
+
+    .pwa-install-subtitle span {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-secondary);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin: 0 0.15rem;
+      font-size: 0.75rem;
+    }
+
+    .pwa-install-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .pwa-install-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .pwa-install-btn:hover { transform: scale(1.05); }
+    .pwa-install-btn:active { transform: scale(0.97); }
+
+    .pwa-install-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 0.3rem;
+      line-height: 1;
+    }
+    .pwa-install-close:hover { color: var(--text-primary); }
+
+    /* ─── PWA Installed Toast ─── */
+    .pwa-installed-toast {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      background: var(--bg-card-solid);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      z-index: 2000;
+      transition: transform 0.3s ease-out;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .pwa-installed-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ─── No Results ─── */
+    .no-results {
+      display: none;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-secondary);
+      grid-column: 1 / -1;
+    }
+
+    .no-results.show { display: block; }
+    .no-results-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .no-results-text { font-size: 1.1rem; }
+
+    /* ─── FAQ Section ─── */
+    .faq-section {
+      max-width: 1100px;
+      margin: 2.5rem auto 0;
+      padding: 0 2rem;
+    }
+
+    .faq-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .faq-item {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .faq-question {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: color var(--transition);
+    }
+
+    .faq-question:hover { color: var(--accent); }
+
+    .faq-arrow {
+      font-size: 0.75rem;
+      transition: transform var(--transition);
+      color: var(--text-secondary);
+    }
+
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 200px;
+    }
+
+    .faq-answer-inner {
+      padding: 0 1.25rem 1rem;
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .header { padding: 0.7rem 1rem; }
+
+      .mobile-menu-btn {
+        display: block;
+        order: -1;
+      }
+
+      .logo { order: 0; flex: 1; }
+      .header-right { order: 1; }
+
+      .nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(18, 18, 31, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 0.5rem;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      }
+
+      .nav.open { display: flex; }
+      .nav a { padding: 0.8rem 1rem; border-radius: 8px; }
+      .nav a:hover { background: rgba(233, 69, 96, 0.08); }
+      .user-name { display: none; }
+
+      .hero { padding: 2rem 1.25rem 1.5rem; }
+
+      .hero-inner {
+        flex-direction: column-reverse;
+        gap: 1.5rem;
+        text-align: center;
+      }
+
+      .hero-content { display: flex; flex-direction: column; align-items: center; }
+      .hero-desc { max-width: 100%; }
+      .hero-tags { justify-content: center; }
+
+      .hero-thumb {
+        flex: none;
+        width: 100%;
+        max-width: 400px;
+        height: 200px;
+      }
+
+      .hero h1 { font-size: 2rem; }
+
+      .stats-inner {
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      .stat-divider { display: none; }
+
+      .filters { padding: 0 1.25rem; }
+    }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.7rem; }
+      .hero-desc { font-size: 0.95rem; }
+
+      .container { padding: 1.25rem; }
+      .stats-banner { padding: 0 1.25rem; }
+
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-modal { padding: 1.5rem; }
+    }
+
 </style>
