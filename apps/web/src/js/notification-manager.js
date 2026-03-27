@@ -51,28 +51,33 @@ const NotificationManager = (() => {
    * Returns true if permission granted and token registered
    */
   async function requestPermissionAndRegister() {
-    if (!messaging) return false;
+    if (!messaging) { console.log('[NotificationManager] No messaging instance'); return false; }
 
     try {
       const permission = await Notification.requestPermission();
+      console.log('[NotificationManager] Permission:', permission);
       if (permission !== 'granted') return false;
 
       // Wait for service worker to be fully active (pushManager requires active SW)
       const swReg = await navigator.serviceWorker.ready;
+      console.log('[NotificationManager] SW ready:', !!swReg, 'pushManager:', !!swReg?.pushManager);
       if (!swReg || !swReg.pushManager) return false;
 
       const tokenOpts = { serviceWorkerRegistration: swReg };
       if (vapidKey) tokenOpts.vapidKey = vapidKey;
+      console.log('[NotificationManager] Getting token, vapidKey:', !!vapidKey);
 
       const token = await messaging.getToken(tokenOpts);
+      console.log('[NotificationManager] Token received:', !!token);
 
       if (token && window.apiClient) {
         await window.apiClient.registerPushToken(token, navigator.userAgent);
         localStorage.setItem(TOKEN_KEY, token);
+        console.log('[NotificationManager] Token registered with backend');
         return true;
       }
     } catch (e) {
-      console.warn('[NotificationManager] Registration failed:', e);
+      console.error('[NotificationManager] Registration failed:', e);
     }
 
     return false;
