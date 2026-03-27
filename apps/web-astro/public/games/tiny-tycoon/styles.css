@@ -1517,6 +1517,7 @@
       transition: border-color 0.2s, opacity 0.2s;
     }
     .upgrade-card.affordable { border-color: var(--matcha); background: rgba(125,184,125,0.05); }
+    .upgrade-card.recommended { border-color: var(--matcha); box-shadow: 0 0 8px rgba(127,176,105,0.3); position: relative; }
     .upgrade-card.maxed { border-color: var(--gold); opacity: 0.8; }
     .upgrade-card.locked { opacity: 0.5; }
     .upgrade-card.too-expensive { border-color: #ddd; opacity: 0.7; }

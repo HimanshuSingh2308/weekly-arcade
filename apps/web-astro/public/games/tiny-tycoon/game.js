@@ -102,10 +102,12 @@
 
   let PATIENCE_TABLE = [
     { minDay: 1,  patience: 12000 },
+    { minDay: 2,  patience: 11000 },
     { minDay: 3,  patience: 10000 },
-    { minDay: 5,  patience: 8000 },
-    { minDay: 7,  patience: 7000 },
-    { minDay: 10, patience: 6000 },
+    { minDay: 4,  patience: 9000 },
+    { minDay: 5,  patience: 8500 },
+    { minDay: 7,  patience: 7500 },
+    { minDay: 10, patience: 6500 },
     { minDay: 15, patience: 5500 },
     { minDay: 20, patience: 5000 },
     { minDay: 25, patience: 4500 },
@@ -288,6 +290,7 @@
   let dayStartTime = 0;
   let customersServed = 0;
   let customersLost = 0;
+  let adaptivePatienceBoost = 0; // +% patience when player is struggling
   let comboStreak = 0;
   let peakCombo = 0;
   let comboForgives = 0;
@@ -1300,7 +1303,7 @@
   function getNextQueueX() {
     const queued = customers.filter(c => !c.isVip && (c.state === 'queued' || c.state === 'walking_to_queue' || c.state === 'serving'));
     const baseX = 40;
-    const spacing = 50;
+    const spacing = queued.length >= 8 ? 42 : 50;
     return baseX + queued.length * spacing;
   }
 
@@ -1452,7 +1455,8 @@
     const doubleShotMultiplier = (t2DoubleShot > 0 && Math.random() < (0.10 + t2DoubleShot * 0.05)) ? 2 : 1;
     const happyHourMultiplier = happyHourActive ? 2 : 1;
     const celebrityMultiplier = c.isCelebrity ? 3 : 1;
-    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier * happyHourMultiplier * celebrityMultiplier) + tipBonus;
+    const rawCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier * happyHourMultiplier * celebrityMultiplier);
+    const totalCoins = Math.min(rawCoins, 5000) + tipBonus; // Cap per-serve at 5000 to prevent edge-case inflation
 
     // Critic bonus: serve >80% patience for +200
     if (c.isCritic) {
@@ -1536,6 +1540,18 @@
     dayPenalties += c.isCritic ? 50 : 5;
     if (c.isCritic) criticCustomerId = null;
 
+    // Adaptive difficulty: if 3+ lost in first 20s, boost patience for remaining customers
+    const elapsed = DAY_DURATION - dayTimer;
+    if (elapsed < 20000 && customersLost >= 3 && adaptivePatienceBoost === 0) {
+      adaptivePatienceBoost = 0.25; // +25% patience for rest of day
+      customers.forEach(cu => {
+        if (cu.state === 'queued' || cu.state === 'walking_to_queue') {
+          cu.patience += cu.maxPatience * 0.25;
+          cu.maxPatience *= 1.25;
+        }
+      });
+    }
+
     const keeperLevel = upgradeLevels.combo_keeper || 0;
     if (comboForgives < keeperLevel) {
       comboForgives++;
@@ -1607,7 +1623,7 @@
   function recalcQueuePositions() {
     const inQueue = customers.filter(c => !c.isVip && (c.state === 'queued' || c.state === 'walking_to_queue' || c.state === 'serving')).sort((a, b) => a.targetX - b.targetX);
     const baseX = 40;
-    const spacing = 50;
+    const spacing = inQueue.length > 8 ? 42 : 50; // Tighter spacing at max queue to avoid overflow
     inQueue.forEach((c, i) => {
       c.targetX = baseX + i * spacing;
     });
@@ -2164,6 +2180,7 @@
     comboStreak = (prestigeLevel >= 2) ? 10 : 0; // P2 perk: Auto Combo — start at 2x
     peakCombo = 0;
     comboForgives = 0;
+    adaptivePatienceBoost = 0;
     manualServing = null;
     autoServing = [null, null, null, null];
     rushActive = false;
@@ -2371,6 +2388,34 @@
     setTimeout(() => showDayEnd(finalRevenue, isNewBest, dayPenalties, challengeBonus), 1000);
   }
 
+  function getNextGoalHint() {
+    // Find cheapest affordable or nearly-affordable upgrade
+    let closest = null;
+    let closestGap = Infinity;
+    for (const [id, upgrade] of Object.entries(UPGRADES)) {
+      const level = upgradeLevels[id] || 0;
+      if (level >= upgrade.maxLevel) continue;
+      const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
+      if (locked) continue;
+      const cost = upgrade.costFn(level);
+      const gap = cost - wallet;
+      if (gap > 0 && gap < closestGap) {
+        closestGap = gap;
+        closest = { name: upgrade.name, icon: upgrade.icon, gap, level: level + 1 };
+      }
+    }
+    if (closest && closestGap < 500) {
+      return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">💡 ${formatCoins(closest.gap)} more for ${closest.icon} ${closest.name} Lv${closest.level}!</div>`;
+    }
+    // Check milestone proximity
+    for (const m of MILESTONES) {
+      if (currentDay < m.day && m.day - currentDay <= 5) {
+        return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎯 Day ${m.day} milestone in ${m.day - currentDay} days! (+${formatCoins(m.bonus)} bonus)</div>`;
+      }
+    }
+    return '';
+  }
+
   function showDayEnd(revenue, isNewBest, penalties, challengeBonus = 0) {
     const modal = document.getElementById('dayEndModal');
     const ch = dailyChallenge;
@@ -2391,6 +2436,7 @@
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${Math.min(3.0, 1.0 + peakCombo * 0.1).toFixed(1)}</span></div>
       ${challengeHtml}
       ${isNewBest ? '<div class="new-best">⭐ NEW PERSONAL BEST! ⭐</div>' : ''}
+      ${getNextGoalHint()}
       <br>
       <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
         <button class="btn" onclick="showShop()">Continue</button>
@@ -2458,6 +2504,32 @@
       <div class="shop-wallet">💰 Wallet: ${formatCoins(wallet)} coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.7rem;font-weight:700;">✨ P${prestigeLevel} (+${prestigeLevel * 5}%)</span>` : ''}</div>
     `;
 
+    // Find recommended upgrade (cheapest affordable non-maxed)
+    let recommendedId = null;
+    let recommendedCost = Infinity;
+    for (const [id, upgrade] of Object.entries(UPGRADES)) {
+      const level = upgradeLevels[id] || 0;
+      if (level >= upgrade.maxLevel) continue;
+      const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
+      if (locked) continue;
+      const cost = upgrade.costFn(level);
+      if (cost <= wallet && cost < recommendedCost) {
+        recommendedCost = cost;
+        recommendedId = id;
+      }
+    }
+    // If nothing affordable, recommend the cheapest overall
+    if (!recommendedId) {
+      for (const [id, upgrade] of Object.entries(UPGRADES)) {
+        const level = upgradeLevels[id] || 0;
+        if (level >= upgrade.maxLevel) continue;
+        const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
+        if (locked) continue;
+        const cost = upgrade.costFn(level);
+        if (cost < recommendedCost) { recommendedCost = cost; recommendedId = id; }
+      }
+    }
+
     let firstLockedTeaser = null;
     for (const [id, upgrade] of Object.entries(UPGRADES)) {
       const level = upgradeLevels[id] || 0;
@@ -2480,9 +2552,11 @@
       else cardClass += ' too-expensive';
 
       const visibleTag = upgrade.visible ? '<div class="upgrade-visible-tag">Shows in shop!</div>' : '';
+      const isRecommended = id === recommendedId;
 
       html += `
-        <div class="${cardClass}">
+        <div class="${cardClass}${isRecommended ? ' recommended' : ''}">
+          ${isRecommended ? '<div style="position:absolute;top:-6px;right:8px;background:var(--matcha);color:#fff;font-size:0.5rem;font-weight:700;padding:1px 6px;border-radius:4px;">⭐ BEST VALUE</div>' : ''}
           <div class="upgrade-icon">${upgrade.icon}</div>
           <div class="upgrade-info">
             <div class="upgrade-name">${upgrade.name}</div>
