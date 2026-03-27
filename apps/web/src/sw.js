@@ -6,7 +6,7 @@ try {
 
   firebase.initializeApp({
     apiKey: 'AIzaSyAFA4KwOaQpa0A-v2auCulStCrOgScrz-g',
-    projectId: 'loyal-curve-425715-h6',
+    projectId: 'weekly-arcade',
     messagingSenderId: '5171085645',
     appId: '1:5171085645:web:b01fbc558d626f649e3704',
   });
