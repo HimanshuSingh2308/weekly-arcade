@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/web/**'
+      - 'apps/web-astro/**'
       - '.github/workflows/deploy-web.yml'
 
   workflow_dispatch:
@@ -28,17 +28,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Web
-        run: |
-          # For static site, just copy the files
-          mkdir -p dist/apps/web
-          cp -r apps/web/src/* dist/apps/web/
+      - name: Build Astro
+        run: cd apps/web-astro && npx astro build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0

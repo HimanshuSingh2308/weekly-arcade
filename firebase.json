@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "apps/web/src",
+    "public": "dist/apps/web-astro",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -16,6 +16,15 @@
     ],
     "headers": [
       {
+        "source": "/_assets/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
         "source": "/js/**",
         "headers": [
           {
@@ -25,7 +34,25 @@
         ]
       },
       {
-        "source": "**/*.@(css|html)",
+        "source": "/games/**/game.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/games/**/styles.css",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=3600"
+          }
+        ]
+      },
+      {
+        "source": "**/*.html",
         "headers": [
           {
             "key": "Cache-Control",
