@@ -1099,7 +1099,11 @@
       return;
     }
 
-    const decoVisuals = {
+    renderDecorationsLoop(shopBg, owned);
+  }
+
+  function getDecoVisuals() {
+    return {
       // ── Boba Bliss ──
       neon_sign: {
         html: '<div class="shop-decor decor-neon"><span class="neon-tube">BOBA</span></div>',
@@ -1270,7 +1274,10 @@
         css: 'position:absolute;bottom:28px;left:0;right:0;'
       },
     };
+  }
 
+  function renderDecorationsLoop(shopBg, owned) {
+    const decoVisuals = getDecoVisuals();
     for (const id of owned) {
       const visual = decoVisuals[id];
       if (!visual) continue;
@@ -2815,13 +2822,16 @@
     const decos = STORE_DECORATIONS[activeStoreId] || [];
     if (decos.length === 0) return '<div style="text-align:center;color:#999;padding:2rem;">No decorations for this store yet</div>';
     const owned = getOwnedDecorations();
+    const visuals = getDecoVisuals();
     let html = `<div class="shop-decor-progress">${owned.length}/${decos.length} owned</div>`;
     html += '<div class="shop-decor-grid">';
     for (const d of decos) {
       const isOwned = owned.includes(d.id);
       const canAfford = !isOwned && wallet >= d.cost;
+      const visual = visuals[d.id];
+      const previewHtml = visual ? `<div class="decor-preview-art">${visual.html}</div>` : `<div class="decor-preview">${d.icon}</div>`;
       html += `<div class="decor-card${isOwned ? ' owned' : ''}${canAfford ? ' affordable' : ''}">
-        <div class="decor-preview">${d.icon}</div>
+        ${previewHtml}
         <div class="decor-name">${d.name}</div>
         ${isOwned ? '<div class="decor-owned">Owned ✓</div>' : `<div class="decor-price">💰 ${formatCoins(d.cost)}</div><button class="btn btn-small decor-buy" ${canAfford ? `onclick="buyDecor('${d.id}')"` : 'disabled'}>Buy</button>`}
       </div>`;

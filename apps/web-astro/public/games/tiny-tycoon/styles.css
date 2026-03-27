@@ -1650,6 +1650,22 @@
     .decor-card.owned { border-color: var(--matcha); background: rgba(127,176,105,0.05); }
     .decor-card.affordable { border-color: var(--gold); }
     .decor-preview { font-size: 1.5rem; margin-bottom: 2px; }
+    .decor-preview-art {
+      width: 100%;
+      height: 50px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.02);
+    }
+    .decor-preview-art .shop-decor {
+      position: relative !important;
+      transform: scale(1.2);
+    }
     .decor-name { font-size: 0.7rem; font-weight: 700; color: #5C3D2E; }
     .decor-price { font-size: 0.6rem; color: #999; margin-top: 2px; }
     .decor-owned { font-size: 0.6rem; color: var(--matcha); font-weight: 600; margin-top: 2px; }
