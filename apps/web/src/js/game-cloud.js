@@ -118,8 +118,12 @@
     if (window.notificationManager.hasToken()) {
       // Already registered — just set up token refresh
       window.notificationManager.setupTokenRefresh();
+    } else if (Notification.permission === 'granted') {
+      // Permission was granted but token never registered (e.g. previous error)
+      const registered = await window.notificationManager.requestPermissionAndRegister();
+      if (registered) window.notificationManager.setupTokenRefresh();
     }
-    // Prompt will be triggered on first score submission via _promptNotifications()
+    // Otherwise, prompt will be triggered on first score submission via _promptNotifications()
   }
 
   async function _promptNotifications() {
