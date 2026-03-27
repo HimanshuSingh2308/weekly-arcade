@@ -1309,7 +1309,7 @@
 
   function createCustomerElement(c) {
     const el = document.createElement('div');
-    el.className = 'customer' + (c.isVip ? ' vip' : '') + ' type-' + c.type + ' entering';
+    el.className = 'customer' + (c.isVip ? ' vip' : '') + (c.isCelebrity ? ' celebrity' : '') + (c.isCritic ? ' critic' : '') + ' type-' + c.type + ' entering';
     el.dataset.id = c.id;
     el.style.transform = `translateX(${c.x}px)`;
     el.style.setProperty('--tx', c.x + 'px');
@@ -1317,7 +1317,15 @@
     // Switch from entrance to walking animation after entrance completes
     setTimeout(() => { if (el.parentNode) el.className = el.className.replace('entering', 'walking'); }, 300);
 
-    const color = CUSTOMER_TYPES[c.type].color;
+    const color = c.isCelebrity ? '#FF1493' : (c.isCritic ? '#455A64' : CUSTOMER_TYPES[c.type].color);
+
+    // Celebrity flash effect
+    if (c.isCelebrity) {
+      const flash = document.createElement('div');
+      flash.className = 'celebrity-flash';
+      queueArea.appendChild(flash);
+      setTimeout(() => flash.remove(), 600);
+    }
 
     el.innerHTML = `
       <div class="customer-shadow"></div>
@@ -1326,6 +1334,8 @@
         <div class="patience-bar" style="width:100%;background:var(--matcha)"></div>
       </div>
       ${c.isVip ? '<div class="customer-crown">👑</div>' : ''}
+      ${c.isCelebrity ? '<div class="customer-accessory" style="position:absolute;top:-2px;left:50%;transform:translateX(-50%);font-size:0.5rem;z-index:3;">🕶️</div>' : ''}
+      ${c.isCritic ? '<div class="customer-accessory" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);font-size:0.55rem;z-index:3;">🎩</div>' : ''}
       <div class="customer-order">${DRINK_TYPES[c.order].emoji}</div>
       <div class="customer-face"></div>
       <div class="customer-head" style="background:${color}"></div>
@@ -2861,7 +2871,9 @@
         const upgradeCount = Object.values(storeData.upgradeLevels || {}).reduce((a, b) => a + b, 0);
         const dayFactor = Math.min(storeData.currentDay || 1, 30);
         const estimatedDailyRev = 100 + dayFactor * 50 + upgradeCount * 30;
-        const offlineRev = Math.floor(estimatedDailyRev * tier.efficiency * hoursOffline / 24);
+        const corpTraining = ((empire.global || {}).hqUpgrades || {}).corporate_training || 0;
+        const efficiencyBoost = tier.efficiency + corpTraining * 0.10; // HQ Corporate Training: +10% per level
+        const offlineRev = Math.floor(estimatedDailyRev * Math.min(efficiencyBoost, 0.95) * hoursOffline / 24); // Cap at 95%
         const daysAdvanced = Math.floor(hoursOffline);
         if (offlineRev > 0) {
           earnings.push({ storeId, storeName: STORE_CONFIGS[storeId]?.name || storeId, revenue: offlineRev, daysAdvanced });

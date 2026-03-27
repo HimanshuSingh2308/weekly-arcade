@@ -1051,6 +1051,47 @@
     }
 
     /* VIP customer glow */
+    /* Celebrity customer — pink glow + sparkle */
+    .customer.celebrity .customer-head,
+    .customer.celebrity .customer-body {
+      box-shadow: 0 0 8px #FF1493, 0 0 16px rgba(255,20,147,0.3);
+    }
+    .customer.celebrity::after {
+      content: '✨';
+      position: absolute;
+      top: -6px;
+      right: -4px;
+      font-size: 0.5rem;
+      animation: fairyTwinkle 1s ease-in-out infinite;
+      z-index: 4;
+    }
+    .celebrity-flash {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.8);
+      z-index: 50;
+      animation: cameraFlash 0.6s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes cameraFlash {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* Critic customer — dark sophisticated look */
+    .customer.critic .customer-head,
+    .customer.critic .customer-body {
+      box-shadow: 0 0 6px rgba(69,90,100,0.4);
+    }
+    .customer.critic::after {
+      content: '📝';
+      position: absolute;
+      bottom: 2px;
+      right: -6px;
+      font-size: 0.4rem;
+      z-index: 4;
+    }
+
     .customer.vip .customer-body,
     .customer.vip .customer-head {
       box-shadow: 0 0 10px var(--gold), 0 0 20px rgba(255,215,0,0.2);
