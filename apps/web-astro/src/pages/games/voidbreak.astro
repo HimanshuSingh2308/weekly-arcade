@@ -1,6 +1,19 @@
 ---
+/**
+ * Voidbreak — Asteroid Roguelite.
+ *
+ * Componentized: 302 lines → 42 lines (page) + 6 components.
+ * Each component is independently editable.
+ */
 import GameLayout from '../../layouts/GameLayout.astro';
 import gameData from '../../data/games/voidbreak.json';
+
+import HUD from '../../components/games/voidbreak/HUD.astro';
+import MenuScreen from '../../components/games/voidbreak/MenuScreen.astro';
+import LoadoutScreen from '../../components/games/voidbreak/LoadoutScreen.astro';
+import GameOverScreen from '../../components/games/voidbreak/GameOverScreen.astro';
+import MobileControls from '../../components/games/voidbreak/MobileControls.astro';
+import Overlays from '../../components/games/voidbreak/Overlays.astro';
 ---
 
 <GameLayout
@@ -21,281 +34,19 @@ import gameData from '../../data/games/voidbreak.json';
     <link rel="stylesheet" href="/games/voidbreak/styles.css">
   </Fragment>
 
-  <!-- Header -->
+  <HUD />
 
-  <!-- HUD -->
-  <div class="hud" id="hud" style="display: none;">
-    <div class="hud-left">
-      <div class="score-display" id="scoreDisplay">0</div>
-      <div class="wave-display">Wave <span id="waveDisplay">1</span> <span id="dailyIndicator" style="color: #ffd700; font-size: 0.8rem; display: none;">DAILY</span></div>
-    </div>
-    <div class="hud-center">
-      <div class="combo-display" id="comboDisplay">x1.5 COMBO</div>
-      <div class="combo-timer-bar" id="comboTimerBar">
-        <div class="combo-timer-fill" id="comboTimerFill" style="width: 100%"></div>
-      </div>
-    </div>
-    <div class="hud-right">
-      <div class="lives-display" id="livesDisplay"></div>
-      <div class="best-display">Best: <span id="bestDisplay">0</span></div>
-    </div>
-  </div>
-
-  <!-- Wave Clear Flash -->
-  <div class="wave-clear" id="waveClear">WAVE 1 CLEARED</div>
-
-  <!-- Game Canvas -->
   <div class="game-container">
     <canvas id="gameCanvas"></canvas>
   </div>
 
-  <!-- Menu Screen -->
-  <div class="menu-screen" id="menuScreen">
-    <div class="menu-icon">
-      <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
-        <!-- Engine flames -->
-        <polygon class="engine-flame" points="18,52 22,72 26,52" fill="#ff6b00" opacity="0.8"/>
-        <polygon class="engine-flame" points="34,52 38,72 42,52" fill="#ff6b00" opacity="0.8"/>
-        <polygon class="engine-flame" points="19,52 22,64 25,52" fill="#00d4ff" opacity="0.9"/>
-        <polygon class="engine-flame" points="35,52 38,64 41,52" fill="#00d4ff" opacity="0.9"/>
+  <MenuScreen />
+  <LoadoutScreen />
+  <GameOverScreen />
+  <MobileControls />
+  <Overlays />
 
-        <!-- Main hull -->
-        <polygon points="30,5 22,22 18,35 22,50 38,50 42,35 38,22" fill="#1a1a2e" stroke="#4da6ff" stroke-width="2"/>
-
-        <!-- Left wing -->
-        <polygon points="18,32 2,52 6,52 22,42" fill="#16213e" stroke="#4da6ff" stroke-width="1.5"/>
-
-        <!-- Right wing -->
-        <polygon points="42,32 58,52 54,52 38,42" fill="#16213e" stroke="#4da6ff" stroke-width="1.5"/>
-
-        <!-- Cockpit -->
-        <polygon points="30,10 24,26 30,34 36,26" fill="#00d4ff" opacity="0.7" stroke="#00ffff" stroke-width="1"/>
-
-        <!-- Engine pods -->
-        <rect x="17" y="44" width="8" height="10" fill="#333" rx="1"/>
-        <rect x="35" y="44" width="8" height="10" fill="#333" rx="1"/>
-        <rect x="19" y="48" width="4" height="5" fill="#00d4ff"/>
-        <rect x="37" y="48" width="4" height="5" fill="#00d4ff"/>
-      </svg>
-    </div>
-    <h2 class="menu-title">Voidbreak</h2>
-    <p class="menu-tagline">Clear the field. Choose your weapon. Go deeper.</p>
-    <button class="play-btn" id="playBtn">START RUN</button>
-    <button class="play-btn" id="dailyBtn" style="background: linear-gradient(135deg, #ffd700, #ff8c00); margin-top: 0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">DAILY CHALLENGE</button>
-    <button class="play-btn secondary" id="loadoutBtn" style="background: var(--bg-card); border: 2px solid var(--cyan); margin-top: 0.5rem; padding: 0.6rem 1.5rem; font-size: 0.9rem;">CUSTOMIZE</button>
-    <div class="coin-display" id="menuCoinDisplay" style="margin-top: 0.75rem; display: none;">
-      <span>Coins:</span> <span id="menuCoins">0</span>
-    </div>
-    <div class="controls-hint">
-      <span class="desktop-controls">
-        <kbd>WASD</kbd> move <span>&bull;</span> <kbd>S</kbd> brake <span>&bull;</span> <kbd>Space</kbd> fire <span>&bull;</span> <kbd>N</kbd> nuke
-      </span>
-      <span class="mobile-controls-text" style="display: none;">
-        Drag to move &bull; Tap to fire
-      </span>
-    </div>
-  </div>
-
-  <!-- Loadout / Customization Screen -->
-  <div class="loadout-screen hidden" id="loadoutScreen">
-    <div class="loadout-header">
-      <div class="loadout-title">CUSTOMIZE</div>
-      <div class="coin-display">
-        <span>Coins:</span> <span id="loadoutCoins">0</span>
-      </div>
-    </div>
-
-    <div class="loadout-preview">
-      <canvas id="previewCanvas" width="100" height="100"></canvas>
-    </div>
-
-    <div class="loadout-tabs">
-      <button class="loadout-tab active" data-tab="ship">Ships</button>
-      <button class="loadout-tab" data-tab="trail">Trails</button>
-      <button class="loadout-tab" data-tab="bullet">Bullets</button>
-      <button class="loadout-tab" data-tab="hud">HUD</button>
-      <button class="loadout-tab" data-tab="class">Class</button>
-    </div>
-
-    <div class="loadout-items" id="loadoutItems">
-      <!-- Items populated by JavaScript -->
-    </div>
-
-    <div class="loadout-buttons">
-      <button class="loadout-btn" id="loadoutStartBtn">START RUN</button>
-      <button class="loadout-btn secondary" id="loadoutBackBtn">Back</button>
-    </div>
-  </div>
-
-  <!-- Settings Modal -->
-  <div class="settings-overlay hidden" id="settingsOverlay"></div>
-  <div class="settings-modal hidden" id="settingsModal">
-    <div class="settings-title">Settings</div>
-    <div class="settings-option">
-      <span class="settings-label">High Contrast</span>
-      <div class="settings-toggle" id="highContrastToggle" data-setting="highContrast"></div>
-    </div>
-    <div class="settings-option">
-      <span class="settings-label">Reduce Motion</span>
-      <div class="settings-toggle" id="reduceMotionToggle" data-setting="reduceMotion"></div>
-    </div>
-    <div class="settings-option">
-      <span class="settings-label">Auto-Fire</span>
-      <div class="settings-toggle" id="autoFireSettingToggle" data-setting="autoFire"></div>
-    </div>
-    <div class="settings-option">
-      <span class="settings-label">Orientation</span>
-      <div class="settings-select" id="orientationSelect">
-        <button class="orient-btn active" data-orient="auto">Auto</button>
-        <button class="orient-btn" data-orient="portrait">Portrait</button>
-        <button class="orient-btn" data-orient="landscape">Landscape</button>
-      </div>
-    </div>
-    <button class="settings-close" id="settingsClose">Close</button>
-  </div>
-
-  <!-- Custom Confirm Dialog -->
-  <div class="confirm-overlay hidden" id="confirmOverlay"></div>
-  <div class="confirm-dialog hidden" id="confirmDialog">
-    <div class="confirm-message" id="confirmMessage"></div>
-    <div class="confirm-buttons">
-      <button class="confirm-btn primary" id="confirmYes">Yes</button>
-      <button class="confirm-btn" id="confirmNo">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Shop Screen -->
-  <div class="shop-screen hidden" id="shopScreen">
-    <div class="shop-title">UPGRADE AVAILABLE</div>
-    <div class="shop-timer" id="shopTimer">10</div>
-    <div class="shop-cards" id="shopCards"></div>
-    <button class="skip-btn" id="skipBtn">Skip</button>
-  </div>
-
-  <!-- Game Over Screen -->
-  <div class="gameover-screen hidden" id="gameoverScreen">
-    <div class="gameover-title" id="gameoverTitle">GAME OVER</div>
-    <div class="gameover-stats">
-      <div class="gameover-stat">
-        <div class="gameover-stat-value" id="finalScore">0</div>
-        <div class="gameover-stat-label">Score</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="gameover-stat-value" id="finalWave">1</div>
-        <div class="gameover-stat-label">Wave</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="gameover-stat-value" id="finalKills">0</div>
-        <div class="gameover-stat-label">Kills</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="gameover-stat-value" id="finalCombo">0</div>
-        <div class="gameover-stat-label">Best Combo</div>
-      </div>
-    </div>
-    <div class="stats-grid" id="statsGrid">
-      <div class="stat-item">
-        <div class="stat-item-value" id="statPerfectWaves">0</div>
-        <div class="stat-item-label">Perfect Waves</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-item-value" id="statUpgrades">0</div>
-        <div class="stat-item-label">Upgrades</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-item-value" id="statStreak">0</div>
-        <div class="stat-item-label">Day Streak</div>
-      </div>
-    </div>
-    <div class="gameover-buttons">
-      <button class="retry-btn" id="retryBtn">Play Again</button>
-      <a href="/" class="home-btn">Home</a>
-    </div>
-  </div>
-
-  <!-- Mobile Controls - Gesture Based -->
-  <div class="mobile-controls" id="mobileControls">
-    <!-- Left zone: Virtual joystick for movement -->
-    <div class="gesture-zone gesture-zone-left" id="joystickZone">
-      <div class="joystick-base" id="joystickBase">
-        <div class="joystick-stick" id="joystickStick"></div>
-      </div>
-    </div>
-    <!-- Right zone: Tap/hold to fire -->
-    <div class="gesture-zone gesture-zone-right" id="fireZone">
-      <div class="fire-zone-indicator" id="fireIndicator">FIRE</div>
-    </div>
-    <!-- Auto-fire toggle button -->
-    <div class="autofire-toggle" id="autofireToggle">AUTO<br>FIRE</div>
-    <div class="nuke-btn hidden" id="nukeBtn">NUKE</div>
-    <div class="mobile-pause-btn" id="mobilePauseBtn">&#x23F8;</div>
-    <div class="gesture-hint">Left: drag to move • Right: tap to fire</div>
-  </div>
-
-  <!-- Achievement Toast -->
-  <div class="achievement-toast" id="achievementToast">
-    <div class="achievement-toast-icon" id="achievementIcon">🏆</div>
-    <div class="achievement-toast-text">
-      <div class="achievement-toast-title" id="achievementTitle">Achievement Unlocked!</div>
-      <div id="achievementName">Into the Void</div>
-    </div>
-  </div>
-
-  <!-- Pause Screen -->
-  <div class="pause-screen hidden" id="pauseScreen">
-    <div class="pause-title">PAUSED</div>
-    <div class="pause-buttons">
-      <button class="pause-btn primary" id="resumeBtn">Resume</button>
-      <button class="pause-btn" id="restartBtn">Restart</button>
-      <a href="/" class="pause-btn" style="text-decoration: none; text-align: center;">Quit</a>
-    </div>
-  </div>
-
-  <!-- Upgrade Icons HUD -->
-  <div class="upgrades-hud" id="upgradesHud"></div>
-
-  <!-- Wave Preview -->
-  <div class="wave-preview" id="wavePreview">
-    <div class="wave-preview-number">WAVE <span id="previewWaveNum">1</span></div>
-    <div class="wave-preview-enemies" id="previewEnemies"></div>
-    <div class="wave-preview-boss hidden" id="previewBoss">BOSS WAVE</div>
-  </div>
-
-  <!-- Tutorial Overlay -->
-  <div class="tutorial-overlay hidden" id="tutorialOverlay">
-    <div class="tutorial-step">
-      <div class="tutorial-icon">🚀</div>
-      <div class="tutorial-text" id="tutorialText">
-        <span class="desktop-controls">
-          Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys to move.<br>
-          <kbd>S</kbd> to brake. <kbd>Space</kbd> to fire. <kbd>N</kbd> for nuke.<br>
-        </span>
-        <span class="mobile-controls-text" style="display: none;">
-          Drag left side of screen to move.<br>
-          Tap right side to fire. Toggle auto-fire in top right.<br>
-          Tap &#x23F8; to pause.<br>
-        </span>
-        <br>
-        Destroy asteroids to earn points.<br>
-        Collect golden orbs for bonus score!<br>
-        Clear each wave to unlock powerful upgrades!
-      </div>
-      <button class="tutorial-skip" id="tutorialSkip">Got it!</button>
-    </div>
-  </div>
-
-  <!-- New Best Celebration -->
-  <div class="new-best-overlay" id="newBestOverlay"></div>
-
-  <!-- More Games -->
-
-  <!-- Firebase SDK -->
-
-  <!-- API Client --></body>
-
-    <Fragment slot="scripts">
+  <Fragment slot="scripts">
     <script is:inline src="/games/voidbreak/game.js"></script>
   </Fragment>
 </GameLayout>
-
-

@@ -1,0 +1,43 @@
+---
+/** Voidbreak Game Over — score, wave, kills, combo stats + retry/home */
+---
+
+<div class="gameover-screen hidden" id="gameoverScreen">
+  <div class="gameover-title" id="gameoverTitle">GAME OVER</div>
+  <div class="gameover-stats">
+    <div class="gameover-stat">
+      <div class="gameover-stat-value" id="finalScore">0</div>
+      <div class="gameover-stat-label">Score</div>
+    </div>
+    <div class="gameover-stat">
+      <div class="gameover-stat-value" id="finalWave">1</div>
+      <div class="gameover-stat-label">Wave</div>
+    </div>
+    <div class="gameover-stat">
+      <div class="gameover-stat-value" id="finalKills">0</div>
+      <div class="gameover-stat-label">Kills</div>
+    </div>
+    <div class="gameover-stat">
+      <div class="gameover-stat-value" id="finalCombo">0</div>
+      <div class="gameover-stat-label">Best Combo</div>
+    </div>
+  </div>
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-item">
+      <div class="stat-item-value" id="statPerfectWaves">0</div>
+      <div class="stat-item-label">Perfect Waves</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-value" id="statUpgrades">0</div>
+      <div class="stat-item-label">Upgrades</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-value" id="statStreak">0</div>
+      <div class="stat-item-label">Day Streak</div>
+    </div>
+  </div>
+  <div class="gameover-buttons">
+    <button class="retry-btn" id="retryBtn">Play Again</button>
+    <a href="/" class="home-btn">Home</a>
+  </div>
+</div>

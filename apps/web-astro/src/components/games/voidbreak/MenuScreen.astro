@@ -1,0 +1,43 @@
+---
+/** Voidbreak Menu — title, ship SVG, play/daily/customize buttons, controls hint */
+---
+
+<div class="menu-screen" id="menuScreen">
+  <div class="menu-icon">
+    <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+      <!-- Engine flames -->
+      <polygon class="engine-flame" points="18,52 22,72 26,52" fill="#ff6b00" opacity="0.8"/>
+      <polygon class="engine-flame" points="34,52 38,72 42,52" fill="#ff6b00" opacity="0.8"/>
+      <polygon class="engine-flame" points="19,52 22,64 25,52" fill="#00d4ff" opacity="0.9"/>
+      <polygon class="engine-flame" points="35,52 38,64 41,52" fill="#00d4ff" opacity="0.9"/>
+      <!-- Main hull -->
+      <polygon points="30,5 22,22 18,35 22,50 38,50 42,35 38,22" fill="#1a1a2e" stroke="#4da6ff" stroke-width="2"/>
+      <!-- Wings -->
+      <polygon points="18,32 2,52 6,52 22,42" fill="#16213e" stroke="#4da6ff" stroke-width="1.5"/>
+      <polygon points="42,32 58,52 54,52 38,42" fill="#16213e" stroke="#4da6ff" stroke-width="1.5"/>
+      <!-- Cockpit -->
+      <polygon points="30,10 24,26 30,34 36,26" fill="#00d4ff" opacity="0.7" stroke="#00ffff" stroke-width="1"/>
+      <!-- Engine pods -->
+      <rect x="17" y="44" width="8" height="10" fill="#333" rx="1"/>
+      <rect x="35" y="44" width="8" height="10" fill="#333" rx="1"/>
+      <rect x="19" y="48" width="4" height="5" fill="#00d4ff"/>
+      <rect x="37" y="48" width="4" height="5" fill="#00d4ff"/>
+    </svg>
+  </div>
+  <h2 class="menu-title">Voidbreak</h2>
+  <p class="menu-tagline">Clear the field. Choose your weapon. Go deeper.</p>
+  <button class="play-btn" id="playBtn">START RUN</button>
+  <button class="play-btn" id="dailyBtn" style="background: linear-gradient(135deg, #ffd700, #ff8c00); margin-top: 0.5rem; padding: 0.75rem 2rem; font-size: 1rem;">DAILY CHALLENGE</button>
+  <button class="play-btn secondary" id="loadoutBtn" style="background: var(--bg-card); border: 2px solid var(--cyan); margin-top: 0.5rem; padding: 0.6rem 1.5rem; font-size: 0.9rem;">CUSTOMIZE</button>
+  <div class="coin-display" id="menuCoinDisplay" style="margin-top: 0.75rem; display: none;">
+    <span>Coins:</span> <span id="menuCoins">0</span>
+  </div>
+  <div class="controls-hint">
+    <span class="desktop-controls">
+      <kbd>WASD</kbd> move <span>&bull;</span> <kbd>S</kbd> brake <span>&bull;</span> <kbd>Space</kbd> fire <span>&bull;</span> <kbd>N</kbd> nuke
+    </span>
+    <span class="mobile-controls-text" style="display: none;">
+      Drag to move &bull; Tap to fire
+    </span>
+  </div>
+</div>

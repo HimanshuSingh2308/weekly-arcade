@@ -1,0 +1,23 @@
+---
+/** Voidbreak HUD — score, wave, combo, lives, best score */
+---
+
+<div class="hud" id="hud" style="display: none;">
+  <div class="hud-left">
+    <div class="score-display" id="scoreDisplay">0</div>
+    <div class="wave-display">Wave <span id="waveDisplay">1</span> <span id="dailyIndicator" style="color: #ffd700; font-size: 0.8rem; display: none;">DAILY</span></div>
+  </div>
+  <div class="hud-center">
+    <div class="combo-display" id="comboDisplay">x1.5 COMBO</div>
+    <div class="combo-timer-bar" id="comboTimerBar">
+      <div class="combo-timer-fill" id="comboTimerFill" style="width: 100%"></div>
+    </div>
+  </div>
+  <div class="hud-right">
+    <div class="lives-display" id="livesDisplay"></div>
+    <div class="best-display">Best: <span id="bestDisplay">0</span></div>
+  </div>
+</div>
+
+<div class="wave-clear" id="waveClear">WAVE 1 CLEARED</div>
+<div class="upgrades-hud" id="upgradesHud"></div>

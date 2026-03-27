@@ -1,0 +1,100 @@
+---
+/** Voidbreak Overlays — settings, confirm, shop, pause, tutorial, wave preview, achievements, new best */
+---
+
+<!-- Settings Modal -->
+<div class="settings-overlay hidden" id="settingsOverlay"></div>
+<div class="settings-modal hidden" id="settingsModal">
+  <div class="settings-title">Settings</div>
+  <div class="settings-option">
+    <span class="settings-label">High Contrast</span>
+    <div class="settings-toggle" id="highContrastToggle" data-setting="highContrast"></div>
+  </div>
+  <div class="settings-option">
+    <span class="settings-label">Reduce Motion</span>
+    <div class="settings-toggle" id="reduceMotionToggle" data-setting="reduceMotion"></div>
+  </div>
+  <div class="settings-option">
+    <span class="settings-label">Auto-Fire</span>
+    <div class="settings-toggle" id="autoFireSettingToggle" data-setting="autoFire"></div>
+  </div>
+  <div class="settings-option">
+    <span class="settings-label">Orientation</span>
+    <div class="settings-select" id="orientationSelect">
+      <button class="orient-btn active" data-orient="auto">Auto</button>
+      <button class="orient-btn" data-orient="portrait">Portrait</button>
+      <button class="orient-btn" data-orient="landscape">Landscape</button>
+    </div>
+  </div>
+  <button class="settings-close" id="settingsClose">Close</button>
+</div>
+
+<!-- Custom Confirm Dialog -->
+<div class="confirm-overlay hidden" id="confirmOverlay"></div>
+<div class="confirm-dialog hidden" id="confirmDialog">
+  <div class="confirm-message" id="confirmMessage"></div>
+  <div class="confirm-buttons">
+    <button class="confirm-btn primary" id="confirmYes">Yes</button>
+    <button class="confirm-btn" id="confirmNo">Cancel</button>
+  </div>
+</div>
+
+<!-- Shop Screen -->
+<div class="shop-screen hidden" id="shopScreen">
+  <div class="shop-title">UPGRADE AVAILABLE</div>
+  <div class="shop-timer" id="shopTimer">10</div>
+  <div class="shop-cards" id="shopCards"></div>
+  <button class="skip-btn" id="skipBtn">Skip</button>
+</div>
+
+<!-- Pause Screen -->
+<div class="pause-screen hidden" id="pauseScreen">
+  <div class="pause-title">PAUSED</div>
+  <div class="pause-buttons">
+    <button class="pause-btn primary" id="resumeBtn">Resume</button>
+    <button class="pause-btn" id="restartBtn">Restart</button>
+    <a href="/" class="pause-btn" style="text-decoration: none; text-align: center;">Quit</a>
+  </div>
+</div>
+
+<!-- Wave Preview -->
+<div class="wave-preview" id="wavePreview">
+  <div class="wave-preview-number">WAVE <span id="previewWaveNum">1</span></div>
+  <div class="wave-preview-enemies" id="previewEnemies"></div>
+  <div class="wave-preview-boss hidden" id="previewBoss">BOSS WAVE</div>
+</div>
+
+<!-- Tutorial Overlay -->
+<div class="tutorial-overlay hidden" id="tutorialOverlay">
+  <div class="tutorial-step">
+    <div class="tutorial-icon">🚀</div>
+    <div class="tutorial-text" id="tutorialText">
+      <span class="desktop-controls">
+        Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys to move.<br>
+        <kbd>S</kbd> to brake. <kbd>Space</kbd> to fire. <kbd>N</kbd> for nuke.<br>
+      </span>
+      <span class="mobile-controls-text" style="display: none;">
+        Drag left side of screen to move.<br>
+        Tap right side to fire. Toggle auto-fire in top right.<br>
+        Tap &#x23F8; to pause.<br>
+      </span>
+      <br>
+      Destroy asteroids to earn points.<br>
+      Collect golden orbs for bonus score!<br>
+      Clear each wave to unlock powerful upgrades!
+    </div>
+    <button class="tutorial-skip" id="tutorialSkip">Got it!</button>
+  </div>
+</div>
+
+<!-- Achievement Toast -->
+<div class="achievement-toast" id="achievementToast">
+  <div class="achievement-toast-icon" id="achievementIcon">🏆</div>
+  <div class="achievement-toast-text">
+    <div class="achievement-toast-title" id="achievementTitle">Achievement Unlocked!</div>
+    <div id="achievementName">Into the Void</div>
+  </div>
+</div>
+
+<!-- New Best Celebration -->
+<div class="new-best-overlay" id="newBestOverlay"></div>

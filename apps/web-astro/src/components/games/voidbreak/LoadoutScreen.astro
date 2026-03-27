@@ -1,0 +1,31 @@
+---
+/** Voidbreak Loadout — ship/trail/bullet/HUD/class customization tabs */
+---
+
+<div class="loadout-screen hidden" id="loadoutScreen">
+  <div class="loadout-header">
+    <div class="loadout-title">CUSTOMIZE</div>
+    <div class="coin-display">
+      <span>Coins:</span> <span id="loadoutCoins">0</span>
+    </div>
+  </div>
+
+  <div class="loadout-preview">
+    <canvas id="previewCanvas" width="100" height="100"></canvas>
+  </div>
+
+  <div class="loadout-tabs">
+    <button class="loadout-tab active" data-tab="ship">Ships</button>
+    <button class="loadout-tab" data-tab="trail">Trails</button>
+    <button class="loadout-tab" data-tab="bullet">Bullets</button>
+    <button class="loadout-tab" data-tab="hud">HUD</button>
+    <button class="loadout-tab" data-tab="class">Class</button>
+  </div>
+
+  <div class="loadout-items" id="loadoutItems"></div>
+
+  <div class="loadout-buttons">
+    <button class="loadout-btn" id="loadoutStartBtn">START RUN</button>
+    <button class="loadout-btn secondary" id="loadoutBackBtn">Back</button>
+  </div>
+</div>
