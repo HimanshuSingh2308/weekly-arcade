@@ -1561,6 +1561,7 @@
       display: flex;
       gap: 0;
       border-bottom: 2px solid #eee;
+      position: relative;
     }
     .shop-tab {
       flex: 1;
@@ -1583,6 +1584,21 @@
     .shop-tab:active { transform: scale(0.97); }
     .shop-content {
       min-height: 200px;
+      animation: tabSlideIn 0.2s ease-out;
+    }
+    @keyframes tabSlideIn {
+      from { opacity: 0.5; transform: translateX(8px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    /* Swipe hint indicator on tab bar */
+    .shop-tab-bar::after {
+      content: '← swipe →';
+      position: absolute;
+      right: 0;
+      top: 100%;
+      font-size: 0.5rem;
+      color: #ccc;
+      padding: 2px 4px;
     }
     /* Chips/Tags */
     .chip {

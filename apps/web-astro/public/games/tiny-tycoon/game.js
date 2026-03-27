@@ -2675,12 +2675,53 @@
   // ==========================================
   function showShop() {
     gameState = 'UPGRADE_SHOP';
-    // M. Cancel game loop
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
     hideAllOverlays();
     hudEl.style.display = 'none';
     renderShop();
     showOverlay('shopOverlay');
+    setupShopSwipe();
+  }
+
+  // Swipe gesture to switch shop tabs
+  let _shopSwipeSetup = false;
+  function setupShopSwipe() {
+    if (_shopSwipeSetup) return;
+    _shopSwipeSetup = true;
+    const modal = document.getElementById('shopModal');
+    let startX = 0, startY = 0, swiping = false;
+
+    modal.addEventListener('touchstart', (e) => {
+      if (gameState !== 'UPGRADE_SHOP') return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      swiping = true;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      if (!swiping || gameState !== 'UPGRADE_SHOP') return;
+      swiping = false;
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.7) return; // Too short or too vertical
+
+      const tabs = getVisibleShopTabs();
+      const idx = tabs.indexOf(shopTab);
+      if (idx < 0) return;
+
+      if (dx < -60 && idx < tabs.length - 1) {
+        setShopTab(tabs[idx + 1]); // Swipe left → next tab
+      } else if (dx > 60 && idx > 0) {
+        setShopTab(tabs[idx - 1]); // Swipe right → prev tab
+      }
+    }, { passive: true });
+  }
+
+  function getVisibleShopTabs() {
+    const tabs = ['upgrades'];
+    if (prestigeLevel >= 1) tabs.push('tier2');
+    tabs.push('decor');
+    return tabs;
   }
 
   let shopTab = 'upgrades';
