@@ -1584,16 +1584,32 @@
     .shop-content {
       min-height: 200px;
     }
-    .shop-badge {
-      position: absolute;
-      top: -6px;
-      right: 8px;
-      background: var(--matcha);
-      color: #fff;
+    /* Chips/Tags */
+    .chip {
+      display: inline-block;
       font-size: 0.5rem;
       font-weight: 700;
       padding: 1px 6px;
-      border-radius: 4px;
+      border-radius: 8px;
+      vertical-align: middle;
+      margin-left: 4px;
+      letter-spacing: 0.3px;
+    }
+    .chip-recommended {
+      background: var(--matcha, #7FB069);
+      color: #fff;
+    }
+    .chip-maxed {
+      background: var(--gold, #F5C542);
+      color: #fff;
+    }
+    .chip-new {
+      background: var(--coral, #E8836B);
+      color: #fff;
+    }
+    .chip-locked {
+      background: #ccc;
+      color: #666;
     }
     .shop-maxed-summary {
       text-align: center;
