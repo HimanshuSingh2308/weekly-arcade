@@ -10,7 +10,7 @@ export class NotificationsService {
   private readonly logsCollection = 'notification-logs';
   private readonly usersCollection = 'users';
 
-  private readonly MAX_PER_DAY = 3;
+  private readonly MAX_PER_DAY = 10;
   private readonly MAX_PER_WEEK = 10;
   private readonly BATCH_SIZE = 500;
 
