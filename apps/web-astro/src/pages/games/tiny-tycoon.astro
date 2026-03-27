@@ -217,16 +217,19 @@ import gameData from '../../data/games/tiny-tycoon.json';
     iced_coffee:  { emoji: '☕', name: 'Iced Coffee',        baseCoins: 8,  serveTime: 1000, unlockDay: 3 },
     smoothie:     { emoji: '🥤', name: 'Fruit Smoothie',    baseCoins: 15, serveTime: 1500, unlockDay: 5 },
     strawberry:   { emoji: '🍓', name: 'Strawberry Special', baseCoins: 20, serveTime: 2000, unlockDay: 8 },
-    sparkling:    { emoji: '🫧', name: 'Sparkling Boba',    baseCoins: 30, serveTime: 2500, unlockDay: 10 }
+    sparkling:    { emoji: '🫧', name: 'Sparkling Boba',    baseCoins: 30, serveTime: 2500, unlockDay: 10 },
+    matcha_latte: { emoji: '🍃', name: 'Matcha Latte',     baseCoins: 40, serveTime: 2800, unlockDay: 15 },
+    taro_milk:    { emoji: '🟣', name: 'Taro Milk Tea',    baseCoins: 55, serveTime: 3200, unlockDay: 20 },
+    signature:    { emoji: '🏆', name: 'Signature Boba',   baseCoins: 75, serveTime: 4000, unlockDay: 25 }
   };
 
   const CUSTOMER_TYPES = {
     regular:    { color: '#8B9DC3', patienceMod: 1.0, orderPool: ['basic_tea', 'boba_milk'],             earlyWeight: 60, lateWeight: 25 },
     student:    { color: '#FFB347', patienceMod: 1.2, orderPool: ['basic_tea', 'iced_coffee'],           earlyWeight: 30, lateWeight: 15 },
     business:   { color: '#708090', patienceMod: 0.7, orderPool: ['iced_coffee', 'boba_milk'],           earlyWeight: 10, lateWeight: 20 },
-    foodie:     { color: '#DDA0DD', patienceMod: 0.9, orderPool: ['smoothie', 'strawberry'],             earlyWeight: 0,  lateWeight: 25 },
-    influencer: { color: '#FF69B4', patienceMod: 0.6, orderPool: ['strawberry', 'sparkling'],            earlyWeight: 0,  lateWeight: 10 },
-    vip:        { color: '#FFD700', patienceMod: 1.0, orderPool: Object.keys(DRINK_TYPES),              earlyWeight: 0,  lateWeight: 0  }
+    foodie:     { color: '#DDA0DD', patienceMod: 0.9, orderPool: ['smoothie', 'strawberry', 'matcha_latte', 'taro_milk'], earlyWeight: 0, lateWeight: 25 },
+    influencer: { color: '#FF69B4', patienceMod: 0.6, orderPool: ['strawberry', 'sparkling', 'taro_milk', 'signature'], earlyWeight: 0, lateWeight: 10 },
+    vip:        { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL',                                 earlyWeight: 0,  lateWeight: 0  }
   };
 
   const UPGRADES = {
@@ -258,6 +261,14 @@ import gameData from '../../data/games/tiny-tycoon.json';
     tt_prestige:      { name: 'New Beginnings',   desc: 'Prestige for the first time',       xp: 150 }
   };
 
+  const PRESTIGE_PERKS = {
+    1: { id: 'tier2_unlock', name: 'Tier 2 Access',  desc: 'Unlock Tier 2 upgrades (coming soon)', icon: '🔓' },
+    2: { id: 'auto_combo',   name: 'Auto Combo',     desc: 'Start each day at 2x combo',           icon: '🔥' },
+    3: { id: 'vip_magnet',   name: 'VIP Magnet',     desc: '+15% VIP spawn chance',                icon: '🧲' },
+    4: { id: 'rush_master',  name: 'Rush Master',    desc: 'Rush Hour = 2x coins',                 icon: '⚡' },
+    5: { id: 'golden_start', name: 'Golden Start',   desc: 'Start each day with 50 bonus coins',   icon: '💎' },
+  };
+
   const SPAWN_TABLE = [
     { minDay: 1,  interval: 3000, maxQueue: 4 },
     { minDay: 2,  interval: 2700, maxQueue: 4 },
@@ -268,7 +279,9 @@ import gameData from '../../data/games/tiny-tycoon.json';
     { minDay: 8,  interval: 1600, maxQueue: 7 },
     { minDay: 10, interval: 1400, maxQueue: 8 },
     { minDay: 15, interval: 1200, maxQueue: 8 },
-    { minDay: 20, interval: 1000, maxQueue: 8 }
+    { minDay: 20, interval: 1000, maxQueue: 8 },
+    { minDay: 25, interval: 900,  maxQueue: 9 },
+    { minDay: 30, interval: 800,  maxQueue: 10 }
   ];
 
   const PATIENCE_TABLE = [
@@ -278,7 +291,9 @@ import gameData from '../../data/games/tiny-tycoon.json';
     { minDay: 7,  patience: 7000 },
     { minDay: 10, patience: 6000 },
     { minDay: 15, patience: 5500 },
-    { minDay: 20, patience: 5000 }
+    { minDay: 20, patience: 5000 },
+    { minDay: 25, patience: 4500 },
+    { minDay: 30, patience: 4000 }
   ];
 
   const DAY_DURATION = 60000; // 60 seconds
@@ -323,8 +338,11 @@ import gameData from '../../data/games/tiny-tycoon.json';
   let upgradeLevels = {};
   let unlockedAchievements = new Set();
   let prestigeLevel = 0;
+  let prestigeBridgeDays = 0;
   let masterVolume = 0.5;
   let isMuted = false;
+  let loginStreak = { lastLoginDate: null, count: 0, longestStreak: 0 };
+  let tutorialsSeen = { main: false, vip: false };
 
   // Per-day state
   let dayTimer = 0;
@@ -387,33 +405,165 @@ import gameData from '../../data/games/tiny-tycoon.json';
   const gameWrap = document.getElementById('gameWrap');
 
   // ==========================================
-  // SAVE / LOAD
+  // SAVE / LOAD (v2 — tt_empire blob)
   // ==========================================
   function saveGame() {
-    localStorage.setItem('tt_wallet', wallet.toString());
-    localStorage.setItem('tt_best_score', bestScore.toString());
-    localStorage.setItem('tt_current_day', currentDay.toString());
-    localStorage.setItem('tt_upgrades', JSON.stringify(upgradeLevels));
-    localStorage.setItem('tt_achievements', JSON.stringify([...unlockedAchievements]));
-    localStorage.setItem('tt_stats', JSON.stringify(cumulativeStats));
-    localStorage.setItem('tt_prestige', prestigeLevel.toString());
+    const empire = {
+      version: 2,
+      global: {
+        wallet,
+        prestigeLevel,
+        bestScore,
+        achievements: [...unlockedAchievements],
+        cumulativeStats,
+        loginStreak,
+        lastPlayedTimestamp: Date.now(),
+        prestigeBridgeDays: prestigeBridgeDays || 0,
+      },
+      stores: {
+        boba_shop: {
+          unlocked: true,
+          currentDay,
+          upgradeLevels: { ...upgradeLevels },
+          bestDayRevenue: bestScore,
+        }
+      },
+      activeStoreId: 'boba_shop',
+      settings: {
+        muted: isMuted,
+        volume: masterVolume,
+        relaxedMode,
+        tutorialsSeen: {
+          main: tutorialsSeen.main,
+          vip: tutorialsSeen.vip,
+        }
+      }
+    };
+    localStorage.setItem('tt_empire', JSON.stringify(empire));
   }
 
   function loadGame() {
-    wallet = parseInt(localStorage.getItem('tt_wallet') || '0') || 0;
-    bestScore = parseInt(localStorage.getItem('tt_best_score') || '0') || 0;
-    currentDay = parseInt(localStorage.getItem('tt_current_day') || '1') || 1;
-    try { upgradeLevels = JSON.parse(localStorage.getItem('tt_upgrades') || '{}'); } catch(e) { upgradeLevels = {}; }
-    try { unlockedAchievements = new Set(JSON.parse(localStorage.getItem('tt_achievements') || '[]')); } catch(e) { unlockedAchievements = new Set(); }
-    try { cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0, ...JSON.parse(localStorage.getItem('tt_stats') || '{}') }; } catch(e) {}
-    prestigeLevel = parseInt(localStorage.getItem('tt_prestige') || '0') || 0;
-    masterVolume = parseFloat(localStorage.getItem('tt_volume') || '0.5') || 0.5;
-    isMuted = localStorage.getItem('tt_muted') === 'true';
+    // Migrate v1 flat keys to v2 empire blob
+    if (localStorage.getItem('tt_wallet') !== null && !localStorage.getItem('tt_empire')) {
+      migrateV1toV2();
+    }
+
+    const raw = localStorage.getItem('tt_empire');
+    if (!raw) {
+      // Fresh game defaults
+      wallet = 0; bestScore = 0; currentDay = 1;
+      upgradeLevels = {}; unlockedAchievements = new Set();
+      prestigeLevel = 0; masterVolume = 0.5; isMuted = false;
+      relaxedMode = false; prestigeBridgeDays = 0;
+      loginStreak = { lastLoginDate: null, count: 0, longestStreak: 0 };
+      tutorialsSeen = { main: false, vip: false };
+      return;
+    }
+
+    try {
+      const empire = JSON.parse(raw);
+      const g = empire.global || {};
+      wallet = g.wallet || 0;
+      prestigeLevel = g.prestigeLevel || 0;
+      bestScore = g.bestScore || 0;
+      unlockedAchievements = new Set(g.achievements || []);
+      cumulativeStats = { totalServed: 0, totalLost: 0, totalCoinsEarned: 0, bestCombo: 0, daysPlayed: 0, ...(g.cumulativeStats || {}) };
+      loginStreak = g.loginStreak || { lastLoginDate: null, count: 0, longestStreak: 0 };
+      prestigeBridgeDays = g.prestigeBridgeDays || 0;
+
+      const store = (empire.stores || {})[(empire.activeStoreId || 'boba_shop')] || {};
+      currentDay = store.currentDay || 1;
+      upgradeLevels = store.upgradeLevels || {};
+
+      const s = empire.settings || {};
+      isMuted = s.muted || false;
+      masterVolume = s.volume || 0.5;
+      relaxedMode = s.relaxedMode || false;
+      tutorialsSeen = s.tutorialsSeen || { main: false, vip: false };
+    } catch(e) {
+      console.error('Failed to load empire save', e);
+    }
+  }
+
+  function migrateV1toV2() {
+    const empire = {
+      version: 2,
+      global: {
+        wallet: parseInt(localStorage.getItem('tt_wallet') || '0') || 0,
+        prestigeLevel: parseInt(localStorage.getItem('tt_prestige') || '0') || 0,
+        bestScore: parseInt(localStorage.getItem('tt_best_score') || '0') || 0,
+        achievements: (() => { try { return JSON.parse(localStorage.getItem('tt_achievements') || '[]'); } catch(e) { return []; } })(),
+        cumulativeStats: (() => { try { return JSON.parse(localStorage.getItem('tt_stats') || '{}'); } catch(e) { return {}; } })(),
+        loginStreak: (() => { try { return JSON.parse(localStorage.getItem('tt_login_streak') || '{}'); } catch(e) { return {}; } })(),
+        lastPlayedTimestamp: Date.now(),
+        prestigeBridgeDays: 0,
+      },
+      stores: {
+        boba_shop: {
+          unlocked: true,
+          currentDay: parseInt(localStorage.getItem('tt_current_day') || '1') || 1,
+          upgradeLevels: (() => { try { return JSON.parse(localStorage.getItem('tt_upgrades') || '{}'); } catch(e) { return {}; } })(),
+          bestDayRevenue: parseInt(localStorage.getItem('tt_best_score') || '0') || 0,
+        }
+      },
+      activeStoreId: 'boba_shop',
+      settings: {
+        muted: localStorage.getItem('tt_muted') === 'true',
+        volume: parseFloat(localStorage.getItem('tt_volume') || '0.5') || 0.5,
+        relaxedMode: localStorage.getItem('tt_relaxed_mode') === 'true',
+        tutorialsSeen: {
+          main: !!localStorage.getItem('tt_tutorial_seen'),
+          vip: !!localStorage.getItem('tt_vip_tutorial_seen'),
+        }
+      }
+    };
+    localStorage.setItem('tt_empire', JSON.stringify(empire));
+    // Clean up old keys
+    ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements',
+     'tt_stats', 'tt_prestige', 'tt_volume', 'tt_muted', 'tt_relaxed_mode',
+     'tt_tutorial_seen', 'tt_vip_tutorial_seen', 'tt_login_streak'].forEach(k => localStorage.removeItem(k));
   }
 
   function resetGame() {
-    ['tt_wallet', 'tt_best_score', 'tt_current_day', 'tt_upgrades', 'tt_achievements', 'tt_stats', 'tt_prestige'].forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem('tt_empire');
     loadGame();
+  }
+
+  // ==========================================
+  // DAILY LOGIN & STREAK
+  // ==========================================
+  let welcomeBackData = null;
+
+  function checkDailyLogin() {
+    const now = Date.now();
+    const today = new Date(now).toISOString().slice(0, 10);
+    if (loginStreak.lastLoginDate === today) return; // Already logged in today
+
+    const lastDate = loginStreak.lastLoginDate;
+    if (lastDate) {
+      const hoursSinceLast = (now - new Date(lastDate + 'T12:00:00').getTime()) / 3600000;
+      if (hoursSinceLast < 36) {
+        // Within grace — increment streak
+        loginStreak.count++;
+      } else {
+        // Streak broken
+        loginStreak.count = 1;
+      }
+    } else {
+      loginStreak.count = 1;
+    }
+
+    if (loginStreak.count > loginStreak.longestStreak) {
+      loginStreak.longestStreak = loginStreak.count;
+    }
+    loginStreak.lastLoginDate = today;
+
+    welcomeBackData = {
+      streak: loginStreak.count,
+      isNewDay: true,
+    };
+
+    saveGame();
   }
 
   // ==========================================
@@ -765,7 +915,8 @@ import gameData from '../../data/games/tiny-tycoon.json';
 
   function pickOrder(customerType, day) {
     const available = getAvailableDrinks(day);
-    const pool = CUSTOMER_TYPES[customerType].orderPool.filter(d => available.includes(d));
+    const rawPool = CUSTOMER_TYPES[customerType].orderPool;
+    const pool = (rawPool === 'ALL' ? available : rawPool.filter(d => available.includes(d)));
     if (pool.length === 0) return available[Math.floor(Math.random() * available.length)];
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -900,7 +1051,8 @@ import gameData from '../../data/games/tiny-tycoon.json';
     ).length;
 
     const vipLevel = upgradeLevels.vip_lounge || 0;
-    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05) : 0;
+    const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0; // P3 perk: VIP Magnet
+    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05 + vipMagnetBonus) : 0;
     let isVip = Math.random() < vipChance;
 
     // If VIP, check for available table
@@ -920,8 +1072,9 @@ import gameData from '../../data/games/tiny-tycoon.json';
       const available = getAvailableDrinks(currentDay);
       order = available[Math.floor(Math.random() * available.length)];
       // Show VIP tutorial on first VIP customer ever
-      if (!localStorage.getItem('tt_vip_tutorial_seen')) {
-        localStorage.setItem('tt_vip_tutorial_seen', 'true');
+      if (!tutorialsSeen.vip) {
+        tutorialsSeen.vip = true;
+        saveGame();
         showVipTutorial();
       }
     } else {
@@ -1142,7 +1295,9 @@ import gameData from '../../data/games/tiny-tycoon.json';
     }
 
     const prestigeMultiplier = 1 + prestigeLevel * 0.05;
-    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier) + tipBonus;
+    const bridgeMultiplier = (prestigeBridgeDays > 0) ? 2 : 1; // Prestige bridge: 2x for 3 days
+    const rushMasterMultiplier = (prestigeLevel >= 4 && rushActive) ? 2 : 1; // P4 perk: Rush Master
+    const totalCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier) + tipBonus;
     dayRevenue += totalCoins;
     customersServed++;
 
@@ -1805,7 +1960,7 @@ import gameData from '../../data/games/tiny-tycoon.json';
     dayPenalties = 0;
     customersServed = 0;
     customersLost = 0;
-    comboStreak = 0;
+    comboStreak = (prestigeLevel >= 2) ? 10 : 0; // P2 perk: Auto Combo — start at 2x
     peakCombo = 0;
     comboForgives = 0;
     manualServing = null;
@@ -1841,6 +1996,17 @@ import gameData from '../../data/games/tiny-tycoon.json';
       rushScheduled = false;
     }
 
+    // P5 perk: Golden Start — 50 bonus coins at day start
+    if (prestigeLevel >= 5) {
+      dayRevenue += 50;
+    }
+
+    // Prestige bridge: 2x earnings for first 3 days after prestige
+    if (prestigeBridgeDays > 0) {
+      prestigeBridgeDays--;
+      saveGame();
+    }
+
     // Daily challenge — pick based on day number (deterministic rotation)
     dailyChallenge = DAILY_CHALLENGES[(currentDay - 1) % DAILY_CHALLENGES.length];
     dailyChallengeComplete = false;
@@ -1864,7 +2030,7 @@ import gameData from '../../data/games/tiny-tycoon.json';
     }
 
     // E. Tutorial on first day
-    if (!localStorage.getItem('tt_tutorial_seen')) {
+    if (!tutorialsSeen.main) {
       showTutorial();
     }
   }
@@ -2175,8 +2341,9 @@ import gameData from '../../data/games/tiny-tycoon.json';
         </p>
         <div style="background:rgba(0,0,0,0.04);border-radius:10px;padding:0.75rem;margin-bottom:1rem;text-align:left;font-size:0.8rem;">
           <div style="margin-bottom:0.3rem;"><strong>You keep:</strong> Achievements, stats, best score</div>
-          <div style="margin-bottom:0.3rem;"><strong>Reset:</strong> Upgrades, wallet, day counter</div>
-          <div style="color:var(--matcha);font-weight:700;">Gain: Permanent +${bonusPct}% coin bonus on all earnings</div>
+          <div style="margin-bottom:0.3rem;"><strong>Reset:</strong> Upgrades, wallet → 500 coins, day counter</div>
+          <div style="color:var(--matcha);font-weight:700;">Gain: +${bonusPct}% coin bonus + 2x earnings for 3 days</div>
+          ${PRESTIGE_PERKS[nextLevel] ? `<div style="margin-top:0.4rem;color:var(--taro);font-weight:700;">${PRESTIGE_PERKS[nextLevel].icon} New Perk: ${PRESTIGE_PERKS[nextLevel].name} — ${PRESTIGE_PERKS[nextLevel].desc}</div>` : ''}
         </div>
         ${prestigeLevel > 0 ? `<div style="font-size:0.75rem;color:var(--taro);margin-bottom:0.75rem;">Current prestige: ${prestigeLevel} (+${prestigeLevel * 5}% bonus)</div>` : ''}
         <div style="display:flex;gap:0.5rem;justify-content:center;">
@@ -2191,11 +2358,13 @@ import gameData from '../../data/games/tiny-tycoon.json';
   function doPrestige() {
     prestigeLevel++;
     // Reset progression but keep achievements, stats, best score
-    wallet = 0;
+    // Prestige bridge: 500 starter coins + 3 days of 2x earnings
+    wallet = 500;
+    prestigeBridgeDays = 3;
     currentDay = 1;
     upgradeLevels = {};
     // Clear VIP tutorial so it re-shows
-    localStorage.removeItem('tt_vip_tutorial_seen');
+    tutorialsSeen.vip = false;
     saveGame();
     playSound('newBest');
     spawnConfetti();
@@ -2213,9 +2382,9 @@ import gameData from '../../data/games/tiny-tycoon.json';
   // SCORE SUBMISSION (delegated to game-cloud.js)
   // ==========================================
   async function submitScore(dayRev) {
-    const storedBest = parseInt(localStorage.getItem('tt_best_score') || '0', 10);
-    if (dayRev > storedBest) {
-      localStorage.setItem('tt_best_score', dayRev.toString());
+    if (dayRev > bestScore) {
+      bestScore = dayRev;
+      saveGame();
     }
 
     await window.gameCloud.submitScore('tiny-tycoon', {
@@ -2315,11 +2484,15 @@ import gameData from '../../data/games/tiny-tycoon.json';
     // Update shop environment visuals
     updateShopEnvironment();
 
+    // Check daily login streak
+    checkDailyLogin();
+
     const bestEl = document.getElementById('titleBest');
-    bestEl.textContent = bestScore > 0 ? `Best Day: 💰 ${formatCoins(bestScore)}` : '';
+    bestEl.innerHTML = (bestScore > 0 ? `Best Day: 💰 ${formatCoins(bestScore)}` : '') +
+      (loginStreak.count > 1 ? `<div style="margin-top:4px;font-size:0.75rem;color:var(--gold);">🔥 ${loginStreak.count}-day streak</div>` : '');
 
     const btns = document.getElementById('titleButtons');
-    const hasSave = parseInt(localStorage.getItem('tt_current_day') || '1') > 1;
+    const hasSave = currentDay > 1;
 
     const statsBtn = hasSave ? `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showStats()">📊 Stats</button>` : '';
     const achBtn = `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showAchievements()">🏆 Achievements</button>`;
@@ -2358,6 +2531,8 @@ import gameData from '../../data/games/tiny-tycoon.json';
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${bestMult} (${s.bestCombo} streak)</span></div>
       <div class="modal-row"><span>Achievements</span><span>🏆 ${achievCount}/${totalAch}</span></div>
       ${prestigeLevel > 0 ? `<div class="modal-row"><span>Prestige Level</span><span>✨ ${prestigeLevel} (+${prestigeLevel * 5}% coins)</span></div>` : ''}
+      <div class="modal-row"><span>Login Streak</span><span>🔥 ${loginStreak.count} day${loginStreak.count !== 1 ? 's' : ''}</span></div>
+      <div class="modal-row"><span>Longest Streak</span><span>🏅 ${loginStreak.longestStreak} day${loginStreak.longestStreak !== 1 ? 's' : ''}</span></div>
       <br>
       <button class="btn" onclick="hideAllOverlays(); showOverlay('titleOverlay');">Back</button>
     `;
@@ -2438,7 +2613,7 @@ import gameData from '../../data/games/tiny-tycoon.json';
   function toggleSound() {
     initAudio();
     isMuted = !isMuted;
-    localStorage.setItem('tt_muted', isMuted.toString());
+    saveGame();
     updateSoundBtn();
     if (isMuted) {
       stopBgm();
@@ -2453,7 +2628,7 @@ import gameData from '../../data/games/tiny-tycoon.json';
 
   window.toggleRelaxedMode = function(on) {
     relaxedMode = on;
-    localStorage.setItem('tt_relaxed_mode', on ? 'true' : 'false');
+    saveGame();
   };
 
   // ==========================================
@@ -2563,7 +2738,8 @@ import gameData from '../../data/games/tiny-tycoon.json';
       ${!isTouch ? '<div class="tutorial-text" style="font-size:0.75rem;margin-top:6px;opacity:0.8;">or press SPACEBAR</div>' : ''}
     `;
     document.body.appendChild(overlay);
-    localStorage.setItem('tt_tutorial_seen', 'true');
+    tutorialsSeen.main = true;
+    saveGame();
 
     function dismiss() {
       if (overlay.parentNode) overlay.remove();
