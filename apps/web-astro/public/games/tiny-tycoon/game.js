@@ -1119,7 +1119,7 @@
       },
       flooring: {
         html: '<div class="shop-decor decor-floor"></div>',
-        css: 'position:absolute;bottom:0;left:0;right:0;height:30px;'
+        css: 'position:absolute;top:22%;left:0;right:0;height:28%;z-index:2;'
       },
       jukebox: {
         html: '<div class="shop-decor decor-jukebox"><div class="jukebox-body"><span class="jukebox-note">&#9835;</span></div></div>',
@@ -1135,7 +1135,7 @@
       },
       gold_counter: {
         html: '<div class="shop-decor decor-gold-counter"></div>',
-        css: 'position:absolute;top:25.5%;left:0;right:0;height:4px;'
+        css: 'position:absolute;top:26%;left:0;right:0;height:5px;z-index:12;'
       },
 
       // ── Bean & Brew ──
@@ -2877,7 +2877,7 @@
       html += `<div class="decor-card${isOwned ? ' owned' : ''}${canAfford ? ' affordable' : ''}">
         ${previewHtml}
         <div class="decor-name">${d.name}</div>
-        ${isOwned ? '<div class="decor-owned">Owned ✓</div>' : `<div class="decor-price">💰 ${formatCoins(d.cost)}</div><button class="btn btn-small decor-buy" ${canAfford ? `onclick="buyDecor('${d.id}')"` : 'disabled'}>Buy</button>`}
+        ${isOwned ? '<div class="decor-owned">✓ Owned</div>' : `<button class="decor-buy" ${canAfford ? `onclick="buyDecor('${d.id}')"` : 'disabled'}>💰 ${formatCoins(d.cost)}</button>`}
       </div>`;
     }
     html += '</div>';
