@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
 ---
 
 <BaseLayout title="Leaderboards | Weekly Arcade">
@@ -11,29 +12,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
   </Fragment>
 
-  <header class="header">
-    <a href="/" class="logo">
-      <span class="logo-icon">🎮</span>
-      <span class="brand">Weekly Arcade</span>
-    </a>
-    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
-    <nav class="nav" id="mobileNav">
-      <a href="/">Games</a>
-      <a href="/leaderboard/" class="active">Leaderboards</a>
-      <a href="/about/">About</a>
-    </nav>
-    <div class="header-right">
-      <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
-      <div class="user-menu" id="userMenu" onclick="toggleUserMenu()">
-        <img class="user-avatar" id="userAvatar" src="" alt="User">
-        <div class="user-dropdown">
-          <a href="/profile/" class="dropdown-item"><span>👤</span> Profile</a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item sign-out" onclick="handleSignOut(event)"><span>🚪</span> Sign Out</a>
-        </div>
-      </div>
-    </div>
-  </header>
+  <SiteHeader activePage="leaderboards" />
 
   <!-- Page Hero -->
   <section class="page-hero">

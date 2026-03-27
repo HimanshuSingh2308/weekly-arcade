@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
 ---
 
 <BaseLayout title="Terms of Service | Weekly Arcade">
@@ -11,17 +12,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
   </Fragment>
 
-  <header class="header">
-    <a href="/" class="logo">
-      <span class="logo-icon">🎮</span>
-      Weekly Arcade
-    </a>
-    <nav class="nav">
-      <a href="/">Games</a>
-      <a href="/leaderboard/">Leaderboard</a>
-      <a href="/profile/">Profile</a>
-    </nav>
-  </header>
+  <SiteHeader activePage="games" />
 
   <main class="container">
     <h1 class="page-title">Terms of Service</h1>

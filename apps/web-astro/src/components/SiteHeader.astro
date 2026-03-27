@@ -1,0 +1,44 @@
+---
+/**
+ * SiteHeader — shared header for all non-game pages (landing, leaderboard, profile, about, etc.)
+ * Provides: logo, nav, auth button, user menu with dropdown.
+ */
+interface Props {
+  activePage?: 'games' | 'leaderboards' | 'about' | 'profile';
+}
+
+const { activePage = 'games' } = Astro.props;
+---
+
+<header class="header">
+  <a href="/" class="logo">
+    <span class="logo-icon">🎮</span>
+    <span>Weekly Arcade</span>
+  </a>
+  <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
+  <nav class="nav" id="mobileNav">
+    <a href="/" class:list={[{ active: activePage === 'games' }]}>Games</a>
+    <a href="/leaderboard/" class:list={[{ active: activePage === 'leaderboards' }]}>Leaderboards</a>
+    <a href="/about/" class:list={[{ active: activePage === 'about' }]}>About</a>
+  </nav>
+  <div class="header-right">
+    <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
+    <div class="user-menu" id="userMenu" onclick="toggleUserMenu()">
+      <img class="user-avatar" id="userAvatar" src="" alt="User">
+      <span class="user-name" id="userName"></span>
+      <span class="dropdown-arrow">&#9660;</span>
+      <div class="user-dropdown">
+        <a href="/profile/" class="dropdown-item">
+          <span>👤</span> My Profile
+        </a>
+        <a href="/leaderboard/" class="dropdown-item">
+          <span>🏆</span> Leaderboards
+        </a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item sign-out" onclick="handleSignOut(event)">
+          <span>🚪</span> Sign Out
+        </a>
+      </div>
+    </div>
+  </div>
+</header>

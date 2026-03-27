@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
 ---
 
 <BaseLayout title="About | Weekly Arcade">
@@ -11,18 +12,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
   </Fragment>
 
-  <header class="header">
-    <a href="/" class="logo">
-      <span class="logo-icon">🎮</span>
-      <span class="brand">Weekly Arcade</span>
-    </a>
-    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
-    <nav class="nav" id="mobileNav">
-      <a href="/">Games</a>
-      <a href="/leaderboard/">Leaderboards</a>
-      <a href="/about/" class="active">About</a>
-    </nav>
-  </header>
+  <SiteHeader activePage="about" />
 
   <section class="hero">
     <h1>About <span class="highlight">Weekly Arcade</span></h1>
