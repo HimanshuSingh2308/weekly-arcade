@@ -857,6 +857,9 @@
       height: 76px;
       cursor: pointer;
       will-change: transform;
+      /* Expanded tap hitbox via padding — visual size unchanged */
+      padding: 6px;
+      margin: -6px;
       transition: opacity 0.3s;
       z-index: 25;
     }
@@ -1576,6 +1579,8 @@
       cursor: default;
     }
     .upgrade-buy-btn.affordable:hover { background: #6aa86a; }
+    .upgrade-buy-btn:active { transform: scale(0.95); }
+    .upgrade-buy-btn:disabled:active { transform: none; opacity: 0.5; }
 
     .shop-actions {
       display: flex;
@@ -1583,6 +1588,13 @@
       gap: 0.5rem;
       margin-top: 1rem;
       flex-wrap: wrap;
+      position: sticky;
+      bottom: -1.5rem;
+      background: var(--white, #FEFEFE);
+      padding: 0.75rem 0;
+      margin-bottom: -1.5rem;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+      z-index: 2;
     }
 
     /* Achievement toast */

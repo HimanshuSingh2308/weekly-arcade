@@ -2950,7 +2950,7 @@
       } else {
         const canUnlock = canUnlockStore(id);
         const req = config.unlockPrestige > prestigeLevel ? `P${config.unlockPrestige} required` : `💰 ${formatCoins(config.unlockCost)}`;
-        storeCardsHtml += `<div style="background:rgba(0,0,0,0.04);border:2px dashed rgba(0,0,0,0.15);border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;opacity:${canUnlock?1:0.5};"><div style="font-size:2rem;filter:grayscale(0.6);">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:#999;">${config.name}</div><div style="font-size:0.6rem;color:#aaa;">${req}</div>${canUnlock?`<button class="btn btn-small" style="margin-top:6px;font-size:0.7rem;min-height:32px;" onclick="event.stopPropagation(); unlockStore('${id}');">Unlock</button>`:'<div style="font-size:0.8rem;margin-top:4px;">🔒</div>'}</div>`;
+        storeCardsHtml += `<div style="background:rgba(0,0,0,0.04);border:2px dashed rgba(0,0,0,0.15);border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;opacity:${canUnlock?1:0.5};"><div style="font-size:2rem;filter:grayscale(0.6);">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:#999;">${config.name}</div><div style="font-size:0.6rem;color:#aaa;">${req}</div>${canUnlock?`<button class="btn btn-small" style="margin-top:6px;font-size:0.7rem;min-height:44px;" onclick="event.stopPropagation(); unlockStore('${id}');">Unlock</button>`:'<div style="font-size:0.8rem;margin-top:4px;">🔒</div>'}</div>`;
       }
     }
     modal.innerHTML = `<h2 style="text-align:center;margin-bottom:0.3rem;">👑 Tiny Tycoon Empire</h2><div style="text-align:center;font-size:0.8rem;color:var(--brown);margin-bottom:0.5rem;">💰 ${formatCoins(wallet)}${prestigeLevel>0?` <span style="color:var(--gold);">✨ P${prestigeLevel}</span>`:''}${loginStreak.count>1?` <span style="color:var(--coral);">🔥 ${loginStreak.count}d</span>`:''}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:1rem;">${storeCardsHtml}</div><div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;"><button class="btn btn-small" onclick="switchStore('${activeStoreId}'); showShop();">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button>${prestigeLevel>=2?'<button class="btn btn-secondary btn-small" onclick="showHQ()">🏢 HQ</button>':''}<button class="btn btn-secondary btn-small" onclick="showStats()">📊</button><button class="btn btn-secondary btn-small" onclick="showAchievements()">🏆</button></div>`;
@@ -2968,7 +2968,7 @@
       const isMaxed = level >= upg.maxLevel;
       const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
       const canAfford = !isMaxed && wallet >= upg.costFn(level);
-      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,${canAfford?'0.03':'0.01'});border-radius:8px;margin-bottom:0.4rem;"><span style="font-size:1.3rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.8rem;font-weight:700;">${upg.name} ${isMaxed?'<span style="color:var(--gold);">MAX</span>':`Lv${level}`}</div><div style="font-size:0.65rem;color:#888;">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small" ${canAfford?`onclick="buyHqUpgrade('${id}')"`:'disabled'} style="font-size:0.7rem;min-height:32px;opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
+      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,${canAfford?'0.03':'0.01'});border-radius:8px;margin-bottom:0.4rem;"><span style="font-size:1.3rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.8rem;font-weight:700;">${upg.name} ${isMaxed?'<span style="color:var(--gold);">MAX</span>':`Lv${level}`}</div><div style="font-size:0.65rem;color:#888;">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small" ${canAfford?`onclick="buyHqUpgrade('${id}')"`:'disabled'} style="font-size:0.7rem;min-height:44px;opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
     }
     html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
     modal.innerHTML = html;
@@ -3044,7 +3044,7 @@
     for (const d of decos) {
       const isOwned = owned.includes(d.id);
       const canAfford = !isOwned && wallet >= d.cost;
-      html += `<div style="background:rgba(0,0,0,${isOwned?'0.02':'0.06'});border-radius:8px;padding:0.5rem;text-align:center;opacity:${isOwned||canAfford?1:0.5};"><div style="font-size:1.4rem;margin-bottom:2px;">${d.icon}</div><div style="font-size:0.7rem;font-weight:700;color:var(--brown);">${d.name}</div>${isOwned?'<div style="font-size:0.6rem;color:var(--matcha);font-weight:600;">Owned ✓</div>':`<div style="font-size:0.6rem;color:var(--taupe);margin-top:1px;">💰 ${formatCoins(d.cost)}</div><button class="btn btn-small" ${canAfford?`onclick="buyDecor('${d.id}')"`:'disabled'} style="font-size:0.6rem;margin-top:3px;min-height:28px;opacity:${canAfford?1:0.4};">Buy</button>`}</div>`;
+      html += `<div style="background:rgba(0,0,0,${isOwned?'0.02':'0.06'});border-radius:8px;padding:0.5rem;text-align:center;opacity:${isOwned||canAfford?1:0.5};"><div style="font-size:1.4rem;margin-bottom:2px;">${d.icon}</div><div style="font-size:0.7rem;font-weight:700;color:var(--brown);">${d.name}</div>${isOwned?'<div style="font-size:0.6rem;color:var(--matcha);font-weight:600;">Owned ✓</div>':`<div style="font-size:0.6rem;color:var(--taupe);margin-top:1px;">💰 ${formatCoins(d.cost)}</div><button class="btn btn-small" ${canAfford?`onclick="buyDecor('${d.id}')"`:'disabled'} style="font-size:0.6rem;margin-top:3px;min-height:44px;opacity:${canAfford?1:0.4};">Buy</button>`}</div>`;
     }
     html += '</div></div>';
     return html;
@@ -3093,7 +3093,7 @@
     for (const [id, upg] of Object.entries(MANAGER_UPGRADES)) {
       const isOwned = !!mgrUpgrades[id];
       const canAfford = !isOwned && wallet >= upg.cost;
-      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem;background:rgba(0,0,0,0.02);border-radius:8px;margin-bottom:0.3rem;opacity:${isOwned||canAfford?1:0.5};"><span style="font-size:1.1rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.75rem;font-weight:600;">${upg.name} ${isOwned?'<span style="color:var(--matcha);">✓</span>':''}</div><div style="font-size:0.6rem;color:#888;">${upg.desc}</div></div>${isOwned?'':`<button class="btn btn-small" ${canAfford?`onclick="buyManagerUpgrade('${storeId}','${id}')"`:'disabled'} style="font-size:0.65rem;min-height:28px;opacity:${canAfford?1:0.5};">💰 ${formatCoins(upg.cost)}</button>`}</div>`;
+      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem;background:rgba(0,0,0,0.02);border-radius:8px;margin-bottom:0.3rem;opacity:${isOwned||canAfford?1:0.5};"><span style="font-size:1.1rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.75rem;font-weight:600;">${upg.name} ${isOwned?'<span style="color:var(--matcha);">✓</span>':''}</div><div style="font-size:0.6rem;color:#888;">${upg.desc}</div></div>${isOwned?'':`<button class="btn btn-small" ${canAfford?`onclick="buyManagerUpgrade('${storeId}','${id}')"`:'disabled'} style="font-size:0.65rem;min-height:44px;opacity:${canAfford?1:0.5};">💰 ${formatCoins(upg.cost)}</button>`}</div>`;
     }
     html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
     modal.innerHTML = html;
@@ -3328,6 +3328,7 @@
   // First interaction init audio
   document.addEventListener('click', () => initAudio(), { once: true });
   document.addEventListener('touchstart', () => initAudio(), { once: true });
+  document.addEventListener('contextmenu', (e) => e.preventDefault()); // Prevent long-press menu
 
   // ==========================================
   // B. SPARKLE PARTICLES (Serve Celebration)
