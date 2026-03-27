@@ -1092,27 +1092,27 @@
 
     const decoVisuals = {
       // Boba Bliss
-      neon_sign:    { html: '<div class="shop-decor decor-neon">BOBA</div>', css: 'position:absolute;top:8px;right:12px;font-size:0.6rem;font-weight:900;color:#FF69B4;text-shadow:0 0 8px #FF69B4,0 0 16px #FF1493;letter-spacing:2px;animation:neonPulse 2s ease-in-out infinite;z-index:5;' },
-      plants:       { html: '<div class="shop-decor decor-plants">🌿🌱🪴</div>', css: 'position:absolute;bottom:62px;left:8px;font-size:0.7rem;z-index:5;letter-spacing:4px;' },
-      fairy_lights: { html: '<div class="shop-decor decor-fairy">✨✨✨✨✨</div>', css: 'position:absolute;top:2px;left:10%;right:10%;text-align:center;font-size:0.5rem;letter-spacing:8px;animation:fairyTwinkle 3s ease-in-out infinite;z-index:5;' },
+      neon_sign:    { html: '<div class="shop-decor decor-neon"><span style="display:block;padding:2px 6px;border:2px solid #FF69B4;border-radius:4px;background:rgba(255,105,180,0.1);">BOBA</span></div>', css: 'position:absolute;top:6px;right:10px;font-size:0.55rem;font-weight:900;color:#FF69B4;text-shadow:0 0 6px #FF69B4,0 0 12px #FF1493,0 0 20px #FF69B4;letter-spacing:3px;animation:neonPulse 2s ease-in-out infinite;z-index:7;' },
+      plants:       { html: '<div class="shop-decor decor-plants"><div class="pot-plant"><div class="pot-leaves"></div><div class="pot-base"></div></div><div class="pot-plant" style="margin-left:8px;"><div class="pot-leaves small"></div><div class="pot-base small"></div></div></div>', css: 'position:absolute;top:14%;left:6px;display:flex;gap:2px;z-index:11;' },
+      fairy_lights: { html: '<div class="shop-decor decor-fairy"><span class="fairy-bulb" style="--d:0s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:0.4s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:0.8s;--c:#6BCB77;"></span><span class="fairy-bulb" style="--d:1.2s;--c:#4D96FF;"></span><span class="fairy-bulb" style="--d:1.6s;--c:#FF6BD6;"></span><span class="fairy-bulb" style="--d:2.0s;--c:#FFD93D;"></span><span class="fairy-bulb" style="--d:2.4s;--c:#FF6B6B;"></span><span class="fairy-bulb" style="--d:2.8s;--c:#6BCB77;"></span></div>', css: 'position:absolute;top:1px;left:5%;right:5%;display:flex;justify-content:space-between;z-index:7;' },
       flooring:     { html: '<div class="shop-decor decor-floor"></div>', css: 'position:absolute;bottom:0;left:0;right:0;height:30px;background:repeating-linear-gradient(90deg,#8B6F47 0px,#8B6F47 20px,#A0845C 20px,#A0845C 40px);opacity:0.3;z-index:1;' },
-      jukebox:      { html: '<div class="shop-decor decor-jukebox">🎵</div>', css: 'position:absolute;bottom:65px;right:8px;font-size:1.2rem;z-index:5;animation:jukeboxBob 2s ease-in-out infinite;' },
-      aquarium:     { html: '<div class="shop-decor decor-aquarium">🐠🐟💧</div>', css: 'position:absolute;top:22px;left:8px;font-size:0.55rem;letter-spacing:2px;z-index:5;opacity:0.8;animation:fishSwim 4s ease-in-out infinite;' },
-      chandelier:   { html: '<div class="shop-decor decor-chandelier">💎</div>', css: 'position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:1rem;z-index:6;filter:drop-shadow(0 0 6px rgba(255,215,0,0.5));' },
-      gold_counter: { html: '<div class="shop-decor decor-gold-counter"></div>', css: 'position:absolute;bottom:28px;left:0;right:0;height:6px;background:linear-gradient(90deg,#FFD700,#DAA520,#FFD700);z-index:4;' },
+      jukebox:      { html: '<div class="shop-decor decor-jukebox">🎵</div>', css: 'position:absolute;top:17%;right:8px;font-size:1.2rem;z-index:11;animation:jukeboxBob 2s ease-in-out infinite;' },
+      aquarium:     { html: '<div class="shop-decor decor-aquarium"><div class="aq-tank"><div class="aq-water"></div><div class="aq-fish f1"></div><div class="aq-fish f2"></div><div class="aq-plant"></div></div></div>', css: 'position:absolute;top:6px;left:6px;z-index:7;' },
+      chandelier:   { html: '<div class="shop-decor decor-chandelier"><div class="ch-chain"></div><div class="ch-body"><div class="ch-arm left"></div><div class="ch-arm right"></div><div class="ch-crystal c1"></div><div class="ch-crystal c2"></div><div class="ch-crystal c3"></div></div></div>', css: 'position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:7;' },
+      gold_counter: { html: '<div class="shop-decor decor-gold-counter"></div>', css: 'position:absolute;top:25.5%;left:0;right:0;height:4px;background:linear-gradient(90deg,#FFD700 0%,#FFF8DC 30%,#FFD700 50%,#FFF8DC 70%,#FFD700 100%);box-shadow:0 1px 4px rgba(255,215,0,0.4);z-index:11;' },
       // Bean & Brew
       chalkboard:   { html: '<div class="shop-decor decor-chalk">📋</div>', css: 'position:absolute;top:12px;right:10px;font-size:1rem;z-index:5;' },
       clock:        { html: '<div class="shop-decor decor-clock2">🕐</div>', css: 'position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:0.9rem;z-index:5;' },
       edison:       { html: '<div class="shop-decor decor-edison">💡💡💡</div>', css: 'position:absolute;top:0;left:15%;right:15%;text-align:center;font-size:0.5rem;letter-spacing:12px;opacity:0.7;z-index:5;' },
-      leather:      { html: '<div class="shop-decor decor-leather">💺</div>', css: 'position:absolute;bottom:65px;right:12px;font-size:0.9rem;z-index:5;' },
+      leather:      { html: '<div class="shop-decor decor-leather">💺</div>', css: 'position:absolute;top:17%;right:12px;font-size:0.9rem;z-index:11;' },
       art_wall:     { html: '<div class="shop-decor decor-art">🎨</div>', css: 'position:absolute;top:14px;left:12px;font-size:0.8rem;z-index:5;' },
-      espresso_machine: { html: '<div class="shop-decor decor-espresso">☕</div>', css: 'position:absolute;bottom:68px;left:55%;font-size:0.9rem;z-index:5;' },
-      record:       { html: '<div class="shop-decor decor-record">🎶</div>', css: 'position:absolute;bottom:65px;left:12px;font-size:0.9rem;z-index:5;animation:jukeboxBob 3s ease-in-out infinite;' },
+      espresso_machine: { html: '<div class="shop-decor decor-espresso">☕</div>', css: 'position:absolute;top:15%;left:55%;font-size:0.9rem;z-index:11;' },
+      record:       { html: '<div class="shop-decor decor-record">🎶</div>', css: 'position:absolute;top:17%;left:12px;font-size:0.9rem;z-index:11;animation:jukeboxBob 3s ease-in-out infinite;' },
       copper:       { html: '<div class="shop-decor decor-copper"></div>', css: 'position:absolute;top:0;right:0;width:6px;height:100%;background:linear-gradient(180deg,#B87333,#CD853F,#B87333);opacity:0.4;z-index:2;' },
       // Juice Junction
       surfboard:    { html: '<div class="shop-decor">🏄</div>', css: 'position:absolute;top:10px;right:8px;font-size:1rem;transform:rotate(-15deg);z-index:5;' },
-      palms:        { html: '<div class="shop-decor">🌴🌴</div>', css: 'position:absolute;bottom:62px;left:4px;font-size:0.8rem;letter-spacing:4px;z-index:5;' },
-      tiki:         { html: '<div class="shop-decor">🔥</div>', css: 'position:absolute;bottom:62px;right:8px;font-size:0.7rem;z-index:5;animation:neonPulse 2s ease-in-out infinite;' },
+      palms:        { html: '<div class="shop-decor">🌴🌴</div>', css: 'position:absolute;top:16%;left:4px;font-size:0.8rem;letter-spacing:4px;z-index:11;' },
+      tiki:         { html: '<div class="shop-decor">🔥</div>', css: 'position:absolute;top:17%;right:8px;font-size:0.7rem;z-index:11;animation:neonPulse 2s ease-in-out infinite;' },
       bamboo:       { html: '<div class="shop-decor"></div>', css: 'position:absolute;bottom:28px;left:0;right:0;height:6px;background:linear-gradient(90deg,#8BC34A,#689F38,#8BC34A);z-index:4;' },
       fruit_wall:   { html: '<div class="shop-decor">🍊🍋🥭🍇</div>', css: 'position:absolute;top:12px;left:8px;font-size:0.5rem;letter-spacing:3px;z-index:5;' },
       waterfall:    { html: '<div class="shop-decor">💧</div>', css: 'position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:0.8rem;z-index:5;animation:fairyTwinkle 2s ease-in-out infinite;' },
@@ -1122,17 +1122,17 @@
       candy_jars:   { html: '<div class="shop-decor">🍬🍬🍬</div>', css: 'position:absolute;top:12px;right:8px;font-size:0.5rem;letter-spacing:3px;z-index:5;' },
       macaron:      { html: '<div class="shop-decor">🧁</div>', css: 'position:absolute;top:18px;left:10px;font-size:0.8rem;z-index:5;' },
       donut_wall:   { html: '<div class="shop-decor">🍩🍩🍩</div>', css: 'position:absolute;top:8px;left:30%;font-size:0.45rem;letter-spacing:4px;z-index:5;' },
-      pink_oven:    { html: '<div class="shop-decor">🔥</div>', css: 'position:absolute;bottom:68px;right:10px;font-size:0.8rem;z-index:5;' },
-      candy_cane:   { html: '<div class="shop-decor">🍭</div>', css: 'position:absolute;bottom:62px;left:6px;font-size:0.9rem;z-index:5;' },
+      pink_oven:    { html: '<div class="shop-decor">🔥</div>', css: 'position:absolute;top:15%;right:10px;font-size:0.8rem;z-index:11;' },
+      candy_cane:   { html: '<div class="shop-decor">🍭</div>', css: 'position:absolute;top:16%;left:6px;font-size:0.9rem;z-index:11;' },
       gingerbread:  { html: '<div class="shop-decor"></div>', css: 'position:absolute;top:0;left:0;right:0;height:4px;background:repeating-linear-gradient(90deg,#8B4513 0px,#8B4513 8px,#D2691E 8px,#D2691E 16px);z-index:3;' },
-      cotton_candy: { html: '<div class="shop-decor">🍥</div>', css: 'position:absolute;bottom:65px;left:50%;font-size:1rem;z-index:5;animation:jukeboxBob 3s ease-in-out infinite;' },
+      cotton_candy: { html: '<div class="shop-decor">🍥</div>', css: 'position:absolute;top:17%;left:50%;font-size:1rem;z-index:11;animation:jukeboxBob 3s ease-in-out infinite;' },
       crystal_cake: { html: '<div class="shop-decor">💎🍰</div>', css: 'position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:0.6rem;z-index:5;letter-spacing:2px;' },
       // Golden Lounge
-      velvet_rope:  { html: '<div class="shop-decor">🪢</div>', css: 'position:absolute;bottom:62px;left:30%;font-size:0.7rem;z-index:5;' },
+      velvet_rope:  { html: '<div class="shop-decor">🪢</div>', css: 'position:absolute;top:18%;left:30%;font-size:0.7rem;z-index:11;' },
       mirror:       { html: '<div class="shop-decor">🪞</div>', css: 'position:absolute;top:10px;right:10px;font-size:0.9rem;z-index:5;' },
       crystal_chand:{ html: '<div class="shop-decor">💎</div>', css: 'position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:1.1rem;z-index:6;filter:drop-shadow(0 0 8px rgba(255,215,0,0.6));animation:neonPulse 3s ease-in-out infinite;' },
-      pillars:      { html: '<div class="shop-decor">🏛️</div>', css: 'position:absolute;bottom:62px;left:4px;font-size:1rem;z-index:5;' },
-      piano:        { html: '<div class="shop-decor">🎹</div>', css: 'position:absolute;bottom:65px;right:6px;font-size:1rem;z-index:5;' },
+      pillars:      { html: '<div class="shop-decor">🏛️</div>', css: 'position:absolute;top:14%;left:4px;font-size:1rem;z-index:11;' },
+      piano:        { html: '<div class="shop-decor">🎹</div>', css: 'position:absolute;top:17%;right:6px;font-size:1rem;z-index:11;' },
       champagne_fountain: { html: '<div class="shop-decor">🍾</div>', css: 'position:absolute;top:16px;left:10px;font-size:0.9rem;z-index:5;animation:fairyTwinkle 2.5s ease-in-out infinite;' },
       star_ceiling: { html: '<div class="shop-decor">⭐⭐⭐</div>', css: 'position:absolute;top:1px;left:15%;right:15%;text-align:center;font-size:0.4rem;letter-spacing:10px;z-index:5;animation:fairyTwinkle 4s ease-in-out infinite;' },
       diamond_bar:  { html: '<div class="shop-decor"></div>', css: 'position:absolute;bottom:28px;left:0;right:0;height:6px;background:linear-gradient(90deg,#FFD700,#FFF8DC,#FFD700,#FFF8DC,#FFD700);z-index:4;' },
@@ -2952,11 +2952,11 @@
     const decos = STORE_DECORATIONS[activeStoreId] || [];
     if (decos.length === 0) return '';
     const owned = getOwnedDecorations();
-    let html = '<div style="margin-top:1rem;border-top:2px solid var(--taro);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--taro);margin-bottom:0.5rem;">🎨 Decorations</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem;">';
+    let html = '<div style="margin-top:1rem;border-top:2px solid var(--taro);padding-top:0.75rem;"><h3 style="font-size:0.85rem;color:var(--taro);margin-bottom:0.3rem;">🎨 Decorations</h3><div style="font-size:0.65rem;color:var(--taupe);margin-bottom:0.5rem;">' + owned.length + '/' + decos.length + ' owned</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;">';
     for (const d of decos) {
       const isOwned = owned.includes(d.id);
       const canAfford = !isOwned && wallet >= d.cost;
-      html += `<div style="background:rgba(0,0,0,${isOwned?'0.02':'0.04'});border-radius:8px;padding:0.4rem;text-align:center;opacity:${isOwned||canAfford?1:0.5};"><div style="font-size:1.3rem;">${d.icon}</div><div style="font-size:0.7rem;font-weight:600;">${d.name}</div>${isOwned?'<div style="font-size:0.6rem;color:var(--matcha);">Owned ✓</div>':`<button class="btn btn-small" ${canAfford?`onclick="buyDecor('${d.id}')"`:'disabled'} style="font-size:0.6rem;margin-top:2px;min-height:28px;opacity:${canAfford?1:0.5};">💰 ${formatCoins(d.cost)}</button>`}</div>`;
+      html += `<div style="background:rgba(0,0,0,${isOwned?'0.02':'0.06'});border-radius:8px;padding:0.5rem;text-align:center;opacity:${isOwned||canAfford?1:0.5};"><div style="font-size:1.4rem;margin-bottom:2px;">${d.icon}</div><div style="font-size:0.7rem;font-weight:700;color:var(--brown);">${d.name}</div>${isOwned?'<div style="font-size:0.6rem;color:var(--matcha);font-weight:600;">Owned ✓</div>':`<div style="font-size:0.6rem;color:var(--taupe);margin-top:1px;">💰 ${formatCoins(d.cost)}</div><button class="btn btn-small" ${canAfford?`onclick="buyDecor('${d.id}')"`:'disabled'} style="font-size:0.6rem;margin-top:3px;min-height:28px;opacity:${canAfford?1:0.4};">Buy</button>`}</div>`;
     }
     html += '</div></div>';
     return html;

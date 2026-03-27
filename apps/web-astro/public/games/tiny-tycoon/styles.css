@@ -1342,6 +1342,7 @@
 
     .modal {
       background: var(--white);
+      color: #5C3D2E;
       border-radius: 16px;
       padding: 1.5rem;
       width: 90%;
@@ -1875,6 +1876,74 @@
     :focus-visible {
       outline: 2px solid var(--gold);
       outline-offset: 2px;
+    }
+
+    /* ===== DECORATION CSS ART ===== */
+
+    /* Potted plants */
+    .pot-plant { display:flex;flex-direction:column;align-items:center; }
+    .pot-leaves { width:14px;height:10px;background:radial-gradient(ellipse at center,#4CAF50,#2E7D32);border-radius:50% 50% 30% 30%;position:relative; }
+    .pot-leaves::before,.pot-leaves::after { content:'';position:absolute;width:8px;height:7px;background:#66BB6A;border-radius:50%;top:-3px; }
+    .pot-leaves::before { left:-3px;transform:rotate(-20deg); }
+    .pot-leaves::after { right:-3px;transform:rotate(20deg); }
+    .pot-leaves.small { width:10px;height:7px; }
+    .pot-base { width:10px;height:8px;background:linear-gradient(180deg,#8D6E63,#6D4C41);border-radius:0 0 3px 3px;clip-path:polygon(10% 0%,90% 0%,100% 100%,0% 100%); }
+    .pot-base.small { width:8px;height:6px; }
+
+    /* Aquarium */
+    .aq-tank { width:36px;height:22px;background:rgba(100,200,255,0.15);border:2px solid rgba(100,200,255,0.3);border-radius:3px;position:relative;overflow:hidden; }
+    .aq-water { position:absolute;inset:0;background:linear-gradient(180deg,rgba(100,200,255,0.1),rgba(50,150,220,0.25));  }
+    .aq-fish { position:absolute;width:6px;height:4px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;animation:fishSwim 3s ease-in-out infinite; }
+    .aq-fish.f1 { background:#FF6B35;top:6px;left:5px; }
+    .aq-fish.f2 { background:#FFD700;top:12px;left:18px;animation-delay:-1.5s;animation-direction:reverse; }
+    .aq-fish::after { content:'';position:absolute;right:-3px;top:1px;border-left:4px solid currentColor;border-top:2px solid transparent;border-bottom:2px solid transparent; }
+    .aq-fish.f1::after { border-left-color:#FF6B35; }
+    .aq-fish.f2::after { border-left-color:#FFD700; }
+    .aq-plant { position:absolute;bottom:0;left:50%;width:3px;height:10px;background:linear-gradient(180deg,#66BB6A,#388E3C);border-radius:2px 2px 0 0;transform:translateX(-50%); }
+
+    /* Chandelier */
+    .ch-chain { width:2px;height:6px;background:#888;margin:0 auto; }
+    .ch-body { width:24px;height:8px;background:linear-gradient(180deg,#C9B037,#FFD700,#C9B037);border-radius:0 0 50% 50%;position:relative;margin:0 auto;box-shadow:0 2px 8px rgba(255,215,0,0.3); }
+    .ch-arm { position:absolute;top:-2px;width:8px;height:2px;background:#C9B037; }
+    .ch-arm.left { left:-4px;transform:rotate(-15deg); }
+    .ch-arm.right { right:-4px;transform:rotate(15deg); }
+    .ch-crystal { position:absolute;bottom:-6px;width:3px;height:5px;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(200,200,255,0.6));border-radius:0 0 50% 50%;animation:fairyTwinkle 2s ease-in-out infinite; }
+    .ch-crystal.c1 { left:4px;animation-delay:0s; }
+    .ch-crystal.c2 { left:50%;transform:translateX(-50%);animation-delay:0.6s; }
+    .ch-crystal.c3 { right:4px;animation-delay:1.2s; }
+
+    /* Fairy light bulbs */
+    .fairy-bulb {
+      display: inline-block;
+      width: 5px;
+      height: 7px;
+      background: var(--c, #FFD93D);
+      border-radius: 50% 50% 40% 40%;
+      box-shadow: 0 0 4px var(--c, #FFD93D), 0 0 8px var(--c, #FFD93D);
+      animation: fairyTwinkle 2.5s ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+      position: relative;
+    }
+    .fairy-bulb::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 3px;
+      background: #555;
+      border-radius: 1px;
+    }
+    .decor-fairy::before {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #444;
+      z-index: -1;
     }
 
     /* Decoration animations */
