@@ -466,6 +466,7 @@
   const vipWaiterEl = document.getElementById('vipWaiter');
   const mainBaristaEl = document.getElementById('mainBarista');
   const gameWrap = document.getElementById('gameWrap');
+  const clockHandEl = document.getElementById('clockHand');
 
   // ==========================================
   // SAVE / LOAD (v2 — tt_empire blob)
@@ -1167,10 +1168,13 @@
     ).length;
 
     const vipLevel = upgradeLevels.vip_lounge || 0;
-    const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0;
-    const hqLoyalty = getHqLevel('loyalty_network') * 0.10;
-    const t2VipAttraction = getTier2Level('vip_attraction') * 0.10;
-    const vipChance = vipLevel > 0 ? (0.05 + vipLevel * 0.05 + vipMagnetBonus + hqLoyalty + t2VipAttraction) : 0;
+    let vipChance = 0;
+    if (vipLevel > 0) {
+      const vipMagnetBonus = (prestigeLevel >= 3) ? 0.15 : 0;
+      const hqLoyalty = getHqLevel('loyalty_network') * 0.10;
+      const t2VipAttraction = getTier2Level('vip_attraction') * 0.10;
+      vipChance = 0.05 + vipLevel * 0.05 + vipMagnetBonus + hqLoyalty + t2VipAttraction;
+    }
     let isVip = Math.random() < vipChance;
 
     // If VIP, check for available table
@@ -1874,6 +1878,10 @@
     const dt = Math.min(timestamp - lastFrameTime, 100);
     lastFrameTime = timestamp;
 
+    // Cache layout-triggering reads once per frame
+    const _queueWidth = queueArea.offsetWidth || 360;
+    const _vipWidth = vipCustomerArea.offsetWidth || 400;
+
     // Update day timer
     dayTimer -= dt;
     if (dayTimer <= 0) {
@@ -1888,9 +1896,8 @@
 
     // D. Update wall clock hand rotation based on timer progress
     const clockProgress = 1 - (dayTimer / DAY_DURATION);
-    const clockHand = document.getElementById('clockHand');
-    if (clockHand) {
-      clockHand.style.transform = 'rotate(' + (clockProgress * 360) + 'deg)';
+    if (clockHandEl) {
+      clockHandEl.style.transform = 'rotate(' + (clockProgress * 360) + 'deg)';
     }
 
     // Spawn timer
@@ -2076,12 +2083,12 @@
 
       if (c.state === 'leaving_angry') {
         c.x += 100 * (dt / 1000);
-        if (c.x > (queueArea.offsetWidth || 400) + 60) c.state = 'gone';
+        if (c.x > _queueWidth + 60) c.state = 'gone';
       }
 
       if (c.state === 'leaving_lounge') {
         c.x += 100 * (dt / 1000);
-        if (c.x > (vipCustomerArea.offsetWidth || 400) + 60) c.state = 'gone';
+        if (c.x > _vipWidth + 60) c.state = 'gone';
       }
 
       // Update position
@@ -2655,7 +2662,7 @@
       'tt_50k_coins':     () => cumulativeStats.totalCoinsEarned >= 50000,
       'tt_250k_coins':    () => cumulativeStats.totalCoinsEarned >= 250000,
       'tt_1m_coins':      () => cumulativeStats.totalCoinsEarned >= 1000000,
-      'tt_hq_upgrade':    () => { try { const e = JSON.parse(localStorage.getItem('tt_empire')||'{}'); return Object.values((e.global||{}).hqUpgrades||{}).some(v=>v>0); } catch(e){return false;} },
+      'tt_hq_upgrade':    () => { const e = getEmpire(); return Object.values((e.global||{}).hqUpgrades||{}).some(v=>v>0); },
       // Engagement
       'tt_streak_7':      () => loginStreak.count >= 7,
       'tt_streak_30':     () => loginStreak.count >= 30,
