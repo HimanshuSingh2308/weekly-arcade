@@ -333,6 +333,15 @@
   let waiterServeTime = 0;
   let extraWaiters = []; // { state, targetId, serveTimer, serveTime, el }
 
+  // Prestige cost scaling — upgrades cost 15% more per prestige level
+  function getPrestigeCostMultiplier() {
+    return 1 + prestigeLevel * 0.15;
+  }
+
+  function getScaledCost(baseCost) {
+    return Math.ceil(baseCost * getPrestigeCostMultiplier());
+  }
+
   function getWaiterCount() {
     return 1 + getTier2Level('extra_waiter');
   }
@@ -2771,7 +2780,7 @@
       if (level >= upgrade.maxLevel) continue;
       const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
       if (locked) continue;
-      const cost = upgrade.costFn(level);
+      const cost = getScaledCost(upgrade.costFn(level));
       const gap = cost - wallet;
       if (gap > 0 && gap < closestGap) {
         closestGap = gap;
@@ -2941,7 +2950,7 @@
     const storeEmoji = config ? config.emoji : '🧋';
     let html = `
       <div class="shop-header">
-        <div class="shop-wallet">💰 <strong>${formatCoins(wallet)}</strong> coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.65rem;">✨P${prestigeLevel}</span>` : ''}</div>
+        <div class="shop-wallet">💰 <strong>${formatCoins(wallet)}</strong> coins${prestigeLevel > 0 ? ` <span style="color:var(--gold);font-size:0.65rem;">✨P${prestigeLevel} <span style="color:#999;font-size:0.55rem;">costs +${prestigeLevel * 15}%</span></span>` : ''}</div>
         <div class="shop-tab-bar">${tabHtml}</div>
       </div>
       <div class="shop-content">
@@ -2996,7 +3005,7 @@
       if (level >= upgrade.maxLevel) continue;
       const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
       if (locked) continue;
-      const cost = upgrade.costFn(level);
+      const cost = getScaledCost(upgrade.costFn(level));
       if (cost <= wallet && cost < recommendedCost) { recommendedCost = cost; recommendedId = id; }
     }
     if (!recommendedId) {
@@ -3005,7 +3014,7 @@
         if (level >= upgrade.maxLevel) continue;
         const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
         if (locked) continue;
-        const cost = upgrade.costFn(level);
+        const cost = getScaledCost(upgrade.costFn(level));
         if (cost < recommendedCost) { recommendedCost = cost; recommendedId = id; }
       }
     }
@@ -3015,7 +3024,7 @@
     for (const [id, upgrade] of Object.entries(UPGRADES)) {
       const level = upgradeLevels[id] || 0;
       const maxed = level >= upgrade.maxLevel;
-      const cost = maxed ? 0 : upgrade.costFn(level);
+      const cost = maxed ? 0 : getScaledCost(upgrade.costFn(level));
       const canAfford = wallet >= cost && !maxed;
       const locked = upgrade.requires && !(upgradeLevels[upgrade.requires] || 0);
 
@@ -3057,7 +3066,7 @@
     for (const [id, upg] of Object.entries(TIER2_UPGRADES)) {
       const level = getTier2Level(id);
       const isMaxed = level >= upg.maxLevel;
-      const cost = isMaxed ? 0 : upg.costFn(level);
+      const cost = isMaxed ? 0 : getScaledCost(upg.costFn(level));
       const canAfford = !isMaxed && wallet >= cost;
       html += `<div class="upgrade-card${canAfford ? ' affordable' : ''}${isMaxed ? ' maxed' : ''}">
         <div class="upgrade-icon">${upg.icon}</div>
@@ -3100,7 +3109,7 @@
     if (level >= upgrade.maxLevel) return;
     if (upgrade.requires && !(upgradeLevels[upgrade.requires] || 0)) return;
 
-    const cost = upgrade.costFn(level);
+    const cost = getScaledCost(upgrade.costFn(level));
     if (wallet < cost) return;
 
     wallet -= cost;
@@ -3486,8 +3495,8 @@
     for (const [id, upg] of Object.entries(HQ_UPGRADES)) {
       const level = getHqLevel(id);
       const isMaxed = level >= upg.maxLevel;
-      const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
-      const canAfford = !isMaxed && wallet >= upg.costFn(level);
+      const cost = isMaxed ? '—' : formatCoins(getScaledCost(upg.costFn(level)));
+      const canAfford = !isMaxed && wallet >= getScaledCost(upg.costFn(level));
       html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,${canAfford?'0.03':'0.01'});border-radius:8px;margin-bottom:0.4rem;"><span style="font-size:1.3rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.8rem;font-weight:700;">${upg.name} ${isMaxed?'<span class="chip chip-maxed">MAX</span>':`${level}/${upg.maxLevel}`}</div><div style="font-size:0.65rem;color:#888;">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small" ${canAfford?`onclick="buyHqUpgrade('${id}')"`:'disabled'} style="font-size:0.7rem;min-height:44px;opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
     }
     html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
@@ -3500,7 +3509,7 @@
     const upg = HQ_UPGRADES[id];
     const level = getHqLevel(id);
     if (!upg || level >= upg.maxLevel) return;
-    const cost = upg.costFn(level);
+    const cost = getScaledCost(upg.costFn(level));
     if (wallet < cost) return;
     wallet -= cost;
     try {
@@ -3524,7 +3533,7 @@
     const upg = TIER2_UPGRADES[id];
     const level = getTier2Level(id);
     if (!upg || level >= upg.maxLevel) return;
-    const cost = upg.costFn(level);
+    const cost = getScaledCost(upg.costFn(level));
     if (wallet < cost) return;
     wallet -= cost;
     // Write tier2 level directly to empire blob (not in-memory upgradeLevels)
