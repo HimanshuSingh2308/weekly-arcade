@@ -1276,7 +1276,7 @@
           const available = getAvailableDrinks(currentDay);
           const items = available.slice(0, 5).map(k => {
             const d = DRINK_TYPES[k];
-            return `<div class="chalk-item">${d.emoji} ${d.baseCoins}</div>`;
+            return `<div class="chalk-item"><span>${d.emoji}</span><span>${d.baseCoins}</span></div>`;
           }).join('');
           return `<div class="shop-decor decor-chalk"><div class="chalk-board"><div class="chalk-title">MENU</div>${items}</div></div>`;
         })(),
