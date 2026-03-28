@@ -3173,6 +3173,12 @@
     upgradeLevels = {};
     collectedMilestones = new Set();
     tutorialsSeen.vip = false;
+    eventPityCounter = 0;
+    grandReopeningActive = false;
+    happyHourActive = false;
+    happyHourTimer = 0;
+    criticActive = false;
+    criticCustomerId = null;
 
     // Reset all stores' upgradeLevels, tier2Levels, day counters (keep unlocks, decorations, managers)
     try {
