@@ -406,8 +406,12 @@
       window.gameCloud.saveState('tiny-tycoon', {
         additionalData: empire,
         lastPlayedDate: new Date().toISOString().split('T')[0],
+        currentLevel: currentDay || 1,
+        currentStreak: loginStreak.count || 0,
+        bestStreak: loginStreak.longestStreak || 0,
         gamesPlayed: cumulativeStats.daysPlayed || 0,
-      }).catch(() => {}); // Silent fail — localStorage is primary
+        gamesWon: cumulativeStats.totalServed || 0,
+      }).catch(() => {});
     }
   }
 
