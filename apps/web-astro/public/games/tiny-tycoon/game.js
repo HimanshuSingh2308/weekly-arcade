@@ -3522,6 +3522,10 @@
     setTimeout(() => { if (tip.parentNode) tip.remove(); }, 6000);
   }
 
+  let hubTab = 'stores';
+
+  function setHubTab(tab) { hubTab = tab; showHub(); }
+
   function showHub() {
     gameState = 'HUB';
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
@@ -3529,9 +3533,49 @@
     hudEl.style.display = 'none';
     checkDailyLogin();
     showFirstTimeTooltip('hub', 'Welcome to your Empire Hub! Tap a store to play, or unlock new ones.');
-    const unlockedStores = getUnlockedStores();
+
     const modal = document.getElementById('hubModal');
-    let storeCardsHtml = '';
+
+    // Tab bar
+    const tabHtml = [
+      { id: 'stores', label: '🏪 Stores' },
+      { id: 'business', label: '🏢 Business' },
+    ].map(t => `<button class="shop-tab${hubTab === t.id ? ' active' : ''}" onclick="setHubTab('${t.id}')">${t.label}</button>`).join('');
+
+    // Wallet header
+    let html = `
+      <div class="shop-header">
+        <h2 style="text-align:center;margin:0 0 0.2rem;font-size:1rem;">👑 Empire</h2>
+        <div style="text-align:center;font-size:0.8rem;color:#5C3D2E;margin-bottom:0.4rem;">💰 ${formatCoins(wallet)}${prestigeLevel>0?` <span style="color:var(--gold);font-size:0.65rem;">✨P${prestigeLevel}</span>`:''}${loginStreak.count>1?` <span style="color:var(--coral);font-size:0.65rem;">🔥${loginStreak.count}d</span>`:''}</div>
+        <div class="shop-tab-bar">${tabHtml}</div>
+      </div>
+    `;
+
+    if (hubTab === 'stores') {
+      html += renderHubStoresTab();
+    } else {
+      html += renderHubBusinessTab();
+    }
+
+    // CTA
+    html += `
+      <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.75rem;">
+        <button class="btn" onclick="switchStore('${activeStoreId}'); showShop();" style="width:100%;">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button>
+        <div style="display:flex;gap:0.4rem;">
+          <button class="btn btn-secondary btn-small" onclick="showStats()" style="flex:1;">📊 Stats</button>
+          <button class="btn btn-secondary btn-small" onclick="showAchievements()" style="flex:1;">🏆</button>
+          <button class="btn btn-secondary btn-small" onclick="showTitle()" style="flex:1;opacity:0.7;">← Menu</button>
+        </div>
+      </div>
+    `;
+
+    modal.innerHTML = html;
+    showOverlay('hubOverlay');
+  }
+
+  function renderHubStoresTab() {
+    const unlockedStores = getUnlockedStores();
+    let html = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-top:0.5rem;">';
     for (const id of Object.keys(STORE_CONFIGS)) {
       const config = STORE_CONFIGS[id];
       const isUnlocked = unlockedStores.includes(id);
@@ -3541,29 +3585,61 @@
         const storeData = (empire.stores || {})[id] || {};
         const day = storeData.currentDay || 1;
         const mgr = (empire.global || {}).managers && (empire.global.managers[id]);
-        let mgrHtml = '';
+        const mgrBadge = mgr ? `<div style="font-size:0.55rem;color:${config.theme['--taupe']};">👨‍💼 ${MANAGER_TIERS[mgr.tier]?.name||mgr.tier}</div>` : '';
+        html += `<div style="cursor:pointer;background:linear-gradient(135deg,${config.theme['--cream']},${config.theme['--wall-bottom']});border:2px solid ${id===activeStoreId?config.theme['--gold']:'rgba(0,0,0,0.1)'};border-radius:12px;padding:0.6rem;text-align:center;" onclick="switchStore('${id}'); showShop();"><div style="font-size:1.8rem;">${config.emoji}</div><div style="font-size:0.75rem;font-weight:700;color:${config.theme['--brown']};">${config.name}</div><div style="font-size:0.6rem;color:${config.theme['--taupe']};">Day ${day}</div>${mgrBadge}</div>`;
+      } else {
+        const canUnlock = canUnlockStore(id);
+        const req = config.unlockPrestige > prestigeLevel ? `P${config.unlockPrestige} required` : `💰 ${formatCoins(config.unlockCost)}`;
+        html += `<div style="background:rgba(0,0,0,0.04);border:2px dashed rgba(0,0,0,0.15);border-radius:12px;padding:0.6rem;text-align:center;opacity:${canUnlock?1:0.5};"><div style="font-size:1.8rem;filter:grayscale(0.6);">${config.emoji}</div><div style="font-size:0.75rem;font-weight:700;color:#999;">${config.name}</div><div style="font-size:0.55rem;color:#aaa;">${req}</div>${canUnlock?`<button class="btn btn-small" style="margin-top:4px;font-size:0.65rem;min-height:36px;" onclick="event.stopPropagation(); unlockStore('${id}');">Unlock</button>`:'<div style="font-size:0.7rem;margin-top:2px;">🔒</div>'}</div>`;
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderHubBusinessTab() {
+    const unlockedStores = getUnlockedStores();
+    let html = '<div style="margin-top:0.5rem;">';
+
+    // HQ Upgrades section
+    if (prestigeLevel >= 2) {
+      html += '<h3 style="font-size:0.8rem;color:#5C3D2E;margin-bottom:0.4rem;">🏢 HQ Global Upgrades</h3>';
+      for (const [id, upg] of Object.entries(HQ_UPGRADES)) {
+        const level = getHqLevel(id);
+        const isMaxed = level >= upg.maxLevel;
+        const cost = isMaxed ? 0 : getScaledCost(upg.costFn(level));
+        const canAfford = !isMaxed && wallet >= cost;
+        html += `<div class="upgrade-card${canAfford ? ' affordable' : ''}${isMaxed ? ' maxed' : ''}"><div class="upgrade-icon">${upg.icon}</div><div class="upgrade-info"><div class="upgrade-name">${upg.name} ${isMaxed ? '<span class="chip chip-maxed">MAX</span>' : `${level}/${upg.maxLevel}`}</div><div class="upgrade-desc">${upg.desc}</div></div>${isMaxed ? '' : `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? `onclick="buyHqUpgrade('${id}')"` : 'disabled'}>${formatCoins(cost)} 💰</button>`}</div>`;
+      }
+    } else {
+      html += '<div style="text-align:center;color:#999;padding:1rem;font-size:0.8rem;">🔒 Prestige 2 to unlock HQ upgrades</div>';
+    }
+
+    // Managers section
+    html += '<h3 style="font-size:0.8rem;color:#5C3D2E;margin:0.75rem 0 0.4rem;">👨‍💼 Store Managers</h3>';
+    if (prestigeLevel >= 1 && unlockedStores.length >= 2) {
+      for (const id of unlockedStores) {
+        const config = STORE_CONFIGS[id];
+        if (!config) continue;
+        const managers = getManagers();
+        const mgr = managers[id];
         if (mgr) {
-          mgrHtml = `<div style="font-size:0.6rem;margin-top:3px;cursor:pointer;color:${config.theme['--taupe']};" onclick="event.stopPropagation(); showManagerUpgrades('${id}');">👨‍💼 ${MANAGER_TIERS[mgr.tier]?.name||mgr.tier} ✏️</div>`;
-        } else if (prestigeLevel >= 1 && getUnlockedStores().length >= 2) {
-          // Find cheapest available tier
+          html += `<div class="upgrade-card" style="cursor:pointer;" onclick="showManagerUpgrades('${id}')"><div class="upgrade-icon">${config.emoji}</div><div class="upgrade-info"><div class="upgrade-name">${config.name}</div><div class="upgrade-desc">👨‍💼 ${MANAGER_TIERS[mgr.tier]?.name||mgr.tier} (${Math.round(MANAGER_TIERS[mgr.tier]?.efficiency*100)||0}% eff.)</div></div><span style="font-size:0.7rem;color:var(--taro);">✏️ Manage</span></div>`;
+        } else {
           const availableTier = Object.entries(MANAGER_TIERS).find(([k, t]) => prestigeLevel >= t.minPrestige);
           if (availableTier) {
             const [tierKey, tier] = availableTier;
             const canAfford = wallet >= tier.cost;
-            mgrHtml = `<button class="btn btn-small" style="margin-top:4px;font-size:0.55rem;min-height:28px;padding:2px 8px;opacity:${canAfford?1:0.5};" ${canAfford ? `onclick="event.stopPropagation(); hireManager('${id}','${tierKey}');"` : 'disabled'}>Hire ${tier.icon} ${formatCoins(tier.cost)}</button>`;
+            html += `<div class="upgrade-card${canAfford ? ' affordable' : ''}"><div class="upgrade-icon">${config.emoji}</div><div class="upgrade-info"><div class="upgrade-name">${config.name}</div><div class="upgrade-desc">No manager — hire to earn offline</div></div><button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? `onclick="hireManager('${id}','${tierKey}')"` : 'disabled'}>Hire ${formatCoins(tier.cost)} 💰</button></div>`;
           }
-        } else {
-          mgrHtml = '<div style="font-size:0.5rem;color:#ccc;margin-top:2px;">P1 to hire</div>';
         }
-        storeCardsHtml += `<div style="cursor:pointer;background:linear-gradient(135deg,${config.theme['--cream']},${config.theme['--wall-bottom']});border:2px solid ${id===activeStoreId?config.theme['--gold']:'rgba(0,0,0,0.1)'};border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;" onclick="switchStore('${id}'); showShop();"><div style="font-size:2rem;">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:${config.theme['--brown']};">${config.name}</div><div style="font-size:0.65rem;color:${config.theme['--taupe']};">Day ${day}</div>${mgrHtml}</div>`;
-      } else {
-        const canUnlock = canUnlockStore(id);
-        const req = config.unlockPrestige > prestigeLevel ? `P${config.unlockPrestige} required` : `💰 ${formatCoins(config.unlockCost)}`;
-        storeCardsHtml += `<div style="background:rgba(0,0,0,0.04);border:2px dashed rgba(0,0,0,0.15);border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;opacity:${canUnlock?1:0.5};"><div style="font-size:2rem;filter:grayscale(0.6);">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:#999;">${config.name}</div><div style="font-size:0.6rem;color:#aaa;">${req}</div>${canUnlock?`<button class="btn btn-small" style="margin-top:6px;font-size:0.7rem;min-height:44px;" onclick="event.stopPropagation(); unlockStore('${id}');">Unlock</button>`:'<div style="font-size:0.8rem;margin-top:4px;">🔒</div>'}</div>`;
       }
+    } else {
+      html += '<div style="text-align:center;color:#999;padding:0.75rem;font-size:0.75rem;">🔒 Prestige 1 + 2 stores to hire managers</div>';
     }
-    modal.innerHTML = `<h2 style="text-align:center;margin-bottom:0.3rem;">👑 Tiny Tycoon Empire</h2><div style="text-align:center;font-size:0.8rem;color:var(--brown);margin-bottom:0.5rem;">💰 ${formatCoins(wallet)}${prestigeLevel>0?` <span style="color:var(--gold);">✨ P${prestigeLevel}</span>`:''}${loginStreak.count>1?` <span style="color:var(--coral);">🔥 ${loginStreak.count}d</span>`:''}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:1rem;">${storeCardsHtml}</div><div style="display:flex;flex-direction:column;gap:0.4rem;"><button class="btn" onclick="switchStore('${activeStoreId}'); showShop();" style="width:100%;">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button><div style="display:flex;gap:0.4rem;">${prestigeLevel>=2?'<button class="btn btn-secondary btn-small" onclick="showHQ()" style="flex:1;">🏢 HQ</button>':''}<button class="btn btn-secondary btn-small" onclick="showStats()" style="flex:1;">📊 Stats</button><button class="btn btn-secondary btn-small" onclick="showAchievements()" style="flex:1;">🏆</button></div><button class="btn btn-secondary btn-small" onclick="showTitle()" style="width:100%;margin-top:0.2rem;opacity:0.7;">← Menu</button></div>`;
-    showOverlay('hubOverlay');
+
+    html += '</div>';
+    return html;
   }
 
   // ==========================================
@@ -4123,7 +4199,7 @@
   // Note: Client-side games cannot prevent console manipulation —
   // server-side score validation is the real anti-cheat layer.
   function setShopTab(tab) { shopTab = tab; renderShop(); }
-  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu, showHub, switchStore, unlockStore, hireManager, collectOfflineEarnings, showHQ, buyHqUpgrade, buyTier2, buyDecor, showManagerUpgrades, upgradeManagerTier, buyManagerUpgrade, setShopTab };
+  const _api = { showShop, renderShop, buyUpgrade, startDay, showTitle, newGame, showStats, showAchievements, shareScore, showPrestigeConfirm, doPrestige, hideAllOverlays, showOverlay, resumeGame, quitToMenu, showHub, switchStore, unlockStore, hireManager, collectOfflineEarnings, showHQ, buyHqUpgrade, buyTier2, buyDecor, showManagerUpgrades, upgradeManagerTier, buyManagerUpgrade, setShopTab, setHubTab };
   Object.entries(_api).forEach(([k, v]) => { window[k] = v; });
 
   // Pause button handler
