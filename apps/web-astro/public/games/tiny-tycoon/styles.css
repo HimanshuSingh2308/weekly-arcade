@@ -1343,7 +1343,7 @@
     /* Rush hour banner */
     .rush-banner {
       position: fixed;
-      top: calc(80px + env(safe-area-inset-top, 0px) + 8px);
+      top: calc(104px + env(safe-area-inset-top, 0px));
       left: 50%;
       transform: translateX(-50%);
       background: linear-gradient(135deg, var(--coral), #ff8a65);
