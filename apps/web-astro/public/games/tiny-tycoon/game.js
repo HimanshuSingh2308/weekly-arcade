@@ -1134,8 +1134,40 @@
     renderVipTables();
     initVipTables();
 
+    // Update shelf displays with available drinks
+    updateShelfDrinks();
+
     // Render purchased decorations
     renderDecorations();
+  }
+
+  function updateShelfDrinks() {
+    const available = getAvailableDrinks(currentDay);
+    const shelves = document.querySelectorAll('.shelf');
+    if (!shelves.length) return;
+
+    // Distribute available drink emojis across shelves
+    const drinkEmojis = available.map(k => DRINK_TYPES[k]?.emoji).filter(Boolean);
+    shelves.forEach((shelf, si) => {
+      const items = shelf.querySelectorAll('.shelf-item');
+      items.forEach((item, ii) => {
+        const idx = si * 3 + ii;
+        if (idx < drinkEmojis.length) {
+          item.textContent = drinkEmojis[idx];
+          item.style.opacity = '1';
+        } else {
+          item.textContent = '';
+          item.style.opacity = '0.3';
+        }
+      });
+    });
+
+    // Update menu board with drink count
+    const menuBoard = document.querySelector('.menu-board');
+    if (menuBoard) {
+      menuBoard.textContent = available.length + ' drinks';
+      menuBoard.style.cssText += 'font-size:0.35rem;color:rgba(0,0,0,0.3);text-align:center;display:flex;align-items:center;justify-content:center;';
+    }
   }
 
   function renderDecorations() {
@@ -2602,6 +2634,7 @@
     hideAllOverlays();
     hudEl.style.display = 'flex';
     dayBadge.textContent = `Day ${currentDay}`;
+    updateShelfDrinks();
     hudCoins.textContent = '0';
     hudTimer.textContent = '1:00';
     updateComboDisplay();
@@ -2752,8 +2785,10 @@
     }
     // Check for upcoming drink unlocks
     for (const [key, drink] of Object.entries(DRINK_TYPES)) {
-      if (drink.unlockDay > currentDay && drink.unlockDay <= currentDay + 3) {
-        return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🆕 Day ${drink.unlockDay} unlocks ${drink.emoji} ${drink.name}!</div>`;
+      const menuBonus = upgradeLevels.premium_menu || 0;
+      const effectiveUnlock = drink.unlockDay - menuBonus;
+      if (effectiveUnlock > currentDay && effectiveUnlock <= currentDay + 3) {
+        return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🆕 Day ${effectiveUnlock} unlocks ${drink.emoji} ${drink.name}!</div>`;
       }
     }
     // Check for upcoming event unlocks
