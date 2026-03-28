@@ -2350,19 +2350,33 @@
     /* ---------- BEAN & BREW ---------- */
 
     /* Chalkboard */
-    .decor-chalk { z-index: 5; }
+    .decor-chalk { z-index: 7; }
     .chalk-board {
-      width: 30px; height: 22px; background: #2C2C2C; border: 2px solid #DEB887;
-      border-radius: 1px; position: relative; overflow: hidden;
+      width: 44px; height: 52px; background: #1a1a1a; border: 2px solid #DEB887;
+      border-radius: 2px; position: relative; overflow: hidden;
+      padding: 2px 3px;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.3);
     }
-    .chalk-board::before {
-      content: ''; position: absolute; top: 4px; left: 4px; right: 4px;
-      height: 1px; background: rgba(255,255,255,0.25);
-      box-shadow: 0 5px 0 rgba(255,255,255,0.2), 0 10px 0 rgba(255,255,255,0.15);
+    .chalk-title {
+      font-size: 0.25rem;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      padding-bottom: 1px;
+      margin-bottom: 1px;
+    }
+    .chalk-item {
+      font-size: 0.2rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.6;
+      display: flex;
+      justify-content: space-between;
     }
     .chalk-board::after {
       content: ''; position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%);
-      width: 10px; height: 2px; background: #F5F5DC; border-radius: 1px;
+      width: 12px; height: 2px; background: #F5F5DC; border-radius: 1px;
     }
 
     /* Clock */

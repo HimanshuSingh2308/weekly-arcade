@@ -1272,8 +1272,15 @@
 
       // ── Bean & Brew ──
       chalkboard: {
-        html: '<div class="shop-decor decor-chalk"><div class="chalk-board"></div></div>',
-        css: 'position:absolute;top:8px;right:8px;'
+        html: (() => {
+          const available = getAvailableDrinks(currentDay);
+          const items = available.slice(0, 5).map(k => {
+            const d = DRINK_TYPES[k];
+            return `<div class="chalk-item">${d.emoji} ${d.baseCoins}</div>`;
+          }).join('');
+          return `<div class="shop-decor decor-chalk"><div class="chalk-board"><div class="chalk-title">MENU</div>${items}</div></div>`;
+        })(),
+        css: 'position:absolute;top:4px;right:6px;z-index:7;'
       },
       clock: {
         html: '<div class="shop-decor decor-clock"><div class="clock-face"><div class="clock-dot"></div></div></div>',
