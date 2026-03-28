@@ -1047,9 +1047,11 @@
       border-radius: 50%;
       pointer-events: none;
       opacity: 0;
+      -webkit-mask: radial-gradient(circle, transparent 55%, black 57%);
+      mask: radial-gradient(circle, transparent 55%, black 57%);
     }
     .serve-ring.active {
-      opacity: 1;
+      opacity: 0.8;
     }
 
     /* VIP customer glow */
