@@ -3174,18 +3174,27 @@
     collectedMilestones = new Set();
     tutorialsSeen.vip = false;
 
-    // Reset all stores' upgradeLevels and day counters (keep unlocks, decorations, managers)
+    // Reset all stores' upgradeLevels, tier2Levels, day counters (keep unlocks, decorations, managers)
     try {
       const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
       for (const [id, store] of Object.entries(empire.stores || {})) {
         if (store.unlocked) {
           store.currentDay = 1;
           store.upgradeLevels = {};
-          // Keep: unlocked, decorations, tier2Levels, bestDayRevenue
+          store.tier2Levels = {};
+          // Keep: unlocked, decorations, bestDayRevenue
         }
       }
       localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
     } catch(e) {}
+
+    // Reset extra waiters (they depend on Tier 2 extra_waiter which just reset)
+    extraWaiters.forEach(w => {
+      if (w.el && w.el.parentNode) w.el.remove();
+    });
+    extraWaiters = [];
+    // Reset auto-serve slots back to 3 (express_lane reset)
+    autoServing = [null, null, null, null];
 
     // Re-apply active store config
     switchStore(activeStoreId);
