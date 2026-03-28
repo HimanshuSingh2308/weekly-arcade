@@ -570,6 +570,8 @@
     .auto-barista-station.station-1 .barista .barista-body { background: #FF9800; }
     /* Purple apron barista */
     .auto-barista-station.station-2 .barista .barista-body { background: #9C27B0; }
+    /* Express Lane (4th auto-serve from Tier 2) */
+    .auto-barista-station.station-3 .barista .barista-body { background: #FFD700; }
 
     .auto-barista-station .barista {
       position: relative;

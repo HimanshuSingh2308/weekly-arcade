@@ -1647,7 +1647,10 @@
     }
     // Loyalty Program: extra tip bonus per level
     const loyaltyLevel = getTier2Level('loyalty_program');
-    if (loyaltyLevel > 0) tipBonus += loyaltyLevel * 3;
+    if (loyaltyLevel > 0) {
+      tipBonus += loyaltyLevel * 3;
+      if (tipBonus > 0) spawnFloatingText(c, '💝+' + (loyaltyLevel * 3));
+    }
 
     const prestigeMultiplier = 1 + prestigeLevel * 0.05;
     const bridgeMultiplier = (prestigeBridgeDays > 0) ? 2 : 1;
@@ -1659,7 +1662,14 @@
     const happyHourMultiplier = happyHourActive ? 2 : 1;
     const celebrityMultiplier = c.isCelebrity ? 3 : 1;
     const rawCoins = Math.floor(baseCoins * vipMultiplier * comboMultiplier * prestigeMultiplier * bridgeMultiplier * rushMasterMultiplier * hqFranchise * t2Golden * doubleShotMultiplier * happyHourMultiplier * celebrityMultiplier);
-    const totalCoins = Math.min(rawCoins, 5000) + tipBonus; // Cap per-serve at 5000 to prevent edge-case inflation
+    const totalCoins = Math.min(rawCoins, 5000) + tipBonus;
+
+    // Visual feedback for active Tier 2 bonuses
+    if (doubleShotMultiplier > 1) spawnFloatingText(c, '2x DOUBLE SHOT!');
+    if (t2Golden > 1 && getTier2Level('golden_touch') > 0) {
+      const area = c.isVip ? vipCustomerArea : queueArea;
+      spawnFloatingTextInArea(c, '✨+' + Math.round((t2Golden - 1) * 100) + '%', area);
+    }
 
     // Critic bonus: serve >80% patience for +200
     if (c.isCritic) {
