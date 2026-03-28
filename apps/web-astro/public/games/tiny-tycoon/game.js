@@ -3199,13 +3199,21 @@
     // Re-apply active store config
     switchStore(activeStoreId);
 
+    // Reset VIP tables visual (tier2 vip_tables just cleared)
+    initVipTables();
+    renderVipTables();
+    updateShopEnvironment();
+
     saveGame();
+    invalidateEmpireCache();
     playSound('newBest');
     spawnConfetti();
     if (prestigeLevel === 1 && !unlockedAchievements.has('tt_prestige')) {
       unlockAchievement('tt_prestige');
     }
     setTimeout(() => {
+      invalidateEmpireCache();
+      shopTab = 'upgrades'; // Reset to upgrades tab
       renderShop();
     }, 1500);
   }
