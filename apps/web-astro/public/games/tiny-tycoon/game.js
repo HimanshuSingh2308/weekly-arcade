@@ -11,7 +11,7 @@
     sparkling:    { emoji: '🫧', name: 'Sparkling Boba',    baseCoins: 30, serveTime: 2500, unlockDay: 10 },
     matcha_latte: { emoji: '🍃', name: 'Matcha Latte',     baseCoins: 40, serveTime: 2800, unlockDay: 15 },
     taro_milk:    { emoji: '🍠', name: 'Taro Milk Tea',    baseCoins: 55, serveTime: 3200, unlockDay: 20 },
-    signature:    { emoji: '🏆', name: 'Signature Boba',   baseCoins: 75, serveTime: 4000, unlockDay: 25 }
+    signature:    { emoji: '🧃', name: 'Signature Boba',   baseCoins: 75, serveTime: 4000, unlockDay: 25 }
   };
 
   let CUSTOMER_TYPES = {
