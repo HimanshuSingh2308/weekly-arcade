@@ -118,9 +118,15 @@
 
   // VIP Table positions (relative to vip lounge, in % for responsiveness)
   const VIP_TABLE_POSITIONS = [
-    { x: 60, y: 30 },   // table 0 (left)
-    { x: 180, y: 50 },  // table 1 (center)
-    { x: 300, y: 30 }   // table 2 (right)
+    { x: 60, y: 30 },   // table 0
+    { x: 180, y: 50 },  // table 1
+    { x: 300, y: 30 },  // table 2
+    { x: 40, y: 70 },   // table 3 (Tier 2 expansion)
+    { x: 140, y: 80 },  // table 4
+    { x: 240, y: 70 },  // table 5
+    { x: 340, y: 80 },  // table 6
+    { x: 100, y: 20 },  // table 7
+    { x: 260, y: 15 },  // table 8
   ];
 
   // ==========================================
@@ -1045,12 +1051,14 @@
 
   function renderVipTables() {
     vipTablesContainer.innerHTML = '';
-    const vipLevel = upgradeLevels.vip_lounge || 0;
+    const totalTables = getVipTableCount();
+    const baseVipLevel = upgradeLevels.vip_lounge || 0;
 
-    // Always show 3 table placeholders (faded if locked)
-    for (let i = 0; i < 3; i++) {
+    // Show active tables + faded placeholders for next unlock tier
+    const showCount = Math.max(totalTables, Math.min(baseVipLevel + 2, VIP_TABLE_POSITIONS.length));
+    for (let i = 0; i < showCount && i < VIP_TABLE_POSITIONS.length; i++) {
       const pos = VIP_TABLE_POSITIONS[i];
-      const isActive = i < vipLevel;
+      const isActive = i < totalTables;
       const table = document.createElement('div');
       table.className = 'vip-table' + (isActive ? '' : ' faded');
       table.style.left = pos.x + 'px';
