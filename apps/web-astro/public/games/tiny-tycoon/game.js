@@ -337,20 +337,22 @@
     return 1 + getTier2Level('extra_waiter');
   }
 
+  const EXTRA_WAITER_IDLE = [{ x: 220, y: 70 }, { x: 270, y: 70 }]; // Separate idle spots
+
   function initExtraWaiters() {
     const count = getWaiterCount();
     const vipLounge = document.getElementById('vipLounge');
-    // Remove old extras
     extraWaiters.forEach(w => { if (w.el && w.el.parentNode) w.el.remove(); });
     extraWaiters = [];
     for (let i = 1; i < count; i++) {
+      const idle = EXTRA_WAITER_IDLE[i - 1] || { x: 170 + i * 50, y: 70 };
       const el = document.createElement('div');
       el.className = 'waiter waiter-extra';
-      el.style.cssText = 'display:none;position:absolute;left:' + (130 + i * 50) + 'px;top:70px;transition:left 0.8s ease,top 0.8s ease;';
+      el.style.cssText = `display:none;position:absolute;left:${idle.x}px;top:${idle.y}px;transition:left 0.8s ease,top 0.8s ease;z-index:36;`;
       const colors = ['#E91E63', '#00BCD4'];
       el.innerHTML = '<div class="barista-head"></div><div class="barista-arm left"></div><div class="barista-arm right"></div><div class="barista-body" style="background:' + (colors[i-1] || '#E91E63') + ';"></div><div class="waiter-tray"></div>';
       vipLounge.appendChild(el);
-      extraWaiters.push({ state: 'idle', targetId: null, serveTimer: 0, serveTime: 0, el });
+      extraWaiters.push({ state: 'idle', targetId: null, serveTimer: 0, serveTime: 0, el, idleX: idle.x, idleY: idle.y });
     }
   }
 
@@ -2175,7 +2177,7 @@
                 if (w.el) w.el.classList.add('serving');
               } else {
                 w.state = 'idle'; w.targetId = null;
-                if (w.el) { w.el.classList.remove('serving'); w.el.style.left = w.el.dataset.idleX || '170px'; w.el.style.top = '70px'; }
+                if (w.el) { w.el.classList.remove('serving'); w.el.style.left = (w.idleX || 220) + 'px'; w.el.style.top = (w.idleY || 70) + 'px'; }
               }
             }
           }, 800);
@@ -2201,15 +2203,15 @@
           if (c.patience <= 0) {
             customerAngry(c);
             w.state = 'idle'; w.targetId = null; w.serveTimer = 0;
-            if (w.el) { w.el.classList.remove('serving'); w.el.style.left = '170px'; w.el.style.top = '70px'; }
+            if (w.el) { w.el.classList.remove('serving'); w.el.style.left = (w.idleX || 220) + 'px'; w.el.style.top = (w.idleY || 70) + 'px'; }
           } else if (w.serveTimer >= w.serveTime) {
             completeServe(c);
             w.state = 'idle'; w.targetId = null; w.serveTimer = 0;
-            if (w.el) { w.el.classList.remove('serving'); w.el.style.left = '170px'; w.el.style.top = '70px'; }
+            if (w.el) { w.el.classList.remove('serving'); w.el.style.left = (w.idleX || 220) + 'px'; w.el.style.top = (w.idleY || 70) + 'px'; }
           }
         } else {
           w.state = 'idle'; w.targetId = null; w.serveTimer = 0;
-          if (w.el) { w.el.classList.remove('serving'); w.el.style.left = '170px'; w.el.style.top = '70px'; }
+          if (w.el) { w.el.classList.remove('serving'); w.el.style.left = (w.idleX || 220) + 'px'; w.el.style.top = (w.idleY || 70) + 'px'; }
         }
       }
     }
@@ -2524,8 +2526,14 @@
     customers.forEach(c => { if (c.el) c.el.remove(); });
     customers = [];
 
-    // Init VIP tables
+    // Init VIP tables + extra waiters
     initVipTables();
+    if (getWaiterCount() > 1) {
+      initExtraWaiters();
+      extraWaiters.forEach(w => { if (w.el) w.el.style.display = 'block'; });
+    }
+    // Reset extra waiter states
+    extraWaiters.forEach(w => { w.state = 'idle'; w.targetId = null; w.serveTimer = 0; });
 
     // Event scheduling (Rush Hour, Happy Hour, Critic Visit)
     happyHourActive = false;
