@@ -69,7 +69,7 @@
     /* HUD */
     .hud {
       position: fixed;
-      top: calc(48px + env(safe-area-inset-top, 0px));
+      top: calc(63px + env(safe-area-inset-top, 0px));
       left: 50%; transform: translateX(-50%);
       width: 100%; max-width: 480px;
       height: 36px;
