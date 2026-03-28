@@ -2919,11 +2919,13 @@
 
     html += `
       <div class="shop-actions">
-        <button class="btn" onclick="startDay()" style="flex:1;">▶ Day ${currentDay}</button>
-        ${hasHub ? '<button class="btn btn-secondary btn-small" onclick="showHub()">🏢</button>' : ''}
-        <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
+        <div class="shop-actions-row">
+          <button class="btn" onclick="startDay()" style="flex:1;">▶ Day ${currentDay}</button>
+          ${hasHub ? '<button class="btn btn-secondary btn-small" onclick="showHub()">🏢</button>' : ''}
+          <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
+        </div>
+        ${canPrestige ? '<button class="btn prestige-btn" onclick="showPrestigeConfirm()" style="width:100%;margin-top:0.4rem;">✨ Prestige — Reset for +' + ((prestigeLevel + 1) * 5) + '% bonus</button>' : ''}
       </div>
-      ${canPrestige ? '<div class="shop-actions-secondary"><button class="btn prestige-btn" onclick="showPrestigeConfirm()" style="width:100%;">✨ Prestige</button></div>' : ''}
     `;
 
     modal.innerHTML = html;
