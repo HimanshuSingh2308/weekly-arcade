@@ -2906,15 +2906,18 @@
 
     html += '</div>'; // close shop-content
 
-    const prestigeBtn = allUpgradesMaxed() ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()">✨ Prestige</button>` : '';
-    const hubBtn = getUnlockedStores().length >= 2 ? `<button class="btn btn-secondary btn-small" onclick="showHub()">🏢 Hub</button>` : '';
+    const canPrestige = allUpgradesMaxed();
+    const hasHub = getUnlockedStores().length >= 2;
 
     html += `
       <div class="shop-actions">
-        <button class="btn" onclick="startDay()">▶ Day ${currentDay}</button>
+        ${canPrestige
+          ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()" style="flex:1;">✨ Prestige</button>`
+          : `<button class="btn" onclick="startDay()" style="flex:1;">▶ Day ${currentDay}</button>`}
+        ${hasHub ? '<button class="btn btn-secondary btn-small" onclick="showHub()">🏢</button>' : ''}
         <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
       </div>
-      ${prestigeBtn || hubBtn ? `<div class="shop-actions-secondary">${prestigeBtn}${hubBtn}</div>` : ''}
+      ${canPrestige ? `<div class="shop-actions-secondary"><button class="btn btn-secondary btn-small" onclick="startDay()" style="flex:1;">▶ Play Day ${currentDay} anyway</button></div>` : ''}
     `;
 
     modal.innerHTML = html;
@@ -2922,6 +2925,17 @@
 
   function renderUpgradesTab() {
     let html = '';
+
+    // If ALL maxed, show compact grid instead of 10 full cards
+    if (allUpgradesMaxed()) {
+      html += '<div style="text-align:center;padding:0.5rem 0 0.3rem;"><span class="chip chip-maxed" style="font-size:0.7rem;padding:3px 10px;">All Upgrades Maxed</span></div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.4rem;padding:0.5rem 0;">';
+      for (const [id, upgrade] of Object.entries(UPGRADES)) {
+        html += `<div style="text-align:center;opacity:0.7;"><div style="font-size:1.3rem;">${upgrade.icon}</div><div style="font-size:0.5rem;color:#999;">${upgrade.maxLevel}/${upgrade.maxLevel}</div></div>`;
+      }
+      html += '</div>';
+      return html;
+    }
 
     // Find recommended
     let recommendedId = null;
