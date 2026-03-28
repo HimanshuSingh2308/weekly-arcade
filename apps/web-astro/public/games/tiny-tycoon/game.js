@@ -2839,7 +2839,7 @@
 
       if (locked) { if (!firstLockedTeaser) firstLockedTeaser = { id, upgrade }; continue; }
       if (maxed) {
-        maxedUpgrades.push(`<div class="upgrade-card maxed"><div class="upgrade-icon">${upgrade.icon}</div><div class="upgrade-info"><div class="upgrade-name">${upgrade.name} <span class="chip chip-maxed">MAX</span></div><div class="upgrade-level">Lv ${upgrade.maxLevel}/${upgrade.maxLevel}</div></div></div>`);
+        maxedUpgrades.push(`<div class="upgrade-card maxed"><div class="upgrade-icon">${upgrade.icon}</div><div class="upgrade-info"><div class="upgrade-name">${upgrade.name} <span class="chip chip-maxed">MAX</span></div><div class="upgrade-level">${upgrade.maxLevel}/${upgrade.maxLevel}</div></div></div>`);
         continue;
       }
 
@@ -2852,7 +2852,7 @@
           <div class="upgrade-info">
             <div class="upgrade-name">${upgrade.name} ${isRecommended ? '<span class="chip chip-recommended">Best Value</span>' : ''}</div>
             <div class="upgrade-desc">${upgrade.desc}</div>
-            <div class="upgrade-level">Lv ${level + 1}/${upgrade.maxLevel}</div>
+            <div class="upgrade-level">${level}/${upgrade.maxLevel}</div>
           </div>
           <button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${id}')">${formatCoins(cost)} 💰</button>
         </div>`;
@@ -2880,7 +2880,7 @@
       html += `<div class="upgrade-card${canAfford ? ' affordable' : ''}${isMaxed ? ' maxed' : ''}">
         <div class="upgrade-icon">${upg.icon}</div>
         <div class="upgrade-info">
-          <div class="upgrade-name">${upg.name} ${isMaxed ? '<span class="chip chip-maxed">MAX</span>' : `Lv${level + 1}`}</div>
+          <div class="upgrade-name">${upg.name} ${isMaxed ? '<span class="chip chip-maxed">MAX</span>' : `${level}/${upg.maxLevel}`}</div>
           <div class="upgrade-desc">${upg.desc}</div>
         </div>
         ${isMaxed ? '' : `<button class="upgrade-buy-btn ${canAfford ? 'affordable' : ''}" ${canAfford ? `onclick="buyTier2('${id}')"` : 'disabled'}>${formatCoins(cost)} 💰</button>`}
@@ -3306,7 +3306,7 @@
       const isMaxed = level >= upg.maxLevel;
       const cost = isMaxed ? '—' : formatCoins(upg.costFn(level));
       const canAfford = !isMaxed && wallet >= upg.costFn(level);
-      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,${canAfford?'0.03':'0.01'});border-radius:8px;margin-bottom:0.4rem;"><span style="font-size:1.3rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.8rem;font-weight:700;">${upg.name} ${isMaxed?'<span style="color:var(--gold);">MAX</span>':`Lv${level}`}</div><div style="font-size:0.65rem;color:#888;">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small" ${canAfford?`onclick="buyHqUpgrade('${id}')"`:'disabled'} style="font-size:0.7rem;min-height:44px;opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
+      html += `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:rgba(0,0,0,${canAfford?'0.03':'0.01'});border-radius:8px;margin-bottom:0.4rem;"><span style="font-size:1.3rem;">${upg.icon}</span><div style="flex:1;"><div style="font-size:0.8rem;font-weight:700;">${upg.name} ${isMaxed?'<span class="chip chip-maxed">MAX</span>':`${level}/${upg.maxLevel}`}</div><div style="font-size:0.65rem;color:#888;">${upg.desc}</div></div>${isMaxed?'':`<button class="btn btn-small" ${canAfford?`onclick="buyHqUpgrade('${id}')"`:'disabled'} style="font-size:0.7rem;min-height:44px;opacity:${canAfford?1:0.5};">💰 ${cost}</button>`}</div>`;
     }
     html += '<br><button class="btn btn-secondary btn-small" onclick="showHub()">← Back</button>';
     modal.innerHTML = html;
