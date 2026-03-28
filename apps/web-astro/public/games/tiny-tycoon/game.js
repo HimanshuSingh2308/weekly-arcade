@@ -326,11 +326,33 @@
   // VIP table state
   let vipTables = []; // { occupied: false, customerId: null }
 
-  // Waiter state
-  let waiterState = 'idle'; // idle, walking, serving
+  // Waiter state — waiter 0 uses existing vars/DOM, extras are in waiters[]
+  let waiterState = 'idle';
   let waiterTargetCustomerId = null;
   let waiterServeTimer = 0;
   let waiterServeTime = 0;
+  let extraWaiters = []; // { state, targetId, serveTimer, serveTime, el }
+
+  function getWaiterCount() {
+    return 1 + getTier2Level('extra_waiter');
+  }
+
+  function initExtraWaiters() {
+    const count = getWaiterCount();
+    const vipLounge = document.getElementById('vipLounge');
+    // Remove old extras
+    extraWaiters.forEach(w => { if (w.el && w.el.parentNode) w.el.remove(); });
+    extraWaiters = [];
+    for (let i = 1; i < count; i++) {
+      const el = document.createElement('div');
+      el.className = 'waiter waiter-extra';
+      el.style.cssText = 'display:none;position:absolute;left:' + (130 + i * 50) + 'px;top:70px;transition:left 0.8s ease,top 0.8s ease;';
+      const colors = ['#E91E63', '#00BCD4'];
+      el.innerHTML = '<div class="barista-head"></div><div class="barista-arm left"></div><div class="barista-arm right"></div><div class="barista-body" style="background:' + (colors[i-1] || '#E91E63') + ';"></div><div class="waiter-tray"></div>';
+      vipLounge.appendChild(el);
+      extraWaiters.push({ state: 'idle', targetId: null, serveTimer: 0, serveTime: 0, el });
+    }
+  }
 
   // Auth
   let currentUser = null;
@@ -1098,9 +1120,10 @@
     if (vipLevel > 0) {
       vipLoungeEl.classList.add('unlocked', 'vip-level-' + vipLevel);
       vipWaiterEl.style.display = 'block';
-      // Position waiter at idle spot
       vipWaiterEl.style.left = '170px';
       vipWaiterEl.style.top = '70px';
+      initExtraWaiters();
+      extraWaiters.forEach(w => { w.el.style.display = 'block'; });
     } else {
       vipLoungeEl.classList.add('locked');
       vipWaiterEl.style.display = 'none';
@@ -2116,6 +2139,82 @@
     vipWaiterEl.style.top = '70px';
   }
 
+  // Extra waiters — same logic as main waiter but for additional staff
+  function updateExtraWaiters(dt) {
+    for (const w of extraWaiters) {
+      if (w.state === 'idle') {
+        // Find seated VIP not being served by any waiter
+        const busyTargets = new Set();
+        if (waiterTargetCustomerId) busyTargets.add(waiterTargetCustomerId);
+        extraWaiters.forEach(ew => { if (ew.targetId) busyTargets.add(ew.targetId); });
+
+        const seated = customers
+          .filter(c => c.isVip && c.state === 'seated' && !busyTargets.has(c.id))
+          .sort((a, b) => a.id - b.id);
+
+        if (seated.length > 0) {
+          const target = seated[0];
+          w.state = 'walking';
+          w.targetId = target.id;
+          target.state = 'waiter_coming';
+          const tablePos = VIP_TABLE_POSITIONS[target.tableIndex];
+          if (tablePos && w.el) {
+            w.el.style.left = (tablePos.x - 5) + 'px';
+            w.el.style.top = (tablePos.y + 10) + 'px';
+          }
+          setTimeout(() => {
+            if (w.state === 'walking' && w.targetId === target.id) {
+              const c = customers.find(x => x.id === target.id);
+              if (c && c.state === 'waiter_coming') {
+                w.state = 'serving';
+                w.serveTime = getWaiterServeTime(c.order);
+                w.serveTimer = 0;
+                c.state = 'being_served_vip';
+                c.serveTime = w.serveTime;
+                c.serveProgress = 0;
+                if (w.el) w.el.classList.add('serving');
+              } else {
+                w.state = 'idle'; w.targetId = null;
+                if (w.el) { w.el.classList.remove('serving'); w.el.style.left = w.el.dataset.idleX || '170px'; w.el.style.top = '70px'; }
+              }
+            }
+          }, 800);
+        }
+      }
+
+      if (w.state === 'serving') {
+        w.serveTimer += dt;
+        const c = customers.find(x => x.id === w.targetId);
+        if (c && c.state === 'being_served_vip') {
+          c.serveProgress = w.serveTimer;
+          if (c.el) {
+            const ring = c.el.querySelector('.serve-ring');
+            if (ring) {
+              const pct = Math.min(1, c.serveProgress / c.serveTime);
+              ring.classList.add('active');
+              ring.style.background = `conic-gradient(var(--matcha) ${pct * 360}deg, transparent ${pct * 360}deg)`;
+            }
+          }
+          c.patience -= dt * 0.5;
+          if (getTier2Level('concierge') > 0 && c.patience < 100) c.patience = 100;
+          updatePatienceBar(c);
+          if (c.patience <= 0) {
+            customerAngry(c);
+            w.state = 'idle'; w.targetId = null; w.serveTimer = 0;
+            if (w.el) { w.el.classList.remove('serving'); w.el.style.left = '170px'; w.el.style.top = '70px'; }
+          } else if (w.serveTimer >= w.serveTime) {
+            completeServe(c);
+            w.state = 'idle'; w.targetId = null; w.serveTimer = 0;
+            if (w.el) { w.el.classList.remove('serving'); w.el.style.left = '170px'; w.el.style.top = '70px'; }
+          }
+        } else {
+          w.state = 'idle'; w.targetId = null; w.serveTimer = 0;
+          if (w.el) { w.el.classList.remove('serving'); w.el.style.left = '170px'; w.el.style.top = '70px'; }
+        }
+      }
+    }
+  }
+
   // ==========================================
   // GAME LOOP
   // ==========================================
@@ -2363,6 +2462,7 @@
 
     // Waiter AI (VIP customers)
     updateWaiter(dt);
+    updateExtraWaiters(dt);
 
     animFrameId = requestAnimationFrame(gameLoop);
   }
@@ -2812,10 +2912,9 @@
     html += `
       <div class="shop-actions">
         <button class="btn" onclick="startDay()">▶ Day ${currentDay}</button>
-        ${prestigeBtn}
-        ${hubBtn}
         <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
       </div>
+      ${prestigeBtn || hubBtn ? `<div class="shop-actions-secondary">${prestigeBtn}${hubBtn}</div>` : ''}
     `;
 
     modal.innerHTML = html;
