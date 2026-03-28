@@ -3541,8 +3541,21 @@
         const storeData = (empire.stores || {})[id] || {};
         const day = storeData.currentDay || 1;
         const mgr = (empire.global || {}).managers && (empire.global.managers[id]);
-        const mgrBadge = mgr ? `<div style="font-size:0.6rem;margin-top:2px;">👨‍💼 ${MANAGER_TIERS[mgr.tier]?.name||mgr.tier}</div>` : '';
-        storeCardsHtml += `<div style="cursor:pointer;background:linear-gradient(135deg,${config.theme['--cream']},${config.theme['--wall-bottom']});border:2px solid ${id===activeStoreId?config.theme['--gold']:'rgba(0,0,0,0.1)'};border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;" onclick="switchStore('${id}'); showShop();"><div style="font-size:2rem;">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:${config.theme['--brown']};">${config.name}</div><div style="font-size:0.65rem;color:${config.theme['--taupe']};">Day ${day}</div>${mgrBadge}${mgr?'':'<div style="font-size:0.55rem;color:#bbb;margin-top:2px;">No manager</div>'}</div>`;
+        let mgrHtml = '';
+        if (mgr) {
+          mgrHtml = `<div style="font-size:0.6rem;margin-top:3px;cursor:pointer;color:${config.theme['--taupe']};" onclick="event.stopPropagation(); showManagerUpgrades('${id}');">👨‍💼 ${MANAGER_TIERS[mgr.tier]?.name||mgr.tier} ✏️</div>`;
+        } else if (prestigeLevel >= 1 && getUnlockedStores().length >= 2) {
+          // Find cheapest available tier
+          const availableTier = Object.entries(MANAGER_TIERS).find(([k, t]) => prestigeLevel >= t.minPrestige);
+          if (availableTier) {
+            const [tierKey, tier] = availableTier;
+            const canAfford = wallet >= tier.cost;
+            mgrHtml = `<button class="btn btn-small" style="margin-top:4px;font-size:0.55rem;min-height:28px;padding:2px 8px;opacity:${canAfford?1:0.5};" ${canAfford ? `onclick="event.stopPropagation(); hireManager('${id}','${tierKey}');"` : 'disabled'}>Hire ${tier.icon} ${formatCoins(tier.cost)}</button>`;
+          }
+        } else {
+          mgrHtml = '<div style="font-size:0.5rem;color:#ccc;margin-top:2px;">P1 to hire</div>';
+        }
+        storeCardsHtml += `<div style="cursor:pointer;background:linear-gradient(135deg,${config.theme['--cream']},${config.theme['--wall-bottom']});border:2px solid ${id===activeStoreId?config.theme['--gold']:'rgba(0,0,0,0.1)'};border-radius:12px;padding:0.75rem;text-align:center;min-width:100px;" onclick="switchStore('${id}'); showShop();"><div style="font-size:2rem;">${config.emoji}</div><div style="font-size:0.8rem;font-weight:700;color:${config.theme['--brown']};">${config.name}</div><div style="font-size:0.65rem;color:${config.theme['--taupe']};">Day ${day}</div>${mgrHtml}</div>`;
       } else {
         const canUnlock = canUnlockStore(id);
         const req = config.unlockPrestige > prestigeLevel ? `P${config.unlockPrestige} required` : `💰 ${formatCoins(config.unlockCost)}`;
