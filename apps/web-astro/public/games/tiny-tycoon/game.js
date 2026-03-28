@@ -3561,7 +3561,7 @@
     html += `
       <div class="shop-actions">
         <div class="shop-actions-row">
-          <button class="btn" onclick="switchStore('${activeStoreId}'); showShop();" style="flex:1;">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button>
+          <button class="btn" onclick="switchStore('${activeStoreId}'); showShop();" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">▶ ${STORE_CONFIGS[activeStoreId].emoji} Play</button>
           <button class="btn btn-secondary btn-small" onclick="showStats()">📊</button>
           <button class="btn btn-secondary btn-small" onclick="showAchievements()">🏆</button>
           <button class="btn btn-secondary btn-small" onclick="showTitle()" style="opacity:0.7;">←</button>
