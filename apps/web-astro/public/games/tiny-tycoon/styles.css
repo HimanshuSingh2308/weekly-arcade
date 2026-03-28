@@ -1350,6 +1350,7 @@
       border-radius: 20px;
       font-weight: 800;
       font-size: 0.85rem;
+      white-space: nowrap;
       z-index: 300;
       animation: rushPulse 0.5s ease-in-out infinite alternate;
       box-shadow: 0 2px 10px rgba(232,115,106,0.5);

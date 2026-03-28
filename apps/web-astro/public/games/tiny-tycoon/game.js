@@ -2298,7 +2298,7 @@
       if (elapsed >= happyHourTimer) {
         happyHourActive = true;
         happyHourTimer = 15000;
-        rushBanner.textContent = '🎉 HAPPY HOUR! 2x Coins! 🎉';
+        rushBanner.textContent = '🎉 HAPPY HOUR! 2x 🎉';
         rushBanner.classList.add('visible');
         playSound('rush');
       }
@@ -2306,7 +2306,7 @@
     if (happyHourActive) {
       happyHourTimer -= dt;
       const hhSecs = Math.max(0, Math.ceil(happyHourTimer / 1000));
-      rushBanner.textContent = `🎉 HAPPY HOUR! 2x Coins! ${hhSecs}s 🎉`;
+      rushBanner.textContent = `🎉 HAPPY HOUR 2x! ${hhSecs}s`;
       if (happyHourTimer <= 0) {
         happyHourActive = false;
         rushBanner.classList.remove('visible');
@@ -2924,7 +2924,7 @@
           ${hasHub ? '<button class="btn btn-secondary btn-small" onclick="showHub()">🏢</button>' : ''}
           <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
         </div>
-        ${canPrestige ? '<button class="btn prestige-btn" onclick="showPrestigeConfirm()" style="width:100%;margin-top:0.4rem;">✨ Prestige — Reset for +' + ((prestigeLevel + 1) * 5) + '% bonus</button>' : ''}
+        ${canPrestige ? '<button class="btn prestige-btn" onclick="showPrestigeConfirm()" style="width:100%;margin-top:0.4rem;white-space:nowrap;font-size:0.8rem;">✨ Prestige (+' + ((prestigeLevel + 1) * 5) + '%)</button>' : ''}
       </div>
     `;
 
