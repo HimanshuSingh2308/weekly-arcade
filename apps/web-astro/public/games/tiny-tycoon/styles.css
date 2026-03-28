@@ -246,7 +246,7 @@
     }
     .shelf-1 { top: 3%; left: 8%; width: 28%; }
     .shelf-2 { top: 10%; right: 8%; width: 28%; }
-    .shelf-3 { top: 16%; left: 12%; width: 32%; }
+    .shelf-3 { top: 12%; left: 12%; width: 32%; }
 
     .shelf-item {
       position: absolute;
