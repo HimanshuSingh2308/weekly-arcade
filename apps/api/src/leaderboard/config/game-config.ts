@@ -233,14 +233,14 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   // Tiny Tycoon: Boba shop idle simulator — 60-second timed days
   // Max score: ~40 customers × 75 base (signature) × 2 (VIP) × 3.0 (combo) × 2 (prestige bridge) + tip = ~18,000 theoretical
   'tiny-tycoon': {
-    maxScore: 30000, // generous buffer for prestige perks + bridge multiplier
-    maxScorePerSecond: 500,
+    maxScore: 100000, // Tier 2 + prestige + bridge + events can stack high
+    maxScorePerSecond: 2000,
     minTimeMs: 55000, // days are 60 seconds, allow 5s tolerance
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
         // Max ~75 serves theoretical (60s / 0.8s fastest serve)
-        if (served !== undefined && served > 80) {
+        if (served !== undefined && served > 150) {
           return { valid: false, reason: 'Too many customers served' };
         }
         // Revenue per customer sanity check (higher with new drinks + prestige)
@@ -255,13 +255,13 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   // Tiny Tycoon: Bean & Brew (coffee store)
   // Max: ~40 customers × 65 base (affogato) × 2 (VIP) × 3.0 (combo) × 2 (bridge) = ~15,600 theoretical
   'tiny-tycoon-bean-brew': {
-    maxScore: 30000,
-    maxScorePerSecond: 500,
+    maxScore: 100000,
+    maxScorePerSecond: 2000,
     minTimeMs: 55000,
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
-        if (served !== undefined && served > 80) {
+        if (served !== undefined && served > 150) {
           return { valid: false, reason: 'Too many customers served' };
         }
       }
@@ -271,13 +271,13 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
 
   // Tiny Tycoon: Juice Junction (tropical store)
   'tiny-tycoon-juice-junction': {
-    maxScore: 35000,
-    maxScorePerSecond: 500,
+    maxScore: 100000,
+    maxScorePerSecond: 2000,
     minTimeMs: 55000,
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
-        if (served !== undefined && served > 80) {
+        if (served !== undefined && served > 150) {
           return { valid: false, reason: 'Too many customers served' };
         }
       }
@@ -288,13 +288,13 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   // Tiny Tycoon: Sweet Tooth (bakery)
   // Max: ~40 × 100 (tasting plate) × 2 × 3.0 × 2 = ~48,000 theoretical
   'tiny-tycoon-sweet-tooth': {
-    maxScore: 60000,
-    maxScorePerSecond: 800,
+    maxScore: 150000,
+    maxScorePerSecond: 3000,
     minTimeMs: 55000,
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
-        if (served !== undefined && served > 80) {
+        if (served !== undefined && served > 150) {
           return { valid: false, reason: 'Too many customers served' };
         }
       }
@@ -305,13 +305,13 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   // Tiny Tycoon: Golden Lounge (luxury bar)
   // Max: ~40 × 200 (diamond) × 2 × 3.0 × 2 = ~96,000 theoretical
   'tiny-tycoon-golden-lounge': {
-    maxScore: 120000,
-    maxScorePerSecond: 1500,
+    maxScore: 300000,
+    maxScorePerSecond: 5000,
     minTimeMs: 55000,
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
-        if (served !== undefined && served > 80) {
+        if (served !== undefined && served > 150) {
           return { valid: false, reason: 'Too many customers served' };
         }
       }
