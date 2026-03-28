@@ -2759,6 +2759,10 @@
   }
 
   function getNextGoalHint() {
+    // currentDay is already incremented when this runs (called from showDayEnd after currentDay++)
+    // So "next day to play" = currentDay, "just completed" = currentDay - 1
+    const nextDay = currentDay;
+
     // Find cheapest affordable or nearly-affordable upgrade
     let closest = null;
     let closestGap = Infinity;
@@ -2777,24 +2781,28 @@
     if (closest && closestGap < 500) {
       return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">💡 ${formatCoins(closest.gap)} more for ${closest.icon} ${closest.name} Lv${closest.level}!</div>`;
     }
-    // Check milestone proximity
+    // Check milestone proximity (nextDay is the day they'll play next)
     for (const m of MILESTONES) {
-      if (currentDay < m.day && m.day - currentDay <= 5) {
-        return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎯 Day ${m.day} milestone in ${m.day - currentDay} days! (+${formatCoins(m.bonus)} bonus)</div>`;
+      if (nextDay <= m.day && m.day - nextDay < 6) {
+        const daysLeft = m.day - nextDay + 1; // +1 because they still need to play that day
+        return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎯 Day ${m.day} milestone in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}! (+${formatCoins(m.bonus)} bonus)</div>`;
       }
     }
     // Check for upcoming drink unlocks
+    const menuBonus = upgradeLevels.premium_menu || 0;
     for (const [key, drink] of Object.entries(DRINK_TYPES)) {
-      const menuBonus = upgradeLevels.premium_menu || 0;
       const effectiveUnlock = drink.unlockDay - menuBonus;
-      if (effectiveUnlock > currentDay && effectiveUnlock <= currentDay + 3) {
+      if (effectiveUnlock > nextDay - 1 && effectiveUnlock <= nextDay + 2) {
+        if (effectiveUnlock <= nextDay) {
+          return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🆕 ${drink.emoji} ${drink.name} now available!</div>`;
+        }
         return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🆕 Day ${effectiveUnlock} unlocks ${drink.emoji} ${drink.name}!</div>`;
       }
     }
     // Check for upcoming event unlocks
-    if (currentDay < 5 && currentDay >= 3) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">⚡ Day 5 unlocks Rush Hour events!</div>`;
-    if (currentDay < 10 && currentDay >= 8) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎉 Day 10 unlocks Happy Hour events!</div>`;
-    if (currentDay < 15 && currentDay >= 13) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎩 Day 15 unlocks Critic visits & celebrities!</div>`;
+    if (nextDay >= 4 && nextDay <= 5) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">⚡ Day 5 unlocks Rush Hour events!</div>`;
+    if (nextDay >= 9 && nextDay <= 10) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎉 Day 10 unlocks Happy Hour events!</div>`;
+    if (nextDay >= 14 && nextDay <= 15) return `<div style="font-size:0.75rem;color:var(--taro);margin-top:0.5rem;">🎩 Day 15 unlocks Critic visits & celebrities!</div>`;
     return '';
   }
 
