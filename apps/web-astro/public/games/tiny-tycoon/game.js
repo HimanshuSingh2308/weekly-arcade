@@ -197,8 +197,46 @@
         localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
       } catch(e) {}
     }
+
+    // Reset all per-store runtime state
+    // VIP waiters
+    waiterState = 'idle';
+    waiterTargetCustomerId = null;
+    waiterServeTimer = 0;
+    waiterServeTime = 0;
+    extraWaiters.forEach(w => { if (w.el && w.el.parentNode) w.el.remove(); });
+    extraWaiters = [];
+
+    // Auto-serve
+    autoServing = [null, null, null, null];
+
+    // Customers
+    customers.forEach(c => { if (c.el) c.el.remove(); });
+    customers = [];
+    manualServing = null;
+
+    // Events
+    happyHourActive = false;
+    happyHourTimer = 0;
+    criticActive = false;
+    criticCustomerId = null;
+    rushActive = false;
+    grandReopeningActive = false;
+    adaptivePatienceBoost = 0;
+
+    // Combo
+    comboStreak = 0;
+    peakCombo = 0;
+    comboForgives = 0;
+
+    // Apply theme + rebuild visuals
     const root = document.documentElement;
     for (const [prop, val] of Object.entries(config.theme)) root.style.setProperty(prop, val);
+    initVipTables();
+    if (getWaiterCount() > 1) {
+      initExtraWaiters();
+      extraWaiters.forEach(w => { if (w.el) w.el.style.display = (upgradeLevels.vip_lounge || 0) > 0 ? 'block' : 'none'; });
+    }
     updateShopEnvironment();
   }
 
