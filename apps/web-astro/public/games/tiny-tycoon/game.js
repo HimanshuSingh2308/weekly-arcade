@@ -422,21 +422,37 @@
       if (!cloudState || !cloudState.additionalData) return false;
 
       const cloudEmpire = cloudState.additionalData;
+      if (!cloudEmpire || !cloudEmpire.version) return false; // Invalid cloud data
+
       const localRaw = localStorage.getItem('tt_empire');
       const localEmpire = localRaw ? JSON.parse(localRaw) : null;
 
-      // Merge strategy: use whichever has more progress (higher lifetime coins)
-      const cloudCoins = (cloudEmpire.global || {}).cumulativeStats?.totalCoinsEarned || 0;
-      const localCoins = localEmpire ? ((localEmpire.global || {}).cumulativeStats?.totalCoinsEarned || 0) : 0;
-
-      if (cloudCoins > localCoins) {
+      // New device (no local data) — always use cloud
+      if (!localEmpire || !localEmpire.version) {
         localStorage.setItem('tt_empire', JSON.stringify(cloudEmpire)); invalidateEmpireCache();
-        return true; // Cloud was newer — reload from localStorage
+        return true;
       }
-      return false; // Local is ahead or equal
+
+      // Both exist — use whichever has more progress
+      const cloudProgress = getProgressScore(cloudEmpire);
+      const localProgress = getProgressScore(localEmpire);
+
+      if (cloudProgress > localProgress) {
+        localStorage.setItem('tt_empire', JSON.stringify(cloudEmpire)); invalidateEmpireCache();
+        return true;
+      }
+      return false;
     } catch(e) {
       return false;
     }
+  }
+
+  function getProgressScore(empire) {
+    const g = empire.global || {};
+    const coins = (g.cumulativeStats || {}).totalCoinsEarned || 0;
+    const prestige = (g.prestigeLevel || 0) * 100000;
+    const stores = Object.keys(empire.stores || {}).filter(id => (empire.stores[id] || {}).unlocked).length * 50000;
+    return coins + prestige + stores;
   }
 
   function loadGame() {
