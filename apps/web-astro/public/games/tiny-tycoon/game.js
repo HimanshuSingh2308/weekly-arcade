@@ -2911,13 +2911,11 @@
 
     html += `
       <div class="shop-actions">
-        ${canPrestige
-          ? `<button class="btn prestige-btn" onclick="showPrestigeConfirm()" style="flex:1;">✨ Prestige</button>`
-          : `<button class="btn" onclick="startDay()" style="flex:1;">▶ Day ${currentDay}</button>`}
+        <button class="btn" onclick="startDay()" style="flex:1;">▶ Day ${currentDay}</button>
         ${hasHub ? '<button class="btn btn-secondary btn-small" onclick="showHub()">🏢</button>' : ''}
         <button class="btn btn-secondary btn-small" onclick="showTitle()">Menu</button>
       </div>
-      ${canPrestige ? `<div class="shop-actions-secondary"><button class="btn btn-secondary btn-small" onclick="startDay()" style="flex:1;">▶ Play Day ${currentDay} anyway</button></div>` : ''}
+      ${canPrestige ? '<div class="shop-actions-secondary"><button class="btn prestige-btn" onclick="showPrestigeConfirm()" style="width:100%;">✨ Prestige</button></div>' : ''}
     `;
 
     modal.innerHTML = html;
