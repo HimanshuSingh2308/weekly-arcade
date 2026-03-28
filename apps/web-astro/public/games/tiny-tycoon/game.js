@@ -3559,18 +3559,50 @@
 
     // CTA
     html += `
-      <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.75rem;">
-        <button class="btn" onclick="switchStore('${activeStoreId}'); showShop();" style="width:100%;">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button>
-        <div style="display:flex;gap:0.4rem;">
-          <button class="btn btn-secondary btn-small" onclick="showStats()" style="flex:1;">📊 Stats</button>
-          <button class="btn btn-secondary btn-small" onclick="showAchievements()" style="flex:1;">🏆</button>
-          <button class="btn btn-secondary btn-small" onclick="showTitle()" style="flex:1;opacity:0.7;">← Menu</button>
+      <div class="shop-actions">
+        <div class="shop-actions-row">
+          <button class="btn" onclick="switchStore('${activeStoreId}'); showShop();" style="flex:1;">▶ Play ${STORE_CONFIGS[activeStoreId].name}</button>
+          <button class="btn btn-secondary btn-small" onclick="showStats()">📊</button>
+          <button class="btn btn-secondary btn-small" onclick="showAchievements()">🏆</button>
+          <button class="btn btn-secondary btn-small" onclick="showTitle()" style="opacity:0.7;">←</button>
         </div>
       </div>
     `;
 
     modal.innerHTML = html;
     showOverlay('hubOverlay');
+    setupHubSwipe();
+  }
+
+  // Swipe gesture for Hub tabs
+  let _hubSwipeSetup = false;
+  function setupHubSwipe() {
+    if (_hubSwipeSetup) return;
+    _hubSwipeSetup = true;
+    const modal = document.getElementById('hubModal');
+    let startX = 0, startY = 0, isHorizontal = null;
+    modal.addEventListener('touchstart', (e) => {
+      if (gameState !== 'HUB') return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isHorizontal = null;
+    }, { passive: true });
+    modal.addEventListener('touchmove', (e) => {
+      if (gameState !== 'HUB' || isHorizontal === false) return;
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (isHorizontal === null && (dx > 10 || dy > 10)) isHorizontal = dx > dy * 1.2;
+      if (isHorizontal) e.preventDefault();
+    }, { passive: false });
+    modal.addEventListener('touchend', (e) => {
+      if (gameState !== 'HUB' || !isHorizontal) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) < 50) return;
+      const tabs = ['stores', 'business'];
+      const idx = tabs.indexOf(hubTab);
+      if (dx < -50 && idx < tabs.length - 1) setHubTab(tabs[idx + 1]);
+      else if (dx > 50 && idx > 0) setHubTab(tabs[idx - 1]);
+    }, { passive: true });
   }
 
   function renderHubStoresTab() {
