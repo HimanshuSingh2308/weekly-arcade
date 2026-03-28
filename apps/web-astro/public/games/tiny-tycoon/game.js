@@ -3326,9 +3326,11 @@
       if (!empire.global) empire.global = {};
       if (!empire.global.hqUpgrades) empire.global.hqUpgrades = {};
       empire.global.hqUpgrades[id] = level + 1;
-      localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      localStorage.setItem('tt_empire', JSON.stringify(empire));
     } catch(e) {}
+    invalidateEmpireCache();
     saveGame();
+    invalidateEmpireCache();
     playSound('upgrade');
     showHQ();
   }
@@ -3343,16 +3345,19 @@
     const cost = upg.costFn(level);
     if (wallet < cost) return;
     wallet -= cost;
+    // Write tier2 level directly to empire blob (not in-memory upgradeLevels)
     try {
       const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
       const store = (empire.stores || {})[activeStoreId];
       if (store) {
         if (!store.tier2Levels) store.tier2Levels = {};
         store.tier2Levels[id] = level + 1;
-        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+        localStorage.setItem('tt_empire', JSON.stringify(empire));
       }
     } catch(e) {}
+    invalidateEmpireCache();
     saveGame();
+    invalidateEmpireCache(); // Ensure fresh read for render
     playSound('upgrade');
     renderShop();
   }
@@ -3368,10 +3373,12 @@
       if (store) {
         if (!store.decorations) store.decorations = [];
         if (!store.decorations.includes(decorId)) store.decorations.push(decorId);
-        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+        localStorage.setItem('tt_empire', JSON.stringify(empire));
       }
     } catch(e) {}
+    invalidateEmpireCache();
     saveGame();
+    invalidateEmpireCache();
     playSound('upgrade');
     renderShop();
   }
