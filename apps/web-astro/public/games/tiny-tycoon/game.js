@@ -2967,7 +2967,7 @@
     html += '</div>'; // close shop-content
 
     const canPrestige = allUpgradesMaxed();
-    const hasHub = getUnlockedStores().length >= 2;
+    const hasHub = prestigeLevel >= 1 || getUnlockedStores().length >= 2;
 
     html += `
       <div class="shop-actions">
@@ -3680,7 +3680,7 @@
       <input type="checkbox" id="relaxedToggle" ${relaxedMode ? 'checked' : ''} onchange="toggleRelaxedMode(this.checked)" style="width:18px;height:18px;cursor:pointer;">
       Relaxed Mode <span style="font-size:0.75rem;opacity:0.7;">(more patience, slower spawns)</span>
     </label>`;
-    const hasMultipleStores = getUnlockedStores().length >= 2;
+    const hasMultipleStores = prestigeLevel >= 1 || getUnlockedStores().length >= 2;
     const hubBtnTitle = hasMultipleStores ? `<button class="btn btn-secondary btn-small" style="margin-top:8px;" onclick="showHub()">🏢 Hub</button>` : '';
     const continueAction = hasMultipleStores ? 'showHub()' : 'showShop()';
     btns.innerHTML = hasSave
