@@ -318,6 +318,14 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
       return { valid: true };
     },
   },
+
+  // Cricket Blitz: 3D IPL-style cricket (bat 5 overs + bowl 5 overs)
+  'cricket-blitz': {
+    maxScore: 500,           // Max ~200 batting + ~150 bowling bonus + bonuses
+    maxScorePerSecond: 5,    // Cricket is a slow-scoring game
+    minTimeMs: 60000,        // At least 1 minute for a real match
+    maxLevel: 10,            // Levels for progression
+  },
 };
 
 /**
