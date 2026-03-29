@@ -4175,15 +4175,26 @@ import * as THREE from 'three';
       if (best && el) el.textContent = `Best: ${best} pts`;
     } catch (e) {}
 
-    // How to play toggle
+    // How to play — opens as overlay, close with X or clicking "How to Play" again
     const htpBtn = $('howToPlayBtn');
     const htpPanel = $('howToPlay');
+    const htpClose = $('htpCloseBtn');
+    function closeHtp() {
+      if (htpPanel) htpPanel.classList.remove('expanded');
+      if (htpBtn) htpBtn.textContent = 'How to Play';
+    }
     if (htpBtn && htpPanel) {
       htpBtn.addEventListener('click', () => {
-        htpPanel.classList.toggle('expanded');
-        htpBtn.textContent = htpPanel.classList.contains('expanded') ? 'Hide Instructions' : 'How to Play';
+        const opening = !htpPanel.classList.contains('expanded');
+        if (opening) {
+          htpPanel.classList.add('expanded');
+          htpBtn.textContent = 'Hide Instructions';
+        } else {
+          closeHtp();
+        }
       });
     }
+    if (htpClose) htpClose.addEventListener('click', closeHtp);
 
     // Play button
     const playBtn = $('playBtn');
