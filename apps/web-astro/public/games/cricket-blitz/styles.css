@@ -785,6 +785,7 @@
 .cb-ball-dot.four { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; box-shadow: 0 0 12px rgba(255,215,0,0.5), inset 0 1px 3px rgba(255,255,255,0.3); }
 .cb-ball-dot.six { background: linear-gradient(135deg, #FF00FF, #8800FF); color: #fff; box-shadow: 0 0 12px rgba(200,0,255,0.5), inset 0 1px 3px rgba(255,255,255,0.2); }
 .cb-ball-dot.wicket { background: linear-gradient(135deg, #E8000D, #AA0008); color: #fff; box-shadow: 0 0 12px rgba(232,0,13,0.5), inset 0 1px 3px rgba(255,255,255,0.2); }
+.cb-ball-dot.wide { background: linear-gradient(135deg, #FFD700, #FFC107); color: #000; font-size: 0.55rem; box-shadow: 0 0 8px rgba(255,215,0,0.4); }
 
 .cb-stat-row {
   display: flex;
@@ -1554,6 +1555,127 @@
 }
 
 /* ---- Reduced Motion ---- */
+/* ---- Toss ---- */
+.cb-toss-modal {
+  text-align: center;
+}
+
+.cb-coin-container {
+  perspective: 600px;
+  width: 80px;
+  height: 80px;
+  margin: 20px auto;
+}
+
+.cb-coin {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cb-coin-front,
+.cb-coin-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 900;
+  backface-visibility: hidden;
+}
+
+.cb-coin-front {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  box-shadow: 0 0 20px rgba(255,215,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+}
+
+.cb-coin-back {
+  background: linear-gradient(135deg, #C0C0C0, #888);
+  color: #333;
+  transform: rotateY(180deg);
+  box-shadow: 0 0 20px rgba(192,192,192,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+}
+
+.cb-coin-heads {
+  animation: coinFlipHeads 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.cb-coin-tails {
+  animation: coinFlipTails 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes coinFlipHeads {
+  0%   { transform: rotateY(0deg); }
+  50%  { transform: rotateY(900deg); }
+  100% { transform: rotateY(1080deg); }
+}
+
+@keyframes coinFlipTails {
+  0%   { transform: rotateY(0deg); }
+  50%  { transform: rotateY(900deg); }
+  100% { transform: rotateY(1260deg); }
+}
+
+.cb-toss-choice .cb-btn-row {
+  justify-content: center;
+  gap: 12px;
+}
+
+.cb-toss-result p {
+  margin: 8px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* ---- Free Hit Badge ---- */
+.cb-freehit-badge {
+  display: none;
+  position: absolute;
+  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 14px;
+  background: linear-gradient(135deg, #FFD700, #FF4500);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  border-radius: 20px;
+  z-index: 22;
+  box-shadow: 0 0 20px rgba(255,69,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  animation: freeHitPulse 0.8s ease-in-out infinite;
+}
+
+.cb-freehit-badge.show {
+  display: block;
+}
+
+@keyframes freeHitPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255,69,0,0.5), 0 2px 8px rgba(0,0,0,0.3); transform: translateX(-50%) scale(1); }
+  50% { box-shadow: 0 0 32px rgba(255,69,0,0.8), 0 2px 16px rgba(0,0,0,0.4); transform: translateX(-50%) scale(1.05); }
+}
+
+/* ---- Super Over Modal ---- */
+.cb-super-over-modal h2 {
+  font-size: 1.5rem;
+  margin: 0 0 4px;
+}
+
+.cb-super-over-modal h3 {
+  font-size: 1.3rem;
+  animation: superOverGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes superOverGlow {
+  0% { text-shadow: 0 0 8px rgba(255,0,255,0.5); }
+  100% { text-shadow: 0 0 20px rgba(255,0,255,0.9), 0 0 40px rgba(255,0,255,0.3); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }
   .cb-btn { transition: none; }
@@ -1566,6 +1688,9 @@
   .cb-title-modal::before { animation: none; display: none; }
   .cb-powerplay-badge { animation: none; }
   .cb-combo-badge { animation: none; }
+  .cb-freehit-badge { animation: none; }
+  .cb-coin-heads, .cb-coin-tails { animation: none; }
+  .cb-super-over-modal h3 { animation: none; }
   .cb-tension-edge.active { animation: none; }
   .cb-gesture-indicator { transition: none; }
   .cb-ball-commentary { transition: none; }

@@ -172,6 +172,33 @@ import gameData from '../../data/games/cricket-blitz.json';
     </div>
   </div>
 
+  <!-- Toss Overlay -->
+  <div class="cb-overlay" id="tossOverlay" role="dialog" aria-modal="true" aria-label="Coin Toss">
+    <div class="cb-modal cb-toss-modal" id="tossModal">
+      <h2>COIN TOSS</h2>
+      <div class="cb-coin-container" id="coinContainer">
+        <div class="cb-coin" id="tossCoin">
+          <div class="cb-coin-front">H</div>
+          <div class="cb-coin-back">T</div>
+        </div>
+      </div>
+      <div class="cb-toss-result" id="tossResult" style="display:none;">
+        <p id="tossResultText"></p>
+        <div class="cb-toss-choice" id="tossChoiceButtons" style="display:none;">
+          <p style="color:var(--cb-gold);font-weight:700;margin:8px 0;">You won the toss! Choose to:</p>
+          <div class="cb-btn-row">
+            <button class="cb-btn" onclick="window._cbTossChoice('bat')">BAT FIRST</button>
+            <button class="cb-btn" onclick="window._cbTossChoice('bowl')">BOWL FIRST</button>
+          </div>
+        </div>
+        <div id="tossLostMsg" style="display:none;">
+          <p id="tossLostText" style="color:var(--cb-text-dim);margin:8px 0;"></p>
+          <button class="cb-btn" onclick="window._cbTossContinue()">CONTINUE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Between Overs Overlay -->
   <div class="cb-overlay" id="overOverlay" role="dialog" aria-modal="true" aria-label="Over summary">
     <div class="cb-modal cb-over-modal" id="overModal"></div>
@@ -296,6 +323,14 @@ import gameData from '../../data/games/cricket-blitz.json';
 
   <!-- Combo Streak Badge -->
   <div id="comboBadge" class="cb-combo-badge" aria-hidden="true"></div>
+
+  <!-- Free Hit Badge -->
+  <div id="freeHitBadge" class="cb-freehit-badge" aria-hidden="true">FREE HIT</div>
+
+  <!-- Super Over Overlay -->
+  <div class="cb-overlay" id="superOverOverlay" role="dialog" aria-modal="true" aria-label="Super Over">
+    <div class="cb-modal cb-super-over-modal" id="superOverModal"></div>
+  </div>
 
   <!-- Pause Overlay -->
   <div class="cb-overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-label="Game Paused">

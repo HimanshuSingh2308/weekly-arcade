@@ -194,6 +194,13 @@ import * as THREE from 'three';
     ]
   };
 
+  // Extended commentary pools for new features
+  COMMENTARY.wide = ["Wide ball! Easy runs for the batting side.", "That's a wide, poor line from the bowler."];
+  COMMENTARY.noBall = ["NO BALL! Free hit coming up!", "Overstepped! That's a no-ball."];
+  COMMENTARY.freeHit = ["FREE HIT! The batsman can swing freely!", "Free hit delivery - nothing to lose!"];
+  COMMENTARY.lbw = ["LBW! Plumb in front of the stumps!", "That's out LBW! The umpire raises the finger."];
+  COMMENTARY.superOver = ["SUPER OVER! This is incredible!", "We're going to a Super Over! The crowd is on its feet!"];
+
   // Bowling commentary (AI batsman perspective)
   const BOWLING_COMMENTARY = {
     dot: [
@@ -397,6 +404,23 @@ import * as THREE from 'three';
     bowlingDeliveryPhase: 'selecting', // 'selecting' | 'meter' | 'bowling' | 'result'
     bowlingResultTimer: 0,
     yorkerWickets: 0,
+    bowlingWides: 0,
+    bowlingNoBalls: 0,
+    bowlingExtras: 0,
+    battingExtras: 0,
+    freeHitNext: false,
+    bowlingDeliveryRepeatCount: {},  // track per-over delivery type counts
+    tossResult: null,     // 'won' | 'lost'
+    tossChoice: null,     // 'bat' | 'bowl'
+    battingFirst: true,   // true = player bats first (default)
+    superOver: false,
+    superOverPhase: null, // 'batting' | 'bowling' | null
+    superOverPlayerScore: 0,
+    superOverAIScore: 0,
+    superOverBalls: 0,
+    superOverWickets: 0,
+    superOverAIWickets: 0,
+    superOverBowlingBalls: 0,
     bowlingBestOverRuns: 0,
     lastTwoDeliveryFast: false,
 
@@ -2701,7 +2725,18 @@ import * as THREE from 'three';
       if (roll < cum) {
         const runs = outcomes[i];
         if (runs === -1) {
-          const outType = dir === 'defense' ? 'bowled' : (Math.random() < 0.5 ? 'caught' : 'bowled');
+          let outType;
+          if (dir === 'defense') {
+            outType = 'bowled';
+          } else {
+            const outRoll = Math.random();
+            if (outRoll < 0.5) outType = 'caught';
+            else outType = 'bowled';
+          }
+          // LBW chance: 40% of bowled dismissals when ball is on stumps and shot is mistimed
+          if (outType === 'bowled' && state.ballIsOnStumps && quality === 'mistimed' && Math.random() < 0.4) {
+            outType = 'lbw';
+          }
           return { runs: -1, type: outType };
         }
         let type = 'dot';
@@ -2836,8 +2871,8 @@ import * as THREE from 'three';
           deliveryPhase = 'idle';
           state.ballActive = false;
           if (state.wickets >= 3) {
-            // All out -- go to innings break instead of game over
-            transitionToInningsBreak();
+            // All out -- handle appropriately based on match phase
+            endGame();
           } else {
             state.waitingForNext = true;
             state.nextBallDelay = 400;
@@ -2863,7 +2898,19 @@ import * as THREE from 'three';
       state.currentOverResults.push({ runs: 0, isWicket: true, isFour: false, isSix: false });
       state.consecutiveScoringBalls = 0;
 
-      if (outcome.type === 'bowled') {
+      if (outcome.type === 'lbw') {
+        // LBW: ball hitting pad sound then ascending umpire tone
+        playTone(120, 'sine', 0.15, 0.1); // low thud (pad)
+        setTimeout(() => {
+          playTone(400, 'sine', 0.1, 0.06);
+          setTimeout(() => playTone(600, 'sine', 0.15, 0.08), 100);
+        }, 150);
+        state.postBallActive = true;
+        state.postBallType = 'wicket';
+        state.postBallTime = Date.now();
+        spawnFloatingText('LBW!', textX, textBaseY, '#FF6600', 32);
+        showBallCommentary({ runs: -1, type: 'lbw' }, false);
+      } else if (outcome.type === 'bowled') {
         playStumpsHit();
         triggerStumpScatter();
         state.postBallActive = true;
@@ -2887,7 +2934,9 @@ import * as THREE from 'three';
       cameraShake.intensity = 0.1;
 
       playCrowdReaction('groan');
-      spawnFloatingText('OUT!', textX, textBaseY, '#E8000D', 32);
+      if (outcome.type !== 'lbw') {
+        spawnFloatingText('OUT!', textX, textBaseY, '#E8000D', 32);
+      }
 
       if (!reducedMotion) gameWrap.classList.add('cb-wicket-flash');
       setTimeout(() => gameWrap.classList.remove('cb-wicket-flash'), 500);
@@ -2895,8 +2944,9 @@ import * as THREE from 'three';
       haptic([100]);
       state.comboStreak = 0;
       // Patch #24: Detailed wicket announcement
-      announceScore(`OUT! ${outcome.type}. ${3 - state.wickets} wicket${3 - state.wickets !== 1 ? 's' : ''} remaining. Score: ${state.runs} for ${state.wickets}.`);
-      showBallCommentary(outcome, false);
+      const wicketTypeLabel = outcome.type === 'lbw' ? 'LBW' : outcome.type;
+      announceScore(`OUT! ${wicketTypeLabel}. ${3 - state.wickets} wicket${3 - state.wickets !== 1 ? 's' : ''} remaining. Score: ${state.runs} for ${state.wickets}.`);
+      if (outcome.type !== 'lbw') showBallCommentary(outcome, false);
 
       if (state.wickets < 3) {
         state.newBatsmanAnim = true;
@@ -3040,6 +3090,22 @@ import * as THREE from 'three';
 
     showBallCommentary(outcome, false);
     updateHUD();
+
+    // Check if player chased down target (bowl-first mode or super over)
+    if (state.matchPhase === 'batting_chase' && state.runs >= state.target) {
+      spawnFloatingText('TARGET CHASED!', textX, textBaseY - 80, '#4CAF50', 28);
+      playCrowdReaction('roar');
+      // End batting immediately after short delay
+      setTimeout(() => {
+        state.battingScore = state.runs;
+        state.battingWickets = state.wickets;
+        state.battingFours = state.fours;
+        state.battingSixes = state.sixes;
+        state.bowlingAIScore = state._bowlFirstAIScore;
+        state.bowlingAIWickets = state._bowlFirstAIWickets;
+        endMatch();
+      }, 1000);
+    }
   }
 
   function triggerStumpScatter() {
@@ -3070,9 +3136,19 @@ import * as THREE from 'three';
     playCrowdClap();
     playUISound('overComplete');
 
+    // Super over: only 1 over, so end after first over
+    if (state.superOver && state.superOverPhase === 'batting') {
+      endGame();
+      return;
+    }
+
     if (state.oversCompleted >= 5) {
-      // Batting innings complete -- transition to innings break
-      transitionToInningsBreak();
+      // Batting innings complete -- transition to innings break or endGame
+      if (state.matchPhase === 'batting_chase') {
+        endGame();
+      } else {
+        transitionToInningsBreak();
+      }
       return;
     }
 
@@ -3197,6 +3273,125 @@ import * as THREE from 'three';
     inningsBreakOverlay.classList.add('cb-visible');
   }
 
+  // Transition from bowling-first to batting chase (bowl-first mode)
+  function transitionToBattingChase() {
+    state.phase = 'INNINGS_BREAK';
+    state.matchPhase = 'batting';
+    gameWrap.classList.remove('cb-playing');
+    gameWrap.classList.remove('cb-bowling');
+
+    // Hide bowling UI
+    if (bowlingPanel) bowlingPanel.style.display = 'none';
+    if (bowlingMeter) bowlingMeter.style.display = 'none';
+    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
+    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+
+    // The AI's score becomes the target the player needs to chase
+    // state.bowlingAIScore is what AI scored, player needs bowlingAIScore + 1
+    const aiScore = state.bowlingAIScore;
+    const aiWickets = state.bowlingAIWickets;
+
+    // Store AI batting stats
+    state.battingScore = 0; // Will be updated as player bats
+    state.battingWickets = 0;
+    state.battingFours = 0;
+    state.battingSixes = 0;
+
+    // AI's score is now the target
+    state.target = aiScore + 1;
+
+    playUISound('overComplete');
+    setNightEnvironment();
+
+    if (!inningsBreakOverlay) {
+      inningsBreakOverlay = $('inningsBreakOverlay');
+      inningsBreakModal = $('inningsBreakModal');
+    }
+
+    const oppTeam = TEAMS[state.opponentTeam];
+    inningsBreakModal.innerHTML = `
+      <h2>AI INNINGS COMPLETE</h2>
+      <div class="cb-final-score" style="font-size:2.5rem;margin:8px 0;">${aiScore} / ${aiWickets}</div>
+      <div class="cb-stats-grid" style="margin:12px 0;">
+        <div class="stat-item"><span class="stat-value">5.0</span><span class="stat-label">Overs</span></div>
+        <div class="stat-item"><span class="stat-value">${state.bowlingWides}</span><span class="stat-label">Wides</span></div>
+        <div class="stat-item"><span class="stat-value">${state.bowlingNoBalls}</span><span class="stat-label">No Balls</span></div>
+      </div>
+      ${state.bowlingExtras > 0 ? `<p style="color:var(--cb-text-dim);font-size:0.85rem;margin:4px 0;">Extras: ${state.bowlingExtras} (${state.bowlingWides}w, ${state.bowlingNoBalls}nb)</p>` : ''}
+      <p style="color:var(--cb-accent);font-size:1.1rem;font-weight:700;margin:16px 0 4px;">Chase ${aiScore + 1} to win!</p>
+      <p style="color:var(--cb-text-dim);font-size:0.85rem;margin:0 0 16px;">You need ${aiScore + 1} runs from 5 overs</p>
+      <button class="cb-btn" onclick="window._cbStartBattingChase()">START BATTING</button>
+    `;
+
+    inningsBreakOverlay.classList.add('cb-visible');
+
+    // Store the AI's first-innings score for endMatch calculations
+    state._bowlFirstAIScore = aiScore;
+    state._bowlFirstAIWickets = aiWickets;
+  }
+
+  function startBattingChase() {
+    if (!inningsBreakOverlay) return;
+    inningsBreakOverlay.classList.remove('cb-visible');
+
+    // Reset batting state
+    state.runs = 0;
+    state.wickets = 0;
+    state.totalBallsFaced = 0;
+    state.ballsInOver = 0;
+    state.oversCompleted = 0;
+    state.fours = 0;
+    state.sixes = 0;
+    state.bestOverRuns = 0;
+    state.currentOverRuns = 0;
+    state.currentOverResults = [];
+    state.consecutiveScoringBalls = 0;
+    state.currentOverScoringBalls = 0;
+    state.shotDirection = 'straight';
+    state.postBallActive = false;
+    state.stumpScatter = null;
+    state.particles = [];
+    state.floatingTexts = [];
+    state.isPowerplay = true;
+    state.comboStreak = 0;
+    state._maxCombo = 0;
+    state.newBatsmanAnim = false;
+    state.batAnimating = false;
+    state.bowlerAnimating = false;
+    deliveryPhase = 'idle';
+    deliveryTimer = 0;
+
+    // Switch phase
+    state.phase = 'BATTING';
+    state.matchPhase = 'batting_chase';
+    gameWrap.classList.add('cb-playing');
+    gameWrap.classList.remove('cb-bowling');
+
+    // Show batting HUD, hide bowling
+    hudTop.style.display = '';
+    hudBottom.style.display = '';
+    if (bowlingPanel) bowlingPanel.style.display = 'none';
+    if (bowlingMeter) bowlingMeter.style.display = 'none';
+    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
+    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+
+    // Make batting 3D objects visible
+    batsmanGroup.visible = true;
+    bowlerGroup.visible = true;
+    if (aiBatsmanGroup) aiBatsmanGroup.visible = false;
+
+    // Reset scatter
+    scatterStumps.forEach(s => scene.remove(s));
+    scatterBails.forEach(b => scene.remove(b));
+    scatterStumps = [];
+    scatterBails = [];
+
+    updateHUD();
+    generateBowlerForOver();
+    showBowlerIntro();
+    setTimeout(() => startDelivery(), 1200);
+  }
+
   function startBowlingInnings() {
     if (!inningsBreakOverlay) return;
     inningsBreakOverlay.classList.remove('cb-visible');
@@ -3221,6 +3416,11 @@ import * as THREE from 'three';
     state.yorkerWickets = 0;
     state.bowlingBestOverRuns = 0;
     state.lastTwoDeliveryFast = false;
+    state.bowlingWides = 0;
+    state.bowlingNoBalls = 0;
+    state.bowlingExtras = 0;
+    state.freeHitNext = false;
+    state.bowlingDeliveryRepeatCount = {};
     state.postBallActive = false;
     state.stumpScatter = null;
     state.particles = [];
@@ -3667,8 +3867,6 @@ import * as THREE from 'three';
   function resolveBowlingOutcome() {
     state.bowlingDeliveryPhase = 'result';
     bowlingBallActive = false;
-    state.bowlingTotalBalls++;
-    state.bowlingBallsInOver++;
 
     // Determine accuracy
     let accuracy = getMeterAccuracy();
@@ -3683,12 +3881,43 @@ import * as THREE from 'three';
       else if (accuracy === 'good') accuracy = 'bad';
     }
 
+    // --- WIDE CHECK ---
+    // Bad accuracy has 25% chance of being a wide
+    if (accuracy === 'bad' && Math.random() < 0.25) {
+      bowlingResultOutcome = { runs: 1, type: 'wide' };
+      handleBowlingOutcome(bowlingResultOutcome);
+      return;
+    }
+
+    // --- NO-BALL CHECK ---
+    // Same delivery type 4+ times in the over = 30% chance of no-ball
+    if (!state.bowlingDeliveryRepeatCount) state.bowlingDeliveryRepeatCount = {};
+    state.bowlingDeliveryRepeatCount[state.selectedDelivery] = (state.bowlingDeliveryRepeatCount[state.selectedDelivery] || 0) + 1;
+    const repeatCount = state.bowlingDeliveryRepeatCount[state.selectedDelivery];
+    let isNoBall = false;
+    if (repeatCount >= 4 && Math.random() < 0.3) {
+      isNoBall = true;
+    }
+
+    // Count the ball now (wides already returned above)
+    state.bowlingTotalBalls++;
+    state.bowlingBallsInOver++;
+
     // Pick probability table
     let probs;
     switch (accuracy) {
       case 'perfect': probs = [...AI_PROB_PERFECT]; break;
       case 'good':    probs = [...AI_PROB_GOOD]; break;
       case 'bad':     probs = [...AI_PROB_BAD]; break;
+    }
+
+    // Free hit: AI cannot be dismissed
+    if (state.freeHitNext) {
+      // Redistribute wicket probability to runs
+      const wicketProb = probs[5] || 0;
+      probs[5] = 0;
+      probs[3] += Math.floor(wicketProb / 2); // to fours
+      probs[4] += Math.ceil(wicketProb / 2);  // to sixes
     }
 
     // Delivery type bonuses
@@ -3743,6 +3972,18 @@ import * as THREE from 'three';
       }
     }
 
+    // If no-ball, mark it and add 1 run + set free hit
+    if (isNoBall) {
+      result.isNoBall = true;
+    }
+
+    // Clear free hit after this ball (unless this ball itself is a no-ball)
+    if (state.freeHitNext && !isNoBall) {
+      state.freeHitNext = false;
+      const fhBadge = $('freeHitBadge');
+      if (fhBadge) fhBadge.classList.remove('show');
+    }
+
     bowlingResultOutcome = result;
     handleBowlingOutcome(result);
   }
@@ -3750,6 +3991,63 @@ import * as THREE from 'three';
   function handleBowlingOutcome(outcome) {
     const textX = W / 2;
     const textBaseY = H * 0.4;
+
+    // --- WIDE handling ---
+    if (outcome.type === 'wide') {
+      state.bowlingWides++;
+      state.bowlingExtras++;
+      state.bowlingAIScore += 1;
+      // Don't increment ballsInOver or totalBalls -- wide doesn't count
+      state.bowlingCurrentOverResults.push({ runs: 1, isWicket: false, isFour: false, isSix: false, isWide: true });
+      spawnFloatingText('WIDE!', textX, textBaseY, '#FFD700', 28);
+      // Double beep sound
+      if (audioCtx && state.soundEnabled) {
+        playTone(500, 'sine', 0.06, 0.06);
+        setTimeout(() => playTone(500, 'sine', 0.06, 0.06), 80);
+      }
+      showBallCommentary(outcome, true);
+      updateBowlingHUD();
+      announceScore(`Wide ball! +1 run. AI: ${state.bowlingAIScore} for ${state.bowlingAIWickets}.`);
+      // Re-bowl after short delay
+      state.bowlingResultTimer = Date.now();
+      setTimeout(() => {
+        if (state.phase !== 'BOWLING') return;
+        // Check if AI chased down on the wide (only in bat-first mode)
+        if (state.battingFirst && state.bowlingAIScore >= state.battingScore + 1) {
+          endMatch();
+          return;
+        }
+        state.bowlingDeliveryPhase = 'selecting';
+        state.postBallActive = false;
+      }, 1000);
+      return;
+    }
+
+    // --- NO-BALL handling ---
+    if (outcome.isNoBall) {
+      state.bowlingNoBalls++;
+      state.bowlingExtras++;
+      state.bowlingAIScore += 1; // +1 extra for no-ball
+      state.freeHitNext = true;
+      spawnFloatingText('NO BALL!', textX, textBaseY - 40, '#FF0000', 26);
+      if (audioCtx && state.soundEnabled) {
+        playTone(300, 'sine', 0.12, 0.08);
+      }
+      showBallCommentary({ runs: 0, type: 'noBall' }, true);
+      announceScore(`No ball! Free hit next. AI: ${state.bowlingAIScore + (outcome.runs > 0 ? outcome.runs : 0)} for ${state.bowlingAIWickets}.`);
+      // Show free hit badge
+      const fhBadge = $('freeHitBadge');
+      if (fhBadge) fhBadge.classList.add('show');
+      // If the outcome was a wicket, it's void on a no-ball -- convert to dot
+      if (outcome.runs === -1) {
+        outcome = { runs: 0, type: 'dot', isNoBall: true };
+      }
+    }
+
+    // Show free hit commentary if this was a free hit ball
+    if (state.freeHitNext && !outcome.isNoBall) {
+      // The free hit delivery is being bowled -- commentary handled above
+    }
 
     if (outcome.runs === -1) {
       // WICKET
@@ -3763,11 +4061,21 @@ import * as THREE from 'three';
         if (state.yorkerWickets >= 3) checkAchievement('cb-yorker-master');
       }
 
-      if (outcome.type === 'bowled') {
+      if (outcome.type === 'lbw') {
+        // LBW sound
+        playTone(120, 'sine', 0.15, 0.1);
+        setTimeout(() => {
+          playTone(400, 'sine', 0.1, 0.06);
+          setTimeout(() => playTone(600, 'sine', 0.15, 0.08), 100);
+        }, 150);
+        spawnFloatingText('LBW!', textX, textBaseY, '#FF6600', 32);
+      } else if (outcome.type === 'bowled') {
         playStumpsHit();
         triggerStumpScatter();
+        spawnFloatingText('WICKET!', textX, textBaseY, '#4CAF50', 32);
       } else {
         playBatCrack(0);
+        spawnFloatingText('CAUGHT!', textX, textBaseY, '#4CAF50', 32);
       }
 
       // Camera shake for bowling wicket
@@ -3777,7 +4085,6 @@ import * as THREE from 'three';
       cameraShake.intensity = 0.1;
 
       playCrowdReaction('roar');
-      spawnFloatingText('WICKET!', textX, textBaseY, '#4CAF50', 32);
       spawnParticles(textX, textBaseY, 30, ['#4CAF50', '#FFD700', '#FFFFFF'], 120, 1.0);
 
       // AI bat defensive push animation
@@ -3858,8 +4165,9 @@ import * as THREE from 'three';
     showBallCommentary(outcome, true);
     updateBowlingHUD();
 
-    // Immediate check: AI chased down target — end match quickly
-    const aiChasedDown = state.bowlingAIScore >= state.battingScore + 1;
+    // Immediate check: AI chased down target — only in bat-first mode (AI chasing)
+    const aiIsChasing = state.battingFirst;
+    const aiChasedDown = aiIsChasing && state.bowlingAIScore >= state.battingScore + 1;
     const aiAllOut = state.bowlingAIWickets >= 10;
     const matchEnding = aiChasedDown || aiAllOut;
 
@@ -3873,9 +4181,13 @@ import * as THREE from 'three';
     setTimeout(() => {
       if (state.phase !== 'BOWLING') return;
 
-      // Check if AI chased down target
-      if (state.bowlingAIScore >= state.battingScore + 1) {
-        endMatch();
+      // Check if AI chased down target (only when AI is chasing in bat-first mode or super over)
+      if ((aiIsChasing || state.superOver) && state.bowlingAIScore >= state.battingScore + 1) {
+        if (state.superOver) {
+          endSuperOverMatch();
+        } else {
+          endMatch();
+        }
         return;
       }
 
@@ -3890,6 +4202,12 @@ import * as THREE from 'three';
         state.bowlingOversCompleted++;
         if (state.bowlingCurrentOverRuns > state.bowlingBestOverRuns) {
           state.bowlingBestOverRuns = state.bowlingCurrentOverRuns;
+        }
+
+        // Super over: only 1 over
+        if (state.superOver && state.bowlingOversCompleted >= 1) {
+          endSuperOverMatch();
+          return;
         }
 
         if (state.bowlingOversCompleted >= 5) {
@@ -3919,6 +4237,7 @@ import * as THREE from 'three';
     gameWrap.classList.remove('cb-bowling');
 
     const ballsHtml = state.bowlingCurrentOverResults.map(r => {
+      if (r.isWide) return '<div class="cb-ball-dot wide">Wd</div>';
       if (r.isWicket) return '<div class="cb-ball-dot wicket">W</div>';
       if (r.isSix) return '<div class="cb-ball-dot six">6</div>';
       if (r.isFour) return '<div class="cb-ball-dot four">4</div>';
@@ -3931,11 +4250,17 @@ import * as THREE from 'three';
     const runsNeeded = state.battingScore + 1 - state.bowlingAIScore;
     const reqRR = ballsLeft > 0 ? (runsNeeded / (ballsLeft / 6)).toFixed(2) : '-';
 
+    // Extras summary
+    const extrasLine = state.bowlingExtras > 0
+      ? `<div class="cb-stat-row"><span>Extras</span><span>${state.bowlingExtras} (${state.bowlingWides}w, ${state.bowlingNoBalls}nb)</span></div>`
+      : '';
+
     overModal.innerHTML = `
       <h2>End of Over ${state.bowlingOversCompleted} (Bowling)</h2>
       <div class="cb-over-summary">${ballsHtml}</div>
       <div class="cb-stat-row"><span>Runs conceded this over</span><span>${state.bowlingCurrentOverRuns}</span></div>
       <div class="cb-stat-row"><span>AI Score</span><span>${state.bowlingAIScore}/${state.bowlingAIWickets}</span></div>
+      ${extrasLine}
       <div class="cb-stat-row"><span>AI needs</span><span>${runsNeeded} from ${ballsLeft} balls</span></div>
       <div class="cb-rate-compare">
         <div class="cb-rate-item">
@@ -3974,6 +4299,7 @@ import * as THREE from 'three';
     state.bowlingCurrentOverRuns = 0;
     state.bowlingCurrentOverResults = [];
     state.deliveryTypeHistory = [];
+    state.bowlingDeliveryRepeatCount = {};
 
     state.phase = 'BOWLING';
     state.bowlingDeliveryPhase = 'selecting';
@@ -3995,6 +4321,22 @@ import * as THREE from 'three';
   // ============================================
 
   function endMatch() {
+    // If bowling first and this is the end of AI's batting (bowling phase), transition to player batting
+    if (!state.battingFirst && state.matchPhase === 'bowling' && !state.superOver) {
+      // AI just finished batting, now player bats to chase
+      transitionToBattingChase();
+      return;
+    }
+
+    // Super Over check: if tied and not already in super over
+    if (!state.superOver) {
+      const tied = state.bowlingAIScore === state.battingScore;
+      if (tied) {
+        startSuperOver();
+        return;
+      }
+    }
+
     state.phase = 'MATCH_RESULT';
     gameWrap.classList.remove('cb-playing');
     gameWrap.classList.remove('cb-bowling');
@@ -4004,6 +4346,10 @@ import * as THREE from 'three';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
     if (bowlingHudTop) bowlingHudTop.style.display = 'none';
     if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+
+    // Hide free hit badge
+    const fhBadge = $('freeHitBadge');
+    if (fhBadge) fhBadge.classList.remove('show');
 
     const playerWon = state.bowlingAIScore < state.battingScore + 1;
     const tied = state.bowlingAIScore === state.battingScore;
@@ -4093,6 +4439,7 @@ import * as THREE from 'three';
         <div class="cb-stat-row"><span>Wicket Penalty</span><span>-${wicketPenalty}</span></div>
         <div class="cb-stat-row"><span>Bowling Defense Bonus</span><span>+${bowlingBonus}</span></div>
         <div class="cb-stat-row"><span>Wickets Taken (x10)</span><span>+${wicketsBonus}</span></div>
+        ${state.bowlingExtras > 0 ? `<div class="cb-stat-row"><span>Extras (${state.bowlingWides}w, ${state.bowlingNoBalls}nb)</span><span>${state.bowlingExtras}</span></div>` : ''}
         ${economyBonus ? '<div class="cb-stat-row"><span>Economy Bonus</span><span>+20</span></div>' : ''}
         ${streakBonus > 0 ? `<div class="cb-stat-row"><span>Streak Bonus (Day ${state.loginStreak.count})</span><span>+${streakBonus}</span></div>` : ''}
         ${dailyChallengeBonus > 0 ? '<div class="cb-stat-row"><span>Daily Challenge Bonus</span><span>+25</span></div>' : ''}
@@ -4140,8 +4487,294 @@ import * as THREE from 'three';
   }
 
   function endGame() {
-    // In match mode, batting end always goes to innings break
+    if (state.superOver && state.superOverPhase === 'batting') {
+      // Super over batting done, transition to super over bowling
+      endSuperOverBatting();
+      return;
+    }
+    if (state.matchPhase === 'batting_chase') {
+      // Player was chasing (bowl-first mode). Batting is done.
+      // Save batting stats and go to match result
+      state.battingScore = state.runs;
+      state.battingWickets = state.wickets;
+      state.battingFours = state.fours;
+      state.battingSixes = state.sixes;
+      // Restore AI's bowling score for comparison
+      state.bowlingAIScore = state._bowlFirstAIScore;
+      state.bowlingAIWickets = state._bowlFirstAIWickets;
+      endMatch();
+      return;
+    }
+    // Normal bat-first mode: batting end goes to innings break -> bowling
     transitionToInningsBreak();
+  }
+
+  // ============================================
+  // SUPER OVER
+  // ============================================
+
+  function startSuperOver() {
+    state.superOver = true;
+    state.superOverPhase = 'batting';
+    // Save original match scores for result display
+    state._origBattingScore = state.battingScore;
+    state._origBowlingAIScore = state.bowlingAIScore;
+    state.superOverPlayerScore = 0;
+    state.superOverAIScore = 0;
+    state.superOverBalls = 0;
+    state.superOverWickets = 0;
+    state.superOverAIWickets = 0;
+    state.superOverBowlingBalls = 0;
+    state.phase = 'SUPER_OVER';
+
+    gameWrap.classList.remove('cb-playing');
+    gameWrap.classList.remove('cb-bowling');
+
+    // Hide bowling UI
+    if (bowlingPanel) bowlingPanel.style.display = 'none';
+    if (bowlingMeter) bowlingMeter.style.display = 'none';
+    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
+    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+
+    const soOverlay = $('superOverOverlay');
+    const soModal = $('superOverModal');
+
+    soModal.innerHTML = `
+      <h2 style="color:#FFD700;">MATCH TIED!</h2>
+      <h3 style="color:#FF00FF;margin:8px 0;">SUPER OVER!</h3>
+      <p style="color:var(--cb-text-dim);margin:0 0 16px;">${pickRandom(COMMENTARY.superOver)}</p>
+      <p style="font-size:0.9rem;color:var(--cb-text-dim);">You bat first -- score as many as you can in 6 balls!</p>
+      <button class="cb-btn" onclick="window._cbStartSuperOverBatting()">START SUPER OVER</button>
+    `;
+    soOverlay.classList.add('cb-visible');
+
+    playUISound('levelComplete');
+    playCrowdReaction('roar');
+  }
+
+  function startSuperOverBatting() {
+    const soOverlay = $('superOverOverlay');
+    soOverlay.classList.remove('cb-visible');
+
+    // Reset batting state for super over
+    state.runs = 0;
+    state.wickets = 0;
+    state.totalBallsFaced = 0;
+    state.ballsInOver = 0;
+    state.oversCompleted = 0;
+    state.fours = 0;
+    state.sixes = 0;
+    state.currentOverRuns = 0;
+    state.currentOverResults = [];
+    state.consecutiveScoringBalls = 0;
+    state.currentOverScoringBalls = 0;
+    state.shotDirection = 'straight';
+    state.postBallActive = false;
+    state.stumpScatter = null;
+    state.particles = [];
+    state.floatingTexts = [];
+    state.isPowerplay = false; // No powerplay in super over
+    state.comboStreak = 0;
+    state.newBatsmanAnim = false;
+    state.batAnimating = false;
+    state.bowlerAnimating = false;
+    state.target = 999; // Just score
+    deliveryPhase = 'idle';
+    deliveryTimer = 0;
+
+    state.superOverPhase = 'batting';
+    state.phase = 'BATTING';
+    state.matchPhase = 'batting';
+    gameWrap.classList.add('cb-playing');
+    gameWrap.classList.remove('cb-bowling');
+
+    // Show batting HUD
+    hudTop.style.display = '';
+    hudBottom.style.display = '';
+
+    // Make batting 3D objects visible
+    batsmanGroup.visible = true;
+    bowlerGroup.visible = true;
+    if (aiBatsmanGroup) aiBatsmanGroup.visible = false;
+
+    setNightEnvironment();
+
+    // Reset scatter
+    scatterStumps.forEach(s => scene.remove(s));
+    scatterBails.forEach(b => scene.remove(b));
+    scatterStumps = [];
+    scatterBails = [];
+
+    updateHUD();
+    generateBowlerForOver();
+    showBowlerIntro();
+    setTimeout(() => startDelivery(), 1200);
+  }
+
+  function endSuperOverBatting() {
+    state.superOverPlayerScore = state.runs;
+    state.superOverWickets = state.wickets;
+
+    gameWrap.classList.remove('cb-playing');
+
+    // Show transition overlay
+    const soOverlay = $('superOverOverlay');
+    const soModal = $('superOverModal');
+
+    soModal.innerHTML = `
+      <h2>YOUR SUPER OVER</h2>
+      <div class="cb-final-score" style="font-size:2.5rem;margin:8px 0;">${state.superOverPlayerScore} / ${state.superOverWickets}</div>
+      <p style="color:var(--cb-accent);font-size:1.1rem;font-weight:700;margin:16px 0 4px;">AI needs ${state.superOverPlayerScore + 1} to win!</p>
+      <p style="color:var(--cb-text-dim);font-size:0.85rem;margin:0 0 16px;">Now bowl them out!</p>
+      <button class="cb-btn" onclick="window._cbStartSuperOverBowling()">BOWL SUPER OVER</button>
+    `;
+    soOverlay.classList.add('cb-visible');
+    playUISound('overComplete');
+  }
+
+  function startSuperOverBowling() {
+    const soOverlay = $('superOverOverlay');
+    soOverlay.classList.remove('cb-visible');
+
+    state.superOverPhase = 'bowling';
+    state.phase = 'BOWLING';
+    state.matchPhase = 'bowling';
+    gameWrap.classList.add('cb-playing');
+    gameWrap.classList.add('cb-bowling');
+
+    // Set the batting score to super over score for target comparison
+    state.battingScore = state.superOverPlayerScore;
+
+    // Reset bowling state
+    state.bowlingAIScore = 0;
+    state.bowlingAIWickets = 0;
+    state.bowlingOversCompleted = 0;
+    state.bowlingBallsInOver = 0;
+    state.bowlingTotalBalls = 0;
+    state.bowlingCurrentOverRuns = 0;
+    state.bowlingCurrentOverResults = [];
+    state.selectedDelivery = 'straight';
+    state.selectedLine = 'middle';
+    state.meterActive = false;
+    state.meterPosition = 0;
+    state.meterStopped = false;
+    state.meterDirection = 1;
+    state.deliveryTypeHistory = [];
+    state.bowlingDeliveryPhase = 'selecting';
+    state.bowlingResultTimer = 0;
+    state.bowlingWides = 0;
+    state.bowlingNoBalls = 0;
+    state.bowlingExtras = 0;
+    state.freeHitNext = false;
+    state.bowlingDeliveryRepeatCount = {};
+    state.postBallActive = false;
+    state.stumpScatter = null;
+    state.particles = [];
+    state.floatingTexts = [];
+
+    // Reset scatter
+    scatterStumps.forEach(s => scene.remove(s));
+    scatterBails.forEach(b => scene.remove(b));
+    scatterStumps = [];
+    scatterBails = [];
+
+    setTwilightEnvironment();
+    buildBowlingScene();
+
+    // Show bowling UI
+    bowlingPanel = $('bowlingPanel');
+    bowlingMeter = $('bowlingMeter');
+    bowlingHudTop = $('bowlingHudTop');
+    bowlingHudBottom = $('bowlingHudBottom');
+
+    if (bowlingPanel) bowlingPanel.style.display = 'flex';
+    if (bowlingMeter) bowlingMeter.style.display = 'block';
+    if (bowlingHudTop) bowlingHudTop.style.display = 'flex';
+    if (bowlingHudBottom) bowlingHudBottom.style.display = 'flex';
+    hudTop.style.display = 'none';
+    hudBottom.style.display = 'none';
+
+    // Ensure battingFirst is true so "AI chased" logic works
+    state.battingFirst = true;
+
+    updateBowlingHUD();
+  }
+
+  function endSuperOverMatch() {
+    state.superOverAIScore = state.bowlingAIScore;
+    state.superOverAIWickets = state.bowlingAIWickets;
+
+    // Determine result
+    const playerWon = state.superOverPlayerScore > state.superOverAIScore;
+    const tied = state.superOverPlayerScore === state.superOverAIScore;
+
+    // Restore original match scores for display
+    state.battingScore = state._origBattingScore || state.battingScore;
+    state.bowlingAIScore = state._origBowlingAIScore || state.bowlingAIScore;
+
+    state.phase = 'MATCH_RESULT';
+    gameWrap.classList.remove('cb-playing');
+    gameWrap.classList.remove('cb-bowling');
+
+    if (bowlingPanel) bowlingPanel.style.display = 'none';
+    if (bowlingMeter) bowlingMeter.style.display = 'none';
+    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
+    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+
+    const fhBadge = $('freeHitBadge');
+    if (fhBadge) fhBadge.classList.remove('show');
+
+    if (!matchResultOverlay) {
+      matchResultOverlay = $('matchResultOverlay');
+      matchResultModal = $('matchResultModal');
+    }
+
+    let heading, subText;
+    if (tied) {
+      heading = 'SHARED TROPHY!';
+      subText = `Super Over also tied at ${state.superOverPlayerScore}! What an incredible match!`;
+      playUISound('levelComplete');
+    } else if (playerWon) {
+      heading = 'YOU WIN!';
+      subText = `Won the Super Over! You: ${state.superOverPlayerScore} - AI: ${state.superOverAIScore}`;
+      playUISound('levelComplete');
+      spawnConfetti();
+    } else {
+      heading = 'AI WINS';
+      subText = `AI won the Super Over: ${state.superOverAIScore} - ${state.superOverPlayerScore}`;
+      playUISound('gameOver');
+    }
+
+    // Calculate a basic score for super over matches
+    const finalScore = Math.max(0, state.battingScore + (playerWon ? 50 : 0) + state.superOverPlayerScore * 5);
+    state.lastFinalScore = finalScore;
+
+    if (playerWon) checkAchievement('cb-full-match-win');
+    submitMatchScore(finalScore, playerWon, tied);
+
+    matchResultModal.innerHTML = `
+      <h2>${heading}</h2>
+      <p style="color:var(--cb-text-dim);margin:0 0 8px;">${subText}</p>
+      ${playerWon ? '<div style="font-size:2rem;margin:8px 0;">&#127942;</div>' : tied ? '<div style="font-size:2rem;margin:8px 0;">&#129309;</div>' : ''}
+      <div class="cb-stats-grid" style="margin:16px 0;">
+        <div class="stat-item"><span class="stat-value">${state.battingScore}</span><span class="stat-label">Your Innings</span></div>
+        <div class="stat-item"><span class="stat-value">${state.bowlingAIScore}</span><span class="stat-label">AI Innings</span></div>
+      </div>
+      <h3 style="color:#FFD700;margin:12px 0 4px;">Super Over</h3>
+      <div class="cb-stats-grid" style="margin:8px 0;">
+        <div class="stat-item"><span class="stat-value">${state.superOverPlayerScore}/${state.superOverWickets}</span><span class="stat-label">Your SO</span></div>
+        <div class="stat-item"><span class="stat-value">${state.superOverAIScore}/${state.superOverAIWickets}</span><span class="stat-label">AI SO</span></div>
+      </div>
+      <div class="cb-score-breakdown">
+        <div class="cb-stat-row cb-score-total"><span>Total Score</span><span>${finalScore}</span></div>
+      </div>
+      <div class="cb-btn-row">
+        <button class="cb-btn" onclick="window._cbPlayAgain()">PLAY AGAIN</button>
+        <button class="cb-share-btn" onclick="window._cbShare()">&#128279; Share</button>
+      </div>
+    `;
+
+    matchResultOverlay.classList.add('cb-visible');
   }
 
   function animateScoreCountUp(target) {
@@ -4193,14 +4826,20 @@ import * as THREE from 'three';
     if (!bht || !bhb) return;
 
     const overs = `${state.bowlingOversCompleted}.${state.bowlingBallsInOver}/5`;
-    const aiTarget = state.battingScore + 1;
-    const runsNeeded = aiTarget - state.bowlingAIScore;
-
     const se = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
     se('bowlingOvers', overs);
     se('bowlingAIScore', `${state.bowlingAIScore}/${state.bowlingAIWickets}`);
-    se('bowlingTarget', `Target: ${aiTarget}`);
-    se('bowlingNeeded', `Need: ${Math.max(0, runsNeeded)}`);
+
+    if (!state.battingFirst && state.matchPhase === 'bowling') {
+      // Bowl-first: AI bats first, no target -- just scoring freely
+      se('bowlingTarget', '1st Innings');
+      se('bowlingNeeded', `Score: ${state.bowlingAIScore}`);
+    } else {
+      const aiTarget = state.battingScore + 1;
+      const runsNeeded = aiTarget - state.bowlingAIScore;
+      se('bowlingTarget', `Target: ${aiTarget}`);
+      se('bowlingNeeded', `Need: ${Math.max(0, runsNeeded)}`);
+    }
 
     const deliveryLabel = DELIVERY_LABELS[state.selectedDelivery] || 'Straight';
     const lineLabel = state.selectedLine.charAt(0).toUpperCase() + state.selectedLine.slice(1);
@@ -4223,11 +4862,22 @@ import * as THREE from 'three';
         btn.classList.toggle('selected', btn.dataset.line === state.selectedLine);
       });
     }
+
+    // Free hit badge visibility
+    const fhBadge = $('freeHitBadge');
+    if (fhBadge) fhBadge.classList.toggle('show', !!state.freeHitNext);
   }
 
   function updateHUD() {
     hudOvers.textContent = `${state.oversCompleted}.${state.ballsInOver}/5`;
-    hudTarget.textContent = '5 overs';
+    if (state.superOver) {
+      hudTarget.textContent = 'SUPER OVER';
+    } else if (state.matchPhase === 'batting_chase') {
+      const needed = Math.max(0, state.target - state.runs);
+      hudTarget.textContent = `Need: ${needed}`;
+    } else {
+      hudTarget.textContent = '5 overs';
+    }
     hudRuns.textContent = state.runs;
     hudFours.textContent = state.fours;
     hudSixes.textContent = state.sixes;
@@ -4281,8 +4931,14 @@ import * as THREE from 'three';
     if (!el) return;
     const pool = isBowling ? BOWLING_COMMENTARY : COMMENTARY;
     let text = '';
-    if (outcome.runs === -1) {
+    if (outcome.runs === -1 && outcome.type === 'lbw') {
+      text = pickRandom(COMMENTARY.lbw || pool.wicket || []);
+    } else if (outcome.runs === -1) {
       text = pickRandom(pool.wicket || []);
+    } else if (outcome.type === 'wide') {
+      text = pickRandom(COMMENTARY.wide || []);
+    } else if (outcome.type === 'noBall') {
+      text = pickRandom(COMMENTARY.noBall || []);
     } else if (outcome.runs === 6 || outcome.type === 'six') {
       text = pickRandom(pool.six || []);
     } else if (outcome.runs === 4 || outcome.type === 'four') {
@@ -4514,9 +5170,85 @@ import * as THREE from 'three';
 
     checkTeamsAchievement();
 
-    state.matchPhase = 'batting';
+    titleOverlay.classList.remove('cb-visible');
+
+    // Show toss
+    showToss();
+  }
+
+  function showToss() {
+    state.phase = 'TOSS';
+    const tossOverlay = $('tossOverlay');
+    const tossCoin = $('tossCoin');
+    const tossResult = $('tossResult');
+    const tossResultText = $('tossResultText');
+    const tossChoiceButtons = $('tossChoiceButtons');
+    const tossLostMsg = $('tossLostMsg');
+    const tossLostText = $('tossLostText');
+
+    // Reset
+    tossResult.style.display = 'none';
+    tossChoiceButtons.style.display = 'none';
+    tossLostMsg.style.display = 'none';
+    tossCoin.className = 'cb-coin';
+
+    tossOverlay.classList.add('cb-visible');
+
+    // Animate coin flip
+    const playerWins = Math.random() < 0.5;
+    const coinResult = playerWins ? 'Heads' : 'Tails';
+
+    // Add flip animation class
+    setTimeout(() => {
+      tossCoin.classList.add(playerWins ? 'cb-coin-heads' : 'cb-coin-tails');
+    }, 100);
+
+    // Show result after animation
+    setTimeout(() => {
+      tossResult.style.display = 'block';
+      if (playerWins) {
+        state.tossResult = 'won';
+        tossResultText.textContent = `It's ${coinResult}! You won the toss!`;
+        tossResultText.style.color = '#4CAF50';
+        tossChoiceButtons.style.display = 'block';
+        playUISound('levelComplete');
+      } else {
+        state.tossResult = 'lost';
+        // Opponent chooses -- 70% they choose to bat
+        const oppBats = Math.random() < 0.7;
+        state.tossChoice = oppBats ? 'bowl' : 'bat'; // if opp bats, player bowls
+        state.battingFirst = oppBats ? false : true;
+        const oppTeam = TEAMS[state.opponentTeam];
+        tossResultText.textContent = `It's ${coinResult}! ${oppTeam.name} won the toss.`;
+        tossResultText.style.color = '#E8000D';
+        tossLostText.textContent = oppBats
+          ? `${oppTeam.name} choose to BAT first. You will bowl first!`
+          : `${oppTeam.name} choose to BOWL first. You will bat first!`;
+        tossLostMsg.style.display = 'block';
+        playUISound('select');
+      }
+    }, 1500);
+  }
+
+  function handleTossChoice(choice) {
+    state.tossChoice = choice;
+    state.battingFirst = (choice === 'bat');
+    const tossOverlay = $('tossOverlay');
+    tossOverlay.classList.remove('cb-visible');
+    playUISound('confirm');
+    beginMatch();
+  }
+
+  function handleTossContinue() {
+    const tossOverlay = $('tossOverlay');
+    tossOverlay.classList.remove('cb-visible');
+    playUISound('confirm');
+    beginMatch();
+  }
+
+  function beginMatch() {
+    // Common match initialization
     state.level = 1;
-    state.target = 999; // No target in match mode batting -- just score as much as possible
     state.runs = 0;
     state.wickets = 0;
     state.totalBallsFaced = 0;
@@ -4543,6 +5275,9 @@ import * as THREE from 'three';
     state.isPowerplay = true;
     state.crowdWaveActive = false;
     state.tensionActive = false;
+    state.battingExtras = 0;
+    state.superOver = false;
+    state.superOverPhase = null;
     deliveryPhase = 'idle';
     deliveryTimer = 0;
 
@@ -4551,10 +5286,6 @@ import * as THREE from 'three';
 
     const tensionEdge = $('tensionEdge');
     if (tensionEdge) tensionEdge.classList.remove('active');
-
-    titleOverlay.classList.remove('cb-visible');
-    state.phase = 'BATTING';
-    gameWrap.classList.add('cb-playing');
 
     // Rebuild crowd with team colors
     if (crowdMesh) {
@@ -4570,10 +5301,77 @@ import * as THREE from 'three';
     scatterStumps = [];
     scatterBails = [];
 
-    updateHUD();
-    generateBowlerForOver();
-    showBowlerIntro();
-    setTimeout(() => startDelivery(), 1200);
+    if (state.battingFirst) {
+      // Player bats first (original flow)
+      state.matchPhase = 'batting';
+      state.target = 999;
+      state.phase = 'BATTING';
+      gameWrap.classList.add('cb-playing');
+      updateHUD();
+      generateBowlerForOver();
+      showBowlerIntro();
+      setTimeout(() => startDelivery(), 1200);
+    } else {
+      // Player bowls first
+      state.matchPhase = 'bowling';
+      state.battingScore = 0;
+      state.battingWickets = 0;
+      state.battingFours = 0;
+      state.battingSixes = 0;
+      // AI bats first, so show bowling directly
+      // We set a temporary batting score of 999 so AI chases nothing initially
+      // After bowling, player bats to chase
+      state.battingScore = 999; // placeholder, AI just scores freely
+      buildBowlingScene();
+      state.phase = 'BOWLING';
+      gameWrap.classList.add('cb-playing');
+      gameWrap.classList.add('cb-bowling');
+
+      // Reset bowling state
+      state.bowlingAIScore = 0;
+      state.bowlingAIWickets = 0;
+      state.bowlingOversCompleted = 0;
+      state.bowlingBallsInOver = 0;
+      state.bowlingTotalBalls = 0;
+      state.bowlingCurrentOverRuns = 0;
+      state.bowlingCurrentOverResults = [];
+      state.selectedDelivery = 'straight';
+      state.selectedLine = 'middle';
+      state.meterActive = false;
+      state.meterPosition = 0;
+      state.meterStopped = false;
+      state.meterDirection = 1;
+      state.deliveryTypeHistory = [];
+      state.bowlingDeliveryPhase = 'selecting';
+      state.bowlingResultTimer = 0;
+      state.yorkerWickets = 0;
+      state.bowlingBestOverRuns = 0;
+      state.lastTwoDeliveryFast = false;
+      state.bowlingWides = 0;
+      state.bowlingNoBalls = 0;
+      state.bowlingExtras = 0;
+      state.freeHitNext = false;
+      state.bowlingDeliveryRepeatCount = {};
+
+      setTwilightEnvironment();
+
+      // Show bowling UI, hide batting UI
+      bowlingPanel = $('bowlingPanel');
+      bowlingMeter = $('bowlingMeter');
+      bowlingMeterFill = $('bowlingMeterFill');
+      bowlingMeterIndicator = $('bowlingMeterIndicator');
+      bowlingHudTop = $('bowlingHudTop');
+      bowlingHudBottom = $('bowlingHudBottom');
+
+      if (bowlingPanel) bowlingPanel.style.display = 'flex';
+      if (bowlingMeter) bowlingMeter.style.display = 'block';
+      if (bowlingHudTop) bowlingHudTop.style.display = 'flex';
+      if (bowlingHudBottom) bowlingHudBottom.style.display = 'flex';
+      hudTop.style.display = 'none';
+      hudBottom.style.display = 'none';
+
+      updateBowlingHUD();
+    }
   }
 
   function resetToTitle() {
@@ -4586,6 +5384,15 @@ import * as THREE from 'three';
     overOverlay.classList.remove('cb-visible');
     if (inningsBreakOverlay) inningsBreakOverlay.classList.remove('cb-visible');
     if (matchResultOverlay) matchResultOverlay.classList.remove('cb-visible');
+    const tossOverlay = $('tossOverlay');
+    if (tossOverlay) tossOverlay.classList.remove('cb-visible');
+    const soOverlay = $('superOverOverlay');
+    if (soOverlay) soOverlay.classList.remove('cb-visible');
+    const fhBadge = $('freeHitBadge');
+    if (fhBadge) fhBadge.classList.remove('show');
+    state.superOver = false;
+    state.superOverPhase = null;
+    state.battingFirst = true;
     titleOverlay.classList.add('cb-visible');
     deliveryPhase = 'idle';
     state.ballActive = false;
@@ -4710,6 +5517,21 @@ import * as THREE from 'three';
       return;
     }
 
+    if (state.phase === 'TOSS') {
+      // Toss handled by buttons, no keyboard shortcuts needed
+      return;
+    }
+
+    if (state.phase === 'SUPER_OVER') {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        // The super over overlay has a button, Enter advances
+        if (state.superOverPhase === 'batting') window._cbStartSuperOverBatting();
+        else if (state.superOverPhase === 'bowling') window._cbStartSuperOverBowling();
+      }
+      return;
+    }
+
     if (state.phase === 'BETWEEN_OVERS') {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -4731,7 +5553,11 @@ import * as THREE from 'three';
     if (state.phase === 'INNINGS_BREAK') {
       if (e.key === 'Enter') {
         e.preventDefault();
-        window._cbStartBowling();
+        if (state.matchPhase === 'batting') {
+          window._cbStartBattingChase();
+        } else {
+          window._cbStartBowling();
+        }
       }
       return;
     }
@@ -5079,6 +5905,30 @@ import * as THREE from 'three';
     } else if (state.bowlingDeliveryPhase === 'meter') {
       stopBowlingMeter();
     }
+  };
+
+  window._cbTossChoice = function(choice) {
+    if (state.phase !== 'TOSS') return;
+    handleTossChoice(choice);
+  };
+
+  window._cbTossContinue = function() {
+    if (state.phase !== 'TOSS') return;
+    handleTossContinue();
+  };
+
+  window._cbStartBattingChase = function() {
+    if (state.phase !== 'INNINGS_BREAK') return;
+    startBattingChase();
+  };
+
+  window._cbStartSuperOverBatting = function() {
+    if (state.phase !== 'SUPER_OVER') return;
+    startSuperOverBatting();
+  };
+
+  window._cbStartSuperOverBowling = function() {
+    startSuperOverBowling();
   };
 
   window._cbPlayAgain = function() {
