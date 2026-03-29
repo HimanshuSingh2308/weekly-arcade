@@ -417,7 +417,87 @@ import * as THREE from 'three';
 
     // Scene
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x1a0a3e, 0.008);
+    scene.fog = new THREE.FogExp2(0x0a1628, 0.006);
+
+    // Sky dome
+    (function buildSkyDome() {
+      const skyGeo = new THREE.SphereGeometry(200, 32, 32);
+      // Custom shader for gradient sky
+      const skyMat = new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        uniforms: {},
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPos.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            float height = normalize(vWorldPosition).y;
+            // Bottom: dark green horizon
+            vec3 horizon = vec3(0.05, 0.12, 0.04);
+            // Warm glow near horizon (stadium light pollution)
+            vec3 warmGlow = vec3(0.14, 0.10, 0.04);
+            // Middle: deep navy
+            vec3 midSky = vec3(0.04, 0.086, 0.157);
+            // Top: dark blue-black
+            vec3 topSky = vec3(0.02, 0.05, 0.1);
+
+            vec3 color;
+            if (height < 0.0) {
+              color = horizon;
+            } else if (height < 0.08) {
+              float t = height / 0.08;
+              color = mix(horizon, warmGlow, t);
+            } else if (height < 0.2) {
+              float t = (height - 0.08) / 0.12;
+              color = mix(warmGlow, midSky, t);
+            } else {
+              float t = clamp((height - 0.2) / 0.6, 0.0, 1.0);
+              color = mix(midSky, topSky, t);
+            }
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `
+      });
+      const skyDome = new THREE.Mesh(skyGeo, skyMat);
+      scene.add(skyDome);
+
+      // Stars (upper hemisphere only)
+      const starCount = 200;
+      const starPositions = new Float32Array(starCount * 3);
+      for (let i = 0; i < starCount; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI * 0.45; // upper hemisphere
+        const r = 195;
+        starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+        starPositions[i * 3 + 1] = r * Math.cos(phi);
+        starPositions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+      }
+      const starGeo = new THREE.BufferGeometry();
+      starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+      const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, sizeAttenuation: true });
+      scene.add(new THREE.Points(starGeo, starMat));
+
+      // Crescent moon
+      const moonGeo = new THREE.CircleGeometry(2, 32);
+      const moonMat = new THREE.MeshBasicMaterial({ color: 0xF5F0D0, transparent: true, opacity: 0.9 });
+      const moon = new THREE.Mesh(moonGeo, moonMat);
+      moon.position.set(60, 140, 80);
+      moon.lookAt(0, 0, 0);
+      scene.add(moon);
+      // Dark circle to make crescent shape
+      const crescentGeo = new THREE.CircleGeometry(1.8, 32);
+      const crescentMat = new THREE.MeshBasicMaterial({ color: 0x050d1a });
+      const crescent = new THREE.Mesh(crescentGeo, crescentMat);
+      crescent.position.set(61, 140.5, 80);
+      crescent.lookAt(0, 0, 0);
+      scene.add(crescent);
+    })();
 
     // Camera
     camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
@@ -480,12 +560,29 @@ import * as THREE from 'three';
 
   // ---- Ground ----
   function buildGround() {
-    const geo = new THREE.CircleGeometry(80, 64);
-    const mat = new THREE.MeshLambertMaterial({ color: 0x2d8a1e });
-    ground = new THREE.Mesh(geo, mat);
+    // Outer darker ground
+    const outerGeo = new THREE.CircleGeometry(80, 64);
+    const outerMat = new THREE.MeshLambertMaterial({ color: 0x1e6b14 });
+    ground = new THREE.Mesh(outerGeo, outerMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = 0;
     scene.add(ground);
+
+    // Inner lighter ground (near pitch)
+    const innerGeo = new THREE.CircleGeometry(30, 48);
+    const innerMat = new THREE.MeshLambertMaterial({ color: 0x34a024 });
+    const innerGround = new THREE.Mesh(innerGeo, innerMat);
+    innerGround.rotation.x = -Math.PI / 2;
+    innerGround.position.set(0, 0.005, 11);
+    scene.add(innerGround);
+
+    // 30-yard circle marking
+    const innerRingGeo = new THREE.RingGeometry(29.8, 30.1, 64);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+    const innerRing = new THREE.Mesh(innerRingGeo, ringMat);
+    innerRing.rotation.x = -Math.PI / 2;
+    innerRing.position.set(0, 0.02, 11);
+    scene.add(innerRing);
   }
 
   // ---- Pitch Strip ----
@@ -698,13 +795,37 @@ import * as THREE from 'three';
   let fielderMeshes = [];
 
   function buildFielders() {
-    const geo = new THREE.SphereGeometry(0.3, 8, 6);
+    const skinColor = 0xdba67a;
     FIELDER_POSITIONS.forEach(pos => {
-      const mat = new THREE.MeshLambertMaterial({ color: 0x666666 });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(pos.x, 0.3, pos.z);
-      scene.add(mesh);
-      fielderMeshes.push(mesh);
+      const group = new THREE.Group();
+
+      // Body (cricket whites torso)
+      const bodyGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.6, 6);
+      const bodyMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.6;
+      group.add(body);
+
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.1, 8, 6);
+      const headMat = new THREE.MeshLambertMaterial({ color: skinColor });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 1.0;
+      group.add(head);
+
+      // Legs
+      const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 4);
+      const legMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
+      const legL = new THREE.Mesh(legGeo, legMat);
+      legL.position.set(-0.06, 0.15, 0);
+      group.add(legL);
+      const legR = new THREE.Mesh(legGeo, legMat);
+      legR.position.set(0.06, 0.15, 0);
+      group.add(legR);
+
+      group.position.set(pos.x, 0, pos.z);
+      scene.add(group);
+      fielderMeshes.push(group);
     });
   }
 
@@ -712,7 +833,12 @@ import * as THREE from 'three';
     if (!fielderMeshes.length) return;
     const oppTeam = state.opponentTeam ? TEAMS[state.opponentTeam] : null;
     const color = new THREE.Color(oppTeam ? oppTeam.primary : '#666666');
-    fielderMeshes.forEach(m => m.material.color.copy(color));
+    fielderMeshes.forEach(group => {
+      // Body is the first child mesh in each fielder group
+      if (group.children && group.children[0]) {
+        group.children[0].material.color.copy(color);
+      }
+    });
   }
 
   // ---- Batsman ----
@@ -3075,16 +3201,17 @@ import * as THREE from 'three';
     const aiTarget = state.battingScore + 1;
     const runsNeeded = aiTarget - state.bowlingAIScore;
 
-    bht.querySelector('#bowlingOvers').textContent = overs;
-    bht.querySelector('#bowlingAIScore').textContent = `${state.bowlingAIScore}/${state.bowlingAIWickets}`;
-    bht.querySelector('#bowlingTarget').textContent = `Target: ${aiTarget}`;
+    const se = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
+    se('bowlingOvers', overs);
+    se('bowlingAIScore', `${state.bowlingAIScore}/${state.bowlingAIWickets}`);
+    se('bowlingTarget', `Target: ${aiTarget}`);
+    se('bowlingNeeded', `Need: ${Math.max(0, runsNeeded)}`);
 
     const deliveryLabel = DELIVERY_LABELS[state.selectedDelivery] || 'Straight';
     const lineLabel = state.selectedLine.charAt(0).toUpperCase() + state.selectedLine.slice(1);
 
-    bhb.querySelector('#bowlingDeliveryType').textContent = deliveryLabel;
-    bhb.querySelector('#bowlingLine').textContent = lineLabel;
-    bhb.querySelector('#bowlingNeeded').textContent = `Need: ${Math.max(0, runsNeeded)}`;
+    se('bowlingDeliveryType', deliveryLabel);
+    se('bowlingLine', lineLabel);
 
     // Update delivery panel selection
     const panel = $('bowlingPanel');
@@ -3202,7 +3329,7 @@ import * as THREE from 'three';
 
     try {
       if (window.apiClient) {
-        window.apiClient.unlockAchievement(id, 'cricket-blitz');
+        window.apiClient.unlockAchievement(id, 'cricket-blitz').catch(() => {});
       }
     } catch (e) {}
   }
