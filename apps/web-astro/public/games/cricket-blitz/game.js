@@ -52,7 +52,9 @@ import * as THREE from 'three';
     'cb_clean_sweep':      { name: 'Clean Sweep',        desc: 'Win by 30+ runs margin',                  xp: 100 },
     'cb_yorker_master':    { name: 'Yorker Master',      desc: 'Take 3 wickets with yorkers',             xp: 75 },
     'cb_death_over_six':   { name: 'Death Over Hero',    desc: 'Hit a six in the death over',             xp: 50 },
-    'cb_in_the_zone':      { name: 'In The Zone',        desc: 'Reach 90+ confidence',                    xp: 75 }
+    'cb_in_the_zone':      { name: 'In The Zone',        desc: 'Reach 90+ confidence',                    xp: 75 },
+    'cb_drs_hero':         { name: 'DRS Hero',           desc: 'Successfully overturn an LBW with DRS',  xp: 75 },
+    'cb_run_out':          { name: 'Direct Hit',         desc: 'Get a run-out while bowling',            xp: 50 }
   };
 
   // Patch #19: Bat skins
@@ -213,6 +215,8 @@ import * as THREE from 'three';
   COMMENTARY.superOver = ["SUPER OVER! This is incredible!", "We're going to a Super Over! The crowd is on its feet!"];
   COMMENTARY.caught_behind = ["Edge and taken! The keeper does the job!", "Thin edge, and the keeper pouches it!", "What a catch behind the stumps!"];
   COMMENTARY.stumped = ["Stumped! Quick work by the keeper!", "Out of his crease and stumped!", "Lightning reflexes from the keeper — STUMPED!"];
+  COMMENTARY.runout = ["Direct hit! Run out!", "What a throw from the deep! He's gone!", "Run out! Brilliant fielding!", "Sharp throw and the bails are off — RUN OUT!"];
+  COMMENTARY.pitch_crack = ["The pitch is starting to break up!", "Cracks appearing on the surface — this could get tricky for the batsmen.", "Variable bounce now — the pitch is deteriorating."];
 
   // Bowling commentary (AI batsman perspective)
   const BOWLING_COMMENTARY = {
@@ -248,6 +252,11 @@ import * as THREE from 'three';
       "GONE! Brilliant bowling!",
       "Wicket! A crucial breakthrough!",
       "OUT! The batsman has to walk!"
+    ],
+    runout: [
+      "Direct hit from the field! Run out!",
+      "Great throw, run out! The AI batsman is short of the crease!",
+      "RUN OUT! Superb fielding effort!"
     ]
   };
 
@@ -477,7 +486,17 @@ import * as THREE from 'three';
     wagonWheelShots: [],
     overRunHistory: [],
     matchPhaseLabel: 'POWERPLAY',
-    matchPhaseColor: '#FFD700'
+    matchPhaseColor: '#FFD700',
+
+    // Phase 2 Realism Features
+    drsAvailable: true,
+    pendingLBW: false,
+    pendingOutcome: null,
+    drsTimeout: null,
+    pitchDeteriorated: false,
+    pitchCracks: [],
+    timeoutAvailable: true,
+    timeoutUsed: false
   };
 
   // ============================================
@@ -3162,6 +3181,12 @@ import * as THREE from 'three';
       state.timingGood = Math.max(60, state.timingGood - 10);
     }
 
+    // Feature 11: Pitch deterioration — bouncers have 10% chance of extra bounce
+    if (state.pitchDeteriorated && deliveryType === 'bouncer' && Math.random() < 0.10) {
+      state.timingPerfect = Math.max(15, state.timingPerfect - 15);
+      state.timingGood = Math.max(55, state.timingGood - 15);
+    }
+
     // Feature 4: Track bowler consecutive same type
     if (state.lastDeliveryType === deliveryType) {
       state.bowlerConsecutiveSameType++;
@@ -3238,6 +3263,13 @@ import * as THREE from 'three';
       case 'mistimed': probs = PROB_MISTIMED[dir]; break;
     }
 
+    // Feature 11: Pitch deterioration — spinners get +10% wicket on mistimed
+    if (state.pitchDeteriorated && state.bowlerType === 'spinner' && quality === 'mistimed') {
+      probs = [...probs];
+      probs[6] = Math.min(80, probs[6] + 10); // +10% wicket
+      probs[0] = Math.max(0, probs[0] - 10);
+    }
+
     const roll = Math.random() * 100;
     let cum = 0;
     const outcomes = [0, 1, 2, 3, 4, 6, -1];
@@ -3262,7 +3294,7 @@ import * as THREE from 'three';
           if (outType === 'caught' && state.ballDeliveryType !== 'bouncer' && Math.random() < 0.3) {
             outType = 'caught_behind';
           }
-          return { runs: -1, type: outType };
+          return { runs: -1, type: outType, _quality: quality };
         }
         let type = 'dot';
         if (runs === 1) type = 'single';
@@ -3270,10 +3302,10 @@ import * as THREE from 'three';
         else if (runs === 3) type = 'three';
         else if (runs === 4) type = 'four';
         else if (runs === 6) type = 'six';
-        return { runs, type };
+        return { runs, type, _quality: quality };
       }
     }
-    return { runs: 0, type: 'dot' };
+    return { runs: 0, type: 'dot', _quality: quality };
   }
 
   // ============================================
@@ -3413,9 +3445,38 @@ import * as THREE from 'three';
     state.ballsInOver++;
     stopBallApproach();
 
+    // Feature 11: Pitch deterioration check
+    if (state.totalBallsFaced >= 15 && !state.pitchDeteriorated) {
+      state.pitchDeteriorated = true;
+      addPitchCracks();
+      showBallCommentary({ type: 'pitch_crack' }, false);
+    }
+
     // Use center-screen coords for floating text (relative to H)
     const textX = W / 2;
     const textBaseY = H * 0.4;
+
+    // Feature 9: DRS intercept for LBW during batting
+    if (outcome.runs === -1 && outcome.type === 'lbw' && state.drsAvailable &&
+        (state.matchPhase === 'batting' || state.matchPhase === 'batting_chase')) {
+      state.pendingLBW = true;
+      state.pendingOutcome = outcome;
+      // Pause delivery progression while DRS is active
+      deliveryPhase = 'idle';
+      state.waitingForNext = false;
+      showDRSPrompt();
+      return;
+    }
+
+    // Feature 10: Run-out on doubles/triples
+    if (outcome.runs === 2 || outcome.runs === 3) {
+      const runoutChance = (outcome.runs === 2 ? 0.04 : 0.08) + (outcome._quality === 'mistimed' ? 0.03 : 0);
+      if (Math.random() < runoutChance) {
+        // Runs still count, but wicket is lost
+        processRunOut(outcome);
+        return;
+      }
+    }
 
     if (outcome.runs === -1) {
       // WICKET
@@ -3700,6 +3761,262 @@ import * as THREE from 'three';
   }
 
   // ============================================
+  // FEATURE 9: DRS REVIEW
+  // ============================================
+
+  function showDRSPrompt() {
+    const prompt = $('drsPrompt');
+    if (!prompt) return;
+    // Reset timer animation
+    const timer = prompt.querySelector('.cb-drs-timer');
+    if (timer) {
+      timer.style.animation = 'none';
+      // force reflow
+      void timer.offsetWidth;
+      timer.style.animation = 'drsShrink 3s linear forwards';
+    }
+    prompt.style.display = 'block';
+
+    state.drsTimeout = setTimeout(() => {
+      hideDRSPrompt();
+      if (state.pendingLBW) {
+        state.pendingLBW = false;
+        processWicketFromLBW(state.pendingOutcome);
+      }
+    }, 3000);
+
+    prompt.onclick = function() { triggerDRS(); };
+  }
+
+  function hideDRSPrompt() {
+    const prompt = $('drsPrompt');
+    if (prompt) {
+      prompt.style.display = 'none';
+      prompt.onclick = null;
+    }
+  }
+
+  function triggerDRS() {
+    clearTimeout(state.drsTimeout);
+    hideDRSPrompt();
+    state.drsAvailable = false;
+    state.pendingLBW = false;
+
+    const overlay = $('drsOverlay');
+    const result = $('drsResult');
+    const pitchView = $('drsPitchView');
+    const title = $('drsTitle');
+
+    if (!overlay || !result || !pitchView) return;
+
+    const isReversed = Math.random() < 0.35;
+    if (title) title.textContent = 'BALL TRACKING';
+    pitchView.innerHTML = generateDRSSvg(isReversed);
+    result.textContent = '';
+    result.style.color = '';
+    overlay.classList.add('cb-visible');
+
+    setTimeout(() => {
+      if (isReversed) {
+        result.textContent = 'MISSING! NOT OUT!';
+        result.style.color = '#4CAF50';
+        playCrowdReaction('cheer');
+        checkAchievement('cb_drs_hero');
+      } else {
+        result.textContent = 'HITTING! OUT!';
+        result.style.color = '#F44336';
+        playCrowdReaction('groan');
+      }
+
+      setTimeout(() => {
+        overlay.classList.remove('cb-visible');
+        if (!isReversed) {
+          processWicketFromLBW(state.pendingOutcome);
+        } else {
+          spawnFloatingText('NOT OUT!', W / 2, H * 0.4, '#4CAF50', 28);
+          state.ballActive = false;
+          deliveryPhase = 'idle';
+          setTimeout(() => {
+            if (state.ballsInOver >= 6) {
+              endOver();
+            } else {
+              startDelivery();
+            }
+          }, 1000);
+        }
+      }, 2000);
+    }, 2000);
+  }
+
+  function processWicketFromLBW(outcome) {
+    // Process the LBW wicket that was pending during DRS
+    state.wickets++;
+    state.currentOverResults.push({ runs: 0, isWicket: true, isFour: false, isSix: false });
+    state.consecutiveScoringBalls = 0;
+
+    const textX = W / 2;
+    const textBaseY = H * 0.4;
+
+    // LBW sound
+    playTone(120, 'sine', 0.15, 0.1);
+    setTimeout(() => {
+      playTone(400, 'sine', 0.1, 0.06);
+      setTimeout(() => playTone(600, 'sine', 0.15, 0.08), 100);
+    }, 150);
+    state.postBallActive = true;
+    state.postBallType = 'wicket';
+    state.postBallTime = Date.now();
+    spawnFloatingText('LBW!', textX, textBaseY, '#FF6600', 32);
+    showBallCommentary({ runs: -1, type: 'lbw' }, false);
+
+    if (!reducedMotion) cameraShake.active = true;
+    cameraShake.start = Date.now();
+    cameraShake.duration = 300;
+    cameraShake.intensity = 0.1;
+
+    playCrowdReaction('groan');
+    if (!reducedMotion) gameWrap.classList.add('cb-wicket-flash');
+    setTimeout(() => gameWrap.classList.remove('cb-wicket-flash'), 500);
+
+    haptic([100]);
+    state.comboStreak = 0;
+    state.confidence = 30;
+
+    const wicketTypeLabel = 'LBW';
+    announceScore(`OUT! ${wicketTypeLabel}. ${3 - state.wickets} wicket${3 - state.wickets !== 1 ? 's' : ''} remaining. Score: ${state.runs} for ${state.wickets}.`);
+
+    if (state.wickets < 3) {
+      state.newBatsmanAnim = true;
+      state.newBatsmanTime = Date.now() + 400;
+    }
+
+    updateHUD();
+
+    // After processing, check if all out
+    deliveryPhase = 'resolved';
+    deliveryTimer = 0;
+  }
+
+  function generateDRSSvg(isReversed) {
+    const endX = isReversed ? 35 : 60;
+    return '<svg viewBox="0 0 120 180" width="120" height="180" style="display:block;margin:0 auto;">' +
+      '<rect x="10" y="10" width="100" height="160" fill="#c8a96e" rx="4" opacity="0.3"/>' +
+      '<rect x="50" y="150" width="20" height="4" fill="#D4A87C" rx="1"/>' +
+      '<line x1="55" y1="155" x2="55" y2="148" stroke="#D4A87C" stroke-width="1.5"/>' +
+      '<line x1="60" y1="155" x2="60" y2="148" stroke="#D4A87C" stroke-width="1.5"/>' +
+      '<line x1="65" y1="155" x2="65" y2="148" stroke="#D4A87C" stroke-width="1.5"/>' +
+      '<circle cx="60" cy="20" r="4" fill="#cc0000"/>' +
+      '<line x1="60" y1="24" x2="' + endX + '" y2="150" stroke="#cc0000" stroke-width="2" stroke-dasharray="4 4">' +
+        '<animate attributeName="stroke-dashoffset" from="200" to="0" dur="1.5s" fill="freeze"/>' +
+      '</line>' +
+      '<circle cx="' + endX + '" cy="150" r="5" fill="' + (isReversed ? '#4CAF50' : '#F44336') + '" opacity="0">' +
+        '<animate attributeName="opacity" from="0" to="1" begin="1.5s" dur="0.3s" fill="freeze"/>' +
+      '</circle>' +
+      '<text x="60" y="175" text-anchor="middle" font-size="10" fill="' + (isReversed ? '#4CAF50' : '#F44336') + '" opacity="0">' +
+        (isReversed ? 'MISSING' : 'HITTING') +
+        '<animate attributeName="opacity" from="0" to="1" begin="1.8s" dur="0.2s" fill="freeze"/>' +
+      '</text>' +
+    '</svg>';
+  }
+
+  // ============================================
+  // FEATURE 10: RUN-OUT PROCESSING
+  // ============================================
+
+  function processRunOut(outcome) {
+    const textX = W / 2;
+    const textBaseY = H * 0.4;
+    const runs = outcome.runs;
+
+    // Runs still count
+    state.runs += runs;
+    state.currentOverRuns += runs;
+    state.currentOverResults.push({ runs, rawRuns: runs, isWicket: true, isFour: false, isSix: false });
+
+    // But wicket is also lost
+    state.wickets++;
+
+    // Track wagon wheel shot
+    state.wagonWheelShots.push({ direction: state.shotDirection, runs: runs });
+
+    spawnFloatingText('RUN OUT!', textX, textBaseY - 40, '#FF6600', 26);
+    spawnFloatingText(runs.toString(), textX, textBaseY, '#FFFFFF', 24);
+
+    // Fielder throw sound then stumps hit
+    playTone(800, 'sine', 0.08, 0.06);
+    setTimeout(() => playStumpsHit(), 200);
+    triggerStumpScatter();
+
+    // Camera shake
+    if (!reducedMotion) cameraShake.active = true;
+    cameraShake.start = Date.now();
+    cameraShake.duration = 300;
+    cameraShake.intensity = 0.1;
+
+    playCrowdReaction('groan');
+    if (!reducedMotion) gameWrap.classList.add('cb-wicket-flash');
+    setTimeout(() => gameWrap.classList.remove('cb-wicket-flash'), 500);
+
+    haptic([100]);
+    state.comboStreak = 0;
+    state.confidence = 30;
+    showBallCommentary({ runs: -1, type: 'runout' }, false);
+    announceScore(`RUN OUT! ${runs} run${runs > 1 ? 's' : ''} scored but wicket lost. ${3 - state.wickets} remaining. Score: ${state.runs} for ${state.wickets}.`);
+
+    if (state.wickets < 3) {
+      state.newBatsmanAnim = true;
+      state.newBatsmanTime = Date.now() + 400;
+    }
+
+    // Bat swing animation
+    state.batAnimating = true;
+    state.batAnimStart = Date.now();
+    state.batAnimType = state.shotDirection;
+    state.batAnimDuration = 200;
+    playBatCrack(2);
+
+    state.postBallActive = true;
+    state.postBallTime = Date.now();
+    state.postBallType = 'default';
+    state.postBallX = 0;
+    state.postBallY = 1;
+    state.postBallVx = (Math.random() - 0.5) * 1.5;
+    state.postBallSize = 8;
+
+    updateHUD();
+
+    // Set delivery phase so game continues
+    deliveryPhase = 'resolved';
+    deliveryTimer = 0;
+  }
+
+  // ============================================
+  // FEATURE 11: PITCH DETERIORATION (3D cracks)
+  // ============================================
+
+  function addPitchCracks() {
+    for (let i = 0; i < 5; i++) {
+      const crackGeo = new THREE.BoxGeometry(0.02, 0.001, 0.3 + Math.random() * 0.4);
+      const crackMat = new THREE.MeshBasicMaterial({ color: 0x5a4020, transparent: true, opacity: 0.4 });
+      const crack = new THREE.Mesh(crackGeo, crackMat);
+      crack.rotation.x = -Math.PI / 2;
+      crack.rotation.z = (Math.random() - 0.5) * 0.5;
+      crack.position.set(
+        (Math.random() - 0.5) * 2,
+        0.016,
+        11 + (Math.random() - 0.5) * 10
+      );
+      scene.add(crack);
+      state.pitchCracks.push(crack);
+    }
+  }
+
+  function removePitchCracks() {
+    state.pitchCracks.forEach(c => scene.remove(c));
+    state.pitchCracks = [];
+  }
+
+  // ============================================
   // OVER / LEVEL / GAME END
   // ============================================
 
@@ -3955,6 +4272,15 @@ import * as THREE from 'three';
     state.wagonWheelShots = [];
     state.overRunHistory = [];
     state.keeperCatchAnim = false;
+    // Phase 2 resets for new innings
+    state.drsAvailable = true;
+    state.pendingLBW = false;
+    state.pendingOutcome = null;
+    if (state.drsTimeout) clearTimeout(state.drsTimeout);
+    state.drsTimeout = null;
+    state.pitchDeteriorated = false;
+    removePitchCracks();
+    state.timeoutUsed = false;
     deliveryPhase = 'idle';
     deliveryTimer = 0;
 
@@ -4021,6 +4347,13 @@ import * as THREE from 'three';
     state.stumpScatter = null;
     state.particles = [];
     state.floatingTexts = [];
+    // Phase 2 resets for bowling innings
+    state.drsAvailable = false; // DRS not available while bowling
+    state.pendingLBW = false;
+    state.pendingOutcome = null;
+    state.pitchDeteriorated = false;
+    removePitchCracks();
+    state.timeoutUsed = false;
 
     // Patch #17: Switch to twilight environment
     setTwilightEnvironment();
@@ -4628,6 +4961,14 @@ import * as THREE from 'three';
       if (fhBadge) fhBadge.classList.remove('show');
     }
 
+    // Feature 10: Run-out chance on 2-run outcomes (bowling side)
+    if (result.runs === 2 && result.type !== 'wide') {
+      const runoutChance = 0.04 + (accuracy === 'bad' ? 0 : accuracy === 'good' ? 0.01 : 0.02);
+      if (Math.random() < runoutChance) {
+        result = { runs: 2, type: 'runout' };
+      }
+    }
+
     bowlingResultOutcome = result;
     handleBowlingOutcome(result);
   }
@@ -4635,6 +4976,13 @@ import * as THREE from 'three';
   function handleBowlingOutcome(outcome) {
     const textX = W / 2;
     const textBaseY = H * 0.4;
+
+    // Feature 11: Pitch deterioration during bowling
+    if (state.bowlingTotalBalls >= 15 && !state.pitchDeteriorated) {
+      state.pitchDeteriorated = true;
+      addPitchCracks();
+      showBallCommentary({ type: 'pitch_crack' }, true);
+    }
 
     // --- WIDE handling ---
     if (outcome.type === 'wide') {
@@ -4691,6 +5039,62 @@ import * as THREE from 'three';
     // Show free hit commentary if this was a free hit ball
     if (state.freeHitNext && !outcome.isNoBall) {
       // The free hit delivery is being bowled -- commentary handled above
+    }
+
+    // Feature 10: Run-out during bowling (AI gets run out)
+    if (outcome.type === 'runout') {
+      const textX = W / 2;
+      const textBaseY = H * 0.4;
+      state.bowlingAIScore += outcome.runs; // runs still count
+      state.bowlingAIWickets++;
+      state.bowlingCurrentOverRuns += outcome.runs;
+      state.bowlingCurrentOverResults.push({ runs: outcome.runs, isWicket: true, isFour: false, isSix: false });
+
+      spawnFloatingText('RUN OUT!', textX, textBaseY - 40, '#FF6600', 26);
+      spawnFloatingText(outcome.runs.toString(), textX, textBaseY, '#FFFFFF', 24);
+      playTone(800, 'sine', 0.08, 0.06);
+      setTimeout(() => playStumpsHit(), 200);
+      triggerStumpScatter();
+
+      if (!reducedMotion) cameraShake.active = true;
+      cameraShake.start = Date.now();
+      cameraShake.duration = 300;
+      cameraShake.intensity = 0.1;
+
+      playCrowdReaction('roar');
+      spawnParticles(textX, textBaseY, 20, ['#FF6600', '#FFD700'], 100, 0.8);
+      haptic([100]);
+
+      checkAchievement('cb_run_out');
+      checkAchievement('cb_first_wicket');
+      if (state.bowlingAIWickets >= 5) checkAchievement('cb_five_wickets');
+
+      showBallCommentary(outcome, true);
+      updateBowlingHUD();
+      announceScore(`RUN OUT! AI scored ${outcome.runs} but lost a wicket. AI: ${state.bowlingAIScore} for ${state.bowlingAIWickets}.`);
+
+      // Schedule next ball
+      state.bowlingResultTimer = Date.now();
+      const aiAllOut = state.bowlingAIWickets >= 10;
+      setTimeout(() => {
+        if (state.phase !== 'BOWLING') return;
+        if (aiAllOut) { endMatch(); return; }
+        if (state.bowlingBallsInOver >= 6) {
+          state.bowlingOversCompleted++;
+          state.overRunHistory.push(state.bowlingCurrentOverRuns);
+          if (state.bowlingOversCompleted >= 5) { endMatch(); return; }
+          showBowlingBetweenOvers();
+          return;
+        }
+        state.bowlingDeliveryPhase = 'selecting';
+        state.postBallActive = false;
+        state.stumpScatter = null;
+        scatterStumps.forEach(s => scene.remove(s));
+        scatterBails.forEach(b => scene.remove(b));
+        scatterStumps = [];
+        scatterBails = [];
+      }, 1200);
+      return;
     }
 
     if (outcome.runs === -1) {
@@ -5543,6 +5947,13 @@ import * as THREE from 'three';
     // Free hit badge visibility
     const fhBadge = $('freeHitBadge');
     if (fhBadge) fhBadge.classList.toggle('show', !!state.freeHitNext);
+
+    // Feature 12: Strategic timeout button visibility during bowling
+    const timeoutBtn = $('timeoutBtn');
+    if (timeoutBtn) {
+      const showTimeout = !state.timeoutUsed && state.bowlingOversCompleted >= 2 && state.phase === 'BOWLING';
+      timeoutBtn.style.display = showTimeout ? 'flex' : 'none';
+    }
   }
 
   function updateBowlingOverDots() {
@@ -5643,6 +6054,13 @@ import * as THREE from 'three';
         comboBadge.classList.remove('show');
       }
     }
+
+    // Feature 12: Strategic timeout button visibility
+    const timeoutBtn = $('timeoutBtn');
+    if (timeoutBtn) {
+      const showTimeout = !state.timeoutUsed && state.oversCompleted >= 2 && state.phase === 'BATTING';
+      timeoutBtn.style.display = showTimeout ? 'flex' : 'none';
+    }
   }
 
   function updateOverDots() {
@@ -5678,7 +6096,11 @@ import * as THREE from 'three';
     if (!el) return;
     const pool = isBowling ? BOWLING_COMMENTARY : COMMENTARY;
     let text = '';
-    if (outcome.runs === -1 && outcome.type === 'lbw') {
+    if (outcome.type === 'pitch_crack') {
+      text = pickRandom(COMMENTARY.pitch_crack || []);
+    } else if (outcome.runs === -1 && outcome.type === 'runout') {
+      text = pickRandom(COMMENTARY.runout || pool.wicket || []);
+    } else if (outcome.runs === -1 && outcome.type === 'lbw') {
       text = pickRandom(COMMENTARY.lbw || pool.wicket || []);
     } else if (outcome.runs === -1 && outcome.type === 'caught_behind') {
       text = pickRandom(COMMENTARY.caught_behind || pool.wicket || []);
@@ -6041,6 +6463,21 @@ import * as THREE from 'three';
     state.superOver = false;
     state.superOverPhase = null;
     state._superOverResultShown = false;
+    // Phase 2 resets
+    state.drsAvailable = true;
+    state.pendingLBW = false;
+    state.pendingOutcome = null;
+    if (state.drsTimeout) clearTimeout(state.drsTimeout);
+    state.drsTimeout = null;
+    state.pitchDeteriorated = false;
+    removePitchCracks();
+    state.timeoutUsed = false;
+    const timeoutBtnInit = $('timeoutBtn');
+    if (timeoutBtnInit) timeoutBtnInit.style.display = 'none';
+    const drsPromptInit = $('drsPrompt');
+    if (drsPromptInit) drsPromptInit.style.display = 'none';
+    const drsOverlayInit = $('drsOverlay');
+    if (drsOverlayInit) drsOverlayInit.classList.remove('cb-visible');
     deliveryPhase = 'idle';
     deliveryTimer = 0;
 
@@ -6168,11 +6605,27 @@ import * as THREE from 'three';
     state.tensionActive = false;
     state.crowdWaveActive = false;
 
+    // Phase 2 resets
+    state.drsAvailable = true;
+    state.pendingLBW = false;
+    state.pendingOutcome = null;
+    if (state.drsTimeout) clearTimeout(state.drsTimeout);
+    state.drsTimeout = null;
+    state.pitchDeteriorated = false;
+    removePitchCracks();
+    state.timeoutUsed = false;
+    const drsPromptReset = $('drsPrompt');
+    if (drsPromptReset) drsPromptReset.style.display = 'none';
+    const drsOverlayReset = $('drsOverlay');
+    if (drsOverlayReset) drsOverlayReset.classList.remove('cb-visible');
+
     // Hide all HUD
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
     if (scoreboardBowl) scoreboardBowl.style.display = 'none';
     if (scoreboardBat) scoreboardBat.style.display = 'none';
+    const timeoutBtnReset = $('timeoutBtn');
+    if (timeoutBtnReset) timeoutBtnReset.style.display = 'none';
 
     // Restore day sky for title/batting
     setDayEnvironment();
@@ -6243,6 +6696,16 @@ import * as THREE from 'three';
     state.lastFrameTime = 0;
     const overlay = $('pauseOverlay');
     if (overlay) overlay.classList.remove('cb-visible');
+    // Restore default pause modal content (may have been replaced by strategic timeout)
+    const modal = $('pauseModal');
+    if (modal) {
+      modal.innerHTML = '<h2>PAUSED</h2>' +
+        '<p style="color:var(--cb-text-dim);margin:0 0 16px;">Game paused</p>' +
+        '<div class="cb-btn-row" style="flex-direction:column;gap:12px;">' +
+        '<button class="cb-btn" onclick="window._cbResume()">\u25B6 RESUME</button>' +
+        '<button class="cb-btn" style="background:#555;" onclick="window._cbQuitToMenu()">\u2715 QUIT TO MENU</button>' +
+        '</div>';
+    }
   }
 
   function quitToMenu() {
@@ -6254,6 +6717,36 @@ import * as THREE from 'three';
 
   window._cbResume = resumeGame;
   window._cbQuitToMenu = quitToMenu;
+
+  // Feature 12: Strategic Timeout
+  window._cbStrategicTimeout = function() {
+    if (!state.timeoutAvailable || state.timeoutUsed) return;
+    if (state.oversCompleted < 2) return;
+    if (state.phase !== 'BATTING' && state.phase !== 'BOWLING') return;
+    state.timeoutUsed = true;
+    const btn = $('timeoutBtn');
+    if (btn) btn.style.display = 'none';
+    pauseGame();
+
+    const modal = $('pauseModal');
+    if (!modal) return;
+
+    const isBatting = state.phase === 'BATTING' || state.matchPhase === 'batting' || state.matchPhase === 'batting_chase';
+    const score = isBatting ? state.runs : state.bowlingAIScore;
+    const wickets = isBatting ? state.wickets : state.bowlingAIWickets;
+    const overs = isBatting ? state.oversCompleted : state.bowlingOversCompleted;
+    const balls = isBatting ? state.totalBallsFaced : state.bowlingTotalBalls;
+    const rr = balls > 0 ? (score / (balls / 6)).toFixed(2) : '0.00';
+
+    modal.innerHTML =
+      '<h2>STRATEGIC TIMEOUT</h2>' +
+      '<div class="cb-stat-row"><span>Score</span><span>' + score + '/' + wickets + '</span></div>' +
+      '<div class="cb-stat-row"><span>Run Rate</span><span>' + rr + '</span></div>' +
+      '<div class="cb-stat-row"><span>Overs Left</span><span>' + (5 - overs) + '</span></div>' +
+      drawWagonWheel() +
+      drawManhattan() +
+      '<button class="cb-btn" onclick="window._cbResume()" style="margin-top:12px;">RESUME</button>';
+  };
 
   document.addEventListener('keydown', (e) => {
     // Escape = pause/resume
@@ -6369,6 +6862,13 @@ import * as THREE from 'three';
     }
 
     if (state.phase !== 'BATTING') return;
+
+    // Feature 9: DRS review key
+    if ((e.key === 'r' || e.key === 'R') && state.pendingLBW) {
+      e.preventDefault();
+      triggerDRS();
+      return;
+    }
 
     switch (e.key) {
       case ' ':

@@ -1661,6 +1661,55 @@
   }
 }
 
+/* ---- DRS Review ---- */
+.cb-drs-modal { max-width: 300px; }
+.cb-drs-prompt {
+  position: fixed;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  background: rgba(255,0,0,0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  animation: drsPromptPulse 0.5s ease-in-out infinite alternate;
+}
+@keyframes drsPromptPulse { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(1.05); } }
+.cb-drs-timer {
+  height: 3px;
+  background: white;
+  margin-top: 6px;
+  border-radius: 2px;
+  animation: drsShrink 3s linear forwards;
+}
+@keyframes drsShrink { from { width: 100%; } to { width: 0%; } }
+
+/* ---- Strategic Timeout Button ---- */
+.cb-timeout-btn {
+  position: fixed;
+  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 4px);
+  right: 8px;
+  z-index: 20;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid var(--cb-team-primary, #FFD700);
+  color: #FFD700;
+  font-size: 1.1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.cb-timeout-btn:active { transform: scale(0.92); }
+
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }
   .cb-btn { transition: none; }
@@ -1683,4 +1732,6 @@
   .cb-delivery-btn { transition: none; }
   .cb-line-btn { transition: none; }
   .cb-bowl-btn { transition: none; }
+  .cb-drs-prompt { animation: none; }
+  .cb-drs-timer { animation: none; }
 }

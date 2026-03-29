@@ -297,6 +297,24 @@ import gameData from '../../data/games/cricket-blitz.json';
     <div class="cb-modal cb-super-over-modal" id="superOverModal"></div>
   </div>
 
+  <!-- DRS Review Overlay -->
+  <div class="cb-overlay" id="drsOverlay" role="dialog" aria-modal="true" aria-label="DRS Review">
+    <div class="cb-modal cb-drs-modal" id="drsModal">
+      <h2 id="drsTitle">BALL TRACKING</h2>
+      <div id="drsPitchView" style="margin:16px auto;"></div>
+      <p id="drsResult" style="font-size:1.2rem;font-weight:900;margin-top:12px;"></p>
+    </div>
+  </div>
+
+  <!-- DRS Prompt (shows briefly after LBW) -->
+  <div class="cb-drs-prompt" id="drsPrompt" style="display:none;">
+    <span>LBW! Review? Tap here or press R</span>
+    <div class="cb-drs-timer"></div>
+  </div>
+
+  <!-- Strategic Timeout Button -->
+  <button class="cb-timeout-btn" id="timeoutBtn" style="display:none;" onclick="window._cbStrategicTimeout()">&#x23F8;</button>
+
   <!-- Pause Overlay -->
   <div class="cb-overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-label="Game Paused">
     <div class="cb-modal" id="pauseModal">
