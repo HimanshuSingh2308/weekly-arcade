@@ -135,6 +135,7 @@
     currentOverRuns: 0,
     currentOverResults: [],
     consecutiveScoringBalls: 0,
+    currentOverScoringBalls: 0,
 
     ballActive: false,
     ballProgress: 0,
@@ -1168,12 +1169,13 @@
       state.ballLateBreak = false;
     }
 
-    if (deliveryType === 'slower') {
-      speed *= 1.4;
-      deliveryType = 'straight'; // travels straight but slower
-    }
-
+    // Store display type before remapping for physics
     state.ballDeliveryType = deliveryType;
+
+    if (deliveryType === 'slower') {
+      speed *= 1.4; // longer travel time = slower ball
+      // Physics uses straight path but display/identity stays 'slower'
+    }
     state.ballSpeed = speed;
     state.ballIsOnStumps = Math.random() < 0.4;
     state.ballSwingDir = (Math.random() - 0.5) * 2;
@@ -1300,17 +1302,18 @@
         break;
 
       case 'inflight':
+        if (deliveryPhase !== 'inflight') break; // guard against re-entry after resolve
         deliveryTimer += dt * 1000;
         state.ballProgress = Math.min(1, deliveryTimer / state.ballSpeed);
 
         // Check if player has swung
         if (state.swingTriggered && !state.batAnimating) {
           // Resolve immediately on swing
+          deliveryPhase = 'resolved';
           const idealTime = state.ballSpeed * 0.85;
           const timingMs = Math.abs(state.swingTime - idealTime);
           const outcome = resolveOutcome(timingMs);
           handleOutcome(outcome);
-          deliveryPhase = 'resolved';
           deliveryTimer = 0;
           break;
         }
@@ -1318,9 +1321,9 @@
         // Ball reached batsman
         if (state.ballProgress >= 1) {
           // Player didn't swing
+          deliveryPhase = 'resolved';
           const outcome = resolveOutcome(-1);
           handleOutcome(outcome);
-          deliveryPhase = 'resolved';
           deliveryTimer = 0;
         }
         break;
@@ -1404,6 +1407,7 @@
 
     if (runs > 0) {
       state.consecutiveScoringBalls++;
+      state.currentOverScoringBalls++;
     } else {
       state.consecutiveScoringBalls = 0;
     }
@@ -1473,7 +1477,7 @@
     }
 
     // Perfect over check
-    if (state.consecutiveScoringBalls >= 6 && state.ballsInOver === 6) {
+    if (state.currentOverScoringBalls >= 6 && state.ballsInOver === 6) {
       checkAchievement('cb-perfect-over');
     }
 
@@ -1586,6 +1590,7 @@
     state.currentOverRuns = 0;
     state.currentOverResults = [];
     state.consecutiveScoringBalls = 0;
+    state.currentOverScoringBalls = 0;
     gameWrap.classList.add('cb-playing');
 
     generateBowlerForOver();
@@ -1600,10 +1605,11 @@
 
     const ballsRemaining = Math.max(0, 30 - state.totalBallsFaced);
 
-    // Check achievement
+    // Check achievements
     if (ballsRemaining >= 10) checkAchievement('cb-target-crushed');
     if (state.level >= 3) checkAchievement('cb-level-3');
     if (state.level >= 5) checkAchievement('cb-level-5');
+    if (state.wickets === 0 && state.totalBallsFaced >= 6) checkAchievement('cb-no-wicket');
 
     playUISound('levelComplete');
     spawnConfetti();
@@ -1636,6 +1642,7 @@
     state.currentOverRuns = 0;
     state.currentOverResults = [];
     state.consecutiveScoringBalls = 0;
+    state.currentOverScoringBalls = 0;
 
     state.phase = 'PLAYING';
     gameWrap.classList.add('cb-playing');
@@ -1964,7 +1971,12 @@
     state.stumpScatter = null;
     state.achievementsUnlocked = new Set();
     state.gameStartTime = Date.now();
+    state.lastFrameTime = 0;
+    state.newBatsmanAnim = false;
+    state.batAnimating = false;
+    state.bowlerAnimating = false;
     deliveryPhase = 'idle';
+    deliveryTimer = 0;
 
     titleOverlay.classList.remove('cb-visible');
     state.phase = 'PLAYING';
@@ -2030,6 +2042,11 @@
     if (state.phase === 'TITLE') {
       if (e.key === 'Enter') {
         e.preventDefault();
+        if (!state.selectedTeam) {
+          const sr = $('srAnnounce');
+          if (sr) sr.textContent = 'Please select a team first.';
+          return;
+        }
         startGame();
       }
       return;
