@@ -3717,7 +3717,7 @@
       const lastPlayed = (empire.global || {}).lastPlayedTimestamp;
       if (!lastPlayed) return null;
       const hoursOffline = Math.min(24, (Date.now() - lastPlayed) / 3600000);
-      if (hoursOffline < 0.1) return null;
+      if (hoursOffline < 1) return null; // Don't show welcome back for < 1 hour
       const earnings = [];
       let totalEarned = 0;
       for (const [storeId, mgr] of Object.entries(managers)) {
@@ -3731,7 +3731,7 @@
         const corpTraining = ((empire.global || {}).hqUpgrades || {}).corporate_training || 0;
         const efficiencyBoost = tier.efficiency + corpTraining * 0.10; // HQ Corporate Training: +10% per level
         const offlineRev = Math.floor(estimatedDailyRev * Math.min(efficiencyBoost, 0.95) * hoursOffline / 24); // Cap at 95%
-        const daysAdvanced = Math.floor(hoursOffline);
+        const daysAdvanced = Math.max(1, Math.floor(hoursOffline)); // At least 1 day if earning
         if (offlineRev > 0) {
           earnings.push({ storeId, storeName: STORE_CONFIGS[storeId]?.name || storeId, revenue: offlineRev, daysAdvanced });
           totalEarned += offlineRev;
@@ -3742,7 +3742,11 @@
       const streakBonus = Math.min(loginStreak.count, 7) * 0.05;
       const streakEarnings = Math.floor(totalEarned * streakBonus);
       localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
-      return { earnings, totalEarned, streakBonus: streakEarnings, hoursOffline: Math.round(hoursOffline), grandTotal: totalEarned + streakEarnings };
+      // Format offline time as human-readable
+      const h = Math.floor(hoursOffline);
+      const m = Math.round((hoursOffline - h) * 60);
+      const awayText = h >= 24 ? '24h+' : h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+      return { earnings, totalEarned, streakBonus: streakEarnings, hoursOffline: Math.round(hoursOffline), awayText, grandTotal: totalEarned + streakEarnings };
     } catch(e) { return null; }
   }
 
@@ -3758,7 +3762,7 @@
     }
     const damageHtml = damage.repairCost > 0 ? `<div style="background:rgba(255,100,100,0.08);border-radius:8px;padding:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;"><div style="font-weight:700;color:var(--coral);">🔧 Maintenance Needed</div><div style="color:#888;">${damage.desc} — Repair: 💰 ${formatCoins(totalRepair)}</div>${damage.grandReopening?'<div style="color:var(--matcha);">🎉 Grand Re-Opening: 2x customers next day!</div>':''}</div>` : '';
     const netTotal = offlineData.grandTotal - totalRepair;
-    modal.innerHTML = `<div style="text-align:center;"><div style="font-size:2rem;">☀️</div><h2>Welcome Back!</h2><div style="font-size:0.75rem;color:#999;margin-bottom:0.75rem;">Away for ${offlineData.hoursOffline}h</div></div><div style="margin-bottom:0.75rem;">${earningsHtml}</div>${damageHtml}<div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;font-size:0.8rem;"><div style="display:flex;justify-content:space-between;"><span>Offline Earnings</span><span>💰 ${formatCoins(offlineData.totalEarned)}</span></div>${offlineData.streakBonus>0?`<div style="display:flex;justify-content:space-between;color:var(--coral);"><span>🔥 Streak Bonus</span><span>💰 ${formatCoins(offlineData.streakBonus)}</span></div>`:''}${totalRepair>0?`<div style="display:flex;justify-content:space-between;color:#c00;"><span>🔧 Repairs</span><span>-💰 ${formatCoins(totalRepair)}</span></div>`:''}<div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid rgba(0,0,0,0.1);padding-top:0.3rem;margin-top:0.3rem;"><span>Net Total</span><span>💰 ${formatCoins(Math.max(0,netTotal))}</span></div></div><button class="btn" onclick="collectOfflineEarnings(${Math.max(0,netTotal)}, ${!!damage.grandReopening})" style="width:100%;min-height:48px;">${totalRepair>0?'Repair & Collect':'Collect & Play'}</button>`;
+    modal.innerHTML = `<div style="text-align:center;"><div style="font-size:2rem;">☀️</div><h2>Welcome Back!</h2><div style="font-size:0.75rem;color:#999;margin-bottom:0.75rem;">Away for ${offlineData.awayText || offlineData.hoursOffline + 'h'}</div></div><div style="margin-bottom:0.75rem;">${earningsHtml}</div>${damageHtml}<div style="background:rgba(0,0,0,0.03);border-radius:8px;padding:0.5rem;margin-bottom:0.75rem;font-size:0.8rem;"><div style="display:flex;justify-content:space-between;"><span>Offline Earnings</span><span>💰 ${formatCoins(offlineData.totalEarned)}</span></div>${offlineData.streakBonus>0?`<div style="display:flex;justify-content:space-between;color:var(--coral);"><span>🔥 Streak Bonus</span><span>💰 ${formatCoins(offlineData.streakBonus)}</span></div>`:''}${totalRepair>0?`<div style="display:flex;justify-content:space-between;color:#c00;"><span>🔧 Repairs</span><span>-💰 ${formatCoins(totalRepair)}</span></div>`:''}<div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid rgba(0,0,0,0.1);padding-top:0.3rem;margin-top:0.3rem;"><span>Net Total</span><span>💰 ${formatCoins(Math.max(0,netTotal))}</span></div></div><button class="btn" onclick="collectOfflineEarnings(${Math.max(0,netTotal)}, ${!!damage.grandReopening})" style="width:100%;min-height:48px;">${totalRepair>0?'Repair & Collect':'Collect & Play'}</button>`;
     hideAllOverlays();
     showOverlay('hubOverlay');
     return true;
