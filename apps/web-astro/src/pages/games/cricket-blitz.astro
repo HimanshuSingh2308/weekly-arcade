@@ -286,6 +286,18 @@ import gameData from '../../data/games/cricket-blitz.json';
   <!-- Combo Streak Badge -->
   <div id="comboBadge" class="cb-combo-badge" aria-hidden="true"></div>
 
+  <!-- Pause Overlay -->
+  <div class="cb-overlay" id="pauseOverlay" role="dialog" aria-modal="true" aria-label="Game Paused">
+    <div class="cb-modal" id="pauseModal">
+      <h2>PAUSED</h2>
+      <p style="color:var(--cb-text-dim);margin:0 0 16px;">Game paused</p>
+      <div class="cb-btn-row" style="flex-direction:column;gap:12px;">
+        <button class="cb-btn" onclick="window._cbResume()">▶ RESUME</button>
+        <button class="cb-btn" style="background:#555;" onclick="window._cbQuitToMenu()">✕ QUIT TO MENU</button>
+      </div>
+    </div>
+  </div>
+
   <Fragment slot="scripts">
     <script type="module" src="/games/cricket-blitz/game.js"></script>
   </Fragment>

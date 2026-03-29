@@ -2989,7 +2989,17 @@ import * as THREE from 'three';
     showBallCommentary(outcome, true);
     updateBowlingHUD();
 
-    // Schedule next ball or end
+    // Immediate check: AI chased down target — end match quickly
+    const aiChasedDown = state.bowlingAIScore >= state.battingScore + 1;
+    const aiAllOut = state.bowlingAIWickets >= 10;
+    const matchEnding = aiChasedDown || aiAllOut;
+
+    if (aiChasedDown) {
+      spawnFloatingText('TARGET CHASED!', W / 2, H * 0.3, '#FF4444', 28);
+      announceScore(`AI wins! Chased down ${state.battingScore + 1}.`);
+    }
+
+    // Schedule next ball or end — shorter delay if match ending
     state.bowlingResultTimer = Date.now();
     setTimeout(() => {
       if (state.phase !== 'BOWLING') return;
@@ -3031,7 +3041,7 @@ import * as THREE from 'three';
       scatterBails.forEach(b => scene.remove(b));
       scatterStumps = [];
       scatterBails = [];
-    }, 1200);
+    }, matchEnding ? 600 : 1200);
   }
 
   function showBowlingBetweenOvers() {
@@ -3692,7 +3702,43 @@ import * as THREE from 'three';
   }
 
   // Keyboard
+  // ============================================
+  // PAUSE SYSTEM
+  // ============================================
+
+  function pauseGame() {
+    if (state.phase !== 'BATTING' && state.phase !== 'BOWLING') return;
+    state.paused = true;
+    const overlay = $('pauseOverlay');
+    if (overlay) overlay.classList.add('cb-visible');
+  }
+
+  function resumeGame() {
+    state.paused = false;
+    state.lastFrameTime = 0;
+    const overlay = $('pauseOverlay');
+    if (overlay) overlay.classList.remove('cb-visible');
+  }
+
+  function quitToMenu() {
+    state.paused = false;
+    const overlay = $('pauseOverlay');
+    if (overlay) overlay.classList.remove('cb-visible');
+    resetToTitle();
+  }
+
+  window._cbResume = resumeGame;
+  window._cbQuitToMenu = quitToMenu;
+
   document.addEventListener('keydown', (e) => {
+    // Escape = pause/resume
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (state.paused) resumeGame();
+      else if (state.phase === 'BATTING' || state.phase === 'BOWLING') pauseGame();
+      return;
+    }
+
     if (state.phase === 'TITLE') {
       if (e.key === 'Enter') {
         e.preventDefault();
