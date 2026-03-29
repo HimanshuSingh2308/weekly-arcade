@@ -780,14 +780,28 @@ import * as THREE from 'three';
   // ---- Stands / Crowd Wall ----
   function buildStands() {
     // A curved wall around the boundary using a partial cylinder
-    const geo = new THREE.CylinderGeometry(82, 82, 12, 64, 1, true, 0, Math.PI * 2);
-    const mat = new THREE.MeshLambertMaterial({
-      color: 0x1a1a3e,
-      side: THREE.BackSide
-    });
-    standsMesh = new THREE.Mesh(geo, mat);
-    standsMesh.position.set(0, 6, 11);
-    scene.add(standsMesh);
+    // Lower tier — darker concrete
+    const geo1 = new THREE.CylinderGeometry(82, 84, 5, 64, 1, true, 0, Math.PI * 2);
+    const mat1 = new THREE.MeshBasicMaterial({ color: 0x2a2a4e, side: THREE.BackSide });
+    const lower = new THREE.Mesh(geo1, mat1);
+    lower.position.set(0, 2.5, 11);
+    scene.add(lower);
+
+    // Upper tier — slightly lighter
+    const geo2 = new THREE.CylinderGeometry(84, 86, 5, 64, 1, true, 0, Math.PI * 2);
+    const mat2 = new THREE.MeshBasicMaterial({ color: 0x3a3a5e, side: THREE.BackSide });
+    const upper = new THREE.Mesh(geo2, mat2);
+    upper.position.set(0, 7.5, 11);
+    scene.add(upper);
+
+    // Top rim — lightest (catches floodlight)
+    const geo3 = new THREE.CylinderGeometry(86, 87, 2, 64, 1, true, 0, Math.PI * 2);
+    const mat3 = new THREE.MeshBasicMaterial({ color: 0x4a4a6e, side: THREE.BackSide });
+    const rim = new THREE.Mesh(geo3, mat3);
+    rim.position.set(0, 11, 11);
+    scene.add(rim);
+
+    standsMesh = lower; // keep ref for any code that uses it
   }
 
   // ---- Crowd (colored dots as sprites on the stands) ----
@@ -1287,7 +1301,7 @@ import * as THREE from 'three';
   // ---- Batsman ----
   function buildBatsman() {
     batsmanGroup = new THREE.Group();
-    batsmanGroup.position.set(0, 0, 0.2);
+    batsmanGroup.position.set(0, 0, 1.8);
 
     const teamColor = 0x004BA0;
     const skinColor = 0xD2A87C;
@@ -1691,8 +1705,8 @@ import * as THREE from 'three';
   // ---- Stumps (batsman end) ----
   function buildStumps() {
     stumpsGroup = new THREE.Group();
-    // Position stumps slightly behind batsman so tops are visible
-    stumpsGroup.position.set(0, 0, 1.2);
+    // Stumps at crease — batsman stands in front (higher z = toward bowler)
+    stumpsGroup.position.set(0, 0, 0.8);
 
     const stumpGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.7, 6);
     const stumpMat = new THREE.MeshLambertMaterial({ color: 0xD4A87C });
