@@ -564,6 +564,8 @@ import * as THREE from 'three';
 
     const container = $('threeContainer');
     container.appendChild(renderer.domElement);
+    renderer.domElement.setAttribute('aria-label', 'Cricket Blitz 3D game field. Use keyboard controls to play.');
+    renderer.domElement.setAttribute('role', 'application');
     renderer.domElement.style.display = 'block';
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
@@ -2928,7 +2930,7 @@ import * as THREE from 'three';
       }
 
       // Camera shake for wicket
-      cameraShake.active = true;
+      if (!reducedMotion) cameraShake.active = true;
       cameraShake.start = Date.now();
       cameraShake.duration = 300;
       cameraShake.intensity = 0.1;
@@ -3014,7 +3016,7 @@ import * as THREE from 'three';
       playBoundaryJingle(false);
       haptic([30]);
       // Camera shake for four
-      cameraShake.active = true;
+      if (!reducedMotion) cameraShake.active = true;
       cameraShake.start = Date.now();
       cameraShake.duration = 200;
       cameraShake.intensity = 0.05;
@@ -3035,7 +3037,7 @@ import * as THREE from 'three';
       playBoundaryJingle(true);
       haptic([30, 15, 50]);
       // Camera shake for six
-      cameraShake.active = true;
+      if (!reducedMotion) cameraShake.active = true;
       cameraShake.start = Date.now();
       cameraShake.duration = 400;
       cameraShake.intensity = 0.15;
@@ -3053,7 +3055,7 @@ import * as THREE from 'three';
         const nearMissText = Math.random() < 0.5 ? 'CLOSE!' : 'BEATEN!';
         spawnFloatingText(nearMissText, textX, textBaseY, 'rgba(255,255,0,0.5)', 24);
         playNearMissSound();
-        cameraShake.active = true;
+        if (!reducedMotion) cameraShake.active = true;
         cameraShake.start = Date.now();
         cameraShake.duration = 150;
         cameraShake.intensity = 0.02;
@@ -3799,6 +3801,14 @@ import * as THREE from 'three';
     if (bowlingMeterIndicator) {
       bowlingMeterIndicator.style.bottom = (state.meterPosition * 100) + '%';
     }
+
+    // Accessibility: announce zone changes for screen readers
+    const pos = state.meterPosition;
+    const zone = (pos >= 0.35 && pos <= 0.65) ? 'green' : (pos >= 0.2 && pos <= 0.8) ? 'yellow' : 'red';
+    if (zone !== state._lastMeterZone) {
+      state._lastMeterZone = zone;
+      if (zone === 'green') announceSR('Green zone — bowl now!');
+    }
   }
 
   function getMeterAccuracy() {
@@ -4079,7 +4089,7 @@ import * as THREE from 'three';
       }
 
       // Camera shake for bowling wicket
-      cameraShake.active = true;
+      if (!reducedMotion) cameraShake.active = true;
       cameraShake.start = Date.now();
       cameraShake.duration = 300;
       cameraShake.intensity = 0.1;
@@ -4133,7 +4143,7 @@ import * as THREE from 'three';
         playCrowdReaction('cheer');
         playBatCrack(3);
         haptic([30]);
-        cameraShake.active = true;
+        if (!reducedMotion) cameraShake.active = true;
         cameraShake.start = Date.now();
         cameraShake.duration = 200;
         cameraShake.intensity = 0.05;
@@ -4144,7 +4154,7 @@ import * as THREE from 'three';
         playCrowdReaction('roar');
         playBatCrack(4);
         haptic([30, 15, 50]);
-        cameraShake.active = true;
+        if (!reducedMotion) cameraShake.active = true;
         cameraShake.start = Date.now();
         cameraShake.duration = 400;
         cameraShake.intensity = 0.15;
@@ -5214,6 +5224,9 @@ import * as THREE from 'three';
         tossResultText.style.color = '#4CAF50';
         tossChoiceButtons.style.display = 'block';
         playUISound('levelComplete');
+        // Focus first choice button for keyboard users
+        const firstBtn = tossChoiceButtons.querySelector('button');
+        if (firstBtn) setTimeout(() => firstBtn.focus(), 100);
       } else {
         state.tossResult = 'lost';
         // Opponent chooses -- 70% they choose to bat

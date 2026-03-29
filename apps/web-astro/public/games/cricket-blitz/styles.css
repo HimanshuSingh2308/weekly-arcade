@@ -1216,7 +1216,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   transition: border-color 0.2s, background 0.2s;
-  min-height: 36px;
+  min-height: 44px;
 }
 
 .cb-line-btn:hover {
