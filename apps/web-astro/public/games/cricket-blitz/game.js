@@ -742,18 +742,19 @@ import * as THREE from 'three';
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Mowed stripes (alternating light/dark green)
-    for (let i = -10; i <= 10; i++) {
+    // Mowed stripes on outfield (NOT on pitch — stripes run perpendicular to pitch)
+    for (let i = -8; i <= 8; i++) {
       if (i % 2 === 0) continue;
-      const stripeGeo = new THREE.PlaneGeometry(170, 7);
+      const stripeGeo = new THREE.PlaneGeometry(170, 8);
       const stripeMat = new THREE.MeshLambertMaterial({
-        color: 0x34a024,
+        color: 0x2d9a1e,
         transparent: true,
-        opacity: 0.3
+        opacity: 0.15
       });
       const stripe = new THREE.Mesh(stripeGeo, stripeMat);
       stripe.rotation.x = -Math.PI / 2;
-      stripe.position.set(0, 0.01, i * 7 + 10);
+      stripe.rotation.z = Math.PI / 2; // perpendicular to pitch
+      stripe.position.set(i * 8, 0.005, 11);
       scene.add(stripe);
     }
 
@@ -817,8 +818,8 @@ import * as THREE from 'three';
     scene.add(rcBowlR);
 
     // Worn patches where bowlers land (z = 16-19 area)
-    const wornGeo = new THREE.CircleGeometry(0.3, 12);
-    const wornMat = new THREE.MeshLambertMaterial({ color: 0x8a7040, transparent: true, opacity: 0.3 });
+    const wornGeo = new THREE.CircleGeometry(0.12, 8);
+    const wornMat = new THREE.MeshLambertMaterial({ color: 0x9a8050, transparent: true, opacity: 0.15 });
     const wornPositions = [
       { x: 0.2, z: 16.5 }, { x: -0.3, z: 17.2 },
       { x: 0.1, z: 18.0 }, { x: -0.15, z: 17.8 }
@@ -1396,10 +1397,10 @@ import * as THREE from 'three';
 
   // ---- Sight Screen (white screen behind bowler's end) ----
   function buildSightScreen() {
-    const screenGeo = new THREE.BoxGeometry(8, 6, 0.5);
+    const screenGeo = new THREE.BoxGeometry(4, 3, 0.3);
     const screenMat = new THREE.MeshBasicMaterial({ color: 0xF0F0F0 });
     const sightScreen = new THREE.Mesh(screenGeo, screenMat);
-    sightScreen.position.set(0, 3, 25);
+    sightScreen.position.set(0, 3, 75); // far behind bowler, near boundary
     scene.add(sightScreen);
   }
 
