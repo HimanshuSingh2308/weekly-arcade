@@ -295,7 +295,21 @@ import * as THREE from 'three';
     bowlingResultTimer: 0,
     yorkerWickets: 0,
     bowlingBestOverRuns: 0,
-    lastTwoDeliveryFast: false
+    lastTwoDeliveryFast: false,
+
+    // Combo streak
+    comboStreak: 0,
+
+    // Camera shake
+    cameraShakeTime: 0,
+    cameraShakeIntensity: 0,
+
+    // Gesture controls
+    gestureDirection: null,
+    gestureConfirmed: false,
+
+    // Ball approach sound
+    ballApproachActive: false
   };
 
   // ============================================
@@ -380,8 +394,8 @@ import * as THREE from 'three';
   let particleMeshes = [];
 
   // Camera animation state
-  let cameraTarget = new THREE.Vector3(0, 1, 11);
-  let cameraPos = new THREE.Vector3(0, 3, -2);
+  let cameraTarget = new THREE.Vector3(0, 0.5, 12);
+  let cameraPos = new THREE.Vector3(0, 6, -8);
   let cameraShake = { active: false, start: 0, duration: 400, intensity: 0.08 };
 
   function initThreeScene() {
@@ -407,8 +421,8 @@ import * as THREE from 'three';
 
     // Camera
     camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
-    camera.position.set(0, 3, -2);
-    camera.lookAt(0, 1, 11);
+    camera.position.set(0, 6, -8);
+    camera.lookAt(0, 0.5, 12);
 
     // Lighting
     const ambient = new THREE.AmbientLight(0x404060, 0.5);
@@ -432,6 +446,8 @@ import * as THREE from 'three';
     buildBall();
     buildStumps();
     buildSweetSpot();
+    buildFielders();
+    buildSweetSpotRing();
 
     // Post-ball mesh
     const pbGeo = new THREE.SphereGeometry(0.15, 12, 8);
@@ -657,6 +673,46 @@ import * as THREE from 'three';
     sweetSpotLine = new THREE.Mesh(geo, mat);
     sweetSpotLine.position.set(0, 0.03, 1.5);
     scene.add(sweetSpotLine);
+  }
+
+  // ---- Sweet Spot Ring (pulsing timing guide) ----
+  let sweetSpotRing;
+  function buildSweetSpotRing() {
+    const geo = new THREE.RingGeometry(0.6, 0.8, 32);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0, side: THREE.DoubleSide });
+    sweetSpotRing = new THREE.Mesh(geo, mat);
+    sweetSpotRing.rotation.x = -Math.PI / 2;
+    sweetSpotRing.position.set(0, 0.03, 1.0);
+    scene.add(sweetSpotRing);
+  }
+
+  // ---- Fielders ----
+  const FIELDER_POSITIONS = [
+    { x: -15, z: 10 },   // mid-wicket
+    { x: 15, z: 10 },    // cover
+    { x: -25, z: 5 },    // square leg
+    { x: 25, z: 5 },     // point
+    { x: 0, z: 30 },     // long-on
+    { x: -20, z: 25 }    // deep mid-wicket
+  ];
+  let fielderMeshes = [];
+
+  function buildFielders() {
+    const geo = new THREE.SphereGeometry(0.3, 8, 6);
+    FIELDER_POSITIONS.forEach(pos => {
+      const mat = new THREE.MeshLambertMaterial({ color: 0x666666 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(pos.x, 0.3, pos.z);
+      scene.add(mesh);
+      fielderMeshes.push(mesh);
+    });
+  }
+
+  function updateFielderColors() {
+    if (!fielderMeshes.length) return;
+    const oppTeam = state.opponentTeam ? TEAMS[state.opponentTeam] : null;
+    const color = new THREE.Color(oppTeam ? oppTeam.primary : '#666666');
+    fielderMeshes.forEach(m => m.material.color.copy(color));
   }
 
   // ---- Batsman ----
@@ -888,12 +944,24 @@ import * as THREE from 'three';
     // Update team colors on batsman
     updateTeamColors();
 
-    // Sweet spot indicator
+    // Sweet spot indicator (line)
     if (state.ballActive && state.ballProgress > 0.5) {
       const pulse = 0.3 + 0.2 * Math.sin(Date.now() * 0.008);
       sweetSpotLine.material.opacity = pulse;
     } else {
       sweetSpotLine.material.opacity = 0;
+    }
+
+    // Sweet spot ring (pulsing timing guide during last 30% of flight)
+    if (sweetSpotRing) {
+      if (state.ballActive && state.ballProgress > 0.7) {
+        const pulse = 0.15 + 0.15 * Math.sin(Date.now() * 0.012);
+        sweetSpotRing.material.opacity = pulse;
+        const scale = 1 + 0.2 * Math.sin(Date.now() * 0.008);
+        sweetSpotRing.scale.set(scale, scale, scale);
+      } else {
+        sweetSpotRing.material.opacity = 0;
+      }
     }
 
     // Show/hide stumps based on scatter state
@@ -956,6 +1024,7 @@ import * as THREE from 'three';
       const oppTeam = TEAMS[state.opponentTeam];
       bowlerBody.material.color.set(oppTeam.primary);
     }
+    updateFielderColors();
   }
 
   function updateBatsmanAnim(dt) {
@@ -1315,13 +1384,13 @@ import * as THREE from 'three';
     let targetCamPos, targetLookAt;
 
     if (state.phase === 'BOWLING' || state.phase === 'INNINGS_BREAK') {
-      // Bowling view: behind the bowler, looking down at batsman
-      targetCamPos = new THREE.Vector3(0, 3, 22);
-      targetLookAt = new THREE.Vector3(0, 1, 0);
+      // Bowling view: wide TV broadcast angle from bowler end
+      targetCamPos = new THREE.Vector3(0, 6, 24);
+      targetLookAt = new THREE.Vector3(0, 0.5, 5);
     } else {
-      // Default camera position: behind batsman looking down pitch
-      targetCamPos = new THREE.Vector3(0, 3, -2);
-      targetLookAt = new THREE.Vector3(0, 1, 11);
+      // Default camera position: wide TV broadcast angle behind batsman
+      targetCamPos = new THREE.Vector3(0, 6, -8);
+      targetLookAt = new THREE.Vector3(0, 0.5, 12);
     }
 
     // Camera effects based on game events
@@ -1344,7 +1413,7 @@ import * as THREE from 'three';
     // Lerp camera
     camera.position.lerp(targetCamPos, 0.05);
 
-    // Camera shake on wicket
+    // Camera shake (supports different intensities per event)
     if (cameraShake.active) {
       const shakeElapsed = Date.now() - cameraShake.start;
       if (shakeElapsed > cameraShake.duration) {
@@ -1536,6 +1605,34 @@ import * as THREE from 'three';
         if (isSix) playTone(n / 2, 'triangle', dur, vol * 0.5);
       }, i * gap * 1000);
     });
+  }
+
+  // Ball approach rising whoosh
+  let ballApproachOsc = null;
+  let ballApproachGain = null;
+  function playBallApproach(durationMs) {
+    if (!audioCtx || !state.soundEnabled) return;
+    try {
+      const dur = (durationMs || 1200) / 1000;
+      ballApproachOsc = audioCtx.createOscillator();
+      ballApproachOsc.type = 'sine';
+      ballApproachOsc.frequency.setValueAtTime(200, audioCtx.currentTime);
+      ballApproachOsc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + dur);
+      ballApproachGain = audioCtx.createGain();
+      ballApproachGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      ballApproachGain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + dur);
+      ballApproachOsc.connect(ballApproachGain);
+      ballApproachGain.connect(masterGain);
+      ballApproachOsc.start();
+      ballApproachOsc.stop(audioCtx.currentTime + dur + 0.1);
+      state.ballApproachActive = true;
+    } catch (e) {}
+  }
+  function stopBallApproach() {
+    if (ballApproachGain) {
+      try { ballApproachGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.02); } catch (e) {}
+    }
+    state.ballApproachActive = false;
   }
 
   function playUISound(type) {
@@ -1772,6 +1869,7 @@ import * as THREE from 'three';
           state.ballProgress = 0;
           state.bowlerAnimating = false;
           playDeliveryWhoosh();
+          playBallApproach(state.ballSpeed);
         }
         break;
 
@@ -1819,6 +1917,7 @@ import * as THREE from 'three';
     state.ballActive = false;
     state.totalBallsFaced++;
     state.ballsInOver++;
+    stopBallApproach();
 
     // Use center-screen coords for floating text (relative to H)
     const textX = W / 2;
@@ -1836,9 +1935,6 @@ import * as THREE from 'three';
         state.postBallActive = true;
         state.postBallType = 'wicket';
         state.postBallTime = Date.now();
-        // Camera shake
-        cameraShake.active = true;
-        cameraShake.start = Date.now();
       } else {
         playBatCrack(0);
         state.postBallActive = true;
@@ -1850,14 +1946,22 @@ import * as THREE from 'three';
         state.postBallSize = 6;
       }
 
+      // Camera shake for wicket
+      cameraShake.active = true;
+      cameraShake.start = Date.now();
+      cameraShake.duration = 300;
+      cameraShake.intensity = 0.1;
+
       playCrowdReaction('groan');
       spawnFloatingText('OUT!', textX, textBaseY, '#E8000D', 32);
 
       if (!reducedMotion) gameWrap.classList.add('cb-wicket-flash');
       setTimeout(() => gameWrap.classList.remove('cb-wicket-flash'), 500);
 
-      vibrate([100]);
+      haptic([100]);
+      state.comboStreak = 0;
       announceScore(`Out! ${outcome.type}. ${state.runs} for ${state.wickets}.`);
+      showBallCommentary(outcome, false);
 
       if (state.wickets < 3) {
         state.newBatsmanAnim = true;
@@ -1874,6 +1978,10 @@ import * as THREE from 'three';
     if (state.isPowerplay && runs > 0) {
       runs = Math.round(runs * 1.5);
     }
+    // Combo streak bonus: 1.5x on boundaries at streak 5+
+    if (state.comboStreak >= 5 && (rawRuns === 4 || rawRuns === 6)) {
+      runs = Math.round(runs * 1.5);
+    }
     state.runs += runs;
     state.currentOverRuns += runs;
     state.currentOverResults.push({ runs, rawRuns, isWicket: false, isFour: rawRuns === 4, isSix: rawRuns === 6 });
@@ -1881,8 +1989,10 @@ import * as THREE from 'three';
     if (runs > 0) {
       state.consecutiveScoringBalls++;
       state.currentOverScoringBalls++;
+      state.comboStreak++;
     } else {
       state.consecutiveScoringBalls = 0;
+      state.comboStreak = 0;
     }
 
     let power = 0;
@@ -1898,6 +2008,7 @@ import * as THREE from 'three';
     state.batAnimDuration = state.shotDirection === 'defense' ? 120 : 200;
 
     playBatCrack(power);
+    haptic([15]); // bat contact haptic
 
     // Post-ball visual
     state.postBallActive = true;
@@ -1915,7 +2026,12 @@ import * as THREE from 'three';
       spawnParticles(textX, textBaseY, 25, ['#FFD700', '#FFA500', '#FFFFFF'], 120, 0.8);
       playCrowdReaction('cheer');
       playBoundaryJingle(false);
-      vibrate([30]);
+      haptic([30]);
+      // Camera shake for four
+      cameraShake.active = true;
+      cameraShake.start = Date.now();
+      cameraShake.duration = 200;
+      cameraShake.intensity = 0.05;
       checkAchievement('cb-first-four');
     } else if (rawRuns === 6) {
       state.sixes++;
@@ -1923,10 +2039,16 @@ import * as THREE from 'three';
       state.postBallVx = (Math.random() - 0.5) * 2;
       const sixLabel = state.isPowerplay ? 'SIX! (x1.5)' : 'SIX!';
       spawnFloatingText(sixLabel, textX, textBaseY - 20, '#FF00FF', 38);
-      spawnParticles(textX, textBaseY, 40, ['#FF00FF', '#FFD700', '#00FFFF', '#FF4444', '#44FF44'], 150, 1.2);
+      const teamColors = state.selectedTeam ? [TEAMS[state.selectedTeam].primary, TEAMS[state.selectedTeam].secondary] : ['#FF00FF', '#FFD700'];
+      spawnParticles(textX, textBaseY, 40, [...teamColors, '#00FFFF', '#FF4444', '#44FF44'], 150, 1.2);
       playCrowdReaction('roar');
       playBoundaryJingle(true);
-      vibrate([30, 15, 50]);
+      haptic([30, 15, 50]);
+      // Camera shake for six
+      cameraShake.active = true;
+      cameraShake.start = Date.now();
+      cameraShake.duration = 400;
+      cameraShake.intensity = 0.15;
       checkAchievement('cb-first-six');
       triggerCrowdWave();
     } else if (runs === 0) {
@@ -1961,6 +2083,7 @@ import * as THREE from 'three';
     hudRuns.classList.add('cb-score-pop');
     setTimeout(() => hudRuns.classList.remove('cb-score-pop'), 300);
 
+    showBallCommentary(outcome, false);
     updateHUD();
   }
 
@@ -2428,6 +2551,12 @@ import * as THREE from 'three';
     bowlingBallProgress = 0;
     bowlingBallSpeed = 800;
 
+    haptic([10]); // bowling release haptic
+
+    // Perfect accuracy haptic
+    const accuracy = getMeterAccuracy();
+    if (accuracy === 'perfect') haptic([10, 5, 10]);
+
     playDeliveryWhoosh();
   }
 
@@ -2533,11 +2662,15 @@ import * as THREE from 'three';
       if (outcome.type === 'bowled') {
         playStumpsHit();
         triggerStumpScatter();
-        cameraShake.active = true;
-        cameraShake.start = Date.now();
       } else {
         playBatCrack(0);
       }
+
+      // Camera shake for bowling wicket
+      cameraShake.active = true;
+      cameraShake.start = Date.now();
+      cameraShake.duration = 300;
+      cameraShake.intensity = 0.1;
 
       playCrowdReaction('roar');
       spawnFloatingText('WICKET!', textX, textBaseY, '#4CAF50', 32);
@@ -2548,7 +2681,7 @@ import * as THREE from 'three';
       aiBatAnimStart = Date.now();
       aiBatAnimType = 'defense';
 
-      vibrate([100]);
+      haptic([100]);
       announceScore(`Wicket! ${outcome.type}. AI: ${state.bowlingAIScore}/${state.bowlingAIWickets}`);
     } else {
       // Runs scored by AI
@@ -2584,14 +2717,25 @@ import * as THREE from 'three';
       if (outcome.runs === 4) {
         state.postBallType = 'four';
         spawnFloatingText('FOUR!', textX, textBaseY, '#E8000D', 32);
+        spawnParticles(textX, textBaseY, 25, ['#FFD700', '#FFA500', '#FFFFFF'], 120, 0.8);
         playCrowdReaction('cheer');
         playBatCrack(3);
+        haptic([30]);
+        cameraShake.active = true;
+        cameraShake.start = Date.now();
+        cameraShake.duration = 200;
+        cameraShake.intensity = 0.05;
       } else if (outcome.runs === 6) {
         state.postBallType = 'six';
         spawnFloatingText('SIX!', textX, textBaseY, '#FF00FF', 36);
         spawnParticles(textX, textBaseY, 30, ['#FF00FF', '#E8000D', '#FFD700'], 130, 1.0);
         playCrowdReaction('roar');
         playBatCrack(4);
+        haptic([30, 15, 50]);
+        cameraShake.active = true;
+        cameraShake.start = Date.now();
+        cameraShake.duration = 400;
+        cameraShake.intensity = 0.15;
       } else if (outcome.runs === 0) {
         state.postBallType = 'default';
         spawnFloatingText('DOT', textX, textBaseY, 'rgba(255,255,255,0.6)', 20);
@@ -2605,6 +2749,7 @@ import * as THREE from 'three';
       announceScore(`${outcome.runs} run${outcome.runs !== 1 ? 's' : ''}. AI: ${state.bowlingAIScore}/${state.bowlingAIWickets}`);
     }
 
+    showBallCommentary(outcome, true);
     updateBowlingHUD();
 
     // Schedule next ball or end
@@ -2972,6 +3117,17 @@ import * as THREE from 'three';
     const tensionEdge = $('tensionEdge');
     state.tensionActive = false; // No target in match mode batting
     if (tensionEdge) tensionEdge.classList.toggle('active', state.tensionActive);
+
+    // Combo streak badge
+    const comboBadge = document.getElementById('comboBadge');
+    if (comboBadge) {
+      if (state.comboStreak >= 3 && state.phase === 'BATTING') {
+        comboBadge.textContent = state.comboStreak >= 5 ? `ON FIRE! x${state.comboStreak} (1.5x)` : `ON FIRE! x${state.comboStreak}`;
+        comboBadge.classList.add('show');
+      } else {
+        comboBadge.classList.remove('show');
+      }
+    }
   }
 
   function showBowlerIntro() {
@@ -2980,8 +3136,38 @@ import * as THREE from 'three';
     setTimeout(() => bowlerIntro.classList.remove('show'), 1500);
   }
 
+  function showBallCommentary(outcome, isBowling) {
+    const el = document.getElementById('ballCommentary');
+    if (!el) return;
+    const pool = isBowling ? BOWLING_COMMENTARY : COMMENTARY;
+    let text = '';
+    if (outcome.runs === -1) {
+      text = pickRandom(pool.wicket || []);
+    } else if (outcome.runs === 6 || outcome.type === 'six') {
+      text = pickRandom(pool.six || []);
+    } else if (outcome.runs === 4 || outcome.type === 'four') {
+      text = pickRandom(pool.four || []);
+    } else if (outcome.runs === 3) {
+      text = pickRandom(pool.three || COMMENTARY.three || []);
+    } else if (outcome.runs === 2 || outcome.type === 'two') {
+      text = pickRandom(pool.two || []);
+    } else if (outcome.runs === 1 || outcome.type === 'single') {
+      text = pickRandom(pool.single || []);
+    } else {
+      text = pickRandom(pool.dot || []);
+    }
+    if (!text) return;
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
   function announceScore(text) {
     if (srAnnounce) srAnnounce.textContent = text;
+    // Also update assertive aria-live region
+    const assertiveEl = document.getElementById('srAssertive');
+    if (assertiveEl) assertiveEl.textContent = text;
   }
 
   // ============================================
@@ -3030,6 +3216,8 @@ import * as THREE from 'three';
       if (navigator.vibrate) navigator.vibrate(pattern);
     } catch (e) {}
   }
+
+  function haptic(pattern) { vibrate(pattern); }
 
   // ============================================
   // TEAM SELECT & GAME START
@@ -3355,6 +3543,8 @@ import * as THREE from 'three';
       case ' ':
         e.preventDefault();
         handleSwing();
+        // Brief audio tone to confirm input
+        playTone(880, 'sine', 0.04, 0.03);
         break;
       case 'ArrowUp': case 'w': case 'W':
         e.preventDefault();
@@ -3375,7 +3565,7 @@ import * as THREE from 'three';
     }
   });
 
-  // Touch zones
+  // Touch zones (legacy, still wired but hidden during gesture mode)
   function handleTouchZone(e) {
     e.preventDefault();
     if (state.phase !== 'BATTING') return;
@@ -3399,11 +3589,119 @@ import * as THREE from 'three';
     isTouchDevice = true;
   }, { once: true });
 
-  // Three.js canvas tap for audio init on mobile
+  // ============================================
+  // GESTURE CONTROLS (swipe + tap for mobile)
+  // ============================================
+
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+  let bowlingTouchStartTime = 0, bowlingTouchHolding = false;
+
+  function showGestureIndicator(direction) {
+    const el = document.getElementById('gestureIndicator');
+    if (!el) return;
+    const arrows = { straight: '\u2191', pull: '\u2190', cut: '\u2192', defense: '\u2193' };
+    const names = { straight: 'DRIVE', pull: 'PULL', cut: 'CUT', defense: 'BLOCK' };
+    el.querySelector('.cb-gesture-arrow').textContent = arrows[direction] || '\u2191';
+    el.querySelector('.cb-gesture-name').textContent = names[direction] || 'DRIVE';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 600);
+  }
+
+  function showBowlingGestureIndicator(delivery) {
+    const el = document.getElementById('gestureIndicator');
+    if (!el) return;
+    const labels = { bouncer: '\u2191 BOUNCER', yorker: '\u2193 YORKER', inswing: '\u2190 INSWING', outswing: '\u2192 OUTSWING', straight: '\u25CF STRAIGHT' };
+    el.querySelector('.cb-gesture-arrow').textContent = '';
+    el.querySelector('.cb-gesture-name').textContent = labels[delivery] || delivery;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 600);
+  }
+
   if (gameContainer) {
     gameContainer.addEventListener('touchstart', (e) => {
       initAudio();
       resumeAudio();
+
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+
+      // Bowling hold detection
+      if (state.phase === 'BOWLING' && state.bowlingDeliveryPhase === 'selecting') {
+        bowlingTouchStartTime = Date.now();
+        bowlingTouchHolding = true;
+        // Start meter after brief hold (150ms)
+        setTimeout(() => {
+          if (bowlingTouchHolding && state.bowlingDeliveryPhase === 'selecting') {
+            startBowlingMeter();
+          }
+        }, 150);
+      }
+    }, { passive: true });
+
+    gameContainer.addEventListener('touchend', (e) => {
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const deltaX = endX - touchStartX;
+      const deltaY = endY - touchStartY;
+      const elapsed = Date.now() - touchStartTime;
+      const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+      // Bowling phase: release stops meter, swipe sets delivery
+      if (state.phase === 'BOWLING') {
+        bowlingTouchHolding = false;
+
+        if (state.bowlingDeliveryPhase === 'meter') {
+          // Release = stop meter
+          stopBowlingMeter();
+          return;
+        }
+
+        if (state.bowlingDeliveryPhase === 'selecting' && dist > 50 && elapsed < 300) {
+          // Swipe sets delivery type
+          const absX = Math.abs(deltaX);
+          const absY = Math.abs(deltaY);
+          let delivery = 'straight';
+          if (absY > absX) {
+            delivery = deltaY < 0 ? 'bouncer' : 'yorker';
+          } else {
+            delivery = deltaX < 0 ? 'inswing' : 'outswing';
+          }
+          selectDeliveryType(delivery);
+          showBowlingGestureIndicator(delivery);
+          return;
+        }
+        return;
+      }
+
+      // Batting phase
+      if (state.phase !== 'BATTING') return;
+
+      if (dist > 50 && elapsed < 300) {
+        // Swipe detected: set direction
+        const absX = Math.abs(deltaX);
+        const absY = Math.abs(deltaY);
+        let direction;
+        if (absY > absX) {
+          direction = deltaY < 0 ? 'straight' : 'defense';
+        } else {
+          direction = deltaX < 0 ? 'pull' : 'cut';
+        }
+        state.gestureDirection = direction;
+        state.gestureConfirmed = true;
+        setShotDirection(direction);
+        showGestureIndicator(direction);
+        // Update pitch shot overlay
+        const overlayIcon = document.getElementById('pitchShotIcon');
+        const overlayName = document.getElementById('pitchShotName');
+        const arrows = { straight: '\u2191', pull: '\u2190', cut: '\u2192', defense: '\u2193' };
+        const names = { straight: 'DRIVE', pull: 'PULL', cut: 'CUT', defense: 'BLOCK' };
+        if (overlayIcon) overlayIcon.textContent = arrows[direction] || '\u2191';
+        if (overlayName) overlayName.textContent = names[direction] || 'DRIVE';
+      } else {
+        // Tap: swing bat with current direction
+        handleSwing(state.gestureDirection || state.shotDirection);
+      }
     }, { passive: true });
   }
 

@@ -1249,6 +1249,115 @@
   box-shadow: 0 0 12px rgba(255,215,0,0.3);
 }
 
+/* ---- Ball Commentary Overlay ---- */
+.cb-ball-commentary {
+  position: fixed;
+  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 40px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  padding: 6px 16px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--cb-accent);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  max-width: calc(100% - 40px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cb-ball-commentary.show {
+  opacity: 1;
+}
+
+/* ---- Gesture Direction Indicator (mobile) ---- */
+.cb-gesture-indicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 20px;
+  background: rgba(0,0,0,0.5);
+  border: 2px solid var(--cb-accent);
+  border-radius: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.cb-gesture-indicator.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.cb-gesture-arrow {
+  font-size: 2rem;
+  color: var(--cb-accent);
+  text-shadow: 0 0 12px rgba(255,215,0,0.5);
+}
+
+.cb-gesture-name {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cb-text);
+}
+
+/* Hide old tap zone arrows during gesture-enabled gameplay on touch */
+@media (hover: none), (pointer: coarse) {
+  .cb-playing:not(.cb-bowling) .cb-touch-zones {
+    display: block;
+    pointer-events: none;
+  }
+  .cb-playing:not(.cb-bowling) .cb-zone-arrow {
+    display: none;
+  }
+}
+
+/* ---- Combo Streak Badge ---- */
+.cb-combo-badge {
+  position: fixed;
+  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 68px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  display: none;
+  padding: 4px 14px;
+  background: linear-gradient(135deg, #FF6B00, #E8000D);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border-radius: 20px;
+  box-shadow: 0 0 16px rgba(255,107,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  animation: comboPulse 0.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cb-combo-badge.show {
+  display: block;
+}
+
+@keyframes comboPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(255,107,0,0.4), 0 2px 8px rgba(0,0,0,0.3); transform: translateX(-50%) scale(1); }
+  50% { box-shadow: 0 0 24px rgba(255,107,0,0.7), 0 2px 12px rgba(0,0,0,0.4); transform: translateX(-50%) scale(1.05); }
+}
+
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }
@@ -1261,7 +1370,10 @@
   .cb-title-icon { animation: none; }
   .cb-title-modal::before { animation: none; display: none; }
   .cb-powerplay-badge { animation: none; }
+  .cb-combo-badge { animation: none; }
   .cb-tension-edge.active { animation: none; }
+  .cb-gesture-indicator { transition: none; }
+  .cb-ball-commentary { transition: none; }
   @keyframes playBtnGlow { 0%, 100% { box-shadow: 0 4px 16px rgba(255,215,0,0.3); } }
   .cb-delivery-btn { transition: none; }
   .cb-line-btn { transition: none; }
