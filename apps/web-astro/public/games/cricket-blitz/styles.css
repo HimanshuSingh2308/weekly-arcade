@@ -371,7 +371,10 @@
 /* ---- Title Screen ---- */
 .cb-title-modal {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 85dvh;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Floating background particles container */
@@ -661,6 +664,8 @@
 
 .cb-how-to-play.expanded {
   display: block;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .cb-how-to-play kbd {
