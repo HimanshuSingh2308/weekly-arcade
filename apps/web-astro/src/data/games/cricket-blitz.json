@@ -1,0 +1,16 @@
+{
+  "id": "cricket-blitz",
+  "name": "Cricket Blitz",
+  "icon": "\ud83c\udfcf",
+  "title": "Cricket Blitz | Weekly Arcade - IPL-Style Cricket Game",
+  "description": "Play Cricket Blitz free online. Face 5 overs of intense IPL-style cricket batting. Time your shots, smash boundaries, and chase down massive targets.",
+  "keywords": "cricket blitz, cricket game, IPL game, batting game, arcade cricket, browser game",
+  "url": "/games/cricket-blitz/",
+  "themeColor": "#1a0a3e",
+  "accentColor": "#FFD700",
+  "genres": ["Arcade", "Sports", "Timing"],
+  "ratingValue": "4.8",
+  "ratingCount": "620",
+  "category": "arcade",
+  "rendering": "canvas"
+}

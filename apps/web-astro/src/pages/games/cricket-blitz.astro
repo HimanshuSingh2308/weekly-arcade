@@ -1,0 +1,167 @@
+---
+/**
+ * Cricket Blitz -- IPL-Style Arcade Cricket.
+ *
+ * GameLayout handles: meta, SEO, structured data, header, shared modules, fallback, more-games.
+ */
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/cricket-blitz.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/games/cricket-blitz/styles.css">
+    <style is:global>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #1a0a3e;
+        color: #ffffff;
+        touch-action: manipulation;
+        overflow: hidden;
+      }
+    </style>
+  </Fragment>
+
+  <!-- Game Container -->
+  <div class="cb-game-wrap" id="gameWrap">
+    <div class="cb-game-container" id="gameContainer">
+      <canvas id="bgCanvas" aria-hidden="true"></canvas>
+      <canvas id="fgCanvas" role="img" aria-label="Cricket Blitz game pitch"></canvas>
+
+      <!-- Touch zones (mobile) -->
+      <div class="cb-touch-zones" id="touchZones">
+        <div class="cb-touch-zone cb-zone-top" data-shot="straight" aria-label="Lofted drive">
+          <span class="cb-zone-arrow">&uarr;</span>
+        </div>
+        <div class="cb-touch-zone cb-zone-left" data-shot="pull" aria-label="Pull shot">
+          <span class="cb-zone-arrow">&larr;</span>
+        </div>
+        <div class="cb-touch-zone cb-zone-right" data-shot="cut" aria-label="Cut shot">
+          <span class="cb-zone-arrow">&rarr;</span>
+        </div>
+        <div class="cb-touch-zone cb-zone-bottom" data-shot="defense" aria-label="Defensive block">
+          <span class="cb-zone-arrow">&darr;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD Top Bar -->
+  <div class="cb-hud-top" id="hudTop">
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">Over</span>
+      <span class="cb-hud-value" id="hudOvers">0.0/5</span>
+    </div>
+    <div class="cb-hud-item cb-hud-target">
+      <span class="cb-hud-label">Target</span>
+      <span class="cb-hud-value" id="hudTarget">40</span>
+    </div>
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">Wickets</span>
+      <span class="cb-hud-value" id="hudWickets">
+        <span class="cb-wicket-icon active"></span>
+        <span class="cb-wicket-icon active"></span>
+        <span class="cb-wicket-icon active"></span>
+      </span>
+    </div>
+  </div>
+
+  <!-- HUD Bottom Bar -->
+  <div class="cb-hud-bottom" id="hudBottom">
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">Runs</span>
+      <span class="cb-hud-value cb-runs-value" id="hudRuns">0</span>
+    </div>
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">RR</span>
+      <span class="cb-hud-value" id="hudRR">0.00</span>
+    </div>
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">4s</span>
+      <span class="cb-hud-value" id="hudFours">0</span>
+    </div>
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">6s</span>
+      <span class="cb-hud-value" id="hudSixes">0</span>
+    </div>
+  </div>
+
+  <!-- Shot direction indicator (desktop) -->
+  <div class="cb-shot-indicator" id="shotIndicator">
+    <span id="shotArrow">&uarr;</span>
+    <span id="shotLabel">Drive</span>
+  </div>
+
+  <!-- Title / Team Select Overlay -->
+  <div class="cb-overlay cb-visible" id="titleOverlay" role="dialog" aria-modal="true" aria-label="Cricket Blitz - Start">
+    <div class="cb-modal cb-title-modal">
+      <div class="cb-title-icon">\ud83c\udfcf</div>
+      <h1 class="cb-title-name">Cricket Blitz</h1>
+      <p class="cb-title-tagline">IPL-Style Arcade Cricket</p>
+      <div class="cb-best-score" id="titleBest"></div>
+
+      <h2 class="cb-section-heading">Select Your Team</h2>
+      <div class="cb-team-grid" id="teamGrid"></div>
+
+      <button class="cb-btn cb-btn-play" id="playBtn" disabled>Play</button>
+
+      <button class="cb-btn-link" id="howToPlayBtn">How to Play</button>
+      <div class="cb-how-to-play" id="howToPlay">
+        <p>Tap or press <kbd>Space</kbd> to swing the bat.</p>
+        <p>Choose shot direction with arrow keys or tap zones.</p>
+        <p>Time your shot as the ball reaches you.</p>
+        <p>Score as many runs as possible in 5 overs (30 balls).</p>
+        <p>Beat the target to advance to the next level!</p>
+        <div class="cb-zone-diagram">
+          <div class="cb-zd-top">LOFTED (&uarr;)</div>
+          <div class="cb-zd-mid">
+            <span>PULL (&larr;)</span>
+            <span>CUT (&rarr;)</span>
+          </div>
+          <div class="cb-zd-bottom">DEFENSE (&darr;)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Between Overs Overlay -->
+  <div class="cb-overlay" id="overOverlay" role="dialog" aria-modal="true" aria-label="Over summary">
+    <div class="cb-modal cb-over-modal" id="overModal"></div>
+  </div>
+
+  <!-- Level Complete Overlay -->
+  <div class="cb-overlay" id="levelOverlay" role="dialog" aria-modal="true" aria-label="Level complete">
+    <div class="cb-modal cb-level-modal" id="levelModal"></div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div class="cb-overlay" id="gameOverOverlay" role="dialog" aria-modal="true" aria-label="Game over">
+    <div class="cb-modal cb-gameover-modal" id="gameOverModal"></div>
+  </div>
+
+  <!-- Bowler Intro -->
+  <div class="cb-bowler-intro" id="bowlerIntro" aria-live="polite"></div>
+
+  <!-- Achievement Toast -->
+  <div class="cb-achievement-toast" id="achievementToast" role="alert"></div>
+
+  <!-- Screen reader announcements -->
+  <div id="srAnnounce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <Fragment slot="scripts">
+    <script is:inline src="/games/cricket-blitz/game.js"></script>
+  </Fragment>
+</GameLayout>
