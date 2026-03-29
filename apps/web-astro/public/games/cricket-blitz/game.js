@@ -50,7 +50,9 @@ import * as THREE from 'three';
     'cb_five_wickets':     { name: 'Five-For',           desc: 'Take 5 wickets in a bowling innings',     xp: 100 },
     'cb_full_match_win':   { name: 'Match Winner',       desc: 'Win a complete match (bat + bowl)',        xp: 75 },
     'cb_clean_sweep':      { name: 'Clean Sweep',        desc: 'Win by 30+ runs margin',                  xp: 100 },
-    'cb_yorker_master':    { name: 'Yorker Master',      desc: 'Take 3 wickets with yorkers',             xp: 75 }
+    'cb_yorker_master':    { name: 'Yorker Master',      desc: 'Take 3 wickets with yorkers',             xp: 75 },
+    'cb_death_over_six':   { name: 'Death Over Hero',    desc: 'Hit a six in the death over',             xp: 50 },
+    'cb_in_the_zone':      { name: 'In The Zone',        desc: 'Reach 90+ confidence',                    xp: 75 }
   };
 
   // Patch #19: Bat skins
@@ -209,6 +211,8 @@ import * as THREE from 'three';
   COMMENTARY.freeHit = ["FREE HIT! The batsman can swing freely!", "Free hit delivery - nothing to lose!"];
   COMMENTARY.lbw = ["LBW! Plumb in front of the stumps!", "That's out LBW! The umpire raises the finger."];
   COMMENTARY.superOver = ["SUPER OVER! This is incredible!", "We're going to a Super Over! The crowd is on its feet!"];
+  COMMENTARY.caught_behind = ["Edge and taken! The keeper does the job!", "Thin edge, and the keeper pouches it!", "What a catch behind the stumps!"];
+  COMMENTARY.stumped = ["Stumped! Quick work by the keeper!", "Out of his crease and stumped!", "Lightning reflexes from the keeper — STUMPED!"];
 
   // Bowling commentary (AI batsman perspective)
   const BOWLING_COMMENTARY = {
@@ -462,7 +466,18 @@ import * as THREE from 'three';
     crowdJumpTime: 0,
     crowdFlashTimer: 0,
     batCelebration: false,
-    batCelebrationTimer: 0
+    batCelebrationTimer: 0,
+
+    // Phase 1 Realism Features
+    keeperCatchAnim: false,
+    keeperCatchAnimStart: 0,
+    confidence: 50,
+    bowlerConsecutiveSameType: 0,
+    lastDeliveryType: null,
+    wagonWheelShots: [],
+    overRunHistory: [],
+    matchPhaseLabel: 'POWERPLAY',
+    matchPhaseColor: '#FFD700'
   };
 
   // ============================================
@@ -526,6 +541,9 @@ import * as THREE from 'three';
   let playerBowlerGroup, playerBowlerBody, playerBowlerArm, playerBowlerBallInHand;
   // Bowling ball (travels away from camera)
   let bowlingBallMesh, bowlingBallSeam, bowlingBallShadow;
+
+  // Keeper references (for catch-behind animation)
+  let keeperGroupRef, keeperGloveL, keeperGloveR;
 
   // Scatter physics for stumps
   let scatterStumps = [];
@@ -958,7 +976,10 @@ import * as THREE from 'three';
     if (!crowdMesh) return;
     const colors = crowdMesh.geometry.getAttribute('color');
     // Patch #17: More energetic crowd during bowling
-    const baseCrowdSwaps = state.matchPhase === 'bowling' ? 16 : 8;
+    // Feature 6: Scale crowd swaps by match pressure
+    const pressureNow = getMatchPressure();
+    const pressureSwapBonus = Math.floor(pressureNow / 10);
+    const baseCrowdSwaps = (state.matchPhase === 'bowling' ? 16 : 8) + pressureSwapBonus;
     const count = Math.min(baseCrowdSwaps, colors.count);
     for (let i = 0; i < count; i++) {
       const idx = Math.floor(Math.random() * colors.count);
@@ -1634,6 +1655,11 @@ import * as THREE from 'three';
     keeperGroup.position.set(0, 0, -0.3); // behind the stumps (lower z = closer to camera)
     keeperGroup.rotation.y = Math.PI; // facing toward bowler
     scene.add(keeperGroup);
+
+    // Store references for keeper catch animation
+    keeperGroupRef = keeperGroup;
+    keeperGloveL = gloveL;
+    keeperGloveR = gloveR;
   }
 
   function updateFielderColors() {
@@ -2215,6 +2241,32 @@ import * as THREE from 'three';
 
     // Batsman shadow
     updateBatsmanShadow();
+
+    // Feature 1: Keeper catch animation — gloves come together
+    if (state.keeperCatchAnim && keeperGloveL && keeperGloveR) {
+      const elapsed = (Date.now() - state.keeperCatchAnimStart) / 1000;
+      if (elapsed < 0.8) {
+        const t = Math.min(1, elapsed / 0.3); // gloves close in 0.3s
+        keeperGloveL.position.x = -0.15 + t * 0.1;  // move inward
+        keeperGloveR.position.x = 0.15 - t * 0.1;   // move inward
+      } else {
+        // Reset
+        state.keeperCatchAnim = false;
+        keeperGloveL.position.x = -0.15;
+        keeperGloveR.position.x = 0.15;
+      }
+    }
+
+    // Feature 3: Confidence glow on batsman
+    if (batsmanBody && batsmanBody.material) {
+      if (state.confidence > 75) {
+        if (!batsmanBody.material.emissive) batsmanBody.material.emissive = new THREE.Color(0x000000);
+        batsmanBody.material.emissive.setHex(0x332200);
+        batsmanBody.material.emissiveIntensity = 0.3;
+      } else {
+        if (batsmanBody.material.emissiveIntensity) batsmanBody.material.emissiveIntensity = 0;
+      }
+    }
 
     // Batsman idle animation (when ball not in flight)
     if (!state.ballActive && !state.batAnimating && !reducedMotion) {
@@ -2838,10 +2890,15 @@ import * as THREE from 'three';
       case 'groan':  gainVal = 0.05; pitchShift = -80; dur = 1.2; noiseGain = 0.02; break;
       default:       return;
     }
+    // Feature 6: Scale crowd volume by match pressure
+    const pressure = getMatchPressure();
+    const pressureScale = 1 + pressure / 100;
+    gainVal *= pressureScale;
+    noiseGain *= pressureScale;
     baseFreqs.forEach(f => {
       playTone(f + pitchShift, 'sine', dur, gainVal);
     });
-    if (type === 'roar') playTone(440, 'sine', dur, 0.04);
+    if (type === 'roar') playTone(440, 'sine', dur, 0.04 * pressureScale);
     createNoise(dur, 2000, 0.5, noiseGain, 'bandpass');
   }
 
@@ -2947,6 +3004,81 @@ import * as THREE from 'three';
   // DIFFICULTY & DELIVERY GENERATION
   // ============================================
 
+  // Feature 2: Three-phase match structure
+  function getMatchPhaseForOver(overNum) {
+    if (overNum < 2) return { label: 'POWERPLAY', color: '#FFD700', multiplier: 1.5 };
+    if (overNum < 4) return { label: 'MIDDLE OVERS', color: '#4CAF50', multiplier: 1.0 };
+    return { label: 'DEATH OVER', color: '#F44336', multiplier: 1.0 };
+  }
+
+  // Feature 6: Situational crowd intensity
+  function getMatchPressure() {
+    const ballsLeft = (5 - state.oversCompleted) * 6 - state.ballsInOver;
+    const runsNeeded = state.target ? state.target - state.runs : 0;
+    const rrRequired = ballsLeft > 0 ? (runsNeeded / (ballsLeft / 6)) : 0;
+
+    let pressure = 0;
+    if (state.matchPhase === 'batting_chase') {
+      if (rrRequired > 12) pressure = 90;
+      else if (rrRequired > 9) pressure = 70;
+      else if (rrRequired > 6) pressure = 50;
+      else pressure = 30;
+    }
+    if (state.oversCompleted >= 4) pressure += 20;
+    if (state.wickets >= 2) pressure += 15;
+
+    return Math.min(100, pressure);
+  }
+
+  // Feature 7: Wagon wheel SVG
+  function drawWagonWheel() {
+    const shots = state.wagonWheelShots;
+    if (shots.length === 0) return '';
+
+    let svg = '<svg viewBox="0 0 120 120" width="120" height="120" style="margin:8px auto;display:block;">';
+    svg += '<circle cx="60" cy="60" r="55" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>';
+    svg += '<circle cx="60" cy="60" r="30" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>';
+
+    const dirMap = {
+      straight: { dx: 0, dy: -1 },
+      pull: { dx: -0.8, dy: -0.6 },
+      cut: { dx: 0.8, dy: -0.6 },
+      defense: { dx: 0, dy: -0.3 }
+    };
+
+    shots.forEach(function(s) {
+      const d = dirMap[s.direction] || dirMap.straight;
+      const len = Math.min(50, (s.runs / 6) * 50 + 5);
+      const color = s.runs >= 6 ? '#9C27B0' : s.runs >= 4 ? '#FFD700' : s.runs > 0 ? '#FFFFFF' : '#666';
+      const ex = 60 + d.dx * len;
+      const ey = 60 + d.dy * len;
+      svg += '<line x1="60" y1="65" x2="' + ex + '" y2="' + ey + '" stroke="' + color + '" stroke-width="1.5" opacity="0.7"/>';
+    });
+
+    svg += '<circle cx="60" cy="65" r="3" fill="#FFD700"/>';
+    svg += '</svg>';
+    return '<div style="text-align:center;"><span style="font-size:0.6rem;color:rgba(255,255,255,0.4);">WAGON WHEEL</span>' + svg + '</div>';
+  }
+
+  // Feature 8: Manhattan chart
+  function drawManhattan() {
+    const overs = state.overRunHistory;
+    if (overs.length === 0) return '';
+
+    const maxRuns = Math.max.apply(null, overs.concat([1]));
+    let html = '<div style="text-align:center;"><span style="font-size:0.6rem;color:rgba(255,255,255,0.4);">MANHATTAN</span></div>';
+    html += '<div style="display:flex;align-items:flex-end;gap:4px;height:40px;margin:8px 0;">';
+    overs.forEach(function(runs, i) {
+      const h = Math.max(4, (runs / maxRuns) * 36);
+      const color = runs >= 15 ? '#9C27B0' : runs >= 10 ? '#FFD700' : runs >= 5 ? '#4CAF50' : '#666';
+      html += '<div style="flex:1;height:' + h + 'px;background:' + color + ';border-radius:2px 2px 0 0;position:relative;">';
+      html += '<span style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:0.55rem;color:rgba(255,255,255,0.6);">' + runs + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
   function getDifficultyParams() {
     const lv = state.level;
     const ov = state.oversCompleted;
@@ -3022,6 +3154,32 @@ import * as THREE from 'three';
     if (deliveryType === 'slower') {
       speed *= 1.4;
     }
+
+    // Feature 2: Death over adjustments (over 5 = index 4)
+    if (state.oversCompleted >= 4) {
+      speed *= 0.85; // faster ball
+      state.timingPerfect = Math.max(20, state.timingPerfect - 10);
+      state.timingGood = Math.max(60, state.timingGood - 10);
+    }
+
+    // Feature 4: Track bowler consecutive same type
+    if (state.lastDeliveryType === deliveryType) {
+      state.bowlerConsecutiveSameType++;
+    } else {
+      state.bowlerConsecutiveSameType = 0;
+    }
+    state.lastDeliveryType = deliveryType;
+    // Feature 4: Show commentary hint when bowler repeats 3+
+    if (state.bowlerConsecutiveSameType >= 3) {
+      const el = document.getElementById('ballCommentary');
+      if (el) {
+        el.textContent = "The batsman is onto this delivery pattern!";
+        el.classList.add('show');
+        clearTimeout(el._timer);
+        el._timer = setTimeout(() => el.classList.remove('show'), 2000);
+      }
+    }
+
     state.ballSpeed = speed;
     state.ballIsOnStumps = Math.random() < 0.4;
     state.ballSwingDir = (Math.random() - 0.5) * 2;
@@ -3036,15 +3194,28 @@ import * as THREE from 'three';
     let probs;
 
     if (timingMs < 0) {
+      // Feature 5: Stumping against spinners when ball is missed
+      if (state.bowlerType === 'spinner' && Math.random() < 0.25) {
+        return { runs: -1, type: 'stumped' };
+      }
       if (state.ballIsOnStumps) return { runs: -1, type: 'bowled' };
       return { runs: 0, type: 'dot' };
     }
 
+    // Feature 3: Confidence-adjusted timing thresholds
+    const confidenceBonus = (state.confidence - 50) * 0.15;
+    const adjustedPerfect = state.timingPerfect + confidenceBonus;
+    const adjustedGood = state.timingGood + confidenceBonus;
+
     let quality;
-    if (timingMs <= state.timingPerfect) quality = 'perfect';
-    else if (timingMs <= state.timingGood) quality = 'good';
+    if (timingMs <= adjustedPerfect) quality = 'perfect';
+    else if (timingMs <= adjustedGood) quality = 'good';
     else if (timingMs <= 200) quality = 'mistimed';
     else {
+      // Feature 5: Stumping against spinners when swing is too late
+      if (state.bowlerType === 'spinner' && Math.random() < 0.25) {
+        return { runs: -1, type: 'stumped' };
+      }
       if (state.ballIsOnStumps) return { runs: -1, type: 'bowled' };
       return { runs: 0, type: 'dot' };
     }
@@ -3053,6 +3224,12 @@ import * as THREE from 'three';
     if (counterShot && counterShot === dir) {
       if (quality === 'mistimed') quality = 'good';
       else if (quality === 'good') quality = 'perfect';
+    }
+
+    // Feature 4: Bowler variation pressure — 3+ same delivery shifts quality up
+    if (state.bowlerConsecutiveSameType >= 3) {
+      if (quality === 'good') quality = 'perfect';
+      else if (quality === 'mistimed') quality = 'good';
     }
 
     switch (quality) {
@@ -3080,6 +3257,10 @@ import * as THREE from 'three';
           // LBW chance: 40% of bowled dismissals when ball is on stumps and shot is mistimed
           if (outType === 'bowled' && state.ballIsOnStumps && quality === 'mistimed' && Math.random() < 0.4) {
             outType = 'lbw';
+          }
+          // Feature 1: Caught behind — 30% of caught dismissals when not a bouncer
+          if (outType === 'caught' && state.ballDeliveryType !== 'bouncer' && Math.random() < 0.3) {
+            outType = 'caught_behind';
           }
           return { runs: -1, type: outType };
         }
@@ -3254,6 +3435,32 @@ import * as THREE from 'three';
         state.postBallTime = Date.now();
         spawnFloatingText('LBW!', textX, textBaseY, '#FF6600', 32);
         showBallCommentary({ runs: -1, type: 'lbw' }, false);
+      } else if (outcome.type === 'stumped') {
+        // Feature 5: Stumping — quick stumps rattle + keeper animation
+        playStumpsHit(); // shorter stumps sound
+        triggerStumpScatter();
+        state.postBallActive = true;
+        state.postBallType = 'wicket';
+        state.postBallTime = Date.now();
+        state.keeperCatchAnim = true;
+        state.keeperCatchAnimStart = Date.now();
+        spawnFloatingText('STUMPED!', textX, textBaseY, '#E8000D', 32);
+        showBallCommentary({ runs: -1, type: 'stumped' }, false);
+      } else if (outcome.type === 'caught_behind') {
+        // Feature 1: Caught behind — thin edge sound + keeper animation
+        playTone(3000, 'sine', 0.03, 0.1); // thin edge click
+        setTimeout(() => playCrowdReaction('groan'), 100);
+        state.postBallActive = true;
+        state.postBallType = 'caught';
+        state.postBallTime = Date.now();
+        state.postBallX = 0;
+        state.postBallY = 1;
+        state.postBallVx = (Math.random() - 0.5) * 3;
+        state.postBallSize = 6;
+        state.keeperCatchAnim = true;
+        state.keeperCatchAnimStart = Date.now();
+        spawnFloatingText('CAUGHT BEHIND!', textX, textBaseY, '#FF8C00', 30);
+        showBallCommentary({ runs: -1, type: 'caught_behind' }, false);
       } else if (outcome.type === 'bowled') {
         playStumpsHit();
         triggerStumpScatter();
@@ -3278,7 +3485,7 @@ import * as THREE from 'three';
       cameraShake.intensity = 0.1;
 
       playCrowdReaction('groan');
-      if (outcome.type !== 'lbw') {
+      if (outcome.type !== 'lbw' && outcome.type !== 'caught_behind' && outcome.type !== 'stumped') {
         spawnFloatingText('OUT!', textX, textBaseY, '#E8000D', 32);
       }
 
@@ -3287,10 +3494,12 @@ import * as THREE from 'three';
 
       haptic([100]);
       state.comboStreak = 0;
+      // Feature 3: Reset confidence on wicket (new batsman nervous)
+      state.confidence = 30;
       // Patch #24: Detailed wicket announcement
-      const wicketTypeLabel = outcome.type === 'lbw' ? 'LBW' : outcome.type;
+      const wicketTypeLabel = outcome.type === 'lbw' ? 'LBW' : outcome.type === 'caught_behind' ? 'Caught Behind' : outcome.type === 'stumped' ? 'Stumped' : outcome.type;
       announceScore(`OUT! ${wicketTypeLabel}. ${3 - state.wickets} wicket${3 - state.wickets !== 1 ? 's' : ''} remaining. Score: ${state.runs} for ${state.wickets}.`);
-      if (outcome.type !== 'lbw') showBallCommentary(outcome, false);
+      if (outcome.type !== 'lbw' && outcome.type !== 'caught_behind' && outcome.type !== 'stumped') showBallCommentary(outcome, false);
 
       if (state.wickets < 3) {
         state.newBatsmanAnim = true;
@@ -3304,8 +3513,16 @@ import * as THREE from 'three';
     // Runs scored
     let runs = outcome.runs;
     const rawRuns = runs;
-    if (state.isPowerplay && runs > 0) {
-      runs = Math.round(runs * 1.5);
+    // Feature 2: Phase-based multiplier
+    const phase = getMatchPhaseForOver(state.oversCompleted);
+    if (phase.label === 'POWERPLAY' && runs > 0) {
+      runs = Math.round(runs * phase.multiplier);
+    }
+    // Feature 2: Death over boundary bonus
+    if (phase.label === 'DEATH OVER' && rawRuns === 4) {
+      runs = rawRuns + 1; // 4s get +1 extra
+    } else if (phase.label === 'DEATH OVER' && rawRuns === 6) {
+      runs = rawRuns + 2; // 6s get +2 extra
     }
     // Combo streak bonus: 1.5x on boundaries at streak 5+
     if (state.comboStreak >= 5 && (rawRuns === 4 || rawRuns === 6)) {
@@ -3314,6 +3531,17 @@ import * as THREE from 'three';
     state.runs += runs;
     state.currentOverRuns += runs;
     state.currentOverResults.push({ runs, rawRuns, isWicket: false, isFour: rawRuns === 4, isSix: rawRuns === 6 });
+
+    // Feature 7: Track wagon wheel shot
+    state.wagonWheelShots.push({ direction: state.shotDirection, runs: rawRuns });
+
+    // Feature 3: Confidence adjustments
+    if (rawRuns === 6) state.confidence = Math.min(100, state.confidence + 12);
+    else if (rawRuns === 4) state.confidence = Math.min(100, state.confidence + 8);
+    else if (rawRuns >= 1) state.confidence = Math.min(100, state.confidence + 3);
+    else state.confidence = Math.max(0, state.confidence - 5);
+    // Feature 3: Check "in the zone" achievement
+    if (state.confidence >= 90) checkAchievement('cb_in_the_zone');
 
     if (runs > 0) {
       state.consecutiveScoringBalls++;
@@ -3384,6 +3612,8 @@ import * as THREE from 'three';
       cameraShake.duration = 400;
       cameraShake.intensity = 0.15;
       checkAchievement('cb_first_six');
+      // Feature 2: Death over six achievement
+      if (state.oversCompleted >= 4) checkAchievement('cb_death_over_six');
       triggerCrowdWave();
       // Crowd jump and bat celebration on six
       state.crowdJumpTime = 0.5;
@@ -3478,6 +3708,9 @@ import * as THREE from 'three';
       state.bestOverRuns = state.currentOverRuns;
     }
 
+    // Feature 8: Track runs per over for manhattan chart
+    state.overRunHistory.push(state.currentOverRuns);
+
     state.oversCompleted++;
     playCrowdClap();
     playUISound('overComplete');
@@ -3516,7 +3749,16 @@ import * as THREE from 'three';
     const rr = state.totalBallsFaced > 0 ? (state.runs / (state.totalBallsFaced / 6)).toFixed(2) : '0.00';
     const ballsRemaining = (5 - state.oversCompleted) * 6;
 
-    const commentary = pickRandom(COMMENTARY.overEnd);
+    let commentary = pickRandom(COMMENTARY.overEnd);
+    // Feature 6: Pressure-based commentary prefix
+    const pressure = getMatchPressure();
+    if (pressure > 70) {
+      const tensionPrefix = pickRandom(["The crowd is on edge! ", "Tension building! ", "Nerves all around! "]);
+      commentary = tensionPrefix + commentary;
+    }
+
+    // Feature 2: Next over phase label
+    const nextPhase = getMatchPhaseForOver(state.oversCompleted);
 
     generateBowlerForOver();
 
@@ -3535,7 +3777,10 @@ import * as THREE from 'three';
           <span class="value">${5 - state.oversCompleted}</span>
         </div>
       </div>
+      ${drawWagonWheel()}
+      ${drawManhattan()}
       <p class="cb-commentary">"${commentary}"</p>
+      <div style="text-align:center;margin:4px 0;"><span style="color:${nextPhase.color};font-weight:700;font-size:0.8rem;">Next: ${nextPhase.label}</span></div>
       <div class="cb-over-bowler">Next: ${state.bowlerName}</div>
       <div class="cb-over-bowler-type">${state.bowlerType}</div>
       <button class="cb-btn" onclick="window._cbNextOver()">NEXT OVER &rarr;</button>
@@ -3703,6 +3948,13 @@ import * as THREE from 'three';
     state.newBatsmanAnim = false;
     state.batAnimating = false;
     state.bowlerAnimating = false;
+    // Feature resets for batting chase
+    state.confidence = 50;
+    state.bowlerConsecutiveSameType = 0;
+    state.lastDeliveryType = null;
+    state.wagonWheelShots = [];
+    state.overRunHistory = [];
+    state.keeperCatchAnim = false;
     deliveryPhase = 'idle';
     deliveryTimer = 0;
 
@@ -4592,6 +4844,8 @@ import * as THREE from 'three';
       // Check end of over
       if (state.bowlingBallsInOver >= 6) {
         state.bowlingOversCompleted++;
+        // Feature 8: Track bowling over runs for manhattan
+        state.overRunHistory.push(state.bowlingCurrentOverRuns);
         if (state.bowlingCurrentOverRuns > state.bowlingBestOverRuns) {
           state.bowlingBestOverRuns = state.bowlingCurrentOverRuns;
         }
@@ -4686,6 +4940,7 @@ import * as THREE from 'three';
       ${extrasLine}
       ${targetHtml}
       ${rateHtml}
+      ${drawManhattan()}
       <button class="cb-btn" onclick="window._cbNextBowlingOver()">NEXT OVER &rarr;</button>
       <p class="cb-countdown" id="overCountdown">Auto-continuing in 5s</p>
     `;
@@ -5325,6 +5580,9 @@ import * as THREE from 'three';
     se('sbScore', `${state.runs}/${state.wickets}`);
     se('sbOvers', `${state.oversCompleted}.${state.ballsInOver}`);
 
+    // Feature 2: Three-phase match structure (declared early for sbTarget)
+    const currentPhase = getMatchPhaseForOver(state.oversCompleted);
+
     // Target / innings info
     if (state.superOver) {
       se('sbTarget', 'SUPER OVER');
@@ -5332,7 +5590,7 @@ import * as THREE from 'three';
       const needed = Math.max(0, state.target - state.runs);
       se('sbTarget', `Need ${needed}`);
     } else {
-      se('sbTarget', state.isPowerplay ? 'POWERPLAY' : '1st Innings');
+      se('sbTarget', currentPhase.label);
     }
 
     // Run rate
@@ -5354,9 +5612,17 @@ import * as THREE from 'three';
     if (pitchShotIcon) pitchShotIcon.textContent = arrows[state.shotDirection] || '\u2191';
     if (pitchShotName) pitchShotName.textContent = (labels[state.shotDirection] || 'Drive').toUpperCase();
 
+    // Feature 2: Three-phase match structure — phase badge
     state.isPowerplay = state.oversCompleted < 2;
+    state.matchPhaseLabel = currentPhase.label;
+    state.matchPhaseColor = currentPhase.color;
     const ppBadge = $('powerplayBadge');
-    if (ppBadge) ppBadge.classList.toggle('show', state.isPowerplay && state.phase === 'BATTING');
+    if (ppBadge) {
+      ppBadge.classList.toggle('show', state.phase === 'BATTING');
+      ppBadge.textContent = currentPhase.label;
+      ppBadge.style.background = currentPhase.color;
+      ppBadge.style.color = currentPhase.label === 'POWERPLAY' ? '#000' : '#FFF';
+    }
 
     const tensionEdge = $('tensionEdge');
     if (state.matchPhase === 'batting_chase') {
@@ -5414,6 +5680,10 @@ import * as THREE from 'three';
     let text = '';
     if (outcome.runs === -1 && outcome.type === 'lbw') {
       text = pickRandom(COMMENTARY.lbw || pool.wicket || []);
+    } else if (outcome.runs === -1 && outcome.type === 'caught_behind') {
+      text = pickRandom(COMMENTARY.caught_behind || pool.wicket || []);
+    } else if (outcome.runs === -1 && outcome.type === 'stumped') {
+      text = pickRandom(COMMENTARY.stumped || pool.wicket || []);
     } else if (outcome.runs === -1) {
       text = pickRandom(pool.wicket || []);
     } else if (outcome.type === 'wide') {
@@ -5760,6 +6030,14 @@ import * as THREE from 'three';
     state.crowdWaveActive = false;
     state.tensionActive = false;
     state.battingExtras = 0;
+    // Feature resets
+    state.confidence = 50;
+    state.bowlerConsecutiveSameType = 0;
+    state.lastDeliveryType = null;
+    state.wagonWheelShots = [];
+    state.overRunHistory = [];
+    state.keeperCatchAnim = false;
+    state.keeperCatchAnimStart = 0;
     state.superOver = false;
     state.superOverPhase = null;
     state._superOverResultShown = false;
