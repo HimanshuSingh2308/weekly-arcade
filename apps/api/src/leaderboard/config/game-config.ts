@@ -323,7 +323,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   'cricket-blitz': {
     maxScore: 500,           // Max ~200 batting + ~150 bowling bonus + bonuses
     maxScorePerSecond: 5,    // Cricket is a slow-scoring game
-    minTimeMs: 60000,        // At least 1 minute for a real match
+    minTimeMs: 10000,        // At least 10 seconds (can lose 3 wickets fast)
     maxLevel: 10,            // Levels for progression
   },
 };
