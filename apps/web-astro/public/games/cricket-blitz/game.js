@@ -555,7 +555,14 @@ import * as THREE from 'three';
     if (!renderer) return;
     renderer.setSize(W, H);
     camera.aspect = W / H;
+
+    // Landscape: widen FOV for better pitch view, Portrait: narrower for focus
+    const isLandscape = W > H;
+    camera.fov = isLandscape ? 50 : 60;
     camera.updateProjectionMatrix();
+
+    // Toggle landscape class on game wrap for CSS HUD adjustments
+    gameWrap.classList.toggle('cb-landscape', isLandscape);
   }
 
   // ---- Ground ----

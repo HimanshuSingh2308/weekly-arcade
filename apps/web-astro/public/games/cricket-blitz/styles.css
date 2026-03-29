@@ -1383,6 +1383,23 @@
   50% { box-shadow: 0 0 24px rgba(255,107,0,0.7), 0 2px 12px rgba(0,0,0,0.4); transform: translateX(-50%) scale(1.05); }
 }
 
+/* ---- Landscape Mode ---- */
+@media (orientation: landscape) {
+  .cb-hud-top, .cb-hud-bottom,
+  .cb-bowling-hud-top, .cb-bowling-hud-bottom {
+    padding-left: calc(env(safe-area-inset-left) + 12px);
+    padding-right: calc(env(safe-area-inset-right) + 12px);
+  }
+  .cb-hud-top, .cb-bowling-hud-top { height: 36px; font-size: 0.75rem; }
+  .cb-hud-bottom, .cb-bowling-hud-bottom { height: 32px; font-size: 0.7rem; }
+  .cb-modal { max-width: 60vw; max-height: 85vh; }
+  .cb-title-modal { max-height: 90vh; }
+  .cb-team-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cb-bowling-panel { flex-direction: row; flex-wrap: wrap; gap: 6px; bottom: 40px; }
+  .cb-delivery-btn { min-width: 56px; min-height: 40px; font-size: 0.7rem; }
+  .cb-touch-zones .cb-touch-zone { opacity: 0.15; }
+}
+
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }
