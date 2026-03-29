@@ -114,45 +114,72 @@
   display: none !important;
 }
 
-/* ---- HUD Bars (glassmorphism) ---- */
-.cb-hud-top,
-.cb-hud-bottom {
+/* ---- TV Broadcast Scoreboard ---- */
+.cb-scoreboard {
   position: fixed;
-  left: 0; right: 0;
+  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 4px);
+  left: 0;
   z-index: 20;
-  display: none;
-  align-items: center;
-  justify-content: space-around;
-  height: var(--cb-hud-h);
-  padding: 0 12px;
-  background: rgba(5,3,15,0.75);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255,255,255,0.08);
-  font-size: 0.85rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.88);
+  border-radius: 0 0 8px 0;
+  border-right: 2px solid var(--cb-team-primary, #FFD700);
+  border-bottom: 2px solid var(--cb-team-primary, #FFD700);
+  padding: 6px 12px;
+  min-width: 200px;
+  max-width: 280px;
+  font-family: -apple-system, system-ui, sans-serif;
 }
-
-.cb-hud-top {
-  top: 0;
-  padding-top: var(--cb-safe-top);
-  border-top: none;
-  border-bottom: 1px solid rgba(255,215,0,0.15);
-  border-radius: 0 0 var(--cb-radius) var(--cb-radius);
-}
-
-.cb-hud-bottom {
-  bottom: 0;
-  padding-bottom: var(--cb-safe-bottom);
-  border-bottom: none;
-  border-top: 1px solid rgba(255,215,0,0.15);
-  border-radius: var(--cb-radius) var(--cb-radius) 0 0;
-}
-
-.cb-playing:not(.cb-bowling) .cb-hud-top,
-.cb-playing:not(.cb-bowling) .cb-hud-bottom {
+.cb-sb-row1 {
   display: flex;
+  align-items: center;
+  gap: 8px;
 }
+.cb-sb-teams {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cb-sb-score {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #FFD700;
+}
+.cb-sb-overs {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+}
+.cb-sb-row2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.cb-sb-target {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.5);
+}
+.cb-sb-rr {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.5);
+}
+.cb-sb-dots {
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+}
+.cb-sb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.cb-sb-dot.bowled { background: #FFD700; }
+.cb-sb-dot.pending { background: rgba(255,255,255,0.2); }
+.cb-sb-dot.four { background: #4CAF50; }
+.cb-sb-dot.six { background: #9C27B0; }
+.cb-sb-dot.wicket { background: #F44336; }
+.cb-sb-dot.wide { background: #FF9800; }
+.cb-sb-dot.dot { background: rgba(255,255,255,0.3); }
 
 /* Hide batting shot indicator during bowling */
 .cb-bowling .cb-shot-indicator {
@@ -162,68 +189,19 @@
   display: none !important;
 }
 
-.cb-hud-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.cb-hud-label {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.45);
-  font-weight: 600;
-}
-
-.cb-hud-value {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #FFD700;
-  text-shadow: 0 0 8px rgba(255,215,0,0.2);
-}
-
-.cb-hud-target .cb-hud-value {
-  color: var(--cb-accent);
-  text-shadow: 0 0 10px rgba(255,215,0,0.3);
-}
-
-.cb-runs-value {
-  font-size: 1.5rem;
-  color: var(--cb-accent) !important;
-  text-shadow: 0 0 12px rgba(255,215,0,0.4) !important;
-}
-
-/* Wicket icons -- emoji style */
-.cb-wicket-icon {
-  display: inline-block;
-  font-size: 14px;
-  margin: 0 1px;
-  transition: opacity 0.3s, filter 0.3s;
-  filter: drop-shadow(0 0 4px rgba(255,215,0,0.4));
-}
-.cb-wicket-icon:not(.active) {
-  opacity: 0.2;
-  filter: grayscale(1);
-}
-
 /* ---- Powerplay Badge ---- */
 .cb-powerplay-badge {
   display: none;
-  position: absolute;
-  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 14px;
+  padding: 2px 10px;
+  margin-top: 3px;
   background: linear-gradient(135deg, #FFD700, #FF8C00);
   color: #000;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  border-radius: 20px;
-  z-index: 22;
-  box-shadow: 0 0 16px rgba(255,215,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+  border-radius: 10px;
+  width: fit-content;
+  box-shadow: 0 0 12px rgba(255,215,0,0.4);
   animation: powerplayPulse 1.5s ease-in-out infinite;
 }
 
@@ -240,7 +218,7 @@
 .cb-pitch-shot-overlay {
   display: none;
   position: fixed;
-  bottom: calc(var(--cb-hud-h) + var(--cb-safe-bottom) + 60px);
+  bottom: calc(var(--cb-safe-bottom) + 60px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -303,7 +281,7 @@
 /* ---- Shot Indicator (desktop) ---- */
 .cb-shot-indicator {
   position: fixed;
-  bottom: calc(var(--cb-hud-h) + 16px + var(--cb-safe-bottom));
+  bottom: calc(var(--cb-safe-bottom) + 16px);
   right: 16px;
   z-index: 15;
   display: none;
@@ -961,7 +939,7 @@
 /* ---- Bowler Intro Banner ---- */
 .cb-bowler-intro {
   position: fixed;
-  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 8px);
+  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 8px);
   left: 50%;
   transform: translateX(-50%) translateY(-60px);
   z-index: 25;
@@ -989,7 +967,7 @@
 /* ---- Achievement Toast ---- */
 .cb-achievement-toast {
   position: fixed;
-  bottom: calc(var(--cb-hud-h) + var(--cb-safe-bottom) + 16px);
+  bottom: calc(var(--cb-safe-bottom) + 16px);
   left: 50%;
   transform: translateX(-50%) translateY(80px);
   z-index: 60;
@@ -1094,44 +1072,12 @@
    ============================================ */
 
 /* ---- Bowling HUD Bars ---- */
-.cb-bowling-hud-top,
-.cb-bowling-hud-bottom {
-  position: fixed;
-  left: 0; right: 0;
-  z-index: 20;
-  display: none;
-  align-items: center;
-  justify-content: space-around;
-  height: var(--cb-hud-h);
-  padding: 0 12px;
-  background: rgba(5,3,15,0.75);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255,255,255,0.08);
-  font-size: 0.85rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-}
-
-.cb-bowling-hud-top {
-  top: 0;
-  padding-top: var(--cb-safe-top);
-  border-top: none;
-  border-bottom: 1px solid rgba(255,215,0,0.15);
-  border-radius: 0 0 var(--cb-radius) var(--cb-radius);
-}
-
-.cb-bowling-hud-bottom {
-  bottom: 0;
-  padding-bottom: var(--cb-safe-bottom);
-  border-bottom: none;
-  border-top: 1px solid rgba(255,215,0,0.15);
-  border-radius: var(--cb-radius) var(--cb-radius) 0 0;
-}
+/* Old bowling HUD bars removed -- replaced by .cb-scoreboard */
 
 /* ---- Bowling Delivery Panel ---- */
 .cb-bowling-panel {
   position: fixed;
-  bottom: calc(var(--cb-hud-h) + var(--cb-safe-bottom) + 8px);
+  bottom: calc(var(--cb-safe-bottom) + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -1149,35 +1095,13 @@
   width: calc(100% - 32px);
 }
 
-/* Hide full bowling panel on touch devices — use gestures instead */
+/* Hide bowling panel + meter on touch devices — use tap-the-pitch instead */
 @media (hover: none), (pointer: coarse) {
-  .cb-bowling-panel .cb-delivery-grid,
-  .cb-bowling-panel .cb-line-indicators,
-  .cb-bowling-panel .cb-bowl-btn {
+  .cb-bowling-panel {
     display: none !important;
   }
-  .cb-bowling-panel {
-    padding: 8px 16px;
-    max-width: 220px;
-    border-radius: 24px;
-    bottom: calc(var(--cb-hud-h) + var(--cb-safe-bottom) + 60px);
-  }
-  .cb-bowling-panel::before {
-    content: 'Swipe to pick delivery • Tap to bowl';
-    display: block;
-    font-size: 0.7rem;
-    color: rgba(255,255,255,0.5);
-    text-align: center;
-    white-space: nowrap;
-  }
-  /* Hide bottom bowling HUD on mobile — gesture indicator shows delivery */
-  .cb-bowling-hud-bottom { display: none !important; }
-
-  /* Make meter smaller on mobile */
   .cb-bowling-meter {
-    width: 28px !important;
-    right: 8px !important;
-    height: 140px !important;
+    display: none !important;
   }
 }
 
@@ -1361,7 +1285,7 @@
 /* ---- Ball Commentary Overlay ---- */
 .cb-ball-commentary {
   position: fixed;
-  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 40px);
+  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 70px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 22;
@@ -1441,7 +1365,7 @@
 /* ---- Combo Streak Badge ---- */
 .cb-combo-badge {
   position: fixed;
-  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 68px);
+  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 100px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 22;
@@ -1469,13 +1393,10 @@
 
 /* ---- Landscape Mode ---- */
 @media (orientation: landscape) {
-  .cb-hud-top, .cb-hud-bottom,
-  .cb-bowling-hud-top, .cb-bowling-hud-bottom {
-    padding-left: calc(env(safe-area-inset-left) + 12px);
-    padding-right: calc(env(safe-area-inset-right) + 12px);
+  .cb-scoreboard {
+    max-width: 260px;
+    padding: 4px 10px;
   }
-  .cb-hud-top, .cb-bowling-hud-top { height: 36px; font-size: 0.75rem; }
-  .cb-hud-bottom, .cb-bowling-hud-bottom { height: 32px; font-size: 0.7rem; }
   .cb-modal { max-width: 60vw; max-height: 85vh; }
   .cb-title-modal { max-height: 90vh; }
   .cb-team-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -1668,7 +1589,7 @@
 .cb-freehit-badge {
   display: none;
   position: absolute;
-  top: calc(var(--cb-hud-h) + var(--cb-safe-top) + 6px);
+  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 70px);
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 14px;
@@ -1706,6 +1627,31 @@
 @keyframes superOverGlow {
   0% { text-shadow: 0 0 8px rgba(255,0,255,0.5); }
   100% { text-shadow: 0 0 20px rgba(255,0,255,0.9), 0 0 40px rgba(255,0,255,0.3); }
+}
+
+/* ---- Bowling Tap Zone Indicator (mobile) ---- */
+.cb-bowling-tap-hint {
+  position: fixed;
+  bottom: calc(var(--cb-safe-bottom, 0px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 16;
+  display: none;
+  padding: 6px 16px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cb-bowling .cb-bowling-tap-hint {
+    display: block;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

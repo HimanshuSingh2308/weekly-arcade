@@ -18,6 +18,15 @@ import * as THREE from 'three';
 
   const TEAM_IDS = Object.keys(TEAMS);
 
+  const TEAM_ABBR = {
+    'mumbai-mavericks': 'MUM',
+    'chennai-cobras': 'CHE',
+    'bangalore-blazers': 'BLR',
+    'kolkata-knights': 'KOL',
+    'delhi-dynamos': 'DEL',
+    'hyderabad-hawks': 'HYD'
+  };
+
   const TARGETS = [40, 55, 75, 100, 130];
   function getTarget(level) {
     if (level <= 5) return TARGETS[level - 1];
@@ -464,16 +473,9 @@ import * as THREE from 'three';
   const gameContainer = $('gameContainer');
   const gameWrap = $('gameWrap');
 
-  // HUD
-  const hudTop = $('hudTop');
-  const hudBottom = $('hudBottom');
-  const hudOvers = $('hudOvers');
-  const hudTarget = $('hudTarget');
-  const hudWickets = $('hudWickets');
-  const hudRuns = $('hudRuns');
-  const hudRR = $('hudRR');
-  const hudFours = $('hudFours');
-  const hudSixes = $('hudSixes');
+  // HUD -- TV scoreboard refs
+  const scoreboardBat = $('scoreboardBat');
+  const scoreboardBowl = $('scoreboardBowl');
   const shotIndicator = $('shotIndicator');
   const shotArrow = $('shotArrow');
   const shotLabel = $('shotLabel');
@@ -493,7 +495,7 @@ import * as THREE from 'three';
 
   // Bowling UI refs (may be null until DOM ready)
   let bowlingPanel, bowlingMeter, bowlingMeterFill, bowlingMeterIndicator;
-  let bowlingLineIndicators, bowlingHudTop, bowlingHudBottom;
+  let bowlingLineIndicators;
   let inningsBreakOverlay, inningsBreakModal;
   let matchResultOverlay, matchResultModal;
 
@@ -3087,8 +3089,8 @@ import * as THREE from 'three';
     const announceText = runs === 0 ? 'Dot ball.' : `${runs} run${runs > 1 ? 's' : ''}.`;
     announceScore(`${announceText} Total: ${state.runs} for ${state.wickets}.`);
 
-    hudRuns.classList.add('cb-score-pop');
-    setTimeout(() => hudRuns.classList.remove('cb-score-pop'), 300);
+    const sbScoreEl = $('sbScore');
+    if (sbScoreEl) { sbScoreEl.classList.add('cb-score-pop'); setTimeout(() => sbScoreEl.classList.remove('cb-score-pop'), 300); }
 
     showBallCommentary(outcome, false);
     updateHUD();
@@ -3287,8 +3289,7 @@ import * as THREE from 'three';
     // Hide bowling UI
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+    if (scoreboardBowl) scoreboardBowl.style.display = 'none';
 
     // The AI's score becomes the target the player needs to chase
     // state.bowlingAIScore is what AI scored, player needs bowlingAIScore + 1
@@ -3372,12 +3373,10 @@ import * as THREE from 'three';
     gameWrap.classList.remove('cb-bowling');
 
     // Show batting HUD, hide bowling
-    hudTop.style.display = '';
-    hudBottom.style.display = '';
+    if (scoreboardBat) scoreboardBat.style.display = '';
+    if (scoreboardBowl) scoreboardBowl.style.display = 'none';
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
 
     // Make batting 3D objects visible
     batsmanGroup.visible = true;
@@ -3446,18 +3445,13 @@ import * as THREE from 'three';
     bowlingMeter = $('bowlingMeter');
     bowlingMeterFill = $('bowlingMeterFill');
     bowlingMeterIndicator = $('bowlingMeterIndicator');
-    bowlingHudTop = $('bowlingHudTop');
-    bowlingHudBottom = $('bowlingHudBottom');
+    // (old bowlingHudTop/Bottom removed -- using scoreboardBowl)
 
-    // Show bowling UI
+    // Show bowling UI, hide batting
     if (bowlingPanel) bowlingPanel.style.display = 'flex';
     if (bowlingMeter) bowlingMeter.style.display = 'block';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'flex';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'flex';
-
-    // Hide batting HUD
-    hudTop.style.display = 'none';
-    hudBottom.style.display = 'none';
+    if (scoreboardBowl) scoreboardBowl.style.display = '';
+    if (scoreboardBat) scoreboardBat.style.display = 'none';
 
     updateBowlingHUD();
   }
@@ -3663,6 +3657,49 @@ import * as THREE from 'three';
     bowlingBallMesh = ballMesh;
     bowlingBallSeam = ballSeam;
     bowlingBallShadow = ballShadow;
+
+    // Pitch target zones (visible on mobile during selecting phase)
+    buildPitchTargetZones();
+  }
+
+  let pitchTargetZones = [];
+
+  function buildPitchTargetZones() {
+    const zoneDefs = [
+      { name: 'bouncer', z: -4.5, color: 0xFF0000, opacity: 0.05 },
+      { name: 'good',    z: -2.5, color: 0x00FF00, opacity: 0.05 },
+      { name: 'yorker',  z: -0.5, color: 0xFFFF00, opacity: 0.05 }
+    ];
+    zoneDefs.forEach(def => {
+      const geo = new THREE.PlaneGeometry(1.5, 2);
+      const mat = new THREE.MeshBasicMaterial({
+        color: def.color, transparent: true, opacity: def.opacity,
+        side: THREE.DoubleSide, depthWrite: false
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.set(0, 0.01, def.z);
+      mesh.visible = false;
+      mesh._zoneName = def.name;
+      mesh._baseOpacity = def.opacity;
+      scene.add(mesh);
+      pitchTargetZones.push(mesh);
+    });
+  }
+
+  function updatePitchTargetZones() {
+    const showZones = state.phase === 'BOWLING' && state.bowlingDeliveryPhase === 'selecting' && isTouchDevice;
+    pitchTargetZones.forEach(z => { z.visible = showZones; });
+  }
+
+  function flashPitchZone(tapY) {
+    let zoneName = 'good';
+    if (tapY < 0.3) zoneName = 'bouncer';
+    else if (tapY > 0.7) zoneName = 'yorker';
+    const zone = pitchTargetZones.find(z => z._zoneName === zoneName);
+    if (!zone) return;
+    zone.material.opacity = 0.15;
+    setTimeout(() => { zone.material.opacity = zone._baseOpacity; }, 200);
   }
 
   let bowlingBallProgress = 0;
@@ -4380,8 +4417,7 @@ import * as THREE from 'three';
     // Hide bowling UI
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+    if (scoreboardBowl) scoreboardBowl.style.display = 'none';
 
     // Hide free hit badge
     const fhBadge = $('freeHitBadge');
@@ -4579,8 +4615,7 @@ import * as THREE from 'three';
     // Hide bowling UI
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+    if (scoreboardBowl) scoreboardBowl.style.display = 'none';
 
     const soOverlay = $('superOverOverlay');
     const soModal = $('superOverModal');
@@ -4635,8 +4670,8 @@ import * as THREE from 'three';
     gameWrap.classList.remove('cb-bowling');
 
     // Show batting HUD
-    hudTop.style.display = '';
-    hudBottom.style.display = '';
+    if (scoreboardBat) scoreboardBat.style.display = '';
+    if (scoreboardBowl) scoreboardBowl.style.display = 'none';
 
     // Make batting 3D objects visible
     batsmanGroup.visible = true;
@@ -4730,15 +4765,13 @@ import * as THREE from 'three';
     // Show bowling UI
     bowlingPanel = $('bowlingPanel');
     bowlingMeter = $('bowlingMeter');
-    bowlingHudTop = $('bowlingHudTop');
-    bowlingHudBottom = $('bowlingHudBottom');
+    // (old bowlingHudTop/Bottom removed -- using scoreboardBowl)
 
     if (bowlingPanel) bowlingPanel.style.display = 'flex';
     if (bowlingMeter) bowlingMeter.style.display = 'block';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'flex';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'flex';
-    hudTop.style.display = 'none';
-    hudBottom.style.display = 'none';
+    if (scoreboardBowl) scoreboardBowl.style.display = '';
+    if (scoreboardBat) scoreboardBat.style.display = 'none';
+    if (scoreboardBat) scoreboardBat.style.display = 'none';
 
     // Ensure battingFirst is true so "AI chased" logic works
     state.battingFirst = true;
@@ -4766,8 +4799,7 @@ import * as THREE from 'three';
 
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
+    if (scoreboardBowl) scoreboardBowl.style.display = 'none';
 
     const fhBadge = $('freeHitBadge');
     if (fhBadge) fhBadge.classList.remove('show');
@@ -4869,33 +4901,34 @@ import * as THREE from 'three';
   // ============================================
 
   function updateBowlingHUD() {
-    const bht = $('bowlingHudTop');
-    const bhb = $('bowlingHudBottom');
-    if (!bht || !bhb) return;
+    const sb = $('scoreboardBowl');
+    if (!sb) return;
 
-    const overs = `${state.bowlingOversCompleted}.${state.bowlingBallsInOver}/5`;
     const se = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
-    se('bowlingOvers', overs);
-    se('bowlingAIScore', `${state.bowlingAIScore}/${state.bowlingAIWickets}`);
+    const teamAbbr = TEAM_ABBR[state.selectedTeam] || '???';
+    const oppAbbr = TEAM_ABBR[state.opponentTeam] || '???';
+
+    se('sbBowlTeams', `AI: ${oppAbbr}`);
+    se('sbBowlScore', `${state.bowlingAIScore}/${state.bowlingAIWickets}`);
+    se('sbBowlOvers', `${state.bowlingOversCompleted}.${state.bowlingBallsInOver}`);
 
     if (!state.battingFirst && state.matchPhase === 'bowling') {
-      // Bowl-first: AI bats first, no target -- just scoring freely
-      se('bowlingTarget', '1st Innings');
-      se('bowlingNeeded', `Score: ${state.bowlingAIScore}`);
+      se('sbBowlTarget', '1st Innings');
     } else {
       const aiTarget = state.battingScore + 1;
-      const runsNeeded = aiTarget - state.bowlingAIScore;
-      se('bowlingTarget', `Target: ${aiTarget}`);
-      se('bowlingNeeded', `Need: ${Math.max(0, runsNeeded)}`);
+      const runsNeeded = Math.max(0, aiTarget - state.bowlingAIScore);
+      se('sbBowlTarget', `Need ${runsNeeded}`);
     }
 
-    const deliveryLabel = DELIVERY_LABELS[state.selectedDelivery] || 'Straight';
-    const lineLabel = state.selectedLine.charAt(0).toUpperCase() + state.selectedLine.slice(1);
+    // Run rate
+    const totalBalls = state.bowlingOversCompleted * 6 + state.bowlingBallsInOver;
+    const rr = totalBalls > 0 ? (state.bowlingAIScore / (totalBalls / 6)).toFixed(2) : '0.00';
+    se('sbBowlRR', `RR ${rr}`);
 
-    se('bowlingDeliveryType', deliveryLabel);
-    se('bowlingLine', lineLabel);
+    // Ball-by-ball dots for current over
+    updateBowlingOverDots();
 
-    // Update delivery panel selection
+    // Update delivery panel selection (desktop)
     const panel = $('bowlingPanel');
     if (panel) {
       panel.querySelectorAll('.cb-delivery-btn').forEach(btn => {
@@ -4903,7 +4936,7 @@ import * as THREE from 'three';
       });
     }
 
-    // Update line indicators
+    // Update line indicators (desktop)
     const lineIndicators = $('bowlingLineIndicators');
     if (lineIndicators) {
       lineIndicators.querySelectorAll('.cb-line-btn').forEach(btn => {
@@ -4916,32 +4949,64 @@ import * as THREE from 'three';
     if (fhBadge) fhBadge.classList.toggle('show', !!state.freeHitNext);
   }
 
+  function updateBowlingOverDots() {
+    const dotsEl = $('sbBowlDots');
+    if (!dotsEl) return;
+    dotsEl.innerHTML = '';
+    const results = state.bowlingCurrentOverResults || [];
+    for (let i = 0; i < 6; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'cb-sb-dot';
+      if (i < results.length) {
+        const r = results[i];
+        if (r.isWicket) dot.classList.add('wicket');
+        else if (r.isWide) dot.classList.add('wide');
+        else if (r.isSix) dot.classList.add('six');
+        else if (r.isFour) dot.classList.add('four');
+        else if (r.runs === 0) dot.classList.add('dot');
+        else dot.classList.add('bowled');
+      } else {
+        dot.classList.add('pending');
+      }
+      dotsEl.appendChild(dot);
+    }
+  }
+
   function updateHUD() {
-    hudOvers.textContent = `${state.oversCompleted}.${state.ballsInOver}/5`;
+    const sb = $('scoreboardBat');
+    if (!sb) return;
+    const se = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
+
+    const teamAbbr = TEAM_ABBR[state.selectedTeam] || '???';
+    const oppAbbr = TEAM_ABBR[state.opponentTeam] || '???';
+
+    se('sbTeams', `${teamAbbr} vs ${oppAbbr}`);
+    se('sbScore', `${state.runs}/${state.wickets}`);
+    se('sbOvers', `${state.oversCompleted}.${state.ballsInOver}`);
+
+    // Target / innings info
     if (state.superOver) {
-      hudTarget.textContent = 'SUPER OVER';
+      se('sbTarget', 'SUPER OVER');
     } else if (state.matchPhase === 'batting_chase') {
       const needed = Math.max(0, state.target - state.runs);
-      hudTarget.textContent = `Need: ${needed}`;
+      se('sbTarget', `Need ${needed}`);
     } else {
-      hudTarget.textContent = '5 overs';
+      se('sbTarget', state.isPowerplay ? 'POWERPLAY' : '1st Innings');
     }
-    hudRuns.textContent = state.runs;
-    hudFours.textContent = state.fours;
-    hudSixes.textContent = state.sixes;
 
-    const rr = state.totalBallsFaced > 0 ? (state.runs / (state.totalBallsFaced / 6)).toFixed(2) : '0.00';
-    hudRR.textContent = rr;
+    // Run rate
+    const totalBalls = state.oversCompleted * 6 + state.ballsInOver;
+    const rr = totalBalls > 0 ? (state.runs / (totalBalls / 6)).toFixed(2) : '0.00';
+    se('sbRR', `RR ${rr}`);
 
-    const icons = hudWickets.querySelectorAll('.cb-wicket-icon');
-    icons.forEach((icon, i) => {
-      icon.classList.toggle('active', i >= state.wickets);
-    });
+    // Ball-by-ball dots for current over
+    updateOverDots();
 
+    // Shot direction indicator (desktop)
     const arrows = { straight: '\u2191', pull: '\u2190', cut: '\u2192', defense: '\u2193' };
     const labels = { straight: 'Drive', pull: 'Pull', cut: 'Cut', defense: 'Block' };
-    shotArrow.textContent = arrows[state.shotDirection] || '\u2191';
-    shotLabel.textContent = labels[state.shotDirection] || 'Drive';
+    if (shotArrow) shotArrow.textContent = arrows[state.shotDirection] || '\u2191';
+    if (shotLabel) shotLabel.textContent = labels[state.shotDirection] || 'Drive';
 
     const pitchShotIcon = $('pitchShotIcon');
     const pitchShotName = $('pitchShotName');
@@ -4970,6 +5035,28 @@ import * as THREE from 'three';
       } else {
         comboBadge.classList.remove('show');
       }
+    }
+  }
+
+  function updateOverDots() {
+    const dotsEl = $('sbDots');
+    if (!dotsEl) return;
+    dotsEl.innerHTML = '';
+    const results = state.currentOverResults || [];
+    for (let i = 0; i < 6; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'cb-sb-dot';
+      if (i < results.length) {
+        const r = results[i];
+        if (r.isWicket) dot.classList.add('wicket');
+        else if (r.isSix) dot.classList.add('six');
+        else if (r.isFour) dot.classList.add('four');
+        else if (r.runs === 0) dot.classList.add('dot');
+        else dot.classList.add('bowled');
+      } else {
+        dot.classList.add('pending');
+      }
+      dotsEl.appendChild(dot);
     }
   }
 
@@ -5364,6 +5451,8 @@ import * as THREE from 'three';
       state.target = 999;
       state.phase = 'BATTING';
       gameWrap.classList.add('cb-playing');
+      if (scoreboardBat) scoreboardBat.style.display = '';
+      if (scoreboardBowl) scoreboardBowl.style.display = 'none';
       updateHUD();
       generateBowlerForOver();
       showBowlerIntro();
@@ -5418,15 +5507,11 @@ import * as THREE from 'three';
       bowlingMeter = $('bowlingMeter');
       bowlingMeterFill = $('bowlingMeterFill');
       bowlingMeterIndicator = $('bowlingMeterIndicator');
-      bowlingHudTop = $('bowlingHudTop');
-      bowlingHudBottom = $('bowlingHudBottom');
 
       if (bowlingPanel) bowlingPanel.style.display = 'flex';
       if (bowlingMeter) bowlingMeter.style.display = 'block';
-      if (bowlingHudTop) bowlingHudTop.style.display = 'flex';
-      if (bowlingHudBottom) bowlingHudBottom.style.display = 'flex';
-      hudTop.style.display = 'none';
-      hudBottom.style.display = 'none';
+      if (scoreboardBowl) scoreboardBowl.style.display = '';
+      if (scoreboardBat) scoreboardBat.style.display = 'none';
 
       updateBowlingHUD();
     }
@@ -5463,15 +5548,11 @@ import * as THREE from 'three';
     state.tensionActive = false;
     state.crowdWaveActive = false;
 
-    // Hide bowling UI
+    // Hide all HUD
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
-    if (bowlingHudTop) bowlingHudTop.style.display = 'none';
-    if (bowlingHudBottom) bowlingHudBottom.style.display = 'none';
-
-    // Show batting HUD elements (they'll be hidden by lack of cb-playing class anyway)
-    hudTop.style.display = '';
-    hudBottom.style.display = '';
+    if (scoreboardBowl) scoreboardBowl.style.display = 'none';
+    if (scoreboardBat) scoreboardBat.style.display = 'none';
 
     // Patch #17: Restore night sky
     setNightEnvironment();
@@ -5724,7 +5805,8 @@ import * as THREE from 'three';
   // ============================================
 
   let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
-  let bowlingTouchStartTime = 0, bowlingTouchHolding = false;
+  let bowlingTapY = 0.5, bowlingTapX = 0.5, bowlingTapStart = null, bowlingSwipeDir = null;
+  let bowlingTapBowlTimer = null;
 
   function showGestureIndicator(direction) {
     const el = document.getElementById('gestureIndicator');
@@ -5740,11 +5822,89 @@ import * as THREE from 'three';
   function showBowlingGestureIndicator(delivery) {
     const el = document.getElementById('gestureIndicator');
     if (!el) return;
-    const labels = { bouncer: '\u2191 BOUNCER', yorker: '\u2193 YORKER', inswing: '\u2190 INSWING', outswing: '\u2192 OUTSWING', straight: '\u25CF STRAIGHT' };
+    const labels = {
+      bouncer: '\u2191 BOUNCER', yorker: '\u2193 YORKER',
+      inswing: '\u2190 INSWING', outswing: '\u2192 OUTSWING',
+      straight: '\u25CF GOOD LENGTH', slower: '\u25CB SLOWER'
+    };
     el.querySelector('.cb-gesture-arrow').textContent = '';
-    el.querySelector('.cb-gesture-name').textContent = labels[delivery] || delivery;
+    el.querySelector('.cb-gesture-name').textContent = labels[delivery] || delivery.toUpperCase();
     el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), 600);
+  }
+
+  // --- TAP-THE-PITCH BOWLING SYSTEM (mobile) ---
+
+  function resolveDeliveryFromGesture(tapY, tapX, swipeDir, holdDuration) {
+    let delivery = 'straight';
+    if (tapY < 0.3) delivery = 'bouncer';
+    else if (tapY > 0.7) delivery = 'yorker';
+    else if (swipeDir === 'left') delivery = 'inswing';
+    else if (swipeDir === 'right') delivery = 'outswing';
+    else delivery = 'straight';
+    if (holdDuration > 500) delivery = 'slower';
+
+    // Line from tap X: left third=off, center=middle, right third=leg
+    let line = 'middle';
+    if (tapX < 0.33) line = 'off';
+    else if (tapX > 0.66) line = 'leg';
+
+    return { delivery, line };
+  }
+
+  function getAccuracyFromTap(tapY, tapX) {
+    let zoneCenter;
+    if (tapY < 0.3) zoneCenter = 0.15;
+    else if (tapY > 0.7) zoneCenter = 0.85;
+    else zoneCenter = 0.5;
+
+    const distFromCenter = Math.abs(tapY - zoneCenter);
+    const xDistFromCenter = Math.abs(tapX - 0.5);
+    const totalDist = distFromCenter + xDistFromCenter * 0.5;
+
+    if (totalDist < 0.1) return 'perfect';
+    if (totalDist < 0.25) return 'good';
+    return 'bad';
+  }
+
+  function startBowlingFromTap() {
+    if (state.phase !== 'BOWLING' || state.bowlingDeliveryPhase !== 'selecting') return;
+
+    const holdDuration = bowlingTapStart ? (Date.now() - bowlingTapStart) : 0;
+    const result = resolveDeliveryFromGesture(bowlingTapY, bowlingTapX, bowlingSwipeDir, holdDuration);
+
+    state.selectedDelivery = result.delivery;
+    state.selectedLine = result.line;
+
+    // Override meter accuracy with tap-based accuracy
+    const tapAccuracy = getAccuracyFromTap(bowlingTapY, bowlingTapX);
+    state._tapAccuracy = tapAccuracy;
+
+    showBowlingGestureIndicator(result.delivery);
+    flashPitchZone(bowlingTapY);
+    updateBowlingHUD();
+
+    // Set meter position to match tap accuracy so resolveBowlingOutcome works
+    if (tapAccuracy === 'perfect') state.meterPosition = 0.5;
+    else if (tapAccuracy === 'good') state.meterPosition = 0.25;
+    else state.meterPosition = 0.1;
+    state.meterStopped = true;
+    state.meterActive = false;
+
+    // Start bowling delivery after short delay
+    setTimeout(() => {
+      if (state.phase !== 'BOWLING' || state.bowlingDeliveryPhase !== 'selecting') return;
+      state.bowlingDeliveryPhase = 'bowling';
+      bowlingBallActive = true;
+      bowlingBallStartTime = Date.now();
+      bowlingBallProgress = 0;
+      bowlingBallSpeed = 800;
+      haptic([10]);
+      if (tapAccuracy === 'perfect') haptic([10, 5, 10]);
+      playDeliveryWhoosh();
+    }, 300);
+
+    bowlingTapStart = null;
   }
 
   if (gameContainer) {
@@ -5756,16 +5916,33 @@ import * as THREE from 'three';
       touchStartY = e.touches[0].clientY;
       touchStartTime = Date.now();
 
-      // Bowling hold detection
+      // Bowling tap-the-pitch (mobile)
       if (state.phase === 'BOWLING' && state.bowlingDeliveryPhase === 'selecting') {
-        bowlingTouchStartTime = Date.now();
-        bowlingTouchHolding = true;
-        // Start meter after brief hold (150ms)
-        setTimeout(() => {
-          if (bowlingTouchHolding && state.bowlingDeliveryPhase === 'selecting') {
-            startBowlingMeter();
+        const rect = gameContainer.getBoundingClientRect();
+        bowlingTapX = (e.touches[0].clientX - rect.left) / rect.width;
+        bowlingTapY = (e.touches[0].clientY - rect.top) / rect.height;
+        bowlingTapStart = Date.now();
+        bowlingSwipeDir = null;
+        // Auto-bowl after 300ms if no swipe detected
+        if (bowlingTapBowlTimer) clearTimeout(bowlingTapBowlTimer);
+        bowlingTapBowlTimer = setTimeout(() => {
+          if (bowlingTapStart && state.bowlingDeliveryPhase === 'selecting') {
+            startBowlingFromTap();
           }
-        }, 150);
+        }, 350);
+      }
+    }, { passive: true });
+
+    gameContainer.addEventListener('touchmove', (e) => {
+      // Detect swipe direction during bowling tap for swing
+      if (state.phase === 'BOWLING' && bowlingTapStart && state.bowlingDeliveryPhase === 'selecting') {
+        const deltaX = e.touches[0].clientX - touchStartX;
+        if (Math.abs(deltaX) > 30) {
+          bowlingSwipeDir = deltaX < 0 ? 'left' : 'right';
+          // Cancel the auto-bowl timer; bowl immediately after swipe
+          if (bowlingTapBowlTimer) { clearTimeout(bowlingTapBowlTimer); bowlingTapBowlTimer = null; }
+          startBowlingFromTap();
+        }
       }
     }, { passive: true });
 
@@ -5777,29 +5954,11 @@ import * as THREE from 'three';
       const elapsed = Date.now() - touchStartTime;
       const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-      // Bowling phase: release stops meter, swipe sets delivery
+      // Bowling phase: tap release triggers bowl if timer hasn't fired
       if (state.phase === 'BOWLING') {
-        bowlingTouchHolding = false;
-
-        if (state.bowlingDeliveryPhase === 'meter') {
-          // Release = stop meter
-          stopBowlingMeter();
-          return;
-        }
-
-        if (state.bowlingDeliveryPhase === 'selecting' && dist > 50 && elapsed < 300) {
-          // Swipe sets delivery type
-          const absX = Math.abs(deltaX);
-          const absY = Math.abs(deltaY);
-          let delivery = 'straight';
-          if (absY > absX) {
-            delivery = deltaY < 0 ? 'bouncer' : 'yorker';
-          } else {
-            delivery = deltaX < 0 ? 'inswing' : 'outswing';
-          }
-          selectDeliveryType(delivery);
-          showBowlingGestureIndicator(delivery);
-          return;
+        if (bowlingTapStart && state.bowlingDeliveryPhase === 'selecting') {
+          if (bowlingTapBowlTimer) { clearTimeout(bowlingTapBowlTimer); bowlingTapBowlTimer = null; }
+          startBowlingFromTap();
         }
         return;
       }
@@ -5852,6 +6011,9 @@ import * as THREE from 'three';
     updateDelivery(dt);
     if (state.phase === 'BOWLING') {
       updateBowlingMeter(dt);
+      updatePitchTargetZones();
+    } else if (pitchTargetZones.length) {
+      pitchTargetZones.forEach(z => { z.visible = false; });
     }
     updateThreeScene(dt);
     renderFloatingTexts();
