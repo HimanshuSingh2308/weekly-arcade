@@ -844,7 +844,7 @@ import * as THREE from 'three';
   // ---- Batsman ----
   function buildBatsman() {
     batsmanGroup = new THREE.Group();
-    batsmanGroup.position.set(0, 0, 0.5);
+    batsmanGroup.position.set(0, 0, 0.9);
 
     const teamColor = 0x004BA0;
     const skinColor = 0xdba67a;
