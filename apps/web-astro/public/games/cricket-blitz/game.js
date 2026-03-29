@@ -561,8 +561,9 @@ import * as THREE from 'three';
       powerPreference: 'high-performance'
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = false; // keep perf high
-    renderer.setClearColor(0x050d1a, 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setClearColor(0x87CEEB, 1);
 
     const container = $('threeContainer');
     container.appendChild(renderer.domElement);
@@ -574,7 +575,7 @@ import * as THREE from 'three';
 
     // Scene
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0a1628, 0.006);
+    scene.fog = new THREE.FogExp2(0x87CEEB, 0.003);
 
     // Sky dome
     (function buildSkyDome() {
@@ -595,27 +596,26 @@ import * as THREE from 'three';
           varying vec3 vWorldPosition;
           void main() {
             float height = normalize(vWorldPosition).y;
-            // Bottom: dark green horizon
-            vec3 horizon = vec3(0.05, 0.12, 0.04);
-            // Warm glow near horizon (stadium light pollution)
-            vec3 warmGlow = vec3(0.14, 0.10, 0.04);
-            // Middle: deep navy
-            vec3 midSky = vec3(0.04, 0.086, 0.157);
-            // Top: dark blue-black
-            vec3 topSky = vec3(0.02, 0.05, 0.1);
+            // Below horizon: green treeline
+            vec3 belowHorizon = vec3(0.227, 0.541, 0.180);
+            // Horizon: hazy blue-white
+            vec3 horizon = vec3(0.722, 0.831, 0.890);
+            // Middle: sky blue
+            vec3 midSky = vec3(0.529, 0.808, 0.922);
+            // Top: bright blue
+            vec3 topSky = vec3(0.290, 0.624, 0.851);
 
             vec3 color;
             if (height < 0.0) {
-              color = horizon;
+              color = belowHorizon;
             } else if (height < 0.08) {
               float t = height / 0.08;
-              color = mix(horizon, warmGlow, t);
-            } else if (height < 0.2) {
-              float t = (height - 0.08) / 0.12;
-              color = mix(warmGlow, midSky, t);
-            } else {
-              float t = clamp((height - 0.2) / 0.6, 0.0, 1.0);
+              color = mix(horizon, midSky, t);
+            } else if (height < 0.3) {
+              float t = (height - 0.08) / 0.22;
               color = mix(midSky, topSky, t);
+            } else {
+              color = topSky;
             }
             gl_FragColor = vec4(color, 1.0);
           }
@@ -625,36 +625,23 @@ import * as THREE from 'three';
       skyDomeMesh = skyDome;
       scene.add(skyDome);
 
-      // Stars (upper hemisphere only)
-      const starCount = 200;
-      const starPositions = new Float32Array(starCount * 3);
-      for (let i = 0; i < starCount; i++) {
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.random() * Math.PI * 0.45; // upper hemisphere
-        const r = 195;
-        starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-        starPositions[i * 3 + 1] = r * Math.cos(phi);
-        starPositions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
-      }
-      const starGeo = new THREE.BufferGeometry();
-      starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-      const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, sizeAttenuation: true });
-      scene.add(new THREE.Points(starGeo, starMat));
+      // Sun disc
+      const sunGeo = new THREE.SphereGeometry(3, 16, 16);
+      const sunMat = new THREE.MeshBasicMaterial({ color: 0xFFF8E0, transparent: true, opacity: 0.8 });
+      const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+      sunMesh.position.set(50, 40, -30);
+      scene.add(sunMesh);
 
-      // Crescent moon
-      const moonGeo = new THREE.CircleGeometry(2, 32);
-      const moonMat = new THREE.MeshBasicMaterial({ color: 0xF5F0D0, transparent: true, opacity: 0.9 });
-      const moon = new THREE.Mesh(moonGeo, moonMat);
-      moon.position.set(60, 140, 80);
-      moon.lookAt(0, 0, 0);
-      scene.add(moon);
-      // Dark circle to make crescent shape
-      const crescentGeo = new THREE.CircleGeometry(1.8, 32);
-      const crescentMat = new THREE.MeshBasicMaterial({ color: 0x050d1a });
-      const crescent = new THREE.Mesh(crescentGeo, crescentMat);
-      crescent.position.set(61, 140.5, 80);
-      crescent.lookAt(0, 0, 0);
-      scene.add(crescent);
+      // Lens flare glow plane near sun
+      const flareGeo = new THREE.PlaneGeometry(12, 12);
+      const flareMat = new THREE.MeshBasicMaterial({ color: 0xFFF8E0, transparent: true, opacity: 0.15, side: THREE.DoubleSide, depthWrite: false });
+      const flareMesh = new THREE.Mesh(flareGeo, flareMat);
+      flareMesh.position.copy(sunMesh.position);
+      scene.add(flareMesh);
+      // Make flare always face camera in render loop via onBeforeRender
+      flareMesh.onBeforeRender = function(renderer, scene, camera) {
+        flareMesh.quaternion.copy(camera.quaternion);
+      };
     })();
 
     // Camera
@@ -662,13 +649,21 @@ import * as THREE from 'three';
     camera.position.set(0, 6, -8);
     camera.lookAt(0, 0.5, 12);
 
-    // Lighting
-    const ambient = new THREE.AmbientLight(0x404060, 0.5);
+    // Lighting — daytime sunlight
+    const ambient = new THREE.AmbientLight(0x8EC8E8, 0.6);
     ambientLight = ambient;
     scene.add(ambient);
 
-    const dirLight = new THREE.DirectionalLight(0xfff5e0, 0.7);
-    dirLight.position.set(5, 20, 0);
+    const dirLight = new THREE.DirectionalLight(0xFFF5E0, 1.0);
+    dirLight.position.set(20, 30, -10);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    dirLight.shadow.camera.far = 100;
+    dirLight.shadow.camera.left = -40;
+    dirLight.shadow.camera.right = 40;
+    dirLight.shadow.camera.top = 40;
+    dirLight.shadow.camera.bottom = -40;
     dirLightRef = dirLight;
     scene.add(dirLight);
 
@@ -679,6 +674,9 @@ import * as THREE from 'three';
     buildStands();
     buildFloodlights();
     buildCrowd();
+    buildSightScreen();
+    buildScoreboard3D();
+    buildPitchDust();
 
     // Build players
     buildBatsman();
@@ -736,29 +734,45 @@ import * as THREE from 'three';
 
   // ---- Ground ----
   function buildGround() {
-    // Outer darker ground
-    const outerGeo = new THREE.CircleGeometry(80, 64);
-    const outerMat = new THREE.MeshLambertMaterial({ color: 0x1e6b14 });
-    ground = new THREE.Mesh(outerGeo, outerMat);
+    // Base dark green ground
+    const baseGeo = new THREE.CircleGeometry(85, 64);
+    const baseMat = new THREE.MeshLambertMaterial({ color: 0x1e6b14 });
+    ground = new THREE.Mesh(baseGeo, baseMat);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 0;
+    ground.receiveShadow = true;
     scene.add(ground);
 
-    // Inner lighter ground (near pitch)
-    const innerGeo = new THREE.CircleGeometry(30, 48);
-    const innerMat = new THREE.MeshLambertMaterial({ color: 0x34a024 });
-    const innerGround = new THREE.Mesh(innerGeo, innerMat);
-    innerGround.rotation.x = -Math.PI / 2;
-    innerGround.position.set(0, 0.005, 11);
-    scene.add(innerGround);
+    // Mowed stripes (alternating light/dark green)
+    for (let i = -10; i <= 10; i++) {
+      if (i % 2 === 0) continue;
+      const stripeGeo = new THREE.PlaneGeometry(170, 7);
+      const stripeMat = new THREE.MeshLambertMaterial({
+        color: 0x34a024,
+        transparent: true,
+        opacity: 0.3
+      });
+      const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+      stripe.rotation.x = -Math.PI / 2;
+      stripe.position.set(0, 0.01, i * 7 + 10);
+      scene.add(stripe);
+    }
 
-    // 30-yard circle marking
-    const innerRingGeo = new THREE.RingGeometry(29.8, 30.1, 64);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
-    const innerRing = new THREE.Mesh(innerRingGeo, ringMat);
-    innerRing.rotation.x = -Math.PI / 2;
-    innerRing.position.set(0, 0.02, 11);
-    scene.add(innerRing);
+    // Boundary rope (thick tube along circle)
+    const curve = new THREE.EllipseCurve(0, 11, 78, 78, 0, Math.PI * 2);
+    const points = curve.getPoints(128).map(function(p) { return new THREE.Vector3(p.x, 0.1, p.y); });
+    const ropePath = new THREE.CatmullRomCurve3(points, true);
+    const ropeGeo = new THREE.TubeGeometry(ropePath, 128, 0.15, 4);
+    const ropeMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const rope = new THREE.Mesh(ropeGeo, ropeMat);
+    scene.add(rope);
+
+    // 30-yard circle
+    const innerCurve = new THREE.EllipseCurve(0, 11, 30, 30, 0, Math.PI * 2);
+    const innerPts = innerCurve.getPoints(64).map(function(p) { return new THREE.Vector3(p.x, 0.02, p.y); });
+    const innerPath = new THREE.CatmullRomCurve3(innerPts, true);
+    const innerGeo = new THREE.TubeGeometry(innerPath, 64, 0.05, 3);
+    const innerMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 });
+    scene.add(new THREE.Mesh(innerGeo, innerMat));
   }
 
   // ---- Pitch Strip ----
@@ -783,6 +797,38 @@ import * as THREE from 'three';
       );
       scene.add(dot);
     }
+
+    // Return crease lines (short perpendicular lines at each end)
+    const rcGeo = new THREE.BoxGeometry(0.06, 0.02, 1.2);
+    const rcMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+    // Batsman end return creases
+    const rcBatL = new THREE.Mesh(rcGeo, rcMat);
+    rcBatL.position.set(-0.6, 0.02, 1.0);
+    scene.add(rcBatL);
+    const rcBatR = new THREE.Mesh(rcGeo, rcMat);
+    rcBatR.position.set(0.6, 0.02, 1.0);
+    scene.add(rcBatR);
+    // Bowler end return creases
+    const rcBowlL = new THREE.Mesh(rcGeo, rcMat);
+    rcBowlL.position.set(-0.6, 0.02, 21.0);
+    scene.add(rcBowlL);
+    const rcBowlR = new THREE.Mesh(rcGeo, rcMat);
+    rcBowlR.position.set(0.6, 0.02, 21.0);
+    scene.add(rcBowlR);
+
+    // Worn patches where bowlers land (z = 16-19 area)
+    const wornGeo = new THREE.CircleGeometry(0.3, 12);
+    const wornMat = new THREE.MeshLambertMaterial({ color: 0x8a7040, transparent: true, opacity: 0.3 });
+    const wornPositions = [
+      { x: 0.2, z: 16.5 }, { x: -0.3, z: 17.2 },
+      { x: 0.1, z: 18.0 }, { x: -0.15, z: 17.8 }
+    ];
+    wornPositions.forEach(function(pos) {
+      const patch = new THREE.Mesh(wornGeo, wornMat);
+      patch.rotation.x = -Math.PI / 2;
+      patch.position.set(pos.x, 0.015, pos.z);
+      scene.add(patch);
+    });
   }
 
   // ---- Crease Lines ----
@@ -795,10 +841,12 @@ import * as THREE from 'three';
     return line;
   }
 
-  // ---- Boundary Rope ----
+  // ---- Boundary Rope (now rendered as tube in buildGround; keep ref for code compat) ----
   function buildBoundary() {
+    // Boundary rope is now built inside buildGround() as a 3D tube.
+    // Create a hidden placeholder so boundaryRope ref doesn't break.
     const geo = new THREE.RingGeometry(78, 79, 64);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0, side: THREE.DoubleSide });
     boundaryRope = new THREE.Mesh(geo, mat);
     boundaryRope.rotation.x = -Math.PI / 2;
     boundaryRope.position.y = 0.02;
@@ -807,29 +855,62 @@ import * as THREE from 'three';
 
   // ---- Stands / Crowd Wall ----
   function buildStands() {
-    // A curved wall around the boundary using a partial cylinder
-    // Lower tier — darker concrete
-    const geo1 = new THREE.CylinderGeometry(82, 84, 5, 64, 1, true, 0, Math.PI * 2);
-    const mat1 = new THREE.MeshBasicMaterial({ color: 0x2a2a4e, side: THREE.BackSide });
-    const lower = new THREE.Mesh(geo1, mat1);
-    lower.position.set(0, 2.5, 11);
-    scene.add(lower);
+    // 4 tiers of stepped stands going up
+    const tierColors = [0x3a3a5e, 0x444468, 0x4e4e72, 0x58587c];
+    const innerRadius = 82;
 
-    // Upper tier — slightly lighter
-    const geo2 = new THREE.CylinderGeometry(84, 86, 5, 64, 1, true, 0, Math.PI * 2);
-    const mat2 = new THREE.MeshBasicMaterial({ color: 0x3a3a5e, side: THREE.BackSide });
-    const upper = new THREE.Mesh(geo2, mat2);
-    upper.position.set(0, 7.5, 11);
-    scene.add(upper);
+    for (var tier = 0; tier < 4; tier++) {
+      var r = innerRadius + tier * 3;
+      var h = 3;
+      var y = tier * 3 + 1.5;
 
-    // Top rim — lightest (catches floodlight)
-    const geo3 = new THREE.CylinderGeometry(86, 87, 2, 64, 1, true, 0, Math.PI * 2);
-    const mat3 = new THREE.MeshBasicMaterial({ color: 0x4a4a6e, side: THREE.BackSide });
-    const rim = new THREE.Mesh(geo3, mat3);
-    rim.position.set(0, 11, 11);
-    scene.add(rim);
+      // Each tier is a ring
+      var tGeo = new THREE.CylinderGeometry(r + 2, r, h, 64, 1, true);
+      var tMat = new THREE.MeshLambertMaterial({
+        color: tierColors[tier],
+        side: THREE.BackSide
+      });
+      var tMesh = new THREE.Mesh(tGeo, tMat);
+      tMesh.position.set(0, y, 11);
+      scene.add(tMesh);
 
-    standsMesh = lower; // keep ref for any code that uses it
+      if (tier === 0) standsMesh = tMesh; // keep ref
+
+      // Seat rows on top of each tier
+      var seatCount = 40;
+      for (var s = 0; s < seatCount; s++) {
+        var angle = (s / seatCount) * Math.PI * 2;
+        var seatX = Math.sin(angle) * (r + 1);
+        var seatZ = Math.cos(angle) * (r + 1) + 11;
+        var seatY = y + h / 2;
+
+        var seatGeo = new THREE.BoxGeometry(1.5, 0.5, 1);
+        var isHomeSection = (s % 8) < 5;
+        var seatColor = isHomeSection ?
+          (state.selectedTeam ? TEAMS[state.selectedTeam].primary : '#004BA0') :
+          (state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#CC0000');
+        var seatMat = new THREE.MeshLambertMaterial({
+          color: new THREE.Color(seatColor).multiplyScalar(0.6)
+        });
+        var seat = new THREE.Mesh(seatGeo, seatMat);
+        seat.position.set(seatX, seatY, seatZ);
+        seat.rotation.y = angle + Math.PI;
+        scene.add(seat);
+      }
+    }
+
+    // Roof canopy over top tier
+    var roofGeo = new THREE.RingGeometry(innerRadius + 8, innerRadius + 16, 64);
+    var roofMat = new THREE.MeshLambertMaterial({
+      color: 0x666688,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.7
+    });
+    var roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.rotation.x = -Math.PI / 2.2;
+    roof.position.set(0, 14, 11);
+    scene.add(roof);
   }
 
   // ---- Crowd (colored dots as sprites on the stands) ----
@@ -1244,6 +1325,51 @@ import * as THREE from 'three';
     }
   }
 
+  function setDayEnvironment() {
+    if (skyDomeMesh) {
+      skyDomeMesh.material = new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        uniforms: {},
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPos.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            float height = normalize(vWorldPosition).y;
+            vec3 belowHorizon = vec3(0.227, 0.541, 0.180);
+            vec3 horizon = vec3(0.722, 0.831, 0.890);
+            vec3 midSky = vec3(0.529, 0.808, 0.922);
+            vec3 topSky = vec3(0.290, 0.624, 0.851);
+            vec3 color;
+            if (height < 0.0) { color = belowHorizon; }
+            else if (height < 0.08) { color = mix(horizon, midSky, height / 0.08); }
+            else if (height < 0.3) { color = mix(midSky, topSky, (height - 0.08) / 0.22); }
+            else { color = topSky; }
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `
+      });
+    }
+    if (dirLightRef) {
+      dirLightRef.color.set(0xFFF5E0);
+      dirLightRef.intensity = 1.0;
+      dirLightRef.position.set(20, 30, -10);
+    }
+    if (ambientLight) {
+      ambientLight.color.set(0x8EC8E8);
+      ambientLight.intensity = 0.6;
+    }
+    if (scene && scene.fog) {
+      scene.fog = new THREE.FogExp2(0x87CEEB, 0.003);
+    }
+  }
+
   let sweetSpotRing;
   function buildSweetSpotRing() {
     const geo = new THREE.RingGeometry(0.6, 0.8, 32);
@@ -1266,6 +1392,80 @@ import * as THREE from 'three';
       board.rotation.y = angle + Math.PI;
       scene.add(board);
     }
+  }
+
+  // ---- Sight Screen (white screen behind bowler's end) ----
+  function buildSightScreen() {
+    const screenGeo = new THREE.BoxGeometry(8, 6, 0.5);
+    const screenMat = new THREE.MeshBasicMaterial({ color: 0xF0F0F0 });
+    const sightScreen = new THREE.Mesh(screenGeo, screenMat);
+    sightScreen.position.set(0, 3, 25);
+    scene.add(sightScreen);
+  }
+
+  // ---- 3D Scoreboard Structure ----
+  function buildScoreboard3D() {
+    const boardGeo = new THREE.BoxGeometry(12, 6, 0.5);
+    const boardMat = new THREE.MeshBasicMaterial({ color: 0x1a1a3e });
+    const scoreboard3D = new THREE.Mesh(boardGeo, boardMat);
+    scoreboard3D.position.set(30, 8, 60);
+    scoreboard3D.rotation.y = -0.3;
+    scene.add(scoreboard3D);
+    // Gold border
+    const borderGeo = new THREE.BoxGeometry(12.4, 6.4, 0.3);
+    const borderMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+    const border = new THREE.Mesh(borderGeo, borderMat);
+    border.position.copy(scoreboard3D.position);
+    border.position.z += 0.2;
+    border.rotation.y = scoreboard3D.rotation.y;
+    scene.add(border);
+  }
+
+  // ---- Ground Dust Particles (near pitch) ----
+  let pitchDustParticles = null;
+  let pitchDustVelocities = [];
+  function buildPitchDust() {
+    const count = 30;
+    const positions = new Float32Array(count * 3);
+    pitchDustVelocities = [];
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 20;
+      positions[i * 3 + 1] = 0.1 + Math.random() * 0.4;
+      positions[i * 3 + 2] = 11 + (Math.random() - 0.5) * 20;
+      pitchDustVelocities.push({
+        vx: (Math.random() - 0.5) * 0.1,
+        vy: (Math.random() - 0.5) * 0.02,
+        vz: (Math.random() - 0.5) * 0.1
+      });
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xC4A87C,
+      size: 0.03,
+      transparent: true,
+      opacity: 0.2,
+      sizeAttenuation: true
+    });
+    pitchDustParticles = new THREE.Points(geo, mat);
+    scene.add(pitchDustParticles);
+  }
+
+  function updatePitchDust(dt) {
+    if (!pitchDustParticles) return;
+    const positions = pitchDustParticles.geometry.getAttribute('position');
+    for (let i = 0; i < positions.count; i++) {
+      const v = pitchDustVelocities[i];
+      let x = positions.getX(i) + v.vx * dt * 10;
+      let y = positions.getY(i) + v.vy * dt * 10;
+      let z = positions.getZ(i) + v.vz * dt * 10;
+      if (Math.abs(x) > 10) x = (Math.random() - 0.5) * 10;
+      if (y > 0.5) y = 0.1;
+      if (y < 0.1) y = 0.5;
+      if (Math.abs(z - 11) > 10) z = 11 + (Math.random() - 0.5) * 10;
+      positions.setXYZ(i, x, y, z);
+    }
+    positions.needsUpdate = true;
   }
 
   // ---- Fielders ----
@@ -1406,6 +1606,7 @@ import * as THREE from 'three';
     batsmanBody = new THREE.Mesh(torsoGeo, bodyMat);
     batsmanBody.position.y = 0.6;
     batsmanBody.rotation.x = THREE.MathUtils.degToRad(10);
+    batsmanBody.castShadow = true;
     batsmanGroup.add(batsmanBody);
 
     // Team stripe across chest
@@ -1618,6 +1819,7 @@ import * as THREE from 'three';
     bowlerBody = new THREE.Mesh(torsoGeo, bodyMat);
     bowlerBody.position.y = 0.55;
     bowlerBody.rotation.x = THREE.MathUtils.degToRad(15);
+    bowlerBody.castShadow = true;
     bowlerGroup.add(bowlerBody);
 
     // Team stripe
@@ -1797,6 +1999,7 @@ import * as THREE from 'three';
     // Always update atmospheric effects
     if (!reducedMotion) {
       updateDustParticles(dt);
+      updatePitchDust(dt);
     }
 
     if (state.phase === 'BOWLING') {
@@ -2348,8 +2551,23 @@ import * as THREE from 'three';
     camera.lookAt(targetLookAt);
   }
 
+  let _shadowPerfChecked = false;
   function renderThreeScene() {
     if (renderer && scene && camera) {
+      // Performance check: disable shadows if first frame is too slow
+      if (!_shadowPerfChecked && renderer.shadowMap.enabled) {
+        const t0 = performance.now();
+        renderer.render(scene, camera);
+        const elapsed = performance.now() - t0;
+        _shadowPerfChecked = true;
+        if (elapsed > 20) {
+          renderer.shadowMap.enabled = false;
+          if (ground) ground.receiveShadow = false;
+          if (batsmanBody) batsmanBody.castShadow = false;
+          if (bowlerBody) bowlerBody.castShadow = false;
+        }
+        return;
+      }
       renderer.render(scene, camera);
     }
   }
@@ -3306,7 +3524,7 @@ import * as THREE from 'three';
     state.target = aiScore + 1;
 
     playUISound('overComplete');
-    setNightEnvironment();
+    setDayEnvironment();
 
     if (!inningsBreakOverlay) {
       inningsBreakOverlay = $('inningsBreakOverlay');
@@ -3367,6 +3585,7 @@ import * as THREE from 'three';
     deliveryTimer = 0;
 
     // Switch phase
+    setDayEnvironment();
     state.phase = 'BATTING';
     state.matchPhase = 'batting_chase';
     gameWrap.classList.add('cb-playing');
@@ -4678,7 +4897,7 @@ import * as THREE from 'three';
     bowlerGroup.visible = true;
     if (aiBatsmanGroup) aiBatsmanGroup.visible = false;
 
-    setNightEnvironment();
+    setDayEnvironment();
 
     // Reset scatter
     scatterStumps.forEach(s => scene.remove(s));
@@ -5446,7 +5665,8 @@ import * as THREE from 'three';
     scatterBails = [];
 
     if (state.battingFirst) {
-      // Player bats first (original flow)
+      // Player bats first (original flow) — day match
+      setDayEnvironment();
       state.matchPhase = 'batting';
       state.target = 999;
       state.phase = 'BATTING';
@@ -5554,8 +5774,8 @@ import * as THREE from 'three';
     if (scoreboardBowl) scoreboardBowl.style.display = 'none';
     if (scoreboardBat) scoreboardBat.style.display = 'none';
 
-    // Patch #17: Restore night sky
-    setNightEnvironment();
+    // Restore day sky for title/batting
+    setDayEnvironment();
 
     // Reset 3D visibility
     batsmanGroup.visible = true;
