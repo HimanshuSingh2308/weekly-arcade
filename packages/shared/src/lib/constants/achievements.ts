@@ -567,6 +567,25 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
     category: 'tiny-tycoon',
     requirement: { type: 'special', gameId: 'tiny-tycoon' },
   },
+
+  // ============ CRICKET BLITZ ACHIEVEMENTS ============
+  cb_first_four:      { id: 'cb-first-four',      name: 'Boundary Finder',   description: 'Hit your first four',                    icon: '🏏', xpReward: 50,  category: 'cricket-blitz', requirement: { type: 'first_boundary', gameId: 'cricket-blitz' } },
+  cb_first_six:       { id: 'cb-first-six',        name: 'Into the Stands',   description: 'Hit your first six',                     icon: '🏟️', xpReward: 75,  category: 'cricket-blitz', requirement: { type: 'first_six', gameId: 'cricket-blitz' } },
+  cb_six_sixes:       { id: 'cb-six-sixes',        name: 'Six Machine',       description: 'Hit 6 sixes in a single match',          icon: '💥', xpReward: 200, category: 'cricket-blitz', requirement: { type: 'sixes', value: 6, gameId: 'cricket-blitz' } },
+  cb_fifty:           { id: 'cb-fifty',            name: 'Half Century',      description: 'Score 50 runs in an innings',             icon: '⭐', xpReward: 100, category: 'cricket-blitz', requirement: { type: 'score', value: 50, gameId: 'cricket-blitz' } },
+  cb_century:         { id: 'cb-century',          name: 'Centurion',         description: 'Score 100 runs in an innings',            icon: '💯', xpReward: 250, category: 'cricket-blitz', requirement: { type: 'score', value: 100, gameId: 'cricket-blitz' } },
+  cb_no_wicket:       { id: 'cb-no-wicket',        name: 'Unbeatable',        description: 'Complete innings without losing a wicket', icon: '🛡️', xpReward: 200, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_perfect_over:    { id: 'cb-perfect-over',     name: 'Perfect Over',      description: 'Score off every ball in an over',         icon: '🎯', xpReward: 150, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_target_crushed:  { id: 'cb-target-crushed',   name: 'Target Crushed',    description: 'Beat target with 10+ balls remaining',    icon: '🔥', xpReward: 150, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_high_score_200:  { id: 'cb-high-score-200',   name: 'Double Century Club', description: 'Achieve a final score of 200+',        icon: '🏆', xpReward: 300, category: 'cricket-blitz', requirement: { type: 'score', value: 200, gameId: 'cricket-blitz' } },
+  cb_all_teams:       { id: 'cb-all-teams',        name: 'Franchise Collector', description: 'Play with each of the 6 teams',        icon: '🎨', xpReward: 150, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_first_wicket:    { id: 'cb-first-wicket',     name: 'Wicket Taker',      description: 'Take your first wicket while bowling',    icon: '🎳', xpReward: 75,  category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_five_wickets:    { id: 'cb-five-wickets',     name: 'Five-For',          description: 'Take 5 wickets in bowling innings',       icon: '🌟', xpReward: 250, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_full_match_win:  { id: 'cb-full-match-win',   name: 'Match Winner',      description: 'Win a complete match (bat + bowl)',       icon: '🏅', xpReward: 200, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_clean_sweep:     { id: 'cb-clean-sweep',      name: 'Clean Sweep',       description: 'Win by 30+ runs margin',                 icon: '💎', xpReward: 250, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_yorker_master:   { id: 'cb-yorker-master',    name: 'Yorker Master',     description: 'Take 3 wickets with yorkers',            icon: '⚡', xpReward: 200, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_level_3:         { id: 'cb-level-3',          name: 'Rising Star',       description: 'Reach level 3',                          icon: '📈', xpReward: 100, category: 'cricket-blitz', requirement: { type: 'level', value: 3, gameId: 'cricket-blitz' } },
+  cb_level_5:         { id: 'cb-level-5',          name: 'Cricket Legend',     description: 'Reach level 5',                          icon: '👑', xpReward: 300, category: 'cricket-blitz', requirement: { type: 'level', value: 5, gameId: 'cricket-blitz' } },
 };
 
 export const ACHIEVEMENT_LIST = Object.values(ACHIEVEMENTS);
