@@ -1339,8 +1339,8 @@
         css: 'position:absolute;top:8%;left:4px;display:flex;z-index:6;'
       },
       tiki: {
-        html: '<div class="shop-decor decor-tiki"><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div></div>',
-        css: 'position:absolute;top:30%;right:8px;z-index:11;'
+        html: '<div class="shop-decor decor-tiki"><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div><div class="tiki-torch"><div class="tiki-flame"></div><div class="tiki-post"></div></div></div>',
+        css: 'position:absolute;top:1px;left:5%;right:5%;display:flex;justify-content:space-between;z-index:7;'
       },
       bamboo: {
         html: '<div class="shop-decor decor-bamboo"><div class="bamboo-bar"></div></div>',
@@ -1352,11 +1352,11 @@
       },
       waterfall: {
         html: '<div class="shop-decor decor-waterfall"><div class="waterfall-stream"></div></div>',
-        css: 'position:absolute;top:12px;left:50%;transform:translateX(-50%);'
+        css: 'position:absolute;top:4%;left:8px;z-index:6;'
       },
       parrot: {
         html: '<div class="shop-decor decor-parrot"><div class="parrot-body"></div><div class="parrot-perch"></div></div>',
-        css: 'position:absolute;top:6px;left:8px;'
+        css: 'position:absolute;top:4%;right:10px;z-index:7;'
       },
       sand: {
         html: '<div class="shop-decor decor-sand"><div class="sand-floor"></div></div>',

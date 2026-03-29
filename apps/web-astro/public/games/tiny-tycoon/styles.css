@@ -2606,20 +2606,24 @@
       width: 14px; height: 5px; background: #388E3C; border-radius: 50% 50% 0 0;
     }
 
-    /* Tiki torch */
-    .decor-tiki { z-index: 11; }
+    /* Tiki torches (spread across top like lights) */
+    .decor-tiki { z-index: 7; }
     .tiki-torch { display: flex; flex-direction: column; align-items: center; }
     .tiki-flame {
-      width: 8px; height: 10px; background: radial-gradient(ellipse at bottom, #FF6B00 30%, #FF0000 60%, transparent 100%);
+      width: 6px; height: 8px; background: radial-gradient(ellipse at bottom, #FF6B00 30%, #FF0000 60%, transparent 100%);
       border-radius: 50% 50% 30% 30%; position: relative;
       animation: flameFlicker 0.5s ease-in-out infinite;
     }
+    .tiki-torch:nth-child(2) .tiki-flame { animation-delay: 0.15s; }
+    .tiki-torch:nth-child(3) .tiki-flame { animation-delay: 0.3s; }
+    .tiki-torch:nth-child(4) .tiki-flame { animation-delay: 0.1s; }
+    .tiki-torch:nth-child(5) .tiki-flame { animation-delay: 0.25s; }
     .tiki-flame::after {
       content: ''; position: absolute; inset: 2px; background: radial-gradient(ellipse at bottom, #FFD700 20%, transparent 70%);
       border-radius: 50%;
     }
     .tiki-post {
-      width: 5px; height: 18px;
+      width: 4px; height: 10px;
       background: repeating-linear-gradient(180deg, #6B4F10 0px, #6B4F10 3px, #8B6914 3px, #8B6914 5px);
     }
 
