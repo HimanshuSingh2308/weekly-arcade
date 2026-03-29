@@ -1040,7 +1040,9 @@
       p.vy += 120 * dt; // gravity
       p.life -= dt;
       if (p.life <= 0) {
-        state.particles.splice(i, 1);
+        state.particles[i] = state.particles[state.particles.length - 1];
+        state.particles.pop();
+        i--;
         continue;
       }
       const alpha = p.life / p.maxLife;
@@ -1066,7 +1068,9 @@
       ft.y -= 40 * dt;
       ft.life -= dt;
       if (ft.life <= 0) {
-        state.floatingTexts.splice(i, 1);
+        state.floatingTexts[i] = state.floatingTexts[state.floatingTexts.length - 1];
+        state.floatingTexts.pop();
+        i--;
         continue;
       }
       const alpha = ft.life / ft.maxLife;
@@ -1598,8 +1602,8 @@
 
     // Check achievement
     if (ballsRemaining >= 10) checkAchievement('cb-target-crushed');
-    if (state.level >= 2) checkAchievement('cb-level-3');
-    if (state.level >= 4) checkAchievement('cb-level-5');
+    if (state.level >= 3) checkAchievement('cb-level-3');
+    if (state.level >= 5) checkAchievement('cb-level-5');
 
     playUISound('levelComplete');
     spawnConfetti();
@@ -1734,7 +1738,7 @@
 
   async function submitScore(finalScore, totalRuns, sr, didBeat) {
     try {
-      if (window.apiClient) {
+      if (window.apiClient && currentUser) {
         await window.apiClient.submitScore('cricket-blitz', {
           score: finalScore,
           level: state.level,
@@ -1828,8 +1832,8 @@
     showAchievementToast(ach.name, ach.desc);
 
     try {
-      if (window.gameCloud) {
-        window.gameCloud.unlockAchievement(id, 'cricket-blitz');
+      if (window.apiClient) {
+        window.apiClient.unlockAchievement(id, 'cricket-blitz');
       }
     } catch (e) {}
   }
@@ -1889,7 +1893,7 @@
       const name = document.createElement('div');
       name.className = 'cb-team-name';
       // Choose text color based on luminance
-      name.style.color = luminance(team.primary) > 0.4 ? '#000' : '#fff';
+      name.style.color = luminance(team.primary) > 0.55 ? '#000' : '#fff';
       name.textContent = team.name.split(' ')[1] || team.name;
 
       card.appendChild(jersey);
@@ -1923,7 +1927,7 @@
     const playBtn = $('playBtn');
     playBtn.disabled = false;
     playBtn.style.background = TEAMS[id].primary;
-    playBtn.style.color = luminance(TEAMS[id].primary) > 0.4 ? '#000' : '#fff';
+    playBtn.style.color = luminance(TEAMS[id].primary) > 0.55 ? '#000' : '#fff';
   }
 
   function startGame() {
@@ -2163,9 +2167,9 @@
       onSignIn: async (user) => {
         currentUser = user;
         try {
-          if (window.gameCloud) {
-            cloudState = await window.gameCloud.loadState('cricket-blitz');
-            await window.gameCloud.syncGuestScores('cricket-blitz');
+          if (window.apiClient) {
+            cloudState = await window.apiClient.loadState('cricket-blitz');
+            await window.apiClient.syncGuestScores('cricket-blitz');
           }
         } catch (e) {}
       },
