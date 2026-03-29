@@ -3909,9 +3909,11 @@ import * as THREE from 'three';
       isNoBall = true;
     }
 
-    // Count the ball now (wides already returned above)
+    // Count the ball (wides already returned above, no-balls don't count as legal deliveries)
     state.bowlingTotalBalls++;
-    state.bowlingBallsInOver++;
+    if (!isNoBall) {
+      state.bowlingBallsInOver++;
+    }
 
     // Pick probability table
     let probs;
