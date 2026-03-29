@@ -147,7 +147,7 @@
     bean_brew: {
       id: 'bean_brew', name: 'Bean & Brew', emoji: '☕', unlockCost: 5000, unlockPrestige: 1,
       theme: { '--cream': '#F5F0E8', '--taupe': '#8B6F47', '--brown': '#3E2723', '--matcha': '#B87333', '--coral': '#D84315', '--gold': '#FFB300', '--taro': '#6D4C41', '--wall-top': '#E8DCC8', '--wall-bottom': '#D4C4A8', '--floor': '#A0845C' },
-      getDrinks: () => ({ drip_coffee: { emoji: '☕', name: 'Drip Coffee', baseCoins: 8, serveTime: 700, unlockDay: 1 }, cappuccino: { emoji: '☕', name: 'Cappuccino', baseCoins: 15, serveTime: 1100, unlockDay: 1 }, espresso: { emoji: '🫖', name: 'Espresso Shot', baseCoins: 12, serveTime: 500, unlockDay: 3 }, caramel_latte: { emoji: '🍯', name: 'Caramel Latte', baseCoins: 22, serveTime: 1400, unlockDay: 5 }, mocha_frappe: { emoji: '🍫', name: 'Mocha Frappe', baseCoins: 35, serveTime: 1800, unlockDay: 8 }, pour_over: { emoji: '🫖', name: 'Pour-Over Special', baseCoins: 50, serveTime: 2200, unlockDay: 12 }, affogato: { emoji: '🍨', name: 'Affogato', baseCoins: 65, serveTime: 2800, unlockDay: 18 } }),
+      getDrinks: () => ({ drip_coffee: { emoji: '☕', name: 'Drip Coffee', baseCoins: 8, serveTime: 700, unlockDay: 1 }, cappuccino: { emoji: '🫘', name: 'Cappuccino', baseCoins: 15, serveTime: 1100, unlockDay: 1 }, espresso: { emoji: '⚡', name: 'Espresso Shot', baseCoins: 12, serveTime: 500, unlockDay: 3 }, caramel_latte: { emoji: '🍯', name: 'Caramel Latte', baseCoins: 22, serveTime: 1400, unlockDay: 5 }, mocha_frappe: { emoji: '🥤', name: 'Mocha Frappe', baseCoins: 35, serveTime: 1800, unlockDay: 8 }, pour_over: { emoji: '🫖', name: 'Pour-Over Special', baseCoins: 50, serveTime: 2200, unlockDay: 12 }, affogato: { emoji: '🍨', name: 'Affogato', baseCoins: 65, serveTime: 2800, unlockDay: 18 } }),
       getCustomers: () => ({ regular: { color: '#A1887F', patienceMod: 1.0, orderPool: ['drip_coffee', 'cappuccino'], earlyWeight: 50, lateWeight: 20 }, student: { color: '#FFB347', patienceMod: 1.2, orderPool: ['drip_coffee', 'espresso'], earlyWeight: 30, lateWeight: 15 }, business: { color: '#546E7A', patienceMod: 0.6, orderPool: ['espresso', 'cappuccino', 'pour_over'], earlyWeight: 15, lateWeight: 30 }, foodie: { color: '#CE93D8', patienceMod: 0.9, orderPool: ['caramel_latte', 'mocha_frappe', 'affogato'], earlyWeight: 0, lateWeight: 25 }, influencer: { color: '#FF69B4', patienceMod: 0.5, orderPool: ['affogato', 'pour_over'], earlyWeight: 0, lateWeight: 10 }, vip: { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL', earlyWeight: 0, lateWeight: 0 } }),
       getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
     },
@@ -161,7 +161,7 @@
     sweet_tooth: {
       id: 'sweet_tooth', name: 'Sweet Tooth', emoji: '🧁', unlockCost: 40000, unlockPrestige: 3,
       theme: { '--cream': '#FFF0F5', '--taupe': '#D4A0A0', '--brown': '#8B4513', '--matcha': '#B76E79', '--coral': '#FF6B81', '--gold': '#FFB6C1', '--taro': '#C9A0DC', '--wall-top': '#FFE4EC', '--wall-bottom': '#FFD1DC', '--floor': '#98FB98' },
-      getDrinks: () => ({ cookie: { emoji: '🍪', name: 'Cookie', baseCoins: 12, serveTime: 600, unlockDay: 1 }, cupcake: { emoji: '🧁', name: 'Cupcake', baseCoins: 20, serveTime: 1000, unlockDay: 1 }, croissant: { emoji: '🥐', name: 'Croissant', baseCoins: 16, serveTime: 900, unlockDay: 3 }, cake_slice: { emoji: '🍰', name: 'Slice of Cake', baseCoins: 35, serveTime: 1500, unlockDay: 6 }, cream_puff: { emoji: '🍮', name: 'Cream Puff Tower', baseCoins: 50, serveTime: 2200, unlockDay: 10 }, tiramisu: { emoji: '🍫', name: 'Tiramisu', baseCoins: 70, serveTime: 2800, unlockDay: 15 }, tasting_plate: { emoji: '🍽️', name: "Chef's Tasting", baseCoins: 100, serveTime: 3500, unlockDay: 20 } }),
+      getDrinks: () => ({ cookie: { emoji: '🍪', name: 'Cookie', baseCoins: 12, serveTime: 600, unlockDay: 1 }, cupcake: { emoji: '🧁', name: 'Cupcake', baseCoins: 20, serveTime: 1000, unlockDay: 1 }, croissant: { emoji: '🥐', name: 'Croissant', baseCoins: 16, serveTime: 900, unlockDay: 3 }, cake_slice: { emoji: '🍰', name: 'Slice of Cake', baseCoins: 35, serveTime: 1500, unlockDay: 6 }, cream_puff: { emoji: '🍮', name: 'Cream Puff Tower', baseCoins: 50, serveTime: 2200, unlockDay: 10 }, tiramisu: { emoji: '🧇', name: 'Tiramisu', baseCoins: 70, serveTime: 2800, unlockDay: 15 }, tasting_plate: { emoji: '🍽️', name: "Chef's Tasting", baseCoins: 100, serveTime: 3500, unlockDay: 20 } }),
       getCustomers: () => ({ regular: { color: '#F8BBD0', patienceMod: 1.1, orderPool: ['cookie', 'cupcake'], earlyWeight: 50, lateWeight: 20 }, student: { color: '#CE93D8', patienceMod: 1.3, orderPool: ['cookie', 'croissant'], earlyWeight: 30, lateWeight: 10 }, business: { color: '#90A4AE', patienceMod: 0.7, orderPool: ['croissant', 'cake_slice'], earlyWeight: 10, lateWeight: 20 }, foodie: { color: '#FFB74D', patienceMod: 0.8, orderPool: ['cake_slice', 'cream_puff', 'tiramisu', 'tasting_plate'], earlyWeight: 0, lateWeight: 35 }, influencer: { color: '#FF69B4', patienceMod: 0.5, orderPool: ['tiramisu', 'tasting_plate'], earlyWeight: 0, lateWeight: 10 }, vip: { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL', earlyWeight: 0, lateWeight: 0 } }),
       getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
     },
@@ -1226,6 +1226,10 @@
     shopBg.classList.remove('vibe-bare', 'vibe-cozy', 'vibe-premium', 'vibe-luxurious');
 
     const owned = getOwnedDecorations();
+
+    // Hide default wall clock when vintage clock decoration is purchased
+    if (wallClock) wallClock.style.display = owned.includes('clock') ? 'none' : '';
+
     if (owned.length === 0) {
       shopBg.classList.add('vibe-bare');
       return;
@@ -1283,16 +1287,16 @@
         css: 'position:absolute;top:4px;right:6px;z-index:7;'
       },
       clock: {
-        html: '<div class="shop-decor decor-clock"><div class="clock-face"><div class="clock-dot"></div></div></div>',
-        css: 'position:absolute;top:6px;left:50%;transform:translateX(-50%);'
+        html: '<div class="shop-decor decor-clock"><div class="clock-face"><div class="clock-hand" id="vintageClockHand"></div><div class="clock-dot"></div></div></div>',
+        css: 'position:absolute;top:3%;right:14%;z-index:7;'
       },
       edison: {
         html: '<div class="shop-decor decor-edison"><div class="edison-row"><div class="edison-bulb"><div class="eb-wire"></div><div class="eb-glass"></div></div><div class="edison-bulb"><div class="eb-wire"></div><div class="eb-glass"></div></div><div class="edison-bulb"><div class="eb-wire"></div><div class="eb-glass"></div></div></div></div>',
         css: 'position:absolute;top:0;left:15%;right:15%;'
       },
       leather: {
-        html: '<div class="shop-decor decor-leather"><div class="leather-seat"></div></div>',
-        css: 'position:absolute;top:34%;right:10px;z-index:11;'
+        html: '<div class="shop-decor decor-leather"><div class="leather-sofa ls-1"></div><div class="leather-sofa ls-2"></div><div class="leather-sofa ls-3"></div></div>',
+        css: 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:11;'
       },
       art_wall: {
         html: '<div class="shop-decor decor-art"><div class="art-frame"></div></div>',
@@ -1952,12 +1956,38 @@
     recalcQueuePositions();
   }
 
+  // Sofa seat positions (x, y) relative to queue area — customers sit here when leather seats are owned
+  const SOFA_SEATS = [
+    { x: 30,  y: 55 },  // sofa 1 (left)
+    { x: 65,  y: 55 },  // sofa 1 (right cushion)
+    { x: 280, y: 60 },  // sofa 2 (right side)
+    { x: 170, y: 42 },  // sofa 3 (center-back)
+    { x: 205, y: 42 },  // sofa 3 (right cushion)
+    { x: 315, y: 60 },  // sofa 2 (right cushion)
+  ];
+
+  function hasLeatherSeats() {
+    return getOwnedDecorations().includes('leather');
+  }
+
   function recalcQueuePositions() {
     const inQueue = customers.filter(c => !c.isVip && (c.state === 'queued' || c.state === 'walking_to_queue' || c.state === 'serving')).sort((a, b) => a.targetX - b.targetX);
     const baseX = 40;
-    const spacing = inQueue.length > 8 ? 42 : 50; // Tighter spacing at max queue to avoid overflow
+    const spacing = inQueue.length > 8 ? 42 : 50;
+    const seated = hasLeatherSeats();
+
     inQueue.forEach((c, i) => {
-      c.targetX = baseX + i * spacing;
+      if (seated && i >= 2 && c.state !== 'serving') {
+        // Customers 3rd+ in queue sit on sofas
+        const seatIdx = (i - 2) % SOFA_SEATS.length;
+        c.targetX = SOFA_SEATS[seatIdx].x;
+        c.targetY = SOFA_SEATS[seatIdx].y;
+        c.onSofa = true;
+      } else {
+        c.targetX = baseX + i * spacing;
+        c.targetY = 30;
+        c.onSofa = false;
+      }
     });
   }
 
@@ -2336,6 +2366,11 @@
     if (clockHand) {
       clockHand.style.transform = 'rotate(' + (clockProgress * 360) + 'deg)';
     }
+    // Also drive vintage clock decoration hand if present
+    const vintageHand = document.getElementById('vintageClockHand');
+    if (vintageHand) {
+      vintageHand.style.transform = 'rotate(' + (clockProgress * 360) + 'deg)';
+    }
 
     // Spawn timer
     spawnTimer -= dt;
@@ -2471,6 +2506,24 @@
         if (Math.abs(dx) > 1) {
           c.x += Math.sign(dx) * 100 * (dt / 1000);
           if (Math.abs(c.targetX - c.x) < 1) c.x = c.targetX;
+        }
+
+        // Animate Y for sofa seating
+        const ty = c.targetY != null ? c.targetY : 30;
+        const dy = ty - c.y;
+        if (Math.abs(dy) > 1) {
+          c.y += Math.sign(dy) * 80 * (dt / 1000);
+          if (Math.abs(ty - c.y) < 1) c.y = ty;
+          if (c.el) c.el.style.top = c.y + 'px';
+        }
+
+        // Toggle sofa sitting visual
+        if (c.el) {
+          if (c.onSofa) {
+            c.el.classList.add('on-sofa');
+          } else {
+            c.el.classList.remove('on-sofa');
+          }
         }
 
         if (c.patience <= 0) {

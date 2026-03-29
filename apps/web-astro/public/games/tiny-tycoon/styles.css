@@ -2379,25 +2379,35 @@
       width: 12px; height: 2px; background: #F5F5DC; border-radius: 1px;
     }
 
-    /* Clock */
-    .decor-clock { z-index: 5; }
-    .clock-face {
-      width: 18px; height: 18px; background: #FFF8E7; border: 2px solid #5C3D2E;
+    /* Vintage Clock decoration (replaces default wall clock) */
+    .decor-clock { z-index: 7; }
+    .decor-clock .clock-face {
+      width: 28px; height: 28px;
+      background: radial-gradient(circle, #FFF 0%, #F5F0E8 70%, #E0D5C5 100%);
+      border: 2px solid #8B7355;
       border-radius: 50%; position: relative;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
-    .clock-face::before {
-      content: ''; position: absolute; top: 2px; left: 50%; width: 1px; height: 6px;
-      background: #333; transform-origin: bottom center; transform: translateX(-50%);
-      animation: clockTick 43200s linear infinite;
+    .decor-clock .clock-face::before {
+      content: ''; position: absolute; top: -5px; left: 50%;
+      transform: translateX(-50%);
+      width: 6px; height: 4px;
+      background: #8B7355; border-radius: 2px 2px 0 0;
     }
-    .clock-face::after {
-      content: ''; position: absolute; top: 3px; left: 50%; width: 1px; height: 5px;
-      background: #333; transform-origin: bottom center; transform: translateX(-50%) rotate(90deg);
-      animation: clockTick 3600s linear infinite;
+    .decor-clock .clock-face::after { content: none; }
+    .decor-clock .clock-hand {
+      position: absolute;
+      bottom: 50%; left: 50%;
+      width: 2px; height: 9px;
+      background: var(--brown, #5C3D2E);
+      transform-origin: bottom center;
+      transform: rotate(0deg);
+      border-radius: 1px;
+      z-index: 1;
     }
-    .clock-dot {
+    .decor-clock .clock-dot {
       position: absolute; top: 50%; left: 50%; width: 2px; height: 2px;
-      background: #333; border-radius: 50%; transform: translate(-50%, -50%); z-index: 1;
+      background: #333; border-radius: 50%; transform: translate(-50%, -50%); z-index: 2;
     }
 
     /* Edison bulbs */
@@ -2415,22 +2425,45 @@
     .edison-bulb:nth-child(2) .eb-glass { animation-delay: 1s; }
     .edison-bulb:nth-child(3) .eb-glass { animation-delay: 2s; }
 
-    /* Leather booth */
+    /* Leather sofas (seating area) */
     .decor-leather { z-index: 11; }
-    .leather-seat {
-      width: 22px; height: 14px; background: linear-gradient(180deg, #8B4513, #6B3410);
-      border-radius: 4px 4px 2px 2px; position: relative;
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+    .leather-sofa {
+      position: absolute;
+      background: linear-gradient(180deg, #8B4513, #6B3410);
+      border-radius: 4px 4px 2px 2px;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 1px 3px rgba(0,0,0,0.2);
     }
-    .leather-seat::before {
-      content: ''; position: absolute; top: 3px; left: 4px;
-      width: 3px; height: 3px; background: rgba(255,255,255,0.15); border-radius: 50%;
-      box-shadow: 6px 0 0 rgba(255,255,255,0.15), 12px 0 0 rgba(255,255,255,0.15),
-                  3px 5px 0 rgba(255,255,255,0.15), 9px 5px 0 rgba(255,255,255,0.15);
-    }
-    .leather-seat::after {
-      content: ''; position: absolute; top: -6px; left: 0; right: 0; height: 6px;
+    .leather-sofa::after {
+      content: ''; position: absolute; top: -7px; left: 0; right: 0; height: 7px;
       background: linear-gradient(180deg, #7B3B10, #8B4513); border-radius: 3px 3px 0 0;
+    }
+    .leather-sofa::before {
+      content: ''; position: absolute; top: 3px; left: 5px;
+      width: 3px; height: 3px; background: rgba(255,255,255,0.12); border-radius: 50%;
+      box-shadow: 7px 0 0 rgba(255,255,255,0.12), 14px 0 0 rgba(255,255,255,0.12),
+                  21px 0 0 rgba(255,255,255,0.12);
+    }
+    /* Sofa 1 — left side, near queue */
+    .leather-sofa.ls-1 {
+      width: 34px; height: 14px; top: 35%; left: 8px;
+    }
+    /* Sofa 2 — right side */
+    .leather-sofa.ls-2 {
+      width: 30px; height: 13px; top: 38%; right: 8px; left: auto;
+    }
+    /* Sofa 3 — center-left, further back */
+    .leather-sofa.ls-3 {
+      width: 28px; height: 12px; top: 28%; left: 45%;
+    }
+
+    /* Customer sitting on sofa */
+    .customer.on-sofa .customer-legs {
+      height: 2px;
+      overflow: hidden;
+    }
+    .customer.on-sofa {
+      transform-origin: bottom center;
+      scale: 0.9;
     }
 
     /* Art wall */
