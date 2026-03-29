@@ -1290,116 +1290,213 @@ import * as THREE from 'three';
     batsmanGroup.position.set(0, 0, 0.2);
 
     const teamColor = 0x004BA0;
-    const skinColor = 0xdba67a;
+    const skinColor = 0xD2A87C;
+    const flat = { flatShading: true };
 
-    // Shoes
-    const shoeGeo = new THREE.BoxGeometry(0.1, 0.05, 0.15);
-    const shoeMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
+    // --- Shoes ---
+    const shoeGeo = new THREE.BoxGeometry(0.1, 0.04, 0.14);
+    const shoeMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0, ...flat });
+    const soleGeo = new THREE.BoxGeometry(0.1, 0.015, 0.14);
+    const soleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
     const shoeL = new THREE.Mesh(shoeGeo, shoeMat);
-    shoeL.position.set(-0.12, 0.025, 0.02);
+    shoeL.position.set(-0.12, 0.03, -0.13);
+    const soleL = new THREE.Mesh(soleGeo, soleMat);
+    soleL.position.y = -0.02;
+    shoeL.add(soleL);
     batsmanGroup.add(shoeL);
     const shoeR = new THREE.Mesh(shoeGeo, shoeMat);
-    shoeR.position.set(0.12, 0.025, 0.02);
+    shoeR.position.set(0.12, 0.03, 0.08);
+    const soleR = new THREE.Mesh(soleGeo, soleMat);
+    soleR.position.y = -0.02;
+    shoeR.add(soleR);
     batsmanGroup.add(shoeR);
 
-    // Legs (white cricket pads)
-    const legGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.5, 8);
-    const legMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
-    batsmanLegL = new THREE.Mesh(legGeo, legMat);
-    batsmanLegL.position.set(-0.12, 0.3, 0);
-    batsmanLegL.rotation.z = THREE.MathUtils.degToRad(2);
+    // --- Legs with Pads ---
+    // Left leg (front foot, forward)
+    const thighGeoL = new THREE.CylinderGeometry(0.07, 0.06, 0.3, 8);
+    const thighMatL = new THREE.MeshLambertMaterial({ color: teamColor, ...flat });
+    batsmanLegL = new THREE.Group();
+    batsmanLegL.position.set(-0.12, 0.45, -0.15);
+    const thighL = new THREE.Mesh(thighGeoL, thighMatL);
+    thighL.position.y = 0;
+    batsmanLegL.add(thighL);
+    // Pad
+    const padGeo = new THREE.BoxGeometry(0.12, 0.3, 0.08);
+    const padMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f0, ...flat });
+    const padL = new THREE.Mesh(padGeo, padMat);
+    padL.position.set(0, -0.2, 0.01);
+    batsmanLegL.add(padL);
+    // Pad ridge (raised center detail)
+    const padRidgeGeo = new THREE.BoxGeometry(0.04, 0.28, 0.02);
+    const padRidgeMat = new THREE.MeshLambertMaterial({ color: 0xeeeee0 });
+    const padRidgeL = new THREE.Mesh(padRidgeGeo, padRidgeMat);
+    padRidgeL.position.set(0, -0.2, 0.04);
+    batsmanLegL.add(padRidgeL);
+    batsmanLegL.rotation.x = THREE.MathUtils.degToRad(12);
     batsmanGroup.add(batsmanLegL);
 
-    batsmanLegR = new THREE.Mesh(legGeo, legMat);
-    batsmanLegR.position.set(0.12, 0.3, 0);
-    batsmanLegR.rotation.z = THREE.MathUtils.degToRad(-2);
+    // Right leg (back foot)
+    batsmanLegR = new THREE.Group();
+    batsmanLegR.position.set(0.12, 0.45, 0.1);
+    const thighR = new THREE.Mesh(thighGeoL.clone(), thighMatL.clone());
+    batsmanLegR.add(thighR);
+    const padR = new THREE.Mesh(padGeo.clone(), padMat.clone());
+    padR.position.set(0, -0.2, 0.01);
+    batsmanLegR.add(padR);
+    const padRidgeR = new THREE.Mesh(padRidgeGeo.clone(), padRidgeMat.clone());
+    padRidgeR.position.set(0, -0.2, 0.04);
+    batsmanLegR.add(padRidgeR);
+    batsmanLegR.rotation.x = THREE.MathUtils.degToRad(-10);
     batsmanGroup.add(batsmanLegR);
 
-    // Torso (jersey - box shape)
-    const bodyGeo = new THREE.BoxGeometry(0.4, 0.5, 0.2);
-    const bodyMat = new THREE.MeshLambertMaterial({ color: teamColor });
-    batsmanBody = new THREE.Mesh(bodyGeo, bodyMat);
-    batsmanBody.position.y = 0.8;
+    // --- Torso (LatheGeometry for organic shape) ---
+    const torsoPoints = [
+      new THREE.Vector2(0, 0),
+      new THREE.Vector2(0.18, 0),
+      new THREE.Vector2(0.2, 0.15),
+      new THREE.Vector2(0.22, 0.3),
+      new THREE.Vector2(0.2, 0.4),
+      new THREE.Vector2(0.15, 0.45),
+      new THREE.Vector2(0, 0.45),
+    ];
+    const torsoGeo = new THREE.LatheGeometry(torsoPoints, 12);
+    const bodyMat = new THREE.MeshLambertMaterial({ color: teamColor, ...flat });
+    batsmanBody = new THREE.Mesh(torsoGeo, bodyMat);
+    batsmanBody.position.y = 0.6;
     batsmanBody.rotation.x = THREE.MathUtils.degToRad(10);
     batsmanGroup.add(batsmanBody);
 
     // Team stripe across chest
-    const stripeGeo = new THREE.BoxGeometry(0.41, 0.08, 0.21);
+    const stripeGeo = new THREE.BoxGeometry(0.44, 0.06, 0.44);
     const stripeMat = new THREE.MeshLambertMaterial({ color: 0xFFD700 });
     const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-    stripe.position.set(0, 0.85, 0);
+    stripe.position.set(0, 0.88, -0.02);
     stripe.rotation.x = THREE.MathUtils.degToRad(10);
     batsmanGroup.add(stripe);
 
-    // Arms (sleeves)
-    const armGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.4, 6);
-    const armMat = new THREE.MeshLambertMaterial({ color: teamColor });
-    const armL = new THREE.Mesh(armGeo, armMat);
-    armL.position.set(-0.26, 0.9, -0.05);
-    armL.rotation.z = THREE.MathUtils.degToRad(15);
-    armL.rotation.x = THREE.MathUtils.degToRad(20);
-    batsmanGroup.add(armL);
-    const armR = new THREE.Mesh(armGeo, armMat);
-    armR.position.set(0.26, 0.9, -0.05);
-    armR.rotation.z = THREE.MathUtils.degToRad(-15);
-    armR.rotation.x = THREE.MathUtils.degToRad(20);
-    batsmanGroup.add(armR);
+    // --- Left Arm (resting at side, slight bend) ---
+    const upperArmGeo = new THREE.CylinderGeometry(0.05, 0.04, 0.25, 8);
+    const sleeveMatL = new THREE.MeshLambertMaterial({ color: teamColor, ...flat });
+    const forearmGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.22, 8);
+    const forearmMat = new THREE.MeshLambertMaterial({ color: skinColor, ...flat });
+    const gloveGeo = new THREE.SphereGeometry(0.04, 8, 6);
+    const gloveMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
 
-    // Hands (gloves)
-    const handGeo = new THREE.SphereGeometry(0.05, 6, 4);
-    const handMat = new THREE.MeshLambertMaterial({ color: skinColor });
-    const handL = new THREE.Mesh(handGeo, handMat);
-    handL.position.set(-0.32, 0.7, -0.18);
-    batsmanGroup.add(handL);
-    const handR = new THREE.Mesh(handGeo, handMat);
-    handR.position.set(0.32, 0.7, -0.18);
-    batsmanGroup.add(handR);
+    const shoulderL = new THREE.Group();
+    shoulderL.position.set(-0.22, 0.98, -0.02);
+    shoulderL.rotation.z = THREE.MathUtils.degToRad(18);
+    shoulderL.rotation.x = THREE.MathUtils.degToRad(10);
+    const upperArmL = new THREE.Mesh(upperArmGeo, sleeveMatL);
+    upperArmL.position.y = -0.12;
+    shoulderL.add(upperArmL);
+    const elbowL = new THREE.Group();
+    elbowL.position.set(0, -0.25, 0);
+    elbowL.rotation.x = THREE.MathUtils.degToRad(-25);
+    const forearmL = new THREE.Mesh(forearmGeo, forearmMat);
+    forearmL.position.y = -0.11;
+    elbowL.add(forearmL);
+    const gloveL = new THREE.Mesh(gloveGeo, gloveMat);
+    gloveL.position.y = -0.22;
+    elbowL.add(gloveL);
+    shoulderL.add(elbowL);
+    batsmanGroup.add(shoulderL);
 
-    // Neck
-    const neckGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 6);
+    // --- Right Arm (bat arm, drawn back in ready position) ---
+    const sleeveMatR = new THREE.MeshLambertMaterial({ color: teamColor, ...flat });
+    const shoulderR = new THREE.Group();
+    shoulderR.position.set(0.22, 0.98, -0.02);
+    shoulderR.rotation.z = THREE.MathUtils.degToRad(-20);
+    shoulderR.rotation.x = THREE.MathUtils.degToRad(25);
+    const upperArmR = new THREE.Mesh(upperArmGeo.clone(), sleeveMatR);
+    upperArmR.position.y = -0.12;
+    shoulderR.add(upperArmR);
+    const elbowR = new THREE.Group();
+    elbowR.position.set(0, -0.25, 0);
+    elbowR.rotation.x = THREE.MathUtils.degToRad(-30);
+    const forearmR = new THREE.Mesh(forearmGeo.clone(), forearmMat.clone());
+    forearmR.position.y = -0.11;
+    elbowR.add(forearmR);
+    const gloveR = new THREE.Mesh(gloveGeo.clone(), gloveMat.clone());
+    gloveR.position.y = -0.22;
+    elbowR.add(gloveR);
+    shoulderR.add(elbowR);
+    batsmanGroup.add(shoulderR);
+
+    // --- Neck ---
+    const neckGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.08, 8);
     const neckMat = new THREE.MeshLambertMaterial({ color: skinColor });
     const neck = new THREE.Mesh(neckGeo, neckMat);
     neck.position.y = 1.1;
     batsmanGroup.add(neck);
 
-    // Helmet (slightly flattened sphere)
-    const helmGeo = new THREE.SphereGeometry(0.18, 12, 8);
-    const helmMat = new THREE.MeshLambertMaterial({ color: teamColor });
+    // --- Helmet ---
+    const helmGeo = new THREE.SphereGeometry(0.2, 12, 8);
+    const helmMat = new THREE.MeshLambertMaterial({ color: teamColor, ...flat });
     batsmanHelmet = new THREE.Mesh(helmGeo, helmMat);
     batsmanHelmet.position.y = 1.28;
-    batsmanHelmet.scale.y = 0.85;
+    batsmanHelmet.scale.set(1, 0.85, 1);
     batsmanGroup.add(batsmanHelmet);
 
-    // Visor (dark strip across front-bottom of helmet)
-    const visorGeo = new THREE.BoxGeometry(0.22, 0.06, 0.08);
-    const visorMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
+    // Visor
+    const visorGeo = new THREE.BoxGeometry(0.35, 0.04, 0.15);
+    const visorMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
     batsmanVisor = new THREE.Mesh(visorGeo, visorMat);
-    batsmanVisor.position.set(0, 1.22, -0.14);
+    batsmanVisor.position.set(0, 1.2, -0.16);
     batsmanGroup.add(batsmanVisor);
 
-    // Bat group (pivots at shoulder for swing animation)
+    // Face guard (3 vertical bars)
+    const guardBarGeo = new THREE.CylinderGeometry(0.006, 0.006, 0.12, 4);
+    const guardBarMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+    for (let i = -1; i <= 1; i++) {
+      const bar = new THREE.Mesh(guardBarGeo, guardBarMat);
+      bar.position.set(i * 0.05, 1.14, -0.2);
+      batsmanGroup.add(bar);
+    }
+
+    // --- Bat (ExtrudeGeometry for proper blade shape) ---
     batGroup = new THREE.Group();
     batGroup.position.set(0.3, 1.2, 0);
 
-    // Bat handle (cylinder on top)
-    const handleGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.2, 6);
-    const handleMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
+    // Bat handle (rubber grip)
+    const handleGeo = new THREE.CylinderGeometry(0.015, 0.018, 0.25, 8);
+    const handleMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
     batHandle = new THREE.Mesh(handleGeo, handleMat);
-    batHandle.position.y = -0.15;
+    batHandle.position.y = -0.12;
     batGroup.add(batHandle);
 
-    // Bat blade (Patch #19: applies selected bat skin)
-    const bladeGeo = new THREE.BoxGeometry(0.06, 0.55, 0.04);
-    const bladeMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(state.selectedBatSkin) });
+    // Bat blade (ExtrudeGeometry for proper cricket bat shape)
+    const batShape = new THREE.Shape();
+    batShape.moveTo(-0.04, 0);
+    batShape.lineTo(-0.06, 0.3);
+    batShape.lineTo(-0.06, 0.4);
+    batShape.lineTo(-0.02, 0.45);
+    batShape.lineTo(0.02, 0.45);
+    batShape.lineTo(0.06, 0.4);
+    batShape.lineTo(0.06, 0.3);
+    batShape.lineTo(0.04, 0);
+    batShape.closePath();
+    const batExtrudeSettings = { depth: 0.03, bevelEnabled: false };
+    const bladeGeo = new THREE.ExtrudeGeometry(batShape, batExtrudeSettings);
+    const bladeMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(state.selectedBatSkin), ...flat });
     batBlade = new THREE.Mesh(bladeGeo, bladeMat);
-    batBlade.position.y = -0.53;
+    batBlade.position.set(0, -0.7, -0.015);
+    batBlade.rotation.x = Math.PI;
     batGroup.add(batBlade);
 
-    // Blade highlight edge
-    const edgeGeo = new THREE.BoxGeometry(0.02, 0.55, 0.045);
-    const edgeMat = new THREE.MeshLambertMaterial({ color: 0xe8c888 });
-    batHighlight = new THREE.Mesh(edgeGeo, edgeMat);
-    batHighlight.position.set(-0.02, -0.53, 0);
+    // Blade highlight (lighter face strip)
+    const highlightShape = new THREE.Shape();
+    highlightShape.moveTo(-0.02, 0.05);
+    highlightShape.lineTo(-0.03, 0.3);
+    highlightShape.lineTo(-0.03, 0.38);
+    highlightShape.lineTo(0.03, 0.38);
+    highlightShape.lineTo(0.03, 0.3);
+    highlightShape.lineTo(0.02, 0.05);
+    highlightShape.closePath();
+    const highlightGeo = new THREE.ExtrudeGeometry(highlightShape, { depth: 0.005, bevelEnabled: false });
+    const highlightMat = new THREE.MeshLambertMaterial({ color: 0xe8c888 });
+    batHighlight = new THREE.Mesh(highlightGeo, highlightMat);
+    batHighlight.position.set(0, -0.7, -0.02);
+    batHighlight.rotation.x = Math.PI;
     batGroup.add(batHighlight);
 
     // Default bat angle (batting stance)
@@ -1414,73 +1511,143 @@ import * as THREE from 'three';
     bowlerGroup = new THREE.Group();
     bowlerGroup.position.set(0, 0, 20);
 
-    const skinColor = 0xdba67a;
+    const skinColor = 0xD2A87C;
     const oppColor = 0x666666;
+    const flat = { flatShading: true };
 
-    // Shoes
-    const shoeGeo = new THREE.BoxGeometry(0.08, 0.04, 0.12);
-    const shoeMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
+    // --- Shoes ---
+    const shoeGeo = new THREE.BoxGeometry(0.09, 0.04, 0.13);
+    const shoeMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0, ...flat });
+    const soleGeo = new THREE.BoxGeometry(0.09, 0.015, 0.13);
+    const soleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
     const shoeL = new THREE.Mesh(shoeGeo, shoeMat);
-    shoeL.position.set(-0.08, 0.02, 0.05);
+    shoeL.position.set(-0.1, 0.03, -0.28);
+    const soleL = new THREE.Mesh(soleGeo, soleMat);
+    soleL.position.y = -0.02;
+    shoeL.add(soleL);
     bowlerGroup.add(shoeL);
-    const shoeR = new THREE.Mesh(shoeGeo, shoeMat);
-    shoeR.position.set(0.08, 0.02, -0.05);
+    const shoeR = new THREE.Mesh(shoeGeo.clone(), shoeMat.clone());
+    shoeR.position.set(0.1, 0.03, 0.22);
+    const soleR = new THREE.Mesh(soleGeo.clone(), soleMat.clone());
+    soleR.position.y = -0.02;
+    shoeR.add(soleR);
     bowlerGroup.add(shoeR);
 
-    // Legs (running pose: one forward, one back)
-    const legGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.35, 6);
-    const legMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
-    bowlerLegL = new THREE.Mesh(legGeo, legMat);
-    bowlerLegL.position.set(-0.08, 0.2, 0.05);
-    bowlerLegL.rotation.x = THREE.MathUtils.degToRad(-15); // front leg
+    // --- Legs (running delivery stride) ---
+    const thighGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.28, 8);
+    const thighMat = new THREE.MeshLambertMaterial({ color: oppColor, ...flat });
+    const padGeo = new THREE.BoxGeometry(0.1, 0.26, 0.07);
+    const padMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f0, ...flat });
+
+    // Front leg (extended far forward)
+    bowlerLegL = new THREE.Group();
+    bowlerLegL.position.set(-0.1, 0.42, -0.15);
+    const bThighL = new THREE.Mesh(thighGeo, thighMat);
+    bowlerLegL.add(bThighL);
+    const bPadL = new THREE.Mesh(padGeo, padMat);
+    bPadL.position.set(0, -0.18, 0.01);
+    bowlerLegL.add(bPadL);
+    bowlerLegL.rotation.x = THREE.MathUtils.degToRad(25);
     bowlerGroup.add(bowlerLegL);
 
-    bowlerLegR = new THREE.Mesh(legGeo, legMat);
-    bowlerLegR.position.set(0.08, 0.2, -0.05);
-    bowlerLegR.rotation.x = THREE.MathUtils.degToRad(15); // back leg
+    // Back leg (extended far back, pushing off)
+    bowlerLegR = new THREE.Group();
+    bowlerLegR.position.set(0.1, 0.42, 0.12);
+    const bThighR = new THREE.Mesh(thighGeo.clone(), thighMat.clone());
+    bowlerLegR.add(bThighR);
+    const bPadR = new THREE.Mesh(padGeo.clone(), padMat.clone());
+    bPadR.position.set(0, -0.18, 0.01);
+    bowlerLegR.add(bPadR);
+    bowlerLegR.rotation.x = THREE.MathUtils.degToRad(-20);
     bowlerGroup.add(bowlerLegR);
 
-    // Torso (jersey)
-    const bodyGeo = new THREE.BoxGeometry(0.3, 0.4, 0.18);
-    const bodyMat = new THREE.MeshLambertMaterial({ color: oppColor });
-    bowlerBody = new THREE.Mesh(bodyGeo, bodyMat);
-    bowlerBody.position.y = 0.6;
+    // --- Torso (LatheGeometry, leaning forward more for delivery stride) ---
+    const torsoPoints = [
+      new THREE.Vector2(0, 0),
+      new THREE.Vector2(0.16, 0),
+      new THREE.Vector2(0.18, 0.12),
+      new THREE.Vector2(0.2, 0.28),
+      new THREE.Vector2(0.18, 0.38),
+      new THREE.Vector2(0.13, 0.42),
+      new THREE.Vector2(0, 0.42),
+    ];
+    const torsoGeo = new THREE.LatheGeometry(torsoPoints, 12);
+    const bodyMat = new THREE.MeshLambertMaterial({ color: oppColor, ...flat });
+    bowlerBody = new THREE.Mesh(torsoGeo, bodyMat);
+    bowlerBody.position.y = 0.55;
+    bowlerBody.rotation.x = THREE.MathUtils.degToRad(15);
     bowlerGroup.add(bowlerBody);
 
-    // Team stripe on bowler torso
-    const stripeGeo = new THREE.BoxGeometry(0.31, 0.06, 0.19);
+    // Team stripe
+    const stripeGeo = new THREE.BoxGeometry(0.4, 0.05, 0.4);
     const stripeMat = new THREE.MeshLambertMaterial({ color: 0xFFD700 });
     const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-    stripe.position.y = 0.65;
+    stripe.position.set(0, 0.82, -0.04);
+    stripe.rotation.x = THREE.MathUtils.degToRad(15);
     bowlerGroup.add(stripe);
 
-    // Non-bowling arm (left, at side)
-    const armGeoL = new THREE.CylinderGeometry(0.04, 0.03, 0.35, 6);
-    const armMatL = new THREE.MeshLambertMaterial({ color: oppColor });
-    const armL = new THREE.Mesh(armGeoL, armMatL);
-    armL.position.set(-0.2, 0.55, 0.05);
-    armL.rotation.z = THREE.MathUtils.degToRad(20);
-    armL.rotation.x = THREE.MathUtils.degToRad(-20);
-    bowlerGroup.add(armL);
+    // --- Non-bowling arm (left, extended forward for balance) ---
+    const upperArmGeo = new THREE.CylinderGeometry(0.045, 0.035, 0.23, 8);
+    const forearmGeo = new THREE.CylinderGeometry(0.035, 0.03, 0.2, 8);
+    const forearmMat = new THREE.MeshLambertMaterial({ color: skinColor, ...flat });
 
-    // Neck
-    const neckGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.08, 6);
+    const shoulderL = new THREE.Group();
+    shoulderL.position.set(-0.2, 0.92, -0.04);
+    shoulderL.rotation.z = THREE.MathUtils.degToRad(25);
+    shoulderL.rotation.x = THREE.MathUtils.degToRad(-40);
+    const bUpperArmL = new THREE.Mesh(upperArmGeo, new THREE.MeshLambertMaterial({ color: oppColor, ...flat }));
+    bUpperArmL.position.y = -0.11;
+    shoulderL.add(bUpperArmL);
+    const bElbowL = new THREE.Group();
+    bElbowL.position.set(0, -0.23, 0);
+    bElbowL.rotation.x = THREE.MathUtils.degToRad(-15);
+    const bForearmL = new THREE.Mesh(forearmGeo, forearmMat);
+    bForearmL.position.y = -0.1;
+    bElbowL.add(bForearmL);
+    const bHandL = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshLambertMaterial({ color: skinColor }));
+    bHandL.position.y = -0.2;
+    bElbowL.add(bHandL);
+    shoulderL.add(bElbowL);
+    bowlerGroup.add(shoulderL);
+
+    // --- Neck ---
+    const neckGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.07, 8);
     const neckMat = new THREE.MeshLambertMaterial({ color: skinColor });
     const neck = new THREE.Mesh(neckGeo, neckMat);
-    neck.position.y = 0.84;
+    neck.position.y = 1.01;
     bowlerGroup.add(neck);
 
-    // Head
-    const headGeo = new THREE.SphereGeometry(0.12, 10, 8);
-    const headMat = new THREE.MeshLambertMaterial({ color: skinColor });
-    bowlerHead = new THREE.Mesh(headGeo, headMat);
-    bowlerHead.position.y = 1.0;
+    // --- Head + Helmet (opponent team color) ---
+    const helmGeo = new THREE.SphereGeometry(0.18, 12, 8);
+    const helmMat = new THREE.MeshLambertMaterial({ color: oppColor, ...flat });
+    bowlerHead = new THREE.Mesh(helmGeo, helmMat);
+    bowlerHead.position.y = 1.16;
+    bowlerHead.scale.set(1, 0.85, 1);
     bowlerGroup.add(bowlerHead);
 
-    // Bowling arm (right, raised for delivery)
-    const armGeo = new THREE.CylinderGeometry(0.04, 0.03, 0.5, 6);
-    const armMat = new THREE.MeshLambertMaterial({ color: skinColor });
-    bowlerArm = new THREE.Mesh(armGeo, armMat);
+    // Bowler visor
+    const bVisorGeo = new THREE.BoxGeometry(0.3, 0.035, 0.13);
+    const bVisorMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    const bVisor = new THREE.Mesh(bVisorGeo, bVisorMat);
+    bVisor.position.set(0, 1.09, -0.14);
+    bowlerGroup.add(bVisor);
+
+    // Face guard bars
+    const guardGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.1, 4);
+    const guardMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+    for (let i = -1; i <= 1; i++) {
+      const bar = new THREE.Mesh(guardGeo, guardMat);
+      bar.position.set(i * 0.045, 1.04, -0.18);
+      bowlerGroup.add(bar);
+    }
+
+    // Slight upward head tilt
+    bowlerHead.rotation.x = THREE.MathUtils.degToRad(-8);
+
+    // --- Bowling arm (right, raised high for delivery) ---
+    const bowlArmGeo = new THREE.CylinderGeometry(0.04, 0.03, 0.5, 8);
+    const bowlArmMat = new THREE.MeshLambertMaterial({ color: skinColor, ...flat });
+    bowlerArm = new THREE.Mesh(bowlArmGeo, bowlArmMat);
     bowlerArm.position.set(0.2, 1.05, 0);
     bowlerArm.rotation.z = THREE.MathUtils.degToRad(-30);
     bowlerArm.visible = false;
@@ -1488,7 +1655,7 @@ import * as THREE from 'three';
 
     // Ball in hand
     const bhGeo = new THREE.SphereGeometry(0.08, 8, 6);
-    const bhMat = new THREE.MeshPhongMaterial({ color: 0xcc0000 });
+    const bhMat = new THREE.MeshLambertMaterial({ color: 0xcc0000 });
     bowlerBallInHand = new THREE.Mesh(bhGeo, bhMat);
     bowlerBallInHand.visible = false;
     bowlerGroup.add(bowlerBallInHand);
@@ -3091,45 +3258,184 @@ import * as THREE from 'three';
 
     const oppTeam = state.opponentTeam ? TEAMS[state.opponentTeam] : { primary: '#666666' };
     const oppColor = new THREE.Color(oppTeam.primary);
+    const skinColor = 0xD2A87C;
+    const flat = { flatShading: true };
 
-    // Body
-    const bodyGeo = new THREE.CapsuleGeometry(0.25, 0.6, 4, 8);
-    const bodyMat = new THREE.MeshLambertMaterial({ color: oppColor });
-    aiBatsmanBody = new THREE.Mesh(bodyGeo, bodyMat);
-    aiBatsmanBody.position.y = 1.0;
+    // --- Shoes ---
+    const aiShoeGeo = new THREE.BoxGeometry(0.1, 0.04, 0.14);
+    const aiShoeMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0, ...flat });
+    const aiSoleGeo = new THREE.BoxGeometry(0.1, 0.015, 0.14);
+    const aiSoleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+    const aiShoeL = new THREE.Mesh(aiShoeGeo, aiShoeMat);
+    aiShoeL.position.set(-0.12, 0.03, -0.13);
+    aiShoeL.add(new THREE.Mesh(aiSoleGeo, aiSoleMat));
+    aiShoeL.children[0].position.y = -0.02;
+    aiBatsmanGroup.add(aiShoeL);
+    const aiShoeR = new THREE.Mesh(aiShoeGeo.clone(), aiShoeMat.clone());
+    aiShoeR.position.set(0.12, 0.03, 0.08);
+    aiShoeR.add(new THREE.Mesh(aiSoleGeo.clone(), aiSoleMat.clone()));
+    aiShoeR.children[0].position.y = -0.02;
+    aiBatsmanGroup.add(aiShoeR);
+
+    // --- Legs with Pads ---
+    const aiThighGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.3, 8);
+    const aiThighMat = new THREE.MeshLambertMaterial({ color: oppColor, ...flat });
+    const aiPadGeo = new THREE.BoxGeometry(0.12, 0.3, 0.08);
+    const aiPadMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f0, ...flat });
+    const aiPadRidgeGeo = new THREE.BoxGeometry(0.04, 0.28, 0.02);
+    const aiPadRidgeMat = new THREE.MeshLambertMaterial({ color: 0xeeeee0 });
+
+    const aiLegL = new THREE.Group();
+    aiLegL.position.set(-0.12, 0.45, -0.15);
+    aiLegL.add(new THREE.Mesh(aiThighGeo, aiThighMat));
+    const aiPadL = new THREE.Mesh(aiPadGeo, aiPadMat);
+    aiPadL.position.set(0, -0.2, 0.01);
+    aiLegL.add(aiPadL);
+    const aiPadRL = new THREE.Mesh(aiPadRidgeGeo, aiPadRidgeMat);
+    aiPadRL.position.set(0, -0.2, 0.04);
+    aiLegL.add(aiPadRL);
+    aiLegL.rotation.x = THREE.MathUtils.degToRad(12);
+    aiBatsmanGroup.add(aiLegL);
+
+    const aiLegR = new THREE.Group();
+    aiLegR.position.set(0.12, 0.45, 0.1);
+    aiLegR.add(new THREE.Mesh(aiThighGeo.clone(), aiThighMat.clone()));
+    const aiPadR = new THREE.Mesh(aiPadGeo.clone(), aiPadMat.clone());
+    aiPadR.position.set(0, -0.2, 0.01);
+    aiLegR.add(aiPadR);
+    const aiPadRR = new THREE.Mesh(aiPadRidgeGeo.clone(), aiPadRidgeMat.clone());
+    aiPadRR.position.set(0, -0.2, 0.04);
+    aiLegR.add(aiPadRR);
+    aiLegR.rotation.x = THREE.MathUtils.degToRad(-10);
+    aiBatsmanGroup.add(aiLegR);
+
+    // --- Torso (LatheGeometry) ---
+    const aiTorsoPoints = [
+      new THREE.Vector2(0, 0),
+      new THREE.Vector2(0.18, 0),
+      new THREE.Vector2(0.2, 0.15),
+      new THREE.Vector2(0.22, 0.3),
+      new THREE.Vector2(0.2, 0.4),
+      new THREE.Vector2(0.15, 0.45),
+      new THREE.Vector2(0, 0.45),
+    ];
+    const aiTorsoGeo = new THREE.LatheGeometry(aiTorsoPoints, 12);
+    const aiBodyMat = new THREE.MeshLambertMaterial({ color: oppColor, ...flat });
+    aiBatsmanBody = new THREE.Mesh(aiTorsoGeo, aiBodyMat);
+    aiBatsmanBody.position.y = 0.6;
+    aiBatsmanBody.rotation.x = THREE.MathUtils.degToRad(10);
     aiBatsmanGroup.add(aiBatsmanBody);
 
-    // Helmet
-    const helmGeo = new THREE.SphereGeometry(0.18, 12, 8);
-    const helmMat = new THREE.MeshLambertMaterial({ color: oppColor });
-    const aiHelmet = new THREE.Mesh(helmGeo, helmMat);
-    aiHelmet.position.y = 1.55;
+    // Stripe
+    const aiStripeGeo = new THREE.BoxGeometry(0.44, 0.06, 0.44);
+    const aiStripeMat = new THREE.MeshLambertMaterial({ color: 0xFFD700 });
+    const aiStripe = new THREE.Mesh(aiStripeGeo, aiStripeMat);
+    aiStripe.position.set(0, 0.88, -0.02);
+    aiStripe.rotation.x = THREE.MathUtils.degToRad(10);
+    aiBatsmanGroup.add(aiStripe);
+
+    // --- Arms ---
+    const aiUpperArmGeo = new THREE.CylinderGeometry(0.05, 0.04, 0.25, 8);
+    const aiForearmGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.22, 8);
+    const aiForearmMat = new THREE.MeshLambertMaterial({ color: skinColor, ...flat });
+    const aiGloveGeo = new THREE.SphereGeometry(0.04, 8, 6);
+    const aiGloveMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
+
+    // Left arm
+    const aiShoulderL = new THREE.Group();
+    aiShoulderL.position.set(-0.22, 0.98, -0.02);
+    aiShoulderL.rotation.z = THREE.MathUtils.degToRad(18);
+    aiShoulderL.rotation.x = THREE.MathUtils.degToRad(10);
+    const aiUpArmL = new THREE.Mesh(aiUpperArmGeo, new THREE.MeshLambertMaterial({ color: oppColor, ...flat }));
+    aiUpArmL.position.y = -0.12;
+    aiShoulderL.add(aiUpArmL);
+    const aiElbowL = new THREE.Group();
+    aiElbowL.position.set(0, -0.25, 0);
+    aiElbowL.rotation.x = THREE.MathUtils.degToRad(-25);
+    aiElbowL.add(new THREE.Mesh(aiForearmGeo, aiForearmMat));
+    aiElbowL.children[0].position.y = -0.11;
+    aiElbowL.add(new THREE.Mesh(aiGloveGeo, aiGloveMat));
+    aiElbowL.children[1].position.y = -0.22;
+    aiShoulderL.add(aiElbowL);
+    aiBatsmanGroup.add(aiShoulderL);
+
+    // Right arm
+    const aiShoulderR = new THREE.Group();
+    aiShoulderR.position.set(0.22, 0.98, -0.02);
+    aiShoulderR.rotation.z = THREE.MathUtils.degToRad(-20);
+    aiShoulderR.rotation.x = THREE.MathUtils.degToRad(25);
+    const aiUpArmR = new THREE.Mesh(aiUpperArmGeo.clone(), new THREE.MeshLambertMaterial({ color: oppColor, ...flat }));
+    aiUpArmR.position.y = -0.12;
+    aiShoulderR.add(aiUpArmR);
+    const aiElbowR = new THREE.Group();
+    aiElbowR.position.set(0, -0.25, 0);
+    aiElbowR.rotation.x = THREE.MathUtils.degToRad(-30);
+    aiElbowR.add(new THREE.Mesh(aiForearmGeo.clone(), aiForearmMat.clone()));
+    aiElbowR.children[0].position.y = -0.11;
+    aiElbowR.add(new THREE.Mesh(aiGloveGeo.clone(), aiGloveMat.clone()));
+    aiElbowR.children[1].position.y = -0.22;
+    aiShoulderR.add(aiElbowR);
+    aiBatsmanGroup.add(aiShoulderR);
+
+    // --- Neck ---
+    const aiNeckGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.08, 8);
+    const aiNeckMat = new THREE.MeshLambertMaterial({ color: skinColor });
+    const aiNeck = new THREE.Mesh(aiNeckGeo, aiNeckMat);
+    aiNeck.position.y = 1.1;
+    aiBatsmanGroup.add(aiNeck);
+
+    // --- Helmet ---
+    const aiHelmGeo = new THREE.SphereGeometry(0.2, 12, 8);
+    const aiHelmMat = new THREE.MeshLambertMaterial({ color: oppColor, ...flat });
+    const aiHelmet = new THREE.Mesh(aiHelmGeo, aiHelmMat);
+    aiHelmet.position.y = 1.28;
+    aiHelmet.scale.set(1, 0.85, 1);
     aiBatsmanGroup.add(aiHelmet);
     aiBatsmanHelmet = aiHelmet;
 
-    // Legs
-    const legGeo = new THREE.CylinderGeometry(0.12, 0.1, 0.6, 8);
-    const legMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
-    const legL = new THREE.Mesh(legGeo, legMat);
-    legL.position.set(-0.15, 0.3, 0);
-    aiBatsmanGroup.add(legL);
-    const legR = new THREE.Mesh(legGeo, legMat);
-    legR.position.set(0.15, 0.3, 0);
-    aiBatsmanGroup.add(legR);
+    // Visor
+    const aiVisorGeo = new THREE.BoxGeometry(0.35, 0.04, 0.15);
+    const aiVisorMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    const aiVisor = new THREE.Mesh(aiVisorGeo, aiVisorMat);
+    aiVisor.position.set(0, 1.2, -0.16);
+    aiBatsmanGroup.add(aiVisor);
 
-    // Bat
+    // Face guard
+    const aiGuardGeo = new THREE.CylinderGeometry(0.006, 0.006, 0.12, 4);
+    const aiGuardMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+    for (let i = -1; i <= 1; i++) {
+      const bar = new THREE.Mesh(aiGuardGeo, aiGuardMat);
+      bar.position.set(i * 0.05, 1.14, -0.2);
+      aiBatsmanGroup.add(bar);
+    }
+
+    // --- Bat (ExtrudeGeometry) ---
     aiBatGroup = new THREE.Group();
     aiBatGroup.position.set(0.3, 1.2, 0);
-    const handleGeo = new THREE.BoxGeometry(0.05, 0.35, 0.05);
-    const handleMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
-    const handle = new THREE.Mesh(handleGeo, handleMat);
-    handle.position.y = -0.22;
-    aiBatGroup.add(handle);
-    const bladeGeo = new THREE.BoxGeometry(0.12, 0.5, 0.04);
-    const bladeMat = new THREE.MeshLambertMaterial({ color: 0xd4a574 });
-    const blade = new THREE.Mesh(bladeGeo, bladeMat);
-    blade.position.y = -0.63;
-    aiBatGroup.add(blade);
+
+    const aiHandleGeo = new THREE.CylinderGeometry(0.015, 0.018, 0.25, 8);
+    const aiHandleMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
+    const aiHandle = new THREE.Mesh(aiHandleGeo, aiHandleMat);
+    aiHandle.position.y = -0.12;
+    aiBatGroup.add(aiHandle);
+
+    const aiBatShape = new THREE.Shape();
+    aiBatShape.moveTo(-0.04, 0);
+    aiBatShape.lineTo(-0.06, 0.3);
+    aiBatShape.lineTo(-0.06, 0.4);
+    aiBatShape.lineTo(-0.02, 0.45);
+    aiBatShape.lineTo(0.02, 0.45);
+    aiBatShape.lineTo(0.06, 0.4);
+    aiBatShape.lineTo(0.06, 0.3);
+    aiBatShape.lineTo(0.04, 0);
+    aiBatShape.closePath();
+    const aiBladeGeo = new THREE.ExtrudeGeometry(aiBatShape, { depth: 0.03, bevelEnabled: false });
+    const aiBladeMat = new THREE.MeshLambertMaterial({ color: 0xD4A87C, ...flat });
+    const aiBlade = new THREE.Mesh(aiBladeGeo, aiBladeMat);
+    aiBlade.position.set(0, -0.7, -0.015);
+    aiBlade.rotation.x = Math.PI;
+    aiBatGroup.add(aiBlade);
+
     aiBatGroup.rotation.z = THREE.MathUtils.degToRad(-30);
     aiBatsmanGroup.add(aiBatGroup);
 
