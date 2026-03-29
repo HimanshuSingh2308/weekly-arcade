@@ -2466,18 +2466,59 @@
       scale: 0.9;
     }
 
-    /* Art wall */
+    /* Coffee brewing art (framed wall picture) */
     .decor-art { z-index: 5; }
     .art-frame {
-      width: 20px; height: 16px; border: 2px solid #8B6914; position: relative; background: #FFF;
-    }
-    .art-frame::before {
-      content: ''; position: absolute; inset: 2px;
-      background: linear-gradient(135deg, #E74C3C, #3498DB, #F1C40F, #2ECC71);
+      width: 24px; height: 20px; border: 2px solid #8B6914; position: relative;
+      background: #FDF6EC; overflow: hidden; border-radius: 1px;
     }
     .art-frame::after {
       content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
       width: 6px; height: 2px; background: #8B6914; border-radius: 1px;
+    }
+    .brew-scene {
+      position: absolute; inset: 1px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    }
+    .brew-pourover {
+      width: 8px; height: 5px; background: #D4A87C;
+      border-radius: 0 0 4px 4px; position: absolute; top: 2px;
+      border-bottom: 1px solid #B8956A;
+    }
+    .brew-pourover::before {
+      content: ''; position: absolute; top: -2px; left: -1px; right: -1px; height: 2px;
+      background: #8B6F47; border-radius: 1px;
+    }
+    .brew-stream {
+      width: 1px; height: 5px; background: linear-gradient(180deg, #8B6F47, #C4955A);
+      position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+      animation: brewDrip 1.5s ease-in-out infinite;
+    }
+    .brew-mug {
+      width: 9px; height: 6px; background: #FFF;
+      border: 1px solid #B87333; border-top: none;
+      border-radius: 0 0 3px 3px; position: absolute; bottom: 2px;
+    }
+    .brew-mug::before {
+      content: ''; position: absolute; top: 0; left: -3px; width: 2px; height: 4px;
+      border: 1px solid #B87333; border-right: none; border-radius: 3px 0 0 3px;
+    }
+    .brew-mug::after {
+      content: ''; position: absolute; top: 1px; left: 1px; right: 1px; height: 2px;
+      background: #6F4E37; border-radius: 0 0 2px 2px;
+    }
+    .brew-steam {
+      position: absolute; width: 2px; height: 3px; background: rgba(255,255,255,0.6);
+      border-radius: 50%; bottom: 8px; animation: brewSteam 2s ease-out infinite;
+    }
+    .brew-steam.s1 { left: 8px; animation-delay: 0s; }
+    .brew-steam.s2 { left: 12px; animation-delay: 0.8s; }
+    @keyframes brewDrip {
+      0%, 100% { opacity: 0.4; height: 4px; }
+      50% { opacity: 1; height: 6px; }
+    }
+    @keyframes brewSteam {
+      0% { transform: translateY(0) scale(1); opacity: 0.5; }
+      100% { transform: translateY(-5px) scale(1.5); opacity: 0; }
     }
 
     /* Espresso machine */
