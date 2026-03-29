@@ -1,40 +1,156 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0a0520"/>
-      <stop offset="100%" stop-color="#1a0a3e"/>
+    <linearGradient id="cbSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050d1a"/>
+      <stop offset="60%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#1a3a20"/>
     </linearGradient>
-    <linearGradient id="pitch" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#c8a96e"/>
-      <stop offset="100%" stop-color="#a08050"/>
+    <linearGradient id="cbPitch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a08050"/>
+      <stop offset="100%" stop-color="#c8a96e"/>
+    </linearGradient>
+    <linearGradient id="cbGround" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e6b14"/>
+      <stop offset="100%" stop-color="#2d8a1e"/>
+    </linearGradient>
+    <radialGradient id="cbFlood" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#fff5e0" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#fff5e0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cbGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#FFA500"/>
     </linearGradient>
   </defs>
-  <!-- Sky -->
-  <rect width="200" height="200" fill="url(#sky)" rx="16"/>
-  <!-- Ground -->
-  <ellipse cx="100" cy="160" rx="90" ry="35" fill="#2d6a1e"/>
-  <!-- Pitch -->
-  <rect x="85" y="80" width="30" height="75" fill="url(#pitch)" rx="2"/>
-  <!-- Stumps -->
-  <line x1="96" y1="82" x2="96" y2="72" stroke="#D4A87C" stroke-width="1.5"/>
-  <line x1="100" y1="82" x2="100" y2="72" stroke="#D4A87C" stroke-width="1.5"/>
-  <line x1="104" y1="82" x2="104" y2="72" stroke="#D4A87C" stroke-width="1.5"/>
-  <!-- Batsman (simplified) -->
-  <circle cx="100" cy="130" r="6" fill="#004BA0"/>
-  <rect x="96" y="136" width="8" height="14" fill="#004BA0" rx="2"/>
-  <line x1="107" y1="134" x2="114" y2="120" stroke="#D4A87C" stroke-width="2.5" stroke-linecap="round"/>
-  <!-- Ball -->
-  <circle cx="100" cy="100" r="4" fill="#cc0000"/>
-  <line x1="97" y1="100" x2="103" y2="100" stroke="white" stroke-width="0.8"/>
+
+  <!-- Night sky -->
+  <rect width="400" height="250" fill="url(#cbSky)" rx="12"/>
+
   <!-- Stars -->
   <circle cx="30" cy="20" r="1" fill="white" opacity="0.7"/>
-  <circle cx="60" cy="15" r="0.8" fill="white" opacity="0.5"/>
-  <circle cx="150" cy="25" r="1" fill="white" opacity="0.6"/>
-  <circle cx="170" cy="10" r="0.8" fill="white" opacity="0.4"/>
-  <circle cx="120" cy="18" r="1" fill="white" opacity="0.5"/>
+  <circle cx="80" cy="12" r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="140" cy="28" r="1" fill="white" opacity="0.6"/>
+  <circle cx="200" cy="8" r="0.8" fill="white" opacity="0.4"/>
+  <circle cx="260" cy="22" r="1" fill="white" opacity="0.7"/>
+  <circle cx="320" cy="15" r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="370" cy="30" r="1" fill="white" opacity="0.6"/>
+  <circle cx="55" cy="45" r="0.6" fill="white" opacity="0.3"/>
+  <circle cx="170" cy="40" r="0.7" fill="white" opacity="0.4"/>
+  <circle cx="290" cy="35" r="0.6" fill="white" opacity="0.3"/>
+  <circle cx="350" cy="48" r="0.7" fill="white" opacity="0.5"/>
+
+  <!-- Moon -->
+  <circle cx="340" cy="35" r="12" fill="#F5F0D0" opacity="0.8"/>
+  <circle cx="345" cy="32" r="10" fill="#050d1a"/>
+
+  <!-- Stadium stands (arc) -->
+  <path d="M0 100 Q200 60 400 100 L400 130 Q200 90 0 130 Z" fill="#2a2a4e"/>
+  <path d="M0 90 Q200 50 400 90 L400 100 Q200 60 0 100 Z" fill="#3a3a5e"/>
+
+  <!-- Crowd dots -->
+  <circle cx="40" cy="105" r="2" fill="#ff4444" opacity="0.7"/>
+  <circle cx="55" cy="102" r="2" fill="#ffdd44" opacity="0.7"/>
+  <circle cx="70" cy="108" r="2" fill="#44aaff" opacity="0.7"/>
+  <circle cx="90" cy="100" r="2" fill="#ff44aa" opacity="0.7"/>
+  <circle cx="110" cy="106" r="2" fill="#44ff88" opacity="0.7"/>
+  <circle cx="130" cy="98" r="2" fill="#ffaa44" opacity="0.7"/>
+  <circle cx="150" cy="104" r="2" fill="#ff4444" opacity="0.7"/>
+  <circle cx="170" cy="96" r="2" fill="#44ddff" opacity="0.7"/>
+  <circle cx="190" cy="102" r="2" fill="#ffdd44" opacity="0.7"/>
+  <circle cx="210" cy="95" r="2" fill="#ff88ff" opacity="0.7"/>
+  <circle cx="230" cy="100" r="2" fill="#44ff44" opacity="0.7"/>
+  <circle cx="250" cy="97" r="2" fill="#ff4444" opacity="0.7"/>
+  <circle cx="270" cy="103" r="2" fill="#ffdd44" opacity="0.7"/>
+  <circle cx="290" cy="98" r="2" fill="#4488ff" opacity="0.7"/>
+  <circle cx="310" cy="105" r="2" fill="#ff44aa" opacity="0.7"/>
+  <circle cx="330" cy="100" r="2" fill="#44ff88" opacity="0.7"/>
+  <circle cx="350" cy="107" r="2" fill="#ffaa44" opacity="0.7"/>
+  <circle cx="370" cy="102" r="2" fill="#ff4444" opacity="0.7"/>
+
+  <!-- Floodlight towers -->
+  <rect x="15" y="55" width="3" height="50" fill="#444"/>
+  <circle cx="16" cy="55" r="5" fill="url(#cbFlood)"/>
+  <rect x="382" y="55" width="3" height="50" fill="#444"/>
+  <circle cx="384" cy="55" r="5" fill="url(#cbFlood)"/>
+
+  <!-- Ground -->
+  <ellipse cx="200" cy="200" rx="200" ry="55" fill="url(#cbGround)"/>
+
+  <!-- Boundary rope -->
+  <ellipse cx="200" cy="195" rx="175" ry="45" fill="none" stroke="white" stroke-width="1" stroke-dasharray="6 4" opacity="0.3"/>
+
+  <!-- Ad boards -->
+  <rect x="30" y="168" width="35" height="8" rx="1" fill="#0066FF" opacity="0.7"/>
+  <rect x="80" y="163" width="35" height="8" rx="1" fill="#FF0000" opacity="0.7"/>
+  <rect x="285" y="163" width="35" height="8" rx="1" fill="#FFD700" opacity="0.7"/>
+  <rect x="335" y="168" width="35" height="8" rx="1" fill="#00AA00" opacity="0.7"/>
+
+  <!-- Pitch (perspective trapezoid) -->
+  <polygon points="185,110 215,110 225,210 175,210" fill="url(#cbPitch)"/>
+
+  <!-- Crease lines -->
+  <line x1="178" y1="195" x2="222" y2="195" stroke="white" stroke-width="1.5" opacity="0.8"/>
+  <line x1="192" y1="115" x2="208" y2="115" stroke="white" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- Stumps (batsman end) -->
+  <line x1="196" y1="195" x2="196" y2="185" stroke="#D4A87C" stroke-width="1.5"/>
+  <line x1="200" y1="195" x2="200" y2="185" stroke="#D4A87C" stroke-width="1.5"/>
+  <line x1="204" y1="195" x2="204" y2="185" stroke="#D4A87C" stroke-width="1.5"/>
+  <line x1="195" y1="185" x2="200" y2="184.5" stroke="#f0d8a0" stroke-width="1"/>
+  <line x1="200" y1="184.5" x2="205" y2="185" stroke="#f0d8a0" stroke-width="1"/>
+
+  <!-- Stumps (bowler end) -->
+  <line x1="198" y1="115" x2="198" y2="112" stroke="#D4A87C" stroke-width="0.8"/>
+  <line x1="200" y1="115" x2="200" y2="112" stroke="#D4A87C" stroke-width="0.8"/>
+  <line x1="202" y1="115" x2="202" y2="112" stroke="#D4A87C" stroke-width="0.8"/>
+
+  <!-- Bowler (small, far end) -->
+  <circle cx="200" cy="118" r="3" fill="#CC0000"/>
+  <rect x="197" y="121" width="6" height="8" rx="1" fill="#CC0000"/>
+
+  <!-- Batsman (larger, near end) -->
+  <circle cx="200" cy="195" r="7" fill="#004BA0"/>
+  <rect x="194" y="202" width="12" height="16" rx="2" fill="#004BA0"/>
+  <!-- Helmet visor -->
+  <rect x="194" y="198" width="12" height="2" rx="1" fill="#333"/>
+  <!-- Pads -->
+  <rect x="195" y="218" width="4" height="10" rx="1" fill="white"/>
+  <rect x="201" y="218" width="4" height="10" rx="1" fill="white"/>
+  <!-- Bat -->
+  <line x1="210" y1="200" x2="220" y2="185" stroke="#D4A87C" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Ball (in flight) -->
+  <circle cx="200" cy="155" r="5" fill="#cc0000"/>
+  <line x1="196" y1="155" x2="204" y2="155" stroke="white" stroke-width="0.8"/>
+  <!-- Ball shadow -->
+  <ellipse cx="200" cy="165" rx="4" ry="1.5" fill="black" opacity="0.2"/>
+
+  <!-- Ball trail -->
+  <circle cx="200" cy="140" r="2.5" fill="#cc0000" opacity="0.3"/>
+  <circle cx="200" cy="130" r="2" fill="#cc0000" opacity="0.2"/>
+  <circle cx="200" cy="122" r="1.5" fill="#cc0000" opacity="0.1"/>
+
+  <!-- Fielders -->
+  <circle cx="140" cy="170" r="3" fill="#CC0000" opacity="0.5"/>
+  <circle cx="260" cy="170" r="3" fill="#CC0000" opacity="0.5"/>
+  <circle cx="120" cy="190" r="3" fill="#CC0000" opacity="0.4"/>
+  <circle cx="280" cy="190" r="3" fill="#CC0000" opacity="0.4"/>
+
+  <!-- Sweet spot glow -->
+  <ellipse cx="200" cy="193" rx="15" ry="4" fill="none" stroke="#FFD700" stroke-width="1" opacity="0.4"/>
+
+  <!-- HUD overlay -->
+  <rect x="10" y="232" width="100" height="14" rx="4" fill="rgba(0,0,0,0.6)"/>
+  <text x="60" y="242" text-anchor="middle" fill="#FFD700" font-family="system-ui" font-weight="800" font-size="9">RUNS: 47/1</text>
+
+  <rect x="290" y="232" width="100" height="14" rx="4" fill="rgba(0,0,0,0.6)"/>
+  <text x="340" y="242" text-anchor="middle" fill="white" font-family="system-ui" font-weight="600" font-size="9">Over 3.2/5</text>
+
   <!-- Title -->
-  <text x="100" y="50" text-anchor="middle" fill="#FFD700" font-family="system-ui" font-weight="900" font-size="18">CRICKET</text>
-  <text x="100" y="66" text-anchor="middle" fill="#FFD700" font-family="system-ui" font-weight="900" font-size="14">BLITZ</text>
-  <!-- Emoji -->
-  <text x="100" y="195" text-anchor="middle" font-size="20">🏏</text>
+  <text x="200" y="22" text-anchor="middle" fill="url(#cbGold)" font-family="system-ui" font-weight="900" font-size="16" letter-spacing="2">CRICKET BLITZ</text>
+  <text x="200" y="36" text-anchor="middle" fill="white" font-family="system-ui" font-weight="600" font-size="8" opacity="0.6" letter-spacing="1">IPL-STYLE 3D CRICKET</text>
+
+  <!-- Powerplay badge -->
+  <rect x="155" y="40" width="90" height="14" rx="7" fill="#FFD700" opacity="0.9"/>
+  <text x="200" y="50" text-anchor="middle" fill="#1a0a3e" font-family="system-ui" font-weight="800" font-size="8">POWERPLAY 1.5x</text>
 </svg>
