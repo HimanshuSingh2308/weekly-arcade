@@ -3700,6 +3700,78 @@
     } catch(e) { return []; }
   }
 
+  // ── Background manager timer (1 real hour = 1 managed day) ──
+  const MANAGED_DAY_MS = 60 * 60 * 1000; // 1 hour in ms
+  let lastManagedTick = Date.now();
+
+  function startManagedStoreTimer() {
+    // Check every 60 seconds if an hour has passed
+    setInterval(() => {
+      const unlockedStores = getUnlockedStores();
+      if (unlockedStores.length < 2) return;
+      const managers = getManagers();
+      if (Object.keys(managers).length === 0) return;
+
+      const now = Date.now();
+      const elapsed = now - lastManagedTick;
+      if (elapsed < MANAGED_DAY_MS) return;
+
+      // Advance managed stores by however many hours have passed
+      const daysToAdvance = Math.floor(elapsed / MANAGED_DAY_MS);
+      lastManagedTick = now;
+
+      const results = [];
+      try {
+        const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+        const corpTraining = ((empire.global || {}).hqUpgrades || {}).corporate_training || 0;
+        let totalEarned = 0;
+
+        for (const storeId of unlockedStores) {
+          if (storeId === activeStoreId && gameState === 'PLAYING') continue; // skip active store during gameplay
+          const mgr = managers[storeId];
+          if (!mgr) continue;
+          const tier = MANAGER_TIERS[mgr.tier];
+          if (!tier) continue;
+          const storeData = (empire.stores || {})[storeId];
+          if (!storeData || !storeData.unlocked) continue;
+
+          const upgradeCount = Object.values(storeData.upgradeLevels || {}).reduce((a, b) => a + b, 0);
+          const dayFactor = Math.min(storeData.currentDay || 1, 30);
+          const estimatedDailyRev = 100 + dayFactor * 50 + upgradeCount * 30;
+          const efficiencyBoost = Math.min(tier.efficiency + corpTraining * 0.10, 0.95);
+          const earned = Math.floor(estimatedDailyRev * efficiencyBoost) * daysToAdvance;
+
+          if (earned > 0) {
+            storeData.currentDay = (storeData.currentDay || 1) + daysToAdvance;
+            totalEarned += earned;
+            results.push({
+              emoji: STORE_CONFIGS[storeId]?.emoji || '🏪',
+              name: STORE_CONFIGS[storeId]?.name || storeId,
+              earned
+            });
+          }
+        }
+
+        if (totalEarned > 0) {
+          empire.global.wallet = (empire.global.wallet || 0) + totalEarned;
+          wallet += totalEarned;
+          localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+          saveGame();
+
+          // Show toast notification
+          const toast = document.getElementById('achievementToast');
+          if (toast) {
+            const names = results.map(r => `${r.emoji} +${formatCoins(r.earned)}`).join('  ');
+            toast.innerHTML = `👨‍💼 Manager Report<br><span style="font-size:0.7rem;font-weight:400;">${names}</span>`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+          }
+          playSound('cashRegister');
+        }
+      } catch(e) {}
+    }, 60000); // check every 60s
+  }
+
   function calculateStoreDamage(hoursOffline) {
     if (hoursOffline <= 36) return { level: 'none', repairCost: 0 };
     const empire = getEmpire();
@@ -4529,6 +4601,7 @@
   };
   updateShopEnvironment();
   checkDailyLogin();
+  startManagedStoreTimer();
   const offlineData = calculateOfflineEarnings();
   if (offlineData && showWelcomeBack(offlineData)) {
     // Welcome back screen shown
