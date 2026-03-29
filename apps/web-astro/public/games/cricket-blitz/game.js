@@ -6,12 +6,12 @@
   // ============================================
 
   const TEAMS = {
-    'mumbai-mavericks':    { name: 'Mumbai Mavericks',    primary: '#004BA0', secondary: '#FFD700', accent: '#FFFFFF' },
-    'chennai-cobras':      { name: 'Chennai Cobras',       primary: '#FFD700', secondary: '#1A1A6B', accent: '#FF6B00' },
-    'bangalore-blazers':   { name: 'Bangalore Blazers',    primary: '#E8000D', secondary: '#000000', accent: '#FFD700' },
-    'kolkata-knights':     { name: 'Kolkata Knights',      primary: '#3B0051', secondary: '#FFD700', accent: '#FFFFFF' },
-    'delhi-dynamos':       { name: 'Delhi Dynamos',        primary: '#0044AA', secondary: '#E8000D', accent: '#FFFFFF' },
-    'hyderabad-hawks':     { name: 'Hyderabad Hawks',      primary: '#FF6B00', secondary: '#000000', accent: '#FFFFFF' }
+    'mumbai-mavericks':    { name: 'Mumbai Mavericks',    city: 'Mumbai',    primary: '#004BA0', secondary: '#FFD700', accent: '#FFFFFF' },
+    'chennai-cobras':      { name: 'Chennai Cobras',       city: 'Chennai',   primary: '#FFD700', secondary: '#1A1A6B', accent: '#FF6B00' },
+    'bangalore-blazers':   { name: 'Bangalore Blazers',    city: 'Bangalore', primary: '#E8000D', secondary: '#000000', accent: '#FFD700' },
+    'kolkata-knights':     { name: 'Kolkata Knights',      city: 'Kolkata',   primary: '#3B0051', secondary: '#FFD700', accent: '#FFFFFF' },
+    'delhi-dynamos':       { name: 'Delhi Dynamos',        city: 'Delhi',     primary: '#0044AA', secondary: '#E8000D', accent: '#FFFFFF' },
+    'hyderabad-hawks':     { name: 'Hyderabad Hawks',      city: 'Hyderabad', primary: '#FF6B00', secondary: '#000000', accent: '#FFFFFF' }
   };
 
   const TEAM_IDS = Object.keys(TEAMS);
@@ -198,7 +198,17 @@
     newBatsmanTime: 0,
 
     teamsPlayed: [],
-    achievementsUnlocked: new Set()
+    achievementsUnlocked: new Set(),
+
+    // Powerplay: first 2 overs
+    isPowerplay: true,
+
+    // Crowd wave after six
+    crowdWaveActive: false,
+    crowdWaveStart: 0,
+
+    // Tension (within 15 runs of target)
+    tensionActive: false
   };
 
   // ============================================
@@ -681,7 +691,35 @@
         const idx = Math.floor(Math.random() * crowdDots.length);
         crowdDots[idx].color = randomCrowdColor();
       }
-      // We redraw a few crowd dots on FG to simulate shimmer without redrawing BG
+
+      // Crowd wave after six: sequential color shift left to right
+      if (state.crowdWaveActive) {
+        const waveElapsed = (Date.now() - state.crowdWaveStart) / 1000;
+        if (waveElapsed > 2) {
+          state.crowdWaveActive = false;
+        } else {
+          const wavePos = waveElapsed * W * 0.8; // wave sweeps across screen
+          const waveWidth = W * 0.15;
+          const team = state.selectedTeam ? TEAMS[state.selectedTeam] : null;
+          const waveColor = team ? team.secondary : '#FFD700';
+          crowdDots.forEach(d => {
+            if (Math.abs(d.x - wavePos) < waveWidth) {
+              d.color = waveColor;
+            }
+          });
+          bgDirty = true;
+        }
+      }
+
+      // Tension: crowd gets more animated (more color shifts)
+      if (state.tensionActive) {
+        const extra = Math.min(15, crowdDots.length);
+        for (let i = 0; i < extra; i++) {
+          const idx = Math.floor(Math.random() * crowdDots.length);
+          crowdDots[idx].color = randomCrowdColor();
+        }
+        bgDirty = true;
+      }
     }
   }
 
@@ -1054,6 +1092,12 @@
     ctx.globalAlpha = 1;
   }
 
+  function triggerCrowdWave() {
+    state.crowdWaveActive = true;
+    state.crowdWaveStart = Date.now();
+    bgDirty = true;
+  }
+
   function spawnFloatingText(text, x, y, color, size) {
     state.floatingTexts.push({
       text, x, y, color,
@@ -1399,11 +1443,15 @@
       return;
     }
 
-    // Runs scored
-    const runs = outcome.runs;
+    // Runs scored -- apply powerplay multiplier
+    let runs = outcome.runs;
+    const rawRuns = runs;
+    if (state.isPowerplay && runs > 0) {
+      runs = Math.round(runs * 1.5);
+    }
     state.runs += runs;
     state.currentOverRuns += runs;
-    state.currentOverResults.push({ runs, isWicket: false, isFour: runs === 4, isSix: runs === 6 });
+    state.currentOverResults.push({ runs, rawRuns, isWicket: false, isFour: rawRuns === 4, isSix: rawRuns === 6 });
 
     if (runs > 0) {
       state.consecutiveScoringBalls++;
@@ -1412,12 +1460,12 @@
       state.consecutiveScoringBalls = 0;
     }
 
-    // Ball power for bat crack
+    // Ball power for bat crack (use rawRuns for sound quality mapping)
     let power = 0;
-    if (runs === 1) power = 1;
-    else if (runs <= 3) power = 2;
-    else if (runs === 4) power = 3;
-    else if (runs === 6) power = 4;
+    if (rawRuns === 1) power = 1;
+    else if (rawRuns <= 3) power = 2;
+    else if (rawRuns === 4) power = 3;
+    else if (rawRuns === 6) power = 4;
 
     // Bat swing animation
     state.batAnimating = true;
@@ -1434,26 +1482,30 @@
     state.postBallY = pitchBottom - 40;
     state.postBallSize = 8;
 
-    if (runs === 4) {
+    if (rawRuns === 4) {
       state.fours++;
       state.postBallType = 'four';
       state.postBallVx = (Math.random() - 0.5) * 2 - 0.3;
-      spawnFloatingText('FOUR!', vpX, pitchBottom - 80, '#FFD700', 32);
+      const fourLabel = state.isPowerplay ? 'FOUR! (x1.5)' : 'FOUR!';
+      spawnFloatingText(fourLabel, vpX, pitchBottom - 80, '#FFD700', 32);
       spawnParticles(vpX, pitchBottom - 60, 25, ['#FFD700', '#FFA500', '#FFFFFF'], 120, 0.8);
       playCrowdReaction('cheer');
       playBoundaryJingle(false);
       vibrate([30]);
       checkAchievement('cb-first-four');
-    } else if (runs === 6) {
+    } else if (rawRuns === 6) {
       state.sixes++;
       state.postBallType = 'six';
       state.postBallVx = (Math.random() - 0.5) * 2;
-      spawnFloatingText('SIX!', vpX, pitchBottom - 80, '#FF00FF', 38);
+      const sixLabel = state.isPowerplay ? 'SIX! (x1.5)' : 'SIX!';
+      spawnFloatingText(sixLabel, vpX, pitchBottom - 80, '#FF00FF', 38);
       spawnParticles(vpX, pitchBottom - 60, 40, ['#FF00FF', '#FFD700', '#00FFFF', '#FF4444', '#44FF44'], 150, 1.2);
       playCrowdReaction('roar');
       playBoundaryJingle(true);
       vibrate([30, 15, 50]);
       checkAchievement('cb-first-six');
+      // Trigger crowd wave
+      triggerCrowdWave();
     } else if (runs === 0) {
       state.postBallType = 'default';
       state.postBallVx = (Math.random() - 0.5);
@@ -1553,15 +1605,30 @@
 
     const commentary = pickRandom(COMMENTARY.overEnd);
 
+    // Generate next bowler ahead of time so we can show them
+    generateBowlerForOver();
+
+    const rrAhead = parseFloat(rr) <= parseFloat(rrr);
+
     overModal.innerHTML = `
       <h2>End of Over ${state.oversCompleted}</h2>
       <div class="cb-over-summary">${ballsHtml}</div>
       <div class="cb-stat-row"><span>Runs this over</span><span>${state.currentOverRuns}</span></div>
       <div class="cb-stat-row"><span>Score</span><span>${state.runs}/${state.wickets}</span></div>
-      <div class="cb-stat-row"><span>Run Rate</span><span>${rr}</span></div>
-      <div class="cb-stat-row"><span>Required RR</span><span>${rrr}</span></div>
+      <div class="cb-rate-compare">
+        <div class="cb-rate-item">
+          <span class="label">Run Rate</span>
+          <span class="value ${rrAhead ? 'behind' : 'ahead'}">${rr}</span>
+        </div>
+        <div class="cb-rate-item">
+          <span class="label">Required RR</span>
+          <span class="value">${rrr}</span>
+        </div>
+      </div>
       <p class="cb-commentary">"${commentary}"</p>
-      <button class="cb-btn" onclick="window._cbNextOver()">Next Over</button>
+      <div class="cb-over-bowler">Next: ${state.bowlerName}</div>
+      <div class="cb-over-bowler-type">${state.bowlerType}</div>
+      <button class="cb-btn" onclick="window._cbNextOver()">NEXT OVER &rarr;</button>
       <p class="cb-countdown" id="overCountdown">Auto-continuing in 5s</p>
     `;
 
@@ -1593,7 +1660,7 @@
     state.currentOverScoringBalls = 0;
     gameWrap.classList.add('cb-playing');
 
-    generateBowlerForOver();
+    // Bowler already generated in showBetweenOvers
     showBowlerIntro();
 
     setTimeout(() => startDelivery(), 1200);
@@ -1643,6 +1710,9 @@
     state.currentOverResults = [];
     state.consecutiveScoringBalls = 0;
     state.currentOverScoringBalls = 0;
+    state.isPowerplay = true;
+    state.tensionActive = false;
+    state.crowdWaveActive = false;
 
     state.phase = 'PLAYING';
     gameWrap.classList.add('cb-playing');
@@ -1695,28 +1765,38 @@
     const heading = didBeat ? 'What an innings!' : 'Innings Over';
     const subText = didBeat ? 'Incredible batting performance!' : 'So close! Better luck next time.';
 
+    // Star rating: 1 star = played, 2 = beat target, 3 = beat with balls remaining
+    let stars = 1;
+    if (didBeat) stars = 2;
+    if (didBeat && ballsRemaining >= 6) stars = 3;
+    const starHtml = Array.from({ length: 3 }, (_, i) =>
+      `<span class="${i < stars ? 'star-filled' : 'star-empty'}">\u2605</span>`
+    ).join('');
+
     gameOverModal.innerHTML = `
       <h2>${heading}</h2>
-      <p style="color:var(--cb-text-dim);margin:0 0 8px;">${subText}</p>
+      <p style="color:var(--cb-text-dim);margin:0 0 4px;">${subText}</p>
+      <div class="cb-star-rating">${starHtml}</div>
       <div class="cb-final-score" id="finalScoreDisplay">0</div>
+      <div class="cb-stats-grid">
+        <div class="stat-item"><span class="stat-value">${totalRuns}</span><span class="stat-label">Runs</span></div>
+        <div class="stat-item"><span class="stat-value">${state.totalBallsFaced}</span><span class="stat-label">Balls</span></div>
+        <div class="stat-item"><span class="stat-value">${state.fours}</span><span class="stat-label">Fours</span></div>
+        <div class="stat-item"><span class="stat-value">${state.sixes}</span><span class="stat-label">Sixes</span></div>
+        <div class="stat-item"><span class="stat-value">${sr}</span><span class="stat-label">SR</span></div>
+        <div class="stat-item"><span class="stat-value">${state.wickets}</span><span class="stat-label">Wickets</span></div>
+      </div>
       <div class="cb-score-breakdown">
         <div class="cb-stat-row"><span>Runs Scored</span><span>${totalRuns}</span></div>
         <div class="cb-stat-row"><span>Boundary Bonus</span><span>+${boundaryBonus}</span></div>
         <div class="cb-stat-row"><span>Wicket Penalty</span><span>-${wicketPenalty}</span></div>
         ${didBeat ? `<div class="cb-stat-row"><span>Target Bonus</span><span>+${targetBonus}</span></div>` : ''}
-        ${didBeat ? `<div class="cb-stat-row"><span>Balls Remaining Bonus</span><span>+${ballBonus}</span></div>` : ''}
+        ${didBeat ? `<div class="cb-stat-row"><span>Balls Remaining</span><span>+${ballBonus}</span></div>` : ''}
         <div class="cb-stat-row cb-score-total"><span>Total Score</span><span>${finalScore}</span></div>
       </div>
-      <div style="margin:12px 0;">
-        <div class="cb-stat-row"><span>Balls Faced</span><span>${state.totalBallsFaced}</span></div>
-        <div class="cb-stat-row"><span>Fours / Sixes</span><span>${state.fours} / ${state.sixes}</span></div>
-        <div class="cb-stat-row"><span>Strike Rate</span><span>${sr}</span></div>
-        <div class="cb-stat-row"><span>Best Over</span><span>${state.bestOverRuns} runs</span></div>
-        <div class="cb-stat-row"><span>Level Reached</span><span>${state.level}</span></div>
-      </div>
       <div class="cb-btn-row">
-        <button class="cb-btn" onclick="window._cbPlayAgain()">Play Again</button>
-        <button class="cb-share-btn" onclick="window._cbShare()">Share Score</button>
+        <button class="cb-btn" onclick="window._cbPlayAgain()">PLAY AGAIN</button>
+        <button class="cb-share-btn" onclick="window._cbShare()">&#128279; Share Score</button>
       </div>
     `;
 
@@ -1809,11 +1889,28 @@
       icon.classList.toggle('active', i >= state.wickets);
     });
 
-    // Shot indicator
+    // Shot indicator (desktop)
     const arrows = { straight: '\u2191', pull: '\u2190', cut: '\u2192', defense: '\u2193' };
     const labels = { straight: 'Drive', pull: 'Pull', cut: 'Cut', defense: 'Block' };
     shotArrow.textContent = arrows[state.shotDirection] || '\u2191';
     shotLabel.textContent = labels[state.shotDirection] || 'Drive';
+
+    // Pitch shot overlay (mobile)
+    const pitchShotIcon = $('pitchShotIcon');
+    const pitchShotName = $('pitchShotName');
+    if (pitchShotIcon) pitchShotIcon.textContent = arrows[state.shotDirection] || '\u2191';
+    if (pitchShotName) pitchShotName.textContent = (labels[state.shotDirection] || 'Drive').toUpperCase();
+
+    // Powerplay badge
+    state.isPowerplay = state.oversCompleted < 2;
+    const ppBadge = $('powerplayBadge');
+    if (ppBadge) ppBadge.classList.toggle('show', state.isPowerplay && state.phase === 'PLAYING');
+
+    // Tension check (within 15 runs of target)
+    const tensionEdge = $('tensionEdge');
+    const runsNeeded = state.target - state.runs;
+    state.tensionActive = runsNeeded > 0 && runsNeeded <= 15 && state.phase === 'PLAYING';
+    if (tensionEdge) tensionEdge.classList.toggle('active', state.tensionActive);
   }
 
   function showBowlerIntro() {
@@ -1887,24 +1984,50 @@
       card.tabIndex = 0;
       card.setAttribute('role', 'button');
       card.setAttribute('aria-label', team.name);
-      card.style.background = team.primary;
+      card.style.background = `linear-gradient(160deg, ${team.primary} 0%, ${darkenColor(team.primary, 0.3)} 100%)`;
       card.dataset.team = id;
 
-      // Jersey
+      // Jersey (shirt shape via CSS)
       const jersey = document.createElement('div');
       jersey.className = 'cb-team-jersey';
-      jersey.style.background = team.primary;
-      jersey.style.borderTop = `8px solid ${team.secondary}`;
+      jersey.style.setProperty('--jersey-stripe', team.secondary);
+      // Build the shirt body via the ::before pseudo (set bg via inline)
+      jersey.style.background = 'transparent';
+      const jerseyInner = document.createElement('div');
+      jerseyInner.style.cssText = `
+        width: 100%; height: 100%;
+        clip-path: polygon(15% 0%, 85% 0%, 100% 15%, 100% 100%, 0% 100%, 0% 15%);
+        background: linear-gradient(180deg, ${team.primary} 0%, ${darkenColor(team.primary, 0.15)} 100%);
+        border-radius: 0 0 4px 4px;
+        position: relative;
+      `;
+      // V stripe as child
+      const vStripe = document.createElement('div');
+      vStripe.style.cssText = `
+        position: absolute; top: 0; left: 50%;
+        width: 0; height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 16px solid ${team.secondary};
+        transform: translateX(-50%);
+      `;
+      jerseyInner.appendChild(vStripe);
+      jersey.appendChild(jerseyInner);
 
-      // Name
+      // Team mascot name (e.g. "Mavericks")
       const name = document.createElement('div');
       name.className = 'cb-team-name';
-      // Choose text color based on luminance
       name.style.color = luminance(team.primary) > 0.55 ? '#000' : '#fff';
       name.textContent = team.name.split(' ')[1] || team.name;
 
+      // City name
+      const city = document.createElement('div');
+      city.className = 'cb-team-city';
+      city.textContent = team.city;
+
       card.appendChild(jersey);
       card.appendChild(name);
+      card.appendChild(city);
       grid.appendChild(card);
 
       card.addEventListener('click', () => selectTeam(id));
@@ -1921,20 +2044,20 @@
     state.selectedTeam = id;
     playUISound('select');
 
+    const team = TEAMS[id];
+
     // Update selection UI
     document.querySelectorAll('.cb-team-card').forEach(card => {
       card.classList.toggle('selected', card.dataset.team === id);
-      if (card.dataset.team === id) {
-        card.style.boxShadow = `0 0 16px ${TEAMS[id].accent}`;
-      } else {
-        card.style.boxShadow = 'none';
-      }
     });
 
     const playBtn = $('playBtn');
     playBtn.disabled = false;
-    playBtn.style.background = TEAMS[id].primary;
-    playBtn.style.color = luminance(TEAMS[id].primary) > 0.55 ? '#000' : '#fff';
+    playBtn.style.background = `linear-gradient(135deg, ${team.primary}, ${darkenColor(team.primary, 0.2)})`;
+    playBtn.style.color = luminance(team.primary) > 0.55 ? '#000' : '#fff';
+    playBtn.style.setProperty('--cb-team-primary', team.primary);
+    document.documentElement.style.setProperty('--cb-team-primary', team.primary);
+    document.documentElement.style.setProperty('--cb-team-secondary', team.secondary);
   }
 
   function startGame() {
@@ -1975,8 +2098,15 @@
     state.newBatsmanAnim = false;
     state.batAnimating = false;
     state.bowlerAnimating = false;
+    state.isPowerplay = true;
+    state.crowdWaveActive = false;
+    state.tensionActive = false;
     deliveryPhase = 'idle';
     deliveryTimer = 0;
+
+    // Clear tension edge
+    const tensionEdge = $('tensionEdge');
+    if (tensionEdge) tensionEdge.classList.remove('active');
 
     titleOverlay.classList.remove('cb-visible');
     state.phase = 'PLAYING';
@@ -2004,6 +2134,12 @@
     state.postBallActive = false;
     state.particles = [];
     state.floatingTexts = [];
+    state.tensionActive = false;
+    state.crowdWaveActive = false;
+    const tensionEdge = $('tensionEdge');
+    if (tensionEdge) tensionEdge.classList.remove('active');
+    const ppBadge = $('powerplayBadge');
+    if (ppBadge) ppBadge.classList.remove('show');
 
     // Show best score
     try {
@@ -2173,7 +2309,7 @@
     if (!window.gameHeader) return;
     window.gameHeader.init({
       title: 'Cricket Blitz',
-      icon: '\ud83c\udfcf',
+      icon: '🏏',
       gameId: 'cricket-blitz',
       buttons: ['sound', 'leaderboard', 'auth'],
       onSound: () => {
@@ -2207,6 +2343,13 @@
     const g = parseInt(hex.slice(3, 5), 16) / 255;
     const b = parseInt(hex.slice(5, 7), 16) / 255;
     return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+
+  function darkenColor(hex, amount) {
+    const r = Math.max(0, Math.round(parseInt(hex.slice(1, 3), 16) * (1 - amount)));
+    const g = Math.max(0, Math.round(parseInt(hex.slice(3, 5), 16) * (1 - amount)));
+    const b = Math.max(0, Math.round(parseInt(hex.slice(5, 7), 16) * (1 - amount)));
+    return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
   }
 
   // ============================================

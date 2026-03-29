@@ -72,11 +72,12 @@ import gameData from '../../data/games/cricket-blitz.json';
     <div class="cb-hud-item">
       <span class="cb-hud-label">Wickets</span>
       <span class="cb-hud-value" id="hudWickets">
-        <span class="cb-wicket-icon active"></span>
-        <span class="cb-wicket-icon active"></span>
-        <span class="cb-wicket-icon active"></span>
+        <span class="cb-wicket-icon active">🏏</span>
+        <span class="cb-wicket-icon active">🏏</span>
+        <span class="cb-wicket-icon active">🏏</span>
       </span>
     </div>
+    <div class="cb-powerplay-badge" id="powerplayBadge">POWERPLAY 1.5x</div>
   </div>
 
   <!-- HUD Bottom Bar -->
@@ -105,18 +106,28 @@ import gameData from '../../data/games/cricket-blitz.json';
     <span id="shotLabel">Drive</span>
   </div>
 
+  <!-- Pitch shot type overlay (mobile helper) -->
+  <div class="cb-pitch-shot-overlay" id="pitchShotOverlay" aria-hidden="true">
+    <span id="pitchShotIcon">&uarr;</span>
+    <span id="pitchShotName">DRIVE</span>
+  </div>
+
+  <!-- Run chase tension edge glow -->
+  <div class="cb-tension-edge" id="tensionEdge" aria-hidden="true"></div>
+
   <!-- Title / Team Select Overlay -->
   <div class="cb-overlay cb-visible" id="titleOverlay" role="dialog" aria-modal="true" aria-label="Cricket Blitz - Start">
     <div class="cb-modal cb-title-modal">
-      <div class="cb-title-icon">\ud83c\udfcf</div>
+      <div class="cb-title-icon">🏏</div>
       <h1 class="cb-title-name">Cricket Blitz</h1>
       <p class="cb-title-tagline">IPL-Style Arcade Cricket</p>
+      <div class="cb-title-bg-particles" aria-hidden="true"></div>
       <div class="cb-best-score" id="titleBest"></div>
 
       <h2 class="cb-section-heading">Select Your Team</h2>
       <div class="cb-team-grid" id="teamGrid"></div>
 
-      <button class="cb-btn cb-btn-play" id="playBtn" disabled>Play</button>
+      <button class="cb-btn cb-btn-play" id="playBtn" disabled>&#9654; START MATCH</button>
 
       <button class="cb-btn-link" id="howToPlayBtn">How to Play</button>
       <div class="cb-how-to-play" id="howToPlay">
