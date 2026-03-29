@@ -1017,6 +1017,10 @@
     return ((empire.stores || {})[activeStoreId] || {}).decorations || [];
   }
 
+  function syncWallClock() {
+    if (wallClock) wallClock.style.display = getOwnedDecorations().includes('clock') ? 'none' : '';
+  }
+
   function getServeTime(drinkKey) {
     const base = DRINK_TYPES[drinkKey].serveTime;
     const level = upgradeLevels.speed_boost || 0;
@@ -1238,8 +1242,7 @@
 
     const owned = getOwnedDecorations();
 
-    // Hide default wall clock when vintage clock decoration is purchased
-    if (wallClock) wallClock.style.display = owned.includes('clock') ? 'none' : '';
+    syncWallClock();
 
     if (owned.length === 0) {
       shopBg.classList.add('vibe-bare');
@@ -2797,7 +2800,7 @@
 
     // Step 2: Decorations pop in
     const ownedDecos = getOwnedDecorations();
-    if (wallClock) wallClock.style.display = ownedDecos.includes('clock') ? 'none' : '';
+    syncWallClock();
     const decoVisuals = getDecoVisuals();
     for (const decoId of ownedDecos) {
       schedule(t, () => {
@@ -4066,6 +4069,8 @@
     saveGame();
     invalidateEmpireCache();
     playSound('upgrade');
+    syncWallClock();
+    renderDecorations();
     renderShop();
   }
 
