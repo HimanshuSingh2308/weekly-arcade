@@ -25,31 +25,31 @@ import * as THREE from 'three';
   }
 
   const ACHIEVEMENTS = {
-    'cb-first-four':       { name: 'Boundary Finder',     desc: 'Hit your first four',                       xp: 10 },
-    'cb-first-six':        { name: 'Into the Stands',     desc: 'Hit your first six',                        xp: 25 },
-    'cb-six-sixes':        { name: 'Six Machine',         desc: 'Hit 6 sixes in a single innings',           xp: 75 },
-    'cb-fifty':            { name: 'Half Century',        desc: 'Score 50 runs in an innings',               xp: 50 },
-    'cb-century':          { name: 'Centurion',           desc: 'Score 100 runs in an innings',              xp: 100 },
-    'cb-no-wicket':        { name: 'Unbeatable',          desc: 'Complete innings without losing a wicket',  xp: 100 },
-    'cb-perfect-over':     { name: 'Perfect Over',        desc: 'Score off every ball in an over',           xp: 50 },
-    'cb-target-crushed':   { name: 'Target Crushed',      desc: 'Beat target with 10+ balls remaining',     xp: 75 },
-    'cb-level-3':          { name: 'Rising Star',         desc: 'Reach level 3',                             xp: 50 },
-    'cb-level-5':          { name: 'Cricket Legend',       desc: 'Reach level 5',                             xp: 100 },
-    'cb-high-score-200':   { name: 'Double Century Club', desc: 'Achieve a final score of 200+',            xp: 150 },
-    'cb-all-teams':        { name: 'Franchise Collector', desc: 'Play a game with each of the 6 teams',     xp: 50 },
-    'cb-first-wicket':     { name: 'Wicket Taker',       desc: 'Take your first wicket while bowling',    xp: 15 },
-    'cb-five-wickets':     { name: 'Five-For',           desc: 'Take 5 wickets in a bowling innings',     xp: 100 },
-    'cb-full-match-win':   { name: 'Match Winner',       desc: 'Win a complete match (bat + bowl)',        xp: 75 },
-    'cb-clean-sweep':      { name: 'Clean Sweep',        desc: 'Win by 30+ runs margin',                  xp: 100 },
-    'cb-yorker-master':    { name: 'Yorker Master',      desc: 'Take 3 wickets with yorkers',             xp: 75 }
+    'cb_first_four':       { name: 'Boundary Finder',     desc: 'Hit your first four',                       xp: 10 },
+    'cb_first_six':        { name: 'Into the Stands',     desc: 'Hit your first six',                        xp: 25 },
+    'cb_six_sixes':        { name: 'Six Machine',         desc: 'Hit 6 sixes in a single innings',           xp: 75 },
+    'cb_fifty':            { name: 'Half Century',        desc: 'Score 50 runs in an innings',               xp: 50 },
+    'cb_century':          { name: 'Centurion',           desc: 'Score 100 runs in an innings',              xp: 100 },
+    'cb_no_wicket':        { name: 'Unbeatable',          desc: 'Complete innings without losing a wicket',  xp: 100 },
+    'cb_perfect_over':     { name: 'Perfect Over',        desc: 'Score off every ball in an over',           xp: 50 },
+    'cb_target_crushed':   { name: 'Target Crushed',      desc: 'Beat target with 10+ balls remaining',     xp: 75 },
+    'cb_level_3':          { name: 'Rising Star',         desc: 'Reach level 3',                             xp: 50 },
+    'cb_level_5':          { name: 'Cricket Legend',       desc: 'Reach level 5',                             xp: 100 },
+    'cb_high_score_200':   { name: 'Double Century Club', desc: 'Achieve a final score of 200+',            xp: 150 },
+    'cb_all_teams':        { name: 'Franchise Collector', desc: 'Play a game with each of the 6 teams',     xp: 50 },
+    'cb_first_wicket':     { name: 'Wicket Taker',       desc: 'Take your first wicket while bowling',    xp: 15 },
+    'cb_five_wickets':     { name: 'Five-For',           desc: 'Take 5 wickets in a bowling innings',     xp: 100 },
+    'cb_full_match_win':   { name: 'Match Winner',       desc: 'Win a complete match (bat + bowl)',        xp: 75 },
+    'cb_clean_sweep':      { name: 'Clean Sweep',        desc: 'Win by 30+ runs margin',                  xp: 100 },
+    'cb_yorker_master':    { name: 'Yorker Master',      desc: 'Take 3 wickets with yorkers',             xp: 75 }
   };
 
   // Patch #19: Bat skins
   const BAT_SKINS = [
     { id: 'default', name: 'Classic', color: '#D4A87C', unlock: null },
-    { id: 'golden', name: 'Golden', color: '#FFD700', unlock: 'cb-fifty' },
-    { id: 'red', name: 'Red Devil', color: '#CC0000', unlock: 'cb-century' },
-    { id: 'diamond', name: 'Diamond', color: '#00FFFF', unlock: 'cb-high-score-200' }
+    { id: 'golden', name: 'Golden', color: '#FFD700', unlock: 'cb_fifty' },
+    { id: 'red', name: 'Red Devil', color: '#CC0000', unlock: 'cb_century' },
+    { id: 'diamond', name: 'Diamond', color: '#00FFFF', unlock: 'cb_high_score_200' }
   ];
 
   function getUnlockedAchievements() {
@@ -3020,7 +3020,7 @@ import * as THREE from 'three';
       cameraShake.start = Date.now();
       cameraShake.duration = 200;
       cameraShake.intensity = 0.05;
-      checkAchievement('cb-first-four');
+      checkAchievement('cb_first_four');
       // Crowd jump and bat celebration on four
       state.crowdJumpTime = 0.5;
       state.batCelebration = true;
@@ -3041,7 +3041,7 @@ import * as THREE from 'three';
       cameraShake.start = Date.now();
       cameraShake.duration = 400;
       cameraShake.intensity = 0.15;
-      checkAchievement('cb-first-six');
+      checkAchievement('cb_first_six');
       triggerCrowdWave();
       // Crowd jump and bat celebration on six
       state.crowdJumpTime = 0.5;
@@ -3072,16 +3072,16 @@ import * as THREE from 'three';
     if (state.runs >= 50 && state.runs - runs < 50) {
       spawnFloatingText('FIFTY!', textX, textBaseY - 60, '#FFD700', 36);
       spawnParticles(textX, textBaseY - 40, 50, ['#FFD700'], 100, 1.5);
-      checkAchievement('cb-fifty');
+      checkAchievement('cb_fifty');
     }
     if (state.runs >= 100 && state.runs - runs < 100) {
       spawnFloatingText('CENTURY!', textX, textBaseY - 60, '#FFD700', 40);
       spawnParticles(textX, textBaseY - 40, 80, ['#FFD700', '#FF00FF', '#00FFFF'], 150, 2);
-      checkAchievement('cb-century');
+      checkAchievement('cb_century');
     }
 
     if (state.currentOverScoringBalls >= 6 && state.ballsInOver === 6) {
-      checkAchievement('cb-perfect-over');
+      checkAchievement('cb_perfect_over');
     }
 
     const announceText = runs === 0 ? 'Dot ball.' : `${runs} run${runs > 1 ? 's' : ''}.`;
@@ -3096,7 +3096,7 @@ import * as THREE from 'three';
     // Check if player chased down target (bowl-first mode or super over)
     if (state.matchPhase === 'batting_chase' && state.runs >= state.target) {
       const ballsRemaining = Math.max(0, 30 - state.totalBallsFaced);
-      if (ballsRemaining >= 10) checkAchievement('cb-target-crushed');
+      if (ballsRemaining >= 10) checkAchievement('cb_target_crushed');
       spawnFloatingText('TARGET CHASED!', textX, textBaseY - 80, '#4CAF50', 28);
       playCrowdReaction('roar');
       // End batting immediately after short delay
@@ -3250,7 +3250,7 @@ import * as THREE from 'three';
     state.battingFours = state.fours;
     state.battingSixes = state.sixes;
 
-    if (state.wickets === 0 && state.totalBallsFaced >= 6) checkAchievement('cb-no-wicket');
+    if (state.wickets === 0 && state.totalBallsFaced >= 6) checkAchievement('cb_no_wicket');
 
     playUISound('overComplete');
 
@@ -4068,11 +4068,11 @@ import * as THREE from 'three';
       state.bowlingAIWickets++;
       state.bowlingCurrentOverResults.push({ runs: 0, isWicket: true, isFour: false, isSix: false });
 
-      checkAchievement('cb-first-wicket');
-      if (state.bowlingAIWickets >= 5) checkAchievement('cb-five-wickets');
+      checkAchievement('cb_first_wicket');
+      if (state.bowlingAIWickets >= 5) checkAchievement('cb_five_wickets');
       if (state.selectedDelivery === 'yorker') {
         state.yorkerWickets++;
-        if (state.yorkerWickets >= 3) checkAchievement('cb-yorker-master');
+        if (state.yorkerWickets >= 3) checkAchievement('cb_yorker_master');
       }
 
       if (outcome.type === 'lbw') {
@@ -4421,14 +4421,14 @@ import * as THREE from 'three';
 
     // Achievements
     if (playerWon) {
-      checkAchievement('cb-full-match-win');
-      if (margin >= 30) checkAchievement('cb-clean-sweep');
+      checkAchievement('cb_full_match_win');
+      if (margin >= 30) checkAchievement('cb_clean_sweep');
     }
-    if (state.battingWickets === 0) checkAchievement('cb-no-wicket');
-    if (state.battingSixes >= 6) checkAchievement('cb-six-sixes');
-    if (state.battingScore >= 50) checkAchievement('cb-fifty');
-    if (state.battingScore >= 100) checkAchievement('cb-century');
-    if (finalScore >= 200) checkAchievement('cb-high-score-200');
+    if (state.battingWickets === 0) checkAchievement('cb_no_wicket');
+    if (state.battingSixes >= 6) checkAchievement('cb_six_sixes');
+    if (state.battingScore >= 50) checkAchievement('cb_fifty');
+    if (state.battingScore >= 100) checkAchievement('cb_century');
+    if (finalScore >= 200) checkAchievement('cb_high_score_200');
 
     // Save high score
     try {
@@ -4797,7 +4797,7 @@ import * as THREE from 'three';
     const finalScore = Math.max(0, state.battingScore + (playerWon ? 50 : 0) + state.superOverPlayerScore * 5);
     state.lastFinalScore = finalScore;
 
-    if (playerWon) checkAchievement('cb-full-match-win');
+    if (playerWon) checkAchievement('cb_full_match_win');
     submitMatchScore(finalScore, playerWon, tied);
 
     matchResultModal.innerHTML = `
@@ -5055,7 +5055,7 @@ import * as THREE from 'three';
         localStorage.setItem('cricket-blitz-teams-played', JSON.stringify(teams));
       }
       state.teamsPlayed = teams;
-      if (teams.length >= 6) checkAchievement('cb-all-teams');
+      if (teams.length >= 6) checkAchievement('cb_all_teams');
     } catch (e) {}
   }
 
