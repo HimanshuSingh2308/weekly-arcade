@@ -1475,7 +1475,7 @@ import * as THREE from 'three';
     try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       masterGain = audioCtx.createGain();
-      masterGain.gain.value = state.soundEnabled ? 0.3 : 0;
+      masterGain.gain.value = state.soundEnabled ? 0.5 : 0;
       masterGain.connect(audioCtx.destination);
       state.audioInitialized = true;
     } catch (e) { /* audio unavailable */ }
@@ -1815,8 +1815,25 @@ import * as THREE from 'three';
   let deliveryPhase = 'idle';
   let deliveryTimer = 0;
 
+  // Ball tint by delivery type — subtle visual cue
+  const DELIVERY_COLORS = {
+    straight: 0xcc0000,  // standard red
+    inswing: 0xcc2200,   // slightly orange tint
+    outswing: 0xaa0022,  // slightly magenta tint
+    bouncer: 0xdd0000,   // brighter red
+    yorker: 0x990000,    // darker red
+    slower: 0xcc4400,    // noticeable orange
+  };
+
   function startDelivery() {
     generateDelivery();
+
+    // Tint ball based on delivery type
+    const dType = state.ballDeliveryType === 'slower' ? 'slower' : state.ballDeliveryType;
+    if (ballMesh && DELIVERY_COLORS[dType]) {
+      ballMesh.material.color.setHex(DELIVERY_COLORS[dType]);
+    }
+
     deliveryPhase = 'runup';
     deliveryTimer = 0;
     state.bowlerAnimating = true;
@@ -2906,6 +2923,7 @@ import * as THREE from 'three';
       state.battingScore + boundaryBonus - wicketPenalty +
       bowlingBonus + wicketsBonus + economyBonus
     );
+    state.lastFinalScore = finalScore;
 
     // Achievements
     if (playerWon) {
@@ -3391,6 +3409,8 @@ import * as THREE from 'three';
     state.postBallActive = false;
     state.particles = [];
     state.floatingTexts = [];
+    floatingTextContainer.innerHTML = '';
+    state.floatingTexts = [];
     state.tensionActive = false;
     state.crowdWaveActive = false;
 
@@ -3732,6 +3752,11 @@ import * as THREE from 'three';
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       state.paused = true;
+      // Pause auto-advance countdowns
+      if (window._cbAutoOverInt) {
+        clearInterval(window._cbAutoOverInt);
+        window._cbAutoOverInt = null;
+      }
     } else {
       state.paused = false;
       state.lastFrameTime = 0;
@@ -3754,7 +3779,7 @@ import * as THREE from 'three';
       buttons: ['sound', 'leaderboard', 'auth'],
       onSound: () => {
         state.soundEnabled = !state.soundEnabled;
-        if (masterGain) masterGain.gain.value = state.soundEnabled ? 0.3 : 0;
+        if (masterGain) masterGain.gain.value = state.soundEnabled ? 0.5 : 0;
         try { localStorage.setItem('cricket-blitz-sound', state.soundEnabled); } catch (e) {}
       },
       onSignIn: async (user) => {
@@ -3837,8 +3862,8 @@ import * as THREE from 'three';
 
   window._cbShare = function() {
     try {
-      const best = localStorage.getItem('cricket-blitz-high-score') || '0';
-      const text = `I scored ${best} in Cricket Blitz! Can you beat it? Play at ${location.origin}/games/cricket-blitz/`;
+      const score = state.lastFinalScore || localStorage.getItem('cricket-blitz-high-score') || '0';
+      const text = `I scored ${score} in Cricket Blitz! Can you beat it? Play at ${location.origin}/games/cricket-blitz/`;
       if (navigator.share) {
         navigator.share({ text });
       } else {
