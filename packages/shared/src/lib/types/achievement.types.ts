@@ -16,10 +16,11 @@ export type AchievementCategory =
   | 'skill'
   | 'voidbreak'
   | 'stack-tower'
-  | 'tiny-tycoon';
+  | 'tiny-tycoon'
+  | 'cricket-blitz';
 
 export interface AchievementRequirement {
-  type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special';
+  type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special' | 'first_boundary' | 'first_six' | 'sixes';
   value?: number;
   gameId?: string;
 }
