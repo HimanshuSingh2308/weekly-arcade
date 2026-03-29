@@ -4257,13 +4257,44 @@ import * as THREE from 'three';
 
     const rrAI = state.bowlingTotalBalls > 0 ? (state.bowlingAIScore / (state.bowlingTotalBalls / 6)).toFixed(2) : '0.00';
     const ballsLeft = (5 - state.bowlingOversCompleted) * 6;
-    const runsNeeded = state.battingScore + 1 - state.bowlingAIScore;
-    const reqRR = ballsLeft > 0 ? (runsNeeded / (ballsLeft / 6)).toFixed(2) : '-';
+    const isBowlingFirst = !state.battingFirst && state.matchPhase === 'bowling';
 
     // Extras summary
     const extrasLine = state.bowlingExtras > 0
       ? `<div class="cb-stat-row"><span>Extras</span><span>${state.bowlingExtras} (${state.bowlingWides}w, ${state.bowlingNoBalls}nb)</span></div>`
       : '';
+
+    // Target info — only show when AI is chasing (batting second)
+    let targetHtml = '';
+    let rateHtml = '';
+    if (!isBowlingFirst) {
+      const runsNeeded = state.battingScore + 1 - state.bowlingAIScore;
+      const reqRR = ballsLeft > 0 ? (runsNeeded / (ballsLeft / 6)).toFixed(2) : '-';
+      targetHtml = `<div class="cb-stat-row"><span>AI needs</span><span>${Math.max(0, runsNeeded)} from ${ballsLeft} balls</span></div>`;
+      rateHtml = `
+        <div class="cb-rate-compare">
+          <div class="cb-rate-item">
+            <span class="label">AI Run Rate</span>
+            <span class="value">${rrAI}</span>
+          </div>
+          <div class="cb-rate-item">
+            <span class="label">Required RR</span>
+            <span class="value">${reqRR}</span>
+          </div>
+        </div>`;
+    } else {
+      rateHtml = `
+        <div class="cb-rate-compare">
+          <div class="cb-rate-item">
+            <span class="label">AI Run Rate</span>
+            <span class="value">${rrAI}</span>
+          </div>
+          <div class="cb-rate-item">
+            <span class="label">Overs Left</span>
+            <span class="value">${5 - state.bowlingOversCompleted}</span>
+          </div>
+        </div>`;
+    }
 
     overModal.innerHTML = `
       <h2>End of Over ${state.bowlingOversCompleted} (Bowling)</h2>
@@ -4271,17 +4302,8 @@ import * as THREE from 'three';
       <div class="cb-stat-row"><span>Runs conceded this over</span><span>${state.bowlingCurrentOverRuns}</span></div>
       <div class="cb-stat-row"><span>AI Score</span><span>${state.bowlingAIScore}/${state.bowlingAIWickets}</span></div>
       ${extrasLine}
-      <div class="cb-stat-row"><span>AI needs</span><span>${runsNeeded} from ${ballsLeft} balls</span></div>
-      <div class="cb-rate-compare">
-        <div class="cb-rate-item">
-          <span class="label">AI Run Rate</span>
-          <span class="value">${rrAI}</span>
-        </div>
-        <div class="cb-rate-item">
-          <span class="label">Required RR</span>
-          <span class="value">${reqRR}</span>
-        </div>
-      </div>
+      ${targetHtml}
+      ${rateHtml}
       <button class="cb-btn" onclick="window._cbNextBowlingOver()">NEXT OVER &rarr;</button>
       <p class="cb-countdown" id="overCountdown">Auto-continuing in 5s</p>
     `;
@@ -5336,7 +5358,8 @@ import * as THREE from 'three';
       // AI bats first, so show bowling directly
       // We set a temporary batting score of 999 so AI chases nothing initially
       // After bowling, player bats to chase
-      state.battingScore = 999; // placeholder, AI just scores freely
+      state.battingScore = 0;
+      state.bowlingFirst = true; // AI bats freely, no target to chase
       buildBowlingScene();
       state.phase = 'BOWLING';
       gameWrap.classList.add('cb-playing');
