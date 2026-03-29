@@ -44,6 +44,109 @@ import * as THREE from 'three';
     'cb-yorker-master':    { name: 'Yorker Master',      desc: 'Take 3 wickets with yorkers',             xp: 75 }
   };
 
+  // Patch #19: Bat skins
+  const BAT_SKINS = [
+    { id: 'default', name: 'Classic', color: '#D4A87C', unlock: null },
+    { id: 'golden', name: 'Golden', color: '#FFD700', unlock: 'cb-fifty' },
+    { id: 'red', name: 'Red Devil', color: '#CC0000', unlock: 'cb-century' },
+    { id: 'diamond', name: 'Diamond', color: '#00FFFF', unlock: 'cb-high-score-200' }
+  ];
+
+  function getUnlockedAchievements() {
+    try {
+      return JSON.parse(localStorage.getItem('cricket-blitz-achievements') || '[]');
+    } catch (e) { return []; }
+  }
+
+  function saveAchievementToStorage(id) {
+    try {
+      const achs = getUnlockedAchievements();
+      if (!achs.includes(id)) {
+        achs.push(id);
+        localStorage.setItem('cricket-blitz-achievements', JSON.stringify(achs));
+      }
+    } catch (e) {}
+  }
+
+  function getAvailableBatSkins() {
+    const unlocked = getUnlockedAchievements();
+    return BAT_SKINS.filter(s => !s.unlock || unlocked.includes(s.unlock));
+  }
+
+  function loadSelectedBatSkin() {
+    try {
+      const saved = localStorage.getItem('cricket-blitz-bat-skin');
+      if (saved) {
+        const skin = BAT_SKINS.find(s => s.id === saved);
+        if (skin) {
+          const available = getAvailableBatSkins();
+          if (available.find(s => s.id === saved)) return skin.color;
+        }
+      }
+    } catch (e) {}
+    return '#D4A87C';
+  }
+
+  // Patch #18: Daily challenges
+  const DAILY_CHALLENGES = [
+    { id: 0, text: 'Score 50+ runs', check: (s) => s.battingScore >= 50 },
+    { id: 1, text: 'Hit 4 sixes in one match', check: (s) => s.battingSixes >= 4 },
+    { id: 2, text: 'Win without losing a wicket', check: (s) => s.battingWickets === 0 && s.bowlingAIScore < s.battingScore + 1 },
+    { id: 3, text: 'Take 5 wickets while bowling', check: (s) => s.bowlingAIWickets >= 5 },
+    { id: 4, text: 'Achieve a 5x combo streak', check: (s) => s._maxCombo >= 5 },
+    { id: 5, text: 'Win by 20+ run margin', check: (s) => (s.battingScore - s.bowlingAIScore) >= 20 && s.bowlingAIScore < s.battingScore + 1 },
+    { id: 6, text: 'Hit 8 boundaries (4s + 6s) in a match', check: (s) => (s.battingFours + s.battingSixes) >= 8 }
+  ];
+
+  function getTodaysChallenge() {
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    return DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
+  }
+
+  function getTodayDateStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function isDailyChallengeCompleted() {
+    try {
+      return localStorage.getItem('cricket-blitz-daily-' + getTodayDateStr()) === 'done';
+    } catch (e) { return false; }
+  }
+
+  function completeDailyChallenge() {
+    try {
+      localStorage.setItem('cricket-blitz-daily-' + getTodayDateStr(), 'done');
+    } catch (e) {}
+  }
+
+  // Patch #23: Login streak
+  function loadLoginStreak() {
+    try {
+      const raw = localStorage.getItem('cricket-blitz-streak');
+      if (raw) {
+        const data = JSON.parse(raw);
+        const today = getTodayDateStr();
+        if (data.lastDate === today) {
+          return data;
+        }
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+        if (data.lastDate === yStr) {
+          const newData = { count: data.count + 1, lastDate: today };
+          localStorage.setItem('cricket-blitz-streak', JSON.stringify(newData));
+          return newData;
+        }
+      }
+      const newData = { count: 1, lastDate: getTodayDateStr() };
+      localStorage.setItem('cricket-blitz-streak', JSON.stringify(newData));
+      return newData;
+    } catch (e) {
+      return { count: 1, lastDate: getTodayDateStr() };
+    }
+  }
+
   const COMMENTARY = {
     dot: [
       "Dot ball. Good bowling, tight line.",
@@ -299,6 +402,7 @@ import * as THREE from 'three';
 
     // Combo streak
     comboStreak: 0,
+    _maxCombo: 0,
 
     // Camera shake
     cameraShakeTime: 0,
@@ -309,7 +413,17 @@ import * as THREE from 'three';
     gestureConfirmed: false,
 
     // Ball approach sound
-    ballApproachActive: false
+    ballApproachActive: false,
+
+    // Daily challenge
+    dailyChallengeCompleted: false,
+    dailyChallengeId: 0,
+
+    // Login streak
+    loginStreak: { count: 0, lastDate: '' },
+
+    // Bat skin
+    selectedBatSkin: '#D4A87C'
   };
 
   // ============================================
@@ -465,6 +579,7 @@ import * as THREE from 'three';
         `
       });
       const skyDome = new THREE.Mesh(skyGeo, skyMat);
+      skyDomeMesh = skyDome;
       scene.add(skyDome);
 
       // Stars (upper hemisphere only)
@@ -506,10 +621,12 @@ import * as THREE from 'three';
 
     // Lighting
     const ambient = new THREE.AmbientLight(0x404060, 0.5);
+    ambientLight = ambient;
     scene.add(ambient);
 
     const dirLight = new THREE.DirectionalLight(0xfff5e0, 0.7);
     dirLight.position.set(5, 20, 0);
+    dirLightRef = dirLight;
     scene.add(dirLight);
 
     // Build stadium
@@ -528,6 +645,9 @@ import * as THREE from 'three';
     buildSweetSpot();
     buildFielders();
     buildSweetSpotRing();
+
+    // Patch #21: Advertising boards along boundary
+    buildAdBoards();
 
     // Post-ball mesh
     const pbGeo = new THREE.SphereGeometry(0.15, 12, 8);
@@ -685,7 +805,9 @@ import * as THREE from 'three';
   function updateCrowdColors() {
     if (!crowdMesh) return;
     const colors = crowdMesh.geometry.getAttribute('color');
-    const count = Math.min(8, colors.count);
+    // Patch #17: More energetic crowd during bowling
+    const baseCrowdSwaps = state.matchPhase === 'bowling' ? 16 : 8;
+    const count = Math.min(baseCrowdSwaps, colors.count);
     for (let i = 0; i < count; i++) {
       const idx = Math.floor(Math.random() * colors.count);
       const c = new THREE.Color(randomCrowdColor());
@@ -780,6 +902,97 @@ import * as THREE from 'three';
   }
 
   // ---- Sweet Spot Ring (pulsing timing guide) ----
+  // Patch #17: Sky/lighting refs for environment variety
+  let skyDomeMesh, ambientLight, dirLightRef;
+
+  function setTwilightEnvironment() {
+    if (skyDomeMesh) {
+      skyDomeMesh.material = new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        uniforms: {},
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPos.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            float height = normalize(vWorldPosition).y;
+            vec3 horizon = vec3(0.6, 0.2, 0.05);
+            vec3 warmGlow = vec3(0.8, 0.35, 0.1);
+            vec3 midSky = vec3(0.3, 0.1, 0.25);
+            vec3 topSky = vec3(0.08, 0.05, 0.18);
+            vec3 color;
+            if (height < 0.0) { color = horizon; }
+            else if (height < 0.1) { color = mix(horizon, warmGlow, height / 0.1); }
+            else if (height < 0.25) { color = mix(warmGlow, midSky, (height - 0.1) / 0.15); }
+            else { color = mix(midSky, topSky, clamp((height - 0.25) / 0.5, 0.0, 1.0)); }
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `
+      });
+    }
+    if (dirLightRef) {
+      dirLightRef.color.set(0xffaa55);
+      dirLightRef.intensity = 0.8;
+    }
+    if (ambientLight) {
+      ambientLight.color.set(0x605040);
+      ambientLight.intensity = 0.6;
+    }
+    if (scene && scene.fog) {
+      scene.fog = new THREE.FogExp2(0x1a0a0e, 0.005);
+    }
+  }
+
+  function setNightEnvironment() {
+    if (skyDomeMesh) {
+      skyDomeMesh.material = new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        uniforms: {},
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPos.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vWorldPosition;
+          void main() {
+            float height = normalize(vWorldPosition).y;
+            vec3 horizon = vec3(0.05, 0.12, 0.04);
+            vec3 warmGlow = vec3(0.14, 0.10, 0.04);
+            vec3 midSky = vec3(0.04, 0.086, 0.157);
+            vec3 topSky = vec3(0.02, 0.05, 0.1);
+            vec3 color;
+            if (height < 0.0) { color = horizon; }
+            else if (height < 0.08) { color = mix(horizon, warmGlow, height / 0.08); }
+            else if (height < 0.2) { color = mix(warmGlow, midSky, (height - 0.08) / 0.12); }
+            else { color = mix(midSky, topSky, clamp((height - 0.2) / 0.6, 0.0, 1.0)); }
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `
+      });
+    }
+    if (dirLightRef) {
+      dirLightRef.color.set(0xfff5e0);
+      dirLightRef.intensity = 0.7;
+    }
+    if (ambientLight) {
+      ambientLight.color.set(0x404060);
+      ambientLight.intensity = 0.5;
+    }
+    if (scene && scene.fog) {
+      scene.fog = new THREE.FogExp2(0x0a1628, 0.006);
+    }
+  }
+
   let sweetSpotRing;
   function buildSweetSpotRing() {
     const geo = new THREE.RingGeometry(0.6, 0.8, 32);
@@ -788,6 +1001,20 @@ import * as THREE from 'three';
     sweetSpotRing.rotation.x = -Math.PI / 2;
     sweetSpotRing.position.set(0, 0.03, 1.0);
     scene.add(sweetSpotRing);
+  }
+
+  // ---- Patch #21: Advertising Boards ----
+  function buildAdBoards() {
+    const adColors = [0xFF0000, 0x0066FF, 0xFFD700, 0x00AA00, 0xFF6600, 0x9900CC];
+    const boardGeo = new THREE.BoxGeometry(8, 1.5, 0.2);
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const mat = new THREE.MeshBasicMaterial({ color: adColors[i % adColors.length] });
+      const board = new THREE.Mesh(boardGeo, mat);
+      board.position.set(Math.sin(angle) * 78, 0.75, Math.cos(angle) * 78);
+      board.rotation.y = angle + Math.PI;
+      scene.add(board);
+    }
   }
 
   // ---- Fielders ----
@@ -952,9 +1179,9 @@ import * as THREE from 'three';
     batHandle.position.y = -0.15;
     batGroup.add(batHandle);
 
-    // Bat blade
+    // Bat blade (Patch #19: applies selected bat skin)
     const bladeGeo = new THREE.BoxGeometry(0.06, 0.55, 0.04);
-    const bladeMat = new THREE.MeshLambertMaterial({ color: 0xD4A87C });
+    const bladeMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(state.selectedBatSkin) });
     batBlade = new THREE.Mesh(bladeGeo, bladeMat);
     batBlade.position.y = -0.53;
     batGroup.add(batBlade);
@@ -1388,7 +1615,11 @@ import * as THREE from 'three';
 
     ballSeam.visible = true;
     ballSeam.position.copy(ballMesh.position);
-    ballSeam.rotation.x = Date.now() * 0.01; // spin
+    // Patch #20: Enhanced ball rotation/seam animation
+    const spinMultiplier = (state.ballDeliveryType === 'inswing' || state.ballDeliveryType === 'outswing') ? 25 : 15;
+    const dtEst = 0.016; // approx frame dt
+    ballSeam.rotation.x += dtEst * spinMultiplier;
+    ballMesh.rotation.z += dtEst * 8;
 
     ballShadow.visible = true;
     ballShadow.position.set(bx, 0.01, bz);
@@ -1819,6 +2050,22 @@ import * as THREE from 'three';
     }
   }
 
+  // Patch #22: Near-miss "phew" sound
+  function playNearMissSound() {
+    if (!audioCtx || !state.soundEnabled) return;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.setTargetAtTime(0, audioCtx.currentTime + 0.06, 0.03);
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.15);
+  }
+
   function playBoundaryJingle(isSix) {
     if (!audioCtx || !state.soundEnabled) return;
     const notes = isSix ? [523, 659, 784, 1047, 1319] : [523, 659, 784];
@@ -2073,6 +2320,7 @@ import * as THREE from 'three';
     state.stumpScatter = null;
     state.batAngle = -30;
     state.batAnimating = false;
+    state._timingAnnounced = false; // Patch #24
     batGroup.rotation.z = THREE.MathUtils.degToRad(-30);
     batGroup.rotation.y = 0;
 
@@ -2114,6 +2362,8 @@ import * as THREE from 'three';
           state.bowlerAnimating = false;
           playDeliveryWhoosh();
           playBallApproach(state.ballSpeed);
+          // Patch #24: Announce ball bowled
+          announceSR('Ball bowled. ' + (DELIVERY_LABELS[state.ballDeliveryType] || 'Straight') + '.');
         }
         break;
 
@@ -2121,6 +2371,12 @@ import * as THREE from 'three';
         if (deliveryPhase !== 'inflight') break;
         deliveryTimer += dt * 1000;
         state.ballProgress = Math.min(1, deliveryTimer / state.ballSpeed);
+
+        // Patch #24: Announce timing window
+        if (state.ballProgress >= 0.7 && !state._timingAnnounced) {
+          state._timingAnnounced = true;
+          announceSR('Timing window open. Swing now!');
+        }
 
         if (state.swingTriggered && !state.batAnimating) {
           deliveryPhase = 'resolved';
@@ -2204,7 +2460,8 @@ import * as THREE from 'three';
 
       haptic([100]);
       state.comboStreak = 0;
-      announceScore(`Out! ${outcome.type}. ${state.runs} for ${state.wickets}.`);
+      // Patch #24: Detailed wicket announcement
+      announceScore(`OUT! ${outcome.type}. ${3 - state.wickets} wicket${3 - state.wickets !== 1 ? 's' : ''} remaining. Score: ${state.runs} for ${state.wickets}.`);
       showBallCommentary(outcome, false);
 
       if (state.wickets < 3) {
@@ -2234,6 +2491,7 @@ import * as THREE from 'three';
       state.consecutiveScoringBalls++;
       state.currentOverScoringBalls++;
       state.comboStreak++;
+      if (state.comboStreak > state._maxCombo) state._maxCombo = state.comboStreak;
     } else {
       state.consecutiveScoringBalls = 0;
       state.comboStreak = 0;
@@ -2298,7 +2556,18 @@ import * as THREE from 'three';
     } else if (runs === 0) {
       state.postBallType = 'default';
       state.postBallVx = (Math.random() - 0.5);
-      spawnFloatingText('DOT', textX, textBaseY, 'rgba(255,255,255,0.6)', 20);
+      // Patch #22: Near-miss feedback (30% chance on dot balls that are not on stumps)
+      if (!state.ballIsOnStumps && Math.random() < 0.3) {
+        const nearMissText = Math.random() < 0.5 ? 'CLOSE!' : 'BEATEN!';
+        spawnFloatingText(nearMissText, textX, textBaseY, 'rgba(255,255,0,0.5)', 24);
+        playNearMissSound();
+        cameraShake.active = true;
+        cameraShake.start = Date.now();
+        cameraShake.duration = 150;
+        cameraShake.intensity = 0.02;
+      } else {
+        spawnFloatingText('DOT', textX, textBaseY, 'rgba(255,255,255,0.6)', 20);
+      }
     } else {
       state.postBallType = 'default';
       state.postBallVx = (Math.random() - 0.5) * 1.5;
@@ -2411,6 +2680,10 @@ import * as THREE from 'three';
 
     overOverlay.classList.add('cb-visible');
 
+    // Patch #24: Between-overs SR announcement
+    const rrVal = state.totalBallsFaced > 0 ? (state.runs / (state.totalBallsFaced / 6)).toFixed(2) : '0.00';
+    announceSR(`End of over ${state.oversCompleted}. Score: ${state.runs} for ${state.wickets}. Run rate: ${rrVal}.`);
+
     state.autoOverTimer = 5;
     clearInterval(window._cbAutoOverInt);
     const countdownEl = overModal.querySelector('#overCountdown');
@@ -2510,6 +2783,9 @@ import * as THREE from 'three';
     state.stumpScatter = null;
     state.particles = [];
     state.floatingTexts = [];
+
+    // Patch #17: Switch to twilight environment
+    setTwilightEnvironment();
 
     // Build bowling-specific 3D objects if not yet built
     buildBowlingScene();
@@ -2686,7 +2962,10 @@ import * as THREE from 'three';
       ballMesh.position.set(lateralX, Math.max(0.15, yOff), bz);
       ballSeam.visible = true;
       ballSeam.position.copy(ballMesh.position);
-      ballSeam.rotation.x = Date.now() * 0.01;
+      // Patch #20: Enhanced ball rotation for bowling
+      const bowlSpinMult = (state.selectedDelivery === 'inswing' || state.selectedDelivery === 'outswing') ? 25 : 15;
+      ballSeam.rotation.x += 0.016 * bowlSpinMult;
+      ballMesh.rotation.z += 0.016 * 8;
       ballShadow.visible = true;
       ballShadow.position.set(lateralX, 0.01, bz);
 
@@ -2926,7 +3205,8 @@ import * as THREE from 'three';
       aiBatAnimType = 'defense';
 
       haptic([100]);
-      announceScore(`Wicket! ${outcome.type}. AI: ${state.bowlingAIScore}/${state.bowlingAIWickets}`);
+      // Patch #24: Detailed bowling wicket announcement
+      announceScore(`Wicket! ${outcome.type}. AI: ${state.bowlingAIScore} for ${state.bowlingAIWickets}. Need ${Math.max(0, state.battingScore + 1 - state.bowlingAIScore)} more.`);
     } else {
       // Runs scored by AI
       state.bowlingAIScore += outcome.runs;
@@ -2990,7 +3270,8 @@ import * as THREE from 'three';
         playBatCrack(1);
       }
 
-      announceScore(`${outcome.runs} run${outcome.runs !== 1 ? 's' : ''}. AI: ${state.bowlingAIScore}/${state.bowlingAIWickets}`);
+      // Patch #24: Detailed bowling run announcement
+      announceScore(`Delivering ${DELIVERY_LABELS[state.selectedDelivery] || 'Straight'} at ${state.selectedLine} line. AI scored ${outcome.runs} run${outcome.runs !== 1 ? 's' : ''}. AI: ${state.bowlingAIScore} for ${state.bowlingAIWickets}.`);
     }
 
     showBallCommentary(outcome, true);
@@ -3156,9 +3437,22 @@ import * as THREE from 'three';
     const boundaryBonus = state.battingFours * 2 + state.battingSixes * 4;
     const wicketPenalty = state.battingWickets * 10;
 
+    // Patch #18: Daily challenge check
+    const challenge = getTodaysChallenge();
+    let dailyChallengeBonus = 0;
+    let dailyChallengeResult = false;
+    if (!isDailyChallengeCompleted() && challenge.check(state)) {
+      dailyChallengeResult = true;
+      dailyChallengeBonus = 25;
+      completeDailyChallenge();
+    }
+
+    // Patch #23: Streak bonus
+    const streakBonus = Math.min(35, state.loginStreak.count * 5);
+
     const finalScore = Math.max(0,
       state.battingScore + boundaryBonus - wicketPenalty +
-      bowlingBonus + wicketsBonus + economyBonus
+      bowlingBonus + wicketsBonus + economyBonus + dailyChallengeBonus + streakBonus
     );
     state.lastFinalScore = finalScore;
 
@@ -3219,8 +3513,17 @@ import * as THREE from 'three';
         <div class="cb-stat-row"><span>Bowling Defense Bonus</span><span>+${bowlingBonus}</span></div>
         <div class="cb-stat-row"><span>Wickets Taken (x10)</span><span>+${wicketsBonus}</span></div>
         ${economyBonus ? '<div class="cb-stat-row"><span>Economy Bonus</span><span>+20</span></div>' : ''}
+        ${streakBonus > 0 ? `<div class="cb-stat-row"><span>Streak Bonus (Day ${state.loginStreak.count})</span><span>+${streakBonus}</span></div>` : ''}
+        ${dailyChallengeBonus > 0 ? '<div class="cb-stat-row"><span>Daily Challenge Bonus</span><span>+25</span></div>' : ''}
         <div class="cb-stat-row cb-score-total"><span>Total Score</span><span>${finalScore}</span></div>
       </div>
+      <div class="cb-daily-result" style="margin:10px 0;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:10px;font-size:0.85rem;">
+        <span style="color:var(--cb-text-dim);">Daily Challenge: ${challenge.text}</span><br>
+        <span style="color:${dailyChallengeResult || isDailyChallengeCompleted() ? '#4CAF50' : '#E8000D'};font-weight:700;">
+          ${dailyChallengeResult || isDailyChallengeCompleted() ? 'Complete!' : 'Not completed'}
+        </span>
+      </div>
+      ${state.loginStreak.count > 1 ? `<div style="font-size:0.8rem;color:var(--cb-accent);margin-bottom:8px;">Day ${state.loginStreak.count} Streak</div>` : ''}
       <div class="cb-btn-row">
         <button class="cb-btn" onclick="window._cbPlayAgain()">PLAY AGAIN</button>
         <button class="cb-share-btn" onclick="window._cbShare()">&#128279; Share</button>
@@ -3426,6 +3729,12 @@ import * as THREE from 'three';
     if (assertiveEl) assertiveEl.textContent = text;
   }
 
+  // Patch #24: Dedicated assertive SR announcement
+  function announceSR(text) {
+    const el = document.getElementById('srAssertive');
+    if (el) el.textContent = text;
+  }
+
   // ============================================
   // ACHIEVEMENTS
   // ============================================
@@ -3437,6 +3746,9 @@ import * as THREE from 'three';
 
     const ach = ACHIEVEMENTS[id];
     showAchievementToast(ach.name, ach.desc);
+
+    // Patch #19: Save achievement for bat skin unlocks
+    saveAchievementToStorage(id);
 
     try {
       if (window.apiClient) {
@@ -3540,6 +3852,57 @@ import * as THREE from 'three';
     });
   }
 
+  function buildTitleExtras() {
+    // Patch #18: Daily challenge card
+    const challengeDiv = $('dailyChallenge');
+    if (challengeDiv) {
+      const challenge = getTodaysChallenge();
+      const done = isDailyChallengeCompleted();
+      challengeDiv.innerHTML = `
+        <div class="cb-daily-label">TODAY'S CHALLENGE</div>
+        <div class="cb-daily-text">${challenge.text}</div>
+        <div class="cb-daily-status">${done ? 'Complete!' : 'Not yet completed'}</div>
+      `;
+    }
+
+    // Patch #23: Streak badge
+    const streakDiv = $('streakBadge');
+    if (streakDiv) {
+      const streak = state.loginStreak;
+      if (streak.count > 1) {
+        streakDiv.textContent = 'Day ' + streak.count + ' Streak';
+        streakDiv.style.display = 'block';
+      } else {
+        streakDiv.style.display = 'none';
+      }
+    }
+
+    // Patch #19: Bat skin selector
+    const skinDiv = $('batSkinSelector');
+    if (skinDiv) {
+      const available = getAvailableBatSkins();
+      let html = '<div class="cb-skin-label">BAT SKIN</div><div class="cb-skin-grid">';
+      available.forEach(skin => {
+        const selected = state.selectedBatSkin === skin.color ? ' selected' : '';
+        html += `<button class="cb-skin-btn${selected}" data-skin-id="${skin.id}" data-skin-color="${skin.color}" style="background:${skin.color};" title="${skin.name}"></button>`;
+      });
+      html += '</div>';
+      skinDiv.innerHTML = html;
+      skinDiv.querySelectorAll('.cb-skin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const color = btn.dataset.skinColor;
+          const id = btn.dataset.skinId;
+          state.selectedBatSkin = color;
+          try { localStorage.setItem('cricket-blitz-bat-skin', id); } catch (e) {}
+          if (batBlade) batBlade.material.color.set(new THREE.Color(color));
+          skinDiv.querySelectorAll('.cb-skin-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          playUISound('select');
+        });
+      });
+    }
+  }
+
   function selectTeam(id) {
     state.selectedTeam = id;
     playUISound('select');
@@ -3590,6 +3953,7 @@ import * as THREE from 'three';
     state.postBallActive = false;
     state.stumpScatter = null;
     state.achievementsUnlocked = new Set();
+    state._maxCombo = 0;
     state.gameStartTime = Date.now();
     state.lastFrameTime = 0;
     state.newBatsmanAnim = false;
@@ -3662,6 +4026,9 @@ import * as THREE from 'three';
     hudTop.style.display = '';
     hudBottom.style.display = '';
 
+    // Patch #17: Restore night sky
+    setNightEnvironment();
+
     // Reset 3D visibility
     batsmanGroup.visible = true;
     bowlerGroup.visible = true;
@@ -3677,6 +4044,9 @@ import * as THREE from 'three';
     if (tensionEdge) tensionEdge.classList.remove('active');
     const ppBadge = $('powerplayBadge');
     if (ppBadge) ppBadge.classList.remove('show');
+
+    // Refresh title extras
+    buildTitleExtras();
 
     try {
       const best = localStorage.getItem('cricket-blitz-high-score');
@@ -4174,6 +4544,15 @@ import * as THREE from 'three';
 
     // Build team select
     buildTeamGrid();
+
+    // Patch #23: Load login streak
+    state.loginStreak = loadLoginStreak();
+
+    // Patch #19: Load bat skin
+    state.selectedBatSkin = loadSelectedBatSkin();
+
+    // Build title screen extras (daily challenge, bat skin, streak)
+    buildTitleExtras();
 
     // Show best score
     try {

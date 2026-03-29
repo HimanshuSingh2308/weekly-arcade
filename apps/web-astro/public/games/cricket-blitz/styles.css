@@ -1400,6 +1400,92 @@
   .cb-touch-zones .cb-touch-zone { opacity: 0.15; }
 }
 
+/* ---- Patch #18: Daily Challenge ---- */
+.cb-daily-challenge {
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.cb-daily-label {
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cb-accent);
+  margin-bottom: 4px;
+}
+
+.cb-daily-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cb-text);
+  margin-bottom: 4px;
+}
+
+.cb-daily-status {
+  font-size: 0.7rem;
+  color: var(--cb-text-dim);
+}
+
+/* ---- Patch #19: Bat Skin Selector ---- */
+.cb-bat-skin-selector {
+  margin: 8px 0;
+  text-align: center;
+}
+
+.cb-skin-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cb-text-dim);
+  margin-bottom: 6px;
+}
+
+.cb-skin-grid {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.cb-skin-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+}
+
+.cb-skin-btn:hover {
+  transform: scale(1.15);
+}
+
+.cb-skin-btn.selected {
+  border-color: #FFD700;
+  box-shadow: 0 0 12px rgba(255,215,0,0.5);
+  transform: scale(1.1);
+}
+
+/* ---- Patch #23: Streak Badge ---- */
+.cb-streak-badge {
+  display: none;
+  margin: 8px auto;
+  padding: 4px 16px;
+  background: linear-gradient(135deg, #FF6B00, #FF4444);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 20px;
+  width: fit-content;
+  box-shadow: 0 0 12px rgba(255,107,0,0.4);
+  letter-spacing: 0.04em;
+}
+
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }
