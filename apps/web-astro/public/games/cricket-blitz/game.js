@@ -423,7 +423,13 @@ import * as THREE from 'three';
     loginStreak: { count: 0, lastDate: '' },
 
     // Bat skin
-    selectedBatSkin: '#D4A87C'
+    selectedBatSkin: '#D4A87C',
+
+    // Visual overhaul state
+    crowdJumpTime: 0,
+    crowdFlashTimer: 0,
+    batCelebration: false,
+    batCelebrationTimer: 0
   };
 
   // ============================================
@@ -498,6 +504,15 @@ import * as THREE from 'three';
   // Scatter physics for stumps
   let scatterStumps = [];
   let scatterBails = [];
+
+  // Visual overhaul: dust particles, ball trail, batsman shadow, floodlight cones
+  let dustParticles = null;
+  let dustVelocities = [];
+  let ballTrailPool = [];
+  let ballTrailIndex = 0;
+  let ballTrailFrame = 0;
+  let batsmanShadow = null;
+  let crowdOriginalY = null;
 
   // Post-ball 3D object
   let postBallMesh;
@@ -649,6 +664,12 @@ import * as THREE from 'three';
     // Patch #21: Advertising boards along boundary
     buildAdBoards();
 
+    // Visual overhaul additions
+    buildDustParticles();
+    buildBallTrail();
+    buildBatsmanShadow();
+    buildFloodlightCones();
+
     // Post-ball mesh
     const pbGeo = new THREE.SphereGeometry(0.15, 12, 8);
     const pbMat = new THREE.MeshPhongMaterial({ color: 0xcc0000 });
@@ -771,13 +792,13 @@ import * as THREE from 'three';
 
   // ---- Crowd (colored dots as sprites on the stands) ----
   function buildCrowd() {
-    const count = 500;
+    const count = 1500;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = 81;
+      const r = 80 + Math.random() * 2; // tighter packing (80-82 vs fixed 81)
       positions[i * 3] = Math.cos(angle) * r;
       positions[i * 3 + 1] = 1 + Math.random() * 10;
       positions[i * 3 + 2] = 11 + Math.sin(angle) * r;
@@ -800,6 +821,12 @@ import * as THREE from 'three';
 
     crowdMesh = new THREE.Points(geo, mat);
     scene.add(crowdMesh);
+
+    // Store original Y positions for jump animation
+    crowdOriginalY = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      crowdOriginalY[i] = positions[i * 3 + 1];
+    }
   }
 
   function updateCrowdColors() {
@@ -840,6 +867,38 @@ import * as THREE from 'three';
         const idx = Math.floor(Math.random() * colors.count);
         const c = new THREE.Color(randomCrowdColor());
         colors.setXYZ(idx, c.r, c.g, c.b);
+      }
+    }
+
+    // Camera flash effect: every 2 seconds, flash 1-2 random dots white
+    state.crowdFlashTimer += 16; // approx frame ms
+    if (state.crowdFlashTimer > 2000) {
+      state.crowdFlashTimer = 0;
+      const flashCount = 1 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < flashCount; i++) {
+        const idx = Math.floor(Math.random() * colors.count);
+        colors.setXYZ(idx, 1, 1, 1); // flash white
+      }
+    }
+
+    // Crowd jump on boundaries (4 or 6)
+    if (state.crowdJumpTime > 0 && crowdOriginalY) {
+      const positions = crowdMesh.geometry.getAttribute('position');
+      const jumpT = state.crowdJumpTime;
+      for (let i = 0; i < positions.count; i++) {
+        const phase = i * 0.01; // slight offset per dot
+        const jumpY = Math.sin((jumpT + phase) * Math.PI * 4) * 0.3;
+        positions.setY(i, crowdOriginalY[i] + Math.max(0, jumpY));
+      }
+      positions.needsUpdate = true;
+      state.crowdJumpTime -= 0.016;
+      if (state.crowdJumpTime <= 0) {
+        state.crowdJumpTime = 0;
+        // Reset Y positions
+        for (let i = 0; i < positions.count; i++) {
+          positions.setY(i, crowdOriginalY[i]);
+        }
+        positions.needsUpdate = true;
       }
     }
 
@@ -889,6 +948,156 @@ import * as THREE from 'three';
       group.position.set(pos[0], pos[1], pos[2]);
       scene.add(group);
       floodlightGroups.push(group);
+    });
+  }
+
+  // ---- Dust Particles in Floodlight Beams ----
+  function buildDustParticles() {
+    const count = 50;
+    const positions = new Float32Array(count * 3);
+    dustVelocities = [];
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 60;
+      positions[i * 3 + 1] = 5 + Math.random() * 10;
+      positions[i * 3 + 2] = 11 + (Math.random() - 0.5) * 60;
+      dustVelocities.push({
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.05,
+        vz: (Math.random() - 0.5) * 0.2
+      });
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.08,
+      transparent: true,
+      opacity: 0.3,
+      sizeAttenuation: true
+    });
+    dustParticles = new THREE.Points(geo, mat);
+    scene.add(dustParticles);
+  }
+
+  function updateDustParticles(dt) {
+    if (!dustParticles) return;
+    const positions = dustParticles.geometry.getAttribute('position');
+    for (let i = 0; i < positions.count; i++) {
+      const v = dustVelocities[i];
+      let x = positions.getX(i) + v.vx * dt * 10;
+      let y = positions.getY(i) + v.vy * dt * 10;
+      let z = positions.getZ(i) + v.vz * dt * 10;
+      // Wrap around if too far
+      if (x > 40) x = -40;
+      if (x < -40) x = 40;
+      if (z > 41) z = -19;
+      if (z < -19) z = 41;
+      if (y > 15) y = 5;
+      if (y < 5) y = 15;
+      positions.setXYZ(i, x, y, z);
+    }
+    positions.needsUpdate = true;
+  }
+
+  // ---- Ball Trail ----
+  function buildBallTrail() {
+    const trailGeo = new THREE.SphereGeometry(0.05, 6, 4);
+    for (let i = 0; i < 20; i++) {
+      const trailMat = new THREE.MeshBasicMaterial({
+        color: 0xcc0000,
+        transparent: true,
+        opacity: 0
+      });
+      const mesh = new THREE.Mesh(trailGeo, trailMat);
+      mesh.visible = false;
+      mesh.userData.life = 0;
+      mesh.userData.maxLife = 0.5;
+      scene.add(mesh);
+      ballTrailPool.push(mesh);
+    }
+  }
+
+  function updateBallTrail(dt) {
+    // Spawn trail spheres during ball flight
+    if (state.ballActive && state.phase === 'BATTING') {
+      ballTrailFrame++;
+      if (ballTrailFrame % 3 === 0 && ballMesh.visible) {
+        const trail = ballTrailPool[ballTrailIndex % 20];
+        trail.position.copy(ballMesh.position);
+        trail.visible = true;
+        trail.scale.setScalar(1);
+        trail.userData.life = 0.5;
+        // Gold trail on six potential (lofted shots)
+        if (state.shotDirection === 'straight') {
+          trail.material.color.setHex(0xFFD700);
+          trail.material.opacity = 0.7;
+        } else {
+          trail.material.color.setHex(0xcc0000);
+          trail.material.opacity = 0.4;
+        }
+        trail.userData.maxLife = 0.5;
+        ballTrailIndex++;
+      }
+    } else {
+      ballTrailFrame = 0;
+    }
+
+    // Update existing trail spheres
+    for (let i = 0; i < ballTrailPool.length; i++) {
+      const trail = ballTrailPool[i];
+      if (trail.userData.life > 0) {
+        trail.userData.life -= dt;
+        const t = Math.max(0, trail.userData.life / trail.userData.maxLife);
+        trail.material.opacity = t * 0.4;
+        trail.scale.setScalar(t);
+        if (trail.userData.life <= 0) {
+          trail.visible = false;
+        }
+      }
+    }
+  }
+
+  // ---- Batsman Ground Shadow ----
+  function buildBatsmanShadow() {
+    const geo = new THREE.CircleGeometry(0.4, 16);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.3
+    });
+    batsmanShadow = new THREE.Mesh(geo, mat);
+    batsmanShadow.rotation.x = -Math.PI / 2;
+    batsmanShadow.position.set(0, 0.01, 0.2);
+    scene.add(batsmanShadow);
+  }
+
+  function updateBatsmanShadow() {
+    if (batsmanShadow && batsmanGroup) {
+      batsmanShadow.position.x = batsmanGroup.position.x;
+      batsmanShadow.position.z = batsmanGroup.position.z;
+    }
+  }
+
+  // ---- Floodlight Beam Cones ----
+  function buildFloodlightCones() {
+    const floodPositions = [
+      [-40, 0, -20],
+      [40, 0, -20],
+      [-40, 0, 42],
+      [40, 0, 42]
+    ];
+    floodPositions.forEach(pos => {
+      const coneGeo = new THREE.ConeGeometry(15, 30, 8);
+      const coneMat = new THREE.MeshBasicMaterial({
+        color: 0xfff5e0,
+        transparent: true,
+        opacity: 0.03
+      });
+      const cone = new THREE.Mesh(coneGeo, coneMat);
+      // Position cone at top of floodlight, pointing downward
+      cone.position.set(pos[0], 20.5 - 15, pos[2]);
+      cone.rotation.x = Math.PI; // flip upside down (pointing down)
+      scene.add(cone);
     });
   }
 
@@ -1376,10 +1585,16 @@ import * as THREE from 'three';
   // ============================================
 
   function updateThreeScene(dt) {
+    // Always update atmospheric effects
+    if (!reducedMotion) {
+      updateDustParticles(dt);
+    }
+
     if (state.phase === 'BOWLING') {
       updateBowlingScene(dt);
       updateParticles3D(dt);
       updateCamera(dt);
+      updateBatsmanShadow();
       return;
     }
 
@@ -1459,6 +1674,41 @@ import * as THREE from 'three';
       updateCrowdColors();
     }
 
+    // Ball trail
+    if (!reducedMotion) {
+      updateBallTrail(dt);
+    }
+
+    // Batsman shadow
+    updateBatsmanShadow();
+
+    // Batsman idle animation (when ball not in flight)
+    if (!state.ballActive && !state.batAnimating && !reducedMotion) {
+      // Subtle breathing sway
+      batsmanGroup.position.y = Math.sin(Date.now() * 0.002) * 0.02;
+      // Bat taps ground gently
+      if (!state.batCelebration) {
+        const idleBatAngle = -30 + Math.sin(Date.now() * 0.003) * 2;
+        batGroup.rotation.z = THREE.MathUtils.degToRad(idleBatAngle);
+      }
+    } else if (state.ballActive || state.batAnimating) {
+      batsmanGroup.position.y = 0;
+    }
+
+    // Bat celebration on boundary
+    if (state.batCelebration && !reducedMotion) {
+      state.batCelebrationTimer -= dt;
+      if (state.batCelebrationTimer > 0) {
+        // Raise bat upward (vertical)
+        batGroup.rotation.z = THREE.MathUtils.degToRad(-90);
+        batGroup.rotation.y = 0;
+      } else {
+        state.batCelebration = false;
+        batGroup.rotation.z = THREE.MathUtils.degToRad(-30);
+        batGroup.rotation.y = 0;
+      }
+    }
+
     // Camera
     updateCamera(dt);
   }
@@ -1526,8 +1776,11 @@ import * as THREE from 'three';
       if (t >= 1) {
         state.batAnimating = false;
         state.batAngle = -30;
-        batGroup.rotation.z = THREE.MathUtils.degToRad(-30);
-        batGroup.rotation.y = 0;
+        // Don't reset bat angle if celebration is active
+        if (!state.batCelebration) {
+          batGroup.rotation.z = THREE.MathUtils.degToRad(-30);
+          batGroup.rotation.y = 0;
+        }
       }
     }
   }
@@ -2535,6 +2788,10 @@ import * as THREE from 'three';
       cameraShake.duration = 200;
       cameraShake.intensity = 0.05;
       checkAchievement('cb-first-four');
+      // Crowd jump and bat celebration on four
+      state.crowdJumpTime = 0.5;
+      state.batCelebration = true;
+      state.batCelebrationTimer = 0.8;
     } else if (rawRuns === 6) {
       state.sixes++;
       state.postBallType = 'six';
@@ -2553,6 +2810,10 @@ import * as THREE from 'three';
       cameraShake.intensity = 0.15;
       checkAchievement('cb-first-six');
       triggerCrowdWave();
+      // Crowd jump and bat celebration on six
+      state.crowdJumpTime = 0.5;
+      state.batCelebration = true;
+      state.batCelebrationTimer = 0.8;
     } else if (runs === 0) {
       state.postBallType = 'default';
       state.postBallVx = (Math.random() - 0.5);
