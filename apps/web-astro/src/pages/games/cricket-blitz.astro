@@ -1,6 +1,6 @@
 ---
 /**
- * Cricket Blitz -- IPL-Style Arcade Cricket.
+ * Cricket Blitz -- IPL-Style Arcade Cricket (Three.js 3D).
  *
  * GameLayout handles: meta, SEO, structured data, header, shared modules, fallback, more-games.
  */
@@ -24,6 +24,13 @@ import gameData from '../../data/games/cricket-blitz.json';
 >
   <Fragment slot="head">
     <link rel="stylesheet" href="/games/cricket-blitz/styles.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+      }
+    }
+    </script>
     <style is:global>
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -38,8 +45,7 @@ import gameData from '../../data/games/cricket-blitz.json';
   <!-- Game Container -->
   <div class="cb-game-wrap" id="gameWrap">
     <div class="cb-game-container" id="gameContainer">
-      <canvas id="bgCanvas" aria-hidden="true"></canvas>
-      <canvas id="fgCanvas" role="img" aria-label="Cricket Blitz game pitch"></canvas>
+      <div id="threeContainer" style="position:absolute;inset:0;z-index:1;overflow:hidden;"></div>
 
       <!-- Touch zones (mobile) -->
       <div class="cb-touch-zones" id="touchZones">
@@ -173,6 +179,6 @@ import gameData from '../../data/games/cricket-blitz.json';
   <div id="srAnnounce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <Fragment slot="scripts">
-    <script is:inline src="/games/cricket-blitz/game.js"></script>
+    <script type="module" src="/games/cricket-blitz/game.js"></script>
   </Fragment>
 </GameLayout>

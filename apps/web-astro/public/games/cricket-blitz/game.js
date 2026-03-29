@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 (() => {
   'use strict';
 
@@ -216,10 +218,6 @@
   // ============================================
 
   const $ = (id) => document.getElementById(id);
-  const bgCanvas = $('bgCanvas');
-  const fgCanvas = $('fgCanvas');
-  const bgCtx = bgCanvas.getContext('2d');
-  const fgCtx = fgCanvas.getContext('2d');
   const gameContainer = $('gameContainer');
   const gameWrap = $('gameWrap');
 
@@ -251,38 +249,1031 @@
   const touchZones = $('touchZones');
 
   // ============================================
-  // CANVAS SIZING
+  // THREE.JS SCENE SETUP
   // ============================================
 
-  let W = 0, H = 0, DPR = 1;
+  let renderer, scene, camera;
+  let W = 0, H = 0;
   let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let isTouchDevice = false;
 
-  // Crowd dot data (drawn to bg canvas)
-  let crowdDots = [];
-  let bgDirty = true;
+  // Scene object references
+  let ground, pitchStrip, boundaryRope;
+  let creaseLineBatsman, creaseLineBowler;
+  let batsmanGroup, bowlerGroup, ballMesh, ballShadow, ballSeam;
+  let batsmanBody, batsmanHelmet, batsmanVisor, batsmanLegL, batsmanLegR, batGroup, batHandle, batBlade, batHighlight;
+  let bowlerBody, bowlerHead, bowlerLegL, bowlerLegR, bowlerArm, bowlerBallInHand;
+  let stumpsGroup, stumpMeshes = [], bailMeshes = [];
+  let stumpsGroupFar, stumpMeshesFar = [], bailMeshesFar = [];
+  let crowdMesh, floodlightGroups = [];
+  let sweetSpotLine;
+  let standsMesh;
 
-  function resizeCanvas() {
-    DPR = window.devicePixelRatio || 1;
-    const cw = gameContainer.clientWidth;
-    const ch = gameContainer.clientHeight;
-    W = cw;
-    H = ch;
+  // Scatter physics for stumps
+  let scatterStumps = [];
+  let scatterBails = [];
 
-    bgCanvas.width = cw * DPR;
-    bgCanvas.height = ch * DPR;
-    bgCanvas.style.width = cw + 'px';
-    bgCanvas.style.height = ch + 'px';
-    bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // Post-ball 3D object
+  let postBallMesh;
 
-    fgCanvas.width = cw * DPR;
-    fgCanvas.height = ch * DPR;
-    fgCanvas.style.width = cw + 'px';
-    fgCanvas.style.height = ch + 'px';
-    fgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // Particle pool (3D)
+  const MAX_PARTICLES = 150;
+  let particlePool = [];
+  let particleMeshes = [];
 
-    initCrowdDots();
-    bgDirty = true;
+  // Camera animation state
+  let cameraTarget = new THREE.Vector3(0, 1, 11);
+  let cameraPos = new THREE.Vector3(0, 3, -2);
+  let cameraShake = { active: false, start: 0, duration: 400, intensity: 0.08 };
+
+  function initThreeScene() {
+    // Renderer
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = false; // keep perf high
+    renderer.setClearColor(0x1a0a3e, 1);
+
+    const container = $('threeContainer');
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+
+    // Scene
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x1a0a3e, 0.008);
+
+    // Camera
+    camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
+    camera.position.set(0, 3, -2);
+    camera.lookAt(0, 1, 11);
+
+    // Lighting
+    const ambient = new THREE.AmbientLight(0x404060, 0.5);
+    scene.add(ambient);
+
+    const dirLight = new THREE.DirectionalLight(0xfff5e0, 0.7);
+    dirLight.position.set(5, 20, 0);
+    scene.add(dirLight);
+
+    // Build stadium
+    buildGround();
+    buildPitch();
+    buildBoundary();
+    buildStands();
+    buildFloodlights();
+    buildCrowd();
+
+    // Build players
+    buildBatsman();
+    buildBowler();
+    buildBall();
+    buildStumps();
+    buildSweetSpot();
+
+    // Post-ball mesh
+    const pbGeo = new THREE.SphereGeometry(0.15, 12, 8);
+    const pbMat = new THREE.MeshPhongMaterial({ color: 0xcc0000 });
+    postBallMesh = new THREE.Mesh(pbGeo, pbMat);
+    postBallMesh.visible = false;
+    scene.add(postBallMesh);
+
+    // Particle meshes pool
+    const pGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const pMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 });
+      const pMesh = new THREE.Mesh(pGeo, pMat);
+      pMesh.visible = false;
+      scene.add(pMesh);
+      particleMeshes.push(pMesh);
+    }
+
+    handleResize();
+  }
+
+  function handleResize() {
+    W = gameContainer.clientWidth;
+    H = gameContainer.clientHeight;
+    if (!renderer) return;
+    renderer.setSize(W, H);
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+  }
+
+  // ---- Ground ----
+  function buildGround() {
+    const geo = new THREE.CircleGeometry(80, 64);
+    const mat = new THREE.MeshLambertMaterial({ color: 0x2d8a1e });
+    ground = new THREE.Mesh(geo, mat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
+    scene.add(ground);
+  }
+
+  // ---- Pitch Strip ----
+  function buildPitch() {
+    const geo = new THREE.PlaneGeometry(3, 22);
+    const mat = new THREE.MeshLambertMaterial({ color: 0xc8a96e });
+    pitchStrip = new THREE.Mesh(geo, mat);
+    pitchStrip.rotation.x = -Math.PI / 2;
+    pitchStrip.position.set(0, 0.01, 11);
+    scene.add(pitchStrip);
+
+    // Pitch texture dots
+    const dotGeo = new THREE.PlaneGeometry(0.06, 0.06);
+    const dotMat = new THREE.MeshBasicMaterial({ color: 0xa0783c, transparent: true, opacity: 0.3 });
+    for (let i = 0; i < 60; i++) {
+      const dot = new THREE.Mesh(dotGeo, dotMat);
+      dot.rotation.x = -Math.PI / 2;
+      dot.position.set(
+        (Math.random() - 0.5) * 2.8,
+        0.015,
+        11 + (Math.random() - 0.5) * 20
+      );
+      scene.add(dot);
+    }
+  }
+
+  // ---- Crease Lines ----
+  function buildCreaseLine(z, width) {
+    const geo = new THREE.BoxGeometry(width, 0.02, 0.06);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+    const line = new THREE.Mesh(geo, mat);
+    line.position.set(0, 0.02, z);
+    scene.add(line);
+    return line;
+  }
+
+  // ---- Boundary Rope ----
+  function buildBoundary() {
+    const geo = new THREE.RingGeometry(78, 79, 64);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+    boundaryRope = new THREE.Mesh(geo, mat);
+    boundaryRope.rotation.x = -Math.PI / 2;
+    boundaryRope.position.y = 0.02;
+    scene.add(boundaryRope);
+  }
+
+  // ---- Stands / Crowd Wall ----
+  function buildStands() {
+    // A curved wall around the boundary using a partial cylinder
+    const geo = new THREE.CylinderGeometry(82, 82, 12, 64, 1, true, 0, Math.PI * 2);
+    const mat = new THREE.MeshLambertMaterial({
+      color: 0x1a1a3e,
+      side: THREE.BackSide
+    });
+    standsMesh = new THREE.Mesh(geo, mat);
+    standsMesh.position.set(0, 6, 11);
+    scene.add(standsMesh);
+  }
+
+  // ---- Crowd (colored dots as sprites on the stands) ----
+  function buildCrowd() {
+    const count = 500;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 81;
+      positions[i * 3] = Math.cos(angle) * r;
+      positions[i * 3 + 1] = 1 + Math.random() * 10;
+      positions[i * 3 + 2] = 11 + Math.sin(angle) * r;
+
+      const color = new THREE.Color(randomCrowdColor());
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const mat = new THREE.PointsMaterial({
+      size: 0.6,
+      vertexColors: true,
+      sizeAttenuation: true
+    });
+
+    crowdMesh = new THREE.Points(geo, mat);
+    scene.add(crowdMesh);
+  }
+
+  function updateCrowdColors() {
+    if (!crowdMesh) return;
+    const colors = crowdMesh.geometry.getAttribute('color');
+    const count = Math.min(8, colors.count);
+    for (let i = 0; i < count; i++) {
+      const idx = Math.floor(Math.random() * colors.count);
+      const c = new THREE.Color(randomCrowdColor());
+      colors.setXYZ(idx, c.r, c.g, c.b);
+    }
+
+    if (state.crowdWaveActive) {
+      const waveElapsed = (Date.now() - state.crowdWaveStart) / 1000;
+      if (waveElapsed > 2) {
+        state.crowdWaveActive = false;
+      } else {
+        const positions = crowdMesh.geometry.getAttribute('position');
+        const waveAngle = waveElapsed * Math.PI;
+        const team = state.selectedTeam ? TEAMS[state.selectedTeam] : null;
+        const waveColor = new THREE.Color(team ? team.secondary : '#FFD700');
+        for (let i = 0; i < colors.count; i++) {
+          const x = positions.getX(i);
+          const z = positions.getZ(i) - 11;
+          const angle = Math.atan2(z, x);
+          if (Math.abs(angle - waveAngle) < 0.3) {
+            colors.setXYZ(i, waveColor.r, waveColor.g, waveColor.b);
+          }
+        }
+      }
+    }
+
+    if (state.tensionActive) {
+      const extra = Math.min(15, colors.count);
+      for (let i = 0; i < extra; i++) {
+        const idx = Math.floor(Math.random() * colors.count);
+        const c = new THREE.Color(randomCrowdColor());
+        colors.setXYZ(idx, c.r, c.g, c.b);
+      }
+    }
+
+    colors.needsUpdate = true;
+  }
+
+  function randomCrowdColor() {
+    const team = state.selectedTeam ? TEAMS[state.selectedTeam] : null;
+    const r = Math.random();
+    if (team && r < 0.4) return team.primary;
+    if (team && r < 0.55) return team.secondary;
+    const bright = ['#FF4444','#44FF44','#4444FF','#FFFF44','#FF44FF','#44FFFF','#FFFFFF','#FFD700','#FF6B00'];
+    return bright[Math.floor(Math.random() * bright.length)];
+  }
+
+  // ---- Floodlights ----
+  function buildFloodlights() {
+    const positions = [
+      [-40, 0, -20],
+      [40, 0, -20],
+      [-40, 0, 42],
+      [40, 0, 42]
+    ];
+    positions.forEach(pos => {
+      const group = new THREE.Group();
+      // Tower pole
+      const poleGeo = new THREE.BoxGeometry(0.3, 20, 0.3);
+      const poleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+      const pole = new THREE.Mesh(poleGeo, poleMat);
+      pole.position.y = 10;
+      group.add(pole);
+
+      // Light box
+      const boxGeo = new THREE.BoxGeometry(1.5, 0.5, 1.5);
+      const boxMat = new THREE.MeshBasicMaterial({ color: 0xffffe0, transparent: true, opacity: 0.8 });
+      const box = new THREE.Mesh(boxGeo, boxMat);
+      box.position.y = 20.5;
+      group.add(box);
+
+      // Spot light
+      const spot = new THREE.SpotLight(0xfff5e0, 0.3, 100, Math.PI / 6, 0.5, 1);
+      spot.position.set(0, 20.5, 0);
+      spot.target.position.set(0, 0, 11);
+      group.add(spot);
+      group.add(spot.target);
+
+      group.position.set(pos[0], pos[1], pos[2]);
+      scene.add(group);
+      floodlightGroups.push(group);
+    });
+  }
+
+  // ---- Sweet Spot ----
+  function buildSweetSpot() {
+    const geo = new THREE.BoxGeometry(4, 0.02, 0.08);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0 });
+    sweetSpotLine = new THREE.Mesh(geo, mat);
+    sweetSpotLine.position.set(0, 0.03, 1.5);
+    scene.add(sweetSpotLine);
+  }
+
+  // ---- Batsman ----
+  function buildBatsman() {
+    batsmanGroup = new THREE.Group();
+    batsmanGroup.position.set(0, 0, 0.5);
+
+    const teamColor = 0x004BA0;
+
+    // Legs (white pads)
+    const legGeo = new THREE.CylinderGeometry(0.12, 0.1, 0.6, 8);
+    const legMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
+    batsmanLegL = new THREE.Mesh(legGeo, legMat);
+    batsmanLegL.position.set(-0.15, 0.3, 0);
+    batsmanGroup.add(batsmanLegL);
+
+    batsmanLegR = new THREE.Mesh(legGeo, legMat);
+    batsmanLegR.position.set(0.15, 0.3, 0);
+    batsmanGroup.add(batsmanLegR);
+
+    // Body (jersey)
+    const bodyGeo = new THREE.CapsuleGeometry(0.25, 0.6, 4, 8);
+    const bodyMat = new THREE.MeshLambertMaterial({ color: teamColor });
+    batsmanBody = new THREE.Mesh(bodyGeo, bodyMat);
+    batsmanBody.position.y = 1.0;
+    batsmanGroup.add(batsmanBody);
+
+    // Helmet
+    const helmGeo = new THREE.SphereGeometry(0.18, 12, 8);
+    const helmMat = new THREE.MeshLambertMaterial({ color: teamColor });
+    batsmanHelmet = new THREE.Mesh(helmGeo, helmMat);
+    batsmanHelmet.position.y = 1.55;
+    batsmanGroup.add(batsmanHelmet);
+
+    // Visor
+    const visorGeo = new THREE.BoxGeometry(0.2, 0.06, 0.1);
+    const visorMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+    batsmanVisor = new THREE.Mesh(visorGeo, visorMat);
+    batsmanVisor.position.set(0, 1.48, -0.14);
+    batsmanGroup.add(batsmanVisor);
+
+    // Bat group (pivots at shoulder)
+    batGroup = new THREE.Group();
+    batGroup.position.set(0.3, 1.2, 0);
+
+    // Handle
+    const handleGeo = new THREE.BoxGeometry(0.05, 0.35, 0.05);
+    const handleMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
+    batHandle = new THREE.Mesh(handleGeo, handleMat);
+    batHandle.position.y = -0.22;
+    batGroup.add(batHandle);
+
+    // Blade
+    const bladeGeo = new THREE.BoxGeometry(0.12, 0.5, 0.04);
+    const bladeMat = new THREE.MeshLambertMaterial({ color: 0xd4a574 });
+    batBlade = new THREE.Mesh(bladeGeo, bladeMat);
+    batBlade.position.y = -0.63;
+    batGroup.add(batBlade);
+
+    // Blade highlight edge
+    const edgeGeo = new THREE.BoxGeometry(0.03, 0.5, 0.045);
+    const edgeMat = new THREE.MeshLambertMaterial({ color: 0xe8c888 });
+    batHighlight = new THREE.Mesh(edgeGeo, edgeMat);
+    batHighlight.position.set(-0.05, -0.63, 0);
+    batGroup.add(batHighlight);
+
+    // Default bat angle
+    batGroup.rotation.z = THREE.MathUtils.degToRad(-30);
+
+    batsmanGroup.add(batGroup);
+    scene.add(batsmanGroup);
+  }
+
+  // ---- Bowler ----
+  function buildBowler() {
+    bowlerGroup = new THREE.Group();
+    bowlerGroup.position.set(0, 0, 20);
+
+    // Body
+    const bodyGeo = new THREE.CapsuleGeometry(0.15, 0.4, 4, 8);
+    const bodyMat = new THREE.MeshLambertMaterial({ color: 0x666666 });
+    bowlerBody = new THREE.Mesh(bodyGeo, bodyMat);
+    bowlerBody.position.y = 0.7;
+    bowlerGroup.add(bowlerBody);
+
+    // Head
+    const headGeo = new THREE.SphereGeometry(0.12, 10, 8);
+    const headMat = new THREE.MeshLambertMaterial({ color: 0xdba67a });
+    bowlerHead = new THREE.Mesh(headGeo, headMat);
+    bowlerHead.position.y = 1.15;
+    bowlerGroup.add(bowlerHead);
+
+    // Legs
+    const legGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.35, 6);
+    const legMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 });
+    bowlerLegL = new THREE.Mesh(legGeo, legMat);
+    bowlerLegL.position.set(-0.08, 0.2, 0);
+    bowlerGroup.add(bowlerLegL);
+
+    bowlerLegR = new THREE.Mesh(legGeo, legMat);
+    bowlerLegR.position.set(0.08, 0.2, 0);
+    bowlerGroup.add(bowlerLegR);
+
+    // Bowling arm
+    const armGeo = new THREE.CylinderGeometry(0.04, 0.03, 0.4, 6);
+    const armMat = new THREE.MeshLambertMaterial({ color: 0xdba67a });
+    bowlerArm = new THREE.Mesh(armGeo, armMat);
+    bowlerArm.position.set(0.2, 1.0, 0);
+    bowlerArm.visible = false;
+    bowlerGroup.add(bowlerArm);
+
+    // Ball in hand
+    const bhGeo = new THREE.SphereGeometry(0.08, 8, 6);
+    const bhMat = new THREE.MeshPhongMaterial({ color: 0xcc0000 });
+    bowlerBallInHand = new THREE.Mesh(bhGeo, bhMat);
+    bowlerBallInHand.visible = false;
+    bowlerGroup.add(bowlerBallInHand);
+
+    scene.add(bowlerGroup);
+  }
+
+  // ---- Ball ----
+  function buildBall() {
+    const geo = new THREE.SphereGeometry(0.15, 16, 12);
+    const mat = new THREE.MeshPhongMaterial({ color: 0xcc0000, shininess: 80 });
+    ballMesh = new THREE.Mesh(geo, mat);
+    ballMesh.visible = false;
+    scene.add(ballMesh);
+
+    // Seam (torus)
+    const seamGeo = new THREE.TorusGeometry(0.14, 0.015, 4, 16);
+    const seamMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    ballSeam = new THREE.Mesh(seamGeo, seamMat);
+    ballSeam.visible = false;
+    scene.add(ballSeam);
+
+    // Shadow on ground
+    const shadowGeo = new THREE.CircleGeometry(0.2, 12);
+    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 });
+    ballShadow = new THREE.Mesh(shadowGeo, shadowMat);
+    ballShadow.rotation.x = -Math.PI / 2;
+    ballShadow.position.y = 0.01;
+    ballShadow.visible = false;
+    scene.add(ballShadow);
+  }
+
+  // ---- Stumps (batsman end) ----
+  function buildStumps() {
+    stumpsGroup = new THREE.Group();
+    stumpsGroup.position.set(0, 0, 1.0);
+
+    const stumpGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6);
+    const stumpMat = new THREE.MeshLambertMaterial({ color: 0xd4a574 });
+
+    for (let i = -1; i <= 1; i++) {
+      const stump = new THREE.Mesh(stumpGeo, stumpMat.clone());
+      stump.position.set(i * 0.08, 0.35, 0);
+      stumpsGroup.add(stump);
+      stumpMeshes.push(stump);
+    }
+
+    // Bails
+    const bailGeo = new THREE.BoxGeometry(0.1, 0.02, 0.02);
+    const bailMat = new THREE.MeshLambertMaterial({ color: 0xe8c888 });
+
+    const bail1 = new THREE.Mesh(bailGeo, bailMat.clone());
+    bail1.position.set(-0.04, 0.72, 0);
+    stumpsGroup.add(bail1);
+    bailMeshes.push(bail1);
+
+    const bail2 = new THREE.Mesh(bailGeo, bailMat.clone());
+    bail2.position.set(0.04, 0.72, 0);
+    stumpsGroup.add(bail2);
+    bailMeshes.push(bail2);
+
+    scene.add(stumpsGroup);
+
+    // Crease lines
+    creaseLineBatsman = buildCreaseLine(1.5, 4);
+    creaseLineBowler = buildCreaseLine(19.5, 2.5);
+
+    // Bowler-end stumps (far end)
+    stumpsGroupFar = new THREE.Group();
+    stumpsGroupFar.position.set(0, 0, 21);
+
+    for (let i = -1; i <= 1; i++) {
+      const stump = new THREE.Mesh(stumpGeo, stumpMat.clone());
+      stump.position.set(i * 0.08, 0.35, 0);
+      stumpsGroupFar.add(stump);
+      stumpMeshesFar.push(stump);
+    }
+    const bailFar1 = new THREE.Mesh(bailGeo, bailMat.clone());
+    bailFar1.position.set(-0.04, 0.72, 0);
+    stumpsGroupFar.add(bailFar1);
+    bailMeshesFar.push(bailFar1);
+
+    const bailFar2 = new THREE.Mesh(bailGeo, bailMat.clone());
+    bailFar2.position.set(0.04, 0.72, 0);
+    stumpsGroupFar.add(bailFar2);
+    bailMeshesFar.push(bailFar2);
+
+    scene.add(stumpsGroupFar);
+  }
+
+  // ============================================
+  // THREE.JS UPDATE (per frame)
+  // ============================================
+
+  function updateThreeScene(dt) {
+    if (state.phase !== 'PLAYING' && state.phase !== 'TITLE') {
+      // Still render but nothing to animate
+      updateParticles3D(dt);
+      updateCamera(dt);
+      return;
+    }
+
+    if (state.phase === 'TITLE') {
+      updateCamera(dt);
+      return;
+    }
+
+    // Update team colors on batsman
+    updateTeamColors();
+
+    // Sweet spot indicator
+    if (state.ballActive && state.ballProgress > 0.5) {
+      const pulse = 0.3 + 0.2 * Math.sin(Date.now() * 0.008);
+      sweetSpotLine.material.opacity = pulse;
+    } else {
+      sweetSpotLine.material.opacity = 0;
+    }
+
+    // Show/hide stumps based on scatter state
+    stumpsGroup.visible = !state.stumpScatter;
+
+    // Update batsman animation
+    updateBatsmanAnim(dt);
+
+    // Update bowler animation
+    updateBowlerAnim(dt);
+
+    // Update ball position
+    if (state.ballActive) {
+      updateBallPosition();
+    } else {
+      ballMesh.visible = false;
+      ballSeam.visible = false;
+      ballShadow.visible = false;
+    }
+
+    // Post-ball animation
+    if (state.postBallActive) {
+      updatePostBall(dt);
+    } else {
+      postBallMesh.visible = false;
+    }
+
+    // Stump scatter
+    if (state.stumpScatter) {
+      updateStumpScatter(dt);
+    }
+
+    // Particles
+    updateParticles3D(dt);
+
+    // Floating texts (stay as DOM overlays)
+    updateFloatingTexts(dt);
+
+    // Crowd
+    if (!reducedMotion) {
+      updateCrowdColors();
+    }
+
+    // Camera
+    updateCamera(dt);
+  }
+
+  let _lastTeamKey = null;
+  function updateTeamColors() {
+    if (state.selectedTeam === _lastTeamKey) return;
+    _lastTeamKey = state.selectedTeam;
+
+    const team = state.selectedTeam ? TEAMS[state.selectedTeam] : { primary: '#004BA0', secondary: '#FFD700' };
+    const primaryColor = new THREE.Color(team.primary);
+
+    batsmanBody.material.color.copy(primaryColor);
+    batsmanHelmet.material.color.copy(primaryColor);
+
+    if (state.opponentTeam) {
+      const oppTeam = TEAMS[state.opponentTeam];
+      bowlerBody.material.color.set(oppTeam.primary);
+    }
+  }
+
+  function updateBatsmanAnim(dt) {
+    // New batsman walk-in
+    if (state.newBatsmanAnim) {
+      const elapsed = Date.now() - state.newBatsmanTime;
+      const t = Math.min(1, elapsed / 800);
+      batsmanGroup.position.x = (1 - t) * 4;
+      if (t >= 1) {
+        state.newBatsmanAnim = false;
+        batsmanGroup.position.x = 0;
+      }
+    }
+
+    // Bat swing animation
+    if (state.batAnimating) {
+      const elapsed = Date.now() - state.batAnimStart;
+      const t = Math.min(1, elapsed / state.batAnimDuration);
+      const eased = 1 - Math.pow(1 - t, 3);
+
+      let angle;
+      switch (state.batAnimType) {
+        case 'straight':
+          angle = -30 + eased * 180;
+          batGroup.rotation.z = THREE.MathUtils.degToRad(angle);
+          batGroup.rotation.y = 0;
+          break;
+        case 'pull':
+          angle = -30 + eased * 160;
+          batGroup.rotation.z = THREE.MathUtils.degToRad(angle * 0.5);
+          batGroup.rotation.y = THREE.MathUtils.degToRad(-eased * 90);
+          break;
+        case 'cut':
+          angle = -30 + eased * 170;
+          batGroup.rotation.z = THREE.MathUtils.degToRad(angle * 0.5);
+          batGroup.rotation.y = THREE.MathUtils.degToRad(eased * 90);
+          break;
+        case 'defense':
+          angle = -30 + eased * 60;
+          batGroup.rotation.z = THREE.MathUtils.degToRad(angle);
+          batGroup.rotation.y = 0;
+          break;
+      }
+
+      if (t >= 1) {
+        state.batAnimating = false;
+        state.batAngle = -30;
+        batGroup.rotation.z = THREE.MathUtils.degToRad(-30);
+        batGroup.rotation.y = 0;
+      }
+    }
+  }
+
+  function updateBowlerAnim(dt) {
+    if (!state.bowlerAnimating) {
+      bowlerArm.visible = false;
+      bowlerBallInHand.visible = false;
+      bowlerGroup.position.z = 20;
+      return;
+    }
+
+    // Run-up: bowler moves toward batsman
+    const runT = state.bowlerRunUp;
+    bowlerGroup.position.z = 20 - runT * 2;
+
+    // Arm windmill
+    bowlerArm.visible = true;
+    const armAngle = THREE.MathUtils.degToRad(state.bowlerArmAngle);
+    bowlerArm.position.set(
+      0.2 + Math.cos(armAngle) * 0.2,
+      1.0 + Math.sin(armAngle) * 0.2,
+      0
+    );
+    bowlerArm.rotation.z = armAngle;
+
+    // Ball in hand before release
+    if (state.bowlerArmAngle < 90) {
+      bowlerBallInHand.visible = true;
+      bowlerBallInHand.position.set(
+        0.2 + Math.cos(armAngle) * 0.35,
+        1.0 + Math.sin(armAngle) * 0.35,
+        0
+      );
+    } else {
+      bowlerBallInHand.visible = false;
+    }
+  }
+
+  function updateBallPosition() {
+    const t = state.ballProgress;
+
+    // Ball travels from bowler end (z=20) to batsman end (z=0.5)
+    const startZ = 20;
+    const endZ = 0.5;
+    const baseZ = startZ + t * (endZ - startZ);
+
+    // Lateral movement for swing
+    let lateralX = 0;
+    const swingVisible = state.ballLateBreak ? (t > 0.6 ? (t - 0.6) / 0.4 : 0) : (t > 0.4 ? (t - 0.4) / 0.6 : 0);
+    if (state.ballDeliveryType === 'inswing') {
+      lateralX = swingVisible * 1.5;
+    } else if (state.ballDeliveryType === 'outswing') {
+      lateralX = -swingVisible * 1.5;
+    }
+
+    // Bouncer: ball rises after 60%
+    let yOff = 0.4; // base height
+    if (state.ballDeliveryType === 'bouncer' && t > 0.6) {
+      const bt = (t - 0.6) / 0.4;
+      yOff += bt * 1.2;
+    }
+
+    // Yorker: ball stays very low
+    if (state.ballDeliveryType === 'yorker') {
+      yOff = 0.4 - t * 0.3;
+    }
+
+    // Normal ball bounces: slight parabolic arc
+    if (state.ballDeliveryType !== 'bouncer' && state.ballDeliveryType !== 'yorker') {
+      // Ball bounces roughly in middle of pitch
+      if (t < 0.5) {
+        yOff = 0.4 + (0.5 - Math.abs(t - 0.25)) * 0.8;
+      } else {
+        yOff = 0.4 + (1 - t) * 0.3;
+      }
+    }
+
+    const bx = lateralX + state.ballSwingDir * swingVisible * 0.3;
+    const by = Math.max(0.15, yOff);
+    const bz = baseZ;
+
+    ballMesh.visible = true;
+    ballMesh.position.set(bx, by, bz);
+
+    ballSeam.visible = true;
+    ballSeam.position.copy(ballMesh.position);
+    ballSeam.rotation.x = Date.now() * 0.01; // spin
+
+    ballShadow.visible = true;
+    ballShadow.position.set(bx, 0.01, bz);
+    const shadowScale = 0.5 + by * 0.3;
+    ballShadow.scale.set(shadowScale, shadowScale, 1);
+  }
+
+  function updatePostBall(dt) {
+    const elapsed = Date.now() - state.postBallTime;
+    const t = Math.min(1, elapsed / 1200);
+
+    postBallMesh.visible = true;
+
+    switch (state.postBallType) {
+      case 'four': {
+        // Ball rolls toward boundary
+        const angle = state.postBallVx * 0.5;
+        const dist = t * 40;
+        postBallMesh.position.set(
+          Math.sin(angle) * dist,
+          0.15,
+          0.5 + dist
+        );
+        postBallMesh.scale.setScalar(Math.max(0.3, 1 - t * 0.7));
+        if (t >= 1) state.postBallActive = false;
+        break;
+      }
+      case 'six': {
+        // Ball arcs up into the stands
+        const x = state.postBallVx * t * 5;
+        const y = 0.5 + t * 15 - t * t * 8;
+        const z = 0.5 + t * 30;
+        postBallMesh.position.set(x, Math.max(0.15, y), z);
+        postBallMesh.scale.setScalar(Math.max(0.2, 1 - t * 0.8));
+        if (t >= 1) state.postBallActive = false;
+        break;
+      }
+      case 'wicket': {
+        postBallMesh.visible = false;
+        if (t >= 0.3) state.postBallActive = false;
+        break;
+      }
+      case 'caught': {
+        // Ball arcs up, fielder intercepts
+        const x = state.postBallVx * t * 4;
+        const y = 0.5 + Math.sin(t * Math.PI) * 3;
+        const z = 0.5 + t * 15;
+        postBallMesh.position.set(x, Math.max(0.15, y), z);
+        postBallMesh.scale.setScalar(Math.max(0.3, 1 - t * 0.5));
+        if (t >= 1) state.postBallActive = false;
+        break;
+      }
+      default: {
+        // Dot / single / runs
+        const x = state.postBallVx * t * 2;
+        const z = 0.5 + t * 5;
+        postBallMesh.position.set(x, 0.15, z);
+        postBallMesh.scale.setScalar(Math.max(0.2, 1 - t));
+        if (t >= 1) state.postBallActive = false;
+        break;
+      }
+    }
+  }
+
+  function updateStumpScatter(dt) {
+    if (!state.stumpScatter) return;
+    const ss = state.stumpScatter;
+    const elapsed = Date.now() - ss.startTime;
+    const t = elapsed / 1000;
+
+    if (t > 1.5) {
+      // Reset stumps
+      state.stumpScatter = null;
+      scatterStumps.forEach(s => scene.remove(s));
+      scatterBails.forEach(b => scene.remove(b));
+      scatterStumps = [];
+      scatterBails = [];
+      return;
+    }
+
+    // On first frame, create scatter meshes
+    if (scatterStumps.length === 0) {
+      const stumpGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6);
+      const stumpMat = new THREE.MeshLambertMaterial({ color: 0xd4a574 });
+      ss.pieces.forEach(p => {
+        const mesh = new THREE.Mesh(stumpGeo, stumpMat);
+        mesh.position.copy(stumpsGroup.position);
+        mesh.position.y = 0.35;
+        mesh.userData = { vx: p.vx, vy: p.vy, rot: p.rot };
+        scene.add(mesh);
+        scatterStumps.push(mesh);
+      });
+
+      const bailGeo = new THREE.BoxGeometry(0.1, 0.02, 0.02);
+      const bailMat = new THREE.MeshLambertMaterial({ color: 0xe8c888 });
+      ss.bails.forEach(b => {
+        const mesh = new THREE.Mesh(bailGeo, bailMat);
+        mesh.position.copy(stumpsGroup.position);
+        mesh.position.y = 0.72;
+        mesh.userData = { vx: b.vx, vy: b.vy };
+        scene.add(mesh);
+        scatterBails.push(mesh);
+      });
+    }
+
+    // Animate scatter
+    const gravity = 9.8;
+    scatterStumps.forEach(mesh => {
+      const d = mesh.userData;
+      mesh.position.x = stumpsGroup.position.x + d.vx * t * 1.5;
+      mesh.position.y = 0.35 + d.vy * t * 1.5 - 0.5 * gravity * t * t;
+      mesh.position.z = stumpsGroup.position.z - t * 0.5;
+      mesh.rotation.x = d.rot * t * 6;
+      mesh.rotation.z = d.rot * t * 4;
+      if (mesh.position.y < 0) mesh.position.y = 0;
+    });
+
+    scatterBails.forEach(mesh => {
+      const d = mesh.userData;
+      mesh.position.x = stumpsGroup.position.x + d.vx * t * 2;
+      mesh.position.y = 0.72 + 3 * t - 0.5 * gravity * t * t;
+      mesh.position.z = stumpsGroup.position.z - t * 1;
+      mesh.rotation.x = t * 10;
+      mesh.rotation.z = t * 8;
+      if (mesh.position.y < 0) mesh.position.y = 0;
+    });
+  }
+
+  // ---- 3D Particles ----
+  function spawnParticles(x, y, count, colors, speed, life) {
+    if (reducedMotion) return;
+
+    // Convert 2D screen coordinates to approximate 3D position
+    // x,y are still passed as screen coords from the game logic
+    // We'll spawn particles at the ball's last position or center of pitch
+    const worldX = 0;
+    const worldY = 1.5;
+    const worldZ = 2;
+
+    for (let i = 0; i < count && state.particles.length < MAX_PARTICLES; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const elev = Math.random() * Math.PI - Math.PI / 2;
+      const spd = speed * 0.015 * (0.5 + Math.random() * 0.5);
+      state.particles.push({
+        x: worldX,
+        y: worldY,
+        z: worldZ,
+        vx: Math.cos(angle) * Math.cos(elev) * spd,
+        vy: Math.sin(elev) * spd + spd * 0.5,
+        vz: Math.sin(angle) * Math.cos(elev) * spd,
+        life: life || 1,
+        maxLife: life || 1,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 0.05 + Math.random() * 0.08
+      });
+    }
+  }
+
+  function updateParticles3D(dt) {
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+      const p = state.particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
+      p.vy -= 3 * dt; // gravity
+      p.life -= dt;
+      if (p.life <= 0 || p.y < 0) {
+        state.particles.splice(i, 1);
+        continue;
+      }
+    }
+
+    // Update particle meshes
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const mesh = particleMeshes[i];
+      if (i < state.particles.length) {
+        const p = state.particles[i];
+        mesh.visible = true;
+        mesh.position.set(p.x, p.y, p.z);
+        const s = p.size;
+        mesh.scale.set(s / 0.05, s / 0.05, s / 0.05);
+        mesh.material.color.set(p.color);
+        mesh.material.opacity = p.life / p.maxLife;
+      } else {
+        mesh.visible = false;
+      }
+    }
+  }
+
+  function triggerCrowdWave() {
+    state.crowdWaveActive = true;
+    state.crowdWaveStart = Date.now();
+  }
+
+  // ---- Floating Texts (DOM-based, not 3D) ----
+  function spawnFloatingText(text, x, y, color, size) {
+    state.floatingTexts.push({
+      text, x, y, color,
+      size: size || 24,
+      life: 1.0,
+      maxLife: 1.0
+    });
+  }
+
+  function updateFloatingTexts(dt) {
+    // These are rendered as DOM overlays in the astro file already
+    // We just manage their lifecycle here
+    for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = state.floatingTexts[i];
+      ft.y -= 40 * dt;
+      ft.life -= dt;
+      if (ft.life <= 0) {
+        state.floatingTexts.splice(i, 1);
+      }
+    }
+  }
+
+  // ---- Camera ----
+  function updateCamera(dt) {
+    // Default camera position: behind batsman looking down pitch
+    let targetCamPos = new THREE.Vector3(0, 3, -2);
+    let targetLookAt = new THREE.Vector3(0, 1, 11);
+
+    // Camera effects based on game events
+    if (state.postBallActive) {
+      if (state.postBallType === 'six') {
+        // Tilt up slightly to follow ball
+        targetCamPos.y += 1.5;
+        targetLookAt.y += 2;
+      } else if (state.postBallType === 'four') {
+        // Slight zoom toward pitch
+        targetCamPos.z += 0.5;
+      }
+    }
+
+    // Lerp camera
+    camera.position.lerp(targetCamPos, 0.05);
+
+    // Camera shake on wicket
+    if (cameraShake.active) {
+      const shakeElapsed = Date.now() - cameraShake.start;
+      if (shakeElapsed > cameraShake.duration) {
+        cameraShake.active = false;
+      } else {
+        const shakeT = 1 - shakeElapsed / cameraShake.duration;
+        camera.position.x += (Math.random() - 0.5) * cameraShake.intensity * shakeT;
+        camera.position.y += (Math.random() - 0.5) * cameraShake.intensity * shakeT;
+      }
+    }
+
+    camera.lookAt(targetLookAt);
+  }
+
+  function renderThreeScene() {
+    if (renderer && scene && camera) {
+      renderer.render(scene, camera);
+    }
+  }
+
+  // Render floating texts as DOM overlays (drawn each frame)
+  const floatingTextContainer = document.createElement('div');
+  floatingTextContainer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;';
+
+  function renderFloatingTexts() {
+    // Clear previous
+    floatingTextContainer.innerHTML = '';
+    state.floatingTexts.forEach(ft => {
+      const div = document.createElement('div');
+      const alpha = ft.life / ft.maxLife;
+      const scale = reducedMotion ? 1 : (1 + (1 - alpha) * 0.3);
+      div.style.cssText = `
+        position: absolute;
+        left: 50%;
+        top: ${ft.y / H * 100}%;
+        transform: translateX(-50%) scale(${scale});
+        font-size: ${ft.size}px;
+        font-weight: 900;
+        color: ${ft.color};
+        opacity: ${alpha};
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        pointer-events: none;
+        white-space: nowrap;
+      `;
+      div.textContent = ft.text;
+      floatingTextContainer.appendChild(div);
+    });
   }
 
   // ============================================
@@ -349,7 +1340,6 @@
 
   function playBatCrack(power) {
     if (!audioCtx || !state.soundEnabled) return;
-    // power: 0=dot, 1=single, 2=two/three, 3=four, 4=six
     const durations = [0.03, 0.04, 0.05, 0.06, 0.08];
     const freqs =     [2000, 1900, 1800, 1500, 1200];
     const volumes =   [0.06, 0.08, 0.1, 0.14, 0.18];
@@ -362,11 +1352,6 @@
       playTone(thumpFreqs[power], 'sine', thumpDur[power], volumes[power] * 0.6);
     }
     if (power >= 3) {
-      // Reverb-like delay
-      const delay = audioCtx.createDelay();
-      delay.delayTime.value = power === 4 ? 0.08 : 0.05;
-      const fb = audioCtx.createGain();
-      fb.gain.value = power === 4 ? 0.3 : 0.2;
       createNoise(d * 0.5, freqs[power], 3, volumes[power] * 0.3, 'bandpass');
     }
   }
@@ -381,7 +1366,6 @@
     for (let i = 0; i < 3; i++) {
       setTimeout(() => createNoise(0.04, 800, 2, 0.12, 'bandpass'), i * 15);
     }
-    // Descending dramatic tone
     if (audioCtx) {
       const osc = audioCtx.createOscillator();
       osc.type = 'sawtooth';
@@ -469,680 +1453,13 @@
   }
 
   // ============================================
-  // CROWD DOTS (BG)
-  // ============================================
-
-  function initCrowdDots() {
-    crowdDots = [];
-    const crowdTop = H * 0.05;
-    const crowdBottom = H * 0.3;
-    const count = Math.min(600, Math.floor(W * (crowdBottom - crowdTop) / 20));
-    for (let i = 0; i < count; i++) {
-      crowdDots.push({
-        x: Math.random() * W,
-        y: crowdTop + Math.random() * (crowdBottom - crowdTop),
-        r: 1.5 + Math.random() * 1.5,
-        color: randomCrowdColor()
-      });
-    }
-  }
-
-  function randomCrowdColor() {
-    const team = state.selectedTeam ? TEAMS[state.selectedTeam] : null;
-    const r = Math.random();
-    if (team && r < 0.4) return team.primary;
-    if (team && r < 0.55) return team.secondary;
-    const bright = ['#FF4444','#44FF44','#4444FF','#FFFF44','#FF44FF','#44FFFF','#FFFFFF','#FFD700','#FF6B00'];
-    return bright[Math.floor(Math.random() * bright.length)];
-  }
-
-  // ============================================
-  // BACKGROUND RENDERING
-  // ============================================
-
-  function drawBackground() {
-    const ctx = bgCtx;
-    ctx.clearRect(0, 0, W, H);
-
-    // Sky gradient
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.35);
-    skyGrad.addColorStop(0, '#1a0a3e');
-    skyGrad.addColorStop(1, '#3d1a6e');
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, W, H * 0.35);
-
-    // Outfield gradient
-    const fieldGrad = ctx.createRadialGradient(W / 2, H * 0.35, 0, W / 2, H * 0.35, W * 0.8);
-    fieldGrad.addColorStop(0, '#3a8a28');
-    fieldGrad.addColorStop(1, '#1d5a10');
-    ctx.fillStyle = fieldGrad;
-    ctx.fillRect(0, H * 0.28, W, H * 0.72);
-
-    // Boundary circle (dashed)
-    ctx.save();
-    ctx.beginPath();
-    ctx.setLineDash([8, 6]);
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 1.5;
-    ctx.ellipse(W / 2, H * 0.35, W * 0.46, H * 0.28, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-
-    // Pitch perspective
-    const vpX = W / 2;
-    const vpY = H * 0.35;
-    const pitchBottomW = W * 0.12;
-    const pitchTopW = W * 0.025;
-    const pitchBottom = H * 0.88;
-    const pitchTop = vpY + H * 0.02;
-
-    ctx.fillStyle = '#c8a96e';
-    ctx.beginPath();
-    ctx.moveTo(vpX - pitchTopW, pitchTop);
-    ctx.lineTo(vpX + pitchTopW, pitchTop);
-    ctx.lineTo(vpX + pitchBottomW, pitchBottom);
-    ctx.lineTo(vpX - pitchBottomW, pitchBottom);
-    ctx.closePath();
-    ctx.fill();
-
-    // Pitch texture (subtle dots)
-    ctx.fillStyle = 'rgba(160,120,60,0.3)';
-    for (let i = 0; i < 80; i++) {
-      const t = Math.random();
-      const py = pitchTop + t * (pitchBottom - pitchTop);
-      const halfW = pitchTopW + t * (pitchBottomW - pitchTopW);
-      const px = vpX + (Math.random() * 2 - 1) * halfW;
-      ctx.fillRect(px, py, 1.5, 1.5);
-    }
-
-    // Crease lines
-    drawCreaseLine(ctx, vpX, pitchTop, pitchBottom, pitchTopW, pitchBottomW, 0.12); // bowler crease
-    drawCreaseLine(ctx, vpX, pitchTop, pitchBottom, pitchTopW, pitchBottomW, 0.88); // batsman crease
-
-    // Bowler-end stumps (small)
-    drawStumps(ctx, vpX, pitchTop + (pitchBottom - pitchTop) * 0.1, 1, 6);
-
-    // Crowd dots
-    crowdDots.forEach(d => {
-      ctx.fillStyle = d.color;
-      ctx.beginPath();
-      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // Floodlights
-    drawFloodlight(ctx, W * 0.05, H * 0.02);
-    drawFloodlight(ctx, W * 0.95, H * 0.02);
-    drawFloodlight(ctx, W * 0.1, H * 0.15);
-    drawFloodlight(ctx, W * 0.9, H * 0.15);
-
-    bgDirty = false;
-  }
-
-  function drawCreaseLine(ctx, vpX, pitchTop, pitchBottom, pitchTopW, pitchBottomW, t) {
-    const y = pitchTop + t * (pitchBottom - pitchTop);
-    const halfW = pitchTopW + t * (pitchBottomW - pitchTopW);
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = t > 0.5 ? 2 : 1;
-    ctx.beginPath();
-    ctx.moveTo(vpX - halfW * 1.3, y);
-    ctx.lineTo(vpX + halfW * 1.3, y);
-    ctx.stroke();
-  }
-
-  function drawStumps(ctx, x, y, scale, height) {
-    const gap = 3 * scale;
-    ctx.strokeStyle = '#d4a574';
-    ctx.lineWidth = Math.max(1, 2 * scale);
-    for (let i = -1; i <= 1; i++) {
-      ctx.beginPath();
-      ctx.moveTo(x + i * gap, y);
-      ctx.lineTo(x + i * gap, y - height);
-      ctx.stroke();
-    }
-    // Bails
-    ctx.strokeStyle = '#e8c888';
-    ctx.lineWidth = Math.max(0.5, 1.5 * scale);
-    ctx.beginPath();
-    ctx.moveTo(x - gap, y - height);
-    ctx.lineTo(x, y - height - 1 * scale);
-    ctx.lineTo(x + gap, y - height);
-    ctx.stroke();
-  }
-
-  function drawFloodlight(ctx, x, y) {
-    const grad = ctx.createRadialGradient(x, y, 0, x, y + H * 0.3, H * 0.4);
-    grad.addColorStop(0, 'rgba(255,255,240,0.04)');
-    grad.addColorStop(1, 'rgba(255,255,240,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(x - W * 0.15, y, W * 0.3, H * 0.5);
-    // Light box
-    ctx.fillStyle = 'rgba(255,255,220,0.3)';
-    ctx.fillRect(x - 4, y, 8, 5);
-  }
-
-  // ============================================
-  // FOREGROUND RENDERING
-  // ============================================
-
-  function drawForeground(dt) {
-    const ctx = fgCtx;
-    ctx.clearRect(0, 0, W, H);
-
-    if (state.phase !== 'PLAYING') return;
-
-    const vpX = W / 2;
-    const vpY = H * 0.35;
-    const pitchBottomW = W * 0.12;
-    const pitchTopW = W * 0.025;
-    const pitchBottom = H * 0.88;
-    const pitchTop = vpY + H * 0.02;
-
-    // Sweet spot indicator (subtle glow on batting crease)
-    if (state.ballActive && state.ballProgress > 0.5) {
-      const creaseY = pitchTop + 0.88 * (pitchBottom - pitchTop);
-      const halfW = pitchTopW + 0.88 * (pitchBottomW - pitchTopW);
-      const pulse = 0.3 + 0.2 * Math.sin(Date.now() * 0.008);
-      ctx.strokeStyle = `rgba(255,215,0,${pulse})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(vpX - halfW * 1.3, creaseY);
-      ctx.lineTo(vpX + halfW * 1.3, creaseY);
-      ctx.stroke();
-    }
-
-    // Batsman stumps
-    if (!state.stumpScatter) {
-      drawStumps(ctx, vpX, pitchBottom - (pitchBottom - pitchTop) * 0.02, 2.5, 25);
-    }
-
-    // Draw batsman
-    drawBatsman(ctx, vpX, pitchBottom);
-
-    // Draw bowler
-    drawBowler(ctx, vpX, vpY, pitchTop);
-
-    // Draw ball
-    if (state.ballActive) {
-      drawBall(ctx, vpX, vpY, pitchTop, pitchBottom, pitchTopW, pitchBottomW);
-    }
-
-    // Post-ball animation
-    if (state.postBallActive) {
-      drawPostBall(ctx, dt);
-    }
-
-    // Stump scatter
-    if (state.stumpScatter) {
-      drawStumpScatter(ctx, dt);
-    }
-
-    // Particles
-    updateAndDrawParticles(ctx, dt);
-
-    // Floating texts
-    updateAndDrawFloatingTexts(ctx, dt);
-
-    // Animate crowd dots (shift a few per frame)
-    if (!reducedMotion && state.phase === 'PLAYING') {
-      const count = Math.min(8, crowdDots.length);
-      for (let i = 0; i < count; i++) {
-        const idx = Math.floor(Math.random() * crowdDots.length);
-        crowdDots[idx].color = randomCrowdColor();
-      }
-
-      // Crowd wave after six: sequential color shift left to right
-      if (state.crowdWaveActive) {
-        const waveElapsed = (Date.now() - state.crowdWaveStart) / 1000;
-        if (waveElapsed > 2) {
-          state.crowdWaveActive = false;
-        } else {
-          const wavePos = waveElapsed * W * 0.8; // wave sweeps across screen
-          const waveWidth = W * 0.15;
-          const team = state.selectedTeam ? TEAMS[state.selectedTeam] : null;
-          const waveColor = team ? team.secondary : '#FFD700';
-          crowdDots.forEach(d => {
-            if (Math.abs(d.x - wavePos) < waveWidth) {
-              d.color = waveColor;
-            }
-          });
-          bgDirty = true;
-        }
-      }
-
-      // Tension: crowd gets more animated (more color shifts)
-      if (state.tensionActive) {
-        const extra = Math.min(15, crowdDots.length);
-        for (let i = 0; i < extra; i++) {
-          const idx = Math.floor(Math.random() * crowdDots.length);
-          crowdDots[idx].color = randomCrowdColor();
-        }
-        bgDirty = true;
-      }
-    }
-  }
-
-  function drawBatsman(ctx, vpX, pitchBottom) {
-    const bx = vpX;
-    const by = pitchBottom + 2;
-    const team = state.selectedTeam ? TEAMS[state.selectedTeam] : { primary: '#004BA0', secondary: '#FFD700' };
-
-    // New batsman walk-in
-    let xOff = 0;
-    if (state.newBatsmanAnim) {
-      const elapsed = Date.now() - state.newBatsmanTime;
-      const t = Math.min(1, elapsed / 800);
-      xOff = (1 - t) * W * 0.3;
-      if (t >= 1) state.newBatsmanAnim = false;
-    }
-
-    ctx.save();
-    ctx.translate(bx + xOff, by);
-
-    // Legs (white pads)
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(-10, -8, 7, 18);
-    ctx.fillRect(3, -8, 7, 18);
-
-    // Body (jersey)
-    ctx.fillStyle = team.primary;
-    ctx.beginPath();
-    ctx.roundRect(-15, -55, 30, 50, 5);
-    ctx.fill();
-
-    // V-stripe on jersey
-    ctx.strokeStyle = team.secondary;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(-10, -55);
-    ctx.lineTo(0, -35);
-    ctx.lineTo(10, -55);
-    ctx.stroke();
-
-    // Helmet
-    ctx.fillStyle = team.primary;
-    ctx.beginPath();
-    ctx.arc(0, -62, 10, 0, Math.PI * 2);
-    ctx.fill();
-    // Face guard
-    ctx.strokeStyle = '#666';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(-5, -58);
-    ctx.lineTo(-5, -52);
-    ctx.moveTo(0, -58);
-    ctx.lineTo(0, -52);
-    ctx.moveTo(5, -58);
-    ctx.lineTo(5, -52);
-    ctx.stroke();
-
-    // Bat
-    ctx.save();
-    ctx.translate(14, -45); // shoulder pivot
-
-    let angle = state.batAngle * Math.PI / 180;
-    if (state.batAnimating) {
-      const elapsed = Date.now() - state.batAnimStart;
-      const t = Math.min(1, elapsed / state.batAnimDuration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      switch (state.batAnimType) {
-        case 'straight':
-          angle = (-30 + eased * 180) * Math.PI / 180;
-          break;
-        case 'pull':
-          angle = (-30 + eased * 160) * Math.PI / 180;
-          break;
-        case 'cut':
-          angle = (-30 + eased * 170) * Math.PI / 180;
-          break;
-        case 'defense':
-          angle = (-30 + eased * 60) * Math.PI / 180;
-          break;
-      }
-      if (t >= 1) {
-        state.batAnimating = false;
-        state.batAngle = -30;
-      }
-    }
-
-    ctx.rotate(angle);
-    // Bat handle
-    ctx.fillStyle = '#8B6914';
-    ctx.fillRect(-2, 0, 4, 14);
-    // Bat blade
-    ctx.fillStyle = '#d4a574';
-    ctx.fillRect(-4, 14, 8, 22);
-    // Bat edge highlight
-    ctx.fillStyle = '#e8c888';
-    ctx.fillRect(-4, 14, 2, 22);
-
-    ctx.restore(); // bat transform
-    ctx.restore(); // batsman transform
-  }
-
-  function drawBowler(ctx, vpX, vpY, pitchTop) {
-    const bowlerY = pitchTop + (vpY - pitchTop) * 0.3;
-    let scale = 0.5;
-
-    // Run-up: bowler grows slightly
-    if (state.bowlerAnimating) {
-      scale += state.bowlerRunUp * 0.15;
-    }
-
-    ctx.save();
-    ctx.translate(vpX, bowlerY);
-    ctx.scale(scale, scale);
-
-    // Body
-    ctx.fillStyle = state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#666';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 8, 14, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Head
-    ctx.fillStyle = '#dba67a';
-    ctx.beginPath();
-    ctx.arc(0, -20, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Bowling arm
-    if (state.bowlerAnimating) {
-      const armAngle = state.bowlerArmAngle * Math.PI / 180;
-      ctx.strokeStyle = '#dba67a';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(0, -10);
-      ctx.lineTo(Math.cos(armAngle) * 18, -10 + Math.sin(armAngle) * 18);
-      ctx.stroke();
-      // Ball in hand (before release)
-      if (state.bowlerArmAngle < 90) {
-        ctx.fillStyle = '#cc0000';
-        ctx.beginPath();
-        ctx.arc(Math.cos(armAngle) * 20, -10 + Math.sin(armAngle) * 20, 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // Legs
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fillRect(-5, 12, 4, 10);
-    ctx.fillRect(1, 12, 4, 10);
-
-    ctx.restore();
-  }
-
-  function drawBall(ctx, vpX, vpY, pitchTop, pitchBottom, pitchTopW, pitchBottomW) {
-    const t = state.ballProgress;
-    // Ball position along pitch in perspective
-    const baseY = pitchTop + t * (pitchBottom - pitchTop);
-
-    // Lateral movement for swing
-    let lateralOff = 0;
-    const swingVisible = state.ballLateBreak ? (t > 0.6 ? (t - 0.6) / 0.4 : 0) : (t > 0.4 ? (t - 0.4) / 0.6 : 0);
-    if (state.ballDeliveryType === 'inswing') {
-      lateralOff = swingVisible * W * 0.04 * -1;
-    } else if (state.ballDeliveryType === 'outswing') {
-      lateralOff = swingVisible * W * 0.04;
-    }
-
-    // Bouncer: ball rises after 60%
-    let yOff = 0;
-    if (state.ballDeliveryType === 'bouncer' && t > 0.6) {
-      const bt = (t - 0.6) / 0.4;
-      yOff = -bt * H * 0.08;
-    }
-
-    // Yorker: ball stays very low
-    if (state.ballDeliveryType === 'yorker') {
-      yOff = t * 3;
-    }
-
-    // Ball size grows with perspective
-    const ballSize = 3 + t * 8;
-    const bx = vpX + lateralOff + state.ballSwingDir * swingVisible * W * 0.01;
-    const by = baseY + yOff;
-
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(bx, baseY + 2, ballSize * 0.8, ballSize * 0.3, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Ball
-    ctx.fillStyle = '#cc0000';
-    ctx.beginPath();
-    ctx.arc(bx, by, ballSize, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Seam
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(bx - ballSize * 0.7, by);
-    ctx.lineTo(bx + ballSize * 0.7, by);
-    ctx.stroke();
-  }
-
-  function drawPostBall(ctx, dt) {
-    const elapsed = Date.now() - state.postBallTime;
-    const t = Math.min(1, elapsed / 1200);
-
-    switch (state.postBallType) {
-      case 'four': {
-        // Ball races along ground to boundary
-        const angle = state.postBallVx;
-        const dist = t * W * 0.5;
-        const bx = state.postBallX + Math.cos(angle) * dist;
-        const by = state.postBallY - dist * 0.6;
-        const size = Math.max(1, state.postBallSize * (1 - t * 0.7));
-        ctx.fillStyle = '#cc0000';
-        ctx.beginPath();
-        ctx.arc(bx, by, size, 0, Math.PI * 2);
-        ctx.fill();
-        // Trail
-        if (!reducedMotion) {
-          ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(state.postBallX, state.postBallY);
-          ctx.lineTo(bx, by);
-          ctx.stroke();
-        }
-        if (t >= 1) state.postBallActive = false;
-        break;
-      }
-      case 'six': {
-        // Ball arcs up into crowd
-        const bx = state.postBallX + t * state.postBallVx * 80;
-        const arcY = state.postBallY - t * H * 0.5 + t * t * H * 0.1;
-        const size = Math.max(1, state.postBallSize * (1 - t * 0.8));
-        ctx.fillStyle = '#cc0000';
-        ctx.beginPath();
-        ctx.arc(bx, arcY, size, 0, Math.PI * 2);
-        ctx.fill();
-        // Trail dots
-        if (!reducedMotion) {
-          for (let i = 0; i < 5; i++) {
-            const tt = Math.max(0, t - i * 0.04);
-            const tx = state.postBallX + tt * state.postBallVx * 80;
-            const ty = state.postBallY - tt * H * 0.5 + tt * tt * H * 0.1;
-            ctx.fillStyle = `rgba(255,255,255,${0.3 - i * 0.05})`;
-            ctx.beginPath();
-            ctx.arc(tx, ty, 2, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-        if (t >= 1) state.postBallActive = false;
-        break;
-      }
-      case 'wicket': {
-        // Ball continues to stumps (already handled by stumpScatter)
-        if (t >= 0.3) state.postBallActive = false;
-        break;
-      }
-      case 'caught': {
-        // Ball arcs up, fielder intercepts
-        const bx = state.postBallX + t * state.postBallVx * 60;
-        const arcY = state.postBallY - Math.sin(t * Math.PI) * H * 0.15;
-        const size = Math.max(1, state.postBallSize * (1 - t * 0.5));
-        ctx.fillStyle = '#cc0000';
-        ctx.beginPath();
-        ctx.arc(bx, arcY, size, 0, Math.PI * 2);
-        ctx.fill();
-        // Fielder dot moves to intercept
-        if (t > 0.5) {
-          ctx.fillStyle = state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#666';
-          ctx.beginPath();
-          ctx.arc(bx, arcY + 5, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        if (t >= 1) state.postBallActive = false;
-        break;
-      }
-      default: {
-        // Dot / single / runs - ball rolls short
-        const bx = state.postBallX + t * state.postBallVx * 30;
-        const by = state.postBallY - t * 40;
-        const size = Math.max(1, state.postBallSize * (1 - t));
-        ctx.fillStyle = '#cc0000';
-        ctx.beginPath();
-        ctx.arc(bx, by, size, 0, Math.PI * 2);
-        ctx.fill();
-        if (t >= 1) state.postBallActive = false;
-        break;
-      }
-    }
-  }
-
-  function drawStumpScatter(ctx, dt) {
-    if (!state.stumpScatter) return;
-    const ss = state.stumpScatter;
-    const elapsed = Date.now() - ss.startTime;
-    const t = elapsed / 1000;
-    if (t > 1.5) {
-      state.stumpScatter = null;
-      return;
-    }
-    if (reducedMotion) {
-      // Simple fade
-      ctx.globalAlpha = Math.max(0, 1 - t);
-      drawStumps(ctx, ss.x, ss.y, 2.5, 25);
-      ctx.globalAlpha = 1;
-      return;
-    }
-    ss.pieces.forEach(p => {
-      ctx.save();
-      ctx.translate(ss.x + p.vx * t * 60, ss.y + p.vy * t * 60 + 200 * t * t);
-      ctx.rotate(p.rot * t * 4);
-      ctx.fillStyle = '#d4a574';
-      ctx.fillRect(-1.5, -12, 3, 24);
-      ctx.restore();
-    });
-    // Bails fly up
-    ss.bails.forEach(b => {
-      const bx = ss.x + b.vx * t * 80;
-      const by = ss.y - 25 + b.vy * t * 80 - 150 * t + 300 * t * t;
-      ctx.fillStyle = '#e8c888';
-      ctx.fillRect(bx - 3, by - 1, 6, 2);
-    });
-  }
-
-  // ============================================
-  // PARTICLES & FLOATING TEXT
-  // ============================================
-
-  const MAX_PARTICLES = 150;
-
-  function spawnParticles(x, y, count, colors, speed, life) {
-    if (reducedMotion) return;
-    for (let i = 0; i < count && state.particles.length < MAX_PARTICLES; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const spd = speed * (0.5 + Math.random() * 0.5);
-      state.particles.push({
-        x, y,
-        vx: Math.cos(angle) * spd,
-        vy: Math.sin(angle) * spd - speed * 0.5,
-        life: life || 1,
-        maxLife: life || 1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        size: 2 + Math.random() * 3
-      });
-    }
-  }
-
-  function updateAndDrawParticles(ctx, dt) {
-    for (let i = state.particles.length - 1; i >= 0; i--) {
-      const p = state.particles[i];
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += 120 * dt; // gravity
-      p.life -= dt;
-      if (p.life <= 0) {
-        state.particles[i] = state.particles[state.particles.length - 1];
-        state.particles.pop();
-        i--;
-        continue;
-      }
-      const alpha = p.life / p.maxLife;
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  function triggerCrowdWave() {
-    state.crowdWaveActive = true;
-    state.crowdWaveStart = Date.now();
-    bgDirty = true;
-  }
-
-  function spawnFloatingText(text, x, y, color, size) {
-    state.floatingTexts.push({
-      text, x, y, color,
-      size: size || 24,
-      life: 1.0,
-      maxLife: 1.0
-    });
-  }
-
-  function updateAndDrawFloatingTexts(ctx, dt) {
-    for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
-      const ft = state.floatingTexts[i];
-      ft.y -= 40 * dt;
-      ft.life -= dt;
-      if (ft.life <= 0) {
-        state.floatingTexts[i] = state.floatingTexts[state.floatingTexts.length - 1];
-        state.floatingTexts.pop();
-        i--;
-        continue;
-      }
-      const alpha = ft.life / ft.maxLife;
-      const scale = reducedMotion ? 1 : (1 + (1 - alpha) * 0.3);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.font = `900 ${ft.size * scale}px -apple-system, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = ft.color;
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-      ctx.lineWidth = 3;
-      ctx.strokeText(ft.text, ft.x, ft.y);
-      ctx.fillText(ft.text, ft.x, ft.y);
-      ctx.restore();
-    }
-  }
-
-  // ============================================
   // DIFFICULTY & DELIVERY GENERATION
   // ============================================
 
   function getDifficultyParams() {
     const lv = state.level;
     const ov = state.oversCompleted;
-    // Base ball speed
     let baseSpeed = Math.max(550, 1200 - (lv - 1) * 80 - ov * 30);
-    // Timing windows
     let perfect = Math.max(30, 60 - (lv - 1) * 4 - ov * 1);
     let good = Math.max(75, 140 - (lv - 1) * 8 - ov * 3);
 
@@ -1175,15 +1492,12 @@
     state.timingPerfect = diff.perfect;
     state.timingGood = diff.good;
 
-    // Bowler type modifiers
     if (state.bowlerType === 'pacer') speed *= 0.9;
     if (state.bowlerType === 'spinner') {
       speed *= 1.3;
-      // Timing window shifts later for spinner
       state.timingGood += 20;
     }
 
-    // Pick delivery type
     const types = [];
     const addType = (type, weight) => { for (let i = 0; i < weight; i++) types.push(type); };
 
@@ -1204,7 +1518,6 @@
 
     let deliveryType = types[Math.floor(Math.random() * types.length)];
 
-    // Mystery ball
     if (mysteryW > 0 && Math.random() * 100 < mysteryW) {
       state.ballLateBreak = true;
       const allTypes = ['straight','inswing','outswing','bouncer','yorker'];
@@ -1213,12 +1526,10 @@
       state.ballLateBreak = false;
     }
 
-    // Store display type before remapping for physics
     state.ballDeliveryType = deliveryType;
 
     if (deliveryType === 'slower') {
-      speed *= 1.4; // longer travel time = slower ball
-      // Physics uses straight path but display/identity stays 'slower'
+      speed *= 1.4;
     }
     state.ballSpeed = speed;
     state.ballIsOnStumps = Math.random() < 0.4;
@@ -1234,23 +1545,19 @@
     let probs;
 
     if (timingMs < 0) {
-      // Missed (no swing)
       if (state.ballIsOnStumps) return { runs: -1, type: 'bowled' };
       return { runs: 0, type: 'dot' };
     }
 
-    // Check timing quality
     let quality;
     if (timingMs <= state.timingPerfect) quality = 'perfect';
     else if (timingMs <= state.timingGood) quality = 'good';
     else if (timingMs <= 200) quality = 'mistimed';
     else {
-      // Too late
       if (state.ballIsOnStumps) return { runs: -1, type: 'bowled' };
       return { runs: 0, type: 'dot' };
     }
 
-    // Counter-shot bonus
     const counterShot = DELIVERY_COUNTER[state.ballDeliveryType];
     if (counterShot && counterShot === dir) {
       if (quality === 'mistimed') quality = 'good';
@@ -1263,10 +1570,9 @@
       case 'mistimed': probs = PROB_MISTIMED[dir]; break;
     }
 
-    // Roll outcome
     const roll = Math.random() * 100;
     let cum = 0;
-    const outcomes = [0, 1, 2, 3, 4, 6, -1]; // -1 = OUT
+    const outcomes = [0, 1, 2, 3, 4, 6, -1];
     for (let i = 0; i < probs.length; i++) {
       cum += probs[i];
       if (roll < cum) {
@@ -1291,7 +1597,7 @@
   // BALL DELIVERY SEQUENCE
   // ============================================
 
-  let deliveryPhase = 'idle'; // idle, runup, inflight, resolved, postDelay
+  let deliveryPhase = 'idle';
   let deliveryTimer = 0;
 
   function startDelivery() {
@@ -1308,6 +1614,14 @@
     state.stumpScatter = null;
     state.batAngle = -30;
     state.batAnimating = false;
+    batGroup.rotation.z = THREE.MathUtils.degToRad(-30);
+    batGroup.rotation.y = 0;
+
+    // Reset scatter meshes
+    scatterStumps.forEach(s => scene.remove(s));
+    scatterBails.forEach(b => scene.remove(b));
+    scatterStumps = [];
+    scatterBails = [];
   }
 
   function updateDelivery(dt) {
@@ -1316,7 +1630,6 @@
 
     switch (deliveryPhase) {
       case 'idle':
-        // Wait between balls
         if (state.waitingForNext) {
           state.nextBallDelay -= dt * 1000;
           if (state.nextBallDelay <= 0) {
@@ -1335,7 +1648,6 @@
         state.bowlerRunUp = Math.min(1, deliveryTimer / 600);
         state.bowlerArmAngle = -90 + state.bowlerRunUp * 180;
         if (deliveryTimer >= 400) {
-          // Release ball
           deliveryPhase = 'inflight';
           deliveryTimer = 0;
           state.ballActive = true;
@@ -1346,13 +1658,11 @@
         break;
 
       case 'inflight':
-        if (deliveryPhase !== 'inflight') break; // guard against re-entry after resolve
+        if (deliveryPhase !== 'inflight') break;
         deliveryTimer += dt * 1000;
         state.ballProgress = Math.min(1, deliveryTimer / state.ballSpeed);
 
-        // Check if player has swung
         if (state.swingTriggered && !state.batAnimating) {
-          // Resolve immediately on swing
           deliveryPhase = 'resolved';
           const idealTime = state.ballSpeed * 0.85;
           const timingMs = Math.abs(state.swingTime - idealTime);
@@ -1362,9 +1672,7 @@
           break;
         }
 
-        // Ball reached batsman
         if (state.ballProgress >= 1) {
-          // Player didn't swing
           deliveryPhase = 'resolved';
           const outcome = resolveOutcome(-1);
           handleOutcome(outcome);
@@ -1377,7 +1685,6 @@
         if (deliveryTimer >= 800) {
           deliveryPhase = 'idle';
           state.ballActive = false;
-          // Check game end conditions
           if (state.wickets >= 3) {
             endGame();
           } else if (state.runs >= state.target) {
@@ -1396,8 +1703,9 @@
     state.totalBallsFaced++;
     state.ballsInOver++;
 
-    const vpX = W / 2;
-    const pitchBottom = H * 0.88;
+    // Use center-screen coords for floating text (relative to H)
+    const textX = W / 2;
+    const textBaseY = H * 0.4;
 
     if (outcome.runs === -1) {
       // WICKET
@@ -1405,35 +1713,35 @@
       state.currentOverResults.push({ runs: 0, isWicket: true, isFour: false, isSix: false });
       state.consecutiveScoringBalls = 0;
 
-      // Animations
       if (outcome.type === 'bowled') {
         playStumpsHit();
-        triggerStumpScatter(vpX, pitchBottom);
+        triggerStumpScatter();
         state.postBallActive = true;
         state.postBallType = 'wicket';
         state.postBallTime = Date.now();
+        // Camera shake
+        cameraShake.active = true;
+        cameraShake.start = Date.now();
       } else {
         playBatCrack(0);
         state.postBallActive = true;
         state.postBallType = 'caught';
         state.postBallTime = Date.now();
-        state.postBallX = vpX;
-        state.postBallY = pitchBottom - 40;
+        state.postBallX = 0;
+        state.postBallY = 1;
         state.postBallVx = (Math.random() - 0.5) * 3;
         state.postBallSize = 6;
       }
 
       playCrowdReaction('groan');
-      spawnFloatingText('OUT!', vpX, pitchBottom - 60, '#E8000D', 32);
+      spawnFloatingText('OUT!', textX, textBaseY, '#E8000D', 32);
 
-      // Wicket flash
       if (!reducedMotion) gameWrap.classList.add('cb-wicket-flash');
       setTimeout(() => gameWrap.classList.remove('cb-wicket-flash'), 500);
 
       vibrate([100]);
       announceScore(`Out! ${outcome.type}. ${state.runs} for ${state.wickets}.`);
 
-      // New batsman animation
       if (state.wickets < 3) {
         state.newBatsmanAnim = true;
         state.newBatsmanTime = Date.now() + 400;
@@ -1443,7 +1751,7 @@
       return;
     }
 
-    // Runs scored -- apply powerplay multiplier
+    // Runs scored
     let runs = outcome.runs;
     const rawRuns = runs;
     if (state.isPowerplay && runs > 0) {
@@ -1460,7 +1768,6 @@
       state.consecutiveScoringBalls = 0;
     }
 
-    // Ball power for bat crack (use rawRuns for sound quality mapping)
     let power = 0;
     if (rawRuns === 1) power = 1;
     else if (rawRuns <= 3) power = 2;
@@ -1478,8 +1785,8 @@
     // Post-ball visual
     state.postBallActive = true;
     state.postBallTime = Date.now();
-    state.postBallX = vpX;
-    state.postBallY = pitchBottom - 40;
+    state.postBallX = 0;
+    state.postBallY = 1;
     state.postBallSize = 8;
 
     if (rawRuns === 4) {
@@ -1487,8 +1794,8 @@
       state.postBallType = 'four';
       state.postBallVx = (Math.random() - 0.5) * 2 - 0.3;
       const fourLabel = state.isPowerplay ? 'FOUR! (x1.5)' : 'FOUR!';
-      spawnFloatingText(fourLabel, vpX, pitchBottom - 80, '#FFD700', 32);
-      spawnParticles(vpX, pitchBottom - 60, 25, ['#FFD700', '#FFA500', '#FFFFFF'], 120, 0.8);
+      spawnFloatingText(fourLabel, textX, textBaseY - 20, '#FFD700', 32);
+      spawnParticles(textX, textBaseY, 25, ['#FFD700', '#FFA500', '#FFFFFF'], 120, 0.8);
       playCrowdReaction('cheer');
       playBoundaryJingle(false);
       vibrate([30]);
@@ -1498,37 +1805,35 @@
       state.postBallType = 'six';
       state.postBallVx = (Math.random() - 0.5) * 2;
       const sixLabel = state.isPowerplay ? 'SIX! (x1.5)' : 'SIX!';
-      spawnFloatingText(sixLabel, vpX, pitchBottom - 80, '#FF00FF', 38);
-      spawnParticles(vpX, pitchBottom - 60, 40, ['#FF00FF', '#FFD700', '#00FFFF', '#FF4444', '#44FF44'], 150, 1.2);
+      spawnFloatingText(sixLabel, textX, textBaseY - 20, '#FF00FF', 38);
+      spawnParticles(textX, textBaseY, 40, ['#FF00FF', '#FFD700', '#00FFFF', '#FF4444', '#44FF44'], 150, 1.2);
       playCrowdReaction('roar');
       playBoundaryJingle(true);
       vibrate([30, 15, 50]);
       checkAchievement('cb-first-six');
-      // Trigger crowd wave
       triggerCrowdWave();
     } else if (runs === 0) {
       state.postBallType = 'default';
       state.postBallVx = (Math.random() - 0.5);
-      spawnFloatingText('DOT', vpX, pitchBottom - 60, 'rgba(255,255,255,0.6)', 20);
+      spawnFloatingText('DOT', textX, textBaseY, 'rgba(255,255,255,0.6)', 20);
     } else {
       state.postBallType = 'default';
       state.postBallVx = (Math.random() - 0.5) * 1.5;
-      spawnFloatingText(runs.toString(), vpX, pitchBottom - 60, '#FFFFFF', 24);
+      spawnFloatingText(runs.toString(), textX, textBaseY, '#FFFFFF', 24);
     }
 
     // Milestone checks
     if (state.runs >= 50 && state.runs - runs < 50) {
-      spawnFloatingText('FIFTY!', vpX, pitchBottom - 120, '#FFD700', 36);
-      spawnParticles(vpX, pitchBottom - 100, 50, ['#FFD700'], 100, 1.5);
+      spawnFloatingText('FIFTY!', textX, textBaseY - 60, '#FFD700', 36);
+      spawnParticles(textX, textBaseY - 40, 50, ['#FFD700'], 100, 1.5);
       checkAchievement('cb-fifty');
     }
     if (state.runs >= 100 && state.runs - runs < 100) {
-      spawnFloatingText('CENTURY!', vpX, pitchBottom - 120, '#FFD700', 40);
-      spawnParticles(vpX, pitchBottom - 100, 80, ['#FFD700', '#FF00FF', '#00FFFF'], 150, 2);
+      spawnFloatingText('CENTURY!', textX, textBaseY - 60, '#FFD700', 40);
+      spawnParticles(textX, textBaseY - 40, 80, ['#FFD700', '#FF00FF', '#00FFFF'], 150, 2);
       checkAchievement('cb-century');
     }
 
-    // Perfect over check
     if (state.currentOverScoringBalls >= 6 && state.ballsInOver === 6) {
       checkAchievement('cb-perfect-over');
     }
@@ -1536,16 +1841,14 @@
     const announceText = runs === 0 ? 'Dot ball.' : `${runs} run${runs > 1 ? 's' : ''}.`;
     announceScore(`${announceText} Total: ${state.runs} for ${state.wickets}.`);
 
-    // Animate score
     hudRuns.classList.add('cb-score-pop');
     setTimeout(() => hudRuns.classList.remove('cb-score-pop'), 300);
 
     updateHUD();
   }
 
-  function triggerStumpScatter(x, y) {
+  function triggerStumpScatter() {
     state.stumpScatter = {
-      x, y: y - (y - H * 0.37) * 0.02,
       startTime: Date.now(),
       pieces: [
         { vx: -1.5, vy: -2, rot: Math.random() * 2 - 1 },
@@ -1564,7 +1867,6 @@
   // ============================================
 
   function endOver() {
-    // Track best over
     if (state.currentOverRuns > state.bestOverRuns) {
       state.bestOverRuns = state.currentOverRuns;
     }
@@ -1574,7 +1876,6 @@
     playUISound('overComplete');
 
     if (state.oversCompleted >= 5) {
-      // Innings over
       if (state.runs >= state.target) {
         completeLevelTarget();
       } else {
@@ -1583,7 +1884,6 @@
       return;
     }
 
-    // Show between-overs screen
     showBetweenOvers();
   }
 
@@ -1605,7 +1905,6 @@
 
     const commentary = pickRandom(COMMENTARY.overEnd);
 
-    // Generate next bowler ahead of time so we can show them
     generateBowlerForOver();
 
     const rrAhead = parseFloat(rr) <= parseFloat(rrr);
@@ -1634,7 +1933,6 @@
 
     overOverlay.classList.add('cb-visible');
 
-    // Auto-continue
     state.autoOverTimer = 5;
     clearInterval(window._cbAutoOverInt);
     const countdownEl = overModal.querySelector('#overCountdown');
@@ -1660,9 +1958,7 @@
     state.currentOverScoringBalls = 0;
     gameWrap.classList.add('cb-playing');
 
-    // Bowler already generated in showBetweenOvers
     showBowlerIntro();
-
     setTimeout(() => startDelivery(), 1200);
   }
 
@@ -1672,7 +1968,6 @@
 
     const ballsRemaining = Math.max(0, 30 - state.totalBallsFaced);
 
-    // Check achievements
     if (ballsRemaining >= 10) checkAchievement('cb-target-crushed');
     if (state.level >= 3) checkAchievement('cb-level-3');
     if (state.level >= 5) checkAchievement('cb-level-5');
@@ -1736,15 +2031,12 @@
     const ballBonus = didBeat ? ballsRemaining * 3 : 0;
     const finalScore = Math.max(0, totalRuns + boundaryBonus - wicketPenalty + targetBonus + ballBonus);
 
-    // Track best
     const sr = state.totalBallsFaced > 0 ? ((totalRuns / state.totalBallsFaced) * 100).toFixed(1) : '0.0';
 
-    // Achievement checks
     if (state.wickets === 0 && state.totalBallsFaced === 30) checkAchievement('cb-no-wicket');
     if (state.sixes >= 6) checkAchievement('cb-six-sixes');
     if (finalScore >= 200) checkAchievement('cb-high-score-200');
 
-    // Save best score
     try {
       const prev = parseInt(localStorage.getItem('cricket-blitz-high-score')) || 0;
       if (finalScore > prev) localStorage.setItem('cricket-blitz-high-score', finalScore);
@@ -1759,13 +2051,11 @@
       playUISound('gameOver');
     }
 
-    // Score submission
     submitScore(finalScore, totalRuns, sr, didBeat);
 
     const heading = didBeat ? 'What an innings!' : 'Innings Over';
     const subText = didBeat ? 'Incredible batting performance!' : 'So close! Better luck next time.';
 
-    // Star rating: 1 star = played, 2 = beat target, 3 = beat with balls remaining
     let stars = 1;
     if (didBeat) stars = 2;
     if (didBeat && ballsRemaining >= 6) stars = 3;
@@ -1801,8 +2091,6 @@
     `;
 
     gameOverOverlay.classList.add('cb-visible');
-
-    // Animated score count-up
     animateScoreCountUp(finalScore);
   }
 
@@ -1854,17 +2142,18 @@
     const colors = team
       ? [team.primary, team.secondary, team.accent, '#FFD700', '#FF00FF']
       : ['#FFD700', '#FF00FF', '#00FFFF', '#FF4444', '#44FF44'];
-    for (let i = 0; i < 100; i++) {
-      const x = Math.random() * W;
-      const y = -20 - Math.random() * 60;
+    for (let i = 0; i < 100 && state.particles.length < MAX_PARTICLES; i++) {
       state.particles.push({
-        x, y,
-        vx: (Math.random() - 0.5) * 100,
-        vy: Math.random() * 80 + 40,
+        x: (Math.random() - 0.5) * 10,
+        y: 8 + Math.random() * 5,
+        z: 5 + Math.random() * 15,
+        vx: (Math.random() - 0.5) * 3,
+        vy: -(Math.random() * 2 + 1),
+        vz: (Math.random() - 0.5) * 3,
         life: 2 + Math.random(),
         maxLife: 3,
         color: colors[Math.floor(Math.random() * colors.length)],
-        size: 3 + Math.random() * 4
+        size: 0.06 + Math.random() * 0.08
       });
     }
   }
@@ -1883,30 +2172,25 @@
     const rr = state.totalBallsFaced > 0 ? (state.runs / (state.totalBallsFaced / 6)).toFixed(2) : '0.00';
     hudRR.textContent = rr;
 
-    // Wickets
     const icons = hudWickets.querySelectorAll('.cb-wicket-icon');
     icons.forEach((icon, i) => {
       icon.classList.toggle('active', i >= state.wickets);
     });
 
-    // Shot indicator (desktop)
     const arrows = { straight: '\u2191', pull: '\u2190', cut: '\u2192', defense: '\u2193' };
     const labels = { straight: 'Drive', pull: 'Pull', cut: 'Cut', defense: 'Block' };
     shotArrow.textContent = arrows[state.shotDirection] || '\u2191';
     shotLabel.textContent = labels[state.shotDirection] || 'Drive';
 
-    // Pitch shot overlay (mobile)
     const pitchShotIcon = $('pitchShotIcon');
     const pitchShotName = $('pitchShotName');
     if (pitchShotIcon) pitchShotIcon.textContent = arrows[state.shotDirection] || '\u2191';
     if (pitchShotName) pitchShotName.textContent = (labels[state.shotDirection] || 'Drive').toUpperCase();
 
-    // Powerplay badge
     state.isPowerplay = state.oversCompleted < 2;
     const ppBadge = $('powerplayBadge');
     if (ppBadge) ppBadge.classList.toggle('show', state.isPowerplay && state.phase === 'PLAYING');
 
-    // Tension check (within 15 runs of target)
     const tensionEdge = $('tensionEdge');
     const runsNeeded = state.target - state.runs;
     state.tensionActive = runsNeeded > 0 && runsNeeded <= 15 && state.phase === 'PLAYING';
@@ -1987,11 +2271,9 @@
       card.style.background = `linear-gradient(160deg, ${team.primary} 0%, ${darkenColor(team.primary, 0.3)} 100%)`;
       card.dataset.team = id;
 
-      // Jersey (shirt shape via CSS)
       const jersey = document.createElement('div');
       jersey.className = 'cb-team-jersey';
       jersey.style.setProperty('--jersey-stripe', team.secondary);
-      // Build the shirt body via the ::before pseudo (set bg via inline)
       jersey.style.background = 'transparent';
       const jerseyInner = document.createElement('div');
       jerseyInner.style.cssText = `
@@ -2001,7 +2283,6 @@
         border-radius: 0 0 4px 4px;
         position: relative;
       `;
-      // V stripe as child
       const vStripe = document.createElement('div');
       vStripe.style.cssText = `
         position: absolute; top: 0; left: 50%;
@@ -2014,13 +2295,11 @@
       jerseyInner.appendChild(vStripe);
       jersey.appendChild(jerseyInner);
 
-      // Team mascot name (e.g. "Mavericks")
       const name = document.createElement('div');
       name.className = 'cb-team-name';
       name.style.color = luminance(team.primary) > 0.55 ? '#000' : '#fff';
       name.textContent = team.name.split(' ')[1] || team.name;
 
-      // City name
       const city = document.createElement('div');
       city.className = 'cb-team-city';
       city.textContent = team.city;
@@ -2046,7 +2325,6 @@
 
     const team = TEAMS[id];
 
-    // Update selection UI
     document.querySelectorAll('.cb-team-card').forEach(card => {
       card.classList.toggle('selected', card.dataset.team === id);
     });
@@ -2066,14 +2344,11 @@
     resumeAudio();
     playUISound('confirm');
 
-    // Pick opponent
     const others = TEAM_IDS.filter(id => id !== state.selectedTeam);
     state.opponentTeam = others[Math.floor(Math.random() * others.length)];
 
-    // Track team played
     checkTeamsAchievement();
 
-    // Reset state
     state.level = 1;
     state.target = getTarget(1);
     state.runs = 0;
@@ -2104,7 +2379,9 @@
     deliveryPhase = 'idle';
     deliveryTimer = 0;
 
-    // Clear tension edge
+    // Reset team color tracking
+    _lastTeamKey = null;
+
     const tensionEdge = $('tensionEdge');
     if (tensionEdge) tensionEdge.classList.remove('active');
 
@@ -2112,9 +2389,19 @@
     state.phase = 'PLAYING';
     gameWrap.classList.add('cb-playing');
 
-    // Reinit crowd with team colors
-    initCrowdDots();
-    bgDirty = true;
+    // Rebuild crowd with team colors
+    if (crowdMesh) {
+      scene.remove(crowdMesh);
+      crowdMesh.geometry.dispose();
+      crowdMesh.material.dispose();
+    }
+    buildCrowd();
+
+    // Reset scatter
+    scatterStumps.forEach(s => scene.remove(s));
+    scatterBails.forEach(b => scene.remove(b));
+    scatterStumps = [];
+    scatterBails = [];
 
     updateHUD();
     generateBowlerForOver();
@@ -2141,7 +2428,6 @@
     const ppBadge = $('powerplayBadge');
     if (ppBadge) ppBadge.classList.remove('show');
 
-    // Show best score
     try {
       const best = localStorage.getItem('cricket-blitz-high-score');
       const bestLv = localStorage.getItem('cricket-blitz-best-level');
@@ -2262,12 +2548,13 @@
     isTouchDevice = true;
   }, { once: true });
 
-  // Canvas tap fallback (for mobile)
-  fgCanvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    initAudio();
-    resumeAudio();
-  }, { passive: false });
+  // Three.js canvas tap for audio init on mobile
+  if (gameContainer) {
+    gameContainer.addEventListener('touchstart', (e) => {
+      initAudio();
+      resumeAudio();
+    }, { passive: true });
+  }
 
   // ============================================
   // GAME LOOP
@@ -2283,9 +2570,10 @@
     const dt = state.lastFrameTime ? Math.min(0.05, (timestamp - state.lastFrameTime) / 1000) : 0.016;
     state.lastFrameTime = timestamp;
 
-    if (bgDirty) drawBackground();
     updateDelivery(dt);
-    drawForeground(dt);
+    updateThreeScene(dt);
+    renderFloatingTexts();
+    renderThreeScene();
   }
 
   // Visibility change (pause when tab hidden)
@@ -2309,7 +2597,7 @@
     if (!window.gameHeader) return;
     window.gameHeader.init({
       title: 'Cricket Blitz',
-      icon: '🏏',
+      icon: '\u{1F3CF}',
       gameId: 'cricket-blitz',
       buttons: ['sound', 'leaderboard', 'auth'],
       onSound: () => {
@@ -2396,13 +2684,16 @@
       if (s === 'false') state.soundEnabled = false;
     } catch (e) {}
 
-    // Resize
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    // Init Three.js scene
+    initThreeScene();
 
-    // ResizeObserver for game container
+    // Add floating text container to game container
+    gameContainer.appendChild(floatingTextContainer);
+
+    // Resize
+    window.addEventListener('resize', handleResize);
     if (window.ResizeObserver) {
-      new ResizeObserver(() => resizeCanvas()).observe(gameContainer);
+      new ResizeObserver(() => handleResize()).observe(gameContainer);
     }
 
     // Build team select
@@ -2436,20 +2727,14 @@
     if (window.gameHeader) {
       initHeader();
     } else {
-      // Wait for header script to load
       const check = setInterval(() => {
         if (window.gameHeader) {
           clearInterval(check);
           initHeader();
         }
       }, 100);
-      // Stop checking after 5s
       setTimeout(() => clearInterval(check), 5000);
     }
-
-    // Draw initial background
-    bgDirty = true;
-    drawBackground();
 
     // Start game loop
     animFrameId = requestAnimationFrame(gameLoop);
