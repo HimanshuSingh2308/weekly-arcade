@@ -147,7 +147,7 @@
     bean_brew: {
       id: 'bean_brew', name: 'Bean & Brew', emoji: '☕', unlockCost: 5000, unlockPrestige: 1,
       theme: { '--cream': '#F5F0E8', '--taupe': '#8B6F47', '--brown': '#3E2723', '--matcha': '#B87333', '--coral': '#D84315', '--gold': '#FFB300', '--taro': '#6D4C41', '--wall-top': '#E8DCC8', '--wall-bottom': '#D4C4A8', '--floor': '#A0845C' },
-      getDrinks: () => ({ drip_coffee: { emoji: '☕', name: 'Drip Coffee', baseCoins: 8, serveTime: 700, unlockDay: 1 }, cappuccino: { emoji: '🫘', name: 'Cappuccino', baseCoins: 15, serveTime: 1100, unlockDay: 1 }, espresso: { emoji: '⚡', name: 'Espresso Shot', baseCoins: 12, serveTime: 500, unlockDay: 3 }, caramel_latte: { emoji: '🍯', name: 'Caramel Latte', baseCoins: 22, serveTime: 1400, unlockDay: 5 }, mocha_frappe: { emoji: '🥤', name: 'Mocha Frappe', baseCoins: 35, serveTime: 1800, unlockDay: 8 }, pour_over: { emoji: '🫖', name: 'Pour-Over Special', baseCoins: 50, serveTime: 2200, unlockDay: 12 }, affogato: { emoji: '🍨', name: 'Affogato', baseCoins: 65, serveTime: 2800, unlockDay: 18 } }),
+      getDrinks: () => ({ drip_coffee: { emoji: '☕', name: 'Drip Coffee', baseCoins: 8, serveTime: 700, unlockDay: 1 }, cappuccino: { emoji: '🫘', name: 'Cappuccino', baseCoins: 15, serveTime: 1100, unlockDay: 1 }, espresso: { emoji: '🥃', name: 'Espresso Shot', baseCoins: 12, serveTime: 500, unlockDay: 3 }, caramel_latte: { emoji: '🍯', name: 'Caramel Latte', baseCoins: 22, serveTime: 1400, unlockDay: 5 }, mocha_frappe: { emoji: '🥤', name: 'Mocha Frappe', baseCoins: 35, serveTime: 1800, unlockDay: 8 }, pour_over: { emoji: '🫖', name: 'Pour-Over Special', baseCoins: 50, serveTime: 2200, unlockDay: 12 }, affogato: { emoji: '🍨', name: 'Affogato', baseCoins: 65, serveTime: 2800, unlockDay: 18 } }),
       getCustomers: () => ({ regular: { color: '#A1887F', patienceMod: 1.0, orderPool: ['drip_coffee', 'cappuccino'], earlyWeight: 50, lateWeight: 20 }, student: { color: '#FFB347', patienceMod: 1.2, orderPool: ['drip_coffee', 'espresso'], earlyWeight: 30, lateWeight: 15 }, business: { color: '#546E7A', patienceMod: 0.6, orderPool: ['espresso', 'cappuccino', 'pour_over'], earlyWeight: 15, lateWeight: 30 }, foodie: { color: '#CE93D8', patienceMod: 0.9, orderPool: ['caramel_latte', 'mocha_frappe', 'affogato'], earlyWeight: 0, lateWeight: 25 }, influencer: { color: '#FF69B4', patienceMod: 0.5, orderPool: ['affogato', 'pour_over'], earlyWeight: 0, lateWeight: 10 }, vip: { color: '#FFD700', patienceMod: 1.0, orderPool: 'ALL', earlyWeight: 0, lateWeight: 0 } }),
       getUpgrades: () => BOBA_UPGRADES, getSpawnTable: () => BOBA_SPAWN, getPatienceTable: () => BOBA_PATIENCE,
     },
@@ -3043,7 +3043,10 @@
     const sr = document.getElementById('srAnnounce');
     if (sr) sr.textContent = `Day ${currentDay} complete. Revenue: ${finalRevenue} coins. Served: ${customersServed}. Lost: ${customersLost}.`;
 
-    setTimeout(() => showDayEnd(finalRevenue, isNewBest, dayPenalties, challengeBonus), 1000);
+    // Simulate managed stores (they advance 1 day for each day you play)
+    const managedResults = simulateManagedStores();
+
+    setTimeout(() => showDayEnd(finalRevenue, isNewBest, dayPenalties, challengeBonus, managedResults), 1000);
   }
 
   function getNextGoalHint() {
@@ -3094,7 +3097,7 @@
     return '';
   }
 
-  function showDayEnd(revenue, isNewBest, penalties, challengeBonus = 0) {
+  function showDayEnd(revenue, isNewBest, penalties, challengeBonus = 0, managedResults = []) {
     const modal = document.getElementById('dayEndModal');
     const ch = dailyChallenge;
     const challengeDesc = ch ? ch.desc.replace('{n}', ch.target) : '';
@@ -3105,6 +3108,22 @@
           ${challengeBonus > 0 ? `+${challengeBonus} 💰` : 'Not yet'}
         </span>
       </div>` : '';
+
+    // Managed store earnings section
+    let managedHtml = '';
+    if (managedResults.length > 0) {
+      const managedTotal = managedResults.reduce((s, r) => s + r.earned, 0);
+      const rows = managedResults.map(r =>
+        `<div class="modal-row" style="font-size:0.8rem;"><span>${r.emoji} ${r.storeName} <span style="color:#999;font-size:0.65rem;">Day ${r.newDay}</span></span><span style="color:var(--matcha);">+${formatCoins(r.earned)} 💰</span></div>`
+      ).join('');
+      managedHtml = `
+        <div style="border-top:1px dashed rgba(0,0,0,0.1);margin-top:0.5rem;padding-top:0.4rem;">
+          <div style="font-size:0.7rem;font-weight:700;color:var(--taupe);margin-bottom:0.2rem;">👨‍💼 Managed Stores</div>
+          ${rows}
+          <div class="modal-row" style="font-weight:700;"><span>Manager Total</span><span style="color:var(--matcha);">+${formatCoins(managedTotal)} 💰</span></div>
+        </div>`;
+    }
+
     modal.innerHTML = `
       <h2>☀️ Day ${currentDay - 1} Complete!</h2>
       <div class="modal-row"><span>Revenue</span><span>💰 ${formatCoins(revenue)}</span></div>
@@ -3113,6 +3132,7 @@
       <div class="modal-row"><span>Lost</span><span>😤 ${customersLost}</span></div>
       <div class="modal-row"><span>Best Combo</span><span>🔥 x${Math.min(3.0, 1.0 + peakCombo * 0.1).toFixed(1)}</span></div>
       ${challengeHtml}
+      ${managedHtml}
       ${isNewBest ? '<div class="new-best">⭐ NEW PERSONAL BEST! ⭐</div>' : ''}
       ${getNextGoalHint()}
       <br>
@@ -3627,6 +3647,54 @@
     saveGame();
     playSound('upgrade');
     showHub();
+  }
+
+  // Simulate 1 day for all managed stores (not the active store) when player completes a day
+  function simulateManagedStores() {
+    const unlockedStores = getUnlockedStores();
+    if (unlockedStores.length < 2) return [];
+    try {
+      const empire = JSON.parse(localStorage.getItem('tt_empire') || '{}');
+      const managers = (empire.global || {}).managers || {};
+      const corpTraining = ((empire.global || {}).hqUpgrades || {}).corporate_training || 0;
+      const results = [];
+
+      for (const storeId of unlockedStores) {
+        if (storeId === activeStoreId) continue; // skip the store player is actively playing
+        const mgr = managers[storeId];
+        if (!mgr) continue; // no manager = no passive earnings
+        const tier = MANAGER_TIERS[mgr.tier];
+        if (!tier) continue;
+        const storeData = (empire.stores || {})[storeId];
+        if (!storeData || !storeData.unlocked) continue;
+
+        const upgradeCount = Object.values(storeData.upgradeLevels || {}).reduce((a, b) => a + b, 0);
+        const dayFactor = Math.min(storeData.currentDay || 1, 30);
+        const estimatedDailyRev = 100 + dayFactor * 50 + upgradeCount * 30;
+        const efficiencyBoost = Math.min(tier.efficiency + corpTraining * 0.10, 0.95);
+        const earned = Math.floor(estimatedDailyRev * efficiencyBoost);
+
+        if (earned > 0) {
+          storeData.currentDay = (storeData.currentDay || 1) + 1;
+          results.push({
+            storeId,
+            storeName: STORE_CONFIGS[storeId]?.name || storeId,
+            emoji: STORE_CONFIGS[storeId]?.emoji || '🏪',
+            earned,
+            newDay: storeData.currentDay
+          });
+        }
+      }
+
+      if (results.length > 0) {
+        // Credit total to wallet
+        const total = results.reduce((sum, r) => sum + r.earned, 0);
+        empire.global.wallet = (empire.global.wallet || 0) + total;
+        wallet += total;
+        localStorage.setItem('tt_empire', JSON.stringify(empire)); invalidateEmpireCache();
+      }
+      return results;
+    } catch(e) { return []; }
   }
 
   function calculateStoreDamage(hoursOffline) {
