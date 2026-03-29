@@ -1095,13 +1095,19 @@
   width: calc(100% - 32px);
 }
 
-/* Hide bowling panel + meter on touch devices — use tap-the-pitch instead */
+/* Hide bowling panel on touch devices — use tap-the-pitch instead */
 @media (hover: none), (pointer: coarse) {
   .cb-bowling-panel {
     display: none !important;
   }
+  /* Keep meter visible on mobile but make it compact */
   .cb-bowling-meter {
-    display: none !important;
+    width: 24px !important;
+    right: 6px !important;
+    height: 120px !important;
+    top: auto !important;
+    bottom: 20% !important;
+    opacity: 0.8;
   }
 }
 
