@@ -685,6 +685,7 @@ import * as THREE from 'three';
     buildStumps();
     buildSweetSpot();
     buildFielders();
+    buildUmpiresAndKeeper();
     buildSweetSpotRing();
 
     // Patch #21: Advertising boards along boundary
@@ -1513,6 +1514,126 @@ import * as THREE from 'three';
       scene.add(group);
       fielderMeshes.push(group);
     });
+  }
+
+  // ---- Umpires + Wicketkeeper ----
+  function buildUmpiresAndKeeper() {
+    const skinColor = 0xdba67a;
+
+    // Helper to build a simple figure
+    function buildFigure(shirtColor, hatColor, position, rotationY) {
+      const group = new THREE.Group();
+
+      // Legs
+      const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.35, 4);
+      const legMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); // dark trousers
+      const legL = new THREE.Mesh(legGeo, legMat);
+      legL.position.set(-0.06, 0.18, 0);
+      group.add(legL);
+      const legR = new THREE.Mesh(legGeo, legMat);
+      legR.position.set(0.06, 0.18, 0);
+      group.add(legR);
+
+      // Body
+      const bodyGeo = new THREE.CylinderGeometry(0.14, 0.12, 0.5, 6);
+      const bodyMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.6;
+      group.add(body);
+
+      // Arms
+      const armGeo = new THREE.CylinderGeometry(0.035, 0.03, 0.35, 4);
+      const armMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+      const armL = new THREE.Mesh(armGeo, armMat);
+      armL.position.set(-0.18, 0.55, 0);
+      armL.rotation.z = 0.15;
+      group.add(armL);
+      const armR = new THREE.Mesh(armGeo, armMat);
+      armR.position.set(0.18, 0.55, 0);
+      armR.rotation.z = -0.15;
+      group.add(armR);
+
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.1, 8, 6);
+      const headMat = new THREE.MeshLambertMaterial({ color: skinColor });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 0.95;
+      group.add(head);
+
+      // Hat
+      const hatGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.06, 8);
+      const hatMat = new THREE.MeshLambertMaterial({ color: hatColor });
+      const hat = new THREE.Mesh(hatGeo, hatMat);
+      hat.position.y = 1.05;
+      group.add(hat);
+
+      group.position.copy(position);
+      if (rotationY) group.rotation.y = rotationY;
+      scene.add(group);
+      return group;
+    }
+
+    // Bowler's end umpire — stands behind stumps at bowler's end, slightly off to one side
+    buildFigure(
+      0xf0f0f0,   // white shirt (umpire)
+      0x222222,   // dark hat
+      new THREE.Vector3(1.5, 0, 20.5),  // behind bowler's stumps, offset right
+      Math.PI     // facing toward batsman
+    );
+
+    // Square leg umpire — stands at square leg position
+    buildFigure(
+      0xf0f0f0,   // white shirt
+      0x222222,   // dark hat
+      new THREE.Vector3(-6, 0, 1.5),    // square leg, near batsman's end
+      Math.PI / 2 // facing the pitch sideways
+    );
+
+    // Wicketkeeper — crouches behind batsman's stumps
+    const keeperGroup = new THREE.Group();
+
+    // Keeper legs (crouched — shorter, bent)
+    const kLegGeo = new THREE.CylinderGeometry(0.05, 0.04, 0.25, 4);
+    const kLegMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 }); // white pads
+    const kLegL = new THREE.Mesh(kLegGeo, kLegMat);
+    kLegL.position.set(-0.07, 0.12, 0);
+    kLegL.rotation.x = 0.4; // bent forward (crouching)
+    keeperGroup.add(kLegL);
+    const kLegR = new THREE.Mesh(kLegGeo, kLegMat);
+    kLegR.position.set(0.07, 0.12, 0);
+    kLegR.rotation.x = 0.4;
+    keeperGroup.add(kLegR);
+
+    // Keeper body (crouched — lower, leaned forward)
+    const kBodyGeo = new THREE.CylinderGeometry(0.13, 0.11, 0.4, 6);
+    const kBodyMat = new THREE.MeshLambertMaterial({ color: 0xf0f0f0 }); // whites
+    const kBody = new THREE.Mesh(kBodyGeo, kBodyMat);
+    kBody.position.y = 0.4;
+    kBody.rotation.x = 0.3; // leaning forward
+    keeperGroup.add(kBody);
+
+    // Keeper gloves (big, positioned in front)
+    const gloveGeo = new THREE.SphereGeometry(0.07, 6, 4);
+    const gloveMat = new THREE.MeshLambertMaterial({ color: 0xFFD700 }); // yellow gloves
+    const gloveL = new THREE.Mesh(gloveGeo, gloveMat);
+    gloveL.position.set(-0.15, 0.35, -0.2);
+    keeperGroup.add(gloveL);
+    const gloveR = new THREE.Mesh(gloveGeo, gloveMat);
+    gloveR.position.set(0.15, 0.35, -0.2);
+    keeperGroup.add(gloveR);
+
+    // Keeper helmet
+    const kHelmetGeo = new THREE.SphereGeometry(0.12, 8, 6);
+    const kHelmetMat = new THREE.MeshLambertMaterial({ color: 0x333366 }); // dark blue helmet
+    const kHelmet = new THREE.Mesh(kHelmetGeo, kHelmetMat);
+    kHelmet.position.y = 0.65;
+    kHelmet.scale.set(1, 0.85, 1);
+    keeperGroup.add(kHelmet);
+
+    // Position keeper behind batsman's stumps
+    keeperGroup.position.set(0, 0, -0.3); // behind the stumps (lower z = closer to camera)
+    keeperGroup.rotation.y = Math.PI; // facing toward bowler
+    scene.add(keeperGroup);
   }
 
   function updateFielderColors() {
