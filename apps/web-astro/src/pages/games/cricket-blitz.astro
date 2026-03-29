@@ -72,8 +72,8 @@ import gameData from '../../data/games/cricket-blitz.json';
       <span class="cb-hud-value" id="hudOvers">0.0/5</span>
     </div>
     <div class="cb-hud-item cb-hud-target">
-      <span class="cb-hud-label">Target</span>
-      <span class="cb-hud-value" id="hudTarget">40</span>
+      <span class="cb-hud-label">Innings</span>
+      <span class="cb-hud-value" id="hudTarget">5 overs</span>
     </div>
     <div class="cb-hud-item">
       <span class="cb-hud-label">Wickets</span>
@@ -137,11 +137,11 @@ import gameData from '../../data/games/cricket-blitz.json';
 
       <button class="cb-btn-link" id="howToPlayBtn">How to Play</button>
       <div class="cb-how-to-play" id="howToPlay">
+        <p><strong>BATTING (1st Innings):</strong></p>
         <p>Tap or press <kbd>Space</kbd> to swing the bat.</p>
         <p>Choose shot direction with arrow keys or tap zones.</p>
         <p>Time your shot as the ball reaches you.</p>
-        <p>Score as many runs as possible in 5 overs (30 balls).</p>
-        <p>Beat the target to advance to the next level!</p>
+        <p>Score as many runs as possible in 5 overs!</p>
         <div class="cb-zone-diagram">
           <div class="cb-zd-top">LOFTED (&uarr;)</div>
           <div class="cb-zd-mid">
@@ -150,6 +150,12 @@ import gameData from '../../data/games/cricket-blitz.json';
           </div>
           <div class="cb-zd-bottom">DEFENSE (&darr;)</div>
         </div>
+        <p style="margin-top:12px;"><strong>BOWLING (2nd Innings):</strong></p>
+        <p>Select delivery type with <kbd>Q/W/E/A/S/D</kbd> or <kbd>1-6</kbd>.</p>
+        <p>Choose line with <kbd>&larr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd> (off/mid/leg).</p>
+        <p>Press <kbd>Space</kbd> to start the accuracy meter, press again to stop.</p>
+        <p>Hit the green zone for the best deliveries!</p>
+        <p>Defend your batting total to win the match!</p>
       </div>
     </div>
   </div>
@@ -167,6 +173,94 @@ import gameData from '../../data/games/cricket-blitz.json';
   <!-- Game Over Overlay -->
   <div class="cb-overlay" id="gameOverOverlay" role="dialog" aria-modal="true" aria-label="Game over">
     <div class="cb-modal cb-gameover-modal" id="gameOverModal"></div>
+  </div>
+
+  <!-- Bowling HUD Top Bar -->
+  <div class="cb-bowling-hud-top" id="bowlingHudTop" style="display:none;">
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">Over</span>
+      <span class="cb-hud-value" id="bowlingOvers">0.0/5</span>
+    </div>
+    <div class="cb-hud-item cb-hud-target">
+      <span class="cb-hud-label" id="bowlingTarget">Target: 0</span>
+      <span class="cb-hud-value" id="bowlingAIScore">0/0</span>
+    </div>
+    <div class="cb-hud-item">
+      <span class="cb-hud-label" id="bowlingNeeded">Need: 0</span>
+      <span class="cb-hud-value" style="font-size:0.7rem;color:var(--cb-text-dim);">AI BATTING</span>
+    </div>
+  </div>
+
+  <!-- Bowling HUD Bottom Bar -->
+  <div class="cb-bowling-hud-bottom" id="bowlingHudBottom" style="display:none;">
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">Delivery</span>
+      <span class="cb-hud-value" id="bowlingDeliveryType">Straight</span>
+    </div>
+    <div class="cb-hud-item">
+      <span class="cb-hud-label">Line</span>
+      <span class="cb-hud-value" id="bowlingLine">Middle</span>
+    </div>
+  </div>
+
+  <!-- Bowling Delivery Panel (mobile + desktop) -->
+  <div class="cb-bowling-panel" id="bowlingPanel" style="display:none;">
+    <div class="cb-delivery-grid">
+      <button class="cb-delivery-btn selected" data-delivery="straight" onclick="window._cbSelectDelivery('straight')">
+        <span class="cb-delivery-key">Q/1</span>
+        <span class="cb-delivery-name">Straight</span>
+      </button>
+      <button class="cb-delivery-btn" data-delivery="inswing" onclick="window._cbSelectDelivery('inswing')">
+        <span class="cb-delivery-key">W/2</span>
+        <span class="cb-delivery-name">Inswing</span>
+      </button>
+      <button class="cb-delivery-btn" data-delivery="outswing" onclick="window._cbSelectDelivery('outswing')">
+        <span class="cb-delivery-key">E/3</span>
+        <span class="cb-delivery-name">Outswing</span>
+      </button>
+      <button class="cb-delivery-btn" data-delivery="bouncer" onclick="window._cbSelectDelivery('bouncer')">
+        <span class="cb-delivery-key">A/4</span>
+        <span class="cb-delivery-name">Bouncer</span>
+      </button>
+      <button class="cb-delivery-btn" data-delivery="yorker" onclick="window._cbSelectDelivery('yorker')">
+        <span class="cb-delivery-key">S/5</span>
+        <span class="cb-delivery-name">Yorker</span>
+      </button>
+      <button class="cb-delivery-btn" data-delivery="slower" onclick="window._cbSelectDelivery('slower')">
+        <span class="cb-delivery-key">D/6</span>
+        <span class="cb-delivery-name">Slower</span>
+      </button>
+    </div>
+    <div class="cb-line-indicators" id="bowlingLineIndicators">
+      <button class="cb-line-btn" data-line="off" onclick="window._cbSelectLine('off')">Off</button>
+      <button class="cb-line-btn selected" data-line="middle" onclick="window._cbSelectLine('middle')">Mid</button>
+      <button class="cb-line-btn" data-line="leg" onclick="window._cbSelectLine('leg')">Leg</button>
+    </div>
+    <button class="cb-bowl-btn" onclick="window._cbBowlingMeterTap()">
+      <span id="bowlBtnLabel">SPACE: Bowl</span>
+    </button>
+  </div>
+
+  <!-- Bowling Accuracy Meter -->
+  <div class="cb-bowling-meter" id="bowlingMeter" style="display:none;">
+    <div class="cb-meter-track">
+      <div class="cb-meter-zone cb-meter-red-top"></div>
+      <div class="cb-meter-zone cb-meter-yellow-top"></div>
+      <div class="cb-meter-zone cb-meter-green"></div>
+      <div class="cb-meter-zone cb-meter-yellow-bottom"></div>
+      <div class="cb-meter-zone cb-meter-red-bottom"></div>
+      <div class="cb-meter-indicator" id="bowlingMeterIndicator"></div>
+    </div>
+  </div>
+
+  <!-- Innings Break Overlay -->
+  <div class="cb-overlay" id="inningsBreakOverlay" role="dialog" aria-modal="true" aria-label="Innings break">
+    <div class="cb-modal cb-innings-modal" id="inningsBreakModal"></div>
+  </div>
+
+  <!-- Match Result Overlay -->
+  <div class="cb-overlay" id="matchResultOverlay" role="dialog" aria-modal="true" aria-label="Match result">
+    <div class="cb-modal cb-match-result-modal" id="matchResultModal"></div>
   </div>
 
   <!-- Bowler Intro -->

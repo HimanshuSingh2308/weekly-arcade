@@ -104,9 +104,14 @@
   text-shadow: 0 0 8px rgba(0,0,0,0.4);
 }
 
-/* Show touch zones on touch devices during play */
-.cb-playing .cb-touch-zones {
+/* Show touch zones on touch devices during batting play */
+.cb-playing:not(.cb-bowling) .cb-touch-zones {
   display: block;
+}
+
+/* Hide batting touch zones during bowling */
+.cb-bowling .cb-touch-zones {
+  display: none !important;
 }
 
 /* ---- HUD Bars (glassmorphism) ---- */
@@ -142,9 +147,17 @@
   border-radius: var(--cb-radius) var(--cb-radius) 0 0;
 }
 
-.cb-playing .cb-hud-top,
-.cb-playing .cb-hud-bottom {
+.cb-playing:not(.cb-bowling) .cb-hud-top,
+.cb-playing:not(.cb-bowling) .cb-hud-bottom {
   display: flex;
+}
+
+/* Hide batting shot indicator during bowling */
+.cb-bowling .cb-shot-indicator {
+  display: none !important;
+}
+.cb-bowling .cb-pitch-shot-overlay {
+  display: none !important;
 }
 
 .cb-hud-item {
@@ -1001,6 +1014,241 @@
   .cb-modal { max-width: 520px; }
 }
 
+/* ============================================
+   BOWLING INNINGS UI
+   ============================================ */
+
+/* ---- Bowling HUD Bars ---- */
+.cb-bowling-hud-top,
+.cb-bowling-hud-bottom {
+  position: fixed;
+  left: 0; right: 0;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  justify-content: space-around;
+  height: var(--cb-hud-h);
+  padding: 0 12px;
+  background: rgba(10,5,30,0.72);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.85rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
+.cb-bowling-hud-top {
+  top: 0;
+  padding-top: var(--cb-safe-top);
+  border-top: none;
+  border-radius: 0 0 var(--cb-radius) var(--cb-radius);
+}
+
+.cb-bowling-hud-bottom {
+  bottom: 0;
+  padding-bottom: var(--cb-safe-bottom);
+  border-bottom: none;
+  border-radius: var(--cb-radius) var(--cb-radius) 0 0;
+}
+
+/* ---- Bowling Delivery Panel ---- */
+.cb-bowling-panel {
+  position: fixed;
+  bottom: calc(var(--cb-hud-h) + var(--cb-safe-bottom) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(10,5,30,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  max-width: 360px;
+  width: calc(100% - 32px);
+}
+
+.cb-delivery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.cb-delivery-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--cb-text);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 44px;
+}
+
+.cb-delivery-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.cb-delivery-btn.selected {
+  border-color: var(--cb-accent);
+  background: rgba(255,215,0,0.12);
+  box-shadow: 0 0 12px rgba(255,215,0,0.2);
+}
+
+.cb-delivery-key {
+  font-size: 0.55rem;
+  color: var(--cb-text-dim);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cb-delivery-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ---- Line Indicators ---- */
+.cb-line-indicators {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+}
+
+.cb-line-btn {
+  flex: 1;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--cb-text);
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 36px;
+}
+
+.cb-line-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.cb-line-btn.selected {
+  border-color: #4CAF50;
+  background: rgba(76,175,80,0.15);
+}
+
+/* ---- Bowl Button ---- */
+.cb-bowl-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--cb-accent), #FFA500);
+  border: none;
+  border-radius: 24px;
+  color: #000;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  min-height: 48px;
+  transition: transform 0.15s;
+  box-shadow: 0 4px 16px rgba(255,215,0,0.3);
+}
+
+.cb-bowl-btn:hover {
+  transform: scale(1.03);
+}
+
+.cb-bowl-btn:active {
+  transform: scale(0.97);
+}
+
+/* ---- Bowling Accuracy Meter ---- */
+.cb-bowling-meter {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 15;
+  display: none;
+  width: 40px;
+  height: 200px;
+}
+
+.cb-meter-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-meter-zone {
+  flex-shrink: 0;
+}
+
+.cb-meter-red-top {
+  height: 20%;
+  background: linear-gradient(180deg, rgba(232,0,13,0.6), rgba(232,0,13,0.3));
+}
+
+.cb-meter-yellow-top {
+  height: 15%;
+  background: linear-gradient(180deg, rgba(255,193,7,0.4), rgba(255,193,7,0.2));
+}
+
+.cb-meter-green {
+  height: 30%;
+  background: linear-gradient(180deg, rgba(76,175,80,0.3), rgba(76,175,80,0.5), rgba(76,175,80,0.3));
+  box-shadow: inset 0 0 10px rgba(76,175,80,0.3);
+}
+
+.cb-meter-yellow-bottom {
+  height: 15%;
+  background: linear-gradient(180deg, rgba(255,193,7,0.2), rgba(255,193,7,0.4));
+}
+
+.cb-meter-red-bottom {
+  height: 20%;
+  background: linear-gradient(180deg, rgba(232,0,13,0.3), rgba(232,0,13,0.6));
+}
+
+.cb-meter-indicator {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 0%;
+  height: 6px;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 16px rgba(255,255,255,0.4);
+  transition: none;
+  z-index: 2;
+}
+
+.cb-bowling-meter.active .cb-meter-track {
+  border-color: var(--cb-accent);
+  box-shadow: 0 0 12px rgba(255,215,0,0.3);
+}
+
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }
@@ -1015,4 +1263,7 @@
   .cb-powerplay-badge { animation: none; }
   .cb-tension-edge.active { animation: none; }
   @keyframes playBtnGlow { 0%, 100% { box-shadow: 0 4px 16px rgba(255,215,0,0.3); } }
+  .cb-delivery-btn { transition: none; }
+  .cb-line-btn { transition: none; }
+  .cb-bowl-btn { transition: none; }
 }
