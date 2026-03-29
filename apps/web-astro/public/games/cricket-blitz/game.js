@@ -4462,10 +4462,12 @@ import * as THREE from 'three';
   }
 
   async function submitMatchScore(finalScore, playerWon, tied) {
+    const MAX_PLAUSIBLE_SCORE = 500;
+    const clampedScore = Math.min(Math.max(0, finalScore), MAX_PLAUSIBLE_SCORE);
     try {
       if (window.apiClient && currentUser) {
         await window.apiClient.submitScore('cricket-blitz', {
-          score: finalScore,
+          score: clampedScore,
           level: 1,
           timeMs: Date.now() - state.gameStartTime,
           metadata: {
@@ -4988,7 +4990,7 @@ import * as THREE from 'three';
     saveAchievementToStorage(id);
 
     try {
-      if (window.apiClient) {
+      if (window.apiClient && currentUser) {
         window.apiClient.unlockAchievement(id, 'cricket-blitz').catch(() => {});
       }
     } catch (e) {}
@@ -5928,6 +5930,7 @@ import * as THREE from 'three';
   };
 
   window._cbStartSuperOverBowling = function() {
+    if (state.phase !== 'SUPER_OVER') return;
     startSuperOverBowling();
   };
 
