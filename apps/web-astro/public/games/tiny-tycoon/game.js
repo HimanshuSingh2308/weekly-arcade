@@ -314,6 +314,8 @@
   ];
   let dailyChallenge = null;
   let dailyChallengeComplete = false;
+  let openingTimeouts = [];
+  let openingSequenceRunning = false;
   let wallet = 0;
   let bestScore = 0;
   let currentDay = 1;
@@ -775,6 +777,18 @@
           });
           break;
         }
+        case 'setupPop': {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(600, now);
+          o.frequency.exponentialRampToValueAtTime(1200, now + 0.06);
+          g.gain.setValueAtTime(vol * 0.15, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          o.connect(g).connect(audioCtx.destination);
+          o.start(now); o.stop(now + 0.08);
+          break;
+        }
         case 'dayStart': {
           const o = audioCtx.createOscillator();
           const g = audioCtx.createGain();
@@ -1120,71 +1134,68 @@
     return -1;
   }
 
+  function createVipTableElement(index, isActive) {
+    const pos = VIP_TABLE_POSITIONS[index];
+    const table = document.createElement('div');
+    table.className = 'vip-table' + (isActive ? '' : ' faded');
+    table.style.left = pos.x + 'px';
+    table.style.top = pos.y + 'px';
+    table.innerHTML = `
+      <div class="vip-table-top"></div>
+      <div class="vip-table-leg"></div>
+      <div class="vip-chair chair-left"></div>
+      <div class="vip-chair chair-right"></div>
+    `;
+    return table;
+  }
+
   function renderVipTables() {
     vipTablesContainer.innerHTML = '';
     const totalTables = getVipTableCount();
     const baseVipLevel = upgradeLevels.vip_lounge || 0;
-
-    // Show active tables + faded placeholders for next unlock tier
     const showCount = Math.max(totalTables, Math.min(baseVipLevel + 2, VIP_TABLE_POSITIONS.length));
     for (let i = 0; i < showCount && i < VIP_TABLE_POSITIONS.length; i++) {
-      const pos = VIP_TABLE_POSITIONS[i];
-      const isActive = i < totalTables;
-      const table = document.createElement('div');
-      table.className = 'vip-table' + (isActive ? '' : ' faded');
-      table.style.left = pos.x + 'px';
-      table.style.top = pos.y + 'px';
-      table.innerHTML = `
-        <div class="vip-table-top"></div>
-        <div class="vip-table-leg"></div>
-        <div class="vip-chair chair-left"></div>
-        <div class="vip-chair chair-right"></div>
-      `;
-      vipTablesContainer.appendChild(table);
+      vipTablesContainer.appendChild(createVipTableElement(i, i < totalTables));
     }
   }
 
   // ==========================================
   // SHOP ENVIRONMENT
   // ==========================================
-  function updateShopEnvironment() {
+  function applyShopLevelClasses() {
     const shopLevel = getShopLevel();
     const shopBg = document.querySelector('.shop-bg');
-
-    // I. Shop visual evolution
     shopBg.classList.remove('shop-level-1', 'shop-level-2', 'shop-level-3', 'shop-level-4');
-    if (shopLevel >= 16) {
-      shopBg.classList.add('shop-level-4');
-    } else if (shopLevel >= 10) {
-      shopBg.classList.add('shop-level-3');
-    } else if (shopLevel >= 5) {
-      shopBg.classList.add('shop-level-2');
-    } else {
-      shopBg.classList.add('shop-level-1');
-    }
+    if (shopLevel >= 16) shopBg.classList.add('shop-level-4');
+    else if (shopLevel >= 10) shopBg.classList.add('shop-level-3');
+    else if (shopLevel >= 5) shopBg.classList.add('shop-level-2');
+    else shopBg.classList.add('shop-level-1');
+  }
 
-    // VIP Lounge
+  function applyVipLoungeSetup(showWaiters) {
     const vipLevel = upgradeLevels.vip_lounge || 0;
     vipLoungeEl.classList.remove('locked', 'unlocked', 'vip-level-1', 'vip-level-2', 'vip-level-3');
     if (vipLevel > 0) {
       vipLoungeEl.classList.add('unlocked', 'vip-level-' + vipLevel);
-      vipWaiterEl.style.display = 'block';
+      vipWaiterEl.style.display = showWaiters ? 'block' : 'none';
       vipWaiterEl.style.left = '170px';
       vipWaiterEl.style.top = '70px';
       initExtraWaiters();
-      extraWaiters.forEach(w => { w.el.style.display = 'block'; });
+      if (showWaiters) {
+        extraWaiters.forEach(w => { w.el.style.display = 'block'; });
+      }
     } else {
       vipLoungeEl.classList.add('locked');
       vipWaiterEl.style.display = 'none';
     }
+  }
 
+  function updateShopEnvironment() {
+    applyShopLevelClasses();
+    applyVipLoungeSetup(true);
     renderVipTables();
     initVipTables();
-
-    // Update shelf displays with available drinks
     updateShelfDrinks();
-
-    // Render purchased decorations
     renderDecorations();
   }
 
@@ -1422,18 +1433,26 @@
   function renderDecorationsLoop(shopBg, owned) {
     const decoVisuals = getDecoVisuals();
     for (const id of owned) {
-      const visual = decoVisuals[id];
-      if (!visual) continue;
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = visual.html;
-      const el = wrapper.firstElementChild;
-      if (el) {
-        el.style.cssText = visual.css;
-        shopBg.appendChild(el);
-      }
+      renderSingleDecoration(shopBg, id, decoVisuals);
     }
+    applyVibeParticles(shopBg, owned);
+  }
 
-    // ── Vibe / Atmosphere system ──
+  function renderSingleDecoration(shopBg, decoId, decoVisuals) {
+    if (!decoVisuals) decoVisuals = getDecoVisuals();
+    const visual = decoVisuals[decoId];
+    if (!visual) return null;
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = visual.html;
+    const el = wrapper.firstElementChild;
+    if (el) {
+      el.style.cssText = visual.css;
+      shopBg.appendChild(el);
+    }
+    return el;
+  }
+
+  function applyVibeParticles(shopBg, owned) {
     const vibeScore = Math.min(100, owned.length * 12.5);
     let vibeClass = 'vibe-bare';
     let moteCount = 0;
@@ -1453,7 +1472,6 @@
 
     shopBg.classList.add(vibeClass);
 
-    // Add floating dust motes
     for (let i = 0; i < moteCount; i++) {
       const mote = document.createElement('div');
       mote.className = 'vibe-mote';
@@ -1461,7 +1479,6 @@
       shopBg.appendChild(mote);
     }
 
-    // Add sparkle particles for luxurious vibe
     for (let i = 0; i < sparkleCount; i++) {
       const sp = document.createElement('div');
       sp.className = 'vibe-sparkle';
@@ -2108,31 +2125,31 @@
     return stations;
   }
 
+  function createAutoStationElement(station) {
+    const isActive = autoServing[station.index] !== null;
+    const div = document.createElement('div');
+    div.className = 'auto-barista-station station-' + station.index + (isActive ? ' active' : ' idle');
+    let drinkEmoji = '';
+    if (isActive) {
+      const c = customers.find(x => x.id === autoServing[station.index]);
+      if (c) drinkEmoji = DRINK_TYPES[c.order].emoji;
+    }
+    div.innerHTML = `
+      <div class="drink-label">${drinkEmoji}</div>
+      <div class="barista">
+        <div class="barista-head"></div>
+        <div class="barista-arm left"></div>
+        <div class="barista-arm right"></div>
+        <div class="barista-body"></div>
+      </div>
+    `;
+    return div;
+  }
+
   function updateAutoStationsUI() {
     autoStationsEl.innerHTML = '';
     const stations = getAutoServeStations();
-    stations.forEach((s, i) => {
-      const isActive = autoServing[s.index] !== null;
-      const div = document.createElement('div');
-      div.className = 'auto-barista-station station-' + s.index + (isActive ? ' active' : ' idle');
-
-      let drinkEmoji = '';
-      if (isActive) {
-        const c = customers.find(x => x.id === autoServing[s.index]);
-        if (c) drinkEmoji = DRINK_TYPES[c.order].emoji;
-      }
-
-      div.innerHTML = `
-        <div class="drink-label">${drinkEmoji}</div>
-        <div class="barista">
-          <div class="barista-head"></div>
-          <div class="barista-arm left"></div>
-          <div class="barista-arm right"></div>
-          <div class="barista-body"></div>
-        </div>
-      `;
-      autoStationsEl.appendChild(div);
-    });
+    stations.forEach(s => autoStationsEl.appendChild(createAutoStationElement(s)));
   }
 
   function tryAutoServe() {
@@ -2632,7 +2649,7 @@
   // ==========================================
   function startDay() {
     initAudio();
-    gameState = 'PLAYING';
+    // gameState set to 'OPENING' later; 'PLAYING' set by finishOpening()
     dayStartTime = Date.now();
     dayTimer = DAY_DURATION;
     dayRevenue = 0;
@@ -2704,12 +2721,7 @@
     }
     eventPityCounter = eventPicked ? 0 : eventPityCounter + 1;
 
-    // Grand Re-Opening banner
-    if (grandReopeningActive) {
-      rushBanner.textContent = '🎉 GRAND RE-OPENING! 2x Customers! 🎉';
-      rushBanner.classList.add('visible');
-      setTimeout(() => { if (!rushActive && !happyHourActive) rushBanner.classList.remove('visible'); }, 5000);
-    }
+    // Grand Re-Opening banner — shown after opening sequence in finishOpening()
 
     // P5 perk: Golden Start — 50 bonus coins at day start
     if (prestigeLevel >= 5) {
@@ -2745,18 +2757,187 @@
     hudCoins.textContent = '0';
     hudTimer.textContent = '1:00';
     updateComboDisplay();
-    updateAutoStationsUI();
-    updateShopEnvironment();
+
+    // Opening sequence instead of instant setup
+    gameState = 'OPENING';
+    playOpeningSequence();
+  }
+
+  // ==========================================
+  // OPENING SEQUENCE
+  // ==========================================
+  function playOpeningSequence() {
+    openingSequenceRunning = true;
+    openingTimeouts = [];
+    const shopBg = document.querySelector('.shop-bg');
+
+    // Prep: apply shop level classes + clear old decos (from renderDecorations)
+    applyShopLevelClasses();
+    shopBg.querySelectorAll('.shop-decor,.vibe-mote,.vibe-sparkle').forEach(el => el.remove());
+    shopBg.classList.remove('vibe-bare', 'vibe-cozy', 'vibe-premium', 'vibe-luxurious');
+
+    // Prep: VIP lounge classes (but hide waiters initially — they'll animate in)
+    applyVipLoungeSetup(false);
+    initVipTables();
+
+    // Prep: clear auto stations
+    autoStationsEl.innerHTML = '';
+    // Clear VIP tables (will animate them in)
+    vipTablesContainer.innerHTML = '';
+
+    // Build animation step list
+    let t = 0;
+
+    // Step 1: Lights on
+    schedule(t, () => {
+      shopBg.classList.add('shop-lights-on');
+      setTimeout(() => shopBg.classList.remove('shop-lights-on'), 500);
+    });
+    t += 200;
+
+    // Step 2: Decorations pop in
+    const ownedDecos = getOwnedDecorations();
+    if (wallClock) wallClock.style.display = ownedDecos.includes('clock') ? 'none' : '';
+    const decoVisuals = getDecoVisuals();
+    for (const decoId of ownedDecos) {
+      schedule(t, () => {
+        const el = renderSingleDecoration(shopBg, decoId, decoVisuals);
+        if (el) el.classList.add('setup-pop-in');
+        playSound('setupPop');
+      });
+      t += 100;
+    }
+    if (ownedDecos.length > 0) t += 50; // small gap after decos
+
+    // Step 3: Auto-serve stations slide in
+    const stations = getAutoServeStations();
+    for (const station of stations) {
+      schedule(t, () => {
+        const el = createAutoStationElement(station);
+        el.classList.add('setup-slide-up');
+        autoStationsEl.appendChild(el);
+        playSound('setupPop');
+      });
+      t += 150;
+    }
+    if (stations.length > 0) t += 50;
+
+    // Step 4: VIP lounge + tables
+    const vipLevel = upgradeLevels.vip_lounge || 0;
+    if (vipLevel > 0) {
+      schedule(t, () => {
+        vipLoungeEl.classList.add('setup-fade-in');
+        setTimeout(() => vipLoungeEl.classList.remove('setup-fade-in'), 400);
+        playSound('setupPop');
+      });
+      t += 150;
+
+      const totalTables = getVipTableCount();
+      const baseVipLevel = upgradeLevels.vip_lounge || 0;
+      const showCount = Math.max(totalTables, Math.min(baseVipLevel + 2, VIP_TABLE_POSITIONS.length));
+      for (let i = 0; i < showCount && i < VIP_TABLE_POSITIONS.length; i++) {
+        const idx = i;
+        const isActive = i < totalTables;
+        schedule(t, () => {
+          const table = createVipTableElement(idx, isActive);
+          table.classList.add('setup-pop-in');
+          vipTablesContainer.appendChild(table);
+          if (isActive) playSound('setupPop');
+        });
+        t += 80;
+      }
+      t += 50;
+
+      // Step 5: Waiters walk in
+      schedule(t, () => {
+        vipWaiterEl.style.display = 'block';
+        playSound('setupPop');
+      });
+      t += 100;
+
+      for (let i = 0; i < extraWaiters.length; i++) {
+        const w = extraWaiters[i];
+        schedule(t, () => {
+          if (w.el) w.el.style.display = 'block';
+        });
+        t += 100;
+      }
+      t += 50;
+    }
+
+    // Step 6: Vibe particles
+    if (ownedDecos.length > 0) {
+      schedule(t, () => applyVibeParticles(shopBg, ownedDecos));
+    }
+
+    // Step 7: "OPEN!" flash + start playing
+    t += 200;
+    schedule(t, () => finishOpening());
+
+    // Skip hint
+    const hint = document.createElement('div');
+    hint.className = 'skip-hint';
+    hint.textContent = 'Tap to skip';
+    gameArea.appendChild(hint);
+    schedule(t + 100, () => hint.remove()); // auto-cleanup
+
+    // Skip handler
+    const skipHandler = (e) => {
+      if (!openingSequenceRunning) return;
+      e.preventDefault();
+      document.removeEventListener('pointerdown', skipHandler);
+      hint.remove();
+      // Clear all pending timeouts
+      openingTimeouts.forEach(h => clearTimeout(h));
+      openingTimeouts = [];
+      openingSequenceRunning = false;
+      // Instant fallback
+      updateAutoStationsUI();
+      updateShopEnvironment();
+      finishOpening();
+    };
+    document.addEventListener('pointerdown', skipHandler);
+    // Clean up listener when sequence finishes naturally
+    schedule(t + 50, () => document.removeEventListener('pointerdown', skipHandler));
+
+    function schedule(delay, fn) {
+      openingTimeouts.push(setTimeout(fn, delay));
+    }
+  }
+
+  function finishOpening() {
+    if (gameState !== 'OPENING') return; // guard against double-call
+    openingSequenceRunning = false;
+
+    const shopBg = document.querySelector('.shop-bg');
+
+    // "OPEN!" flash
+    const flash = document.createElement('div');
+    flash.className = 'open-flash-text';
+    flash.textContent = 'OPEN!';
+    (gameArea || shopBg).appendChild(flash);
+    setTimeout(() => flash.remove(), 700);
+
+    // Transition to playing
+    gameState = 'PLAYING';
+    dayStartTime = Date.now(); // Timer starts NOW, not when startDay() was called
+    lastFrameTime = 0;
 
     playSound('dayStart');
     startBgm();
 
-    // M. Start game loop
     if (!animFrameId) {
       animFrameId = requestAnimationFrame(gameLoop);
     }
 
-    // E. Tutorial on first day
+    // Grand Re-Opening banner (deferred from startDay)
+    if (grandReopeningActive) {
+      rushBanner.textContent = '🎉 GRAND RE-OPENING! 2x Customers! 🎉';
+      rushBanner.classList.add('visible');
+      setTimeout(() => { if (!rushActive && !happyHourActive) rushBanner.classList.remove('visible'); }, 5000);
+    }
+
+    // Tutorial on first day
     if (!tutorialsSeen.main) {
       showTutorial();
     }
