@@ -3095,6 +3095,8 @@ import * as THREE from 'three';
 
     // Check if player chased down target (bowl-first mode or super over)
     if (state.matchPhase === 'batting_chase' && state.runs >= state.target) {
+      const ballsRemaining = Math.max(0, 30 - state.totalBallsFaced);
+      if (ballsRemaining >= 10) checkAchievement('cb-target-crushed');
       spawnFloatingText('TARGET CHASED!', textX, textBaseY - 80, '#4CAF50', 28);
       playCrowdReaction('roar');
       // End batting immediately after short delay
@@ -4444,12 +4446,20 @@ import * as THREE from 'three';
       playUISound('levelComplete');
     } else if (playerWon) {
       heading = 'YOU WIN!';
-      subText = `Defended ${state.battingScore} by ${margin} runs!`;
+      if (state.battingFirst) {
+        subText = `Defended ${state.battingScore} by ${margin} runs!`;
+      } else {
+        subText = `Chased down ${state._bowlFirstAIScore || state.bowlingAIScore} successfully!`;
+      }
       playUISound('levelComplete');
       spawnConfetti();
     } else {
       heading = 'AI WINS';
-      subText = `AI chased ${state.battingScore + 1} with ${aiWicketsLeft} wicket${aiWicketsLeft !== 1 ? 's' : ''} left`;
+      if (state.battingFirst) {
+        subText = `AI chased ${state.battingScore + 1} with ${aiWicketsLeft} wicket${aiWicketsLeft !== 1 ? 's' : ''} left`;
+      } else {
+        subText = `You fell short by ${Math.abs(margin)} runs chasing ${(state._bowlFirstAIScore || state.bowlingAIScore) + 1}`;
+      }
       playUISound('gameOver');
     }
 
@@ -4737,6 +4747,8 @@ import * as THREE from 'three';
   }
 
   function endSuperOverMatch() {
+    if (state._superOverResultShown) return;
+    state._superOverResultShown = true;
     state.superOverAIScore = state.bowlingAIScore;
     state.superOverAIWickets = state.bowlingAIWickets;
 
@@ -4941,7 +4953,12 @@ import * as THREE from 'three';
     if (ppBadge) ppBadge.classList.toggle('show', state.isPowerplay && state.phase === 'BATTING');
 
     const tensionEdge = $('tensionEdge');
-    state.tensionActive = false; // No target in match mode batting
+    if (state.matchPhase === 'batting_chase') {
+      const needed = state.target - state.runs;
+      state.tensionActive = needed > 0 && needed <= 15;
+    } else {
+      state.tensionActive = false;
+    }
     if (tensionEdge) tensionEdge.classList.toggle('active', state.tensionActive);
 
     // Combo streak badge
@@ -5317,6 +5334,7 @@ import * as THREE from 'three';
     state.battingExtras = 0;
     state.superOver = false;
     state.superOverPhase = null;
+    state._superOverResultShown = false;
     deliveryPhase = 'idle';
     deliveryTimer = 0;
 
@@ -5361,7 +5379,7 @@ import * as THREE from 'three';
       // We set a temporary batting score of 999 so AI chases nothing initially
       // After bowling, player bats to chase
       state.battingScore = 0;
-      state.bowlingFirst = true; // AI bats freely, no target to chase
+      // AI bats freely in first innings (no target — state.battingFirst = false handles this)
       buildBowlingScene();
       state.phase = 'BOWLING';
       gameWrap.classList.add('cb-playing');
@@ -5432,6 +5450,7 @@ import * as THREE from 'three';
     if (fhBadge) fhBadge.classList.remove('show');
     state.superOver = false;
     state.superOverPhase = null;
+    state._superOverResultShown = false;
     state.battingFirst = true;
     titleOverlay.classList.add('cb-visible');
     deliveryPhase = 'idle';
