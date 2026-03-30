@@ -120,7 +120,7 @@ import SiteHeader from '../../components/SiteHeader.astro';
       { id: '2048', name: '2048', icon: '🔢', description: 'Number puzzle' },
       { id: 'chaos-kitchen', name: 'Chaos Kitchen', icon: '👨‍🍳', description: 'Cooking game' },
       { id: 'memory-match', name: 'Memory Match', icon: '🃏', description: 'Card matching' },
-      { id: 'lumble', name: 'Lumble', icon: '🪙', description: '3D platformer' },
+      { id: 'lumble', name: 'Lumble', icon: '🔤', description: '3D platformer' },
       { id: 'fieldstone', name: 'Fieldstone', icon: '🏰', description: 'Kingdom builder' },
       { id: 'solitaire-roguelite', name: 'Solitaire Roguelite', icon: '🃏', description: 'Klondike with Jokers' },
       { id: 'coin-cascade', name: 'Coin Cascade', icon: '🪙', description: 'Physics coin pusher' },
@@ -142,6 +142,10 @@ import SiteHeader from '../../components/SiteHeader.astro';
         const catalog = await window.apiClient.getGameCatalog();
         if (catalog && catalog.length > 0) {
           GAMES = catalog;
+          // Ensure cricket-blitz is always in the list (may not be in API catalog yet)
+          if (!GAMES.some(g => g.id === 'cricket-blitz')) {
+            GAMES.push({ id: 'cricket-blitz', name: 'Cricket Blitz', icon: '🏏', description: '3D IPL-style cricket' });
+          }
           // Validate URL param against real catalog
           if (!GAMES.some(g => g.id === currentGame)) {
             currentGame = GAMES[0].id;
