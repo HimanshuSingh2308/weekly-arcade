@@ -291,5 +291,30 @@
     };
   }
 
+  // ── iOS Audio Unlock (global, one-time) ──
+  // iOS Safari suspends AudioContext until first user gesture.
+  // This creates + plays a silent buffer on the first touch/click to unlock it.
+  function unlockIOSAudio() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      // Close this throwaway context — individual games create their own
+      setTimeout(() => { try { ctx.close(); } catch(e){} }, 100);
+    } catch (e) {}
+    document.removeEventListener('touchstart', unlockIOSAudio);
+    document.removeEventListener('click', unlockIOSAudio);
+  }
+  document.addEventListener('touchstart', unlockIOSAudio, { once: true, passive: true });
+  document.addEventListener('click', unlockIOSAudio, { once: true });
+
   window.gameHeader = { init };
 })();
