@@ -1591,13 +1591,46 @@ import * as THREE from 'three';
 
   // ---- 3D Scoreboard Structure ----
   function buildScoreboard3D() {
+    // Create TV screen with Weekly Arcade branding
+    const screenCanvas = document.createElement('canvas');
+    screenCanvas.width = 512;
+    screenCanvas.height = 256;
+    const sCtx = screenCanvas.getContext('2d');
+    // Dark gradient background
+    const grad = sCtx.createLinearGradient(0, 0, 512, 256);
+    grad.addColorStop(0, '#0a0520');
+    grad.addColorStop(1, '#1a0a3e');
+    sCtx.fillStyle = grad;
+    sCtx.fillRect(0, 0, 512, 256);
+    // Border
+    sCtx.strokeStyle = '#FFD700';
+    sCtx.lineWidth = 4;
+    sCtx.strokeRect(4, 4, 504, 248);
+    // Title
+    sCtx.fillStyle = '#FFD700';
+    sCtx.font = 'bold 36px -apple-system, sans-serif';
+    sCtx.textAlign = 'center';
+    sCtx.fillText('WEEKLY ARCADE', 256, 80);
+    // Subtitle
+    sCtx.fillStyle = '#FFFFFF';
+    sCtx.font = 'bold 24px -apple-system, sans-serif';
+    sCtx.fillText('CRICKET BLITZ', 256, 120);
+    // URL
+    sCtx.fillStyle = 'rgba(255,255,255,0.5)';
+    sCtx.font = '16px -apple-system, sans-serif';
+    sCtx.fillText('weeklyarcade.games', 256, 160);
+    // Cricket emoji
+    sCtx.font = '48px sans-serif';
+    sCtx.fillText('🏏', 256, 220);
+
+    const screenTexture = new THREE.CanvasTexture(screenCanvas);
     const boardGeo = new THREE.BoxGeometry(12, 6, 0.5);
-    const boardMat = new THREE.MeshBasicMaterial({ color: 0x1a1a3e });
+    const boardMat = new THREE.MeshBasicMaterial({ map: screenTexture });
     const scoreboard3D = new THREE.Mesh(boardGeo, boardMat);
     scoreboard3D.position.set(30, 8, 60);
     scoreboard3D.rotation.y = -0.3;
     scene.add(scoreboard3D);
-    // Gold border
+    // Gold border frame
     const borderGeo = new THREE.BoxGeometry(12.4, 6.4, 0.3);
     const borderMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
     const border = new THREE.Mesh(borderGeo, borderMat);
@@ -4534,6 +4567,9 @@ import * as THREE from 'three';
     if (!inningsBreakOverlay) return;
     inningsBreakOverlay.classList.remove('cb-visible');
 
+    // Reset for 2nd innings worm chart
+    state.overRunHistory = [];
+
     // Reset batting state
     state.runs = 0;
     state.wickets = 0;
@@ -4616,6 +4652,9 @@ import * as THREE from 'three';
   function startBowlingInnings() {
     if (!inningsBreakOverlay) return;
     inningsBreakOverlay.classList.remove('cb-visible');
+
+    // Reset for 2nd innings worm chart
+    state.overRunHistory = [];
 
     // Reset bowling state
     state.bowlingAIScore = 0;
