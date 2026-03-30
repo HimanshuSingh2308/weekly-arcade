@@ -7532,38 +7532,45 @@ import * as THREE from 'three';
     const startX = path[0].x;
     const endX = path[path.length - 1].x;
     const screenH = window.innerHeight;
+    const screenW = window.innerWidth;
+    const dragLength = endY - startY; // positive = dragging down
+    const speed = totalDist / Math.max(1, duration); // px per ms
 
-    // Delivery type from path shape
     let type = 'straight';
 
-    // Check lateral curve (swing)
-    const midIdx = Math.floor(path.length / 2);
-    const midX = path[midIdx].x;
-    const expectedMidX = (startX + endX) / 2;
-    const curve = midX - expectedMidX; // positive = curves right
-
-    if (Math.abs(curve) > 20) {
-      type = curve > 0 ? 'outswing' : 'inswing';
+    // ── BOUNCER: Quick short flick downward (fast, short distance) ──
+    // Like digging the ball in short — aggressive quick gesture
+    if (speed > 0.8 && totalDist < screenH * 0.25 && duration < 250) {
+      type = 'bouncer';
     }
-
-    // Vertical analysis
-    const dragLength = endY - startY; // positive = dragging down the screen (toward batsman)
-    const startNorm = startY / screenH; // where on screen the drag started
-
-    if (startNorm < 0.3 && dragLength < screenH * 0.3) {
-      type = 'bouncer'; // started high, short drag
-    } else if (dragLength > screenH * 0.5) {
-      type = 'yorker'; // long drag = full length delivery
+    // ── YORKER: Tap and hold on lower half of screen (> 500ms), then release ──
+    // Deliberate, aimed at the batsman's feet
+    else if (duration > 500 && totalDist < screenH * 0.15) {
+      type = 'yorker';
     }
+    // ── SLOWER BALL: Slow gentle swipe (low speed, moderate distance) ──
+    else if (speed < 0.3 && duration > 400) {
+      type = 'slower';
+    }
+    // ── SWING: Check lateral curve in the drag path ──
+    else {
+      const midIdx = Math.floor(path.length / 2);
+      if (midIdx > 0 && midIdx < path.length) {
+        const midX = path[midIdx].x;
+        const expectedMidX = (startX + endX) / 2;
+        const curve = midX - expectedMidX;
 
-    // Speed analysis
-    if (duration > 600) type = 'slower'; // slow deliberate drag
+        if (curve > 15) type = 'outswing';      // drag curves right
+        else if (curve < -15) type = 'inswing';  // drag curves left
+      }
+      // ── STRAIGHT: Default for normal downward swipe ──
+    }
 
     // Line from horizontal end position
-    const endNorm = endX / window.innerWidth;
+    const endNorm = endX / screenW;
     const line = endNorm < 0.35 ? 'off' : endNorm > 0.65 ? 'leg' : 'middle';
 
-    // Accuracy from smoothness
+    // Accuracy from path smoothness (less jitter = more accurate)
     let jitter = 0;
     for (let i = 2; i < path.length; i++) {
       const dx = path[i].x - path[i-1].x;
@@ -7634,12 +7641,17 @@ import * as THREE from 'three';
   const BOWLING_TUTORIAL = [
     {
       title: 'HOW TO BOWL',
-      body: 'Drag your finger down the pitch to bowl!<br><br>Curve left \u2192 Inswing<br>Curve right \u2192 Outswing<br>Short drag \u2192 Bouncer<br>Long drag \u2192 Yorker',
-      diagram: ''
+      body: '<b>Swipe down</b> \u2192 Straight<br><b>Curve left</b> \u2192 Inswing<br><b>Curve right</b> \u2192 Outswing',
+      diagram: '<div style="font-size:1.5rem;line-height:1.8;">\u2B07\uFE0F Straight &nbsp; \u21A9\uFE0F In &nbsp; \u21AA\uFE0F Out</div>'
     },
     {
-      title: 'SMOOTH = ACCURATE',
-      body: 'A smooth, steady drag = perfect accuracy.<br>A shaky drag = loose delivery!',
+      title: 'SPECIAL DELIVERIES',
+      body: '<b>Quick flick</b> (fast + short) \u2192 Bouncer \u{1F4A5}<br><b>Tap & hold</b> (500ms+) \u2192 Yorker \u{1F3AF}<br><b>Slow swipe</b> \u2192 Slower ball',
+      diagram: '<div style="font-size:1.5rem;">\u26A1 Flick &nbsp; \u{1F44A} Hold &nbsp; \u{1F40C} Slow</div>'
+    },
+    {
+      title: 'AIM & ACCURACY',
+      body: 'End your swipe <b>left</b> = off stump<br>End <b>center</b> = middle<br>End <b>right</b> = leg stump<br><br>Smooth drag = perfect accuracy!',
       diagram: '<div style="font-size:2rem;">\u{1F3AF}</div>'
     }
   ];
