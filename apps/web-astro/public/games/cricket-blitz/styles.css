@@ -1131,14 +1131,9 @@
   .cb-bowling-panel {
     display: none !important;
   }
-  /* Keep meter visible on mobile but make it compact */
+  /* Hide meter on mobile — drag gestures handle accuracy */
   .cb-bowling-meter {
-    width: 24px !important;
-    right: 6px !important;
-    height: 120px !important;
-    top: auto !important;
-    bottom: 20% !important;
-    opacity: 0.8;
+    display: none !important;
   }
 }
 
