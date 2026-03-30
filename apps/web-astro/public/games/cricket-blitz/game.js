@@ -1275,7 +1275,11 @@ import * as THREE from 'three';
     scene.add(ballTrackingLine);
 
     // Add pitch point (where ball bounced) — bright dot at ~60% of path
-    const bounceIdx = Math.floor(ballTrackingPositions.length * 0.6);
+    // Bounce point varies by delivery type
+    const bouncePct = state.ballDeliveryType === 'bouncer' ? 0.3 :
+                      state.ballDeliveryType === 'yorker' ? 0.85 :
+                      state.ballDeliveryType === 'slower' ? 0.55 : 0.6;
+    const bounceIdx = Math.floor(ballTrackingPositions.length * bouncePct);
     if (bounceIdx < ballTrackingPositions.length) {
       const bouncePos = ballTrackingPositions[bounceIdx];
       const dotGeo = new THREE.CircleGeometry(0.1, 8);
@@ -4701,9 +4705,11 @@ import * as THREE from 'three';
     updateHUD();
     generateBowlerForOver();
     showBowlerIntro();
-    // Show batting tutorial on first ever play, then start delivery
+    // Skip tutorial during chase (player already saw bowling) — just start
     setTimeout(() => {
-      if (!showTutorial('batting')) {
+      if (state.matchPhase === 'batting_chase') {
+        startDelivery(); // no tutorial mid-chase
+      } else if (!showTutorial('batting')) {
         startDelivery();
       }
     }, 1200);
@@ -6486,6 +6492,26 @@ import * as THREE from 'three';
         if (bowlerNameEl) bowlerNameEl.textContent = `${state.bowlerName || 'Bowler'} (${state.bowlerType || 'pacer'})`;
       }
     }
+
+    // Confidence bar
+    const confBar = $('confidenceBar');
+    const confFill = $('confidenceFill');
+    const confLabel = $('confidenceLabel');
+    if (confBar && confFill) {
+      const isBatting = state.phase === 'BATTING';
+      confBar.style.display = isBatting ? 'block' : 'none';
+      if (isBatting) {
+        const pct = Math.max(0, Math.min(100, state.confidence || 50));
+        confFill.style.width = pct + '%';
+        if (pct >= 75) {
+          confFill.classList.add('zone');
+          if (confLabel) { confLabel.textContent = 'IN THE ZONE'; confLabel.classList.add('show'); }
+        } else {
+          confFill.classList.remove('zone');
+          if (confLabel) confLabel.classList.remove('show');
+        }
+      }
+    }
   }
 
   function updateOverDots() {
@@ -6942,8 +6968,8 @@ import * as THREE from 'three';
       gameWrap.classList.add('cb-playing');
       if (scoreboardBat) scoreboardBat.style.display = '';
       if (scoreboardBowl) scoreboardBowl.style.display = 'none';
+      generateBowlerForOver(); // generate names BEFORE updateHUD
       updateHUD();
-      generateBowlerForOver();
       showBowlerIntro();
       // Show batting tutorial on first ever play, then start delivery
       setTimeout(() => {
