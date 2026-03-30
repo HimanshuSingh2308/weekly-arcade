@@ -1729,6 +1729,71 @@
   color: rgba(255,255,255,0.6);
 }
 
+/* ---- Tutorial Overlay ---- */
+.cb-tutorial-overlay {
+  z-index: 100;
+  display: none;
+}
+.cb-tutorial-overlay.show { display: flex; }
+.cb-tutorial-modal {
+  max-width: 320px;
+  text-align: center;
+}
+.cb-tutorial-slide {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.cb-tutorial-slide h3 {
+  color: #FFD700;
+  font-size: 1.1rem;
+  margin: 0;
+}
+.cb-tutorial-slide p {
+  color: rgba(255,255,255,0.8);
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.5;
+}
+.cb-tutorial-arrows {
+  font-size: 1.5rem;
+  line-height: 2;
+  color: #FFD700;
+}
+.cb-tutorial-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.cb-tutorial-nav .cb-btn-small {
+  min-width: auto;
+  min-height: 36px;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  box-shadow: none;
+}
+.cb-tutorial-nav .cb-btn-small:hover {
+  background: rgba(255,255,255,0.2);
+  box-shadow: none;
+}
+.cb-tutorial-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.cb-tutorial-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+}
+.cb-tutorial-dot.active { background: #FFD700; }
+
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }
   .cb-btn { transition: none; }

@@ -2254,7 +2254,7 @@ import * as THREE from 'three';
     }
 
     // Show/hide stumps based on scatter state
-    stumpsGroup.visible = !state.stumpScatter;
+    stumpsGroup.visible = !state.stumpScatter && !state.stumpsScattered;
 
     // Update batsman animation
     updateBatsmanAnim(dt);
@@ -2597,12 +2597,10 @@ import * as THREE from 'three';
     const t = elapsed / 1000;
 
     if (t > 1.5) {
-      // Reset stumps
+      // Keep stumps broken on ground — don't restore until next delivery
       state.stumpScatter = null;
-      scatterStumps.forEach(s => scene.remove(s));
-      scatterBails.forEach(b => scene.remove(b));
-      scatterStumps = [];
-      scatterBails = [];
+      state.stumpsScattered = true; // flag keeps original stumps hidden
+      // Leave scatter meshes in scene (stumps on ground)
       return;
     }
 
@@ -3381,6 +3379,15 @@ import * as THREE from 'three';
     const dType = state.ballDeliveryType === 'slower' ? 'slower' : state.ballDeliveryType;
     if (ballMesh && DELIVERY_COLORS[dType]) {
       ballMesh.material.color.setHex(DELIVERY_COLORS[dType]);
+    }
+
+    // Restore stumps if they were scattered from previous wicket
+    if (state.stumpsScattered) {
+      state.stumpsScattered = false;
+      scatterStumps.forEach(s => scene.remove(s));
+      scatterBails.forEach(b => scene.remove(b));
+      scatterStumps = [];
+      scatterBails = [];
     }
 
     deliveryPhase = 'runup';
@@ -4367,7 +4374,12 @@ import * as THREE from 'three';
     updateHUD();
     generateBowlerForOver();
     showBowlerIntro();
-    setTimeout(() => startDelivery(), 1200);
+    // Show batting tutorial on first ever play, then start delivery
+    setTimeout(() => {
+      if (!showTutorial('batting')) {
+        startDelivery();
+      }
+    }, 1200);
   }
 
   function startBowlingInnings() {
@@ -4411,8 +4423,8 @@ import * as THREE from 'three';
     removePitchCracks();
     state.timeoutUsed = false;
 
-    // Patch #17: Switch to twilight environment
-    setTwilightEnvironment();
+    // Keep consistent day match environment across both innings
+    setDayEnvironment();
 
     // Build bowling-specific 3D objects if not yet built
     buildBowlingScene();
@@ -4436,6 +4448,9 @@ import * as THREE from 'three';
     if (scoreboardBat) scoreboardBat.style.display = 'none';
 
     updateBowlingHUD();
+
+    // Show bowling tutorial on first ever bowl
+    showTutorial('bowling');
   }
 
   // ============================================
@@ -5822,7 +5837,7 @@ import * as THREE from 'three';
     scatterStumps = [];
     scatterBails = [];
 
-    setTwilightEnvironment();
+    setDayEnvironment();
     buildBowlingScene();
 
     // Show bowling UI
@@ -6595,7 +6610,12 @@ import * as THREE from 'three';
       updateHUD();
       generateBowlerForOver();
       showBowlerIntro();
-      setTimeout(() => startDelivery(), 1200);
+      // Show batting tutorial on first ever play, then start delivery
+      setTimeout(() => {
+        if (!showTutorial('batting')) {
+          startDelivery();
+        }
+      }, 1200);
     } else {
       // Player bowls first
       state.matchPhase = 'bowling';
@@ -6639,7 +6659,7 @@ import * as THREE from 'three';
       state.freeHitNext = false;
       state.bowlingDeliveryRepeatCount = {};
 
-      setTwilightEnvironment();
+      setDayEnvironment();
 
       // Show bowling UI, hide batting UI
       bowlingPanel = $('bowlingPanel');
@@ -6653,6 +6673,9 @@ import * as THREE from 'three';
       if (scoreboardBat) scoreboardBat.style.display = 'none';
 
       updateBowlingHUD();
+
+      // Show bowling tutorial on first ever bowl
+      showTutorial('bowling');
     }
   }
 
@@ -7003,12 +7026,10 @@ import * as THREE from 'three';
   }, { once: true });
 
   // ============================================
-  // GESTURE CONTROLS (swipe + tap for mobile)
+  // GESTURE CONTROLS (one-swipe mobile)
   // ============================================
 
   let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
-  let bowlingTapY = 0.5, bowlingTapX = 0.5, bowlingTapStart = null, bowlingSwipeDir = null;
-  let bowlingTapBowlTimer = null;
 
   function showGestureIndicator(direction) {
     const el = document.getElementById('gestureIndicator');
@@ -7035,65 +7056,121 @@ import * as THREE from 'three';
     setTimeout(() => el.classList.remove('show'), 600);
   }
 
-  // --- TAP-THE-PITCH BOWLING SYSTEM (mobile) ---
+  // --- ONE-SWIPE BATTING (mobile) ---
+  // Single swipe = direction + swing in one motion
 
-  function resolveDeliveryFromGesture(tapY, tapX, swipeDir, holdDuration) {
-    let delivery = 'straight';
-    if (tapY < 0.3) delivery = 'bouncer';
-    else if (tapY > 0.7) delivery = 'yorker';
-    else if (swipeDir === 'left') delivery = 'inswing';
-    else if (swipeDir === 'right') delivery = 'outswing';
-    else delivery = 'straight';
-    if (holdDuration > 500) delivery = 'slower';
+  let battingSwipeStart = null;
 
-    // Line from tap X: left third=off, center=middle, right third=leg
-    let line = 'middle';
-    if (tapX < 0.33) line = 'off';
-    else if (tapX > 0.66) line = 'leg';
+  function handleBattingTouchStart(e) {
+    if (state.phase !== 'BATTING') return;
+    if (deliveryPhase !== 'inflight') return;
 
-    return { delivery, line };
+    const touch = e.touches[0];
+    battingSwipeStart = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    };
   }
 
-  function getAccuracyFromTap(tapY, tapX) {
-    let zoneCenter;
-    if (tapY < 0.3) zoneCenter = 0.15;
-    else if (tapY > 0.7) zoneCenter = 0.85;
-    else zoneCenter = 0.5;
+  function handleBattingTouchEnd(e) {
+    if (!battingSwipeStart) return;
+    if (state.phase !== 'BATTING') return;
+    if (deliveryPhase !== 'inflight') return;
 
-    const distFromCenter = Math.abs(tapY - zoneCenter);
-    const xDistFromCenter = Math.abs(tapX - 0.5);
-    const totalDist = distFromCenter + xDistFromCenter * 0.5;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - battingSwipeStart.x;
+    const dy = touch.clientY - battingSwipeStart.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (totalDist < 0.1) return 'perfect';
-    if (totalDist < 0.25) return 'good';
-    return 'bad';
+    // Determine direction from swipe
+    let direction = 'straight'; // default
+
+    if (dist > 30) { // minimum swipe distance
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      // angle: 0=right, 90=down, -90=up, 180=left
+      if (angle < -45 && angle > -135) direction = 'straight'; // swipe up
+      else if (angle > 45 && angle < 135) direction = 'defense'; // swipe down
+      else if (angle >= -45 && angle <= 45) direction = 'cut'; // swipe right
+      else direction = 'pull'; // swipe left
+    }
+    // If very short swipe (just a tap), use default direction
+
+    // Set direction AND swing in one go
+    state.shotDirection = direction;
+    handleSwing(direction); // trigger the bat swing with timing
+
+    // Show gesture indicator briefly
+    showGestureIndicator(direction);
+
+    // Update pitch shot overlay
+    const overlayIcon = document.getElementById('pitchShotIcon');
+    const overlayName = document.getElementById('pitchShotName');
+    const arrows = { straight: '\u2191', pull: '\u2190', cut: '\u2192', defense: '\u2193' };
+    const names = { straight: 'DRIVE', pull: 'PULL', cut: 'CUT', defense: 'BLOCK' };
+    if (overlayIcon) overlayIcon.textContent = arrows[direction] || '\u2191';
+    if (overlayName) overlayName.textContent = names[direction] || 'DRIVE';
+
+    battingSwipeStart = null;
   }
 
-  function startBowlingFromTap() {
-    if (state.phase !== 'BOWLING' || state.bowlingDeliveryPhase !== 'selecting') return;
+  // --- DRAG-PATH BOWLING (mobile) ---
+  // Drag finger down the pitch to bowl
 
-    const holdDuration = bowlingTapStart ? (Date.now() - bowlingTapStart) : 0;
-    const result = resolveDeliveryFromGesture(bowlingTapY, bowlingTapX, bowlingSwipeDir, holdDuration);
+  let bowlingDragPath = [];
+  let bowlingDragStart = null;
 
-    state.selectedDelivery = result.delivery;
-    state.selectedLine = result.line;
+  function handleBowlingTouchStart(e) {
+    if (state.phase !== 'BOWLING') return;
+    if (state.bowlingDeliveryPhase !== 'selecting') return;
 
-    // Override meter accuracy with tap-based accuracy
-    const tapAccuracy = getAccuracyFromTap(bowlingTapY, bowlingTapX);
-    state._tapAccuracy = tapAccuracy;
+    const touch = e.touches[0];
+    bowlingDragStart = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    bowlingDragPath = [{ x: touch.clientX, y: touch.clientY }];
+  }
 
-    showBowlingGestureIndicator(result.delivery);
-    flashPitchZone(bowlingTapY);
-    updateBowlingHUD();
+  function handleBowlingTouchMove(e) {
+    if (!bowlingDragStart) return;
+    if (state.phase !== 'BOWLING') return;
+    const touch = e.touches[0];
+    bowlingDragPath.push({ x: touch.clientX, y: touch.clientY });
+  }
 
-    // Set meter position to match tap accuracy so resolveBowlingOutcome works
-    if (tapAccuracy === 'perfect') state.meterPosition = 0.5;
-    else if (tapAccuracy === 'good') state.meterPosition = 0.25;
-    else state.meterPosition = 0.1;
+  function handleBowlingTouchEnd(e) {
+    if (!bowlingDragStart) return;
+    if (state.phase !== 'BOWLING' || state.bowlingDeliveryPhase !== 'selecting') {
+      bowlingDragStart = null;
+      bowlingDragPath = [];
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const duration = Date.now() - bowlingDragStart.time;
+    const totalDist = Math.sqrt(
+      Math.pow(touch.clientX - bowlingDragStart.x, 2) +
+      Math.pow(touch.clientY - bowlingDragStart.y, 2)
+    );
+
+    // Analyze the drag path
+    const delivery = analyzeBowlingDrag(bowlingDragPath, duration, totalDist);
+
+    state.selectedDelivery = delivery.type;
+    state.selectedLine = delivery.line;
+
+    // Accuracy based on how smooth the drag was
+    const accuracy = delivery.accuracy;
+    state._tapAccuracy = accuracy;
+
+    // Set meter position based on accuracy for outcome resolution
+    state.meterPosition = accuracy === 'perfect' ? 0.5 : accuracy === 'good' ? 0.3 : 0.1;
     state.meterStopped = true;
     state.meterActive = false;
 
-    // Start bowling delivery after short delay
+    showBowlingGestureIndicator(delivery.type);
+    flashPitchZone(bowlingDragStart.y / window.innerHeight);
+    updateBowlingHUD();
+
+    // Bowl immediately after short delay
     setTimeout(() => {
       if (state.phase !== 'BOWLING' || state.bowlingDeliveryPhase !== 'selecting') return;
       state.bowlingDeliveryPhase = 'bowling';
@@ -7102,11 +7179,64 @@ import * as THREE from 'three';
       bowlingBallProgress = 0;
       bowlingBallSpeed = 800;
       haptic([10]);
-      if (tapAccuracy === 'perfect') haptic([10, 5, 10]);
+      if (accuracy === 'perfect') haptic([10, 5, 10]);
       playDeliveryWhoosh();
     }, 300);
 
-    bowlingTapStart = null;
+    bowlingDragStart = null;
+    bowlingDragPath = [];
+  }
+
+  function analyzeBowlingDrag(path, duration, totalDist) {
+    if (path.length < 2) return { type: 'straight', line: 'middle', accuracy: 'bad' };
+
+    const startY = path[0].y;
+    const endY = path[path.length - 1].y;
+    const startX = path[0].x;
+    const endX = path[path.length - 1].x;
+    const screenH = window.innerHeight;
+
+    // Delivery type from path shape
+    let type = 'straight';
+
+    // Check lateral curve (swing)
+    const midIdx = Math.floor(path.length / 2);
+    const midX = path[midIdx].x;
+    const expectedMidX = (startX + endX) / 2;
+    const curve = midX - expectedMidX; // positive = curves right
+
+    if (Math.abs(curve) > 20) {
+      type = curve > 0 ? 'outswing' : 'inswing';
+    }
+
+    // Vertical analysis
+    const dragLength = endY - startY; // positive = dragging down the screen (toward batsman)
+    const startNorm = startY / screenH; // where on screen the drag started
+
+    if (startNorm < 0.3 && dragLength < screenH * 0.3) {
+      type = 'bouncer'; // started high, short drag
+    } else if (dragLength > screenH * 0.5) {
+      type = 'yorker'; // long drag = full length delivery
+    }
+
+    // Speed analysis
+    if (duration > 600) type = 'slower'; // slow deliberate drag
+
+    // Line from horizontal end position
+    const endNorm = endX / window.innerWidth;
+    const line = endNorm < 0.35 ? 'off' : endNorm > 0.65 ? 'leg' : 'middle';
+
+    // Accuracy from smoothness
+    let jitter = 0;
+    for (let i = 2; i < path.length; i++) {
+      const dx = path[i].x - path[i-1].x;
+      const prevDx = path[i-1].x - path[i-2].x;
+      jitter += Math.abs(dx - prevDx);
+    }
+    const avgJitter = jitter / Math.max(1, path.length - 2);
+    const accuracy = avgJitter < 3 ? 'perfect' : avgJitter < 8 ? 'good' : 'bad';
+
+    return { type, line, accuracy };
   }
 
   if (gameContainer) {
@@ -7118,82 +7248,129 @@ import * as THREE from 'three';
       touchStartY = e.touches[0].clientY;
       touchStartTime = Date.now();
 
-      // Bowling tap-the-pitch (mobile)
-      if (state.phase === 'BOWLING' && state.bowlingDeliveryPhase === 'selecting') {
-        const rect = gameContainer.getBoundingClientRect();
-        bowlingTapX = (e.touches[0].clientX - rect.left) / rect.width;
-        bowlingTapY = (e.touches[0].clientY - rect.top) / rect.height;
-        bowlingTapStart = Date.now();
-        bowlingSwipeDir = null;
-        // Auto-bowl after 300ms if no swipe detected
-        if (bowlingTapBowlTimer) clearTimeout(bowlingTapBowlTimer);
-        bowlingTapBowlTimer = setTimeout(() => {
-          if (bowlingTapStart && state.bowlingDeliveryPhase === 'selecting') {
-            startBowlingFromTap();
-          }
-        }, 350);
-      }
+      // Dispatch to batting or bowling handler
+      handleBattingTouchStart(e);
+      handleBowlingTouchStart(e);
     }, { passive: true });
 
     gameContainer.addEventListener('touchmove', (e) => {
-      // Detect swipe direction during bowling tap for swing
-      if (state.phase === 'BOWLING' && bowlingTapStart && state.bowlingDeliveryPhase === 'selecting') {
-        const deltaX = e.touches[0].clientX - touchStartX;
-        if (Math.abs(deltaX) > 30) {
-          bowlingSwipeDir = deltaX < 0 ? 'left' : 'right';
-          // Cancel the auto-bowl timer; bowl immediately after swipe
-          if (bowlingTapBowlTimer) { clearTimeout(bowlingTapBowlTimer); bowlingTapBowlTimer = null; }
-          startBowlingFromTap();
-        }
-      }
+      handleBowlingTouchMove(e);
     }, { passive: true });
 
     gameContainer.addEventListener('touchend', (e) => {
-      const endX = e.changedTouches[0].clientX;
-      const endY = e.changedTouches[0].clientY;
-      const deltaX = endX - touchStartX;
-      const deltaY = endY - touchStartY;
-      const elapsed = Date.now() - touchStartTime;
-      const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-      // Bowling phase: tap release triggers bowl if timer hasn't fired
-      if (state.phase === 'BOWLING') {
-        if (bowlingTapStart && state.bowlingDeliveryPhase === 'selecting') {
-          if (bowlingTapBowlTimer) { clearTimeout(bowlingTapBowlTimer); bowlingTapBowlTimer = null; }
-          startBowlingFromTap();
-        }
+      // Bowling drag-path
+      if (state.phase === 'BOWLING' && bowlingDragStart) {
+        handleBowlingTouchEnd(e);
         return;
       }
 
-      // Batting phase
-      if (state.phase !== 'BATTING') return;
-
-      if (dist > 50 && elapsed < 300) {
-        // Swipe detected: set direction
-        const absX = Math.abs(deltaX);
-        const absY = Math.abs(deltaY);
-        let direction;
-        if (absY > absX) {
-          direction = deltaY < 0 ? 'straight' : 'defense';
-        } else {
-          direction = deltaX < 0 ? 'pull' : 'cut';
-        }
-        state.gestureDirection = direction;
-        state.gestureConfirmed = true;
-        setShotDirection(direction);
-        showGestureIndicator(direction);
-        // Update pitch shot overlay
-        const overlayIcon = document.getElementById('pitchShotIcon');
-        const overlayName = document.getElementById('pitchShotName');
-        const arrows = { straight: '\u2191', pull: '\u2190', cut: '\u2192', defense: '\u2193' };
-        const names = { straight: 'DRIVE', pull: 'PULL', cut: 'CUT', defense: 'BLOCK' };
-        if (overlayIcon) overlayIcon.textContent = arrows[direction] || '\u2191';
-        if (overlayName) overlayName.textContent = names[direction] || 'DRIVE';
-      } else {
-        // Tap: swing bat with current direction
-        handleSwing(state.gestureDirection || state.shotDirection);
+      // Batting one-swipe
+      if (state.phase === 'BATTING' && battingSwipeStart) {
+        handleBattingTouchEnd(e);
+        return;
       }
     }, { passive: true });
+  }
+
+  // ============================================
+  // FIRST-TIME TUTORIAL
+  // ============================================
+
+  const BATTING_TUTORIAL = [
+    {
+      title: 'HOW TO BAT',
+      body: 'Swipe in any direction to play your shot!',
+      diagram: '<div class="cb-tutorial-arrows">\u2191 Lofted<br>\u2190 Pull \u00A0\u00A0\u00A0 Cut \u2192<br>\u2193 Defense</div>'
+    },
+    {
+      title: 'TIMING IS KEY',
+      body: 'Swipe as the ball reaches the cyan marker on the pitch for PERFECT timing!',
+      diagram: '<div style="font-size:2rem;">\u{1F3CF} \u2192 \u2B55</div>'
+    },
+    {
+      title: 'BUILD CONFIDENCE',
+      body: 'Hit boundaries to enter the ZONE \u2014 timing gets easier the more you score!',
+      diagram: '<div style="font-size:2rem;">\u2728 \u{1F525} \u2728</div>'
+    }
+  ];
+
+  const BOWLING_TUTORIAL = [
+    {
+      title: 'HOW TO BOWL',
+      body: 'Drag your finger down the pitch to bowl!<br><br>Curve left \u2192 Inswing<br>Curve right \u2192 Outswing<br>Short drag \u2192 Bouncer<br>Long drag \u2192 Yorker',
+      diagram: ''
+    },
+    {
+      title: 'SMOOTH = ACCURATE',
+      body: 'A smooth, steady drag = perfect accuracy.<br>A shaky drag = loose delivery!',
+      diagram: '<div style="font-size:2rem;">\u{1F3AF}</div>'
+    }
+  ];
+
+  let currentTutorial = null;
+  let currentSlideIdx = 0;
+
+  function showTutorial(type) {
+    const seen = localStorage.getItem('cricket-blitz-' + type + '-tutorial-seen');
+    if (seen) return false; // already seen
+
+    currentTutorial = type === 'batting' ? BATTING_TUTORIAL : BOWLING_TUTORIAL;
+    currentSlideIdx = 0;
+    renderTutorialSlide();
+
+    const overlay = $('tutorialOverlay');
+    if (overlay) {
+      overlay.classList.add('show');
+      overlay.style.display = 'flex';
+    }
+
+    return true; // tutorial shown, caller should wait
+  }
+
+  function renderTutorialSlide() {
+    const slide = currentTutorial[currentSlideIdx];
+    const el = $('tutorialSlide');
+    const dots = $('tutorialDots');
+    const nextBtn = $('tutorialNext');
+
+    if (el) el.innerHTML = '<h3>' + slide.title + '</h3><p>' + slide.body + '</p>' + slide.diagram;
+
+    // Dots
+    if (dots) {
+      dots.innerHTML = currentTutorial.map(function(_, i) {
+        return '<div class="cb-tutorial-dot ' + (i === currentSlideIdx ? 'active' : '') + '"></div>';
+      }).join('');
+    }
+
+    // Last slide changes button
+    if (nextBtn) nextBtn.textContent = currentSlideIdx === currentTutorial.length - 1 ? 'GOT IT!' : 'NEXT \u2192';
+  }
+
+  window._cbNextTutorialSlide = function() {
+    currentSlideIdx++;
+    if (currentSlideIdx >= currentTutorial.length) {
+      closeTutorial();
+    } else {
+      renderTutorialSlide();
+    }
+  };
+
+  window._cbSkipTutorial = function() {
+    closeTutorial();
+  };
+
+  function closeTutorial() {
+    const type = currentTutorial === BATTING_TUTORIAL ? 'batting' : 'bowling';
+    localStorage.setItem('cricket-blitz-' + type + '-tutorial-seen', 'true');
+    const overlay = $('tutorialOverlay');
+    if (overlay) { overlay.classList.remove('show'); overlay.style.display = 'none'; }
+
+    // Resume the game after tutorial
+    if (type === 'batting') {
+      startDelivery(); // start first ball
+    } else {
+      state.bowlingDeliveryPhase = 'selecting';
+    }
   }
 
   // ============================================
