@@ -1794,12 +1794,17 @@ import * as THREE from 'three';
       head.position.y = 0.95;
       group.add(head);
 
-      // Hat
-      const hatGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.06, 8);
-      const hatMat = new THREE.MeshLambertMaterial({ color: hatColor });
-      const hat = new THREE.Mesh(hatGeo, hatMat);
-      hat.position.y = 1.05;
-      group.add(hat);
+      // Wide-brim sun hat (IPL umpire style)
+      const brimGeo = new THREE.CylinderGeometry(0.18, 0.2, 0.03, 12);
+      const brimMat = new THREE.MeshLambertMaterial({ color: hatColor });
+      const brim = new THREE.Mesh(brimGeo, brimMat);
+      brim.position.y = 1.03;
+      group.add(brim);
+      const crownGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.08, 8);
+      const crownMat = new THREE.MeshLambertMaterial({ color: hatColor });
+      const crown = new THREE.Mesh(crownGeo, crownMat);
+      crown.position.y = 1.08;
+      group.add(crown);
 
       group.position.copy(position);
       if (rotationY) group.rotation.y = rotationY;
@@ -1807,18 +1812,18 @@ import * as THREE from 'three';
       return group;
     }
 
-    // Bowler's end umpire — stands behind stumps at bowler's end, slightly off to one side
+    // Bowler's end umpire — IPL style: navy blue shirt, navy hat, black trousers
     buildFigure(
-      0xf0f0f0,   // white shirt (umpire)
-      0x222222,   // dark hat
+      0x1a1a6b,   // navy blue polo shirt (IPL umpire)
+      0x1a1a4e,   // navy wide-brim hat
       new THREE.Vector3(1.5, 0, 20.5),  // behind bowler's stumps, offset right
       Math.PI     // facing toward batsman
     );
 
-    // Square leg umpire — stands at square leg position
+    // Square leg umpire — IPL style: navy blue shirt, navy hat
     buildFigure(
-      0xf0f0f0,   // white shirt
-      0x222222,   // dark hat
+      0x1a1a6b,   // navy blue polo shirt
+      0x1a1a4e,   // navy wide-brim hat
       new THREE.Vector3(-6, 0, 1.5),    // square leg, near batsman's end
       Math.PI / 2 // facing the pitch sideways
     );
@@ -1877,10 +1882,14 @@ import * as THREE from 'three';
 
   function updateFielderColors() {
     if (!fielderMeshes.length) return;
-    const oppTeam = state.opponentTeam ? TEAMS[state.opponentTeam] : null;
-    const color = new THREE.Color(oppTeam ? oppTeam.primary : '#666666');
+    // Fielders belong to the BOWLING team
+    // When batting: fielders = opponent team
+    // When bowling: fielders = YOUR team (you're fielding)
+    const isBowling = state.phase === 'BOWLING' || state.matchPhase === 'bowling';
+    const fieldingTeamId = isBowling ? state.selectedTeam : state.opponentTeam;
+    const fieldingTeam = fieldingTeamId ? TEAMS[fieldingTeamId] : null;
+    const color = new THREE.Color(fieldingTeam ? fieldingTeam.primary : '#666666');
     fielderMeshes.forEach(group => {
-      // Body is the first child mesh in each fielder group
       if (group.children && group.children[0]) {
         group.children[0].material.color.copy(color);
       }
@@ -4599,6 +4608,9 @@ import * as THREE from 'three';
     // Reset for 2nd innings worm chart
     state.overRunHistory = [];
 
+    // Update fielder jerseys — now opponent is fielding
+    updateFielderColors();
+
     // Reset batting state
     state.runs = 0;
     state.wickets = 0;
@@ -4684,6 +4696,9 @@ import * as THREE from 'three';
 
     // Reset for 2nd innings worm chart
     state.overRunHistory = [];
+
+    // Update fielder jerseys — now YOUR team is fielding
+    updateFielderColors();
 
     // Reset bowling state
     state.bowlingAIScore = 0;
