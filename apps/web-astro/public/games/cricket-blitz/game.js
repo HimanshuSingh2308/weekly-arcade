@@ -7793,9 +7793,11 @@ import * as THREE from 'three';
   let currentUser = null;
   let cloudState = null;
 
+  let headerAPI = null;
+
   function initHeader() {
     if (!window.gameHeader) return;
-    window.gameHeader.init({
+    headerAPI = window.gameHeader.init({
       title: 'Cricket Blitz',
       icon: '\u{1F3CF}',
       gameId: 'cricket-blitz',
@@ -7803,6 +7805,13 @@ import * as THREE from 'three';
       onSound: () => {
         state.soundEnabled = !state.soundEnabled;
         if (masterGain) masterGain.gain.value = state.soundEnabled ? 0.5 : 0;
+        // Update the button icon via header API
+        if (headerAPI && headerAPI.setSoundMuted) {
+          headerAPI.setSoundMuted(!state.soundEnabled);
+        } else {
+          const soundBtn = document.getElementById('ghSoundBtn');
+          if (soundBtn) soundBtn.textContent = state.soundEnabled ? '🔊' : '🔇';
+        }
         try { localStorage.setItem('cricket-blitz-sound', state.soundEnabled); } catch (e) {}
       },
       onSignIn: async (user) => {
@@ -8004,6 +8013,36 @@ import * as THREE from 'three';
       }, 100);
       setTimeout(() => clearInterval(check), 5000);
     }
+
+    // Load saved sound preference
+    try {
+      const savedSound = localStorage.getItem('cricket-blitz-sound');
+      if (savedSound === 'false') {
+        state.soundEnabled = false;
+        if (masterGain) masterGain.gain.value = 0;
+        if (headerAPI && headerAPI.setSoundMuted) headerAPI.setSoundMuted(true);
+      }
+    } catch (e) {}
+
+    // iOS audio fix: resume AudioContext on FIRST user interaction anywhere
+    function unlockAudioOnce() {
+      initAudio();
+      resumeAudio();
+      // Also try to create and play a silent buffer (iOS Safari workaround)
+      if (audioCtx) {
+        try {
+          const silentBuffer = audioCtx.createBuffer(1, 1, 22050);
+          const src = audioCtx.createBufferSource();
+          src.buffer = silentBuffer;
+          src.connect(audioCtx.destination);
+          src.start(0);
+        } catch (e) {}
+      }
+      document.removeEventListener('touchstart', unlockAudioOnce);
+      document.removeEventListener('click', unlockAudioOnce);
+    }
+    document.addEventListener('touchstart', unlockAudioOnce, { once: true });
+    document.addEventListener('click', unlockAudioOnce, { once: true });
 
     // Start game loop
     animFrameId = requestAnimationFrame(gameLoop);
