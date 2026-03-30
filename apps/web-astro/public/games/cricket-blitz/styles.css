@@ -1691,9 +1691,9 @@
 /* ---- Strategic Timeout Button ---- */
 .cb-timeout-btn {
   position: fixed;
-  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 4px);
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 60px);
   right: 8px;
-  z-index: 20;
+  z-index: 18;
   background: rgba(0,0,0,0.7);
   border: 1px solid var(--cb-team-primary, #FFD700);
   color: #FFD700;

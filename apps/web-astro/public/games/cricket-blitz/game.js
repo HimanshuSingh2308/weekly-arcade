@@ -1574,7 +1574,7 @@ import * as THREE from 'three';
       const texture = createAdBoardTexture(brand.text, brand.bg, brand.fg);
       const mat = new THREE.MeshBasicMaterial({ map: texture });
       const board = new THREE.Mesh(boardGeo, mat);
-      board.position.set(Math.sin(angle) * 79, 1.25, Math.cos(angle) * 79);
+      board.position.set(Math.sin(angle) * 79, 1.25, Math.cos(angle) * 79 + 11);
       board.rotation.y = angle + Math.PI;
       scene.add(board);
     }
@@ -1582,10 +1582,27 @@ import * as THREE from 'three';
 
   // ---- Sight Screen (white screen behind bowler's end) ----
   function buildSightScreen() {
-    const screenGeo = new THREE.BoxGeometry(4, 3, 0.3);
-    const screenMat = new THREE.MeshBasicMaterial({ color: 0xF0F0F0 });
+    // Branded sight screen instead of plain white
+    const sCanvas = document.createElement('canvas');
+    sCanvas.width = 256; sCanvas.height = 192;
+    const sCtx = sCanvas.getContext('2d');
+    sCtx.fillStyle = '#1a0a3e';
+    sCtx.fillRect(0, 0, 256, 192);
+    sCtx.strokeStyle = '#FFD700'; sCtx.lineWidth = 3;
+    sCtx.strokeRect(4, 4, 248, 184);
+    sCtx.fillStyle = '#FFD700';
+    sCtx.font = 'bold 22px -apple-system, sans-serif';
+    sCtx.textAlign = 'center';
+    sCtx.fillText('WEEKLY', 128, 70);
+    sCtx.fillText('ARCADE', 128, 100);
+    sCtx.fillStyle = 'rgba(255,255,255,0.4)';
+    sCtx.font = '14px sans-serif';
+    sCtx.fillText('🏏 CRICKET BLITZ', 128, 140);
+    const sTexture = new THREE.CanvasTexture(sCanvas);
+    const screenGeo = new THREE.BoxGeometry(5, 4, 0.3);
+    const screenMat = new THREE.MeshBasicMaterial({ map: sTexture });
     const sightScreen = new THREE.Mesh(screenGeo, screenMat);
-    sightScreen.position.set(0, 3, 75); // far behind bowler, near boundary
+    sightScreen.position.set(0, 3, 75);
     scene.add(sightScreen);
   }
 
@@ -3313,8 +3330,8 @@ import * as THREE from 'three';
       10
     );
 
-    const W = 200, H = 80;
-    const padL = 28, padR = 8, padT = 8, padB = 16;
+    const W = 260, H = 120;
+    const padL = 30, padR = 20, padT = 12, padB = 20;
     const chartW = W - padL - padR;
     const chartH = H - padT - padB;
 
