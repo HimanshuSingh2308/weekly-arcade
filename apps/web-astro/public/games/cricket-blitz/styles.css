@@ -390,6 +390,9 @@
 .cb-title-modal {
   position: relative;
   overflow: hidden;
+  /* Dynamically size to fit screen */
+  max-height: calc(100dvh - 80px);
+  padding: clamp(8px, 2dvh, 20px) clamp(10px, 3vw, 24px);
 }
 
 /* Floating background particles container */
@@ -407,9 +410,9 @@
 }
 
 .cb-title-icon {
-  font-size: 48px;
+  font-size: clamp(28px, 5dvh, 48px);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: clamp(0px, 0.5dvh, 4px);
   animation: titleIconBounce 2s ease-in-out infinite;
   filter: drop-shadow(0 4px 12px rgba(255,215,0,0.3));
 }
@@ -421,9 +424,9 @@
 }
 
 .cb-title-name {
-  font-size: 1.8rem;
+  font-size: clamp(1.2rem, 4dvh, 1.8rem);
   font-weight: 900;
-  margin: 0 0 2px;
+  margin: 0 0 clamp(0px, 0.3dvh, 2px);
   background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -448,9 +451,9 @@
 }
 
 .cb-title-tagline {
-  font-size: 0.7rem;
+  font-size: clamp(0.5rem, 1.2dvh, 0.7rem);
   color: rgba(255,255,255,0.5);
-  margin: 0 0 4px;
+  margin: 0 0 clamp(0px, 0.5dvh, 4px);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   font-weight: 600;
@@ -492,8 +495,8 @@
 .cb-team-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: clamp(3px, 0.8dvh, 8px);
+  margin-bottom: clamp(2px, 0.5dvh, 8px);
 }
 
 .cb-team-card {
@@ -501,8 +504,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 10px 8px;
+  gap: 2px;
+  padding: clamp(5px, 1dvh, 12px) clamp(4px, 1vw, 10px);
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.1);
   cursor: pointer;
@@ -652,12 +655,13 @@
 
 .cb-btn-play {
   width: 100%;
-  height: 56px;
-  min-height: 56px;
-  font-size: 1.1rem;
+  height: clamp(40px, 6dvh, 56px);
+  min-height: 40px;
+  font-size: clamp(0.85rem, 2dvh, 1.1rem);
   font-weight: 800;
   letter-spacing: 0.05em;
   border-radius: 28px;
+  margin-top: clamp(2px, 0.5dvh, 8px);
 }
 
 .cb-btn-play:not(:disabled) {
@@ -1484,8 +1488,8 @@ input, select, textarea, button {
 
 /* ---- Patch #18: Daily Challenge ---- */
 .cb-daily-challenge {
-  margin: 10px 0;
-  padding: 10px 14px;
+  margin: clamp(2px, 0.5dvh, 10px) 0;
+  padding: clamp(4px, 1dvh, 10px) 14px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,215,0,0.2);
   border-radius: 10px;
