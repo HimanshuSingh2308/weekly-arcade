@@ -1880,18 +1880,36 @@ import * as THREE from 'three';
     keeperGloveR = gloveR;
   }
 
+  // Bowling fielder positions (around AI batsman's end, visible from bowling camera)
+  const BOWLING_FIELDER_POSITIONS = [
+    { x: -12, z: 5 },    // mid-wicket (near batsman)
+    { x: 12, z: 5 },     // cover
+    { x: -20, z: -5 },   // square leg (behind batsman from bowling view)
+    { x: 20, z: -5 },    // point
+    { x: -8, z: 12 },    // mid-on
+    { x: 8, z: 12 }      // mid-off
+  ];
+
   function updateFielderColors() {
     if (!fielderMeshes.length) return;
-    // Fielders belong to the BOWLING team
-    // When batting: fielders = opponent team
-    // When bowling: fielders = YOUR team (you're fielding)
     const isBowling = state.phase === 'BOWLING' || state.matchPhase === 'bowling';
     const fieldingTeamId = isBowling ? state.selectedTeam : state.opponentTeam;
     const fieldingTeam = fieldingTeamId ? TEAMS[fieldingTeamId] : null;
     const color = new THREE.Color(fieldingTeam ? fieldingTeam.primary : '#666666');
-    fielderMeshes.forEach(group => {
+    fielderMeshes.forEach(function(group, i) {
       if (group.children && group.children[0]) {
         group.children[0].material.color.copy(color);
+      }
+    });
+  }
+
+  function repositionFielders(isBowling) {
+    if (!fielderMeshes.length) return;
+    const positions = isBowling ? BOWLING_FIELDER_POSITIONS : FIELDER_POSITIONS;
+    fielderMeshes.forEach(function(group, i) {
+      if (i < positions.length) {
+        group.position.set(positions[i].x, 0, positions[i].z);
+        group.visible = true;
       }
     });
   }
@@ -4608,8 +4626,9 @@ import * as THREE from 'three';
     // Reset for 2nd innings worm chart
     state.overRunHistory = [];
 
-    // Update fielder jerseys — now opponent is fielding
+    // Update fielder jerseys and positions — opponent is fielding
     updateFielderColors();
+    repositionFielders(false); // batting positions
 
     // Reset batting state
     state.runs = 0;
@@ -4697,8 +4716,9 @@ import * as THREE from 'three';
     // Reset for 2nd innings worm chart
     state.overRunHistory = [];
 
-    // Update fielder jerseys — now YOUR team is fielding
+    // Update fielder jerseys and positions — YOUR team is fielding
     updateFielderColors();
+    repositionFielders(true); // bowling positions
 
     // Reset bowling state
     state.bowlingAIScore = 0;
@@ -6944,6 +6964,8 @@ import * as THREE from 'three';
       state.battingScore = 0;
       // AI bats freely in first innings (no target — state.battingFirst = false handles this)
       buildBowlingScene();
+      updateFielderColors();
+      repositionFielders(true); // bowling positions
       state.phase = 'BOWLING';
       gameWrap.classList.add('cb-playing');
       gameWrap.classList.add('cb-bowling');
