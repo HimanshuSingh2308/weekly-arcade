@@ -1531,13 +1531,48 @@ import * as THREE from 'three';
   }
 
   // ---- Patch #21: Advertising Boards ----
+  function createAdBoardTexture(text, bgColor, textColor) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, 256, 64);
+    // Border
+    ctx.strokeStyle = textColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 254, 62);
+    // Text
+    ctx.fillStyle = textColor;
+    ctx.font = 'bold 18px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 32);
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+  }
+
   function buildAdBoards() {
-    const teamPrimary = state.selectedTeam ? new THREE.Color(TEAMS[state.selectedTeam].primary) : new THREE.Color(0x0066FF);
     const boardGeo = new THREE.BoxGeometry(8, 2.5, 0.2);
+    const brandTexts = [
+      { text: 'WEEKLY ARCADE', bg: '#1a0a3e', fg: '#FFD700' },
+      { text: 'CRICKET BLITZ', bg: '#FFD700', fg: '#1a0a3e' },
+      { text: 'WEEKLY ARCADE', bg: '#CC0000', fg: '#FFFFFF' },
+      { text: 'PLAY FREE', bg: '#004BA0', fg: '#FFFFFF' },
+      { text: 'WEEKLY ARCADE', bg: '#1a0a3e', fg: '#FFD700' },
+      { text: 'CRICKET BLITZ', bg: '#FF6B00', fg: '#FFFFFF' },
+      { text: 'WEEKLY ARCADE', bg: '#FFFFFF', fg: '#1a0a3e' },
+      { text: '13+ GAMES', bg: '#3B0051', fg: '#FFD700' },
+      { text: 'WEEKLY ARCADE', bg: '#1a0a3e', fg: '#FFD700' },
+      { text: 'CRICKET BLITZ', bg: '#E8000D', fg: '#FFFFFF' },
+      { text: 'WEEKLY ARCADE', bg: '#2d8a1e', fg: '#FFFFFF' },
+      { text: 'NO DOWNLOAD', bg: '#004BA0', fg: '#FFD700' },
+    ];
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2;
-      const boardColor = (i % 2 === 0) ? teamPrimary : new THREE.Color(0xFFFFFF);
-      const mat = new THREE.MeshBasicMaterial({ color: boardColor });
+      const brand = brandTexts[i];
+      const texture = createAdBoardTexture(brand.text, brand.bg, brand.fg);
+      const mat = new THREE.MeshBasicMaterial({ map: texture });
       const board = new THREE.Mesh(boardGeo, mat);
       board.position.set(Math.sin(angle) * 79, 1.25, Math.cos(angle) * 79);
       board.rotation.y = angle + Math.PI;
@@ -3272,42 +3307,56 @@ import * as THREE from 'three';
       svg += '<text x="' + xScale(o) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.3)">' + o + '</text>';
     }
 
-    // Draw first innings line (if exists) — team A color (blue)
+    // Use actual team colors
+    var teamAColor = state.battingFirst ?
+      (state.selectedTeam ? TEAMS[state.selectedTeam].primary : '#4A9FFF') :
+      (state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#4A9FFF');
+    var teamBColor = state.battingFirst ?
+      (state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#FF6B35') :
+      (state.selectedTeam ? TEAMS[state.selectedTeam].primary : '#FF6B35');
+
+    // Draw first innings line (if exists) — 1st batting team color
     if (cum1.length > 1) {
       var path1 = 'M';
       cum1.forEach(function(r, i) {
         path1 += (i > 0 ? 'L' : '') + xScale(i).toFixed(1) + ',' + yScale(r).toFixed(1);
       });
-      svg += '<path d="' + path1 + '" fill="none" stroke="#4A9FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>';
-      // Dots at each over
+      svg += '<path d="' + path1 + '" fill="none" stroke="' + teamAColor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>';
       cum1.forEach(function(r, i) {
-        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="2.5" fill="#4A9FFF"/>';
+        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="3" fill="' + teamAColor + '"/>';
       });
+      // End label with total
+      var lastCum1 = cum1[cum1.length - 1];
+      svg += '<text x="' + (xScale(cum1.length - 1) + 6) + '" y="' + (yScale(lastCum1) + 3) + '" font-size="7" font-weight="bold" fill="' + teamAColor + '">' + lastCum1 + '</text>';
     }
 
-    // Draw current innings line — team B color (orange/red)
+    // Draw current innings line — 2nd batting team color
     if (cum2.length > 1) {
       var path2 = 'M';
       cum2.forEach(function(r, i) {
         path2 += (i > 0 ? 'L' : '') + xScale(i).toFixed(1) + ',' + yScale(r).toFixed(1);
       });
-      svg += '<path d="' + path2 + '" fill="none" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
-      // Dots at each over
+      svg += '<path d="' + path2 + '" fill="none" stroke="' + teamBColor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
       cum2.forEach(function(r, i) {
-        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="2.5" fill="#FF6B35"/>';
+        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="3" fill="' + teamBColor + '"/>';
       });
+      // End label with total
+      var lastCum2 = cum2[cum2.length - 1];
+      svg += '<text x="' + (xScale(cum2.length - 1) + 6) + '" y="' + (yScale(lastCum2) + 3) + '" font-size="7" font-weight="bold" fill="' + teamBColor + '">' + lastCum2 + '</text>';
     }
 
     svg += '</svg>';
 
-    // Legend
-    var teamA = state.battingFirst ? TEAM_ABBR[state.selectedTeam] || 'YOU' : TEAM_ABBR[state.opponentTeam] || 'AI';
-    var teamB = state.battingFirst ? TEAM_ABBR[state.opponentTeam] || 'AI' : TEAM_ABBR[state.selectedTeam] || 'YOU';
-    var legend = '<div style="display:flex;justify-content:center;gap:12px;font-size:0.6rem;margin-top:2px;">';
-    if (firstInningsOvers.length > 0) {
-      legend += '<span style="color:#4A9FFF;">● ' + teamA + ' (1st)</span>';
-    }
-    legend += '<span style="color:#FF6B35;">● ' + teamB + ' (2nd)</span>';
+    // Legend with team colors
+    var teamAName = state.battingFirst ? TEAM_ABBR[state.selectedTeam] || 'YOU' : TEAM_ABBR[state.opponentTeam] || 'AI';
+    var teamBName = state.battingFirst ? TEAM_ABBR[state.opponentTeam] || 'AI' : TEAM_ABBR[state.selectedTeam] || 'YOU';
+    var legend = '<div style="display:flex;justify-content:center;gap:16px;font-size:0.65rem;margin-top:4px;">';
+    legend += '<span style="color:' + teamAColor + ';font-weight:700;">■ ' + teamAName;
+    if (cum1.length > 1) legend += ' (' + cum1[cum1.length - 1] + ')';
+    legend += '</span>';
+    legend += '<span style="color:' + teamBColor + ';font-weight:700;">■ ' + teamBName;
+    if (cum2.length > 1) legend += ' (' + cum2[cum2.length - 1] + ')';
+    legend += '</span>';
     legend += '</div>';
 
     return '<div style="text-align:center;"><span style="font-size:0.6rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;">SCORING COMPARISON</span></div>' + svg + legend;
