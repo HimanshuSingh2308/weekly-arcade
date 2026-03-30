@@ -310,8 +310,8 @@ class AuthManager {
 // Self-injects HTML/CSS on first show — no per-game markup needed.
 const AuthNudge = (() => {
   const DISMISS_KEY = 'auth-nudge-dismissed';
-  const DISMISS_HOURS = 24;
-  const MAX_PER_SESSION = 2;
+  const DISMISS_HOURS = 1;
+  const MAX_PER_SESSION = 5;
   let shown = 0;
   let injected = false;
 
