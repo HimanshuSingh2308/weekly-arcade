@@ -3357,59 +3357,71 @@ import * as THREE from 'three';
       svg += '<text x="' + xScale(o) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.3)">' + o + '</text>';
     }
 
-    // Use actual team colors
-    var teamAColor = state.battingFirst ?
-      (state.selectedTeam ? TEAMS[state.selectedTeam].primary : '#4A9FFF') :
-      (state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#4A9FFF');
-    var teamBColor = state.battingFirst ?
-      (state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#FF6B35') :
-      (state.selectedTeam ? TEAMS[state.selectedTeam].primary : '#FF6B35');
+    // Determine who batted first and who's batting now
+    var isSecondInnings = firstInningsOvers.length > 0;
+    var playerTeamColor = state.selectedTeam ? TEAMS[state.selectedTeam].primary : '#4A9FFF';
+    var oppTeamColor = state.opponentTeam ? TEAMS[state.opponentTeam].primary : '#FF6B35';
 
-    // Draw first innings line (if exists) — 1st batting team color
+    // Figure out which color goes to which line
+    var firstBattingTeamColor, currentBattingTeamColor;
+    var firstBattingName, currentBattingName;
+
+    if (state.battingFirst) {
+      // You batted first (or are batting first now)
+      firstBattingTeamColor = playerTeamColor;
+      firstBattingName = TEAM_ABBR[state.selectedTeam] || 'YOU';
+      currentBattingTeamColor = isSecondInnings ? oppTeamColor : playerTeamColor;
+      currentBattingName = isSecondInnings ? (TEAM_ABBR[state.opponentTeam] || 'AI') : (TEAM_ABBR[state.selectedTeam] || 'YOU');
+    } else {
+      // AI batted first (you bowled first)
+      firstBattingTeamColor = oppTeamColor;
+      firstBattingName = TEAM_ABBR[state.opponentTeam] || 'AI';
+      currentBattingTeamColor = isSecondInnings ? playerTeamColor : oppTeamColor;
+      currentBattingName = isSecondInnings ? (TEAM_ABBR[state.selectedTeam] || 'YOU') : (TEAM_ABBR[state.opponentTeam] || 'AI');
+    }
+
+    // Draw first innings line (if exists)
     if (cum1.length > 1) {
       var path1 = 'M';
       cum1.forEach(function(r, i) {
         path1 += (i > 0 ? 'L' : '') + xScale(i).toFixed(1) + ',' + yScale(r).toFixed(1);
       });
-      svg += '<path d="' + path1 + '" fill="none" stroke="' + teamAColor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>';
+      svg += '<path d="' + path1 + '" fill="none" stroke="' + firstBattingTeamColor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>';
       cum1.forEach(function(r, i) {
-        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="3" fill="' + teamAColor + '"/>';
+        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="3" fill="' + firstBattingTeamColor + '"/>';
       });
-      // End label with total
       var lastCum1 = cum1[cum1.length - 1];
-      svg += '<text x="' + (xScale(cum1.length - 1) + 6) + '" y="' + (yScale(lastCum1) + 3) + '" font-size="7" font-weight="bold" fill="' + teamAColor + '">' + lastCum1 + '</text>';
+      svg += '<text x="' + (xScale(cum1.length - 1) + 6) + '" y="' + (yScale(lastCum1) + 3) + '" font-size="7" font-weight="bold" fill="' + firstBattingTeamColor + '">' + lastCum1 + '</text>';
     }
 
-    // Draw current innings line — 2nd batting team color
+    // Draw current innings line
     if (cum2.length > 1) {
       var path2 = 'M';
       cum2.forEach(function(r, i) {
         path2 += (i > 0 ? 'L' : '') + xScale(i).toFixed(1) + ',' + yScale(r).toFixed(1);
       });
-      svg += '<path d="' + path2 + '" fill="none" stroke="' + teamBColor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      svg += '<path d="' + path2 + '" fill="none" stroke="' + currentBattingTeamColor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
       cum2.forEach(function(r, i) {
-        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="3" fill="' + teamBColor + '"/>';
+        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="3" fill="' + currentBattingTeamColor + '"/>';
       });
-      // End label with total
       var lastCum2 = cum2[cum2.length - 1];
-      svg += '<text x="' + (xScale(cum2.length - 1) + 6) + '" y="' + (yScale(lastCum2) + 3) + '" font-size="7" font-weight="bold" fill="' + teamBColor + '">' + lastCum2 + '</text>';
+      svg += '<text x="' + (xScale(cum2.length - 1) + 6) + '" y="' + (yScale(lastCum2) + 3) + '" font-size="7" font-weight="bold" fill="' + currentBattingTeamColor + '">' + lastCum2 + '</text>';
     }
 
     svg += '</svg>';
 
-    // Legend with team colors
-    var teamAName = state.battingFirst ? TEAM_ABBR[state.selectedTeam] || 'YOU' : TEAM_ABBR[state.opponentTeam] || 'AI';
-    var teamBName = state.battingFirst ? TEAM_ABBR[state.opponentTeam] || 'AI' : TEAM_ABBR[state.selectedTeam] || 'YOU';
+    // Legend — show correct team names with their colors
     var legend = '<div style="display:flex;justify-content:center;gap:16px;font-size:0.65rem;margin-top:4px;">';
-    legend += '<span style="color:' + teamAColor + ';font-weight:700;">■ ' + teamAName;
-    if (cum1.length > 1) legend += ' (' + cum1[cum1.length - 1] + ')';
-    legend += '</span>';
-    legend += '<span style="color:' + teamBColor + ';font-weight:700;">■ ' + teamBName;
-    if (cum2.length > 1) legend += ' (' + cum2[cum2.length - 1] + ')';
+    if (isSecondInnings && cum1.length > 1) {
+      legend += '<span style="color:' + firstBattingTeamColor + ';font-weight:700;">■ ' + firstBattingName + ' (1st: ' + cum1[cum1.length - 1] + ')</span>';
+    }
+    legend += '<span style="color:' + currentBattingTeamColor + ';font-weight:700;">■ ' + currentBattingName;
+    if (cum2.length > 1) legend += (isSecondInnings ? ' (2nd: ' : ' (') + cum2[cum2.length - 1] + ')';
     legend += '</span>';
     legend += '</div>';
 
-    return '<div style="text-align:center;"><span style="font-size:0.6rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;">SCORING COMPARISON</span></div>' + svg + legend;
+    var title = isSecondInnings ? 'SCORING COMPARISON' : 'INNINGS PROGRESS';
+    return '<div style="text-align:center;"><span style="font-size:0.6rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;">' + title + '</span></div>' + svg + legend;
   }
 
   function getDifficultyParams() {
