@@ -117,7 +117,7 @@
 /* ---- TV Broadcast Scoreboard ---- */
 .cb-scoreboard {
   position: fixed;
-  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 4px);
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 4px);
   left: 0;
   z-index: 20;
   background: rgba(0,0,0,0.88);
@@ -940,7 +940,7 @@
 /* ---- Bowler Intro Banner ---- */
 .cb-bowler-intro {
   position: fixed;
-  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 8px);
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 8px);
   left: 50%;
   transform: translateX(-50%) translateY(-60px);
   z-index: 25;
@@ -1292,7 +1292,7 @@
 /* ---- Ball Commentary Overlay ---- */
 .cb-ball-commentary {
   position: fixed;
-  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 70px);
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 70px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 22;
@@ -1372,7 +1372,7 @@
 /* ---- Combo Streak Badge ---- */
 .cb-combo-badge {
   position: fixed;
-  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 100px);
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 100px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 22;
@@ -1596,7 +1596,7 @@
 .cb-freehit-badge {
   display: none;
   position: absolute;
-  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 70px);
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 70px);
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 14px;
@@ -1691,7 +1691,7 @@
 /* ---- Strategic Timeout Button ---- */
 .cb-timeout-btn {
   position: fixed;
-  top: calc(var(--cb-header-h, 44px) + var(--cb-safe-top, 0px) + 4px);
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 4px);
   right: 8px;
   z-index: 20;
   background: rgba(0,0,0,0.7);
@@ -1709,6 +1709,25 @@
   line-height: 1;
 }
 .cb-timeout-btn:active { transform: scale(0.92); }
+
+/* ---- Player Name Bar ---- */
+.cb-player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: rgba(0,0,0,0.75);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #FFD700;
+  pointer-events: none;
+}
+.cb-player-bar span:last-child {
+  color: rgba(255,255,255,0.6);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .cb-team-card { transition: none; }

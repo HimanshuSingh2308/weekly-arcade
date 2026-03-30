@@ -683,8 +683,8 @@ import * as THREE from 'three';
 
     // Camera
     camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
-    camera.position.set(0, 6, -8);
-    camera.lookAt(0, 0.5, 12);
+    camera.position.set(0, 4, -5);
+    camera.lookAt(0, 0.8, 12);
 
     // Lighting — daytime sunlight
     const ambient = new THREE.AmbientLight(0x8EC8E8, 0.6);
@@ -735,7 +735,7 @@ import * as THREE from 'three';
     buildFloodlightCones();
 
     // Post-ball mesh
-    const pbGeo = new THREE.SphereGeometry(0.15, 12, 8);
+    const pbGeo = new THREE.SphereGeometry(0.22, 12, 8);
     const pbMat = new THREE.MeshPhongMaterial({ color: 0xcc0000 });
     postBallMesh = new THREE.Mesh(pbGeo, pbMat);
     postBallMesh.visible = false;
@@ -774,7 +774,7 @@ import * as THREE from 'three';
   function buildGround() {
     // Base dark green ground
     const baseGeo = new THREE.CircleGeometry(85, 64);
-    const baseMat = new THREE.MeshLambertMaterial({ color: 0x1e6b14 });
+    const baseMat = new THREE.MeshLambertMaterial({ color: 0x2d8a1e });
     ground = new THREE.Mesh(baseGeo, baseMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
@@ -785,9 +785,9 @@ import * as THREE from 'three';
       if (i % 2 === 0) continue;
       const stripeGeo = new THREE.PlaneGeometry(170, 8);
       const stripeMat = new THREE.MeshLambertMaterial({
-        color: 0x2d9a1e,
+        color: 0x45b535,
         transparent: true,
-        opacity: 0.15
+        opacity: 0.25
       });
       const stripe = new THREE.Mesh(stripeGeo, stripeMat);
       stripe.rotation.x = -Math.PI / 2;
@@ -800,8 +800,8 @@ import * as THREE from 'three';
     const curve = new THREE.EllipseCurve(0, 11, 78, 78, 0, Math.PI * 2);
     const points = curve.getPoints(128).map(function(p) { return new THREE.Vector3(p.x, 0.1, p.y); });
     const ropePath = new THREE.CatmullRomCurve3(points, true);
-    const ropeGeo = new THREE.TubeGeometry(ropePath, 128, 0.15, 4);
-    const ropeMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const ropeGeo = new THREE.TubeGeometry(ropePath, 128, 0.3, 6);
+    const ropeMat = new THREE.MeshBasicMaterial({ color: 0xCC0000 });
     const rope = new THREE.Mesh(ropeGeo, ropeMat);
     scene.add(rope);
 
@@ -816,21 +816,22 @@ import * as THREE from 'three';
 
   // ---- Pitch Strip ----
   function buildPitch() {
-    const geo = new THREE.PlaneGeometry(3, 22);
-    const mat = new THREE.MeshLambertMaterial({ color: 0xc8a96e });
+    const geo = new THREE.PlaneGeometry(3.5, 22);
+    const mat = new THREE.MeshLambertMaterial({ color: 0xB07040 });
     pitchStrip = new THREE.Mesh(geo, mat);
     pitchStrip.rotation.x = -Math.PI / 2;
     pitchStrip.position.set(0, 0.01, 11);
     scene.add(pitchStrip);
 
-    // Pitch texture dots
-    const dotGeo = new THREE.PlaneGeometry(0.06, 0.06);
-    const dotMat = new THREE.MeshBasicMaterial({ color: 0xa0783c, transparent: true, opacity: 0.3 });
-    for (let i = 0; i < 60; i++) {
+    // Pitch texture dots — dense worn clay look with varied colors
+    const dotColors = [0x8a5530, 0x6a4020, 0x8a5530, 0x6a4020, 0x7a4828];
+    for (let i = 0; i < 120; i++) {
+      const dotGeo = new THREE.PlaneGeometry(0.05 + Math.random() * 0.04, 0.05 + Math.random() * 0.04);
+      const dotMat = new THREE.MeshBasicMaterial({ color: dotColors[i % dotColors.length], transparent: true, opacity: 0.25 + Math.random() * 0.15 });
       const dot = new THREE.Mesh(dotGeo, dotMat);
       dot.rotation.x = -Math.PI / 2;
       dot.position.set(
-        (Math.random() - 0.5) * 2.8,
+        (Math.random() - 0.5) * 3.2,
         0.015,
         11 + (Math.random() - 0.5) * 20
       );
@@ -855,9 +856,29 @@ import * as THREE from 'three';
     rcBowlR.position.set(0.6, 0.02, 21.0);
     scene.add(rcBowlR);
 
+    // Crease box markings at batsman's end (rectangular outline around stumps)
+    const cBoxMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 });
+    // Front line (popping crease is already buildCreaseLine at z=1.5)
+    // Back line of the box
+    const cBoxBack = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.02, 0.05), cBoxMat);
+    cBoxBack.position.set(0, 0.02, 0.3);
+    scene.add(cBoxBack);
+    // Left side of box
+    const cBoxLeft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 1.25), cBoxMat);
+    cBoxLeft.position.set(-0.7, 0.02, 0.9);
+    scene.add(cBoxLeft);
+    // Right side of box
+    const cBoxRight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 1.25), cBoxMat);
+    cBoxRight.position.set(0.7, 0.02, 0.9);
+    scene.add(cBoxRight);
+    // Front of box (connects to popping crease area)
+    const cBoxFront = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.02, 0.05), cBoxMat);
+    cBoxFront.position.set(0, 0.02, 1.5);
+    scene.add(cBoxFront);
+
     // Worn patches where bowlers land (z = 16-19 area)
     const wornGeo = new THREE.CircleGeometry(0.12, 8);
-    const wornMat = new THREE.MeshLambertMaterial({ color: 0x9a8050, transparent: true, opacity: 0.15 });
+    const wornMat = new THREE.MeshLambertMaterial({ color: 0x7a4828, transparent: true, opacity: 0.2 });
     const wornPositions = [
       { x: 0.2, z: 16.5 }, { x: -0.3, z: 17.2 },
       { x: 0.1, z: 18.0 }, { x: -0.15, z: 17.8 }
@@ -1269,7 +1290,7 @@ import * as THREE from 'three';
   // ---- Sweet Spot ----
   function buildSweetSpot() {
     const geo = new THREE.BoxGeometry(4, 0.02, 0.08);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0 });
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00DDFF, transparent: true, opacity: 0 });
     sweetSpotLine = new THREE.Mesh(geo, mat);
     sweetSpotLine.position.set(0, 0.03, 1.5);
     scene.add(sweetSpotLine);
@@ -1414,8 +1435,8 @@ import * as THREE from 'three';
 
   let sweetSpotRing;
   function buildSweetSpotRing() {
-    const geo = new THREE.RingGeometry(0.6, 0.8, 32);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0, side: THREE.DoubleSide });
+    const geo = new THREE.CircleGeometry(0.3, 32);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00DDFF, transparent: true, opacity: 0, side: THREE.DoubleSide });
     sweetSpotRing = new THREE.Mesh(geo, mat);
     sweetSpotRing.rotation.x = -Math.PI / 2;
     sweetSpotRing.position.set(0, 0.03, 1.0);
@@ -1424,13 +1445,14 @@ import * as THREE from 'three';
 
   // ---- Patch #21: Advertising Boards ----
   function buildAdBoards() {
-    const adColors = [0xFF0000, 0x0066FF, 0xFFD700, 0x00AA00, 0xFF6600, 0x9900CC];
-    const boardGeo = new THREE.BoxGeometry(8, 1.5, 0.2);
+    const teamPrimary = state.selectedTeam ? new THREE.Color(TEAMS[state.selectedTeam].primary) : new THREE.Color(0x0066FF);
+    const boardGeo = new THREE.BoxGeometry(8, 2.5, 0.2);
     for (let i = 0; i < 12; i++) {
       const angle = (i / 12) * Math.PI * 2;
-      const mat = new THREE.MeshBasicMaterial({ color: adColors[i % adColors.length] });
+      const boardColor = (i % 2 === 0) ? teamPrimary : new THREE.Color(0xFFFFFF);
+      const mat = new THREE.MeshBasicMaterial({ color: boardColor });
       const board = new THREE.Mesh(boardGeo, mat);
-      board.position.set(Math.sin(angle) * 78, 0.75, Math.cos(angle) * 78);
+      board.position.set(Math.sin(angle) * 79, 1.25, Math.cos(angle) * 79);
       board.rotation.y = angle + Math.PI;
       scene.add(board);
     }
@@ -2075,22 +2097,28 @@ import * as THREE from 'three';
   }
 
   // ---- Ball ----
+  let ballGlowLight;
   function buildBall() {
-    const geo = new THREE.SphereGeometry(0.15, 16, 12);
-    const mat = new THREE.MeshPhongMaterial({ color: 0xcc0000, shininess: 80 });
+    const geo = new THREE.SphereGeometry(0.22, 16, 12);
+    const mat = new THREE.MeshPhongMaterial({ color: 0xcc0000, shininess: 80, emissive: 0x440000, emissiveIntensity: 0.2 });
     ballMesh = new THREE.Mesh(geo, mat);
     ballMesh.visible = false;
     scene.add(ballMesh);
 
-    // Seam (torus)
-    const seamGeo = new THREE.TorusGeometry(0.14, 0.015, 4, 16);
+    // Glow light attached to ball
+    ballGlowLight = new THREE.PointLight(0xFF4444, 0.5, 3);
+    ballGlowLight.visible = false;
+    scene.add(ballGlowLight);
+
+    // Seam (torus) — slightly larger to match ball
+    const seamGeo = new THREE.TorusGeometry(0.20, 0.018, 4, 16);
     const seamMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     ballSeam = new THREE.Mesh(seamGeo, seamMat);
     ballSeam.visible = false;
     scene.add(ballSeam);
 
     // Shadow on ground
-    const shadowGeo = new THREE.CircleGeometry(0.2, 12);
+    const shadowGeo = new THREE.CircleGeometry(0.28, 12);
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 });
     ballShadow = new THREE.Mesh(shadowGeo, shadowMat);
     ballShadow.rotation.x = -Math.PI / 2;
@@ -2105,27 +2133,36 @@ import * as THREE from 'three';
     // Stumps at crease — batsman stands in front (higher z = toward bowler)
     stumpsGroup.position.set(0, 0, 0.8);
 
-    const stumpGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.7, 6);
-    const stumpMat = new THREE.MeshLambertMaterial({ color: 0xD4A87C });
+    const teamColor = state.selectedTeam ? TEAMS[state.selectedTeam].secondary : '#0000AA';
+    const stumpGeo = new THREE.CylinderGeometry(0.045, 0.045, 1.0, 8);
+    const stumpMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(teamColor) });
+
+    // White stripe geometry for mid-height ring on each stump
+    const stripeGeo = new THREE.CylinderGeometry(0.048, 0.048, 0.08, 8);
+    const stripeMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
 
     for (let i = -1; i <= 1; i++) {
       const stump = new THREE.Mesh(stumpGeo, stumpMat.clone());
-      stump.position.set(i * 0.1, 0.35, 0);
+      stump.position.set(i * 0.1, 0.5, 0);
+      // White stripe
+      const stripe = new THREE.Mesh(stripeGeo, stripeMat.clone());
+      stripe.position.y = 0.0; // mid-height of stump
+      stump.add(stripe);
       stumpsGroup.add(stump);
       stumpMeshes.push(stump);
     }
 
-    // Bails (wider, resting on top)
-    const bailGeo = new THREE.BoxGeometry(0.12, 0.02, 0.02);
-    const bailMat = new THREE.MeshLambertMaterial({ color: 0xf0d8a0 });
+    // Glowing gold bails
+    const bailGeo = new THREE.BoxGeometry(0.22, 0.03, 0.03);
+    const bailMat = new THREE.MeshLambertMaterial({ color: 0xFFD700, emissive: 0xFFD700, emissiveIntensity: 0.3 });
 
     const bail1 = new THREE.Mesh(bailGeo, bailMat.clone());
-    bail1.position.set(-0.05, 0.72, 0);
+    bail1.position.set(-0.05, 1.02, 0);
     stumpsGroup.add(bail1);
     bailMeshes.push(bail1);
 
     const bail2 = new THREE.Mesh(bailGeo, bailMat.clone());
-    bail2.position.set(0.05, 0.72, 0);
+    bail2.position.set(0.05, 1.02, 0);
     stumpsGroup.add(bail2);
     bailMeshes.push(bail2);
 
@@ -2135,23 +2172,27 @@ import * as THREE from 'three';
     creaseLineBatsman = buildCreaseLine(1.5, 4);
     creaseLineBowler = buildCreaseLine(19.5, 2.5);
 
-    // Bowler-end stumps (far end)
+    // Bowler-end stumps (far end) — same style, proportionally same
     stumpsGroupFar = new THREE.Group();
     stumpsGroupFar.position.set(0, 0, 20);
 
+    const stumpGeoFar = new THREE.CylinderGeometry(0.045, 0.045, 1.0, 8);
     for (let i = -1; i <= 1; i++) {
-      const stump = new THREE.Mesh(stumpGeo, stumpMat.clone());
-      stump.position.set(i * 0.1, 0.35, 0);
+      const stump = new THREE.Mesh(stumpGeoFar, stumpMat.clone());
+      stump.position.set(i * 0.1, 0.5, 0);
+      const stripe = new THREE.Mesh(stripeGeo, stripeMat.clone());
+      stripe.position.y = 0.0;
+      stump.add(stripe);
       stumpsGroupFar.add(stump);
       stumpMeshesFar.push(stump);
     }
     const bailFar1 = new THREE.Mesh(bailGeo, bailMat.clone());
-    bailFar1.position.set(-0.05, 0.72, 0);
+    bailFar1.position.set(-0.05, 1.02, 0);
     stumpsGroupFar.add(bailFar1);
     bailMeshesFar.push(bailFar1);
 
     const bailFar2 = new THREE.Mesh(bailGeo, bailMat.clone());
-    bailFar2.position.set(0.05, 0.72, 0);
+    bailFar2.position.set(0.05, 1.02, 0);
     stumpsGroupFar.add(bailFar2);
     bailMeshesFar.push(bailFar2);
 
@@ -2203,7 +2244,7 @@ import * as THREE from 'three';
     // Sweet spot ring (pulsing timing guide during last 30% of flight)
     if (sweetSpotRing) {
       if (state.ballActive && state.ballProgress > 0.7) {
-        const pulse = 0.15 + 0.15 * Math.sin(Date.now() * 0.012);
+        const pulse = 0.3 + 0.3 * Math.sin(Date.now() * 0.012);
         sweetSpotRing.material.opacity = pulse;
         const scale = 1 + 0.2 * Math.sin(Date.now() * 0.008);
         sweetSpotRing.scale.set(scale, scale, scale);
@@ -2228,6 +2269,7 @@ import * as THREE from 'three';
       ballMesh.visible = false;
       ballSeam.visible = false;
       ballShadow.visible = false;
+      if (ballGlowLight) ballGlowLight.visible = false;
     }
 
     // Post-ball animation
@@ -2483,6 +2525,12 @@ import * as THREE from 'three';
     ballShadow.position.set(bx, 0.01, bz);
     const shadowScale = 0.5 + by * 0.3;
     ballShadow.scale.set(shadowScale, shadowScale, 1);
+
+    // Sync ball glow light
+    if (ballGlowLight) {
+      ballGlowLight.visible = true;
+      ballGlowLight.position.copy(ballMesh.position);
+    }
   }
 
   function updatePostBall(dt) {
@@ -2560,23 +2608,24 @@ import * as THREE from 'three';
 
     // On first frame, create scatter meshes
     if (scatterStumps.length === 0) {
-      const stumpGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6);
-      const stumpMat = new THREE.MeshLambertMaterial({ color: 0xd4a574 });
+      const teamColor = state.selectedTeam ? TEAMS[state.selectedTeam].secondary : '#0000AA';
+      const stumpGeo = new THREE.CylinderGeometry(0.045, 0.045, 1.0, 8);
+      const stumpMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(teamColor) });
       ss.pieces.forEach(p => {
         const mesh = new THREE.Mesh(stumpGeo, stumpMat);
         mesh.position.copy(stumpsGroup.position);
-        mesh.position.y = 0.35;
+        mesh.position.y = 0.5;
         mesh.userData = { vx: p.vx, vy: p.vy, rot: p.rot };
         scene.add(mesh);
         scatterStumps.push(mesh);
       });
 
-      const bailGeo = new THREE.BoxGeometry(0.1, 0.02, 0.02);
-      const bailMat = new THREE.MeshLambertMaterial({ color: 0xe8c888 });
+      const bailGeo = new THREE.BoxGeometry(0.22, 0.03, 0.03);
+      const bailMat = new THREE.MeshLambertMaterial({ color: 0xFFD700, emissive: 0xFFD700, emissiveIntensity: 0.3 });
       ss.bails.forEach(b => {
         const mesh = new THREE.Mesh(bailGeo, bailMat);
         mesh.position.copy(stumpsGroup.position);
-        mesh.position.y = 0.72;
+        mesh.position.y = 1.02;
         mesh.userData = { vx: b.vx, vy: b.vy };
         scene.add(mesh);
         scatterBails.push(mesh);
@@ -2588,7 +2637,7 @@ import * as THREE from 'three';
     scatterStumps.forEach(mesh => {
       const d = mesh.userData;
       mesh.position.x = stumpsGroup.position.x + d.vx * t * 1.5;
-      mesh.position.y = 0.35 + d.vy * t * 1.5 - 0.5 * gravity * t * t;
+      mesh.position.y = 0.5 + d.vy * t * 1.5 - 0.5 * gravity * t * t;
       mesh.position.z = stumpsGroup.position.z - t * 0.5;
       mesh.rotation.x = d.rot * t * 6;
       mesh.rotation.z = d.rot * t * 4;
@@ -2598,7 +2647,7 @@ import * as THREE from 'three';
     scatterBails.forEach(mesh => {
       const d = mesh.userData;
       mesh.position.x = stumpsGroup.position.x + d.vx * t * 2;
-      mesh.position.y = 0.72 + 3 * t - 0.5 * gravity * t * t;
+      mesh.position.y = 1.02 + 3 * t - 0.5 * gravity * t * t;
       mesh.position.z = stumpsGroup.position.z - t * 1;
       mesh.rotation.x = t * 10;
       mesh.rotation.z = t * 8;
@@ -2704,9 +2753,9 @@ import * as THREE from 'three';
       targetCamPos = new THREE.Vector3(0, 6, 24);
       targetLookAt = new THREE.Vector3(0, 0.5, 5);
     } else {
-      // Default camera position: wide TV broadcast angle behind batsman
-      targetCamPos = new THREE.Vector3(0, 6, -8);
-      targetLookAt = new THREE.Vector3(0, 0.5, 12);
+      // Default camera position: lower, closer behind batsman (stumps prominent)
+      targetCamPos = new THREE.Vector3(0, 4, -5);
+      targetLookAt = new THREE.Vector3(0, 0.8, 12);
     }
 
     // Camera effects based on game events
@@ -3443,6 +3492,7 @@ import * as THREE from 'three';
     state.ballActive = false;
     state.totalBallsFaced++;
     state.ballsInOver++;
+    state.batsmanBalls = (state.batsmanBalls || 0) + 1;
     stopBallApproach();
 
     // Feature 11: Pitch deterioration check
@@ -3565,6 +3615,11 @@ import * as THREE from 'three';
       if (state.wickets < 3) {
         state.newBatsmanAnim = true;
         state.newBatsmanTime = Date.now() + 400;
+        // New batsman name
+        state.batsmanName = BOWLER_FIRST[Math.floor(Math.random() * BOWLER_FIRST.length)].charAt(0) + '. ' +
+                            BOWLER_LAST[Math.floor(Math.random() * BOWLER_LAST.length)];
+        state.batsmanRuns = 0;
+        state.batsmanBalls = 0;
       }
 
       updateHUD();
@@ -3590,6 +3645,7 @@ import * as THREE from 'three';
       runs = Math.round(runs * 1.5);
     }
     state.runs += runs;
+    state.batsmanRuns = (state.batsmanRuns || 0) + runs;
     state.currentOverRuns += runs;
     state.currentOverResults.push({ runs, rawRuns, isWicket: false, isFour: rawRuns === 4, isSix: rawRuns === 6 });
 
@@ -4717,6 +4773,12 @@ import * as THREE from 'three';
       ballShadow.visible = true;
       ballShadow.position.set(lateralX, 0.01, bz);
 
+      // Sync ball glow light
+      if (ballGlowLight) {
+        ballGlowLight.visible = true;
+        ballGlowLight.position.copy(ballMesh.position);
+      }
+
       // When ball reaches batsman, resolve
       if (bowlingBallProgress >= 1 && state.bowlingDeliveryPhase === 'bowling') {
         resolveBowlingOutcome();
@@ -4726,6 +4788,7 @@ import * as THREE from 'three';
         ballMesh.visible = false;
         ballSeam.visible = false;
         ballShadow.visible = false;
+        if (ballGlowLight) ballGlowLight.visible = false;
       }
     }
 
@@ -6061,6 +6124,19 @@ import * as THREE from 'three';
       const showTimeout = !state.timeoutUsed && state.oversCompleted >= 2 && state.phase === 'BATTING';
       timeoutBtn.style.display = showTimeout ? 'flex' : 'none';
     }
+
+    // Player name bar
+    const playerNameBar = $('playerNameBar');
+    if (playerNameBar) {
+      const isBatting = state.phase === 'BATTING' && (state.matchPhase === 'batting' || state.matchPhase === 'batting_chase');
+      playerNameBar.style.display = isBatting ? 'flex' : 'none';
+      if (isBatting) {
+        const batsmanNameEl = $('playerBatsmanName');
+        const bowlerNameEl = $('playerBowlerName');
+        if (batsmanNameEl) batsmanNameEl.textContent = `*${state.batsmanName || 'Player'} ${state.batsmanRuns || 0}(${state.batsmanBalls || 0})`;
+        if (bowlerNameEl) bowlerNameEl.textContent = `${state.bowlerName || 'Bowler'} (${state.bowlerType || 'pacer'})`;
+      }
+    }
   }
 
   function updateOverDots() {
@@ -6480,6 +6556,12 @@ import * as THREE from 'three';
     if (drsOverlayInit) drsOverlayInit.classList.remove('cb-visible');
     deliveryPhase = 'idle';
     deliveryTimer = 0;
+
+    // Generate batsman name
+    state.batsmanName = BOWLER_FIRST[Math.floor(Math.random() * BOWLER_FIRST.length)].charAt(0) + '. ' +
+                        BOWLER_LAST[Math.floor(Math.random() * BOWLER_LAST.length)];
+    state.batsmanRuns = 0;
+    state.batsmanBalls = 0;
 
     // Reset team color tracking
     _lastTeamKey = null;
