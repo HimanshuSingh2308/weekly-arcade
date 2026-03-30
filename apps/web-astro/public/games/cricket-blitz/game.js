@@ -575,6 +575,11 @@ import * as THREE from 'three';
   let ballTrailIndex = 0;
   let ballTrailFrame = 0;
   let batsmanShadow = null;
+
+  // Ball tracking system — records path, draws post-delivery line
+  let ballTrackingPositions = []; // array of Vector3 recorded during flight
+  let ballTrackingLine = null; // THREE.Line mesh
+  let ballTrackingTimer = 0; // fade timer
   let crowdOriginalY = null;
 
   // Post-ball 3D object
@@ -1239,6 +1244,88 @@ import * as THREE from 'three';
         if (trail.userData.life <= 0) {
           trail.visible = false;
         }
+      }
+    }
+  }
+
+  // ---- Ball Tracking Line (post-delivery path visualization) ----
+  function showBallTrackingLine(outcome) {
+    clearBallTrackingLine();
+    if (ballTrackingPositions.length < 3) { ballTrackingPositions = []; return; }
+
+    // Determine line color based on outcome
+    let color = 0xFFFFFF; // default white
+    if (outcome.runs === -1) {
+      // Wicket — red line
+      color = outcome.type === 'lbw' ? 0xFF4444 : 0xFF0000;
+    } else if (outcome.runs >= 4) {
+      color = 0xFFD700; // boundary — gold
+    } else if (outcome.runs === 0) {
+      color = 0x888888; // dot — grey
+    }
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(ballTrackingPositions);
+    const material = new THREE.LineBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.8,
+      linewidth: 2
+    });
+    ballTrackingLine = new THREE.Line(geometry, material);
+    scene.add(ballTrackingLine);
+
+    // Add pitch point (where ball bounced) — bright dot at ~60% of path
+    const bounceIdx = Math.floor(ballTrackingPositions.length * 0.6);
+    if (bounceIdx < ballTrackingPositions.length) {
+      const bouncePos = ballTrackingPositions[bounceIdx];
+      const dotGeo = new THREE.CircleGeometry(0.1, 8);
+      const dotMat = new THREE.MeshBasicMaterial({ color: 0x00DDFF, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+      const dot = new THREE.Mesh(dotGeo, dotMat);
+      dot.rotation.x = -Math.PI / 2;
+      dot.position.set(bouncePos.x, 0.02, bouncePos.z);
+      dot.userData.isTrackingDot = true;
+      scene.add(dot);
+    }
+
+    // Impact point (where ball reached batsman) — last position
+    const impactPos = ballTrackingPositions[ballTrackingPositions.length - 1];
+    const impGeo = new THREE.CircleGeometry(0.08, 8);
+    const impColor = outcome.runs === -1 ? 0xFF0000 : 0x00FF00;
+    const impMat = new THREE.MeshBasicMaterial({ color: impColor, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+    const impDot = new THREE.Mesh(impGeo, impMat);
+    impDot.rotation.x = -Math.PI / 2;
+    impDot.position.set(impactPos.x, 0.02, impactPos.z);
+    impDot.userData.isTrackingDot = true;
+    scene.add(impDot);
+
+    // Auto-clear after 1.5 seconds
+    ballTrackingTimer = 1.5;
+    ballTrackingPositions = [];
+  }
+
+  function clearBallTrackingLine() {
+    if (ballTrackingLine) {
+      scene.remove(ballTrackingLine);
+      ballTrackingLine.geometry.dispose();
+      ballTrackingLine.material.dispose();
+      ballTrackingLine = null;
+    }
+    // Remove tracking dots
+    const toRemove = [];
+    scene.children.forEach(c => { if (c.userData && c.userData.isTrackingDot) toRemove.push(c); });
+    toRemove.forEach(c => scene.remove(c));
+    ballTrackingTimer = 0;
+  }
+
+  function updateBallTracking(dt) {
+    if (ballTrackingTimer > 0) {
+      ballTrackingTimer -= dt;
+      // Fade out the line
+      if (ballTrackingLine && ballTrackingLine.material) {
+        ballTrackingLine.material.opacity = Math.max(0, ballTrackingTimer / 1.5) * 0.8;
+      }
+      if (ballTrackingTimer <= 0) {
+        clearBallTrackingLine();
       }
     }
   }
@@ -2295,10 +2382,11 @@ import * as THREE from 'three';
       updateCrowdColors();
     }
 
-    // Ball trail
+    // Ball trail + tracking line
     if (!reducedMotion) {
       updateBallTrail(dt);
     }
+    updateBallTracking(dt);
 
     // Batsman shadow
     updateBatsmanShadow();
@@ -2512,6 +2600,11 @@ import * as THREE from 'three';
 
     ballMesh.visible = true;
     ballMesh.position.set(bx, by, bz);
+
+    // Record ball position for post-delivery tracking line
+    if (ballTrackingPositions.length === 0 || ballTrackingPositions.length < 60) {
+      ballTrackingPositions.push(new THREE.Vector3(bx, Math.max(0.05, by * 0.3), bz)); // project onto near-ground level
+    }
 
     ballSeam.visible = true;
     ballSeam.position.copy(ballMesh.position);
@@ -3375,6 +3468,10 @@ import * as THREE from 'three';
   function startDelivery() {
     generateDelivery();
 
+    // Clear previous ball tracking line
+    clearBallTrackingLine();
+    ballTrackingPositions = [];
+
     // Tint ball based on delivery type
     const dType = state.ballDeliveryType === 'slower' ? 'slower' : state.ballDeliveryType;
     if (ballMesh && DELIVERY_COLORS[dType]) {
@@ -3501,6 +3598,9 @@ import * as THREE from 'three';
     state.ballsInOver++;
     state.batsmanBalls = (state.batsmanBalls || 0) + 1;
     stopBallApproach();
+
+    // Draw ball tracking line on the pitch
+    showBallTrackingLine(outcome);
 
     // Feature 11: Pitch deterioration check
     if (state.totalBallsFaced >= 15 && !state.pitchDeteriorated) {
