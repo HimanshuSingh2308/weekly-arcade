@@ -1572,7 +1572,7 @@ import * as THREE from 'three';
       const angle = (i / 12) * Math.PI * 2;
       const brand = brandTexts[i];
       const texture = createAdBoardTexture(brand.text, brand.bg, brand.fg);
-      const mat = new THREE.MeshBasicMaterial({ map: texture });
+      const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
       const board = new THREE.Mesh(boardGeo, mat);
       board.position.set(Math.sin(angle) * 79, 1.25, Math.cos(angle) * 79 + 11);
       board.rotation.y = angle + Math.PI;
@@ -4660,7 +4660,7 @@ import * as THREE from 'three';
     state.lastDeliveryType = null;
     state.wagonWheelShots = [];
     state.overRunHistory = [];
-    state.firstInningsOverHistory = [];
+    // Keep firstInningsOverHistory — it has 1st innings data for worm chart comparison
     state.keeperCatchAnim = false;
     // Phase 2 resets for new innings
     state.drsAvailable = true;
@@ -6470,7 +6470,7 @@ import * as THREE from 'three';
     // Feature 12: Strategic timeout button visibility
     const timeoutBtn = $('timeoutBtn');
     if (timeoutBtn) {
-      const showTimeout = !state.timeoutUsed && state.oversCompleted >= 2 && state.phase === 'BATTING';
+      const showTimeout = !state.timeoutUsed && (state.oversCompleted >= 2 || state.bowlingOversCompleted >= 2) && (state.phase === 'BATTING' || state.phase === 'BOWLING');
       timeoutBtn.style.display = showTimeout ? 'flex' : 'none';
     }
 
@@ -7338,17 +7338,9 @@ import * as THREE from 'three';
     }
   });
 
-  // Touch zones (legacy, still wired but hidden during gesture mode)
-  function handleTouchZone(e) {
-    e.preventDefault();
-    if (state.phase !== 'BATTING') return;
-    const zone = e.currentTarget;
-    const dir = zone.dataset.shot;
-    handleSwing(dir);
-  }
-
+  // Touch zones — only for desktop mouse clicks (one-swipe handles mobile)
   document.querySelectorAll('.cb-touch-zone').forEach(zone => {
-    zone.addEventListener('touchstart', handleTouchZone, { passive: false });
+    // NO touchstart handler — one-swipe system handles all touch input
     zone.addEventListener('mousedown', (e) => {
       if (isTouchDevice) return;
       e.preventDefault();
@@ -7539,13 +7531,11 @@ import * as THREE from 'three';
     let type = 'straight';
 
     // ── BOUNCER: Quick short flick downward (fast, short distance) ──
-    // Like digging the ball in short — aggressive quick gesture
-    if (speed > 0.8 && totalDist < screenH * 0.25 && duration < 250) {
+    if (speed > 0.5 && totalDist < screenH * 0.35 && duration < 350) {
       type = 'bouncer';
     }
-    // ── YORKER: Tap and hold on lower half of screen (> 500ms), then release ──
-    // Deliberate, aimed at the batsman's feet
-    else if (duration > 500 && totalDist < screenH * 0.15) {
+    // ── YORKER: Tap and hold (> 400ms, minimal movement), then release ──
+    else if (duration > 400 && totalDist < screenH * 0.2) {
       type = 'yorker';
     }
     // ── SLOWER BALL: Slow gentle swipe (low speed, moderate distance) ──
