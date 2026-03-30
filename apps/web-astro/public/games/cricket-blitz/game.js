@@ -7557,20 +7557,19 @@ import * as THREE from 'three';
 
     let type = 'straight';
 
-    // ── BOUNCER: Quick short flick downward (fast, short distance) ──
-    if (speed > 0.5 && totalDist < screenH * 0.35 && duration < 350) {
-      type = 'bouncer';
-    }
-    // ── YORKER: Tap and hold (> 400ms, minimal movement), then release ──
-    else if (duration > 400 && totalDist < screenH * 0.2) {
+    // Check delivery type based on gesture shape
+    // Order matters: check specific gestures first, default to straight
+
+    // ── YORKER: Tap and hold (> 500ms, barely moved) ──
+    if (duration > 500 && totalDist < 40) {
       type = 'yorker';
     }
-    // ── SLOWER BALL: Slow gentle swipe (low speed, moderate distance) ──
-    else if (speed < 0.3 && duration > 400) {
+    // ── SLOWER BALL: Very slow deliberate swipe ──
+    else if (speed < 0.2 && duration > 500 && totalDist > 50) {
       type = 'slower';
     }
     // ── SWING: Check lateral curve in the drag path ──
-    else {
+    else if (path.length >= 4) {
       const midIdx = Math.floor(path.length / 2);
       if (midIdx > 0 && midIdx < path.length) {
         const midX = path[midIdx].x;
@@ -7580,7 +7579,14 @@ import * as THREE from 'three';
         if (curve > 15) type = 'outswing';      // drag curves right
         else if (curve < -15) type = 'inswing';  // drag curves left
       }
-      // ── STRAIGHT: Default for normal downward swipe ──
+      // ── BOUNCER: If still straight but very short + fast flick ──
+      if (type === 'straight' && totalDist < screenH * 0.15 && duration < 200 && speed > 1.0) {
+        type = 'bouncer';
+      }
+    }
+    // Very short path (< 4 points) — check for bouncer flick
+    else if (totalDist < screenH * 0.12 && duration < 180 && speed > 1.2) {
+      type = 'bouncer';
     }
 
     // Line from horizontal end position
