@@ -586,6 +586,10 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   cb_yorker_master:   { id: 'cb_yorker_master',    name: 'Yorker Master',     description: 'Take 3 wickets with yorkers',            icon: '⚡', xpReward: 200, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
   cb_level_3:         { id: 'cb_level_3',          name: 'Rising Star',       description: 'Reach level 3',                          icon: '📈', xpReward: 100, category: 'cricket-blitz', requirement: { type: 'level', value: 3, gameId: 'cricket-blitz' } },
   cb_level_5:         { id: 'cb_level_5',          name: 'Cricket Legend',     description: 'Reach level 5',                          icon: '👑', xpReward: 300, category: 'cricket-blitz', requirement: { type: 'level', value: 5, gameId: 'cricket-blitz' } },
+  cb_in_the_zone:     { id: 'cb_in_the_zone',      name: 'In The Zone',       description: 'Reach 90+ confidence while batting',     icon: '🔥', xpReward: 150, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_death_over_six:  { id: 'cb_death_over_six',   name: 'Death Over Hero',   description: 'Hit a six in the death over',             icon: '💥', xpReward: 150, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_drs_hero:        { id: 'cb_drs_hero',         name: 'DRS Hero',          description: 'Successfully overturn an LBW with DRS',   icon: '📺', xpReward: 200, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+  cb_run_out:         { id: 'cb_run_out',           name: 'Direct Hit',        description: 'Get a run-out while bowling',             icon: '🎯', xpReward: 100, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
 };
 
 export const ACHIEVEMENT_LIST = Object.values(ACHIEVEMENTS);
