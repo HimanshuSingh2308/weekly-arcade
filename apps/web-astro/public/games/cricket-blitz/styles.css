@@ -47,6 +47,9 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  touch-action: manipulation; /* prevent double-tap zoom on Safari */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #threeContainer {
@@ -1079,12 +1082,54 @@
 }
 
 /* ---- Responsive ---- */
+/* Small phones (iPhone SE, small Android) */
 @media (max-width: 380px) {
-  .cb-team-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .cb-title-name { font-size: 1.8rem; }
-  .cb-title-icon { font-size: 56px; }
-  .cb-modal { padding: 18px 14px; }
-  .cb-team-card { min-height: 70px; padding: 12px 8px; }
+  .cb-team-grid { grid-template-columns: repeat(2, 1fr); gap: 5px; }
+  .cb-title-name { font-size: 1.4rem; }
+  .cb-title-icon { font-size: 36px; margin-bottom: 2px; }
+  .cb-title-tagline { font-size: 0.55rem; margin-bottom: 2px; }
+  .cb-modal { padding: 12px 10px; }
+  .cb-team-card { min-height: 55px; padding: 8px 6px; gap: 2px; }
+  .cb-team-card .cb-team-name { font-size: 0.8rem; }
+  .cb-team-card .cb-team-city { font-size: 0.55rem; }
+  .cb-btn-play { height: 44px !important; font-size: 0.85rem !important; }
+  .cb-scoreboard { padding: 4px 8px; min-width: 160px; }
+  .cb-sb-score { font-size: 1rem; }
+  .cb-sb-teams { font-size: 0.55rem; }
+  .cb-daily-challenge { padding: 6px 8px; font-size: 0.7rem; }
+  .cb-bat-skin-selector { font-size: 0.6rem; }
+  .cb-best-score { font-size: 0.65rem; }
+  .cb-select-heading { font-size: 0.65rem; }
+}
+
+/* Very short screens (landscape or short phones) */
+@media (max-height: 600px) {
+  .cb-title-icon { font-size: 28px; }
+  .cb-title-name { font-size: 1.2rem; }
+  .cb-title-tagline { display: none; }
+  .cb-modal { padding: 10px 10px; max-height: 95dvh; }
+  .cb-team-card { min-height: 45px; padding: 6px 4px; }
+  .cb-team-grid { gap: 4px; margin-bottom: 4px; }
+  .cb-btn-play { height: 40px !important; }
+  .cb-daily-challenge { display: none; }
+  .cb-bat-skin-selector { display: none; }
+  .cb-best-score { display: none; }
+}
+
+/* Prevent Safari auto-zoom on interactive elements */
+input, select, textarea, button {
+  font-size: 16px !important;
+}
+.cb-btn, .cb-delivery-btn, .cb-line-btn, .cb-bowl-btn, .cb-timeout-btn {
+  font-size: max(16px, 0.85rem);
+  touch-action: manipulation;
+}
+
+/* Ensure no text triggers Safari zoom (minimum 16px on iOS) */
+@supports (-webkit-touch-callout: none) {
+  .cb-team-card, .cb-scoreboard, .cb-modal {
+    -webkit-text-size-adjust: 100%;
+  }
 }
 
 @media (min-width: 520px) {
