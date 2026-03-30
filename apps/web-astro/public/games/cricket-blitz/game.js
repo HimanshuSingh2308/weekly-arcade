@@ -3221,21 +3221,96 @@ import * as THREE from 'three';
 
   // Feature 8: Manhattan chart
   function drawManhattan() {
-    const overs = state.overRunHistory;
-    if (overs.length === 0) return '';
+    // Worm Chart — scoring comparison between both innings
+    const currentOvers = state.overRunHistory;
+    const firstInningsOvers = state.firstInningsOverHistory || [];
 
-    const maxRuns = Math.max.apply(null, overs.concat([1]));
-    let html = '<div style="text-align:center;"><span style="font-size:0.6rem;color:rgba(255,255,255,0.4);">MANHATTAN</span></div>';
-    html += '<div style="display:flex;align-items:flex-end;gap:4px;height:40px;margin:8px 0;">';
-    overs.forEach(function(runs, i) {
-      const h = Math.max(4, (runs / maxRuns) * 36);
-      const color = runs >= 15 ? '#9C27B0' : runs >= 10 ? '#FFD700' : runs >= 5 ? '#4CAF50' : '#666';
-      html += '<div style="flex:1;height:' + h + 'px;background:' + color + ';border-radius:2px 2px 0 0;position:relative;">';
-      html += '<span style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:0.55rem;color:rgba(255,255,255,0.6);">' + runs + '</span>';
-      html += '</div>';
-    });
-    html += '</div>';
-    return html;
+    if (currentOvers.length === 0 && firstInningsOvers.length === 0) return '';
+
+    // Build cumulative totals for each innings
+    const buildCumulative = function(overs) {
+      const cum = [0];
+      let total = 0;
+      overs.forEach(function(r) { total += r; cum.push(total); });
+      return cum;
+    };
+
+    const cum1 = buildCumulative(firstInningsOvers); // first innings (blue/team A)
+    const cum2 = buildCumulative(currentOvers); // current innings (orange/team B)
+
+    const maxOvers = 5;
+    const maxRuns = Math.max(
+      cum1.length > 0 ? cum1[cum1.length - 1] : 0,
+      cum2.length > 0 ? cum2[cum2.length - 1] : 0,
+      10
+    );
+
+    const W = 200, H = 80;
+    const padL = 28, padR = 8, padT = 8, padB = 16;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    const xScale = function(ov) { return padL + (ov / maxOvers) * chartW; };
+    const yScale = function(runs) { return padT + chartH - (runs / maxRuns) * chartH; };
+
+    // Build SVG
+    let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" style="display:block;margin:4px auto;">';
+
+    // Background
+    svg += '<rect x="' + padL + '" y="' + padT + '" width="' + chartW + '" height="' + chartH + '" fill="rgba(255,255,255,0.03)" rx="2"/>';
+
+    // Grid lines
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + (g / 4) * chartH;
+      svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>';
+      var label = Math.round(maxRuns * (1 - g / 4));
+      svg += '<text x="' + (padL - 4) + '" y="' + (gy + 3) + '" text-anchor="end" font-size="6" fill="rgba(255,255,255,0.3)">' + label + '</text>';
+    }
+
+    // Over labels on x-axis
+    for (var o = 0; o <= maxOvers; o++) {
+      svg += '<text x="' + xScale(o) + '" y="' + (H - 2) + '" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.3)">' + o + '</text>';
+    }
+
+    // Draw first innings line (if exists) — team A color (blue)
+    if (cum1.length > 1) {
+      var path1 = 'M';
+      cum1.forEach(function(r, i) {
+        path1 += (i > 0 ? 'L' : '') + xScale(i).toFixed(1) + ',' + yScale(r).toFixed(1);
+      });
+      svg += '<path d="' + path1 + '" fill="none" stroke="#4A9FFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>';
+      // Dots at each over
+      cum1.forEach(function(r, i) {
+        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="2.5" fill="#4A9FFF"/>';
+      });
+    }
+
+    // Draw current innings line — team B color (orange/red)
+    if (cum2.length > 1) {
+      var path2 = 'M';
+      cum2.forEach(function(r, i) {
+        path2 += (i > 0 ? 'L' : '') + xScale(i).toFixed(1) + ',' + yScale(r).toFixed(1);
+      });
+      svg += '<path d="' + path2 + '" fill="none" stroke="#FF6B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      // Dots at each over
+      cum2.forEach(function(r, i) {
+        if (i > 0) svg += '<circle cx="' + xScale(i).toFixed(1) + '" cy="' + yScale(r).toFixed(1) + '" r="2.5" fill="#FF6B35"/>';
+      });
+    }
+
+    svg += '</svg>';
+
+    // Legend
+    var teamA = state.battingFirst ? TEAM_ABBR[state.selectedTeam] || 'YOU' : TEAM_ABBR[state.opponentTeam] || 'AI';
+    var teamB = state.battingFirst ? TEAM_ABBR[state.opponentTeam] || 'AI' : TEAM_ABBR[state.selectedTeam] || 'YOU';
+    var legend = '<div style="display:flex;justify-content:center;gap:12px;font-size:0.6rem;margin-top:2px;">';
+    if (firstInningsOvers.length > 0) {
+      legend += '<span style="color:#4A9FFF;">● ' + teamA + ' (1st)</span>';
+    }
+    legend += '<span style="color:#FF6B35;">● ' + teamB + ' (2nd)</span>';
+    legend += '</div>';
+
+    return '<div style="text-align:center;"><span style="font-size:0.6rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;">SCORING COMPARISON</span></div>' + svg + legend;
   }
 
   function getDifficultyParams() {
@@ -4317,6 +4392,9 @@ import * as THREE from 'three';
     state.battingFours = state.fours;
     state.battingSixes = state.sixes;
 
+    // Save first innings over history for worm chart comparison
+    state.firstInningsOverHistory = state.overRunHistory.slice();
+
     if (state.wickets === 0 && state.totalBallsFaced >= 6) checkAchievement('cb_no_wicket');
 
     playUISound('overComplete');
@@ -4360,6 +4438,9 @@ import * as THREE from 'three';
     // state.bowlingAIScore is what AI scored, player needs bowlingAIScore + 1
     const aiScore = state.bowlingAIScore;
     const aiWickets = state.bowlingAIWickets;
+
+    // Save AI's first innings over history for worm chart
+    state.firstInningsOverHistory = state.overRunHistory.slice();
 
     // Store AI batting stats
     state.battingScore = 0; // Will be updated as player bats
@@ -4434,6 +4515,7 @@ import * as THREE from 'three';
     state.lastDeliveryType = null;
     state.wagonWheelShots = [];
     state.overRunHistory = [];
+    state.firstInningsOverHistory = [];
     state.keeperCatchAnim = false;
     // Phase 2 resets for new innings
     state.drsAvailable = true;
@@ -6649,6 +6731,7 @@ import * as THREE from 'three';
     state.lastDeliveryType = null;
     state.wagonWheelShots = [];
     state.overRunHistory = [];
+    state.firstInningsOverHistory = [];
     state.keeperCatchAnim = false;
     state.keeperCatchAnimStart = 0;
     state.superOver = false;
