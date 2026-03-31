@@ -570,6 +570,7 @@
   .chess3d-diff-btn,
   .chess3d-color-btn {
     min-width: 60px;
+    min-height: 44px;
     padding: 7px 4px;
     font-size: 0.76rem;
   }
@@ -594,6 +595,20 @@
 
   .chess3d-player-top { top: 48px; }
   .chess3d-player-bottom { bottom: 8px; }
+}
+
+@media (max-width: 360px) {
+  .chess3d-diff-btn {
+    min-width: 52px;
+    font-size: 0.70rem;
+    padding: 6px 3px;
+  }
+
+  .chess3d-coming-soon {
+    display: block;
+    margin-left: 0;
+    margin-top: 2px;
+  }
 }
 
 /* ---------- Reduced motion ---------- */

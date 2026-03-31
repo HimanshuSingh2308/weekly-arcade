@@ -30,15 +30,20 @@
   const RANK_NAMES = ['1', '2', '3', '4', '5', '6', '7', '8'];
   const FILE_NAMES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-  // Colors
-  const COL_LIGHT_SQ = new BABYLON.Color3(0.94, 0.85, 0.71);   // #F0D9B5
-  const COL_DARK_SQ = new BABYLON.Color3(0.36, 0.20, 0.09);    // #5C3317
-  const COL_WHITE_PIECE = new BABYLON.Color3(0.96, 0.94, 0.91); // #F5F0E8
-  const COL_BLACK_PIECE = new BABYLON.Color3(0.17, 0.17, 0.17); // #2C2C2C
-  const COL_GOLD = new BABYLON.Color3(0.79, 0.66, 0.30);       // #C9A84C
-  const COL_EMERALD = new BABYLON.Color3(0.24, 0.67, 0.38);    // #3DAA62
-  const COL_RED = new BABYLON.Color3(0.75, 0.22, 0.17);        // #C0392B
-  const COL_BLUE = new BABYLON.Color3(0.20, 0.40, 0.70);
+  // Colors (initialized lazily in initColors() after Babylon loads)
+  let COL_LIGHT_SQ, COL_DARK_SQ, COL_WHITE_PIECE, COL_BLACK_PIECE;
+  let COL_GOLD, COL_EMERALD, COL_RED, COL_BLUE;
+
+  function initColors() {
+    COL_LIGHT_SQ = new BABYLON.Color3(0.94, 0.85, 0.71);   // #F0D9B5
+    COL_DARK_SQ = new BABYLON.Color3(0.36, 0.20, 0.09);    // #5C3317
+    COL_WHITE_PIECE = new BABYLON.Color3(0.96, 0.94, 0.91); // #F5F0E8
+    COL_BLACK_PIECE = new BABYLON.Color3(0.17, 0.17, 0.17); // #2C2C2C
+    COL_GOLD = new BABYLON.Color3(0.79, 0.66, 0.30);       // #C9A84C
+    COL_EMERALD = new BABYLON.Color3(0.24, 0.67, 0.38);    // #3DAA62
+    COL_RED = new BABYLON.Color3(0.75, 0.22, 0.17);        // #C0392B
+    COL_BLUE = new BABYLON.Color3(0.20, 0.40, 0.70);
+  }
 
   /* ================================================================
      1. CHESS ENGINE
@@ -1660,6 +1665,8 @@
   const $ = (id) => document.getElementById(id);
 
   function initGame() {
+    initColors(); // Must init after Babylon.js is loaded
+
     chessEngine = new ChessEngine();
     chessAI = new ChessAI(chessEngine);
     elo = new EloSystem();
