@@ -3534,30 +3534,18 @@
       return { ship, trail, bullet, hud, class: classItem };
     }
 
-    // Add coins (game rewards)
-    async function addCoinsReward(amount, description) {
+    // Add coins (local display only — coins are awarded server-side during score submission)
+    function addCoinsReward(amount, description) {
       if (amount <= 0) return;
 
       coinsEarnedThisRun += amount;
 
-      // Update local state
+      // Update local display state
       customization.coins += amount;
       customization.totalCoinsEarned += amount;
 
       // Show coin popup
       showCoinPopup(amount);
-
-      // Sync with backend if logged in
-      if (currentUser && window.apiClient) {
-        try {
-          await window.apiClient.addCoins(amount, 'game_reward', 'voidbreak', description);
-        } catch (e) {
-          console.error('[Coins] Failed to sync to backend:', e);
-        }
-      } else {
-        // not logged in - skipping backend sync
-      }
-
       updateCoinDisplays();
     }
 

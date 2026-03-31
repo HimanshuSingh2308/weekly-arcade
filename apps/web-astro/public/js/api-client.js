@@ -291,11 +291,13 @@ class ApiClient {
    * @param {Object} [metadata] - Additional metadata
    * @returns {Promise<{success: boolean, coinsAdded: number, newBalance: number, transactionId: string}>}
    */
+  /**
+   * @deprecated Coins are now awarded server-side during score submission.
+   * This method is a no-op kept for backward compatibility.
+   */
   async addCoins(amount, type, gameId, description, metadata = {}) {
-    return this.request('/customizations/coins/add', {
-      method: 'POST',
-      body: JSON.stringify({ amount, type, gameId, description, metadata }),
-    });
+    console.warn('[ApiClient] addCoins() is deprecated — coins are awarded server-side during score submission');
+    return { success: true, coinsAdded: 0, newBalance: 0, transactionId: 'deprecated' };
   }
 
   /**
