@@ -51,13 +51,14 @@ export class LeaderboardService {
       case 'daily':
         return `${year}-${month}-${day}`;
       case 'weekly':
-        // Get ISO week number
+        // Get ISO week number — use the ISO year (year of the Thursday), not calendar year
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
         const dayNum = d.getUTCDay() || 7;
         d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const isoYear = d.getUTCFullYear();
+        const yearStart = new Date(Date.UTC(isoYear, 0, 1));
         const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-        return `${year}-W${String(weekNum).padStart(2, '0')}`;
+        return `${isoYear}-W${String(weekNum).padStart(2, '0')}`;
       case 'monthly':
         return `${year}-${month}`;
       case 'allTime':

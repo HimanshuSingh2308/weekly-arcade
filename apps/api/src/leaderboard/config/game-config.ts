@@ -247,7 +247,8 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     },
   },
   // Tiny Tycoon: Boba shop idle simulator — 60-second timed days
-  // Max score: ~40 customers × 75 base (signature) × 2 (VIP) × 3.0 (combo) × 2 (prestige bridge) + tip = ~18,000 theoretical
+  // Per-customer max: Math.min(rawCoins, 5000) + tipBonus + criticBonus ≈ 5500
+  // Multipliers: VIP(2x) × combo(3x) × prestige × bridge(2x) × rushMaster(2x) × franchise × goldenTouch × doubleShot(2x) × happyHour(2x) × celebrity(3x)
   'tiny-tycoon': {
     maxScore: 100000, // Tier 2 + prestige + bridge + events can stack high
     maxScorePerSecond: 2000,
@@ -260,8 +261,8 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
         if (served !== undefined && served > 150) {
           return { valid: false, reason: 'Too many customers served' };
         }
-        // Revenue per customer sanity check (higher with new drinks + prestige)
-        if (served !== undefined && served > 0 && dto.score / served > 500) {
+        // Revenue per customer sanity check — rawCoins capped at 5000 + tip + critic ≈ 5500
+        if (served !== undefined && served > 0 && dto.score / served > 6000) {
           return { valid: false, reason: 'Revenue per customer too high' };
         }
       }

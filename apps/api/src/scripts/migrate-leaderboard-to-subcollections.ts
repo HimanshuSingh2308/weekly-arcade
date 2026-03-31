@@ -13,6 +13,7 @@
  */
 
 import * as admin from 'firebase-admin';
+import { applicationDefault } from 'firebase-admin/app';
 
 const DRY_RUN = process.env.DRY_RUN === 'true';
 const BATCH_SIZE = 500;
@@ -20,6 +21,7 @@ const BATCH_SIZE = 500;
 async function main() {
   if (admin.apps.length === 0) {
     admin.initializeApp({
+      credential: applicationDefault(),
       projectId: process.env.FIREBASE_PROJECT_ID || 'weekly-arcade',
     });
   }
