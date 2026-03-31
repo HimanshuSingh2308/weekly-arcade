@@ -1,0 +1,116 @@
+<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="c3dBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1C1C2E"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="c3dGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C9A84C"/>
+      <stop offset="100%" stop-color="#A08030"/>
+    </linearGradient>
+    <linearGradient id="c3dLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F0D9B5"/>
+      <stop offset="100%" stop-color="#D4B896"/>
+    </linearGradient>
+    <linearGradient id="c3dDark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7B5B3A"/>
+      <stop offset="100%" stop-color="#5C3317"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="250" fill="url(#c3dBg)" rx="12"/>
+
+  <!-- Subtle grid lines for depth -->
+  <line x1="100" y1="80" x2="50" y2="220" stroke="#2a2a4a" stroke-width="0.5"/>
+  <line x1="200" y1="80" x2="200" y2="220" stroke="#2a2a4a" stroke-width="0.5"/>
+  <line x1="300" y1="80" x2="350" y2="220" stroke="#2a2a4a" stroke-width="0.5"/>
+
+  <!-- Chess board (perspective) -->
+  <polygon points="120,90 280,90 330,200 70,200" fill="url(#c3dDark)" opacity="0.3"/>
+
+  <!-- Board squares (4x4 visible in perspective) -->
+  <!-- Row 1 -->
+  <polygon points="120,90 160,90 168,117 128,117" fill="url(#c3dLight)"/>
+  <polygon points="160,90 200,90 208,117 168,117" fill="url(#c3dDark)"/>
+  <polygon points="200,90 240,90 248,117 208,117" fill="url(#c3dLight)"/>
+  <polygon points="240,90 280,90 288,117 248,117" fill="url(#c3dDark)"/>
+  <!-- Row 2 -->
+  <polygon points="128,117 168,117 178,145 118,145" fill="url(#c3dDark)"/>
+  <polygon points="168,117 208,117 218,145 178,145" fill="url(#c3dLight)"/>
+  <polygon points="208,117 248,117 258,145 218,145" fill="url(#c3dDark)"/>
+  <polygon points="248,117 288,117 298,145 258,145" fill="url(#c3dLight)"/>
+  <!-- Row 3 -->
+  <polygon points="118,145 178,145 190,175 106,175" fill="url(#c3dLight)"/>
+  <polygon points="178,145 218,145 230,175 190,175" fill="url(#c3dDark)"/>
+  <polygon points="218,145 258,145 270,175 230,175" fill="url(#c3dLight)"/>
+  <polygon points="258,145 298,145 310,175 270,175" fill="url(#c3dDark)"/>
+  <!-- Row 4 -->
+  <polygon points="106,175 190,175 202,200 92,200" fill="url(#c3dDark)"/>
+  <polygon points="190,175 230,175 242,200 202,200" fill="url(#c3dLight)"/>
+  <polygon points="230,175 270,175 282,200 242,200" fill="url(#c3dDark)"/>
+  <polygon points="270,175 310,175 322,200 282,200" fill="url(#c3dLight)"/>
+
+  <!-- Board edge highlight -->
+  <polygon points="120,90 280,90 330,200 70,200" fill="none" stroke="#C9A84C" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- White King (tall piece with cross) -->
+  <rect x="192" y="150" width="16" height="25" rx="3" fill="#F0E6D3" opacity="0.95"/>
+  <rect x="196" y="142" width="8" height="10" rx="2" fill="#F0E6D3"/>
+  <line x1="200" y1="136" x2="200" y2="144" stroke="#F0E6D3" stroke-width="2"/>
+  <line x1="196" y1="140" x2="204" y2="140" stroke="#F0E6D3" stroke-width="2"/>
+  <!-- Shadow -->
+  <ellipse cx="200" cy="176" rx="10" ry="3" fill="black" opacity="0.3"/>
+
+  <!-- Black Queen (tall piece with crown) -->
+  <rect x="232" y="96" width="14" height="22" rx="3" fill="#2C2C2C"/>
+  <circle cx="239" cy="92" r="5" fill="#2C2C2C"/>
+  <circle cx="239" cy="88" r="2" fill="#C9A84C" opacity="0.6"/>
+  <ellipse cx="239" cy="119" rx="9" ry="2.5" fill="black" opacity="0.3"/>
+
+  <!-- White Rook -->
+  <rect x="139" y="100" width="12" height="18" rx="2" fill="#F0E6D3" opacity="0.9"/>
+  <rect x="137" y="97" width="16" height="4" rx="1" fill="#F0E6D3" opacity="0.9"/>
+  <ellipse cx="145" cy="119" rx="8" ry="2" fill="black" opacity="0.25"/>
+
+  <!-- Black Knight -->
+  <rect x="260" y="150" width="12" height="18" rx="2" fill="#2C2C2C"/>
+  <polygon points="262,150 272,150 275,142 268,138 260,142" fill="#2C2C2C"/>
+  <ellipse cx="266" cy="169" rx="8" ry="2" fill="black" opacity="0.25"/>
+
+  <!-- White Pawns -->
+  <circle cx="120" cy="170" r="5" fill="#F0E6D3" opacity="0.8"/>
+  <rect x="116" y="174" width="8" height="10" rx="2" fill="#F0E6D3" opacity="0.8"/>
+  <circle cx="160" cy="172" r="5" fill="#F0E6D3" opacity="0.8"/>
+  <rect x="156" y="176" width="8" height="10" rx="2" fill="#F0E6D3" opacity="0.8"/>
+
+  <!-- Black Pawns -->
+  <circle cx="178" cy="100" r="4" fill="#2C2C2C" opacity="0.8"/>
+  <rect x="175" y="103" width="7" height="8" rx="1.5" fill="#2C2C2C" opacity="0.8"/>
+  <circle cx="218" cy="98" r="4" fill="#2C2C2C" opacity="0.8"/>
+  <rect x="215" y="101" width="7" height="8" rx="1.5" fill="#2C2C2C" opacity="0.8"/>
+
+  <!-- Legal move dots (green glow) -->
+  <circle cx="210" cy="130" r="4" fill="#3DAA62" opacity="0.5"/>
+  <circle cx="210" cy="130" r="2" fill="#3DAA62" opacity="0.8"/>
+  <circle cx="250" cy="130" r="4" fill="#3DAA62" opacity="0.5"/>
+  <circle cx="250" cy="130" r="2" fill="#3DAA62" opacity="0.8"/>
+
+  <!-- Selected piece glow -->
+  <rect x="189" y="147" width="22" height="32" rx="4" fill="none" stroke="#C9A84C" stroke-width="2" opacity="0.6"/>
+
+  <!-- Title -->
+  <text x="200" y="24" text-anchor="middle" fill="url(#c3dGold)" font-family="system-ui" font-weight="900" font-size="18" letter-spacing="3">CHESS 3D</text>
+  <text x="200" y="40" text-anchor="middle" fill="#A09AB8" font-family="system-ui" font-weight="600" font-size="8" letter-spacing="1">PLAY VS AI · 4 DIFFICULTY LEVELS</text>
+
+  <!-- ELO badge -->
+  <rect x="155" y="46" width="90" height="14" rx="7" fill="#C9A84C" opacity="0.2"/>
+  <rect x="155" y="46" width="90" height="14" rx="7" fill="none" stroke="#C9A84C" stroke-width="0.8" opacity="0.5"/>
+  <text x="200" y="56" text-anchor="middle" fill="#C9A84C" font-family="system-ui" font-weight="700" font-size="8">♟ ELO RATED</text>
+
+  <!-- HUD elements -->
+  <rect x="10" y="230" width="80" height="14" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <text x="50" y="240" text-anchor="middle" fill="#C9A84C" font-family="system-ui" font-weight="700" font-size="8">Your turn</text>
+  <rect x="310" y="230" width="80" height="14" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <text x="350" y="240" text-anchor="middle" fill="#A09AB8" font-family="system-ui" font-weight="600" font-size="8">ELO 1200</text>
+</svg>
