@@ -19,11 +19,16 @@ export const GAME_REGISTRY: GameInfo[] = [
   { id: '2048',               name: '2048',                icon: '🔢', description: 'Number puzzle',          genres: ['puzzle', 'strategy'] },
   { id: 'chaos-kitchen',      name: 'Chaos Kitchen',       icon: '👨‍🍳', description: 'Cooking game',           genres: ['action', 'casual'] },
   { id: 'memory-match',       name: 'Memory Match',        icon: '🃏', description: 'Card matching',          genres: ['casual', 'puzzle'] },
-  { id: 'lumble',             name: 'Lumble',              icon: '🪙', description: '3D platformer',          genres: ['3d', 'action'] },
+  { id: 'lumble',             name: 'Lumble',              icon: '🫧', description: '3D platformer',          genres: ['3d', 'action'] },
   { id: 'fieldstone',         name: 'Fieldstone',          icon: '🏰', description: 'Kingdom builder',        genres: ['strategy', 'puzzle'] },
   { id: 'solitaire-roguelite',name: 'Solitaire Roguelite', icon: '🃏', description: 'Klondike with Jokers',   genres: ['card', 'puzzle'] },
   { id: 'coin-cascade',       name: 'Coin Cascade',        icon: '🪙', description: 'Physics coin pusher',    genres: ['arcade', 'casual'] },
   { id: 'tiny-tycoon',        name: 'Tiny Tycoon',         icon: '🧋', description: 'Boba shop simulator',    genres: ['simulation', 'casual'] },
+  { id: 'tiny-tycoon-bean-brew',     name: 'TT: Bean & Brew',    icon: '☕', description: 'Coffee house',          genres: ['simulation', 'casual'] },
+  { id: 'tiny-tycoon-juice-junction',name: 'TT: Juice Junction', icon: '🍊', description: 'Juice bar',             genres: ['simulation', 'casual'] },
+  { id: 'tiny-tycoon-sweet-tooth',   name: 'TT: Sweet Tooth',    icon: '🧁', description: 'Bakery & desserts',     genres: ['simulation', 'casual'] },
+  { id: 'tiny-tycoon-golden-lounge', name: 'TT: Golden Lounge',  icon: '🥂', description: 'Luxury cocktail bar',   genres: ['simulation', 'casual'] },
+  { id: 'cricket-blitz',    name: 'Cricket Blitz',       icon: '🏏', description: '3D IPL-style cricket',  genres: ['sports', '3d'] },
 ];
 
 /** Lookup a game by ID */
