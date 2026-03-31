@@ -33,14 +33,17 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/platform-socket.io": "^11.1.17",
     "@nestjs/schedule": "^6.1.1",
     "@nestjs/throttler": "^6.5.0",
+    "@nestjs/websockets": "^11.1.17",
     "axios": "^1.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "firebase-admin": "^13.7.0",
     "firebase-functions": "^7.1.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "socket.io": "^4.8.3"
   }
 }

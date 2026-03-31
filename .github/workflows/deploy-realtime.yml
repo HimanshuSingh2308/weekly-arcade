@@ -1,0 +1,41 @@
+name: Deploy Realtime Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/realtime/**'
+      - 'packages/shared/**'
+      - '.github/workflows/deploy-realtime.yml'
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: npx nx build shared
+
+      - name: Build realtime service
+        run: npx nx run realtime:build
+        env:
+          INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
+
+      # Render auto-deploys from GitHub on push to main.
+      # This workflow validates the build succeeds.
+      # To trigger Render deploy manually, uncomment and add RENDER_DEPLOY_HOOK_URL secret:
+      # - name: Trigger Render Deploy
+      #   run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

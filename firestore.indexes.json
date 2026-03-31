@@ -57,6 +57,32 @@
         { "fieldPath": "lastPlayedDate", "order": "ASCENDING" }
       ]
     }
+    ,
+    {
+      "collectionGroup": "matchmakingQueue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gameId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "ratingWindowMin", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "toUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matchResults",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "finishedAt", "order": "DESCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }
