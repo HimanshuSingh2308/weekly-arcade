@@ -26,7 +26,7 @@
 
 ## Project Structure
 
-- `apps/web/` - Frontend (vanilla JS, served via Firebase Hosting)
+- `apps/web-astro/` - Frontend (Astro 6, deployed to Firebase Hosting)
 - `apps/api/` - Backend (NestJS on Cloud Run)
 - `packages/shared/` - Shared types and constants
 
@@ -124,28 +124,23 @@ const state = await window.apiClient.getGameState('game-id');
 await window.apiClient.unlockAchievement('achievement-id', 'game-id', { metadata });
 ```
 
-## Adding a New Game
+## Adding a New Game (Astro)
 
-1. Create game in `apps/web/src/games/{game-name}/index.html`
-2. Add to home page in `apps/web/src/index.html`
-3. Add to leaderboard GAMES array in `apps/web/src/leaderboard/index.html`
-4. Add to service worker cache in `apps/web/src/sw.js`
-5. Include auth integration (see above)
-6. Create SVG thumbnail in `apps/web/src/images/thumbnails/{game-name}.svg`
+1. Create game data: `apps/web-astro/src/data/games/{game-name}.json`
+2. Create game page: `apps/web-astro/src/pages/games/{game-name}.astro` (uses `GameLayout.astro`)
+3. Create game JS: `apps/web-astro/public/games/{game-name}/game.js`
+4. Add to service worker cache in `apps/web-astro/public/sw.js`
+5. Register in `packages/shared/src/lib/constants/game-registry.ts`
+6. Add score validation config in `apps/api/src/leaderboard/config/game-config.ts`
+7. Include auth integration (see above)
 
 ## Service Worker / PWA Cache
 
-**IMPORTANT:** Whenever you modify ANY file under `apps/web/src/` (games, JS, HTML, CSS), you MUST increment `CACHE_VERSION` in `apps/web/src/sw.js`. This is required for PWA users to receive updates — without it, they will be served stale cached files indefinitely.
+**IMPORTANT:** Whenever you modify ANY file under `apps/web-astro/` (games, JS, pages), you MUST increment `CACHE_VERSION` in `apps/web-astro/public/sw.js`. This is required for PWA users to receive updates.
 
 ```javascript
-// In apps/web/src/sw.js — increment this number
-const CACHE_VERSION = 21; // ← bump this on every change
-```
-
-If adding a new game, also add its paths to the `ASSETS` array in `sw.js`:
-```javascript
-'/games/{game-name}/',
-'/games/{game-name}/index.html',
+// In apps/web-astro/public/sw.js — increment this number
+const CACHE_VERSION = 24; // ← bump this on every change
 ```
 
 ## Deployment
