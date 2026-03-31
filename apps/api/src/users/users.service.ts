@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { FieldValue } from '@google-cloud/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 import { FirebaseService } from '../firebase/firebase.service';
 import { User, UserSettings } from '@weekly-arcade/shared';
 import { UpdateUserDto, UpdateSettingsDto } from './dto';
