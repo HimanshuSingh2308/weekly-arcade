@@ -336,6 +336,7 @@
                 // Kingside
                 const castleK = color === WHITE ? 'K' : 'k';
                 if (this.castling[castleK] &&
+                    this.board[rank][7]?.type === 'r' && this.board[rank][7]?.color === color &&
                     !this.board[rank][5] && !this.board[rank][6] &&
                     !this._isSquareAttackedBy(rank, 4, opp) &&
                     !this._isSquareAttackedBy(rank, 5, opp) &&
@@ -345,6 +346,7 @@
                 // Queenside
                 const castleQ = color === WHITE ? 'Q' : 'q';
                 if (this.castling[castleQ] &&
+                    this.board[rank][0]?.type === 'r' && this.board[rank][0]?.color === color &&
                     !this.board[rank][3] && !this.board[rank][2] && !this.board[rank][1] &&
                     !this._isSquareAttackedBy(rank, 4, opp) &&
                     !this._isSquareAttackedBy(rank, 3, opp) &&
@@ -759,16 +761,16 @@
     ]
   };
 
-  // Opening book (Expert only)
+  // Opening book (Expert only) — keys use position + turn + castling only
   const OPENING_BOOK = {
-    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1': [
+    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq': [
       { from: [1,4], to: [3,4], w: 40 }, // e4
       { from: [1,3], to: [3,3], w: 35 }, // d4
       { from: [0,6], to: [2,5], w: 15 }, // Nf3
       { from: [1,2], to: [3,2], w: 10 }, // c4
     ],
     // After 1.e4
-    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1': [
+    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq': [
       { from: [6,4], to: [4,4], w: 35 }, // e5
       { from: [6,2], to: [4,2], w: 30 }, // c5 (Sicilian)
       { from: [6,4], to: [5,4], w: 15 }, // e6 (French)
@@ -776,38 +778,38 @@
       { from: [6,3], to: [4,3], w: 10 }, // d5 (Scandinavian)
     ],
     // After 1.d4
-    'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1': [
+    'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq': [
       { from: [6,3], to: [4,3], w: 40 }, // d5
       { from: [7,6], to: [5,5], w: 30 }, // Nf6 (Indian)
       { from: [6,4], to: [5,4], w: 15 }, // e6
       { from: [6,5], to: [4,5], w: 10 }, // f5 (Dutch)
     ],
     // After 1.e4 e5
-    'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2': [
+    'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq': [
       { from: [0,6], to: [2,5], w: 50 }, // Nf3
       { from: [1,5], to: [3,5], w: 20 }, // f4 (King's Gambit)
       { from: [0,5], to: [3,2], w: 15 }, // Bc4
     ],
     // After 1.e4 e5 2.Nf3
-    'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2': [
+    'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq': [
       { from: [7,1], to: [5,2], w: 50 }, // Nc6
       { from: [7,6], to: [5,5], w: 25 }, // Nf6 (Petrov)
       { from: [6,3], to: [5,3], w: 15 }, // d6 (Philidor)
     ],
     // After 1.e4 c5 (Sicilian)
-    'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2': [
+    'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq': [
       { from: [0,6], to: [2,5], w: 60 }, // Nf3 (Open Sicilian)
       { from: [1,2], to: [2,2], w: 20 }, // c3 (Alapin)
       { from: [1,3], to: [3,3], w: 10 }, // d4
     ],
     // After 1.d4 d5
-    'rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 2': [
+    'rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq': [
       { from: [1,2], to: [3,2], w: 45 }, // c4 (Queen's Gambit)
       { from: [0,6], to: [2,5], w: 30 }, // Nf3
       { from: [0,1], to: [2,2], w: 15 }, // Nc3
     ],
     // After 1.d4 Nf6
-    'rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2': [
+    'rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq': [
       { from: [1,2], to: [3,2], w: 40 }, // c4
       { from: [0,6], to: [2,5], w: 30 }, // Nf3
       { from: [0,2], to: [3,5], w: 15 }, // Bg5
@@ -825,10 +827,11 @@
       const startTime = Date.now();
       const timeLimit = AI_TIME_LIMIT[difficulty];
 
-      // Opening book check for expert
+      // Opening book check for expert (use position + turn + castling only for matching)
       if (difficulty === 'expert') {
         const fen = this.engine.getFEN();
-        const bookMoves = OPENING_BOOK[fen];
+        const bookKey = fen.split(' ').slice(0, 3).join(' ');
+        const bookMoves = OPENING_BOOK[bookKey];
         if (bookMoves && bookMoves.length > 0) {
           // Weighted random from top 3
           const sorted = bookMoves.sort((a, b) => b.w - a.w).slice(0, 3);
@@ -1808,6 +1811,7 @@
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (!gameActive) return;
+      if (promotionResolve) return; // Block keys during promotion dialog
       if (e.key === 'z' || e.key === 'Z') handleUndo();
       if (e.key === 'f' || e.key === 'F') { resetCamera(camera.alpha > Math.PI); }
       if (e.key === 'r' || e.key === 'R') { resetCamera(playerColor === BLACK); }
@@ -1943,6 +1947,8 @@
   }
 
   async function executePromotion(fromRow, fromCol, toRow, toCol) {
+    isAnimating = true; // Block all input during promotion
+
     // Show promotion dialog
     // Update icons based on player color
     const btns = document.querySelectorAll('.chess3d-promo-btn');
@@ -1955,6 +1961,7 @@
     showOverlay('promotionOverlay');
 
     const promotionPiece = await new Promise(resolve => { promotionResolve = resolve; });
+    isAnimating = false;
     executePlayerMove(fromRow, fromCol, toRow, toCol, promotionPiece);
   }
 
@@ -1990,26 +1997,13 @@
         pieceMeshes[destKey] = instance;
       }
 
-      // Handle castling rook animation
+      // Handle castling rook animation (animatePieceMove handles key mapping internally)
       if (result.castle) {
         const rank = fromRow;
         if (result.castle === 'K') {
           animatePieceMove(rank, 7, rank, 5, null);
-          // Update the piece mesh mapping for rook
-          const rookKey = 'r' + rank + 'c7';
-          const newKey = 'r' + rank + 'c5';
-          if (pieceMeshes[rookKey]) {
-            pieceMeshes[newKey] = pieceMeshes[rookKey];
-            delete pieceMeshes[rookKey];
-          }
         } else {
           animatePieceMove(rank, 0, rank, 3, null);
-          const rookKey = 'r' + rank + 'c0';
-          const newKey = 'r' + rank + 'c3';
-          if (pieceMeshes[rookKey]) {
-            pieceMeshes[newKey] = pieceMeshes[rookKey];
-            delete pieceMeshes[rookKey];
-          }
         }
       }
 
@@ -2058,15 +2052,14 @@
 
   function scheduleAIMove() {
     $('thinkingIndicator').style.display = '';
+    isAnimating = true; // Block input immediately while AI thinks
 
     // Use setTimeout to not block the UI
     setTimeout(() => {
       const move = chessAI.findBestMove(aiDifficulty);
       $('thinkingIndicator').style.display = 'none';
 
-      if (!move || !gameActive) return;
-
-      isAnimating = true;
+      if (!move || !gameActive) { isAnimating = false; return; }
       const fromRow = move.from[0], fromCol = move.from[1];
       const toRow = move.to[0], toCol = move.to[1];
 
@@ -2100,14 +2093,8 @@
           const rank = fromRow;
           if (result.castle === 'K') {
             animatePieceMove(rank, 7, rank, 5, null);
-            const rookKey = 'r' + rank + 'c7';
-            const newKey = 'r' + rank + 'c5';
-            if (pieceMeshes[rookKey]) { pieceMeshes[newKey] = pieceMeshes[rookKey]; delete pieceMeshes[rookKey]; }
           } else {
             animatePieceMove(rank, 0, rank, 3, null);
-            const rookKey = 'r' + rank + 'c0';
-            const newKey = 'r' + rank + 'c3';
-            if (pieceMeshes[rookKey]) { pieceMeshes[newKey] = pieceMeshes[rookKey]; delete pieceMeshes[rookKey]; }
           }
         }
 
@@ -2147,14 +2134,12 @@
   function checkGameEnd() {
     if (chessEngine.isCheckmate()) {
       const winner = chessEngine.getTurn() === WHITE ? 'black' : 'white';
-      sound.play('checkmate');
       srAnnounce('Checkmate! ' + winner + ' wins.');
       setTimeout(() => endGame(winner, 'Checkmate'), 400);
       return true;
     }
     if (chessEngine.isDraw()) {
       const reason = chessEngine.getDrawReason();
-      sound.play('draw');
       srAnnounce('Game drawn: ' + reason);
       setTimeout(() => endGame('draw', reason), 400);
       return true;
@@ -2310,7 +2295,12 @@
           movesPlayed: moveCount,
           eloDelta: eloDelta,
           openingName: detectOpening(),
-          terminationType: (terminationType || 'unknown').toLowerCase().replace(/\s/g, '_')
+          terminationType: ({
+            'Checkmate': 'checkmate', 'Resignation': 'resignation',
+            'Stalemate': 'stalemate', 'Threefold repetition': 'draw',
+            'Fivefold repetition': 'draw', 'Insufficient material': 'draw',
+            '50-move rule': 'draw', '75-move rule': 'draw'
+          })[terminationType] || 'draw'
         }
       });
 
