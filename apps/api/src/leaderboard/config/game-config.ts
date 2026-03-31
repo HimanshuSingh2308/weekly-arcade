@@ -180,7 +180,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 6000, // 5000 theoretical + buffer
     maxScorePerSecond: 200,
     minTimeMs: 10000, // Minimum to complete a board
-    allowedMetadataKeys: ['difficulty', 'mode', 'moves', 'time', 'maxCombo'],
+    allowedMetadataKeys: ['difficulty', 'mode', 'moves', 'time', 'maxCombo', 'won', 'isDaily'],
     customValidation: (dto) => {
       // Perfect memory should still take some time
       if (dto.timeMs && dto.timeMs < 5000 && dto.score > 3000) {
