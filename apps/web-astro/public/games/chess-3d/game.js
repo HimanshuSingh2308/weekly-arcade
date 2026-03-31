@@ -2371,22 +2371,28 @@
   }
 
   function updateMoveHistory() {
-    const history = chessEngine.getHistory();
-    let html = '';
-    for (let i = 0; i < history.length; i += 2) {
-      const moveNum = Math.floor(i / 2) + 1;
-      html += '<div class="chess3d-move-row">';
-      html += '<span class="chess3d-move-num">' + moveNum + '.</span>';
-      html += '<span class="chess3d-move-white">' + history[i] + '</span>';
-      if (history[i + 1]) {
-        html += '<span class="chess3d-move-black">' + history[i + 1] + '</span>';
-      }
-      html += '</div>';
-    }
-    $('moveList').innerHTML = html;
-
-    // Auto-scroll to bottom
     const list = $('moveList');
+    list.textContent = '';
+    const history = chessEngine.getHistory();
+    for (let i = 0; i < history.length; i += 2) {
+      const row = document.createElement('div');
+      row.className = 'chess3d-move-row';
+      const num = document.createElement('span');
+      num.className = 'chess3d-move-num';
+      num.textContent = (Math.floor(i / 2) + 1) + '.';
+      const white = document.createElement('span');
+      white.className = 'chess3d-move-white';
+      white.textContent = history[i];
+      row.appendChild(num);
+      row.appendChild(white);
+      if (history[i + 1]) {
+        const black = document.createElement('span');
+        black.className = 'chess3d-move-black';
+        black.textContent = history[i + 1];
+        row.appendChild(black);
+      }
+      list.appendChild(row);
+    }
     list.scrollTop = list.scrollHeight;
   }
 

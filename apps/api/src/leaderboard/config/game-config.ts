@@ -289,6 +289,26 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
         if (dto.metadata.aiDifficulty && !validDifficulties.includes(dto.metadata.aiDifficulty as string)) {
           return { valid: false, reason: 'Invalid AI difficulty' };
         }
+        // ELO delta must be within K-factor bounds (max K=40)
+        if (dto.metadata.eloDelta !== undefined) {
+          const delta = dto.metadata.eloDelta as number;
+          if (typeof delta !== 'number' || Math.abs(delta) > 40) {
+            return { valid: false, reason: 'ELO delta out of range' };
+          }
+        }
+        // Moves-to-time correlation: at least 1.5s per move for human play
+        if (dto.metadata.movesPlayed && dto.timeMs) {
+          const minTimeForMoves = (dto.metadata.movesPlayed as number) * 1500;
+          if (dto.timeMs < minTimeForMoves) {
+            return { valid: false, reason: 'Game completed faster than physically possible' };
+          }
+        }
+        // Difficulty-based minimum game time
+        const minTimeByDifficulty: Record<string, number> = { easy: 15000, medium: 30000, hard: 60000, expert: 120000 };
+        const diffMinTime = minTimeByDifficulty[dto.metadata.aiDifficulty as string];
+        if (diffMinTime && dto.timeMs && dto.timeMs < diffMinTime) {
+          return { valid: false, reason: 'Game too short for difficulty level' };
+        }
       }
       return { valid: true };
     },
