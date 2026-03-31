@@ -1115,11 +1115,27 @@
       this.ctx = null;
       this.muted = localStorage.getItem('chess3d-mute') === 'true';
       this.volume = parseFloat(localStorage.getItem('chess3d-volume') || '0.5');
+      this._noiseBuffer = null;  // Pre-allocated noise buffer
+      this._activeSounds = 0;
+      this._MAX_SIMULTANEOUS = 4;
+      this._lastPlayTime = {};   // Debounce tracker
+
+      // Pause audio when tab is hidden
+      document.addEventListener('visibilitychange', () => {
+        if (!this.ctx) return;
+        if (document.hidden) this.ctx.suspend();
+        else this.ctx.resume();
+      });
     }
 
     _ensureContext() {
       if (!this.ctx) {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Pre-allocate noise buffer for capture sounds (avoids GC pressure)
+        const bufferSize = this.ctx.sampleRate * 0.15;
+        this._noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = this._noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
       }
       if (this.ctx.state === 'suspended') {
         this.ctx.resume();
@@ -1135,6 +1151,14 @@
     play(type) {
       if (this.muted) return;
       try { this._ensureContext(); } catch (e) { return; }
+
+      // Debounce: min 50ms between same sound type
+      const now = performance.now();
+      if (this._lastPlayTime[type] && now - this._lastPlayTime[type] < 50) return;
+      this._lastPlayTime[type] = now;
+
+      // Limit simultaneous sounds
+      if (this._activeSounds >= this._MAX_SIMULTANEOUS) return;
 
       switch (type) {
         case 'move': this._playTone(300, 0.08, 'triangle', 0.25); break;
@@ -1152,33 +1176,33 @@
     }
 
     _playTone(freq, duration, type, vol) {
+      this._activeSounds++;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = type;
       osc.frequency.value = freq;
-      gain.gain.value = vol * this.volume;
+      gain.gain.setValueAtTime(vol * this.volume, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
       osc.connect(gain).connect(this.ctx.destination);
       osc.start();
       osc.stop(this.ctx.currentTime + duration + 0.01);
+      osc.onended = () => { this._activeSounds--; };
     }
 
     _playNoise(duration, filterFreq, vol) {
-      const bufferSize = this.ctx.sampleRate * duration;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      this._activeSounds++;
       const source = this.ctx.createBufferSource();
-      source.buffer = buffer;
+      source.buffer = this._noiseBuffer; // Reuse pre-allocated buffer
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.value = filterFreq;
       const gain = this.ctx.createGain();
-      gain.gain.value = vol * this.volume;
+      gain.gain.setValueAtTime(vol * this.volume, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
       source.connect(filter).connect(gain).connect(this.ctx.destination);
       source.start();
       source.stop(this.ctx.currentTime + duration + 0.01);
+      source.onended = () => { this._activeSounds--; };
     }
 
     _playChime(freqs, noteDur, vol) {
