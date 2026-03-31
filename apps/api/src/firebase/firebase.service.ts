@@ -71,6 +71,12 @@ export class FirebaseService implements OnModuleInit {
     return this._firestore.batch();
   }
 
+  // Batch-read multiple documents in a single RPC round-trip
+  async getAll(...refs: FirebaseFirestore.DocumentReference[]): Promise<FirebaseFirestore.DocumentSnapshot[]> {
+    if (refs.length === 0) return [];
+    return this._firestore.getAll(...refs);
+  }
+
   // Verify Firebase ID token
   async verifyIdToken(token: string): Promise<admin.auth.DecodedIdToken> {
     return this._auth.verifyIdToken(token);

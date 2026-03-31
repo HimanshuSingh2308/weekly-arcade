@@ -14,6 +14,11 @@ export class NotificationsService {
   private readonly MAX_PER_WEEK = 10;
   private readonly BATCH_SIZE = 500;
 
+  // In-memory cache for frequency cap checks (avoids 2 Firestore queries per notification)
+  // Stores uid → { capped: boolean, expiry: timestamp }
+  private readonly capCache = new Map<string, { capped: boolean; expiry: number }>();
+  private readonly CAP_CACHE_TTL_MS = 60_000; // 60 seconds
+
   constructor(private readonly firebaseService: FirebaseService) {}
 
   async registerToken(uid: string, token: string, deviceInfo?: string): Promise<void> {
@@ -174,6 +179,12 @@ export class NotificationsService {
   }
 
   async checkFrequencyCap(uid: string): Promise<boolean> {
+    // Check in-memory cache first (avoids 2 Firestore queries)
+    const cached = this.capCache.get(uid);
+    if (cached && Date.now() < cached.expiry) {
+      return !cached.capped;
+    }
+
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -185,7 +196,10 @@ export class NotificationsService {
       .where('sentAt', '>=', oneDayAgo)
       .get();
 
-    if (dailySnapshot.size >= this.MAX_PER_DAY) return false;
+    if (dailySnapshot.size >= this.MAX_PER_DAY) {
+      this.capCache.set(uid, { capped: true, expiry: Date.now() + this.CAP_CACHE_TTL_MS });
+      return false;
+    }
 
     // Check weekly cap
     const weeklySnapshot = await this.firebaseService
@@ -194,9 +208,9 @@ export class NotificationsService {
       .where('sentAt', '>=', oneWeekAgo)
       .get();
 
-    if (weeklySnapshot.size >= this.MAX_PER_WEEK) return false;
-
-    return true;
+    const capped = weeklySnapshot.size >= this.MAX_PER_WEEK;
+    this.capCache.set(uid, { capped, expiry: Date.now() + this.CAP_CACHE_TTL_MS });
+    return !capped;
   }
 
   async logNotification(

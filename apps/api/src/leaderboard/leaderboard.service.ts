@@ -24,8 +24,15 @@ export class LeaderboardService {
   private readonly usersCollection = 'users';
 
   // In-memory leaderboard cache: key → { entries, expiry timestamp }
+  // Capped at MAX_CACHE_ENTRIES to prevent unbounded memory growth.
   private readonly leaderboardCache = new Map<string, { data: LeaderboardEntry[]; expiry: number }>();
   private readonly CACHE_TTL_MS = 60_000; // 60 seconds
+  private readonly MAX_CACHE_ENTRIES = 500;
+
+  // Score submission dedup cache: prevents duplicate writes from network retries.
+  // Key: "uid_gameId_score", Value: expiry timestamp. Window: 10 seconds.
+  private readonly scoreDedup = new Map<string, number>();
+  private readonly DEDUP_WINDOW_MS = 10_000;
 
   constructor(
     private readonly firebaseService: FirebaseService,
@@ -66,6 +73,21 @@ export class LeaderboardService {
   ): Promise<{ scoreId: string; rank: number; xpEarned: number }> {
     const now = new Date();
 
+    // Idempotency: reject duplicate submissions within a 10s window
+    const dedupKey = `${uid}_${gameId}_${submitDto.score}`;
+    const dedupExpiry = this.scoreDedup.get(dedupKey);
+    if (dedupExpiry && Date.now() < dedupExpiry) {
+      throw new BadRequestException('Duplicate score submission — please wait before resubmitting');
+    }
+    this.scoreDedup.set(dedupKey, Date.now() + this.DEDUP_WINDOW_MS);
+    // Lazy cleanup: remove expired dedup entries
+    if (this.scoreDedup.size > 10_000) {
+      const cutoff = Date.now();
+      for (const [key, exp] of this.scoreDedup) {
+        if (exp < cutoff) this.scoreDedup.delete(key);
+      }
+    }
+
     // SECURITY: Validate score against game-specific rules
     const validationResult = this.validateScoreSubmission(gameId, submitDto);
     if (!validationResult.valid) {
@@ -104,22 +126,21 @@ export class LeaderboardService {
       createdAt: now,
     });
 
-    // Save to scores collection
-    const scoreRef = await this.firebaseService.collection(this.scoresCollection).add(scoreRecord);
-
-    // Update leaderboards for all periods
-    const periods: LeaderboardPeriod[] = ['daily', 'weekly', 'monthly', 'allTime'];
-    const updatePromises = periods.map((period) =>
-      this.updateLeaderboard(uid, gameId, period, submitDto.score, user.displayName, user.avatarUrl)
-    );
-    await Promise.all(updatePromises);
-
-    // Calculate XP earned
+    // Calculate XP before writes so we can parallelize
     const xpEarned = this.calculateXP(submitDto);
-    await this.usersService.addXP(uid, xpEarned);
-
-    // Award coins server-side based on score (replaces client-callable /coins/add)
     const coinsEarned = Math.min(50, Math.floor(submitDto.score / 100));
+
+    // Save score doc + update all 4 leaderboard periods + XP in parallel
+    const periods: LeaderboardPeriod[] = ['daily', 'weekly', 'monthly', 'allTime'];
+    const [scoreRef] = await Promise.all([
+      this.firebaseService.collection(this.scoresCollection).add(scoreRecord),
+      ...periods.map((period) =>
+        this.updateLeaderboard(uid, gameId, period, submitDto.score, user.displayName, user.avatarUrl)
+      ),
+      this.usersService.addXP(uid, xpEarned),
+    ]);
+
+    // Fire-and-forget: coins + play streak (non-critical, don't block response)
     if (coinsEarned > 0) {
       this.customizationsService
         .addCoins(uid, {
@@ -130,14 +151,12 @@ export class LeaderboardService {
         })
         .catch((err) => this.logger.warn(`Failed to award coins to ${uid}: ${err.message}`));
     }
-
-    // Get rank for today
-    const rank = await this.getUserRank(uid, gameId, 'daily');
-
-    // Update play streak (fire-and-forget)
     this.usersService.updatePlayStreak(uid).catch((err) =>
       this.logger.warn(`Failed to update play streak for ${uid}: ${err.message}`)
     );
+
+    // Get rank (uses cached leaderboard data when available)
+    const rank = await this.getUserRank(uid, gameId, 'daily');
 
     this.logger.log(`Score submitted for user ${uid}, game ${gameId}. XP: ${xpEarned}, Rank: ${rank}`);
 
@@ -217,14 +236,16 @@ export class LeaderboardService {
         score,
         updatedAt: new Date(),
       });
+
+      // Ensure parent doc exists with static metadata (only on first write)
+      if (!existing.exists) {
+        const parentRef = this.firebaseService.doc(`${this.leaderboardsCollection}/${leaderboardId}`);
+        await parentRef.set({ gameId, period, dateKey }, { merge: true });
+      }
+
+      // Invalidate cache for this leaderboard
+      this.leaderboardCache.delete(leaderboardId);
     }
-
-    // Ensure parent doc exists with metadata
-    const parentRef = this.firebaseService.doc(`${this.leaderboardsCollection}/${leaderboardId}`);
-    await parentRef.set({ gameId, period, dateKey, updatedAt: new Date() }, { merge: true });
-
-    // Invalidate cache for this leaderboard
-    this.leaderboardCache.delete(leaderboardId);
   }
 
   async getLeaderboard(
@@ -267,13 +288,37 @@ export class LeaderboardService {
       updatedAt: entry.updatedAt?.toDate ? entry.updatedAt.toDate() : entry.updatedAt,
     }));
 
-    // Store in cache
+    // Store in cache (with size cap + eviction of expired entries)
+    this.evictCacheIfNeeded();
     this.leaderboardCache.set(leaderboardId, {
       data: entries,
       expiry: Date.now() + this.CACHE_TTL_MS,
     });
 
     return entries;
+  }
+
+  /**
+   * Evict expired entries first; if still over limit, evict oldest entries (LRU).
+   * Map preserves insertion order, so first entries are oldest.
+   */
+  private evictCacheIfNeeded(): void {
+    if (this.leaderboardCache.size < this.MAX_CACHE_ENTRIES) return;
+
+    const now = Date.now();
+    // Pass 1: remove expired
+    for (const [key, value] of this.leaderboardCache) {
+      if (value.expiry < now) {
+        this.leaderboardCache.delete(key);
+      }
+    }
+
+    // Pass 2: if still over limit, remove oldest (first inserted)
+    while (this.leaderboardCache.size >= this.MAX_CACHE_ENTRIES) {
+      const oldest = this.leaderboardCache.keys().next().value;
+      if (oldest) this.leaderboardCache.delete(oldest);
+      else break;
+    }
   }
 
   async getFriendsLeaderboard(
@@ -290,10 +335,9 @@ export class LeaderboardService {
     const leaderboardId = `${gameId}_${period}_${dateKey}`;
     const entriesPath = `${this.leaderboardsCollection}/${leaderboardId}/entries`;
 
-    // Read each friend's entry doc directly (no contention, parallel reads)
-    const entryDocs = await Promise.all(
-      friendUids.map((fid) => this.firebaseService.doc(`${entriesPath}/${fid}`).get())
-    );
+    // Single round-trip batch read of all friends' entries
+    const entryRefs = friendUids.map((fid) => this.firebaseService.doc(`${entriesPath}/${fid}`));
+    const entryDocs = await this.firebaseService.getAll(...entryRefs);
 
     // Filter to friends who have entries, collect scores
     const rawEntries = entryDocs
@@ -371,7 +415,7 @@ export class LeaderboardService {
   // ============ USER PROFILE RESOLUTION ============
 
   /**
-   * Batch-fetch user profiles for display name resolution.
+   * Batch-fetch user profiles in a single Firestore RPC round-trip.
    * Returns a Map of uid → { displayName, avatarUrl }.
    */
   private async batchGetUserProfiles(
@@ -383,12 +427,11 @@ export class LeaderboardService {
     // Deduplicate
     const uniqueUids = [...new Set(uids)];
 
-    // Fetch in parallel
-    const docs = await Promise.all(
-      uniqueUids.map((uid) =>
-        this.firebaseService.doc(`${this.usersCollection}/${uid}`).get()
-      )
+    // Single round-trip batch read via Firestore getAll()
+    const refs = uniqueUids.map((uid) =>
+      this.firebaseService.doc(`${this.usersCollection}/${uid}`)
     );
+    const docs = await this.firebaseService.getAll(...refs);
 
     for (const doc of docs) {
       if (doc.exists) {
