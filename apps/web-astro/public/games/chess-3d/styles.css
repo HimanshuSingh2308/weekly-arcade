@@ -6,9 +6,9 @@
   --c3d-navy: #1C1C2E;
   --c3d-gold: #C9A84C;
   --c3d-emerald: #3DAA62;
-  --c3d-red: #C0392B;
+  --c3d-red: #D4504A;
   --c3d-text: #E8DCC8;
-  --c3d-text-dim: #8A8099;
+  --c3d-text-dim: #A09AB8;
   --c3d-card: rgba(30, 30, 50, 0.95);
   --c3d-card-border: rgba(201, 168, 76, 0.25);
 }
@@ -609,6 +609,16 @@
     margin-left: 0;
     margin-top: 2px;
   }
+}
+
+/* ---------- Focus visible ---------- */
+.chess3d-btn:focus-visible,
+.chess3d-diff-btn:focus-visible,
+.chess3d-color-btn:focus-visible,
+.chess3d-hud-btn:focus-visible,
+.chess3d-promo-btn:focus-visible {
+  outline: 2px solid var(--c3d-gold);
+  outline-offset: 2px;
 }
 
 /* ---------- Reduced motion ---------- */

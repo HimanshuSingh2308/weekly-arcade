@@ -1676,6 +1676,7 @@
     // Init Babylon
     const canvas = $('renderCanvas');
     babylonSetup = initBabylon(canvas);
+    canvas.setAttribute('tabindex', '0'); // Override Babylon's positive tabindex
     createPieceMasters(scene, babylonSetup.shadowGen);
     placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
 
@@ -1743,8 +1744,9 @@
     const diffBtns = document.querySelectorAll('.chess3d-diff-btn');
     diffBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        diffBtns.forEach(b => b.classList.remove('selected'));
+        diffBtns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked', 'false'); });
         btn.classList.add('selected');
+        btn.setAttribute('aria-checked', 'true');
         aiDifficulty = btn.dataset.diff;
         localStorage.setItem('chess3d-difficulty', aiDifficulty);
         sound.play('click');
@@ -1755,8 +1757,9 @@
     const colorBtns = document.querySelectorAll('.chess3d-color-btn');
     colorBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        colorBtns.forEach(b => b.classList.remove('selected'));
+        colorBtns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked', 'false'); });
         btn.classList.add('selected');
+        btn.setAttribute('aria-checked', 'true');
         sound.play('click');
       });
     });
@@ -2464,7 +2467,9 @@
   // --- SR announce ---
   function srAnnounce(text) {
     const el = $('srAnnounce');
-    if (el) el.textContent = text;
+    if (!el) return;
+    el.textContent = '';
+    requestAnimationFrame(() => { el.textContent = text; });
   }
 
   /* ================================================================

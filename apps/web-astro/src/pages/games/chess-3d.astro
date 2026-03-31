@@ -37,7 +37,7 @@ import gameData from '../../data/games/chess-3d.json';
 
   <!-- 3D Canvas Container -->
   <div class="chess3d-wrap" id="gameWrap">
-    <canvas id="renderCanvas"></canvas>
+    <canvas id="renderCanvas" role="application" aria-label="Chess 3D game board. Use mouse or touch to select and move pieces."></canvas>
   </div>
 
   <!-- Main Menu Overlay -->
@@ -56,20 +56,20 @@ import gameData from '../../data/games/chess-3d.json';
 
       <div class="chess3d-difficulty-select" id="difficultySelect" role="group" aria-labelledby="diffLabel">
         <span id="diffLabel" class="chess3d-label">Difficulty</span>
-        <div class="chess3d-btn-group">
-          <button class="chess3d-diff-btn" data-diff="easy">Easy<span class="chess3d-diff-elo">~600</span></button>
-          <button class="chess3d-diff-btn selected" data-diff="medium">Medium<span class="chess3d-diff-elo">~1100</span></button>
-          <button class="chess3d-diff-btn" data-diff="hard">Hard<span class="chess3d-diff-elo">~1500</span></button>
-          <button class="chess3d-diff-btn" data-diff="expert">Expert<span class="chess3d-diff-elo">~1900</span></button>
+        <div class="chess3d-btn-group" role="radiogroup" aria-label="Select difficulty">
+          <button class="chess3d-diff-btn" role="radio" aria-checked="false" data-diff="easy">Easy<span class="chess3d-diff-elo">~600</span></button>
+          <button class="chess3d-diff-btn selected" role="radio" aria-checked="true" data-diff="medium">Medium<span class="chess3d-diff-elo">~1100</span></button>
+          <button class="chess3d-diff-btn" role="radio" aria-checked="false" data-diff="hard">Hard<span class="chess3d-diff-elo">~1500</span></button>
+          <button class="chess3d-diff-btn" role="radio" aria-checked="false" data-diff="expert">Expert<span class="chess3d-diff-elo">~1900</span></button>
         </div>
       </div>
 
       <div class="chess3d-color-select" id="colorSelect" role="group" aria-labelledby="colorLabel">
         <span id="colorLabel" class="chess3d-label">Play As</span>
-        <div class="chess3d-btn-group">
-          <button class="chess3d-color-btn selected" data-color="white">White</button>
-          <button class="chess3d-color-btn" data-color="random">Random</button>
-          <button class="chess3d-color-btn" data-color="black">Black</button>
+        <div class="chess3d-btn-group" role="radiogroup" aria-label="Select color">
+          <button class="chess3d-color-btn selected" role="radio" aria-checked="true" data-color="white">White</button>
+          <button class="chess3d-color-btn" role="radio" aria-checked="false" data-color="random">Random</button>
+          <button class="chess3d-color-btn" role="radio" aria-checked="false" data-color="black">Black</button>
         </div>
       </div>
 
