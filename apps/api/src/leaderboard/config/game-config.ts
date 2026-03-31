@@ -246,95 +246,22 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
       return { valid: true };
     },
   },
-  // Tiny Tycoon: Boba shop idle simulator — 60-second timed days
+  // Tiny Tycoon: All stores submit under 'tiny-tycoon' with store ID in metadata
+  // Limits use golden-lounge (most permissive): maxScore 300k, maxScorePerSecond 5000
   // Per-customer max: Math.min(rawCoins, 5000) + tipBonus + criticBonus ≈ 5500
-  // Multipliers: VIP(2x) × combo(3x) × prestige × bridge(2x) × rushMaster(2x) × franchise × goldenTouch × doubleShot(2x) × happyHour(2x) × celebrity(3x)
   'tiny-tycoon': {
-    maxScore: 100000, // Tier 2 + prestige + bridge + events can stack high
-    maxScorePerSecond: 2000,
-    minTimeMs: 55000, // days are 60 seconds, allow 5s tolerance
-    allowedMetadataKeys: ['customersServed', 'day', 'customersLost', 'peakCombo', 'upgradeLevels'],
-    customValidation: (dto) => {
-      if (dto.metadata) {
-        const served = dto.metadata.customersServed as number;
-        // Max ~75 serves theoretical (60s / 0.8s fastest serve)
-        if (served !== undefined && served > 150) {
-          return { valid: false, reason: 'Too many customers served' };
-        }
-        // Revenue per customer sanity check — rawCoins capped at 5000 + tip + critic ≈ 5500
-        if (served !== undefined && served > 0 && dto.score / served > 6000) {
-          return { valid: false, reason: 'Revenue per customer too high' };
-        }
-      }
-      return { valid: true };
-    },
-  },
-
-  // Tiny Tycoon: Bean & Brew (coffee store)
-  // Max: ~40 customers × 65 base (affogato) × 2 (VIP) × 3.0 (combo) × 2 (bridge) = ~15,600 theoretical
-  'tiny-tycoon-bean-brew': {
-    maxScore: 100000,
-    maxScorePerSecond: 2000,
-    minTimeMs: 55000,
-    allowedMetadataKeys: ['customersServed', 'day', 'customersLost', 'peakCombo', 'upgradeLevels'],
-    customValidation: (dto) => {
-      if (dto.metadata) {
-        const served = dto.metadata.customersServed as number;
-        if (served !== undefined && served > 150) {
-          return { valid: false, reason: 'Too many customers served' };
-        }
-      }
-      return { valid: true };
-    },
-  },
-
-  // Tiny Tycoon: Juice Junction (tropical store)
-  'tiny-tycoon-juice-junction': {
-    maxScore: 100000,
-    maxScorePerSecond: 2000,
-    minTimeMs: 55000,
-    allowedMetadataKeys: ['customersServed', 'day', 'customersLost', 'peakCombo', 'upgradeLevels'],
-    customValidation: (dto) => {
-      if (dto.metadata) {
-        const served = dto.metadata.customersServed as number;
-        if (served !== undefined && served > 150) {
-          return { valid: false, reason: 'Too many customers served' };
-        }
-      }
-      return { valid: true };
-    },
-  },
-
-  // Tiny Tycoon: Sweet Tooth (bakery)
-  // Max: ~40 × 100 (tasting plate) × 2 × 3.0 × 2 = ~48,000 theoretical
-  'tiny-tycoon-sweet-tooth': {
-    maxScore: 150000,
-    maxScorePerSecond: 3000,
-    minTimeMs: 55000,
-    allowedMetadataKeys: ['customersServed', 'day', 'customersLost', 'peakCombo', 'upgradeLevels'],
-    customValidation: (dto) => {
-      if (dto.metadata) {
-        const served = dto.metadata.customersServed as number;
-        if (served !== undefined && served > 150) {
-          return { valid: false, reason: 'Too many customers served' };
-        }
-      }
-      return { valid: true };
-    },
-  },
-
-  // Tiny Tycoon: Golden Lounge (luxury bar)
-  // Max: ~40 × 200 (diamond) × 2 × 3.0 × 2 = ~96,000 theoretical
-  'tiny-tycoon-golden-lounge': {
     maxScore: 300000,
     maxScorePerSecond: 5000,
-    minTimeMs: 55000,
-    allowedMetadataKeys: ['customersServed', 'day', 'customersLost', 'peakCombo', 'upgradeLevels'],
+    minTimeMs: 55000, // days are 60 seconds, allow 5s tolerance
+    allowedMetadataKeys: ['store', 'customersServed', 'day', 'customersLost', 'peakCombo', 'upgradeLevels'],
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
         if (served !== undefined && served > 150) {
           return { valid: false, reason: 'Too many customers served' };
+        }
+        if (served !== undefined && served > 0 && dto.score / served > 6000) {
+          return { valid: false, reason: 'Revenue per customer too high' };
         }
       }
       return { valid: true };

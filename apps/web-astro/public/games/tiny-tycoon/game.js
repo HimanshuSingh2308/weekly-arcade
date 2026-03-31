@@ -3540,6 +3540,7 @@
       level: currentDay,
       timeMs: Date.now() - dayStartTime,
       metadata: {
+        store: activeStoreId,
         day: currentDay,
         customersServed,
         customersLost,
