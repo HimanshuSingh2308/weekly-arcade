@@ -2,8 +2,9 @@ services:
   - type: web
     name: weekly-arcade
     runtime: node
-    region: ohio  # US East — close to Cloud Run us-central1
+    region: ohio
     plan: free
+    nodeVersion: "20"
     buildCommand: npm ci && npx nx run shared:build && npx nx run realtime:build
     startCommand: node apps/realtime/dist/main.js
     envVars:
@@ -16,6 +17,4 @@ services:
       - key: API_BASE_URL
         value: https://weekly-arcade-api-5171085645.us-central1.run.app/api
       - key: INTERNAL_API_KEY
-        sync: false  # Set manually in Render dashboard
-      - key: GOOGLE_APPLICATION_CREDENTIALS
-        sync: false  # Set manually — path to service account JSON
+        sync: false
