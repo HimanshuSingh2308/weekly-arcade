@@ -296,7 +296,6 @@
           score, highestTile, moves, won, continueAfterWin, tileId
         };
         localStorage.setItem('2048-game-state', JSON.stringify(state));
-        saveCloudState();
       }
 
       function loadGame() {
@@ -334,6 +333,7 @@
         buttonsDiv.appendChild(playBtn);
         document.getElementById('gameOverlay').classList.add('show');
         submitScore();
+        saveCloudState();
       }
 
       function showWinOverlay() {
@@ -355,6 +355,7 @@
         buttonsDiv.appendChild(keepBtn);
         document.getElementById('gameOverlay').classList.add('show');
         submitScore();
+        saveCloudState();
       }
 
       function continueGame() {
@@ -389,10 +390,12 @@
         };
         await window.gameCloud.saveState('2048', state);
         cloudState2048 = state;
-        await window.gameCloud.checkAchievements('2048', [
-          { id: 'first_word', condition: state.gamesPlayed === 1 },
-          { id: 'ten_wins', condition: state.gamesWon >= 10 }
-        ]);
+        if (state.gamesPlayed === 1) {
+          window.gameCloud.unlockAchievement('first_word', '2048');
+        }
+        if (state.gamesWon >= 10) {
+          window.gameCloud.unlockAchievement('ten_wins', '2048');
+        }
       }
 
       async function loadLeaderboard() {
