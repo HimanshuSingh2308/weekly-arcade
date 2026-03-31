@@ -1685,6 +1685,12 @@
   let promotionResolve = null;
   let babylonSetup = null;
 
+  // Multiplayer state
+  let gameMode = 'ai'; // 'ai' or 'multiplayer'
+  let mpSessionId = null;
+  let mpIsHost = false;
+  let mpLobby = null;
+
   // DOM refs
   const $ = (id) => document.getElementById(id);
 
@@ -1791,10 +1797,97 @@
     // Play AI button
     $('playAIBtn').addEventListener('click', () => {
       sound.play('click');
+      gameMode = 'ai';
       const colorChoice = document.querySelector('.chess3d-color-btn.selected')?.dataset.color || 'white';
       playerColor = colorChoice === 'random' ? (Math.random() < 0.5 ? WHITE : BLACK) : (colorChoice === 'white' ? WHITE : BLACK);
       startNewGame();
     });
+
+    // Play vs Friend button — multiplayer
+    const friendBtn = $('playFriendBtn');
+    if (friendBtn && window.multiplayerClient) {
+      friendBtn.disabled = false;
+      friendBtn.classList.remove('chess3d-btn-disabled');
+      const badge = friendBtn.querySelector('.chess3d-coming-soon');
+      if (badge) badge.remove();
+      friendBtn.textContent = 'Play vs Friend';
+
+      friendBtn.addEventListener('click', async () => {
+        if (!currentUser) { window.authNudge?.show(); return; }
+        sound.play('click');
+        gameMode = 'multiplayer';
+        hideOverlay('mainMenuOverlay');
+        showOverlay('mpLobbyOverlay');
+      });
+    }
+
+    // Multiplayer lobby buttons
+    if ($('mpQuickMatchBtn')) {
+      $('mpQuickMatchBtn').addEventListener('click', async () => {
+        if (!currentUser) return;
+        sound.play('click');
+        window.multiplayerUI?.showMatchmaking('Chess 3D', async () => {
+          await window.multiplayerClient.cancelMatchmaking();
+        });
+        try {
+          const result = await window.multiplayerClient.findMatch('chess-3d');
+          if (result.matchedSessionId) {
+            window.multiplayerUI?.hideMatchmaking();
+            await mpJoinAndPlay(result.matchedSessionId);
+          } else {
+            mpPollForMatch();
+          }
+        } catch (err) {
+          window.multiplayerUI?.hideMatchmaking();
+          console.error('[Chess3D] Matchmaking error:', err);
+        }
+      });
+    }
+
+    if ($('mpCreatePrivateBtn')) {
+      $('mpCreatePrivateBtn').addEventListener('click', async () => {
+        if (!currentUser) return;
+        sound.play('click');
+        try {
+          const colorChoice = document.querySelector('.chess3d-color-btn.selected')?.dataset.color || 'random';
+          const session = await window.multiplayerClient.createSession('chess-3d', {
+            mode: 'private',
+            maxPlayers: 2,
+            gameConfig: { colorPreference: colorChoice },
+          });
+          mpSessionId = session.sessionId;
+          mpIsHost = true;
+          mpShowWaitingRoom(session);
+        } catch (err) {
+          console.error('[Chess3D] Create session error:', err);
+        }
+      });
+    }
+
+    if ($('mpJoinCodeBtn')) {
+      $('mpJoinCodeBtn').addEventListener('click', async () => {
+        if (!currentUser) return;
+        sound.play('click');
+        const code = prompt('Enter join code:');
+        if (!code) return;
+        try {
+          const session = await window.multiplayerClient.joinByCode(code);
+          mpSessionId = session.sessionId;
+          mpIsHost = false;
+          await mpJoinAndPlay(session.sessionId);
+        } catch (err) {
+          alert('Invalid or expired code');
+        }
+      });
+    }
+
+    if ($('mpBackBtn')) {
+      $('mpBackBtn').addEventListener('click', () => {
+        sound.play('click');
+        hideOverlay('mpLobbyOverlay');
+        showOverlay('mainMenuOverlay');
+      });
+    }
 
     // Restore saved difficulty
     const saved = localStorage.getItem('chess3d-difficulty');
@@ -1815,7 +1908,12 @@
     // Resign dialog
     $('resignConfirmBtn').addEventListener('click', () => {
       hideOverlay('resignOverlay');
-      endGame(playerColor === WHITE ? 'black' : 'white', 'Resignation');
+      if (gameMode === 'multiplayer' && window.multiplayerClient) {
+        window.multiplayerClient.forfeit();
+        // Server handles the result via onGameFinished
+      } else {
+        endGame(playerColor === WHITE ? 'black' : 'white', 'Resignation');
+      }
     });
     $('resignCancelBtn').addEventListener('click', () => { hideOverlay('resignOverlay'); sound.play('click'); });
 
@@ -2002,6 +2100,18 @@
   function executePlayerMove(fromRow, fromCol, toRow, toCol, promotion) {
     deselectPiece();
     isAnimating = true;
+
+    // In multiplayer mode, send move to server instead of applying locally
+    if (gameMode === 'multiplayer' && window.multiplayerClient) {
+      window.multiplayerClient.submitMove('chess-move', {
+        from: [fromRow, fromCol],
+        to: [toRow, toCol],
+        promotion: promotion || undefined,
+      });
+      sound.play('move');
+      // Server will broadcast new state via onGameState — UI updates there
+      return;
+    }
 
     const result = chessEngine.makeMove(fromRow, fromCol, toRow, toCol, promotion);
     if (!result) {
@@ -2214,7 +2324,192 @@
   }
 
   /* ================================================================
-     9. GAME FLOW
+     9a. MULTIPLAYER FUNCTIONS
+     ================================================================ */
+
+  function mpShowWaitingRoom(session) {
+    hideOverlay('mpLobbyOverlay');
+    const container = $('mpWaitingRoom');
+    if (!container) return;
+    showOverlay('mpWaitingOverlay');
+
+    const codeEl = $('mpJoinCode');
+    if (codeEl && session.joinCode) {
+      codeEl.textContent = session.joinCode;
+    }
+
+    $('mpCopyCodeBtn')?.addEventListener('click', () => {
+      navigator.clipboard?.writeText(session.joinCode || '');
+      sound.play('click');
+    });
+
+    $('mpWaitingCancelBtn')?.addEventListener('click', async () => {
+      sound.play('click');
+      try { await window.multiplayerClient.leaveSession(mpSessionId); } catch (e) {}
+      hideOverlay('mpWaitingOverlay');
+      showOverlay('mainMenuOverlay');
+      mpCleanup();
+    });
+
+    // Connect WebSocket and listen for opponent
+    window.multiplayerClient.connect(mpSessionId).then(() => {
+      mpRegisterListeners();
+    });
+  }
+
+  async function mpJoinAndPlay(sessionId) {
+    mpSessionId = sessionId;
+    hideOverlay('mpLobbyOverlay');
+    hideOverlay('mpWaitingOverlay');
+
+    try {
+      const session = await window.multiplayerClient.getSession(sessionId);
+      mpIsHost = session.hostUid === currentUser?.uid;
+      await window.multiplayerClient.connect(sessionId);
+      mpRegisterListeners();
+
+      // Signal ready
+      window.multiplayerClient.signalReady();
+    } catch (err) {
+      console.error('[Chess3D] MP join error:', err);
+      showOverlay('mainMenuOverlay');
+    }
+  }
+
+  function mpRegisterListeners() {
+    window.multiplayerClient.onPlayerJoined(async () => {
+      // Opponent joined — if we're host, start the game
+      if (mpIsHost) {
+        try {
+          await window.multiplayerClient.startGame(mpSessionId);
+        } catch (e) {
+          console.error('[Chess3D] Start game error:', e);
+        }
+      }
+    });
+
+    window.multiplayerClient.onGameState((data) => {
+      const state = data.state;
+      const turnUid = data.turnUid;
+
+      // Determine our color from server state
+      if (state.colorMap && currentUser?.uid) {
+        const myColor = state.colorMap[currentUser.uid];
+        if (myColor) playerColor = myColor;
+      }
+
+      // Load FEN into local engine for display
+      chessEngine.reset();
+      if (state.fen) chessEngine.loadFEN(state.fen);
+      chessEngine.sanHistory = state.moveHistory || [];
+
+      // Transition from waiting/lobby to game
+      hideOverlay('mpWaitingOverlay');
+      hideOverlay('mpLobbyOverlay');
+      if (!gameActive) {
+        gameActive = true;
+        gameStartTime = Date.now();
+        moveCount = (state.moveHistory || []).length;
+        $('gameHud').style.display = '';
+        $('undoBtn').style.display = 'none'; // No undo in multiplayer
+
+        // Player bars
+        const opponentUid = state.players?.find(uid => uid !== currentUser?.uid);
+        $('topName').textContent = opponentUid ? 'Opponent' : '...';
+        $('bottomName').textContent = currentUser?.displayName || 'You';
+        $('topElo').textContent = '';
+        $('bottomElo').textContent = '';
+
+        resetCamera(playerColor === BLACK);
+      }
+
+      // Update 3D board
+      placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
+      clearHighlights();
+      for (const m of lastMoveHighlights) m.dispose();
+      lastMoveHighlights = [];
+      clearCheckHighlight();
+
+      // Show last move highlight
+      if (state.moveHistory && state.moveHistory.length > 0) {
+        updateMoveHistory();
+        updateCapturedPieces();
+      }
+
+      // Check indicator
+      if (chessEngine.isCheck()) {
+        const king = chessEngine._findKing(chessEngine.getTurn());
+        if (king) showCheckHighlight(king[0], king[1]);
+      }
+
+      // Turn indicator
+      const isMyTurn = turnUid === currentUser?.uid;
+      $('turnText').textContent = isMyTurn ? 'Your turn' : 'Opponent\'s turn...';
+      isAnimating = !isMyTurn; // Block input when not our turn
+    });
+
+    window.multiplayerClient.onGameFinished(({ results }) => {
+      gameActive = false;
+      const myResult = results?.[currentUser?.uid];
+      if (myResult?.outcome === 'win') { sound.play('win'); }
+      else if (myResult?.outcome === 'loss') { sound.play('loss'); }
+      else { sound.play('draw'); }
+
+      $('gameOverTitle').textContent = myResult?.outcome === 'win' ? 'You Win!' :
+        myResult?.outcome === 'loss' ? 'You Lose' : 'Draw';
+      $('gameOverReason').textContent = '';
+      $('gameOverElo').textContent = '';
+      $('gameOverStats').textContent = moveCount + ' moves';
+      showOverlay('gameOverOverlay');
+
+      // On rematch/menu, clean up MP
+      $('menuBtn').onclick = () => {
+        hideOverlay('gameOverOverlay');
+        showOverlay('mainMenuOverlay');
+        mpCleanup();
+        updateMenuDisplay();
+      };
+    });
+
+    window.multiplayerClient.onMoveRejected(({ reason }) => {
+      console.warn('[Chess3D] Move rejected:', reason);
+      sound.play('error');
+      isAnimating = false; // Re-enable input
+    });
+
+    window.multiplayerClient.onError(({ code }) => {
+      if (code === 'DISCONNECTED') {
+        window.multiplayerUI?.showDisconnectOverlay();
+      }
+    });
+  }
+
+  let mpPollTimer = null;
+  function mpPollForMatch() {
+    mpPollTimer = setInterval(async () => {
+      try {
+        const status = await window.multiplayerClient.getMatchmakingStatus();
+        if (status?.status === 'matched' && status.sessionId) {
+          clearInterval(mpPollTimer);
+          window.multiplayerUI?.hideMatchmaking();
+          await mpJoinAndPlay(status.sessionId);
+        }
+      } catch (e) { /* ignore */ }
+    }, 2000);
+  }
+
+  function mpCleanup() {
+    gameActive = false;
+    gameMode = 'ai';
+    mpSessionId = null;
+    if (mpPollTimer) { clearInterval(mpPollTimer); mpPollTimer = null; }
+    try { window.multiplayerClient?.disconnect(); } catch (e) {}
+    $('gameHud').style.display = 'none';
+    $('undoBtn').style.display = '';
+  }
+
+  /* ================================================================
+     9b. GAME FLOW
      ================================================================ */
 
   function startNewGame() {

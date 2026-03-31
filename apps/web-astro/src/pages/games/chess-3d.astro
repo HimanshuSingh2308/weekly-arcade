@@ -167,11 +167,43 @@ import gameData from '../../data/games/chess-3d.json';
     </div>
   </div>
 
+  <!-- Multiplayer Lobby Overlay -->
+  <div class="chess3d-overlay" id="mpLobbyOverlay" role="dialog" aria-modal="true" aria-label="Multiplayer lobby">
+    <div class="chess3d-modal chess3d-menu-modal">
+      <h2 style="margin:0 0 8px;">Play vs Friend</h2>
+      <p style="color:var(--c3d-text-dim);margin:0 0 20px;">Challenge a friend or find an opponent</p>
+      <button class="chess3d-btn chess3d-btn-play" id="mpQuickMatchBtn">Quick Match</button>
+      <button class="chess3d-btn" id="mpCreatePrivateBtn" style="margin-top:10px;">Create Private Game</button>
+      <button class="chess3d-btn" id="mpJoinCodeBtn" style="margin-top:10px;">Join by Code</button>
+      <button class="chess3d-btn chess3d-btn-secondary" id="mpBackBtn" style="margin-top:16px;">Back</button>
+    </div>
+  </div>
+
+  <!-- Multiplayer Waiting Room Overlay -->
+  <div class="chess3d-overlay" id="mpWaitingOverlay" role="dialog" aria-modal="true" aria-label="Waiting for opponent">
+    <div class="chess3d-modal chess3d-menu-modal">
+      <h2 style="margin:0 0 8px;">Waiting for Opponent</h2>
+      <div class="chess3d-thinking" style="display:flex;margin:16px 0;">
+        <div class="chess3d-thinking-dots"><span></span><span></span><span></span></div>
+        <span>Looking for a challenger...</span>
+      </div>
+      <div style="margin:16px 0;text-align:center;">
+        <p style="color:var(--c3d-text-dim);margin:0 0 8px;font-size:0.85rem;">Share this code with a friend:</p>
+        <div style="font-size:2rem;font-weight:900;letter-spacing:0.2em;color:var(--c3d-gold);" id="mpJoinCode">------</div>
+        <button class="chess3d-btn" id="mpCopyCodeBtn" style="margin-top:12px;font-size:0.85rem;">Copy Code</button>
+      </div>
+      <button class="chess3d-btn chess3d-btn-secondary" id="mpWaitingCancelBtn">Cancel</button>
+    </div>
+  </div>
+
   <!-- Screen reader announcements -->
   <div id="srAnnounce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <Fragment slot="scripts">
     <script is:inline src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script is:inline src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script is:inline src="/js/multiplayer-client.js"></script>
+    <script is:inline src="/js/multiplayer-ui.js"></script>
     <script is:inline src="/games/chess-3d/game.js"></script>
   </Fragment>
 </GameLayout>
