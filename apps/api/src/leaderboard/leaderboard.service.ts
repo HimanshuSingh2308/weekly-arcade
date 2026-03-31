@@ -377,17 +377,148 @@ export class LeaderboardService {
   // ============ SCORES ARCHIVAL ============
 
   /**
-   * Weekly cron: delete scores older than 90 days to control Firestore costs.
+   * Weekly cron: consolidate scores older than 90 days into per-user-per-game
+   * summaries in `scoreArchives`, then delete the raw score documents.
    * Runs every Sunday at 3 AM.
    */
   @Cron('0 3 * * 0')
   async archiveOldScores(): Promise<void> {
     const cutoffDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    let totalDeleted = 0;
 
-    this.logger.log(`Starting scores archival — deleting scores before ${cutoffDate.toISOString()}`);
+    this.logger.log(`Starting scores archival — consolidating scores before ${cutoffDate.toISOString()}`);
 
+    // Phase 1: Read all old scores and group by user+game
+    const summaries = new Map<string, {
+      odId: string;
+      gameId: string;
+      totalGames: number;
+      bestScore: number;
+      totalScore: number;
+      bestLevel: number;
+      bestTimeMs: number | null; // lowest time = best
+      firstPlayed: Date;
+      lastPlayed: Date;
+    }>();
+
+    let totalRead = 0;
     let hasMore = true;
+    let lastDoc: FirebaseFirestore.DocumentSnapshot | undefined;
+
+    while (hasMore) {
+      let query = this.firebaseService
+        .collection(this.scoresCollection)
+        .where('createdAt', '<', cutoffDate)
+        .orderBy('createdAt', 'asc')
+        .limit(500);
+
+      if (lastDoc) {
+        query = query.startAfter(lastDoc);
+      }
+
+      const snapshot = await query.get();
+
+      if (snapshot.empty) {
+        hasMore = false;
+        break;
+      }
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const key = `${data.odId}_${data.gameId}`;
+        const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+
+        const existing = summaries.get(key);
+        if (existing) {
+          existing.totalGames += 1;
+          existing.totalScore += data.score || 0;
+          existing.bestScore = Math.max(existing.bestScore, data.score || 0);
+          existing.bestLevel = Math.max(existing.bestLevel, data.level || 0);
+          if (data.timeMs != null) {
+            existing.bestTimeMs = existing.bestTimeMs != null
+              ? Math.min(existing.bestTimeMs, data.timeMs)
+              : data.timeMs;
+          }
+          if (createdAt < existing.firstPlayed) existing.firstPlayed = createdAt;
+          if (createdAt > existing.lastPlayed) existing.lastPlayed = createdAt;
+        } else {
+          summaries.set(key, {
+            odId: data.odId,
+            gameId: data.gameId,
+            totalGames: 1,
+            bestScore: data.score || 0,
+            totalScore: data.score || 0,
+            bestLevel: data.level || 0,
+            bestTimeMs: data.timeMs ?? null,
+            firstPlayed: createdAt,
+            lastPlayed: createdAt,
+          });
+        }
+      }
+
+      totalRead += snapshot.size;
+      lastDoc = snapshot.docs[snapshot.docs.length - 1];
+      this.logger.log(`Read ${totalRead} old scores so far...`);
+    }
+
+    if (totalRead === 0) {
+      this.logger.log('No scores to archive');
+      return;
+    }
+
+    // Phase 2: Upsert consolidated summaries into scoreArchives collection
+    // Merge with any existing archive (from prior runs)
+    let archivedCount = 0;
+    const archiveBatches = this.chunkArray(Array.from(summaries.entries()), 500);
+
+    for (const chunk of archiveBatches) {
+      const batch = this.firebaseService.batch();
+
+      for (const [key, summary] of chunk) {
+        const archiveRef = this.firebaseService.doc(`scoreArchives/${key}`);
+        const existingDoc = await archiveRef.get();
+
+        if (existingDoc.exists) {
+          const prev = existingDoc.data()!;
+          batch.set(archiveRef, {
+            odId: summary.odId,
+            gameId: summary.gameId,
+            totalGames: (prev.totalGames || 0) + summary.totalGames,
+            bestScore: Math.max(prev.bestScore || 0, summary.bestScore),
+            totalScore: (prev.totalScore || 0) + summary.totalScore,
+            avgScore: Math.round(
+              ((prev.totalScore || 0) + summary.totalScore) /
+              ((prev.totalGames || 0) + summary.totalGames)
+            ),
+            bestLevel: Math.max(prev.bestLevel || 0, summary.bestLevel),
+            bestTimeMs: prev.bestTimeMs != null && summary.bestTimeMs != null
+              ? Math.min(prev.bestTimeMs, summary.bestTimeMs)
+              : prev.bestTimeMs ?? summary.bestTimeMs,
+            firstPlayed: (prev.firstPlayed?.toDate?.() || prev.firstPlayed) < summary.firstPlayed
+              ? prev.firstPlayed
+              : summary.firstPlayed,
+            lastPlayed: (prev.lastPlayed?.toDate?.() || prev.lastPlayed) > summary.lastPlayed
+              ? prev.lastPlayed
+              : summary.lastPlayed,
+            updatedAt: new Date(),
+          });
+        } else {
+          batch.set(archiveRef, {
+            ...summary,
+            avgScore: Math.round(summary.totalScore / summary.totalGames),
+            updatedAt: new Date(),
+          });
+        }
+      }
+
+      await batch.commit();
+      archivedCount += chunk.length;
+      this.logger.log(`Upserted ${archivedCount} archive summaries...`);
+    }
+
+    // Phase 3: Delete the raw score documents
+    let totalDeleted = 0;
+    hasMore = true;
+
     while (hasMore) {
       const snapshot = await this.firebaseService
         .collection(this.scoresCollection)
@@ -407,9 +538,19 @@ export class LeaderboardService {
       await batch.commit();
 
       totalDeleted += snapshot.size;
-      this.logger.log(`Archived ${totalDeleted} old scores so far...`);
+      this.logger.log(`Deleted ${totalDeleted} raw scores so far...`);
     }
 
-    this.logger.log(`Scores archival complete — deleted ${totalDeleted} scores older than 90 days`);
+    this.logger.log(
+      `Scores archival complete — consolidated ${summaries.size} user-game summaries, deleted ${totalDeleted} raw scores`
+    );
+  }
+
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
   }
 }

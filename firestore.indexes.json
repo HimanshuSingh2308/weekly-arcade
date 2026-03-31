@@ -40,6 +40,14 @@
         { "fieldPath": "odId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "scoreArchives",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "odId", "order": "ASCENDING" },
+        { "fieldPath": "gameId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

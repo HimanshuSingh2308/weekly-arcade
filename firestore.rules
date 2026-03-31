@@ -83,6 +83,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ============ SCORE ARCHIVES ============
+
+    // Consolidated score summaries — readable by owner, server-only writes
+    match /scoreArchives/{archiveId} {
+      allow read: if request.auth != null &&
+        resource.data.odId == request.auth.uid;
+      allow write: if false;
+    }
+
     // ============ PUSH NOTIFICATIONS ============
 
     // Push tokens - server-only (Admin SDK)
