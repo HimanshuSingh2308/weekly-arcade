@@ -291,6 +291,10 @@ export const DEFAULT_GAME_CONFIG: GameValidationConfig = {
  * Get configuration for a specific game
  */
 export function getGameConfig(gameId: string): GameValidationConfig {
+  // Resolve store variants to parent config (e.g., 'tiny-tycoon-juice-junction' → 'tiny-tycoon')
+  if (!(gameId in GAME_CONFIG) && gameId.startsWith('tiny-tycoon-')) {
+    return GAME_CONFIG['tiny-tycoon'] || DEFAULT_GAME_CONFIG;
+  }
   return GAME_CONFIG[gameId] || DEFAULT_GAME_CONFIG;
 }
 
