@@ -190,6 +190,10 @@ export class LeaderboardService {
     });
   }
 
+  /**
+   * Write the user's best score to a subcollection entry.
+   * Each user gets their own document — no contention between concurrent players.
+   */
   private async updateLeaderboard(
     uid: string,
     gameId: string,
@@ -200,67 +204,24 @@ export class LeaderboardService {
   ): Promise<void> {
     const dateKey = this.getDateKey(period);
     const leaderboardId = `${gameId}_${period}_${dateKey}`;
-    const leaderboardRef = this.firebaseService.doc(`${this.leaderboardsCollection}/${leaderboardId}`);
+    const entryRef = this.firebaseService.doc(
+      `${this.leaderboardsCollection}/${leaderboardId}/entries/${uid}`
+    );
 
-    await this.firebaseService.runTransaction(async (transaction) => {
-      const doc = await transaction.get(leaderboardRef);
+    const existing = await entryRef.get();
 
-      let entries: LeaderboardEntry[] = [];
-      if (doc.exists) {
-        entries = (doc.data() as { entries: LeaderboardEntry[] }).entries || [];
-      }
-
-      // Find existing entry for this user
-      const existingIndex = entries.findIndex((e) => e.odId === uid);
-
-      if (existingIndex >= 0) {
-        // Update if new score is higher
-        if (score > entries[existingIndex].score) {
-          entries[existingIndex] = {
-            ...entries[existingIndex],
-            score,
-            updatedAt: new Date(),
-          };
-        }
-      } else {
-        // Add new entry
-        entries.push({
-          odId: uid,
-          odName: displayName,
-          odAvatarUrl: avatarUrl,
-          score,
-          rank: 0, // Will be recalculated
-          updatedAt: new Date(),
-        });
-      }
-
-      // Sort by score descending
-      entries.sort((a, b) => b.score - a.score);
-
-      // Deduplicate by user ID (keep highest score entry)
-      const seenUsers = new Set<string>();
-      entries = entries.filter((entry) => {
-        if (!entry.odId || seenUsers.has(entry.odId)) {
-          return false;
-        }
-        seenUsers.add(entry.odId);
-        return true;
-      });
-
-      // Update ranks and keep top 100
-      entries = entries.slice(0, 100).map((entry, index) => ({
-        ...entry,
-        rank: index + 1,
-      }));
-
-      transaction.set(leaderboardRef, {
-        gameId,
-        period,
-        dateKey,
-        entries,
+    // Only write if new score is higher (or first entry)
+    if (!existing.exists || score > (existing.data()?.score || 0)) {
+      await entryRef.set({
+        odId: uid,
+        score,
         updatedAt: new Date(),
       });
-    });
+    }
+
+    // Ensure parent doc exists with metadata
+    const parentRef = this.firebaseService.doc(`${this.leaderboardsCollection}/${leaderboardId}`);
+    await parentRef.set({ gameId, period, dateKey, updatedAt: new Date() }, { merge: true });
 
     // Invalidate cache for this leaderboard
     this.leaderboardCache.delete(leaderboardId);
@@ -280,16 +241,31 @@ export class LeaderboardService {
       return cached.data.slice(0, limit);
     }
 
-    const doc = await this.firebaseService
-      .doc(`${this.leaderboardsCollection}/${leaderboardId}`)
+    // Query subcollection ordered by score
+    const snapshot = await this.firebaseService
+      .collection(`${this.leaderboardsCollection}/${leaderboardId}/entries`)
+      .orderBy('score', 'desc')
+      .limit(limit)
       .get();
 
-    if (!doc.exists) {
+    if (snapshot.empty) {
       return [];
     }
 
-    const data = doc.data() as { entries: LeaderboardEntry[] };
-    const entries = data.entries || [];
+    // Resolve display names from user profiles
+    const rawEntries = snapshot.docs.map((doc) => doc.data());
+    const userIds = rawEntries.map((e) => e.odId as string);
+    const profiles = await this.batchGetUserProfiles(userIds);
+
+    const entries: LeaderboardEntry[] = rawEntries.map((entry, index) => ({
+      odId: entry.odId,
+      odName: profiles.get(entry.odId)?.displayName || 'Player',
+      odAvatarUrl: profiles.get(entry.odId)?.avatarUrl || null,
+      score: entry.score,
+      rank: index + 1,
+      level: entry.level,
+      updatedAt: entry.updatedAt?.toDate ? entry.updatedAt.toDate() : entry.updatedAt,
+    }));
 
     // Store in cache
     this.leaderboardCache.set(leaderboardId, {
@@ -297,7 +273,7 @@ export class LeaderboardService {
       expiry: Date.now() + this.CACHE_TTL_MS,
     });
 
-    return entries.slice(0, limit);
+    return entries;
   }
 
   async getFriendsLeaderboard(
@@ -312,42 +288,58 @@ export class LeaderboardService {
 
     const dateKey = this.getDateKey(period);
     const leaderboardId = `${gameId}_${period}_${dateKey}`;
-    const doc = await this.firebaseService
-      .doc(`${this.leaderboardsCollection}/${leaderboardId}`)
-      .get();
+    const entriesPath = `${this.leaderboardsCollection}/${leaderboardId}/entries`;
 
-    if (!doc.exists) {
-      return [];
-    }
+    // Read each friend's entry doc directly (no contention, parallel reads)
+    const entryDocs = await Promise.all(
+      friendUids.map((fid) => this.firebaseService.doc(`${entriesPath}/${fid}`).get())
+    );
 
-    const data = doc.data() as { entries: LeaderboardEntry[] };
-    const entries = data.entries || [];
+    // Filter to friends who have entries, collect scores
+    const rawEntries = entryDocs
+      .filter((doc) => doc.exists)
+      .map((doc) => doc.data()!)
+      .sort((a, b) => b.score - a.score);
 
-    // Filter to only friends
-    const friendEntries = entries.filter((e) => friendUids.includes(e.odId));
+    if (rawEntries.length === 0) return [];
 
-    // Re-rank within friends
-    return friendEntries.map((entry, index) => ({
-      ...entry,
+    // Resolve display names
+    const userIds = rawEntries.map((e) => e.odId as string);
+    const profiles = await this.batchGetUserProfiles(userIds);
+
+    return rawEntries.map((entry, index) => ({
+      odId: entry.odId,
+      odName: profiles.get(entry.odId)?.displayName || 'Player',
+      odAvatarUrl: profiles.get(entry.odId)?.avatarUrl || null,
+      score: entry.score,
       rank: index + 1,
+      level: entry.level,
+      updatedAt: entry.updatedAt?.toDate ? entry.updatedAt.toDate() : entry.updatedAt,
     }));
   }
 
+  /**
+   * Get user's rank by counting how many entries have a higher score.
+   * Works for ALL users, not just top 100.
+   */
   async getUserRank(uid: string, gameId: string, period: LeaderboardPeriod): Promise<number> {
     const dateKey = this.getDateKey(period);
     const leaderboardId = `${gameId}_${period}_${dateKey}`;
-    const doc = await this.firebaseService
-      .doc(`${this.leaderboardsCollection}/${leaderboardId}`)
+    const entriesPath = `${this.leaderboardsCollection}/${leaderboardId}/entries`;
+
+    const userEntry = await this.firebaseService.doc(`${entriesPath}/${uid}`).get();
+    if (!userEntry.exists) return 0;
+
+    const userScore = userEntry.data()?.score || 0;
+
+    // Count entries with a higher score
+    const higherCount = await this.firebaseService
+      .collection(entriesPath)
+      .where('score', '>', userScore)
+      .count()
       .get();
 
-    if (!doc.exists) {
-      return 0;
-    }
-
-    const data = doc.data() as { entries: LeaderboardEntry[] };
-    const entry = (data.entries || []).find((e) => e.odId === uid);
-
-    return entry?.rank || 0;
+    return higherCount.data().count + 1;
   }
 
   async getUserRankWithScore(
@@ -357,21 +349,58 @@ export class LeaderboardService {
   ): Promise<{ rank: number; score: number }> {
     const dateKey = this.getDateKey(period);
     const leaderboardId = `${gameId}_${period}_${dateKey}`;
-    const doc = await this.firebaseService
-      .doc(`${this.leaderboardsCollection}/${leaderboardId}`)
+    const entriesPath = `${this.leaderboardsCollection}/${leaderboardId}/entries`;
+
+    const userEntry = await this.firebaseService.doc(`${entriesPath}/${uid}`).get();
+    if (!userEntry.exists) return { rank: 0, score: 0 };
+
+    const userScore = userEntry.data()?.score || 0;
+
+    const higherCount = await this.firebaseService
+      .collection(entriesPath)
+      .where('score', '>', userScore)
+      .count()
       .get();
 
-    if (!doc.exists) {
-      return { rank: 0, score: 0 };
+    return {
+      rank: higherCount.data().count + 1,
+      score: userScore,
+    };
+  }
+
+  // ============ USER PROFILE RESOLUTION ============
+
+  /**
+   * Batch-fetch user profiles for display name resolution.
+   * Returns a Map of uid → { displayName, avatarUrl }.
+   */
+  private async batchGetUserProfiles(
+    uids: string[]
+  ): Promise<Map<string, { displayName: string; avatarUrl: string | null }>> {
+    const profiles = new Map<string, { displayName: string; avatarUrl: string | null }>();
+    if (uids.length === 0) return profiles;
+
+    // Deduplicate
+    const uniqueUids = [...new Set(uids)];
+
+    // Fetch in parallel
+    const docs = await Promise.all(
+      uniqueUids.map((uid) =>
+        this.firebaseService.doc(`${this.usersCollection}/${uid}`).get()
+      )
+    );
+
+    for (const doc of docs) {
+      if (doc.exists) {
+        const data = doc.data() as User;
+        profiles.set(data.uid, {
+          displayName: data.displayName || 'Player',
+          avatarUrl: data.avatarUrl || null,
+        });
+      }
     }
 
-    const data = doc.data() as { entries: LeaderboardEntry[] };
-    const entry = (data.entries || []).find((e) => e.odId === uid);
-
-    return {
-      rank: entry?.rank || 0,
-      score: entry?.score || 0,
-    };
+    return profiles;
   }
 
   // ============ SCORES ARCHIVAL ============

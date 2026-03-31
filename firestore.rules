@@ -24,6 +24,12 @@ service cloud.firestore {
       allow read: if true;
       // Only backend can write (via Admin SDK)
       allow write: if false;
+
+      // Leaderboard entries subcollection (one doc per user per leaderboard)
+      match /entries/{entryId} {
+        allow read: if true;
+        allow write: if false;
+      }
     }
 
     // Scores are publicly readable
