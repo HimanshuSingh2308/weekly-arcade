@@ -3535,8 +3535,7 @@
       saveGame();
     }
 
-    const scoreGameId = activeStoreId === 'boba_shop' ? 'tiny-tycoon' : `tiny-tycoon-${activeStoreId.replace(/_/g, '-')}`;
-    await window.gameCloud.submitScore(scoreGameId, {
+    await window.gameCloud.submitScore('tiny-tycoon', {
       score: dayRev,
       level: currentDay,
       timeMs: Date.now() - dayStartTime,
