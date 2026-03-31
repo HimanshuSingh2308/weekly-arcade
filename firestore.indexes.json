@@ -48,6 +48,14 @@
         { "fieldPath": "odId", "order": "ASCENDING" },
         { "fieldPath": "gameId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "settings.notificationsEnabled", "order": "ASCENDING" },
+        { "fieldPath": "lastPlayedDate", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

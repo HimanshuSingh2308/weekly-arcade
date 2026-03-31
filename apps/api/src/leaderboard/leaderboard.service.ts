@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { FieldValue } from '@google-cloud/firestore';
 import { FirebaseService } from '../firebase/firebase.service';
 import { UsersService } from '../users/users.service';
 import { AuthService } from '../auth/auth.service';
@@ -538,29 +539,26 @@ export class LeaderboardService {
     }
 
     // Phase 2: Upsert consolidated summaries into scoreArchives collection
-    // Merge with any existing archive (from prior runs)
+    // Uses transactions per doc to handle min/max merges without separate reads
     let archivedCount = 0;
-    const archiveBatches = this.chunkArray(Array.from(summaries.entries()), 500);
 
-    for (const chunk of archiveBatches) {
-      const batch = this.firebaseService.batch();
+    for (const [key, summary] of summaries) {
+      const archiveRef = this.firebaseService.doc(`scoreArchives/${key}`);
 
-      for (const [key, summary] of chunk) {
-        const archiveRef = this.firebaseService.doc(`scoreArchives/${key}`);
-        const existingDoc = await archiveRef.get();
+      await this.firebaseService.runTransaction(async (transaction) => {
+        const existingDoc = await transaction.get(archiveRef);
 
         if (existingDoc.exists) {
           const prev = existingDoc.data()!;
-          batch.set(archiveRef, {
+          const newTotalGames = (prev.totalGames || 0) + summary.totalGames;
+          const newTotalScore = (prev.totalScore || 0) + summary.totalScore;
+          transaction.set(archiveRef, {
             odId: summary.odId,
             gameId: summary.gameId,
-            totalGames: (prev.totalGames || 0) + summary.totalGames,
+            totalGames: newTotalGames,
             bestScore: Math.max(prev.bestScore || 0, summary.bestScore),
-            totalScore: (prev.totalScore || 0) + summary.totalScore,
-            avgScore: Math.round(
-              ((prev.totalScore || 0) + summary.totalScore) /
-              ((prev.totalGames || 0) + summary.totalGames)
-            ),
+            totalScore: newTotalScore,
+            avgScore: Math.round(newTotalScore / newTotalGames),
             bestLevel: Math.max(prev.bestLevel || 0, summary.bestLevel),
             bestTimeMs: prev.bestTimeMs != null && summary.bestTimeMs != null
               ? Math.min(prev.bestTimeMs, summary.bestTimeMs)
@@ -574,17 +572,18 @@ export class LeaderboardService {
             updatedAt: new Date(),
           });
         } else {
-          batch.set(archiveRef, {
+          transaction.set(archiveRef, {
             ...summary,
             avgScore: Math.round(summary.totalScore / summary.totalGames),
             updatedAt: new Date(),
           });
         }
-      }
+      });
 
-      await batch.commit();
-      archivedCount += chunk.length;
-      this.logger.log(`Upserted ${archivedCount} archive summaries...`);
+      archivedCount++;
+      if (archivedCount % 100 === 0) {
+        this.logger.log(`Upserted ${archivedCount}/${summaries.size} archive summaries...`);
+      }
     }
 
     // Phase 3: Delete the raw score documents

@@ -55,7 +55,7 @@ export class LeaderboardController {
     @Param('period') period: LeaderboardPeriod,
     @Query('limit') limit?: string
   ): Promise<LeaderboardEntry[]> {
-    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    const parsedLimit = Math.min(limit ? parseInt(limit, 10) || 50 : 50, 100);
     return this.leaderboardService.getLeaderboard(gameId, period, parsedLimit);
   }
 

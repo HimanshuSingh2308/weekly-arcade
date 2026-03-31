@@ -172,71 +172,68 @@ export class CustomizationsService {
       throw new BadRequestException(`Item ${itemId} has no valid coin cost`);
     }
 
-    // Check if already owned
-    const existingItem = await this.firebaseService
-      .doc(`${this.inventoryCollection}/${uid}/items/${itemId}`)
-      .get();
-
-    if (existingItem.exists) {
-      throw new BadRequestException(`You already own ${item.name}`);
-    }
-
-    // Get current balance
-    const { coins: currentBalance } = await this.getCoinBalance(uid);
-
-    if (currentBalance < coinCost) {
-      throw new BadRequestException(
-        `Insufficient coins. Need ${coinCost}, have ${currentBalance}`
-      );
-    }
-
-    // Perform transaction
+    // Use Firestore transaction to prevent double-spend race condition
     const transactionId = uuidv4();
-    const newBalance = currentBalance - coinCost;
     const now = new Date();
 
-    // Use Firestore batch write for atomicity
-    const batch = this.firebaseService.batch();
-
-    // Update coin balance
     const inventoryRef = this.firebaseService.doc(`${this.inventoryCollection}/${uid}`);
-    batch.set(
-      inventoryRef,
-      {
-        odId: uid,
-        coins: newBalance,
-        updatedAt: now,
-      },
-      { merge: true }
-    );
-
-    // Add item to inventory
     const itemRef = this.firebaseService.doc(
       `${this.inventoryCollection}/${uid}/items/${itemId}`
     );
-    batch.set(itemRef, {
-      itemId,
-      acquiredAt: now,
-      acquiredMethod: 'coins',
-      coinsPaid: coinCost,
-      transactionId,
-    });
-
-    // Record transaction
     const txRef = this.firebaseService.doc(`${this.transactionsCollection}/${transactionId}`);
-    batch.set(txRef, {
-      id: transactionId,
-      odId: uid,
-      amount: -coinCost,
-      type: 'purchase' as CoinTransactionType,
-      gameId: item.gameId,
-      itemId,
-      description: `Purchased ${item.name}`,
-      balanceAfter: newBalance,
-      createdAt: now,
-    });
 
-    await batch.commit();
+    const newBalance = await this.firebaseService.runTransaction(async (transaction) => {
+      // Read inside transaction — guarantees consistent snapshot
+      const [inventoryDoc, existingItem] = await Promise.all([
+        transaction.get(inventoryRef),
+        transaction.get(itemRef),
+      ]);
+
+      if (existingItem.exists) {
+        throw new BadRequestException(`You already own ${item.name}`);
+      }
+
+      const currentBalance = inventoryDoc.exists
+        ? (inventoryDoc.data() as UserInventoryDoc).coins || 0
+        : 0;
+
+      if (currentBalance < coinCost) {
+        throw new BadRequestException(
+          `Insufficient coins. Need ${coinCost}, have ${currentBalance}`
+        );
+      }
+
+      const balance = currentBalance - coinCost;
+
+      // All writes inside transaction — atomic
+      transaction.set(inventoryRef, {
+        odId: uid,
+        coins: balance,
+        updatedAt: now,
+      }, { merge: true });
+
+      transaction.set(itemRef, {
+        itemId,
+        acquiredAt: now,
+        acquiredMethod: 'coins',
+        coinsPaid: coinCost,
+        transactionId,
+      });
+
+      transaction.set(txRef, {
+        id: transactionId,
+        odId: uid,
+        amount: -coinCost,
+        type: 'purchase' as CoinTransactionType,
+        gameId: item.gameId,
+        itemId,
+        description: `Purchased ${item.name}`,
+        balanceAfter: balance,
+        createdAt: now,
+      });
+
+      return balance;
+    });
 
     this.logger.log(`User ${uid} purchased ${item.name} for ${coinCost} coins`);
 
