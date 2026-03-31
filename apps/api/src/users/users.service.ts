@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { FieldValue } from 'firebase-admin/firestore';
 import { FirebaseService } from '../firebase/firebase.service';
 import { User, UserSettings } from '@weekly-arcade/shared';
 import { UpdateUserDto, UpdateSettingsDto } from './dto';
@@ -201,34 +200,36 @@ export class UsersService {
   }
 
   /**
-   * Add XP using atomic increment — no read required, eliminates hot-doc contention.
-   * Level is recalculated from the new totalXP after the write.
+   * Add XP via transaction — reads current XP, increments, recalculates level, writes back.
+   * Uses admin.firestore.FieldValue to avoid cross-package class mismatch between
+   * root @google-cloud/firestore and firebase-admin's bundled copy.
    */
   async addXP(uid: string, xpAmount: number): Promise<{ totalXP: number; playerLevel: number }> {
     const userRef = this.firebaseService.doc(`${this.usersCollection}/${uid}`);
 
-    // Atomic increment — no read needed, safe under concurrent writes
-    await userRef.update({
-      totalXP: FieldValue.increment(xpAmount),
-      updatedAt: new Date(),
+    const result = await this.firebaseService.runTransaction(async (txn) => {
+      const snap = await txn.get(userRef);
+      if (!snap.exists) {
+        throw new NotFoundException('User not found');
+      }
+
+      const data = snap.data() as User;
+      const newTotalXP = (data.totalXP || 0) + xpAmount;
+      const newLevel = Math.floor(Math.sqrt(newTotalXP / 100)) + 1;
+
+      const updates: Record<string, unknown> = {
+        totalXP: newTotalXP,
+        updatedAt: new Date(),
+      };
+      if (newLevel !== data.playerLevel) {
+        updates.playerLevel = newLevel;
+      }
+
+      txn.update(userRef, updates);
+      return { totalXP: newTotalXP, playerLevel: newLevel };
     });
 
-    // Read back to compute level (single read, non-contended)
-    const updated = await userRef.get();
-    if (!updated.exists) {
-      throw new NotFoundException('User not found');
-    }
-
-    const newTotalXP = (updated.data() as User).totalXP;
-    const newLevel = Math.floor(Math.sqrt(newTotalXP / 100)) + 1;
-
-    // Update level only if changed (avoids unnecessary write)
-    const currentLevel = (updated.data() as User).playerLevel;
-    if (newLevel !== currentLevel) {
-      await userRef.update({ playerLevel: newLevel });
-    }
-
-    this.logger.log(`Added ${xpAmount} XP to user ${uid}. New total: ${newTotalXP}, Level: ${newLevel}`);
-    return { totalXP: newTotalXP, playerLevel: newLevel };
+    this.logger.log(`Added ${xpAmount} XP to user ${uid}. New total: ${result.totalXP}, Level: ${result.playerLevel}`);
+    return result;
   }
 }
