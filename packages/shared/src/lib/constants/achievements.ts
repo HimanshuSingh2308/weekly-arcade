@@ -608,6 +608,22 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   cb_death_over_six:  { id: 'cb_death_over_six',   name: 'Death Over Hero',   description: 'Hit a six in the death over',             icon: '💥', xpReward: 150, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
   cb_drs_hero:        { id: 'cb_drs_hero',         name: 'DRS Hero',          description: 'Successfully overturn an LBW with DRS',   icon: '📺', xpReward: 200, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
   cb_run_out:         { id: 'cb_run_out',           name: 'Direct Hit',        description: 'Get a run-out while bowling',             icon: '🎯', xpReward: 100, category: 'cricket-blitz', requirement: { type: 'special', gameId: 'cricket-blitz' } },
+
+  // Chess 3D achievements
+  c3d_first_win:      { id: 'c3d_first_win',       name: 'First Victory',     description: 'Win your first chess game',               icon: '♟️', xpReward: 100, category: 'chess-3d', requirement: { type: 'wins', value: 1, gameId: 'chess-3d' } },
+  c3d_checkmate_easy: { id: 'c3d_checkmate_easy',   name: 'Opening Gambit',    description: 'Beat the Easy AI',                        icon: '🎯', xpReward: 50,  category: 'chess-3d', requirement: { type: 'checkmate', gameId: 'chess-3d' } },
+  c3d_checkmate_med:  { id: 'c3d_checkmate_med',    name: 'Tactical Mind',     description: 'Beat the Medium AI',                      icon: '🧠', xpReward: 150, category: 'chess-3d', requirement: { type: 'checkmate', gameId: 'chess-3d' } },
+  c3d_checkmate_hard: { id: 'c3d_checkmate_hard',   name: 'Strategic Master',  description: 'Beat the Hard AI',                        icon: '⚔️', xpReward: 300, category: 'chess-3d', requirement: { type: 'checkmate', gameId: 'chess-3d' } },
+  c3d_checkmate_exp:  { id: 'c3d_checkmate_exp',    name: 'Grandmaster',       description: 'Beat the Expert AI',                      icon: '👑', xpReward: 500, category: 'chess-3d', requirement: { type: 'checkmate', gameId: 'chess-3d' } },
+  c3d_elo_1000:       { id: 'c3d_elo_1000',         name: 'Rising Player',     description: 'Reach 1000 ELO rating',                   icon: '📈', xpReward: 100, category: 'chess-3d', requirement: { type: 'elo', value: 1000, gameId: 'chess-3d' } },
+  c3d_elo_1500:       { id: 'c3d_elo_1500',         name: 'Club Champion',     description: 'Reach 1500 ELO rating',                   icon: '🏆', xpReward: 250, category: 'chess-3d', requirement: { type: 'elo', value: 1500, gameId: 'chess-3d' } },
+  c3d_elo_2000:       { id: 'c3d_elo_2000',         name: 'Chess Master',      description: 'Reach 2000 ELO rating',                   icon: '💎', xpReward: 500, category: 'chess-3d', requirement: { type: 'elo', value: 2000, gameId: 'chess-3d' } },
+  c3d_quick_mate:     { id: 'c3d_quick_mate',       name: "Scholar's Mate",    description: 'Win in 10 moves or fewer',                icon: '⚡', xpReward: 200, category: 'chess-3d', requirement: { type: 'special', gameId: 'chess-3d' } },
+  c3d_win_streak_3:   { id: 'c3d_win_streak_3',     name: 'Hat Trick',         description: 'Win 3 games in a row',                    icon: '🔥', xpReward: 150, category: 'chess-3d', requirement: { type: 'streak', value: 3, gameId: 'chess-3d' } },
+  c3d_win_streak_5:   { id: 'c3d_win_streak_5',     name: 'Unstoppable',       description: 'Win 5 games in a row',                    icon: '💪', xpReward: 300, category: 'chess-3d', requirement: { type: 'streak', value: 5, gameId: 'chess-3d' } },
+  c3d_10_games:       { id: 'c3d_10_games',         name: 'Chess Enthusiast',  description: 'Play 10 chess games',                     icon: '♜', xpReward: 100, category: 'chess-3d', requirement: { type: 'special', gameId: 'chess-3d' } },
+  c3d_stalemate:      { id: 'c3d_stalemate',        name: 'Houdini',           description: 'Escape with a stalemate when losing',     icon: '🎩', xpReward: 200, category: 'chess-3d', requirement: { type: 'special', gameId: 'chess-3d' } },
+  c3d_promotion:      { id: 'c3d_promotion',        name: 'Promoted',          description: 'Promote a pawn to a queen',               icon: '👸', xpReward: 75,  category: 'chess-3d', requirement: { type: 'special', gameId: 'chess-3d' } },
 };
 
 export const ACHIEVEMENT_LIST = Object.values(ACHIEVEMENTS);

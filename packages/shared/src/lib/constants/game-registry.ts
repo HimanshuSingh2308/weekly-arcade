@@ -25,6 +25,7 @@ export const GAME_REGISTRY: GameInfo[] = [
   { id: 'coin-cascade',       name: 'Coin Cascade',        icon: '🪙', description: 'Physics coin pusher',    genres: ['arcade', 'casual'] },
   { id: 'tiny-tycoon',        name: 'Tiny Tycoon',         icon: '🧋', description: 'Boba shop simulator',    genres: ['simulation', 'casual'] },
   { id: 'cricket-blitz',    name: 'Cricket Blitz',       icon: '🏏', description: '3D IPL-style cricket',  genres: ['sports', '3d'] },
+  { id: 'chess-3d',          name: 'Chess 3D',            icon: '♟️', description: '3D chess vs AI',         genres: ['strategy', 'board', '3d'] },
 ];
 
 /** Lookup a game by ID */

@@ -1,0 +1,16 @@
+{
+  "id": "chess-3d",
+  "name": "Chess 3D",
+  "icon": "\u265f\ufe0f",
+  "title": "Chess 3D | Weekly Arcade - 3D Chess vs AI",
+  "description": "Play chess against a smart AI or challenge friends in real-time — on a stunning 3D board you can rotate and explore.",
+  "keywords": "chess 3d, chess game, chess ai, strategy game, board game, browser chess, online chess",
+  "url": "/games/chess-3d/",
+  "themeColor": "#1C1C2E",
+  "accentColor": "#C9A84C",
+  "genres": ["Strategy", "Board", "3D"],
+  "ratingValue": "4.8",
+  "ratingCount": "500",
+  "category": "strategy",
+  "rendering": "webgl"
+}

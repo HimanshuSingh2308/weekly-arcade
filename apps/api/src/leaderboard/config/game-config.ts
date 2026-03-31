@@ -268,6 +268,52 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     },
   },
 
+  // Chess 3D: 3D chess vs AI with ELO rating
+  'chess-3d': {
+    maxScore: 3000,            // Max realistic ELO
+    maxScorePerSecond: 100,
+    minTimeMs: 10000,          // Minimum 10 seconds for a game
+    allowedMetadataKeys: ['result', 'opponent', 'aiDifficulty', 'movesPlayed', 'eloDelta', 'openingName', 'terminationType'],
+    customValidation: (dto) => {
+      // ELO must be reasonable
+      if (dto.score < 100) {
+        return { valid: false, reason: 'ELO below minimum' };
+      }
+      // Validate metadata values
+      if (dto.metadata) {
+        const validResults = ['win', 'loss', 'draw'];
+        if (dto.metadata.result && !validResults.includes(dto.metadata.result as string)) {
+          return { valid: false, reason: 'Invalid result value' };
+        }
+        const validDifficulties = ['easy', 'medium', 'hard', 'expert'];
+        if (dto.metadata.aiDifficulty && !validDifficulties.includes(dto.metadata.aiDifficulty as string)) {
+          return { valid: false, reason: 'Invalid AI difficulty' };
+        }
+        // ELO delta must be within K-factor bounds (max K=40)
+        if (dto.metadata.eloDelta !== undefined) {
+          const delta = dto.metadata.eloDelta as number;
+          if (typeof delta !== 'number' || Math.abs(delta) > 40) {
+            return { valid: false, reason: 'ELO delta out of range' };
+          }
+        }
+        // Moves-to-time correlation: at least 1.5s per move for human play
+        if (dto.metadata.movesPlayed && dto.timeMs) {
+          const minTimeForMoves = (dto.metadata.movesPlayed as number) * 1500;
+          if (dto.timeMs < minTimeForMoves) {
+            return { valid: false, reason: 'Game completed faster than physically possible' };
+          }
+        }
+        // Difficulty-based minimum game time
+        const minTimeByDifficulty: Record<string, number> = { easy: 15000, medium: 30000, hard: 60000, expert: 120000 };
+        const diffMinTime = minTimeByDifficulty[dto.metadata.aiDifficulty as string];
+        if (diffMinTime && dto.timeMs && dto.timeMs < diffMinTime) {
+          return { valid: false, reason: 'Game too short for difficulty level' };
+        }
+      }
+      return { valid: true };
+    },
+  },
+
   // Cricket Blitz: 3D IPL-style cricket (bat 5 overs + bowl 5 overs)
   'cricket-blitz': {
     maxScore: 500,           // Max ~200 batting + ~150 bowling bonus + bonuses
