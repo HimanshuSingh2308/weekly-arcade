@@ -268,6 +268,32 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     },
   },
 
+  // Chess 3D: 3D chess vs AI with ELO rating
+  'chess-3d': {
+    maxScore: 3000,            // Max realistic ELO
+    maxScorePerSecond: 100,
+    minTimeMs: 10000,          // Minimum 10 seconds for a game
+    allowedMetadataKeys: ['result', 'opponent', 'aiDifficulty', 'movesPlayed', 'eloDelta', 'openingName', 'terminationType'],
+    customValidation: (dto) => {
+      // ELO must be reasonable
+      if (dto.score < 100) {
+        return { valid: false, reason: 'ELO below minimum' };
+      }
+      // Validate metadata values
+      if (dto.metadata) {
+        const validResults = ['win', 'loss', 'draw'];
+        if (dto.metadata.result && !validResults.includes(dto.metadata.result as string)) {
+          return { valid: false, reason: 'Invalid result value' };
+        }
+        const validDifficulties = ['easy', 'medium', 'hard', 'expert'];
+        if (dto.metadata.aiDifficulty && !validDifficulties.includes(dto.metadata.aiDifficulty as string)) {
+          return { valid: false, reason: 'Invalid AI difficulty' };
+        }
+      }
+      return { valid: true };
+    },
+  },
+
   // Cricket Blitz: 3D IPL-style cricket (bat 5 overs + bowl 5 overs)
   'cricket-blitz': {
     maxScore: 500,           // Max ~200 batting + ~150 bowling bonus + bonuses

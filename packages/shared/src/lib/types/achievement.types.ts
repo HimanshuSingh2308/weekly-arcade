@@ -17,10 +17,11 @@ export type AchievementCategory =
   | 'voidbreak'
   | 'stack-tower'
   | 'tiny-tycoon'
-  | 'cricket-blitz';
+  | 'cricket-blitz'
+  | 'chess-3d';
 
 export interface AchievementRequirement {
-  type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special' | 'first_boundary' | 'first_six' | 'sixes';
+  type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special' | 'first_boundary' | 'first_six' | 'sixes' | 'checkmate' | 'elo';
   value?: number;
   gameId?: string;
 }

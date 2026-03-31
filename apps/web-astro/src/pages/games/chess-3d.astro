@@ -1,0 +1,177 @@
+---
+/**
+ * Chess 3D -- 3D Chess vs AI (Babylon.js WebGL).
+ *
+ * GameLayout handles: meta, SEO, structured data, header, shared modules, fallback, more-games.
+ */
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/chess-3d.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/games/chess-3d/styles.css">
+    <style is:global>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #1C1C2E;
+        color: #E8DCC8;
+        touch-action: manipulation;
+        overflow: hidden;
+      }
+    </style>
+  </Fragment>
+
+  <!-- 3D Canvas Container -->
+  <div class="chess3d-wrap" id="gameWrap">
+    <canvas id="renderCanvas"></canvas>
+  </div>
+
+  <!-- Main Menu Overlay -->
+  <div class="chess3d-overlay chess3d-visible" id="mainMenuOverlay" role="dialog" aria-modal="true" aria-label="Chess 3D - Main Menu">
+    <div class="chess3d-modal chess3d-menu-modal">
+      <div class="chess3d-menu-icon">{gameData.icon}</div>
+      <h1 class="chess3d-menu-title">Chess 3D</h1>
+      <p class="chess3d-menu-tagline">3D Chess with Smart AI</p>
+
+      <div class="chess3d-elo-display" id="menuEloDisplay">
+        <span class="chess3d-elo-badge" id="menuEloBadge"></span>
+        <span class="chess3d-elo-value" id="menuEloValue"></span>
+      </div>
+
+      <div class="chess3d-menu-stats" id="menuStats"></div>
+
+      <div class="chess3d-difficulty-select" id="difficultySelect">
+        <label class="chess3d-label">Difficulty</label>
+        <div class="chess3d-btn-group">
+          <button class="chess3d-diff-btn" data-diff="easy">Easy<span class="chess3d-diff-elo">~600</span></button>
+          <button class="chess3d-diff-btn selected" data-diff="medium">Medium<span class="chess3d-diff-elo">~1100</span></button>
+          <button class="chess3d-diff-btn" data-diff="hard">Hard<span class="chess3d-diff-elo">~1500</span></button>
+          <button class="chess3d-diff-btn" data-diff="expert">Expert<span class="chess3d-diff-elo">~1900</span></button>
+        </div>
+      </div>
+
+      <div class="chess3d-color-select" id="colorSelect">
+        <label class="chess3d-label">Play As</label>
+        <div class="chess3d-btn-group">
+          <button class="chess3d-color-btn selected" data-color="white">White</button>
+          <button class="chess3d-color-btn" data-color="random">Random</button>
+          <button class="chess3d-color-btn" data-color="black">Black</button>
+        </div>
+      </div>
+
+      <button class="chess3d-btn chess3d-btn-play" id="playAIBtn">Play vs AI</button>
+
+      <button class="chess3d-btn chess3d-btn-disabled" id="playFriendBtn" disabled>
+        Play vs Friend <span class="chess3d-coming-soon">Coming Soon</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Game HUD -->
+  <div class="chess3d-hud" id="gameHud" style="display:none;">
+    <!-- Top player (opponent) -->
+    <div class="chess3d-player-bar chess3d-player-top" id="playerTop">
+      <div class="chess3d-player-info">
+        <span class="chess3d-player-name" id="topName">AI</span>
+        <span class="chess3d-player-elo" id="topElo"></span>
+      </div>
+      <div class="chess3d-captured" id="topCaptured"></div>
+      <div class="chess3d-material-adv" id="topAdvantage"></div>
+    </div>
+
+    <!-- Bottom player (you) -->
+    <div class="chess3d-player-bar chess3d-player-bottom" id="playerBottom">
+      <div class="chess3d-player-info">
+        <span class="chess3d-player-name" id="bottomName">You</span>
+        <span class="chess3d-player-elo" id="bottomElo"></span>
+      </div>
+      <div class="chess3d-captured" id="bottomCaptured"></div>
+      <div class="chess3d-material-adv" id="bottomAdvantage"></div>
+    </div>
+
+    <!-- Turn indicator -->
+    <div class="chess3d-turn-indicator" id="turnIndicator">
+      <span id="turnText">Your turn</span>
+    </div>
+
+    <!-- AI thinking indicator -->
+    <div class="chess3d-thinking" id="thinkingIndicator" style="display:none;">
+      <div class="chess3d-thinking-dots"><span></span><span></span><span></span></div>
+      <span>Thinking...</span>
+    </div>
+
+    <!-- Move history panel -->
+    <div class="chess3d-move-history" id="moveHistory">
+      <div class="chess3d-move-list" id="moveList"></div>
+    </div>
+
+    <!-- HUD buttons -->
+    <div class="chess3d-hud-buttons">
+      <button class="chess3d-hud-btn" id="undoBtn" title="Undo (Z)" aria-label="Undo last move">&#x21A9;</button>
+      <button class="chess3d-hud-btn" id="flipBtn" title="Flip board (F)" aria-label="Flip board">&#x21C5;</button>
+      <button class="chess3d-hud-btn" id="resetCamBtn" title="Reset camera (R)" aria-label="Reset camera">&#x21BA;</button>
+      <button class="chess3d-hud-btn chess3d-hud-btn-danger" id="resignBtn" title="Resign" aria-label="Resign">&#x2691;</button>
+    </div>
+  </div>
+
+  <!-- Promotion Dialog -->
+  <div class="chess3d-overlay" id="promotionOverlay" role="dialog" aria-modal="true" aria-label="Choose promotion piece">
+    <div class="chess3d-modal chess3d-promotion-modal">
+      <h2>Promote Pawn</h2>
+      <div class="chess3d-promotion-choices" id="promotionChoices">
+        <button class="chess3d-promo-btn" data-piece="q" aria-label="Queen">&#9813;</button>
+        <button class="chess3d-promo-btn" data-piece="r" aria-label="Rook">&#9814;</button>
+        <button class="chess3d-promo-btn" data-piece="b" aria-label="Bishop">&#9815;</button>
+        <button class="chess3d-promo-btn" data-piece="n" aria-label="Knight">&#9816;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resign Confirm Dialog -->
+  <div class="chess3d-overlay" id="resignOverlay" role="dialog" aria-modal="true" aria-label="Confirm resignation">
+    <div class="chess3d-modal chess3d-resign-modal">
+      <h2>Resign?</h2>
+      <p>You will lose this game and it will affect your rating.</p>
+      <div class="chess3d-btn-row">
+        <button class="chess3d-btn" id="resignConfirmBtn">Resign</button>
+        <button class="chess3d-btn chess3d-btn-secondary" id="resignCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div class="chess3d-overlay" id="gameOverOverlay" role="dialog" aria-modal="true" aria-label="Game over">
+    <div class="chess3d-modal chess3d-gameover-modal">
+      <h2 id="gameOverTitle">Game Over</h2>
+      <p id="gameOverReason" class="chess3d-gameover-reason"></p>
+      <div class="chess3d-elo-change" id="gameOverElo"></div>
+      <div class="chess3d-gameover-stats" id="gameOverStats"></div>
+      <div class="chess3d-btn-row">
+        <button class="chess3d-btn chess3d-btn-play" id="rematchBtn">Rematch</button>
+        <button class="chess3d-btn chess3d-btn-secondary" id="menuBtn">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen reader announcements -->
+  <div id="srAnnounce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <Fragment slot="scripts">
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script is:inline src="/games/chess-3d/game.js"></script>
+  </Fragment>
+</GameLayout>
