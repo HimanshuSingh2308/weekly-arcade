@@ -5,6 +5,10 @@ export * from './lib/types/leaderboard.types.js';
 export * from './lib/types/achievement.types.js';
 export * from './lib/types/customization.types.js';
 export * from './lib/types/notification.types.js';
+export * from './lib/types/multiplayer.types.js';
+
+// Interfaces
+export * from './lib/interfaces/game-logic.interface.js';
 
 // Constants
 export * from './lib/constants/achievements.js';
