@@ -105,6 +105,10 @@ export class UsersService {
       throw new BadRequestException('Already friends');
     }
 
+    if (friends.length >= 50) {
+      throw new BadRequestException('Friends list is full (max 50)');
+    }
+
     const newFriends = [...friends, friendUid];
 
     await userRef.update({

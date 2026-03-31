@@ -426,14 +426,20 @@ export class CustomizationsService {
 
   async getCoinHistory(
     uid: string,
-    limit = 50
+    limit = 50,
+    startAfter?: string
   ): Promise<{ transactions: CoinTransaction[]; totalCount: number }> {
-    const snapshot = await this.firebaseService
+    let query = this.firebaseService
       .collection(this.transactionsCollection)
       .where('odId', '==', uid)
       .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
+      .limit(limit);
+
+    if (startAfter) {
+      query = query.startAfter(new Date(startAfter));
+    }
+
+    const snapshot = await query.get();
 
     const transactions: CoinTransaction[] = snapshot.docs.map((doc) => {
       const data = doc.data();

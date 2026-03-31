@@ -8,7 +8,10 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == userId;
 
       // Users can update their own data (but not create/delete via client)
-      allow update: if request.auth != null && request.auth.uid == userId;
+      // SECURITY: Prevent client-side manipulation of server-managed fields
+      allow update: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['totalXP', 'playerLevel', 'uid', 'email', 'createdAt', 'currentPlayStreak', 'lastPlayedDate']);
 
       // Game states subcollection
       match /gameStates/{gameId} {

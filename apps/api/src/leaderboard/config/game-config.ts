@@ -9,12 +9,17 @@
  * - maxGuessCount: Maximum guesses allowed (for word games)
  */
 
+// Common metadata keys used by XP calculation (allowed for all games)
+const COMMON_METADATA_KEYS = ['perfectGame', 'streakBonus'];
+
 export interface GameValidationConfig {
   maxScore: number;
   maxScorePerSecond: number;
   minTimeMs: number;
   maxLevel?: number;
   maxGuessCount?: number;
+  // Allowed metadata keys (in addition to COMMON_METADATA_KEYS). If undefined, only common keys allowed.
+  allowedMetadataKeys?: string[];
   // Custom validation function for game-specific rules
   customValidation?: (dto: ScoreValidationInput) => ValidationResult;
 }
@@ -42,6 +47,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 500, // Can get points quickly on easy guesses
     minTimeMs: 3000, // Minimum 3 seconds to read and guess
     maxGuessCount: 6,
+    allowedMetadataKeys: ['wordLength', 'hardMode'],
     customValidation: (dto) => {
       if (dto.guessCount !== undefined && dto.guessCount > 6) {
         return { valid: false, reason: 'Wordle allows maximum 6 guesses' };
@@ -62,6 +68,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 100000, // Very high scores possible with long games
     maxScorePerSecond: 50, // ~1 apple per second at most
     minTimeMs: 5000, // At least 5 seconds of gameplay
+    allowedMetadataKeys: [],
     customValidation: (dto) => {
       // Score should be proportional to time (roughly)
       if (dto.timeMs && dto.score > 0) {
@@ -79,6 +86,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 500000, // Very high scores possible
     maxScorePerSecond: 200, // Moves take time
     minTimeMs: 30000, // At least 30 seconds for a meaningful game
+    allowedMetadataKeys: [],
     customValidation: (dto) => {
       // High scores require many moves which take time
       if (dto.timeMs && dto.score > 10000) {
@@ -97,6 +105,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 100, // Quick stacking possible
     minTimeMs: 5000,
     maxLevel: 200, // Realistic tower height limit
+    allowedMetadataKeys: [],
     customValidation: (dto) => {
       if (dto.level !== undefined && dto.level > 200) {
         return { valid: false, reason: 'Tower height exceeds maximum' };
@@ -115,6 +124,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 500, // Fast-paced game
     minTimeMs: 10000, // Minimum round duration
     maxLevel: 100,
+    allowedMetadataKeys: ['wave', 'perfectWave'],
     customValidation: (dto) => {
       // Score should scale with time and level
       if (dto.timeMs && dto.level) {
@@ -133,6 +143,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 100,
     minTimeMs: 30000, // Strategy games take time
     maxLevel: 11, // wave 10 + victory
+    allowedMetadataKeys: ['wave', 'deck'],
     customValidation: (dto) => {
       // Score should correlate with waves survived
       if (dto.level !== undefined && dto.score > dto.level * 10000) {
@@ -153,6 +164,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 200, // Fast serving possible
     minTimeMs: 60000, // 1 minute minimum
     maxLevel: 20,
+    allowedMetadataKeys: [],
     customValidation: (dto) => {
       // Score capped by round time
       if (dto.timeMs && dto.score > (dto.timeMs / 1000) * 300) {
@@ -168,6 +180,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 6000, // 5000 theoretical + buffer
     maxScorePerSecond: 200,
     minTimeMs: 10000, // Minimum to complete a board
+    allowedMetadataKeys: ['difficulty'],
     customValidation: (dto) => {
       // Perfect memory should still take some time
       if (dto.timeMs && dto.timeMs < 5000 && dto.score > 3000) {
@@ -192,6 +205,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 300,
     minTimeMs: 5000,
     maxGuessCount: 10,
+    allowedMetadataKeys: [],
   },
 
   // Solitaire Roguelite: Klondike with Joker multipliers
@@ -200,6 +214,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 100,
     minTimeMs: 30000, // At least 30 seconds for a real game
     maxLevel: 4, // foundationsCompleted 0-4
+    allowedMetadataKeys: [],
     customValidation: (dto) => {
       if (dto.level !== undefined && dto.level > 4) {
         return { valid: false, reason: 'Foundations completed exceeds 4' };
@@ -214,6 +229,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 50000,
     maxScorePerSecond: 200, // Rapid cascades can score fast with combos
     minTimeMs: 15000, // Games take at least 15 seconds (30 coins × 0.5s cooldown)
+    allowedMetadataKeys: ['coinsDropped', 'coinsCollected'],
     customValidation: (dto) => {
       if (dto.metadata) {
         const dropped = dto.metadata.coinsDropped as number;
@@ -236,6 +252,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 100000, // Tier 2 + prestige + bridge + events can stack high
     maxScorePerSecond: 2000,
     minTimeMs: 55000, // days are 60 seconds, allow 5s tolerance
+    allowedMetadataKeys: ['customersServed'],
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
@@ -258,6 +275,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 100000,
     maxScorePerSecond: 2000,
     minTimeMs: 55000,
+    allowedMetadataKeys: ['customersServed'],
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
@@ -274,6 +292,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 100000,
     maxScorePerSecond: 2000,
     minTimeMs: 55000,
+    allowedMetadataKeys: ['customersServed'],
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
@@ -291,6 +310,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 150000,
     maxScorePerSecond: 3000,
     minTimeMs: 55000,
+    allowedMetadataKeys: ['customersServed'],
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
@@ -308,6 +328,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScore: 300000,
     maxScorePerSecond: 5000,
     minTimeMs: 55000,
+    allowedMetadataKeys: ['customersServed'],
     customValidation: (dto) => {
       if (dto.metadata) {
         const served = dto.metadata.customersServed as number;
@@ -325,6 +346,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxScorePerSecond: 5,    // Cricket is a slow-scoring game
     minTimeMs: 10000,        // At least 10 seconds (can lose 3 wickets fast)
     maxLevel: 10,            // Levels for progression
+    allowedMetadataKeys: [],
   },
 };
 
@@ -402,6 +424,20 @@ export function validateScore(
       valid: false,
       reason: `Guess count ${dto.guessCount} exceeds maximum ${config.maxGuessCount}`,
     };
+  }
+
+  // Validate metadata keys against per-game allowlist
+  if (dto.metadata && typeof dto.metadata === 'object') {
+    const gameKeys = config.allowedMetadataKeys ?? [];
+    const allowedKeys = new Set([...COMMON_METADATA_KEYS, ...gameKeys]);
+    const submittedKeys = Object.keys(dto.metadata);
+    const disallowedKeys = submittedKeys.filter((k) => !allowedKeys.has(k));
+    if (disallowedKeys.length > 0) {
+      return {
+        valid: false,
+        reason: `Disallowed metadata keys for ${gameId}: ${disallowedKeys.join(', ')}`,
+      };
+    }
   }
 
   // Run custom validation (if defined)

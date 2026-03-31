@@ -87,13 +87,29 @@ export class AchievementsService {
     };
   }
 
-  async getUserAchievements(uid: string): Promise<UserAchievement[]> {
-    const snapshot = await this.firebaseService
+  async getUserAchievements(
+    uid: string,
+    limit = 50,
+    startAfter?: string
+  ): Promise<UserAchievement[]> {
+    let query = this.firebaseService
       .collection(this.achievementsCollection)
       .where('odId', '==', uid)
-      .get();
+      .orderBy('unlockedAt', 'desc')
+      .limit(limit);
 
-    return snapshot.docs.map((doc) => doc.data() as UserAchievement);
+    if (startAfter) {
+      query = query.startAfter(new Date(startAfter));
+    }
+
+    const snapshot = await query.get();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        unlockedAt: data.unlockedAt?.toDate ? data.unlockedAt.toDate() : data.unlockedAt,
+      } as UserAchievement;
+    });
   }
 
   async getAchievementProgress(uid: string): Promise<{

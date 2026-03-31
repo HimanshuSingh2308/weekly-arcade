@@ -7,12 +7,13 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
 import { CustomizationsService } from './customizations.service';
 import { CurrentUser, AuthUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
-import { PurchaseItemDto, EquipItemDto, AddCoinsDto } from './dto';
+import { AdminGuard } from '../auth/guards/admin.guard';
+import { PurchaseItemDto, EquipItemDto } from './dto';
 import {
   CustomizationItem,
   UserEquippedItems,
@@ -109,29 +110,8 @@ export class CustomizationsController {
   }
 
   // ============ COINS (Auth Required) ============
-
-  /**
-   * Add coins (from game events)
-   * SECURITY: Rate limited to prevent coin flooding from console abuse
-   */
-  @Post('coins/add')
-  @HttpCode(HttpStatus.OK)
-  @Throttle({
-    short: { limit: 1, ttl: 5000 }, // 1 per 5 seconds
-    medium: { limit: 5, ttl: 60000 }, // 5 per minute
-    long: { limit: 30, ttl: 3600000 }, // 30 per hour
-  })
-  async addCoins(
-    @CurrentUser() authUser: AuthUser,
-    @Body() addCoinsDto: AddCoinsDto
-  ): Promise<{
-    success: boolean;
-    coinsAdded: number;
-    newBalance: number;
-    transactionId: string;
-  }> {
-    return this.customizationsService.addCoins(authUser.uid, addCoinsDto);
-  }
+  // Note: Coin rewards are now awarded server-side during score submission.
+  // The POST /coins/add endpoint has been removed to prevent client-side coin injection.
 
   /**
    * Get current coin balance
@@ -150,25 +130,26 @@ export class CustomizationsController {
   @Get('coins/history')
   async getCoinHistory(
     @CurrentUser() authUser: AuthUser,
-    @Query('limit') limit?: string
+    @Query('limit') limit?: string,
+    @Query('startAfter') startAfter?: string
   ): Promise<{
     transactions: CoinTransaction[];
     totalCount: number;
   }> {
     const limitNum = limit ? parseInt(limit, 10) : 50;
-    return this.customizationsService.getCoinHistory(authUser.uid, limitNum);
+    return this.customizationsService.getCoinHistory(authUser.uid, limitNum, startAfter);
   }
 
   // ============ ADMIN ============
 
   /**
    * Seed catalog to Firestore (for initial setup)
-   * In production, this should be protected by admin auth
+   * Protected by AdminGuard — requires ADMIN_UIDS env var
    */
   @Post('admin/seed-catalog')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AdminGuard)
   async seedCatalog(@CurrentUser() authUser: AuthUser): Promise<{ seeded: number }> {
-    // TODO: Add admin role check
     return this.customizationsService.seedCatalog();
   }
 }

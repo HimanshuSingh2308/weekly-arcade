@@ -1,7 +1,9 @@
 import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { FirebaseService } from '../firebase/firebase.service';
 import { UsersService } from '../users/users.service';
 import { AuthService } from '../auth/auth.service';
+import { CustomizationsService } from '../customizations/customizations.service';
 import { LeaderboardEntry, LeaderboardPeriod, ScoreRecord, User } from '@weekly-arcade/shared';
 import { SubmitScoreDto } from './dto';
 import { validateScore, ValidationResult } from './config/game-config';
@@ -16,14 +18,20 @@ function removeUndefined<T extends object>(obj: T): T {
 @Injectable()
 export class LeaderboardService {
   private readonly logger = new Logger(LeaderboardService.name);
+  // "od" prefix = "operator display" — public-facing user identifier (maps to Firebase UID)
   private readonly scoresCollection = 'scores';
   private readonly leaderboardsCollection = 'leaderboards';
   private readonly usersCollection = 'users';
 
+  // In-memory leaderboard cache: key → { entries, expiry timestamp }
+  private readonly leaderboardCache = new Map<string, { data: LeaderboardEntry[]; expiry: number }>();
+  private readonly CACHE_TTL_MS = 60_000; // 60 seconds
+
   constructor(
     private readonly firebaseService: FirebaseService,
     private readonly usersService: UsersService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly customizationsService: CustomizationsService,
   ) {}
 
   private getDateKey(period: LeaderboardPeriod, date: Date = new Date()): string {
@@ -109,6 +117,19 @@ export class LeaderboardService {
     // Calculate XP earned
     const xpEarned = this.calculateXP(submitDto);
     await this.usersService.addXP(uid, xpEarned);
+
+    // Award coins server-side based on score (replaces client-callable /coins/add)
+    const coinsEarned = Math.min(50, Math.floor(submitDto.score / 100));
+    if (coinsEarned > 0) {
+      this.customizationsService
+        .addCoins(uid, {
+          amount: coinsEarned,
+          type: 'game_reward',
+          gameId,
+          description: `Score reward for ${gameId}`,
+        })
+        .catch((err) => this.logger.warn(`Failed to award coins to ${uid}: ${err.message}`));
+    }
 
     // Get rank for today
     const rank = await this.getUserRank(uid, gameId, 'daily');
@@ -240,6 +261,9 @@ export class LeaderboardService {
         updatedAt: new Date(),
       });
     });
+
+    // Invalidate cache for this leaderboard
+    this.leaderboardCache.delete(leaderboardId);
   }
 
   async getLeaderboard(
@@ -249,6 +273,13 @@ export class LeaderboardService {
   ): Promise<LeaderboardEntry[]> {
     const dateKey = this.getDateKey(period);
     const leaderboardId = `${gameId}_${period}_${dateKey}`;
+
+    // Check in-memory cache first
+    const cached = this.leaderboardCache.get(leaderboardId);
+    if (cached && Date.now() < cached.expiry) {
+      return cached.data.slice(0, limit);
+    }
+
     const doc = await this.firebaseService
       .doc(`${this.leaderboardsCollection}/${leaderboardId}`)
       .get();
@@ -258,7 +289,15 @@ export class LeaderboardService {
     }
 
     const data = doc.data() as { entries: LeaderboardEntry[] };
-    return (data.entries || []).slice(0, limit);
+    const entries = data.entries || [];
+
+    // Store in cache
+    this.leaderboardCache.set(leaderboardId, {
+      data: entries,
+      expiry: Date.now() + this.CACHE_TTL_MS,
+    });
+
+    return entries.slice(0, limit);
   }
 
   async getFriendsLeaderboard(
@@ -333,5 +372,44 @@ export class LeaderboardService {
       rank: entry?.rank || 0,
       score: entry?.score || 0,
     };
+  }
+
+  // ============ SCORES ARCHIVAL ============
+
+  /**
+   * Weekly cron: delete scores older than 90 days to control Firestore costs.
+   * Runs every Sunday at 3 AM.
+   */
+  @Cron('0 3 * * 0')
+  async archiveOldScores(): Promise<void> {
+    const cutoffDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    let totalDeleted = 0;
+
+    this.logger.log(`Starting scores archival — deleting scores before ${cutoffDate.toISOString()}`);
+
+    let hasMore = true;
+    while (hasMore) {
+      const snapshot = await this.firebaseService
+        .collection(this.scoresCollection)
+        .where('createdAt', '<', cutoffDate)
+        .limit(500)
+        .get();
+
+      if (snapshot.empty) {
+        hasMore = false;
+        break;
+      }
+
+      const batch = this.firebaseService.batch();
+      for (const doc of snapshot.docs) {
+        batch.delete(doc.ref);
+      }
+      await batch.commit();
+
+      totalDeleted += snapshot.size;
+      this.logger.log(`Archived ${totalDeleted} old scores so far...`);
+    }
+
+    this.logger.log(`Scores archival complete — deleted ${totalDeleted} scores older than 90 days`);
   }
 }

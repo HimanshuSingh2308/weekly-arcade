@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -27,8 +28,13 @@ export class AchievementsController {
    * Get current user's unlocked achievements
    */
   @Get('me')
-  async getMyAchievements(@CurrentUser() authUser: AuthUser): Promise<UserAchievement[]> {
-    return this.achievementsService.getUserAchievements(authUser.uid);
+  async getMyAchievements(
+    @CurrentUser() authUser: AuthUser,
+    @Query('limit') limit?: string,
+    @Query('startAfter') startAfter?: string
+  ): Promise<UserAchievement[]> {
+    const limitNum = limit ? parseInt(limit, 10) : 50;
+    return this.achievementsService.getUserAchievements(authUser.uid, limitNum, startAfter);
   }
 
   /**
