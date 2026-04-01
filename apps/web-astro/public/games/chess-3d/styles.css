@@ -248,6 +248,7 @@
 
 .chess3d-btn-row .chess3d-btn {
   flex: 1;
+  width: auto;
 }
 
 /* ---------- HUD ---------- */
