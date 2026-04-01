@@ -2978,11 +2978,15 @@
     window.multiplayerClient.onError(({ code }) => {
       if (code === 'DISCONNECTED') {
         window.multiplayerUI?.showDisconnectOverlay();
+        // Pause timers — don't penalize players during connection loss
+        mpPauseTimers();
       }
     });
 
     window.multiplayerClient.onReconnected(() => {
       window.multiplayerUI?.hideDisconnectOverlay();
+      // Resume timers from where they were paused
+      mpResumeTimers();
       srAnnounce('Reconnected to game server.');
     });
   }
@@ -3064,6 +3068,40 @@
   function mpStopTimers() {
     if (mpTurnTimerInterval) { clearInterval(mpTurnTimerInterval); mpTurnTimerInterval = null; }
     if (mpGameTimerInterval) { clearInterval(mpGameTimerInterval); mpGameTimerInterval = null; }
+  }
+
+  // Track elapsed time at pause so we can resume accurately
+  let mpPausedTurnElapsed = 0;
+  let mpPausedGameElapsed = 0;
+  let mpTimersPaused = false;
+
+  function mpPauseTimers() {
+    if (mpTimersPaused) return;
+    mpTimersPaused = true;
+    mpPausedTurnElapsed = (Date.now() - mpTurnStartTime) / 1000;
+    mpPausedGameElapsed = (Date.now() - gameStartTime) / 1000;
+    mpStopTimers();
+
+    // Show paused state on timers
+    const myTimer = $('bottomTimer');
+    const oppTimer = $('topTimer');
+    if (myTimer) myTimer.classList.add('warning');
+    if (oppTimer) oppTimer.classList.add('warning');
+    $('gameClock').textContent = mpFormatTime(mpPausedGameElapsed) + ' ⏸';
+  }
+
+  function mpResumeTimers() {
+    if (!mpTimersPaused) return;
+    mpTimersPaused = false;
+
+    // Adjust start times to account for paused duration
+    mpTurnStartTime = Date.now() - (mpPausedTurnElapsed * 1000);
+    gameStartTime = Date.now() - (mpPausedGameElapsed * 1000);
+
+    // Restart the timers
+    const isMyTurn = chessEngine.getTurn() === playerColor;
+    mpStartTurnTimer(isMyTurn);
+    mpStartGameClock();
   }
 
   function mpCleanup() {
