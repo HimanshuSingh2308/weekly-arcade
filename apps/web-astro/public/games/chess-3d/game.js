@@ -1824,10 +1824,10 @@
     // Multiplayer lobby buttons
     if ($('mpQuickMatchBtn')) {
       $('mpQuickMatchBtn').addEventListener('click', async () => {
-        if (!currentUser) return;
+        if (!currentUser) { window.authNudge?.show(); return; }
         sound.play('click');
         window.multiplayerUI?.showMatchmaking('Chess 3D', async () => {
-          await window.multiplayerClient.cancelMatchmaking();
+          await window.multiplayerClient.cancelMatchmaking().catch(() => {});
         });
         try {
           const result = await window.multiplayerClient.findMatch('chess-3d');
@@ -1839,14 +1839,14 @@
           }
         } catch (err) {
           window.multiplayerUI?.hideMatchmaking();
-          console.error('[Chess3D] Matchmaking error:', err);
+          mpShowError('Matchmaking is not available yet. The multiplayer server is being deployed.');
         }
       });
     }
 
     if ($('mpCreatePrivateBtn')) {
       $('mpCreatePrivateBtn').addEventListener('click', async () => {
-        if (!currentUser) return;
+        if (!currentUser) { window.authNudge?.show(); return; }
         sound.play('click');
         try {
           const colorChoice = document.querySelector('.chess3d-color-btn.selected')?.dataset.color || 'random';
@@ -1859,14 +1859,14 @@
           mpIsHost = true;
           mpShowWaitingRoom(session);
         } catch (err) {
-          console.error('[Chess3D] Create session error:', err);
+          mpShowError('Private games are not available yet. The multiplayer server is being deployed.');
         }
       });
     }
 
     if ($('mpJoinCodeBtn')) {
       $('mpJoinCodeBtn').addEventListener('click', async () => {
-        if (!currentUser) return;
+        if (!currentUser) { window.authNudge?.show(); return; }
         sound.play('click');
         const code = prompt('Enter join code:');
         if (!code) return;
@@ -1876,7 +1876,7 @@
           mpIsHost = false;
           await mpJoinAndPlay(session.sessionId);
         } catch (err) {
-          alert('Invalid or expired code');
+          mpShowError('Could not join game. The code may be invalid or the server is not available yet.');
         }
       });
     }
@@ -2327,10 +2327,19 @@
      9a. MULTIPLAYER FUNCTIONS
      ================================================================ */
 
+  function mpShowError(message) {
+    const el = $('mpErrorMsg');
+    if (el) {
+      el.textContent = message;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    } else {
+      alert(message);
+    }
+  }
+
   function mpShowWaitingRoom(session) {
     hideOverlay('mpLobbyOverlay');
-    const container = $('mpWaitingRoom');
-    if (!container) return;
     showOverlay('mpWaitingOverlay');
 
     const codeEl = $('mpJoinCode');
@@ -2338,8 +2347,32 @@
       codeEl.textContent = session.joinCode;
     }
 
+    // Build invite URL for sharing
+    const inviteUrl = window.location.origin + '/games/chess-3d/?join=' + (session.joinCode || '');
+    const inviteLinkEl = $('mpInviteLink');
+    if (inviteLinkEl) inviteLinkEl.textContent = inviteUrl;
+
+    // Copy code button
     $('mpCopyCodeBtn')?.addEventListener('click', () => {
       navigator.clipboard?.writeText(session.joinCode || '');
+      $('mpCopyCodeBtn').textContent = 'Copied!';
+      setTimeout(() => { $('mpCopyCodeBtn').textContent = 'Copy Code'; }, 2000);
+      sound.play('click');
+    });
+
+    // Share link button
+    $('mpShareLinkBtn')?.addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Chess 3D — Play with me!',
+          text: 'Join my Chess 3D game on Weekly Arcade!',
+          url: inviteUrl,
+        }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(inviteUrl);
+        $('mpShareLinkBtn').textContent = 'Link Copied!';
+        setTimeout(() => { $('mpShareLinkBtn').textContent = 'Share Link'; }, 2000);
+      }
       sound.play('click');
     });
 
@@ -2354,6 +2387,8 @@
     // Connect WebSocket and listen for opponent
     window.multiplayerClient.connect(mpSessionId).then(() => {
       mpRegisterListeners();
+    }).catch(() => {
+      mpShowError('Could not connect to game server. It may not be deployed yet.');
     });
   }
 
@@ -2776,11 +2811,16 @@
   function showOverlay(id) {
     const el = $(id);
     if (el) el.classList.add('chess3d-visible');
+    // Detach camera controls so overlays can receive pointer events
+    if (camera) camera.detachControl();
   }
 
   function hideOverlay(id) {
     const el = $(id);
     if (el) el.classList.remove('chess3d-visible');
+    // Re-attach camera controls if no overlays are open
+    const anyOpen = document.querySelector('.chess3d-overlay.chess3d-visible');
+    if (!anyOpen && camera) camera.attachControl($('renderCanvas'), true);
   }
 
   // --- SR announce ---
