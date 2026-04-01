@@ -12,7 +12,7 @@
 
   const REALTIME_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3001'
-    : 'https://weekly-arcade-realtime-5171085645.us-central1.run.app';
+    : 'https://weekly-arcade-realtime-l5zsdalm2a-uc.a.run.app';
 
   let socket = null;
   let currentSessionId = null;
