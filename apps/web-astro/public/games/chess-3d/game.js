@@ -65,7 +65,7 @@
   // For code that reads puzzleMode/puzzleIndex directly, these are now on _pz
 
   function initColors() {
-    const tc = _themes()?.getThemeColors();
+    const tc = _t.getThemeColors?.();
     COL_LIGHT_SQ = tc?.light || new BABYLON.Color3(0.94, 0.85, 0.71);
     COL_DARK_SQ = tc?.dark || new BABYLON.Color3(0.36, 0.20, 0.09);
     COL_WHITE_PIECE = new BABYLON.Color3(0.96, 0.94, 0.91); // #F5F0E8
