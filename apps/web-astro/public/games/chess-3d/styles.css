@@ -277,6 +277,41 @@
   font-size: 0.85rem;
 }
 
+.chess3d-timer {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c3d-text);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-left: auto;
+  min-width: 50px;
+  text-align: center;
+}
+
+.chess3d-timer.active {
+  color: var(--c3d-gold);
+  background: rgba(201, 168, 76, 0.15);
+}
+
+.chess3d-timer.warning {
+  color: var(--c3d-red);
+  background: rgba(212, 80, 74, 0.15);
+  animation: timerPulse 1s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.chess3d-game-clock {
+  font-size: 0.75rem;
+  color: var(--c3d-text-dim);
+  margin-left: 8px;
+}
+
 .chess3d-player-top {
   top: calc(52px + var(--c3d-safe-top));
 }

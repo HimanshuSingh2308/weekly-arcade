@@ -89,6 +89,7 @@ import gameData from '../../data/games/chess-3d.json';
         <span class="chess3d-player-name" id="topName">AI</span>
         <span class="chess3d-player-elo" id="topElo"></span>
       </div>
+      <span class="chess3d-timer" id="topTimer" style="display:none;">2:00</span>
       <div class="chess3d-captured" id="topCaptured"></div>
       <div class="chess3d-material-adv" id="topAdvantage"></div>
     </div>
@@ -99,6 +100,7 @@ import gameData from '../../data/games/chess-3d.json';
         <span class="chess3d-player-name" id="bottomName">You</span>
         <span class="chess3d-player-elo" id="bottomElo"></span>
       </div>
+      <span class="chess3d-timer" id="bottomTimer" style="display:none;">2:00</span>
       <div class="chess3d-captured" id="bottomCaptured"></div>
       <div class="chess3d-material-adv" id="bottomAdvantage"></div>
     </div>
@@ -106,6 +108,7 @@ import gameData from '../../data/games/chess-3d.json';
     <!-- Turn indicator -->
     <div class="chess3d-turn-indicator" id="turnIndicator">
       <span id="turnText">Your turn</span>
+      <span class="chess3d-game-clock" id="gameClock" style="display:none;"></span>
     </div>
 
     <!-- AI thinking indicator -->

@@ -1690,6 +1690,11 @@
   let mpSessionId = null;
   let mpIsHost = false;
   let mpLobby = null;
+  let mpOpponentName = 'Opponent';
+  let mpTurnStartTime = 0;
+  let mpTurnTimerInterval = null;
+  let mpGameTimerInterval = null;
+  const MP_TURN_TIMEOUT = 120; // 2 min per turn (matches game-registry turnTimeoutSec)
 
   // DOM refs
   const $ = (id) => document.getElementById(id);
@@ -2669,12 +2674,30 @@
         $('gameHud').style.display = '';
         $('undoBtn').style.display = 'none'; // No undo in multiplayer
 
-        // Player bars
-        const opponentUid = state.players?.find(uid => uid !== currentUser?.uid);
-        $('topName').textContent = opponentUid ? 'Opponent' : '...';
+        // Fetch opponent name from session data
+        window.multiplayerClient.getSession(mpSessionId).then(session => {
+          if (session?.players) {
+            for (const [uid, player] of Object.entries(session.players)) {
+              if (uid !== currentUser?.uid) {
+                mpOpponentName = player.displayName || 'Opponent';
+                $('topName').textContent = mpOpponentName;
+              }
+            }
+          }
+        }).catch(() => {});
+
+        $('topName').textContent = mpOpponentName;
         $('bottomName').textContent = currentUser?.displayName || 'You';
         $('topElo').textContent = '';
         $('bottomElo').textContent = '';
+
+        // Show turn timers in multiplayer
+        $('topTimer').style.display = '';
+        $('bottomTimer').style.display = '';
+        $('gameClock').style.display = '';
+
+        // Start game clock
+        mpStartGameClock();
 
         resetCamera(playerColor === BLACK);
       }
@@ -2698,10 +2721,16 @@
         if (king) showCheckHighlight(king[0], king[1]);
       }
 
-      // Turn indicator
+      // Turn indicator + timer
       const isMyTurn = turnUid === currentUser?.uid;
-      $('turnText').textContent = isMyTurn ? 'Your turn' : 'Opponent\'s turn...';
+      $('turnText').textContent = isMyTurn ? 'Your turn' : mpOpponentName + '\'s turn...';
       isAnimating = !isMyTurn; // Block input when not our turn
+
+      // Reset turn timer on each state update
+      if (gameMode === 'multiplayer') {
+        mpTurnStartTime = Date.now();
+        mpStartTurnTimer(isMyTurn);
+      }
     });
 
     window.multiplayerClient.onGameFinished(({ results }) => {
@@ -2769,12 +2798,68 @@
     if (mpPollTimer) { clearInterval(mpPollTimer); mpPollTimer = null; }
   }
 
+  function mpFormatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function mpStartTurnTimer(isMyTurn) {
+    if (mpTurnTimerInterval) clearInterval(mpTurnTimerInterval);
+
+    const myTimer = $('bottomTimer');
+    const oppTimer = $('topTimer');
+    const activeTimer = isMyTurn ? myTimer : oppTimer;
+    const inactiveTimer = isMyTurn ? oppTimer : myTimer;
+
+    activeTimer.classList.add('active');
+    activeTimer.classList.remove('warning');
+    inactiveTimer.classList.remove('active', 'warning');
+
+    mpTurnTimerInterval = setInterval(() => {
+      if (!gameActive) { clearInterval(mpTurnTimerInterval); return; }
+      const elapsed = (Date.now() - mpTurnStartTime) / 1000;
+      const remaining = Math.max(0, MP_TURN_TIMEOUT - elapsed);
+
+      activeTimer.textContent = mpFormatTime(remaining);
+      inactiveTimer.textContent = '--:--';
+
+      // Warning when < 30s
+      if (remaining <= 30 && remaining > 0) {
+        activeTimer.classList.add('warning');
+      }
+
+      if (remaining <= 0) {
+        clearInterval(mpTurnTimerInterval);
+        activeTimer.textContent = '0:00';
+      }
+    }, 500);
+  }
+
+  function mpStartGameClock() {
+    if (mpGameTimerInterval) clearInterval(mpGameTimerInterval);
+    const clockEl = $('gameClock');
+    if (!clockEl) return;
+
+    mpGameTimerInterval = setInterval(() => {
+      if (!gameActive) { clearInterval(mpGameTimerInterval); return; }
+      const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+      clockEl.textContent = mpFormatTime(elapsed);
+    }, 1000);
+  }
+
+  function mpStopTimers() {
+    if (mpTurnTimerInterval) { clearInterval(mpTurnTimerInterval); mpTurnTimerInterval = null; }
+    if (mpGameTimerInterval) { clearInterval(mpGameTimerInterval); mpGameTimerInterval = null; }
+  }
+
   function mpCleanup() {
     const sid = mpSessionId;
     gameActive = false;
     gameMode = 'ai';
     mpSessionId = null;
     mpStopPolling();
+    mpStopTimers();
     // Leave the session so server knows to clean up
     if (sid) {
       window.multiplayerClient?.leaveSession(sid).catch(() => {});
