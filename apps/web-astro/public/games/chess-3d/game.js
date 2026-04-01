@@ -1163,6 +1163,12 @@
       switch (type) {
         case 'move': this._playTone(300, 0.08, 'triangle', 0.25); break;
         case 'capture': this._playNoise(0.15, 600, 0.35); break;
+        // Tiered captures by piece importance
+        case 'capture-pawn': this._playNoise(0.1, 400, 0.2); break;
+        case 'capture-knight':
+        case 'capture-bishop': this._playNoise(0.15, 600, 0.3); this._playTone(500, 0.1, 'triangle', 0.15); break;
+        case 'capture-rook': this._playNoise(0.2, 800, 0.35); this._playChime([400, 500], 0.15, 0.2); break;
+        case 'capture-queen': this._playNoise(0.25, 1000, 0.4); this._playChime([523, 659, 784], 0.2, 0.3); break;
         case 'check': this._playChime([880, 1100], 0.3, 0.3); break;
         case 'checkmate': this._playChime([440, 554, 659], 0.5, 0.4); break;
         case 'castle': this._playTone(280, 0.06, 'triangle', 0.2); setTimeout(() => this._playTone(320, 0.06, 'triangle', 0.2), 80); break;
@@ -1653,6 +1659,189 @@
 
   function clearCheckHighlight() {
     if (checkHighlight) { checkHighlight.dispose(); checkHighlight = null; }
+  }
+
+  // Capture flash effect at a board position
+  function showCaptureEffect(row, col, pieceType) {
+    if (!scene) return;
+
+    // Color intensity based on piece value
+    const intensity = { p: 0.5, n: 0.7, b: 0.7, r: 0.85, q: 1.0 }[pieceType] || 0.5;
+    const color = pieceType === 'q'
+      ? new BABYLON.Color3(1.0, 0.84, 0.0)    // Gold for queen
+      : pieceType === 'r'
+        ? new BABYLON.Color3(0.9, 0.4, 0.1)   // Orange for rook
+        : new BABYLON.Color3(1.0, 1.0, 1.0);  // White for others
+
+    // Expanding ring
+    const ring = BABYLON.MeshBuilder.CreateTorus('captureRing', {
+      diameter: 0.6, thickness: 0.08, tessellation: 24
+    }, scene);
+    ring.position = new BABYLON.Vector3(col, 0.05, row);
+    ring.isPickable = false;
+
+    const mat = new BABYLON.StandardMaterial('captureMat', scene);
+    mat.emissiveColor = color;
+    mat.alpha = intensity;
+    mat.disableLighting = true;
+    ring.material = mat;
+
+    // Animate: expand + fade out
+    let frame = 0;
+    const duration = 30; // frames
+    const observer = scene.onBeforeRenderObservable.add(() => {
+      frame++;
+      const t = frame / duration;
+      const scale = 1 + t * 2.5;
+      ring.scaling = new BABYLON.Vector3(scale, 1, scale);
+      mat.alpha = intensity * (1 - t);
+      if (frame >= duration) {
+        scene.onBeforeRenderObservable.remove(observer);
+        ring.dispose();
+        mat.dispose();
+      }
+    });
+
+    // For queen/rook, add a second burst ring
+    if (pieceType === 'q' || pieceType === 'r') {
+      setTimeout(() => showCaptureRipple(row, col, color, intensity * 0.6), 100);
+    }
+  }
+
+  function showCaptureRipple(row, col, color, intensity) {
+    if (!scene) return;
+    const ring = BABYLON.MeshBuilder.CreateTorus('ripple', {
+      diameter: 0.4, thickness: 0.05, tessellation: 20
+    }, scene);
+    ring.position = new BABYLON.Vector3(col, 0.05, row);
+    ring.isPickable = false;
+    const mat = new BABYLON.StandardMaterial('rippleMat', scene);
+    mat.emissiveColor = color;
+    mat.alpha = intensity;
+    mat.disableLighting = true;
+    ring.material = mat;
+
+    let frame = 0;
+    const observer = scene.onBeforeRenderObservable.add(() => {
+      frame++;
+      const t = frame / 25;
+      ring.scaling = new BABYLON.Vector3(1 + t * 3, 1, 1 + t * 3);
+      mat.alpha = intensity * (1 - t);
+      if (frame >= 25) {
+        scene.onBeforeRenderObservable.remove(observer);
+        ring.dispose();
+        mat.dispose();
+      }
+    });
+  }
+
+  // Diff two board states to detect captures and moves
+  let mpPreviousFen = null;
+
+  function mpDetectChanges(newFen) {
+    if (!mpPreviousFen || !newFen) {
+      mpPreviousFen = newFen;
+      return null;
+    }
+
+    const oldEngine = new ChessEngine(mpPreviousFen);
+    const newEngine = new ChessEngine(newFen);
+    const changes = { captured: null, movedTo: null, isCheck: false };
+
+    // Find pieces that disappeared (captured)
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const oldPiece = oldEngine.board[r][c];
+        const newPiece = newEngine.board[r][c];
+
+        // Piece was here before but different piece or empty now
+        if (oldPiece && (!newPiece || (newPiece.color !== oldPiece.color && newPiece.type !== oldPiece.type))) {
+          // Check if this piece exists anywhere else (moved) or truly captured
+          let found = false;
+          for (let r2 = 0; r2 < 8; r2++) {
+            for (let c2 = 0; c2 < 8; c2++) {
+              const np = newEngine.board[r2][c2];
+              if (np && np.color === oldPiece.color && np.type === oldPiece.type && (r2 !== r || c2 !== c)) {
+                // Could be the same piece moved — but this is approximate
+              }
+            }
+          }
+          // If the square now has an opponent's piece, it's a capture location
+          if (newPiece && newPiece.color !== oldPiece.color) {
+            changes.captured = { row: r, col: c, type: oldPiece.type, color: oldPiece.color };
+            changes.movedTo = { row: r, col: c };
+          }
+        }
+
+        // New piece appeared where there was none — this is where the move landed
+        if (!oldPiece && newPiece) {
+          changes.movedTo = { row: r, col: c };
+        }
+      }
+    }
+
+    changes.isCheck = newEngine.isCheck();
+    mpPreviousFen = newFen;
+    return changes;
+  }
+
+  // 3D captured pieces displayed on table sides
+  let capturedMeshes3D = [];
+
+  function placeCapturedPieces3D(engine) {
+    // Dispose old captured meshes
+    for (const m of capturedMeshes3D) { try { m.dispose(); } catch (e) {} }
+    capturedMeshes3D = [];
+
+    if (!scene || !pieceMasters) return;
+
+    // Collect captured pieces from move history
+    const captured = { w: [], b: [] };
+    if (engine.moveHistory) {
+      for (const move of engine.moveHistory) {
+        if (move.captured) {
+          captured[move.captured.color].push(move.captured.type);
+        }
+        if (move.undo?.enPassantCapture) {
+          captured[move.undo.enPassantCapture.color].push('p');
+        }
+      }
+    }
+
+    // Place white's captured pieces (pieces that white lost) on the left side
+    // Place black's captured pieces (pieces that black lost) on the right side
+    const pieceOrder = ['q', 'r', 'r', 'b', 'b', 'n', 'n', 'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'];
+
+    // Sort by value (most valuable first)
+    const sortByValue = (a, b) => (PIECE_VALUES[b] || 0) - (PIECE_VALUES[a] || 0);
+
+    // White pieces captured (displayed on black's side — right of board)
+    const whiteCaptured = captured.w.sort(sortByValue);
+    whiteCaptured.forEach((type, i) => {
+      const masterKey = WHITE + type;
+      if (!pieceMasters[masterKey]) return;
+      const mesh = pieceMasters[masterKey].createInstance('cap_w_' + i);
+      const row = Math.floor(i / 4);
+      const col = i % 4;
+      mesh.position = new BABYLON.Vector3(8.5 + col * 0.7, 0.1, 1 + row * 0.7);
+      mesh.scaling = new BABYLON.Vector3(0.6, 0.6, 0.6);
+      mesh.isPickable = false;
+      capturedMeshes3D.push(mesh);
+    });
+
+    // Black pieces captured (displayed on white's side — left of board)
+    const blackCaptured = captured.b.sort(sortByValue);
+    blackCaptured.forEach((type, i) => {
+      const masterKey = BLACK + type;
+      if (!pieceMasters[masterKey]) return;
+      const mesh = pieceMasters[masterKey].createInstance('cap_b_' + i);
+      const row = Math.floor(i / 4);
+      const col = i % 4;
+      mesh.position = new BABYLON.Vector3(-1.5 - col * 0.7, 0.1, 6 - row * 0.7);
+      mesh.scaling = new BABYLON.Vector3(0.6, 0.6, 0.6);
+      mesh.isPickable = false;
+      capturedMeshes3D.push(mesh);
+    });
   }
 
   function resetCamera(forBlack) {
@@ -2235,6 +2424,7 @@
 
       updateMoveHistory();
       updateCapturedPieces();
+      placeCapturedPieces3D(chessEngine);
 
       isAnimating = false;
 
@@ -2322,6 +2512,7 @@
 
         updateMoveHistory();
         updateCapturedPieces();
+      placeCapturedPieces3D(chessEngine);
 
         isAnimating = false;
 
@@ -2702,6 +2893,9 @@
         resetCamera(playerColor === BLACK);
       }
 
+      // Detect captures and moves by diffing FEN
+      const changes = mpDetectChanges(state.fen);
+
       // Update 3D board
       placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
       clearHighlights();
@@ -2709,16 +2903,33 @@
       lastMoveHighlights = [];
       clearCheckHighlight();
 
+      // Play capture feedback based on piece type
+      if (changes?.captured) {
+        const ct = changes.captured.type;
+        const soundType = 'capture-' + ({ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen' }[ct] || 'pawn');
+        sound.play(soundType);
+        showCaptureEffect(changes.captured.row, changes.captured.col, ct);
+        srAnnounce((ct === 'q' ? 'Queen' : ct === 'r' ? 'Rook' : ct === 'b' ? 'Bishop' : ct === 'n' ? 'Knight' : 'Pawn') + ' captured!');
+      } else if (changes && !changes.captured) {
+        sound.play('move');
+      }
+
+      // Place captured pieces on the table sides
+      placeCapturedPieces3D(chessEngine);
+
       // Show last move highlight
       if (state.moveHistory && state.moveHistory.length > 0) {
         updateMoveHistory();
         updateCapturedPieces();
+      placeCapturedPieces3D(chessEngine);
       }
 
       // Check indicator
-      if (chessEngine.isCheck()) {
+      if (changes?.isCheck || chessEngine.isCheck()) {
         const king = chessEngine._findKing(chessEngine.getTurn());
         if (king) showCheckHighlight(king[0], king[1]);
+        if (changes?.captured) { setTimeout(() => sound.play('check'), 300); }
+        else { sound.play('check'); }
       }
 
       // Turn indicator + timer
