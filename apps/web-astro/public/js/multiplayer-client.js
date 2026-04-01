@@ -30,6 +30,7 @@
     'session:player-reconnected': [],
     'session:player-ready': [],
     'session:host-changed': [],
+    'reconnected': [],
     'error': [],
   };
 
@@ -63,10 +64,18 @@
         timeout: 10000,
       });
 
+      let initialConnect = true;
       socket.on('connect', () => {
         console.log('[MP] Connected to realtime service');
         reconnectAttempts = 0;
-        resolve();
+        if (initialConnect) {
+          initialConnect = false;
+          resolve();
+        } else {
+          // This is a reconnect — notify listeners
+          console.log('[MP] Reconnected');
+          _emit('reconnected', {});
+        }
       });
 
       socket.on('connect_error', (err) => {
@@ -188,6 +197,7 @@
   function onGameStarted(cb) { on('game:started', cb); }
   function onGameFinished(cb) { on('game:finished', cb); }
   function onMoveRejected(cb) { on('game:move-rejected', cb); }
+  function onReconnected(cb) { on('reconnected', cb); }
   function onError(cb) { on('error', cb); }
 
   // ─── Session Management (via REST → apiClient) ────────────────────
@@ -385,6 +395,7 @@
     onGameStarted,
     onGameFinished,
     onMoveRejected,
+    onReconnected,
     onError,
 
     // Session management (REST)

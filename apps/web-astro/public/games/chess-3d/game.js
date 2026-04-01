@@ -2643,6 +2643,11 @@
         window.multiplayerUI?.showDisconnectOverlay();
       }
     });
+
+    window.multiplayerClient.onReconnected(() => {
+      window.multiplayerUI?.hideDisconnectOverlay();
+      srAnnounce('Reconnected to game server.');
+    });
   }
 
   let mpPollTimer = null;
