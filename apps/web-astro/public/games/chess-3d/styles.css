@@ -770,14 +770,16 @@
   outline-offset: 2px;
 }
 
-/* ---------- Settings Button ---------- */
+/* ---------- Settings Button (icon-only in row) ---------- */
 .chess3d-btn-settings {
-  width: 100%;
-  margin-top: 8px;
+  flex: 0 0 44px !important;
+  width: 44px;
+  min-width: 44px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--c3d-text-dim);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: 0.85rem;
+  font-size: 1.1rem;
+  padding: 8px;
 }
 
 .chess3d-btn-settings:hover {
@@ -933,8 +935,7 @@
 
 /* ---------- Daily Puzzle Button ---------- */
 .chess3d-btn-puzzle {
-  width: 100%;
-  margin-top: 10px;
+  margin-top: 0;
   background: rgba(61, 170, 98, 0.2);
   color: var(--c3d-emerald);
   border: 1px solid rgba(61, 170, 98, 0.4);

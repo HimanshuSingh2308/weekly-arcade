@@ -73,18 +73,17 @@ import gameData from '../../data/games/chess-3d.json';
         </div>
       </div>
 
-      <button class="chess3d-btn chess3d-btn-settings" id="settingsBtn">&#x2699; Customize</button>
-
       <button class="chess3d-btn chess3d-btn-play" id="playAIBtn">Play vs AI</button>
 
-      <button class="chess3d-btn chess3d-btn-disabled" id="playFriendBtn" disabled>
-        Play vs Friend <span class="chess3d-coming-soon">Coming Soon</span>
-      </button>
-
-      <!-- Daily Puzzle Button -->
-      <button class="chess3d-btn chess3d-btn-puzzle" id="dailyPuzzleBtn">
-        Daily Puzzle <span class="chess3d-puzzle-badge">New</span>
-      </button>
+      <div class="chess3d-btn-row" style="margin-top:8px;">
+        <button class="chess3d-btn chess3d-btn-secondary" id="playFriendBtn" disabled>
+          vs Friend
+        </button>
+        <button class="chess3d-btn chess3d-btn-puzzle" id="dailyPuzzleBtn">
+          Puzzle <span class="chess3d-puzzle-badge">New</span>
+        </button>
+        <button class="chess3d-btn chess3d-btn-settings" id="settingsBtn">&#x2699;</button>
+      </div>
     </div>
   </div>
 
