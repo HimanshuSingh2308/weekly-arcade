@@ -73,51 +73,7 @@ import gameData from '../../data/games/chess-3d.json';
         </div>
       </div>
 
-      <!-- Board Theme Selector -->
-      <div class="chess3d-theme-select" role="group" aria-labelledby="themeLabel">
-        <span id="themeLabel" class="chess3d-label">Board Theme</span>
-        <div class="chess3d-theme-group">
-          <button class="chess3d-theme-btn" data-theme="classic" title="Classic Wood" aria-label="Classic wood board theme">
-            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#F0D9B5 50%,#5C3317 50%);"></span>
-            <span class="chess3d-theme-name">Classic</span>
-          </button>
-          <button class="chess3d-theme-btn" data-theme="marble" title="Marble" aria-label="Marble board theme">
-            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#E8E8E8 50%,#6B6B6B 50%);"></span>
-            <span class="chess3d-theme-name">Marble</span>
-          </button>
-          <button class="chess3d-theme-btn" data-theme="forest" title="Forest" aria-label="Forest board theme">
-            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#AECF9F 50%,#4A7B3C 50%);"></span>
-            <span class="chess3d-theme-name">Forest</span>
-          </button>
-          <button class="chess3d-theme-btn" data-theme="midnight" title="Midnight" aria-label="Midnight board theme">
-            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#4A5568 50%,#1A202C 50%);"></span>
-            <span class="chess3d-theme-name">Midnight</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Piece Skin Selector -->
-      <div class="chess3d-skin-select" role="group" aria-labelledby="skinLabel">
-        <span id="skinLabel" class="chess3d-label">Piece Style</span>
-        <div class="chess3d-skin-group">
-          <button class="chess3d-skin-btn" data-skin="classic" aria-label="Classic piece style">
-            <span class="chess3d-skin-icon">&#9812;</span>
-            <span class="chess3d-skin-name">Classic</span>
-          </button>
-          <button class="chess3d-skin-btn" data-skin="minimal" aria-label="Minimal piece style">
-            <span class="chess3d-skin-icon">&#9898;</span>
-            <span class="chess3d-skin-name">Minimal</span>
-            <span class="chess3d-skin-lock">&#128274;</span>
-            <span class="chess3d-skin-lock-tip"></span>
-          </button>
-          <button class="chess3d-skin-btn" data-skin="royal" aria-label="Royal piece style">
-            <span class="chess3d-skin-icon">&#9813;</span>
-            <span class="chess3d-skin-name">Royal</span>
-            <span class="chess3d-skin-lock">&#128274;</span>
-            <span class="chess3d-skin-lock-tip"></span>
-          </button>
-        </div>
-      </div>
+      <button class="chess3d-btn chess3d-btn-settings" id="settingsBtn">&#x2699; Customize</button>
 
       <button class="chess3d-btn chess3d-btn-play" id="playAIBtn">Play vs AI</button>
 
@@ -249,6 +205,59 @@ import gameData from '../../data/games/chess-3d.json';
   </div>
 
   <!-- Multiplayer Lobby Overlay -->
+  <!-- Settings Overlay (Board Theme + Piece Style) -->
+  <div class="chess3d-overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-label="Customize">
+    <div class="chess3d-modal" style="max-width:380px;">
+      <h2 style="margin:0 0 12px;">Customize</h2>
+
+      <div class="chess3d-theme-select" role="group" aria-labelledby="themeLabel">
+        <span id="themeLabel" class="chess3d-label">Board Theme</span>
+        <div class="chess3d-theme-group">
+          <button class="chess3d-theme-btn" data-theme="classic" title="Classic Wood" aria-label="Classic wood board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#F0D9B5 50%,#5C3317 50%);"></span>
+            <span class="chess3d-theme-name">Classic</span>
+          </button>
+          <button class="chess3d-theme-btn" data-theme="marble" title="Marble" aria-label="Marble board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#E8E8E8 50%,#6B6B6B 50%);"></span>
+            <span class="chess3d-theme-name">Marble</span>
+          </button>
+          <button class="chess3d-theme-btn" data-theme="forest" title="Forest" aria-label="Forest board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#AECF9F 50%,#4A7B3C 50%);"></span>
+            <span class="chess3d-theme-name">Forest</span>
+          </button>
+          <button class="chess3d-theme-btn" data-theme="midnight" title="Midnight" aria-label="Midnight board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#4A5568 50%,#1A202C 50%);"></span>
+            <span class="chess3d-theme-name">Midnight</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chess3d-skin-select" role="group" aria-labelledby="skinLabel">
+        <span id="skinLabel" class="chess3d-label">Piece Style</span>
+        <div class="chess3d-skin-group">
+          <button class="chess3d-skin-btn" data-skin="classic" aria-label="Classic piece style">
+            <span class="chess3d-skin-icon">&#9812;</span>
+            <span class="chess3d-skin-name">Classic</span>
+          </button>
+          <button class="chess3d-skin-btn" data-skin="minimal" aria-label="Minimal piece style">
+            <span class="chess3d-skin-icon">&#9898;</span>
+            <span class="chess3d-skin-name">Minimal</span>
+            <span class="chess3d-skin-lock">&#128274;</span>
+            <span class="chess3d-skin-lock-tip"></span>
+          </button>
+          <button class="chess3d-skin-btn" data-skin="royal" aria-label="Royal piece style">
+            <span class="chess3d-skin-icon">&#9813;</span>
+            <span class="chess3d-skin-name">Royal</span>
+            <span class="chess3d-skin-lock">&#128274;</span>
+            <span class="chess3d-skin-lock-tip"></span>
+          </button>
+        </div>
+      </div>
+
+      <button class="chess3d-btn chess3d-btn-secondary" id="settingsBackBtn" style="margin-top:14px;">Done</button>
+    </div>
+  </div>
+
   <div class="chess3d-overlay" id="mpLobbyOverlay" role="dialog" aria-modal="true" aria-label="Multiplayer lobby">
     <div class="chess3d-modal chess3d-menu-modal">
       <h2 style="margin:0 0 8px;">Play vs Friend</h2>

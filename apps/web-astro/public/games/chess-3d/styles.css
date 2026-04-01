@@ -770,6 +770,21 @@
   outline-offset: 2px;
 }
 
+/* ---------- Settings Button ---------- */
+.chess3d-btn-settings {
+  width: 100%;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--c3d-text-dim);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.85rem;
+}
+
+.chess3d-btn-settings:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--c3d-text);
+}
+
 /* ---------- Board Theme Selector ---------- */
 .chess3d-theme-select {
   margin-bottom: 10px;

@@ -2242,6 +2242,18 @@
       startNewGame();
     });
 
+    // Settings (Customize) button
+    $('settingsBtn')?.addEventListener('click', () => {
+      sound.play('click');
+      hideOverlay('mainMenuOverlay');
+      showOverlay('settingsOverlay');
+    });
+    $('settingsBackBtn')?.addEventListener('click', () => {
+      sound.play('click');
+      hideOverlay('settingsOverlay');
+      showOverlay('mainMenuOverlay');
+    });
+
     // Play vs Friend button — multiplayer
     const friendBtn = $('playFriendBtn');
     if (friendBtn && window.multiplayerClient) {
