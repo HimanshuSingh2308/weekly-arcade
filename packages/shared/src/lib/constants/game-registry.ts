@@ -42,7 +42,7 @@ export const GAME_REGISTRY: GameInfo[] = [
   { id: 'tiny-tycoon',        name: 'Tiny Tycoon',         icon: '🧋', description: 'Boba shop simulator',    genres: ['simulation', 'casual'] },
   { id: 'cricket-blitz',    name: 'Cricket Blitz',       icon: '🏏', description: '3D IPL-style cricket',  genres: ['sports', '3d'] },
   { id: 'chess-3d',          name: 'Chess 3D',            icon: '♟️', description: '3D chess vs AI & friends', genres: ['strategy', 'board', '3d', 'multiplayer'],
-    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'turn-based', turnTimeoutSec: 120, sessionTimeoutMin: 60, spectatorAllowed: true } },
+    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'turn-based', turnTimeoutSec: 120, sessionTimeoutMin: 90, spectatorAllowed: true } },
 ];
 
 /** Lookup a game by ID */

@@ -289,10 +289,10 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
         if (dto.metadata.aiDifficulty && !validDifficulties.includes(dto.metadata.aiDifficulty as string)) {
           return { valid: false, reason: 'Invalid AI difficulty' };
         }
-        // ELO delta must be within K-factor bounds (max K=40)
+        // ELO delta must be within K-factor bounds (max K=32)
         if (dto.metadata.eloDelta !== undefined) {
           const delta = dto.metadata.eloDelta as number;
-          if (typeof delta !== 'number' || Math.abs(delta) > 40) {
+          if (typeof delta !== 'number' || Math.abs(delta) > 32) {
             return { valid: false, reason: 'ELO delta out of range' };
           }
         }
@@ -303,11 +303,19 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
             return { valid: false, reason: 'Game completed faster than physically possible' };
           }
         }
-        // Difficulty-based minimum game time
+        // Difficulty-based minimum game time (AI games)
         const minTimeByDifficulty: Record<string, number> = { easy: 15000, medium: 30000, hard: 60000, expert: 120000 };
         const diffMinTime = minTimeByDifficulty[dto.metadata.aiDifficulty as string];
         if (diffMinTime && dto.timeMs && dto.timeMs < diffMinTime) {
           return { valid: false, reason: 'Game too short for difficulty level' };
+        }
+        // Multiplayer human games need longer minimum (shortest possible real game ~2 min)
+        if (dto.metadata.opponent === 'human' && dto.timeMs && dto.timeMs < 120000) {
+          return { valid: false, reason: 'Human game too short' };
+        }
+        // Human games must have at least 4 half-moves (minimum legal complete game)
+        if (dto.metadata.opponent === 'human' && dto.metadata.movesPlayed && (dto.metadata.movesPlayed as number) < 4) {
+          return { valid: false, reason: 'Not enough moves for a complete game' };
         }
       }
       return { valid: true };

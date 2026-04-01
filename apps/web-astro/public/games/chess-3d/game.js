@@ -1027,7 +1027,7 @@
      ================================================================ */
   class EloSystem {
     constructor() {
-      this.rating = parseInt(localStorage.getItem('chess3d-elo')) || 1200;
+      this.rating = parseInt(localStorage.getItem('chess3d-elo')) || 800;
       this.gamesPlayed = 0;
       this._loadStats();
     }
@@ -1064,8 +1064,8 @@
     }
 
     getKFactor() {
-      if (this.gamesPlayed < 20) return 40;
-      if (this.rating < 1000) return 40;
+      if (this.gamesPlayed < 20) return 32;
+      if (this.rating < 1000) return 32;
       if (this.rating <= 1800) return 24;
       return 16;
     }
