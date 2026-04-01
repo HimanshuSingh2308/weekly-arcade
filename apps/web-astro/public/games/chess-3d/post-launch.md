@@ -1,140 +1,124 @@
 # Post-Launch Plan: Chess 3D
 
 **Created**: 2026-04-01
-**Last Updated**: 2026-04-01 (Patch #7 applied)
+**Last Updated**: 2026-04-01 (Fresh analysis v2)
 **Status**: IN_PROGRESS
 
 ---
 
 ## Funnel Assessment
 
-1. **BROKEN** — No critical bugs remaining (all fixed in launch session)
-2. **CONFUSING** — Multiplayer join flow needs polish (connection feedback improved but still fragile)
-3. **UNFUN** — Easy→Medium AI gap too steep; Expert feels same as Hard
-4. **MISSING** — Draw offer, time controls, move history on mobile, spectator view
-5. **POLISH** — Captured pieces on table sides (done), capture effects (done), ambient music
+1. **BROKEN** — All critical bugs fixed. No known blockers.
+2. **CONFUSING** — Medium AI gap smoothed (blundering). Mobile board visible. Move animation added.
+3. **UNFUN** — Expert AI still feels same as Hard (1 ply difference). No draw offer.
+4. **MISSING** — Time controls, spectator mode, puzzle mode, analysis board.
+5. **POLISH** — Ambient music, board themes, piece skins.
 
 ---
 
-## Patches
+## Completed Patches (15 applied)
 
-Ordered by improvement matrix score (highest first).
+- [x] #1 Fix board clipping on mobile (FOVMODE_HORIZONTAL_FIXED) — 2026-04-01
+- [x] #2 Fix ELO system (800 start, K=32, achievements) — 2026-04-01
+- [x] #3 Fix multiplayer session cleanup (auto-abandon) — 2026-04-01
+- [x] #4 Fix API client signature — 2026-04-01
+- [x] #5 Deploy Firestore indexes — 2026-04-01
+- [x] #6 Server-side score submission — 2026-04-01
+- [x] #7 Medium AI blundering (20% 2nd-best) — 2026-04-01
+- [x] #8 Capture effects + tiered sounds — 2026-04-01
+- [x] #9 3D captured pieces on table — 2026-04-01
+- [x] #10 Turn timers + game clock — 2026-04-01
+- [x] #11 Timer pause on disconnect — 2026-04-01
+- [x] #12 Mobile move history drawer — 2026-04-01
+- [x] #13 Babylon.js move animation for multiplayer — 2026-04-01
+- [x] #14 Matchmaking 300-point rating window — 2026-04-01
+- [x] #15 Mobile gameplay UX (HUD centered, board zoom, safe areas) — 2026-04-01
 
-### Week 1 — Fix & Clarify
+---
 
-- [x] **#1 Fix board clipping on mobile** (Score: 35) — FOVMODE_HORIZONTAL_FIXED for portrait
-  - Category: BROKEN
-  - Files: game.js (camera setup)
-  - Applied: 2026-04-01
+## Pending Patches (ordered by improvement matrix score)
 
-- [x] **#2 Fix ELO system** (Score: 33) — Starting ELO 800, K=32, fix broken achievement
-  - Category: BROKEN
-  - Files: game.js, achievements.ts, game-config.ts
-  - Applied: 2026-04-01
+### Week 2 — Core Improvements
 
-- [x] **#3 Fix multiplayer session cleanup** (Score: 32) — Auto-abandon on all disconnect
-  - Category: BROKEN
-  - Files: game.gateway.ts, game.js
-  - Applied: 2026-04-01
+- [ ] **#16 Expert AI iterative deepening** (Score: 28) — Depth 6-7 with time limit + null-move pruning
+  - Impact: 3 | Fun: 4 | Effort: 3 | Risk: 4
+  - Category: UNFUN (Expert feels same as Hard)
+  - Files: game.js (ChessAI.findBestMove, _alphaBeta)
+  - Prerequisite: #17 (Web Worker) for Expert not to freeze UI at depth 6+
 
-- [x] **#4 Fix API client signature** (Score: 30) — multiplayer-client.js request() calls
-  - Category: BROKEN
-  - Files: multiplayer-client.js
-  - Applied: 2026-04-01
-
-- [x] **#5 Deploy Firestore indexes** (Score: 30) — Missing matchmaking indexes caused 500s
-  - Category: BROKEN
-  - Files: firestore.indexes.json
-  - Applied: 2026-04-01
-
-- [x] **#6 Server-side score submission** (Score: 29) — Prevent client-side MP score manipulation
-  - Category: BROKEN
-  - Files: internal.controller.ts, game.js
-  - Applied: 2026-04-01
-
-- [x] **#7 Medium AI blundering** (Score: 28) — Add 20% chance of 2nd-best move to smooth Easy→Medium gap
-  - Category: CONFUSING
-  - Files: game.js (ChessAI.findBestMove)
-  - Applied: 2026-04-01
-
-- [ ] **#8 Expert AI iterative deepening** (Score: 26) — Depth 6-7 with time limit, null-move pruning
-  - Category: UNFUN
-  - Files: game.js (ChessAI.findBestMove)
-
-### Week 2 — Polish & Feel
-
-- [x] **#9 Capture effects + tiered sounds** (Score: 27) — Gold ring for queen, expanding ripple
-  - Category: POLISH
-  - Files: game.js (SoundManager, showCaptureEffect)
-  - Applied: 2026-04-01
-
-- [x] **#10 3D captured pieces on table** (Score: 25) — Miniature pieces on board sides
-  - Category: POLISH
-  - Files: game.js (placeCapturedPieces3D)
-  - Applied: 2026-04-01
-
-- [x] **#11 Turn timers + game clock** (Score: 25) — Per-turn countdown, game elapsed time
-  - Category: MISSING
-  - Files: game.js, chess-3d.astro, styles.css
-  - Applied: 2026-04-01
-
-- [x] **#12 Timer pause on disconnect** (Score: 24) — Don't penalize connection issues
-  - Category: CONFUSING
-  - Files: game.js (mpPauseTimers/mpResumeTimers)
-  - Applied: 2026-04-01
-
-- [ ] **#13 Draw offer mechanism** (Score: 23) — Server-side draw-offer/draw-accept move types
-  - Category: MISSING
-  - Files: chess-3d.logic.ts, game.js, chess-3d.astro
-
-- [x] **#14 Mobile move history** (Score: 22) — Collapsible drawer with last-move preview
-  - Category: MISSING
-  - Files: styles.css, chess-3d.astro, game.js
-  - Applied: 2026-04-01
-
-- [ ] **#15 Time control options** (Score: 21) — Rapid (10+0), Blitz (5+0), Correspondence (current)
-  - Category: MISSING
-  - Files: game-registry.ts, chess-3d.astro, game.js
-
-### Week 3+ — Depth & Content
-
-- [ ] **#16 AI Web Worker extraction** (Score: 20) — Move AI search off main thread for smooth 60fps
+- [ ] **#17 AI Web Worker extraction** (Score: 27) — Move AI search off main thread
+  - Impact: 4 | Fun: 3 | Effort: 3 | Risk: 4
   - Category: UNFUN (Expert blocks UI for 3s)
   - Files: new chess-ai-worker.js, game.js
 
-- [ ] **#17 Opening book expansion** (Score: 18) — 7→50 positions for better Expert variety
+- [ ] **#18 Draw offer mechanism** (Score: 25) — Server-side draw-offer/draw-accept
+  - Impact: 4 | Fun: 3 | Effort: 3 | Risk: 4
+  - Category: MISSING
+  - Files: chess-3d.logic.ts, game.js, chess-3d.astro
+
+- [ ] **#19 Time control options** (Score: 23) — Rapid (10+0), Blitz (5+0), Correspondence (current)
+  - Impact: 3 | Fun: 4 | Effort: 2 | Risk: 4
+  - Category: MISSING
+  - Files: game-registry.ts, chess-3d.astro, game.js, multiplayer lobby UI
+
+### Week 3 — Content & Depth
+
+- [ ] **#20 Opening book expansion** (Score: 20) — 7→50 positions for Expert variety
+  - Impact: 2 | Fun: 3 | Effort: 5 | Risk: 5
   - Category: UNFUN
   - Files: game.js (OPENING_BOOK)
 
-- [ ] **#18 Spectator mode** (Score: 17) — Watch ongoing multiplayer games
+- [ ] **#21 Ambient background music** (Score: 19) — Low strategy drone from sound-design skill
+  - Impact: 4 | Fun: 3 | Effort: 4 | Risk: 5
+  - Category: POLISH
+  - Files: game.js (SoundManager + MusicLoop)
+
+- [ ] **#22 Board themes** (Score: 18) — Classic wood, marble, dark mode, tournament green
+  - Impact: 4 | Fun: 2 | Effort: 3 | Risk: 5
+  - Category: POLISH
+  - Files: game.js (board materials), settings in localStorage
+
+- [ ] **#23 Near-miss tease on game over** (Score: 18) — "2 moves from checkmate!" / "1 win from achievement"
+  - Impact: 3 | Fun: 3 | Effort: 4 | Risk: 5
+  - Category: POLISH (retention)
+  - Files: game.js (endGame)
+
+### Month 2+ — Features
+
+- [ ] **#24 Daily chess puzzle** (Score: 17) — Mate-in-N, new each day
+  - Impact: 3 | Fun: 4 | Effort: 1 | Risk: 4
+  - Category: MISSING (retention)
+  - Files: new puzzle system, chess-3d.astro
+
+- [ ] **#25 Spectator mode** (Score: 16) — Watch ongoing multiplayer games
+  - Impact: 2 | Fun: 3 | Effort: 2 | Risk: 4
   - Category: MISSING
   - Files: game.gateway.ts, game.js
 
-- [ ] **#19 Puzzle mode** (Score: 16) — Daily chess puzzles (mate in N)
-  - Category: MISSING
-  - Files: new puzzle system
-
-- [ ] **#20 Ambient background music** (Score: 15) — Low drone for strategy mood
-  - Category: POLISH
-  - Files: game.js (SoundManager + MusicLoop from sound-design skill)
-
-- [ ] **#21 Analysis board** (Score: 14) — Post-game move review with engine evaluation
+- [ ] **#26 Analysis board** (Score: 14) — Post-game move review with engine evaluation
+  - Impact: 2 | Fun: 3 | Effort: 1 | Risk: 4
   - Category: MISSING
   - Files: new analysis UI
+
+- [ ] **#27 Piece skins** (Score: 13) — Unlock different 3D piece sets via achievements
+  - Impact: 2 | Fun: 2 | Effort: 2 | Risk: 5
+  - Category: POLISH (progression)
+  - Files: game.js (piece masters), new mesh factories
 
 ---
 
 ## Metrics Baseline
 
-| Metric | Value at Launch | Target |
-|--------|-----------------|--------|
-| Starting ELO | 800 (Pawn tier) | Players reach Knight (1000) by session 10 |
-| AI difficulties | 4 levels (Easy/Med/Hard/Expert) | Smooth progression, no dead zones |
-| Achievements | 19 total, 0 multiplayer-broken | All earnable, no dry zones |
+| Metric | Value at Launch | Target (Week 2) |
+|--------|-----------------|-----------------|
+| Starting ELO | 800 (Pawn) | Players reach Knight (1000) by session 10 |
+| AI difficulties | 4 levels, Medium blunders 20% | Smooth curve, no dead zones |
+| Achievements | 19 total, all earnable | 1 unlock per 5 sessions avg |
 | Session timeout | 90 min | No force-terminated games |
-| Matchmaking window | ±100→±300 (40s) | Quality matches within 60s |
-| Turn timer | 2 min | No timeout complaints |
-| Mobile board visibility | All 64 squares visible | No clipping on any device |
+| Matchmaking window | ±100→±300 (40s cap) | Quality matches within 60s |
+| Mobile board | Full 64 squares visible | No clipping on any device |
+| Move animation | Arc + bounce + sound in MP | Clear visual feedback every move |
+| Multiplayer score | Server-submitted | No client manipulation |
 
 ---
 
@@ -142,11 +126,24 @@ Ordered by improvement matrix score (highest first).
 
 | Element | Verdict | Notes |
 |---------|---------|-------|
-| Move history on desktop | KEEP | Valuable for serious players |
-| ELO display in AI mode | KEEP | Motivates progression |
-| "Play vs Friend" coming soon badge | CUT (done) | Feature is live now |
-| Undo in multiplayer | CUT (done) | Not applicable, hidden |
-| maxScorePerSecond validation | REVIEW | Meaningless for ELO-based scoring |
+| maxScorePerSecond validation | CUT or DOCUMENT | Meaningless for ELO scoring |
+| Easy AI warning tooltip | ADD | Warn about -39 ELO risk on loss |
+| Move history on desktop side panel | KEEP | Valuable for serious players |
+| Undo in multiplayer | CUT (done) | Not applicable |
+
+---
+
+## Retention Stack Assessment
+
+| Layer | Status | Notes |
+|-------|--------|-------|
+| Core loop fun | GOOD | 3D board, smooth AI, satisfying captures |
+| Daily challenge | MISSING | #24 would add this |
+| Streak rewards | PARTIAL | Play streak exists but no chess-specific streak |
+| Progression unlock | GOOD | ELO tiers (Pawn→Grandmaster) + 19 achievements |
+| Social leaderboard | GOOD | Multiplayer ELO leaderboard |
+
+**Biggest retention gap**: No daily reason to return. Daily puzzles (#24) would be the highest-ROI addition for D7/D30 retention.
 
 ---
 
@@ -154,8 +151,9 @@ Ordered by improvement matrix score (highest first).
 
 | Date | Signal | Action Taken |
 |------|--------|-------------|
-| 2026-04-01 | Initial launch | Full game built, 10-phase workflow completed |
-| 2026-04-01 | Multiplayer integration | Server-side chess engine, WebSocket wiring, lobby/invite |
-| 2026-04-01 | Balance audit | ELO rebalanced, achievements fixed, validation hardened |
-| 2026-04-01 | Mobile QA | Board clipping fixed, HUD centered, timers added |
-| 2026-04-01 | Post-launch plan | Created — 12/21 patches applied on launch day |
+| 2026-04-01 | Launch day | Full game built + 10-phase workflow |
+| 2026-04-01 | Multiplayer integration | Server engine, WebSocket, lobby/invite |
+| 2026-04-01 | Balance audit | ELO 800 start, K=32, 19 achievements, rating window |
+| 2026-04-01 | Mobile QA | Board clipping fixed, HUD centered, safe areas |
+| 2026-04-01 | Move animation | Babylon.js arc + bounce for MP moves |
+| 2026-04-01 | Fresh analysis v2 | 15/27 patches applied, 12 remaining |
