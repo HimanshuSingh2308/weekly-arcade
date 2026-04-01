@@ -2026,7 +2026,8 @@
   }
 
   function resetCamera(forBlack) {
-    const targetAlpha = forBlack ? Math.PI / 4 + Math.PI : Math.PI / 4;
+    // White views from behind rank 1 (alpha ~225°), Black from behind rank 8 (alpha ~45°)
+    const targetAlpha = forBlack ? Math.PI / 4 : Math.PI / 4 + Math.PI;
     const aspect = window.innerWidth / window.innerHeight;
     const isPortrait = aspect < 0.7;
     const targetBeta = isPortrait ? Math.PI / 3 : Math.PI / 3.5;
