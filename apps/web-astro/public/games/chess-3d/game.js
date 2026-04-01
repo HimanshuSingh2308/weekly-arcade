@@ -3715,6 +3715,10 @@
     gameActive = true;
     gameStartTime = Date.now();
     moveCount = 0;
+
+    // Clear captured pieces from board sides
+    for (const m of capturedMeshes3D) { try { m.dispose(); } catch (e) {} }
+    capturedMeshes3D = [];
     selectedSquare = null;
     isAnimating = false;
     puzzleMode = false;
