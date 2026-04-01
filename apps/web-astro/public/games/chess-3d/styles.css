@@ -456,6 +456,78 @@
   color: var(--c3d-gold);
 }
 
+/* Mobile move history drawer */
+.chess3d-mobile-moves {
+  display: none; /* Only shown on mobile via media query */
+  position: absolute;
+  left: calc(6px + var(--c3d-safe-left));
+  right: calc(6px + var(--c3d-safe-right));
+  bottom: calc(100px + var(--c3d-safe-bottom));
+  background: var(--c3d-card);
+  border: 1px solid var(--c3d-card-border);
+  border-radius: 10px;
+  z-index: 40;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 36px; /* Collapsed: header only */
+}
+
+.chess3d-mobile-moves.expanded {
+  max-height: 200px;
+}
+
+.chess3d-mobile-moves-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--c3d-text);
+  cursor: pointer;
+  gap: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chess3d-mobile-moves-count {
+  background: var(--c3d-gold);
+  color: var(--c3d-navy);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.chess3d-mobile-moves-last {
+  color: var(--c3d-gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: auto;
+  opacity: 0.9;
+}
+
+.chess3d-mobile-moves.expanded .chess3d-mobile-moves-last {
+  display: none;
+}
+
+.chess3d-mobile-moves-arrow {
+  font-size: 0.6rem;
+  color: var(--c3d-text-dim);
+  transition: transform 0.3s;
+}
+
+.chess3d-mobile-moves.expanded .chess3d-mobile-moves-arrow {
+  transform: rotate(180deg);
+}
+
+.chess3d-mobile-moves-body {
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 0 12px 8px;
+  border-top: 1px solid var(--c3d-card-border);
+}
+
 /* HUD buttons */
 .chess3d-hud-buttons {
   position: absolute;
@@ -607,6 +679,10 @@
 }
 
 @media (max-width: 480px) {
+  .chess3d-mobile-moves {
+    display: block;
+  }
+
   .chess3d-modal {
     padding: 20px 16px;
   }

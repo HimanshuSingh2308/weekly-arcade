@@ -122,6 +122,19 @@ import gameData from '../../data/games/chess-3d.json';
       <div class="chess3d-move-list" id="moveList"></div>
     </div>
 
+    <!-- Mobile move history (collapsible drawer) -->
+    <div class="chess3d-mobile-moves" id="mobileMovesPanel">
+      <div class="chess3d-mobile-moves-header" id="mobileMovesToggle">
+        <span>Moves</span>
+        <span class="chess3d-mobile-moves-count" id="mobileMovesCount">0</span>
+        <span class="chess3d-mobile-moves-last" id="mobileMovesLast"></span>
+        <span class="chess3d-mobile-moves-arrow" id="mobileMovesArrow">&#x25B2;</span>
+      </div>
+      <div class="chess3d-mobile-moves-body" id="mobileMovesBody">
+        <div class="chess3d-move-list" id="mobileMoveList"></div>
+      </div>
+    </div>
+
     <!-- HUD buttons -->
     <div class="chess3d-hud-buttons">
       <button class="chess3d-hud-btn" id="undoBtn" title="Undo (Z)" aria-label="Undo last move">&#x21A9;</button>

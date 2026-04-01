@@ -87,9 +87,10 @@ Ordered by improvement matrix score (highest first).
   - Category: MISSING
   - Files: chess-3d.logic.ts, game.js, chess-3d.astro
 
-- [ ] **#14 Mobile move history** (Score: 22) — Collapsible panel in dead space below board
+- [x] **#14 Mobile move history** (Score: 22) — Collapsible drawer with last-move preview
   - Category: MISSING
   - Files: styles.css, chess-3d.astro, game.js
+  - Applied: 2026-04-01
 
 - [ ] **#15 Time control options** (Score: 21) — Rapid (10+0), Blitz (5+0), Correspondence (current)
   - Category: MISSING

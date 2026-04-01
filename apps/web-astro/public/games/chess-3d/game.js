@@ -2189,6 +2189,15 @@
     $('resetCamBtn').addEventListener('click', () => { resetCamera(playerColor === BLACK); sound.play('click'); });
     $('resignBtn').addEventListener('click', () => { showOverlay('resignOverlay'); sound.play('click'); });
 
+    // Mobile move history drawer toggle
+    $('mobileMovesToggle')?.addEventListener('click', () => {
+      const panel = $('mobileMovesPanel');
+      if (panel) {
+        panel.classList.toggle('expanded');
+        sound.play('click');
+      }
+    });
+
     // Resign dialog
     $('resignConfirmBtn').addEventListener('click', () => {
       hideOverlay('resignOverlay');
@@ -3338,9 +3347,32 @@
   }
 
   function updateMoveHistory() {
-    const list = $('moveList');
-    list.textContent = '';
     const history = chessEngine.getHistory();
+
+    // Update desktop move list
+    const list = $('moveList');
+    _renderMoveList(list, history);
+
+    // Update mobile move list + collapsed preview
+    const mobileList = $('mobileMoveList');
+    if (mobileList) {
+      _renderMoveList(mobileList, history);
+      const countEl = $('mobileMovesCount');
+      if (countEl) countEl.textContent = history.length;
+      // Show last move in collapsed header for quick context
+      const lastEl = $('mobileMovesLast');
+      if (lastEl && history.length > 0) {
+        const moveNum = Math.ceil(history.length / 2);
+        const lastMove = history[history.length - 1];
+        const isWhite = history.length % 2 === 1;
+        lastEl.textContent = moveNum + '.' + (isWhite ? '' : '..') + lastMove;
+      }
+    }
+  }
+
+  function _renderMoveList(container, history) {
+    if (!container) return;
+    container.textContent = '';
     for (let i = 0; i < history.length; i += 2) {
       const row = document.createElement('div');
       row.className = 'chess3d-move-row';
@@ -3358,9 +3390,9 @@
         black.textContent = history[i + 1];
         row.appendChild(black);
       }
-      list.appendChild(row);
+      container.appendChild(row);
     }
-    list.scrollTop = list.scrollHeight;
+    container.scrollTop = container.scrollHeight;
   }
 
   function updateCapturedPieces() {
