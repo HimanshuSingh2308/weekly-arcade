@@ -2406,10 +2406,10 @@
     const hintBtn = $('puzzleHintBtn');
     if (hintBtn) {
       hintBtn.addEventListener('click', () => {
-        if (!puzzleMode || puzzleSolved) return;
+        if (!_pz.puzzleMode || _pz.puzzleSolved) return;
         const puzzle = DAILY_PUZZLES[puzzleIndex];
         if (!puzzle) return;
-        const expectedMove = puzzle.solution[puzzleMoveIndex];
+        const expectedMove = puzzle.solution[_pz.puzzleMoveIndex];
         if (!expectedMove) return;
 
         // Highlight the "from" square of the expected move
@@ -2426,7 +2426,7 @@
     if (puzzleMenuBtn) {
       puzzleMenuBtn.addEventListener('click', () => {
         gameActive = false;
-        puzzleMode = false;
+        _pz.puzzleMode = false;
         $('gameHud').style.display = 'none';
         const puzzleOvl = $('puzzleOverlay');
         if (puzzleOvl) puzzleOvl.style.display = 'none';
@@ -2680,7 +2680,7 @@
     isAnimating = true;
 
     // In puzzle mode, delegate to puzzle handler
-    if (puzzleMode) {
+    if (_pz.puzzleMode) {
       handlePuzzleMove(fromRow, fromCol, toRow, toCol, promotion);
       return;
     }
@@ -2878,7 +2878,7 @@
   }
 
   function handleUndo() {
-    if (!gameActive || isAnimating || puzzleMode) return;
+    if (!gameActive || isAnimating || _pz.puzzleMode) return;
     if (chessEngine.getTurn() !== playerColor) return;
 
     // Undo AI move + player move (only if both exist)
@@ -3488,16 +3488,16 @@
     const puzzle = DAILY_PUZZLES[idx];
     if (!puzzle) return;
 
-    puzzleMode = true;
-    puzzleIndex = idx;
-    puzzleMoveIndex = 0;
-    puzzleSolved = false;
+    _pz.puzzleMode = true;
+    _pz.puzzleIndex = idx;
+    _pz.puzzleMoveIndex = 0;
+    _pz.puzzleSolved = false;
     gameActive = true;
     gameMode = 'ai';
 
     chessEngine.reset();
     chessEngine.loadFEN(puzzle.fen);
-    puzzleFenSnapshot = puzzle.fen;
+    _pz.puzzleFenSnapshot = puzzle.fen;
     playerColor = chessEngine.getTurn();
 
     hideOverlay('mainMenuOverlay');
@@ -3545,9 +3545,9 @@
 
   function handlePuzzleMove(fromRow, fromCol, toRow, toCol, promotion) {
     const puzzle = DAILY_PUZZLES[puzzleIndex];
-    if (!puzzle || puzzleSolved) return;
+    if (!puzzle || _pz.puzzleSolved) return;
 
-    const expectedMove = puzzle.solution[puzzleMoveIndex];
+    const expectedMove = puzzle.solution[_pz.puzzleMoveIndex];
     if (!expectedMove) return;
 
     // Convert move to algebraic notation for comparison
@@ -3558,7 +3558,7 @@
       const result = chessEngine.makeMove(fromRow, fromCol, toRow, toCol, promotion);
       if (!result) return;
 
-      puzzleMoveIndex++;
+      _pz.puzzleMoveIndex++;
       sound.play('move');
 
       animatePieceMove(fromRow, fromCol, toRow, toCol, () => {
@@ -3589,8 +3589,8 @@
         $('puzzleMoveStatus').className = 'chess3d-puzzle-status correct';
 
         // Check if puzzle is complete
-        if (puzzleMoveIndex >= puzzle.solution.length) {
-          puzzleSolved = true;
+        if (_pz.puzzleMoveIndex >= puzzle.solution.length) {
+          _pz.puzzleSolved = true;
           markPuzzleSolved(puzzleIndex);
           sound.play('win');
           $('puzzleMoveStatus').textContent = 'Solved! Come back tomorrow for a new puzzle.';
@@ -3600,7 +3600,7 @@
           // Show a small celebration after a delay
           setTimeout(() => {
             gameActive = false;
-            puzzleMode = false;
+            _pz.puzzleMode = false;
             $('gameOverTitle').textContent = 'Puzzle Solved!';
             $('gameOverReason').textContent = puzzle.title + ' — ' + puzzle.desc;
             $('gameOverElo').textContent = '';
@@ -3611,9 +3611,9 @@
         }
 
         // Play opponent's response move (next in solution) after a short delay
-        if (puzzleMoveIndex < puzzle.solution.length) {
+        if (_pz.puzzleMoveIndex < puzzle.solution.length) {
           setTimeout(() => {
-            const oppMove = puzzle.solution[puzzleMoveIndex];
+            const oppMove = puzzle.solution[_pz.puzzleMoveIndex];
             if (!oppMove) return;
             const oFromCol = oppMove.charCodeAt(0) - 97;
             const oFromRow = parseInt(oppMove[1]) - 1;
@@ -3623,14 +3623,14 @@
 
             const oppResult = chessEngine.makeMove(oFromRow, oFromCol, oToRow, oToCol, oPromo);
             if (oppResult) {
-              puzzleMoveIndex++;
+              _pz.puzzleMoveIndex++;
               sound.play('move');
               animatePieceMove(oFromRow, oFromCol, oToRow, oToCol, () => {
                 showLastMove(oFromRow, oFromCol, oToRow, oToCol);
                 isAnimating = false;
 
-                if (puzzleMoveIndex >= puzzle.solution.length) {
-                  puzzleSolved = true;
+                if (_pz.puzzleMoveIndex >= puzzle.solution.length) {
+                  _pz.puzzleSolved = true;
                   markPuzzleSolved(puzzleIndex);
                   sound.play('win');
                   $('puzzleMoveStatus').textContent = 'Solved! Come back tomorrow.';
@@ -3638,7 +3638,7 @@
                   $('turnText').textContent = 'Puzzle solved!';
                   setTimeout(() => {
                     gameActive = false;
-                    puzzleMode = false;
+                    _pz.puzzleMode = false;
                     $('gameOverTitle').textContent = 'Puzzle Solved!';
                     $('gameOverReason').textContent = puzzle.title + ' — ' + puzzle.desc;
                     $('gameOverElo').textContent = '';
@@ -3665,9 +3665,9 @@
       // Reset to puzzle position after a brief pause
       setTimeout(() => {
         chessEngine.reset();
-        chessEngine.loadFEN(puzzleFenSnapshot);
+        chessEngine.loadFEN(_pz.puzzleFenSnapshot);
         // Re-apply solved moves up to current position
-        for (let i = 0; i < puzzleMoveIndex; i++) {
+        for (let i = 0; i < _pz.puzzleMoveIndex; i++) {
           const mv = DAILY_PUZZLES[puzzleIndex].solution[i];
           const fC = mv.charCodeAt(0) - 97, fR = parseInt(mv[1]) - 1;
           const tC = mv.charCodeAt(2) - 97, tR = parseInt(mv[3]) - 1;
@@ -3721,8 +3721,8 @@
     capturedMeshes3D = [];
     selectedSquare = null;
     isAnimating = false;
-    puzzleMode = false;
-    puzzleSolved = false;
+    _pz.puzzleMode = false;
+    _pz.puzzleSolved = false;
     startAmbientMusic();
 
     // Hide puzzle overlay if visible
