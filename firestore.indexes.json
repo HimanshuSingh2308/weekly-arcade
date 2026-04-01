@@ -88,6 +88,7 @@
       "collectionGroup": "matchResults",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "gameId", "order": "ASCENDING" },
         { "fieldPath": "finishedAt", "order": "DESCENDING" }
       ]
     }
