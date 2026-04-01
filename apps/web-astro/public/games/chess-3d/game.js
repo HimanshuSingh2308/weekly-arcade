@@ -1767,6 +1767,48 @@
 
     // Show menu initially
     showOverlay('mainMenuOverlay');
+
+    // Handle deep links: ?join=CODE or ?session=ID
+    if (window.multiplayerClient) {
+      const params = new URLSearchParams(window.location.search);
+      const joinCode = params.get('join');
+      const sessionId = params.get('session');
+
+      if (joinCode || sessionId) {
+        // Wait for auth before joining
+        const deepLinkCheck = setInterval(async () => {
+          if (!currentUser) return; // Still waiting for auth
+          clearInterval(deepLinkCheck);
+
+          gameMode = 'multiplayer';
+          hideOverlay('mainMenuOverlay');
+
+          try {
+            if (joinCode) {
+              showOverlay('mpJoiningOverlay');
+              $('mpJoiningStatus').textContent = 'Joining via invite link...';
+              const session = await window.multiplayerClient.joinByCode(joinCode);
+              mpSessionId = session.sessionId;
+              mpIsHost = false;
+              await mpJoinAndPlay(session.sessionId);
+            } else if (sessionId) {
+              showOverlay('mpJoiningOverlay');
+              $('mpJoiningStatus').textContent = 'Joining session...';
+              await mpJoinAndPlay(sessionId);
+            }
+          } catch (err) {
+            showOverlay('mainMenuOverlay');
+            mpShowError(mpParseError(err, 'join'));
+          }
+
+          // Clean URL without reloading
+          window.history.replaceState({}, '', window.location.pathname);
+        }, 500);
+
+        // Timeout after 15s if auth never resolves
+        setTimeout(() => clearInterval(deepLinkCheck), 15000);
+      }
+    }
   }
 
   function setupMenuUI() {

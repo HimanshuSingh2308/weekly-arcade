@@ -106,7 +106,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         );
       }
 
-      // Send current game state to the connecting client
+      // Send current game state to the connecting client (if game already started)
       const activeSession = this.stateManager.getSession(sessionId);
       if (activeSession && activeSession.version > 0) {
         const turnUid = this.stateManager.getNextTurn(sessionId);
@@ -119,6 +119,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
 
       this.logger.log(`${isSpectator ? 'Spectator' : 'Player'} connected: uid=${uid} session=${sessionId}`);
+
+      // Auto-ready on connect and try to start if all players are in
+      if (isParticipant) {
+        this.roomManager.markReady(sessionId, uid);
+        await this.tryStartGame(sessionId, roomName);
+      }
     } catch (error) {
       this.logger.error(`Connection error: ${(error as Error).message}`);
       client.emit('error', { code: 'CONNECTION_ERROR', message: (error as Error).message });
@@ -205,6 +211,71 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     client.to(roomName).emit('session:player-ready', { uid });
 
     this.logger.debug(`Player ready: uid=${uid} session=${sessionId}`);
+
+    // Check if we should start the game
+    await this.tryStartGame(sessionId, roomName);
+  }
+
+  /**
+   * Check if all connected players are ready and the session is in starting/playing state.
+   * If so, initialize the game state and broadcast to all clients.
+   */
+  private async tryStartGame(sessionId: string, roomName: string): Promise<void> {
+    const activeSession = this.stateManager.getSession(sessionId);
+    if (!activeSession || activeSession.version > 0) return; // Already initialized
+
+    // Read session from Firestore to check status
+    const sessionDoc = await this.firebase.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) return;
+    const session = sessionDoc.data() as Session;
+
+    // Need at least minPlayers connected
+    const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
+    if (connectedPlayers.length < session.minPlayers) return;
+
+    // Session must be starting or playing
+    if (session.status !== 'starting' && session.status !== 'playing') return;
+
+    // All connected players must be ready
+    const readyPlayers = this.roomManager.getReadyPlayers(sessionId);
+    const allReady = connectedPlayers.every(uid => readyPlayers.includes(uid));
+    if (!allReady) return;
+
+    // Initialize game state
+    try {
+      const playerUids = Object.keys(session.players).filter(
+        uid => session.players[uid].status !== 'left'
+      );
+      const state = await this.stateManager.initializeGame(
+        sessionId, playerUids, session.gameConfig || {}
+      );
+
+      // Update Firestore to playing if still starting
+      if (session.status === 'starting') {
+        await this.firebase.doc(`sessions/${sessionId}`).update({
+          status: 'playing',
+          startedAt: new Date(),
+          lastActivityAt: new Date(),
+        });
+      }
+
+      // Broadcast initial state to all players
+      const turnUid = this.stateManager.getNextTurn(sessionId);
+      const payload: WsGameStatePayload = {
+        state,
+        version: 1,
+        turnUid,
+      };
+      this.server.to(roomName).emit('game:state', payload);
+
+      this.logger.log(`Game started: session=${sessionId} players=${playerUids.join(',')}`);
+    } catch (error) {
+      this.logger.error(`Failed to start game: ${(error as Error).message}`);
+      this.server.to(roomName).emit('error', {
+        code: 'GAME_START_FAILED',
+        message: 'Failed to initialize the game. Please try again.',
+      });
+    }
   }
 
   @SubscribeMessage('game:forfeit')
