@@ -19,10 +19,12 @@ RUN npx nx run shared:build && npx nx run realtime:build
 FROM node:20-slim
 WORKDIR /app
 ENV NODE_ENV=production
+# Cloud Run sets PORT dynamically (default 8080)
+ENV PORT=8080
 # Only copy production node_modules and built output
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules 2>/dev/null || true
 COPY --from=builder /app/apps/realtime/dist ./dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-EXPOSE 3001
+EXPOSE 8080
 CMD ["node", "dist/main.js"]

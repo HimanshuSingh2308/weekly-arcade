@@ -10,32 +10,65 @@ on:
 
   workflow_dispatch:
 
+env:
+  PROJECT_ID: loyal-curve-425715-h6
+  REGION: us-central1
+  SERVICE_NAME: weekly-arcade-realtime
+  AR_REPO: cloud-run-source-deploy
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          node-version: '20'
-          cache: 'npm'
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Build shared packages
-        run: npx nx build shared
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Build realtime service
-        run: npx nx run realtime:build
-        env:
-          INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
+      - name: Build Docker image
+        run: |
+          docker build \
+            -f apps/realtime/Dockerfile \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE_NAME }}:latest \
+            .
 
-      # Render auto-deploys from GitHub on push to main.
-      # This workflow validates the build succeeds.
-      # To trigger Render deploy manually, uncomment and add RENDER_DEPLOY_HOOK_URL secret:
-      # - name: Trigger Render Deploy
-      #   run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE_NAME }}:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 5 \
+            --timeout 3600 \
+            --session-affinity \
+            --set-env-vars "NODE_ENV=production,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }},API_BASE_URL=https://weekly-arcade-api-5171085645.us-central1.run.app/api,INTERNAL_API_KEY=${{ secrets.INTERNAL_API_KEY }}"
+
+      - name: Show service URL
+        run: |
+          gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)'
