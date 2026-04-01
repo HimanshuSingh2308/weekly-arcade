@@ -56,7 +56,7 @@
   background: var(--c3d-card);
   border: 1px solid var(--c3d-card-border);
   border-radius: 16px;
-  padding: 28px 24px;
+  padding: 28px 24px 32px;
   max-width: 420px;
   width: 90vw;
   max-height: 90vh;
@@ -92,8 +92,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 12px;
-  font-size: 1.1rem;
+  margin-bottom: 4px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -108,7 +108,7 @@
 .chess3d-menu-stats {
   color: var(--c3d-text-dim);
   font-size: 0.8rem;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 /* ---------- Labels ---------- */
@@ -125,7 +125,7 @@
 .chess3d-btn-group {
   display: flex;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
   justify-content: center;
 }
