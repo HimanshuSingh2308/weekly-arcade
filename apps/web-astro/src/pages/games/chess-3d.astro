@@ -140,6 +140,7 @@ import gameData from '../../data/games/chess-3d.json';
       <button class="chess3d-hud-btn" id="undoBtn" title="Undo (Z)" aria-label="Undo last move">&#x21A9;</button>
       <button class="chess3d-hud-btn" id="flipBtn" title="Flip board (F)" aria-label="Flip board">&#x21C5;</button>
       <button class="chess3d-hud-btn" id="resetCamBtn" title="Reset camera (R)" aria-label="Reset camera">&#x21BA;</button>
+      <button class="chess3d-hud-btn" id="drawOfferBtn" title="Offer Draw" aria-label="Offer draw" style="display:none;">&#xBD;</button>
       <button class="chess3d-hud-btn chess3d-hud-btn-danger" id="resignBtn" title="Resign" aria-label="Resign">&#x2691;</button>
     </div>
   </div>
@@ -169,6 +170,18 @@ import gameData from '../../data/games/chess-3d.json';
     </div>
   </div>
 
+  <!-- Draw Offer Received -->
+  <div class="chess3d-overlay" id="drawOfferOverlay" role="dialog" aria-modal="true" aria-label="Draw offer">
+    <div class="chess3d-modal" style="max-width:320px;">
+      <h2 style="margin:0 0 8px;">Draw Offered</h2>
+      <p id="drawOfferText" style="color:var(--c3d-text-dim);margin:0 0 16px;">Your opponent offers a draw.</p>
+      <div class="chess3d-btn-row">
+        <button class="chess3d-btn" id="drawAcceptBtn">Accept Draw</button>
+        <button class="chess3d-btn chess3d-btn-secondary" id="drawDeclineBtn">Decline</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Game Over Overlay -->
   <div class="chess3d-overlay" id="gameOverOverlay" role="dialog" aria-modal="true" aria-label="Game over">
     <div class="chess3d-modal chess3d-gameover-modal">
@@ -176,6 +189,7 @@ import gameData from '../../data/games/chess-3d.json';
       <p id="gameOverReason" class="chess3d-gameover-reason"></p>
       <div class="chess3d-elo-change" id="gameOverElo"></div>
       <div class="chess3d-gameover-stats" id="gameOverStats"></div>
+      <p id="gameOverTease" style="color:var(--c3d-gold);font-size:0.85rem;margin:8px 0 0;display:none;font-weight:600;"></p>
       <div class="chess3d-btn-row">
         <button class="chess3d-btn chess3d-btn-play" id="rematchBtn">Rematch</button>
         <button class="chess3d-btn chess3d-btn-secondary" id="menuBtn">Menu</button>

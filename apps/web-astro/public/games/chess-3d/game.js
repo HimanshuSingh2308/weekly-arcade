@@ -2284,6 +2284,28 @@
       }
     });
 
+    // Draw offer button (multiplayer only)
+    $('drawOfferBtn')?.addEventListener('click', () => {
+      if (gameMode !== 'multiplayer' || !window.multiplayerClient) return;
+      window.multiplayerClient.submitMove('draw-offer', {});
+      sound.play('click');
+      $('drawOfferBtn').disabled = true;
+      $('drawOfferBtn').textContent = 'Offered';
+      setTimeout(() => { $('drawOfferBtn').disabled = false; $('drawOfferBtn').textContent = '\u00BD'; }, 5000);
+    });
+
+    // Draw accept/decline
+    $('drawAcceptBtn')?.addEventListener('click', () => {
+      window.multiplayerClient?.submitMove('draw-accept', {});
+      hideOverlay('drawOfferOverlay');
+      sound.play('click');
+    });
+    $('drawDeclineBtn')?.addEventListener('click', () => {
+      window.multiplayerClient?.submitMove('draw-decline', {});
+      hideOverlay('drawOfferOverlay');
+      sound.play('click');
+    });
+
     // Resign dialog
     $('resignConfirmBtn').addEventListener('click', () => {
       hideOverlay('resignOverlay');
@@ -2986,6 +3008,7 @@
         moveCount = (state.moveHistory || []).length;
         $('gameHud').style.display = '';
         $('undoBtn').style.display = 'none'; // No undo in multiplayer
+        $('drawOfferBtn').style.display = ''; // Show draw offer in multiplayer
 
         // Fetch opponent name from session data
         window.multiplayerClient.getSession(mpSessionId).then(session => {
@@ -3068,6 +3091,15 @@
         const king = chessEngine._findKing(chessEngine.getTurn());
         if (king) showCheckHighlight(king[0], king[1]);
         sound.play('check');
+      }
+
+      // Draw offer detection
+      if (state.drawOffer && state.drawOffer !== currentUser?.uid) {
+        // Opponent offered a draw — show the dialog
+        $('drawOfferText').textContent = mpOpponentName + ' offers a draw.';
+        showOverlay('drawOfferOverlay');
+        sound.play('click');
+        srAnnounce(mpOpponentName + ' has offered a draw.');
       }
 
       // Turn indicator + timer
@@ -3276,6 +3308,7 @@
     moveCount = 0;
     selectedSquare = null;
     isAnimating = false;
+    startAmbientMusic();
 
     hideOverlay('mainMenuOverlay');
     hideOverlay('gameOverOverlay');
@@ -3317,6 +3350,7 @@
 
   function endGame(winner, reason) {
     gameActive = false;
+    stopAmbientMusic();
     $('thinkingIndicator').style.display = 'none';
 
     const gameTimeMs = Date.now() - gameStartTime;
@@ -3360,6 +3394,14 @@
     }
 
     $('gameOverStats').textContent = moveCount + ' moves \u00b7 ' + formatTime(gameTimeMs);
+
+    // Near-miss tease — show what's almost achieved
+    const tease = getNearMissTease(eloResult.newRating, result, moveCount);
+    const teaseEl = $('gameOverTease');
+    if (teaseEl) {
+      teaseEl.textContent = tease || '';
+      teaseEl.style.display = tease ? '' : 'none';
+    }
 
     showOverlay('gameOverOverlay');
 
@@ -3552,6 +3594,103 @@
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
     return min + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  // Near-miss tease — motivate the player to try again
+  function getNearMissTease(currentElo, result, moves) {
+    const teases = [];
+
+    // ELO tier proximity
+    const tiers = [
+      { name: 'Knight', elo: 1000 },
+      { name: 'Bishop', elo: 1200 },
+      { name: 'Rook', elo: 1400 },
+      { name: 'Queen', elo: 1600 },
+      { name: 'King', elo: 1800 },
+      { name: 'Grandmaster', elo: 2000 },
+    ];
+    for (const tier of tiers) {
+      const gap = tier.elo - currentElo;
+      if (gap > 0 && gap <= 50) {
+        teases.push('Only ' + gap + ' ELO from ' + tier.name + ' tier!');
+        break;
+      }
+    }
+
+    // Win streak proximity
+    if (result === 'win' && elo.streak >= 2 && elo.streak < 3) {
+      teases.push('1 more win for Hat Trick achievement!');
+    } else if (result === 'win' && elo.streak >= 4 && elo.streak < 5) {
+      teases.push('1 more win for Unstoppable achievement!');
+    }
+
+    // Quick mate proximity
+    if (result === 'win' && moves <= 10 && moves > 7) {
+      teases.push('Close! Win in 7 moves for Scholar\'s Mate achievement.');
+    }
+
+    // Loss encouragement
+    if (result === 'loss') {
+      teases.push('Try again — every game makes you better.');
+    }
+
+    return teases[0] || null; // Show the most relevant tease
+  }
+
+  // --- Ambient Music ---
+  let ambientPlaying = false;
+  let ambientNodes = [];
+
+  function startAmbientMusic() {
+    if (ambientPlaying || sound.muted) return;
+    try { sound._ensureContext(); } catch (e) { return; }
+    const ctx = sound.ctx;
+    if (!ctx) return;
+
+    ambientPlaying = true;
+
+    // Root drone (A3 = 220Hz)
+    const drone = ctx.createOscillator();
+    const droneGain = ctx.createGain();
+    drone.type = 'sine';
+    drone.frequency.value = 220;
+    droneGain.gain.value = 0.015;
+    drone.connect(droneGain).connect(ctx.destination);
+    drone.start();
+    ambientNodes.push({ osc: drone, gain: droneGain });
+
+    // Fifth (E4 = 330Hz)
+    const fifth = ctx.createOscillator();
+    const fifthGain = ctx.createGain();
+    fifth.type = 'sine';
+    fifth.frequency.value = 330;
+    fifthGain.gain.value = 0.008;
+    fifth.connect(fifthGain).connect(ctx.destination);
+    fifth.start();
+    ambientNodes.push({ osc: fifth, gain: fifthGain });
+
+    // Slow LFO for subtle movement
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.frequency.value = 0.08;
+    lfoGain.gain.value = 2;
+    lfo.connect(lfoGain).connect(drone.frequency);
+    lfo.start();
+    ambientNodes.push({ osc: lfo, gain: lfoGain });
+  }
+
+  function stopAmbientMusic() {
+    if (!ambientPlaying) return;
+    ambientPlaying = false;
+    const ctx = sound.ctx;
+    if (!ctx) return;
+    for (const node of ambientNodes) {
+      try {
+        node.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+        node.osc.stop(ctx.currentTime + 1.1);
+      } catch (e) {}
+    }
+    ambientNodes = [];
   }
 
   // --- Overlay helpers ---

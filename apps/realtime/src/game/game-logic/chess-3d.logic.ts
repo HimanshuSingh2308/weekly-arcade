@@ -46,6 +46,8 @@ interface ChessState {
   colorMap: Record<string, string>; // uid -> 'w' | 'b'
   moveHistory: string[];   // SAN notation
   result?: string;
+  drawOffer?: string;      // UID of player who offered draw (null if none)
+  drawAgreed?: boolean;    // true when both players agreed to draw
 }
 
 // ─── Chess Engine (Server-side) ─────────────────────────────────────
@@ -687,9 +689,33 @@ export class Chess3dLogic implements MultiplayerGameLogic, OnModuleInit {
 
       return newState as unknown as Record<string, unknown>;
 
+    } else if (moveType === 'draw-offer') {
+      // Player offers a draw — record the offer in state, don't change the board
+      return {
+        ...cs,
+        drawOffer: uid,
+      } as unknown as Record<string, unknown>;
+
+    } else if (moveType === 'draw-accept') {
+      // Accept a pending draw offer
+      if (!cs.drawOffer || cs.drawOffer === uid) {
+        throw new Error('No pending draw offer to accept');
+      }
+      // Mark game as drawn — checkGameOver will detect this
+      return {
+        ...cs,
+        drawOffer: null,
+        drawAgreed: true,
+      } as unknown as Record<string, unknown>;
+
+    } else if (moveType === 'draw-decline') {
+      // Decline a pending draw offer
+      return {
+        ...cs,
+        drawOffer: null,
+      } as unknown as Record<string, unknown>;
+
     } else if (moveType === 'resign') {
-      // Resignation is handled by the gateway's forfeit mechanism,
-      // but we support it here as a move type too
       throw new Error('Use forfeit instead of resign move');
 
     } else {
@@ -701,6 +727,17 @@ export class Chess3dLogic implements MultiplayerGameLogic, OnModuleInit {
     const cs = state as unknown as ChessState;
     const engine = new ChessEngine(cs.fen);
     const [whiteUid, blackUid] = cs.players;
+
+    // Draw by mutual agreement
+    if ((cs as any).drawAgreed) {
+      return {
+        players: {
+          [whiteUid]: { score: 0.5, rank: 1, outcome: 'draw' },
+          [blackUid]: { score: 0.5, rank: 1, outcome: 'draw' },
+        },
+        reason: 'completed',
+      };
+    }
 
     if (engine.isCheckmate()) {
       // The player whose turn it is has been checkmated (they lost)

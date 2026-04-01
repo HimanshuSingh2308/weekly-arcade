@@ -51,10 +51,10 @@
   - Category: UNFUN (Expert blocks UI for 3s)
   - Files: new chess-ai-worker.js, game.js
 
-- [ ] **#18 Draw offer mechanism** (Score: 25) — Server-side draw-offer/draw-accept
-  - Impact: 4 | Fun: 3 | Effort: 3 | Risk: 4
+- [x] **#18 Draw offer mechanism** (Score: 25) — Server-side draw-offer/draw-accept/decline
   - Category: MISSING
   - Files: chess-3d.logic.ts, game.js, chess-3d.astro
+  - Applied: 2026-04-01
 
 - [ ] **#19 Time control options** (Score: 23) — Rapid (10+0), Blitz (5+0), Correspondence (current)
   - Impact: 3 | Fun: 4 | Effort: 2 | Risk: 4
@@ -68,7 +68,7 @@
   - Category: UNFUN
   - Files: game.js (OPENING_BOOK)
 
-- [ ] **#21 Ambient background music** (Score: 19) — Low strategy drone from sound-design skill
+- [x] **#21 Ambient background music** (Score: 19) — Low A3 drone + E4 fifth with LFO
   - Impact: 4 | Fun: 3 | Effort: 4 | Risk: 5
   - Category: POLISH
   - Files: game.js (SoundManager + MusicLoop)
@@ -78,7 +78,7 @@
   - Category: POLISH
   - Files: game.js (board materials), settings in localStorage
 
-- [ ] **#23 Near-miss tease on game over** (Score: 18) — "2 moves from checkmate!" / "1 win from achievement"
+- [x] **#23 Near-miss tease on game over** (Score: 18) — ELO tier proximity, streak, quick mate, loss encouragement
   - Impact: 3 | Fun: 3 | Effort: 4 | Risk: 5
   - Category: POLISH (retention)
   - Files: game.js (endGame)
