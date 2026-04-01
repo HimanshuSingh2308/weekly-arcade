@@ -1798,7 +1798,7 @@
             }
           } catch (err) {
             showOverlay('mainMenuOverlay');
-            mpShowError(mpParseError(err, 'join'));
+            { const m = mpParseError(err, 'join'); if (m) mpShowError(m); }
           }
 
           // Clean URL without reloading
@@ -1886,7 +1886,7 @@
           }
         } catch (err) {
           window.multiplayerUI?.hideMatchmaking();
-          mpShowError(mpParseError(err, 'matchmaking'));
+          { const m = mpParseError(err, 'matchmaking'); if (m) mpShowError(m); }
         }
       });
     }
@@ -1906,7 +1906,7 @@
           mpIsHost = true;
           mpShowWaitingRoom(session);
         } catch (err) {
-          mpShowError(mpParseError(err, 'create'));
+          { const m = mpParseError(err, 'create'); if (m) mpShowError(m); }
         }
       });
     }
@@ -1939,7 +1939,7 @@
           hideOverlay('mpJoiningOverlay');
           showOverlay('mpLobbyOverlay');
           sound.play('error');
-          mpShowError(mpParseError(err, 'join'));
+          { const m = mpParseError(err, 'join'); if (m) mpShowError(m); }
         }
       });
     }
@@ -2390,26 +2390,86 @@
      9a. MULTIPLAYER FUNCTIONS
      ================================================================ */
 
+  let mpErrorTimer = null;
+
   function mpShowError(message) {
     const el = $('mpErrorMsg');
     if (el) {
       el.textContent = message;
       el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 8000);
+      if (mpErrorTimer) clearTimeout(mpErrorTimer);
+      mpErrorTimer = setTimeout(() => { el.style.display = 'none'; }, 15000);
     } else {
       alert(message);
     }
     sound.play('error');
   }
 
+  function mpShowErrorWithCountdown(baseMsg, expiresInMs) {
+    const el = $('mpErrorMsg');
+    if (!el) { alert(baseMsg); return; }
+    sound.play('error');
+    el.style.display = 'block';
+
+    if (mpErrorTimer) clearTimeout(mpErrorTimer);
+    const endTime = Date.now() + expiresInMs;
+
+    function tick() {
+      const remaining = Math.max(0, endTime - Date.now());
+      if (remaining <= 0) {
+        el.innerHTML = baseMsg + ' <strong style="color:var(--c3d-emerald);">Ready now! Try again.</strong>';
+        return;
+      }
+      const min = Math.floor(remaining / 60000);
+      const sec = Math.floor((remaining % 60000) / 1000);
+      const timeStr = min > 0 ? min + 'm ' + sec + 's' : sec + 's';
+      el.innerHTML = baseMsg + ' <strong>Expires in ' + timeStr + '</strong>';
+      mpErrorTimer = setTimeout(tick, 1000);
+    }
+    tick();
+  }
+
+  async function mpHandleSessionLimit(context) {
+    // Fetch active sessions to find earliest expiry
+    try {
+      const sessions = await window.multiplayerClient.getActiveSessions();
+      if (sessions && sessions.length > 0) {
+        // Find the oldest waiting session (will expire first)
+        let earliestExpiry = Infinity;
+        for (const s of sessions) {
+          if (s.status === 'waiting' && s.lastActivityAt) {
+            const activityTime = new Date(s.lastActivityAt).getTime();
+            const expiresAt = activityTime + 5 * 60 * 1000; // 5 min idle timeout
+            if (expiresAt < earliestExpiry) earliestExpiry = expiresAt;
+          }
+        }
+        if (earliestExpiry < Infinity) {
+          const remaining = earliestExpiry - Date.now();
+          if (remaining > 0) {
+            mpShowErrorWithCountdown(
+              'Session limit reached (3 max). Oldest session expiring soon.',
+              remaining
+            );
+            return;
+          }
+        }
+      }
+    } catch (e) { /* fallback to static message */ }
+
+    mpShowError('Session limit reached (3 max). Your oldest session will expire within 5 minutes. Try again shortly.');
+  }
+
   function mpParseError(err, context) {
     const msg = err?.message || '';
 
     // 409 Conflict — already in queue or session
-    if (msg.includes('409') || msg.includes('Conflict')) {
-      if (context === 'matchmaking') return 'You already have an active matchmaking request. Please wait for it to expire (2 min) or try again shortly.';
-      if (context === 'create') return 'You already have an active session. Leave your current session first, or wait for it to expire.';
-      return 'Conflict — you may already have an active session or request.';
+    if (msg.includes('409') || msg.includes('Conflict') || msg.includes('concurrent')) {
+      if (msg.includes('matchmaking') || context === 'matchmaking') {
+        return 'You already have an active matchmaking request. Please wait for it to expire (2 min) or try again shortly.';
+      }
+      // Session limit — show countdown
+      mpHandleSessionLimit(context);
+      return null; // Handled by countdown, don't show static error
     }
 
     // 401/403 — auth issues
