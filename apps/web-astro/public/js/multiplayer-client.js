@@ -17,7 +17,8 @@
   let socket = null;
   let currentSessionId = null;
   let reconnectAttempts = 0;
-  const MAX_RECONNECT_ATTEMPTS = 10;
+  const MAX_RECONNECT_ATTEMPTS = 20; // Higher for iOS background resume
+  let _visibilityReconnectPending = false;
 
   // Event callback storage
   const listeners = {
@@ -60,20 +61,35 @@
         reconnection: true,
         reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        timeout: 10000,
+        reconnectionDelayMax: 10000,
+        timeout: 15000,
+        // iOS Safari: use both transports — WebSocket may fail after background
+        transports: ['websocket', 'polling'],
+        // Upgrade polling to WS when available
+        upgrade: true,
+        // Shorter ping for faster disconnect detection on mobile
+        pingInterval: 10000,
+        pingTimeout: 20000,
+        // Force new connection on reconnect (iOS caches stale sockets)
+        forceNew: false,
       });
 
       let initialConnect = true;
       socket.on('connect', () => {
         console.log('[MP] Connected to realtime service');
         reconnectAttempts = 0;
+        _visibilityReconnectPending = false;
         if (initialConnect) {
           initialConnect = false;
           resolve();
         } else {
           // This is a reconnect — notify listeners
           console.log('[MP] Reconnected');
+          // Refresh auth token on reconnect (may have expired during iOS background)
+          const freshToken = window.apiClient?.token;
+          if (freshToken && socket.auth) {
+            socket.auth.token = freshToken;
+          }
           _emit('reconnected', {});
         }
       });
@@ -81,6 +97,16 @@
       socket.on('connect_error', (err) => {
         console.error('[MP] Connection error:', err.message);
         reconnectAttempts++;
+
+        // On auth error, try refreshing token
+        if (err.message?.includes('auth') || err.message?.includes('token') || err.message?.includes('unauthorized')) {
+          const freshToken = window.apiClient?.token;
+          if (freshToken && socket.auth) {
+            socket.auth.token = freshToken;
+            console.log('[MP] Refreshed auth token for reconnect');
+          }
+        }
+
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
           reject(new Error('Failed to connect to multiplayer service'));
         }
@@ -89,6 +115,12 @@
       socket.on('disconnect', (reason) => {
         console.log('[MP] Disconnected:', reason);
         _emit('error', { code: 'DISCONNECTED', message: reason });
+
+        // If server disconnected us (not client-initiated), force reconnect
+        if (reason === 'io server disconnect' || reason === 'transport close') {
+          console.log('[MP] Server-side disconnect — attempting reconnect');
+          socket.connect();
+        }
       });
 
       // Register all event forwarders
@@ -104,8 +136,68 @@
           predictedState = null; // Server state takes precedence
         }
       });
+
+      // iOS/Safari: detect tab resume and force reconnect if socket died
+      _setupVisibilityReconnect();
     });
   }
+
+  // iOS Safari suspends WebSocket when tab goes to background.
+  // On resume, the socket is dead but Socket.IO may not detect it.
+  // This forces a health check + reconnect on visibility change.
+  function _setupVisibilityReconnect() {
+    // Remove previous listener if any
+    if (_visibilityHandler) document.removeEventListener('visibilitychange', _visibilityHandler);
+
+    _visibilityHandler = () => {
+      if (document.visibilityState === 'visible' && socket) {
+        console.log('[MP] Tab resumed — checking connection');
+
+        if (!socket.connected) {
+          console.log('[MP] Socket dead after background — reconnecting');
+          _visibilityReconnectPending = true;
+          _emit('error', { code: 'DISCONNECTED', message: 'Tab resumed' });
+
+          // Refresh token before reconnecting (may have expired)
+          const freshToken = window.apiClient?.token;
+          if (freshToken && socket.auth) {
+            socket.auth.token = freshToken;
+          }
+
+          socket.connect();
+        } else {
+          // Socket says connected but may be stale — send a ping to verify
+          socket.emit('ping', {}, () => {
+            // If this callback fires, connection is alive
+            console.log('[MP] Connection verified after resume');
+          });
+
+          // If no response within 3s, force reconnect
+          setTimeout(() => {
+            if (socket && !socket.connected) {
+              console.log('[MP] Ping timeout after resume — forcing reconnect');
+              socket.disconnect();
+              socket.connect();
+            }
+          }, 3000);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', _visibilityHandler);
+
+    // iOS also fires 'pageshow' on back-forward cache restore
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted && socket && !socket.connected) {
+        console.log('[MP] Page restored from bfcache — reconnecting');
+        const freshToken = window.apiClient?.token;
+        if (freshToken && socket.auth) socket.auth.token = freshToken;
+        socket.connect();
+      }
+    });
+  }
+
+  let _visibilityHandler = null;
 
   function disconnect() {
     if (socket) {
