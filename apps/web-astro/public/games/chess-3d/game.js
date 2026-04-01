@@ -1977,16 +1977,23 @@
 
     if (!scene || !pieceMasters) return;
 
-    // Collect captured pieces from move history
+    // Detect captured pieces by comparing current board to starting material
+    // This works in both AI mode (moveHistory) and multiplayer (FEN only)
+    const startingPieces = { w: { p: 8, r: 2, n: 2, b: 2, q: 1, k: 1 }, b: { p: 8, r: 2, n: 2, b: 2, q: 1, k: 1 } };
+    const currentPieces = { w: { p: 0, r: 0, n: 0, b: 0, q: 0, k: 0 }, b: { p: 0, r: 0, n: 0, b: 0, q: 0, k: 0 } };
+
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const p = engine.board[r][c];
+        if (p) currentPieces[p.color][p.type]++;
+      }
+    }
+
     const captured = { w: [], b: [] };
-    if (engine.moveHistory) {
-      for (const move of engine.moveHistory) {
-        if (move.captured) {
-          captured[move.captured.color].push(move.captured.type);
-        }
-        if (move.undo?.enPassantCapture) {
-          captured[move.undo.enPassantCapture.color].push('p');
-        }
+    for (const color of [WHITE, BLACK]) {
+      for (const type of ['q', 'r', 'b', 'n', 'p']) {
+        const diff = (startingPieces[color][type] || 0) - (currentPieces[color][type] || 0);
+        for (let i = 0; i < diff; i++) captured[color].push(type);
       }
     }
 
