@@ -140,7 +140,7 @@ export class MatchmakingService {
       avatarUrl = userDoc.data()?.avatarUrl || null;
     }
 
-    // Create session
+    // Create session with the searching player (uid) as host
     const session = await this.multiplayerService.createSession(uid, displayName!, avatarUrl ?? null, {
       gameId,
       mode: 'quick-match',
@@ -148,7 +148,25 @@ export class MatchmakingService {
       minPlayers: 2,
     });
 
-    // Update both queue entries
+    // Auto-join the matched opponent into the session
+    let matchDisplayName = 'Player';
+    let matchAvatarUrl: string | null = null;
+    try {
+      const matchUserDoc = await this.firebase.doc(`users/${matchData.uid}`).get();
+      matchDisplayName = matchUserDoc.data()?.displayName || 'Player';
+      matchAvatarUrl = matchUserDoc.data()?.avatarUrl || null;
+    } catch (e) { /* fallback to defaults */ }
+
+    await this.multiplayerService.joinSession(session.sessionId, matchData.uid, matchDisplayName, matchAvatarUrl);
+
+    // Auto-start for quick match (both players are already in)
+    try {
+      await this.multiplayerService.startGame(session.sessionId, uid);
+    } catch (e) {
+      // startGame may fail if minPlayers not met yet — that's OK
+    }
+
+    // Update both queue entries to matched
     const batch = this.firebase.batch();
     batch.update(this.firebase.doc(`matchmakingQueue/${entryId}`), {
       status: 'matched',
