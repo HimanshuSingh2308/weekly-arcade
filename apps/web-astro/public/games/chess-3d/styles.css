@@ -769,9 +769,292 @@
   outline-offset: 2px;
 }
 
+/* ---------- Board Theme Selector ---------- */
+.chess3d-theme-select {
+  margin-bottom: 10px;
+}
+
+.chess3d-theme-group {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chess3d-theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  min-width: 64px;
+}
+
+.chess3d-theme-btn:hover {
+  border-color: rgba(201, 168, 76, 0.5);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.chess3d-theme-btn.selected {
+  border-color: var(--c3d-gold);
+  background: rgba(201, 168, 76, 0.18);
+}
+
+.chess3d-theme-swatch {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.chess3d-theme-name {
+  font-size: 0.65rem;
+  color: var(--c3d-text-dim);
+  font-weight: 600;
+}
+
+.chess3d-theme-btn.selected .chess3d-theme-name {
+  color: var(--c3d-gold);
+}
+
+/* ---------- Piece Skin Selector ---------- */
+.chess3d-skin-select {
+  margin-bottom: 10px;
+}
+
+.chess3d-skin-group {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chess3d-skin-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  position: relative;
+  min-width: 72px;
+}
+
+.chess3d-skin-btn:hover {
+  border-color: rgba(201, 168, 76, 0.5);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.chess3d-skin-btn.selected {
+  border-color: var(--c3d-gold);
+  background: rgba(201, 168, 76, 0.18);
+}
+
+.chess3d-skin-btn.locked {
+  opacity: 0.5;
+}
+
+.chess3d-skin-btn.locked:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.chess3d-skin-icon {
+  font-size: 1.5rem;
+  color: var(--c3d-text);
+  line-height: 1;
+}
+
+.chess3d-skin-name {
+  font-size: 0.65rem;
+  color: var(--c3d-text-dim);
+  font-weight: 600;
+}
+
+.chess3d-skin-btn.selected .chess3d-skin-name {
+  color: var(--c3d-gold);
+}
+
+.chess3d-skin-lock {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.6rem;
+}
+
+.chess3d-skin-btn:not(.locked) .chess3d-skin-lock {
+  display: none;
+}
+
+.chess3d-skin-lock-tip {
+  display: none;
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c3d-card);
+  border: 1px solid var(--c3d-gold);
+  color: var(--c3d-gold);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  white-space: nowrap;
+  z-index: 10;
+  font-weight: 600;
+}
+
+/* ---------- Daily Puzzle Button ---------- */
+.chess3d-btn-puzzle {
+  width: 100%;
+  margin-top: 10px;
+  background: rgba(61, 170, 98, 0.2);
+  color: var(--c3d-emerald);
+  border: 1px solid rgba(61, 170, 98, 0.4);
+}
+
+.chess3d-btn-puzzle:hover {
+  background: rgba(61, 170, 98, 0.3);
+  border-color: var(--c3d-emerald);
+}
+
+.chess3d-puzzle-badge {
+  font-size: 0.6rem;
+  background: var(--c3d-emerald);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ---------- Puzzle HUD Overlay ---------- */
+.chess3d-puzzle-hud {
+  position: fixed;
+  top: calc(130px + var(--c3d-safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  pointer-events: auto;
+}
+
+.chess3d-puzzle-card {
+  background: var(--c3d-card);
+  border: 1px solid var(--c3d-card-border);
+  border-radius: 12px;
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 220px;
+  max-width: 300px;
+}
+
+.chess3d-puzzle-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.chess3d-puzzle-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 1px 4px rgba(61, 170, 98, 0.4));
+}
+
+.chess3d-puzzle-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.chess3d-puzzle-diff {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--c3d-emerald);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chess3d-puzzle-desc {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--c3d-text-dim);
+}
+
+.chess3d-puzzle-status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--c3d-text-dim);
+  margin: 4px 0;
+}
+
+.chess3d-puzzle-status.correct {
+  color: var(--c3d-emerald);
+}
+
+.chess3d-puzzle-status.wrong {
+  color: var(--c3d-red);
+}
+
+.chess3d-puzzle-status.solved {
+  color: var(--c3d-gold);
+}
+
+.chess3d-puzzle-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .chess3d-thinking-dots span { animation: none; opacity: 0.7; }
   .chess3d-promo-btn:hover { transform: none; }
   .chess3d-btn:hover { transform: none; }
+}
+
+/* ---------- Responsive — theme/skin selectors ---------- */
+@media (max-width: 480px) {
+  .chess3d-theme-btn {
+    min-width: 56px;
+    padding: 4px 6px;
+  }
+
+  .chess3d-theme-swatch {
+    width: 26px;
+    height: 26px;
+  }
+
+  .chess3d-skin-btn {
+    min-width: 60px;
+    padding: 4px 8px;
+  }
+
+  .chess3d-skin-icon {
+    font-size: 1.2rem;
+  }
+
+  .chess3d-puzzle-hud {
+    top: calc(115px + var(--c3d-safe-top));
+  }
+
+  .chess3d-puzzle-card {
+    min-width: 180px;
+    padding: 8px 12px;
+  }
 }

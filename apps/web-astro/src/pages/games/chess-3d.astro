@@ -73,10 +73,61 @@ import gameData from '../../data/games/chess-3d.json';
         </div>
       </div>
 
+      <!-- Board Theme Selector -->
+      <div class="chess3d-theme-select" role="group" aria-labelledby="themeLabel">
+        <span id="themeLabel" class="chess3d-label">Board Theme</span>
+        <div class="chess3d-theme-group">
+          <button class="chess3d-theme-btn" data-theme="classic" title="Classic Wood" aria-label="Classic wood board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#F0D9B5 50%,#5C3317 50%);"></span>
+            <span class="chess3d-theme-name">Classic</span>
+          </button>
+          <button class="chess3d-theme-btn" data-theme="marble" title="Marble" aria-label="Marble board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#E8E8E8 50%,#6B6B6B 50%);"></span>
+            <span class="chess3d-theme-name">Marble</span>
+          </button>
+          <button class="chess3d-theme-btn" data-theme="forest" title="Forest" aria-label="Forest board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#AECF9F 50%,#4A7B3C 50%);"></span>
+            <span class="chess3d-theme-name">Forest</span>
+          </button>
+          <button class="chess3d-theme-btn" data-theme="midnight" title="Midnight" aria-label="Midnight board theme">
+            <span class="chess3d-theme-swatch" style="background:linear-gradient(135deg,#4A5568 50%,#1A202C 50%);"></span>
+            <span class="chess3d-theme-name">Midnight</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Piece Skin Selector -->
+      <div class="chess3d-skin-select" role="group" aria-labelledby="skinLabel">
+        <span id="skinLabel" class="chess3d-label">Piece Style</span>
+        <div class="chess3d-skin-group">
+          <button class="chess3d-skin-btn" data-skin="classic" aria-label="Classic piece style">
+            <span class="chess3d-skin-icon">&#9812;</span>
+            <span class="chess3d-skin-name">Classic</span>
+          </button>
+          <button class="chess3d-skin-btn" data-skin="minimal" aria-label="Minimal piece style">
+            <span class="chess3d-skin-icon">&#9898;</span>
+            <span class="chess3d-skin-name">Minimal</span>
+            <span class="chess3d-skin-lock">&#128274;</span>
+            <span class="chess3d-skin-lock-tip"></span>
+          </button>
+          <button class="chess3d-skin-btn" data-skin="royal" aria-label="Royal piece style">
+            <span class="chess3d-skin-icon">&#9813;</span>
+            <span class="chess3d-skin-name">Royal</span>
+            <span class="chess3d-skin-lock">&#128274;</span>
+            <span class="chess3d-skin-lock-tip"></span>
+          </button>
+        </div>
+      </div>
+
       <button class="chess3d-btn chess3d-btn-play" id="playAIBtn">Play vs AI</button>
 
       <button class="chess3d-btn chess3d-btn-disabled" id="playFriendBtn" disabled>
         Play vs Friend <span class="chess3d-coming-soon">Coming Soon</span>
+      </button>
+
+      <!-- Daily Puzzle Button -->
+      <button class="chess3d-btn chess3d-btn-puzzle" id="dailyPuzzleBtn">
+        Daily Puzzle <span class="chess3d-puzzle-badge">New</span>
       </button>
     </div>
   </div>
@@ -244,6 +295,25 @@ import gameData from '../../data/games/chess-3d.json';
       <h2 id="mpJoiningStatus" style="margin:0 0 16px;font-size:1.1rem;">Connecting...</h2>
       <div class="chess3d-thinking" style="display:flex;justify-content:center;">
         <div class="chess3d-thinking-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Puzzle HUD Overlay -->
+  <div class="chess3d-puzzle-hud" id="puzzleOverlay" style="display:none;" role="status" aria-label="Daily puzzle info">
+    <div class="chess3d-puzzle-card">
+      <div class="chess3d-puzzle-header">
+        <span class="chess3d-puzzle-icon">&#9823;</span>
+        <div>
+          <h3 id="puzzleTitle" class="chess3d-puzzle-title">Mate in 1</h3>
+          <span id="puzzleDifficulty" class="chess3d-puzzle-diff">Easy</span>
+          <span id="puzzleDesc" class="chess3d-puzzle-desc"></span>
+        </div>
+      </div>
+      <p id="puzzleMoveStatus" class="chess3d-puzzle-status">Find the winning move!</p>
+      <div class="chess3d-puzzle-actions">
+        <button class="chess3d-hud-btn" id="puzzleHintBtn" title="Hint" aria-label="Get a hint">&#128161;</button>
+        <button class="chess3d-hud-btn" id="puzzleBackBtn" title="Back to Menu" aria-label="Back to menu">&#10005;</button>
       </div>
     </div>
   </div>
