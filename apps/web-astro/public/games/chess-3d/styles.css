@@ -1038,6 +1038,27 @@
   margin-top: 6px;
 }
 
+/* ---------- Turn change animations ---------- */
+.chess3d-turn-flash {
+  animation: turnFlash 0.6s ease;
+}
+
+@keyframes turnFlash {
+  0% { transform: translateX(-50%) scale(1); border-color: var(--c3d-gold); }
+  30% { transform: translateX(-50%) scale(1.15); border-color: var(--c3d-gold); box-shadow: 0 0 12px rgba(201, 168, 76, 0.5); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+.chess3d-bar-pulse {
+  animation: barPulse 0.6s ease;
+}
+
+@keyframes barPulse {
+  0% { border-color: var(--c3d-card-border); }
+  30% { border-color: var(--c3d-gold); box-shadow: 0 0 10px rgba(201, 168, 76, 0.3); }
+  100% { border-color: var(--c3d-card-border); }
+}
+
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .chess3d-thinking-dots span { animation: none; opacity: 0.7; }

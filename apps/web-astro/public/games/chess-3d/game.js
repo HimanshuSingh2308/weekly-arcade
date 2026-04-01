@@ -1646,7 +1646,7 @@
       return;
     }
 
-    const duration = 20; // frames (~333ms at 60fps)
+    const duration = 36; // frames (~600ms at 60fps)
     let frame = 0;
 
     const observer = scene.onBeforeRenderObservable.add(() => {
@@ -1726,10 +1726,11 @@
     for (const [r, c] of [[fromRow, fromCol], [toRow, toCol]]) {
       const sq = BABYLON.MeshBuilder.CreatePlane('lastMove', { size: 0.95 }, scene);
       sq.rotation.x = Math.PI / 2;
-      sq.position = new BABYLON.Vector3(c, 0.015, r);
+      sq.position = new BABYLON.Vector3(c, 0.018, r);
       const mat = new BABYLON.StandardMaterial('lmMat', scene);
-      mat.diffuseColor = COL_BLUE.clone();
-      mat.alpha = 0.25;
+      mat.diffuseColor = new BABYLON.Color3(0.3, 0.5, 0.85);
+      mat.emissiveColor = new BABYLON.Color3(0.15, 0.25, 0.5);
+      mat.alpha = 0.4;
       mat.disableLighting = true;
       sq.material = mat;
       sq.isPickable = false;
@@ -1925,7 +1926,7 @@
     }
 
     const fps = 30;
-    const frames = 15; // ~500ms
+    const frames = 24; // ~800ms
 
     // Position X animation
     const animX = new BABYLON.Animation('moveX', 'position.x', fps, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
@@ -1947,9 +1948,9 @@
     const animScale = new BABYLON.Animation('bounce', 'scaling.y', fps, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
     animScale.setKeys([
       { frame: frames, value: 1.0 },
-      { frame: frames + 3, value: 1.15 },
-      { frame: frames + 6, value: 0.92 },
-      { frame: frames + 9, value: 1.0 },
+      { frame: frames + 4, value: 1.15 },
+      { frame: frames + 8, value: 0.92 },
+      { frame: frames + 12, value: 1.0 },
     ]);
 
     // Ease
@@ -1959,7 +1960,7 @@
     animZ.setEasingFunction(ease);
 
     mesh.animations = [animX, animZ, animY, animScale];
-    scene.beginAnimation(mesh, 0, frames + 9, false, 1, () => {
+    scene.beginAnimation(mesh, 0, frames + 12, false, 1, () => {
       mesh.position = endPos;
       mesh.scaling = new BABYLON.Vector3(1, 1, 1);
       if (callback) callback();
@@ -3952,9 +3953,30 @@
     }
   }
 
+  let _lastTurnWasMine = null;
   function updateTurnIndicator() {
     const isMyTurn = chessEngine.getTurn() === playerColor;
     $('turnText').textContent = isMyTurn ? 'Your turn' : 'AI thinking...';
+
+    // Sound + visual pulse when turn changes to you
+    if (_lastTurnWasMine !== null && isMyTurn !== _lastTurnWasMine) {
+      if (isMyTurn) {
+        sound.play('click');
+      }
+      // Flash the turn indicator
+      const el = $('turnIndicator');
+      if (el) {
+        el.classList.add('chess3d-turn-flash');
+        setTimeout(() => el.classList.remove('chess3d-turn-flash'), 600);
+      }
+      // Pulse the active player bar
+      const bar = isMyTurn ? $('playerBottom') : $('playerTop');
+      if (bar) {
+        bar.classList.add('chess3d-bar-pulse');
+        setTimeout(() => bar.classList.remove('chess3d-bar-pulse'), 600);
+      }
+    }
+    _lastTurnWasMine = isMyTurn;
   }
 
   function updateMoveHistory() {
