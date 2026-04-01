@@ -2,13 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { FirebaseService } from '../firebase/firebase.service';
 import { MatchmakingEntry, Session } from '@weekly-arcade/shared';
+import { MatchmakingService } from './matchmaking.service';
 import { MULTIPLAYER_DEFAULTS } from './config/multiplayer-defaults';
 
 @Injectable()
 export class MatchmakingCron {
   private readonly logger = new Logger(MatchmakingCron.name);
 
-  constructor(private readonly firebase: FirebaseService) {}
+  constructor(
+    private readonly firebase: FirebaseService,
+    private readonly matchmakingService: MatchmakingService,
+  ) {}
 
   /**
    * Widen matchmaking windows and expire stale entries.
@@ -64,6 +68,26 @@ export class MatchmakingCron {
       if (updates > 0) {
         await batch.commit();
         this.logger.debug(`Matchmaking scan: ${updates} entries updated`);
+      }
+
+      // After widening windows, try to match waiting players
+      const waitingEntries = snapshot.docs
+        .filter(doc => (doc.data() as MatchmakingEntry).status === 'waiting')
+        .map(doc => ({ id: doc.id, ...(doc.data() as MatchmakingEntry) }));
+
+      for (const entry of waitingEntries) {
+        try {
+          const result = await this.matchmakingService.tryMatchPlayer(
+            entry.id, entry.uid, entry.gameId, entry.skillRating,
+            'Player', null, // displayName/avatar not needed for session creation from cron
+          );
+          if (result) {
+            this.logger.log(`Cron matched ${entry.uid} → session ${result}`);
+            break; // One match per scan cycle to avoid race conditions
+          }
+        } catch (e) {
+          // tryMatchPlayer may fail if entry was already matched — ignore
+        }
       }
     } catch (error) {
       this.logger.error(`Matchmaking scan failed: ${(error as Error).message}`);

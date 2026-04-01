@@ -1831,6 +1831,7 @@
         await window.multiplayerClient.cancelMatchmaking().catch(() => {});
 
         window.multiplayerUI?.showMatchmaking('Chess 3D', async () => {
+          mpStopPolling();
           await window.multiplayerClient.cancelMatchmaking().catch(() => {});
         });
         try {
@@ -2604,23 +2605,33 @@
 
   let mpPollTimer = null;
   function mpPollForMatch() {
+    mpStopPolling(); // Clear any existing poll
     mpPollTimer = setInterval(async () => {
       try {
         const status = await window.multiplayerClient.getMatchmakingStatus();
         if (status?.status === 'matched' && status.sessionId) {
-          clearInterval(mpPollTimer);
+          mpStopPolling();
           window.multiplayerUI?.hideMatchmaking();
           await mpJoinAndPlay(status.sessionId);
+        } else if (status?.status === 'expired') {
+          mpStopPolling();
+          window.multiplayerUI?.hideMatchmaking();
+          showOverlay('mpLobbyOverlay');
+          mpShowError('Matchmaking timed out. No opponents found. Try again.');
         }
-      } catch (e) { /* ignore */ }
-    }, 2000);
+      } catch (e) { /* ignore polling errors */ }
+    }, 5000); // Poll every 5s (was 2s — avoids 429 rate limits)
+  }
+
+  function mpStopPolling() {
+    if (mpPollTimer) { clearInterval(mpPollTimer); mpPollTimer = null; }
   }
 
   function mpCleanup() {
     gameActive = false;
     gameMode = 'ai';
     mpSessionId = null;
-    if (mpPollTimer) { clearInterval(mpPollTimer); mpPollTimer = null; }
+    mpStopPolling();
     try { window.multiplayerClient?.disconnect(); } catch (e) {}
     $('gameHud').style.display = 'none';
     $('undoBtn').style.display = '';

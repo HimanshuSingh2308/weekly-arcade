@@ -105,8 +105,8 @@ export class MatchmakingService {
     uid: string,
     gameId: string,
     rating: number,
-    displayName: string,
-    avatarUrl: string | null,
+    displayName?: string,
+    avatarUrl?: string | null,
   ): Promise<string | null> {
     // Find compatible opponents
     const candidates = await this.firebase
@@ -133,8 +133,15 @@ export class MatchmakingService {
 
     const matchData = match.data() as MatchmakingEntry;
 
+    // Resolve display name if not provided (e.g., called from cron)
+    if (!displayName) {
+      const userDoc = await this.firebase.doc(`users/${uid}`).get();
+      displayName = userDoc.data()?.displayName || 'Player';
+      avatarUrl = userDoc.data()?.avatarUrl || null;
+    }
+
     // Create session
-    const session = await this.multiplayerService.createSession(uid, displayName, avatarUrl, {
+    const session = await this.multiplayerService.createSession(uid, displayName!, avatarUrl ?? null, {
       gameId,
       mode: 'quick-match',
       maxPlayers: 2,
