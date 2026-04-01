@@ -1765,50 +1765,136 @@
   let mpPreviousFen = null;
 
   function mpDetectChanges(newFen) {
-    if (!mpPreviousFen || !newFen) {
+    if (!mpPreviousFen || !newFen || mpPreviousFen === newFen) {
       mpPreviousFen = newFen;
       return null;
     }
 
     const oldEngine = new ChessEngine(mpPreviousFen);
     const newEngine = new ChessEngine(newFen);
-    const changes = { captured: null, movedTo: null, isCheck: false };
+    const changes = { captured: null, movedFrom: null, movedTo: null, movedPiece: null, isCheck: false, isCastle: false };
 
-    // Find pieces that disappeared (captured)
+    // Find squares that changed
+    const emptied = []; // Had a piece, now empty or different
+    const filled = [];  // Was empty, now has a piece (or replaced)
+
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
-        const oldPiece = oldEngine.board[r][c];
-        const newPiece = newEngine.board[r][c];
+        const oldP = oldEngine.board[r][c];
+        const newP = newEngine.board[r][c];
 
-        // Piece was here before but different piece or empty now
-        if (oldPiece && (!newPiece || (newPiece.color !== oldPiece.color && newPiece.type !== oldPiece.type))) {
-          // Check if this piece exists anywhere else (moved) or truly captured
-          let found = false;
-          for (let r2 = 0; r2 < 8; r2++) {
-            for (let c2 = 0; c2 < 8; c2++) {
-              const np = newEngine.board[r2][c2];
-              if (np && np.color === oldPiece.color && np.type === oldPiece.type && (r2 !== r || c2 !== c)) {
-                // Could be the same piece moved — but this is approximate
-              }
-            }
-          }
-          // If the square now has an opponent's piece, it's a capture location
-          if (newPiece && newPiece.color !== oldPiece.color) {
-            changes.captured = { row: r, col: c, type: oldPiece.type, color: oldPiece.color };
-            changes.movedTo = { row: r, col: c };
+        const oldKey = oldP ? oldP.color + oldP.type : null;
+        const newKey = newP ? newP.color + newP.type : null;
+
+        if (oldKey !== newKey) {
+          if (oldP && !newP) emptied.push({ r, c, piece: oldP });
+          else if (!oldP && newP) filled.push({ r, c, piece: newP });
+          else if (oldP && newP) {
+            // Piece replaced (capture or promotion)
+            emptied.push({ r, c, piece: oldP });
+            filled.push({ r, c, piece: newP });
           }
         }
+      }
+    }
 
-        // New piece appeared where there was none — this is where the move landed
-        if (!oldPiece && newPiece) {
-          changes.movedTo = { row: r, col: c };
-        }
+    // Determine from→to by matching emptied piece to filled location
+    // Normal move: 1 emptied + 1 filled (same piece type/color)
+    // Capture: 1 emptied (moved piece) + 1 emptied (captured) + 1 filled (moved piece at capture square)
+    // Castle: 2 emptied + 2 filled
+    if (emptied.length >= 2 && filled.length >= 2) {
+      changes.isCastle = true;
+    }
+
+    for (const f of filled) {
+      const match = emptied.find(e => e.piece.color === f.piece.color && e.piece.type === f.piece.type);
+      if (match) {
+        changes.movedFrom = { row: match.r, col: match.c };
+        changes.movedTo = { row: f.r, col: f.c };
+        changes.movedPiece = f.piece;
+        break;
+      }
+    }
+
+    // Detect capture: an opponent piece disappeared
+    for (const e of emptied) {
+      if (changes.movedPiece && e.piece.color !== changes.movedPiece.color) {
+        changes.captured = { row: e.r, col: e.c, type: e.piece.type, color: e.piece.color };
       }
     }
 
     changes.isCheck = newEngine.isCheck();
     mpPreviousFen = newFen;
     return changes;
+  }
+
+  // Babylon.js move animation for multiplayer state updates
+  function mpAnimateMove(fromRow, fromCol, toRow, toCol, callback) {
+    const key = 'r' + fromRow + 'c' + fromCol;
+    const mesh = pieceMeshes[key];
+    if (!mesh) { if (callback) callback(); return; }
+
+    const startPos = mesh.position.clone();
+    const endPos = new BABYLON.Vector3(toCol, 0.15, toRow);
+    const dist = BABYLON.Vector3.Distance(startPos, endPos);
+    const peakH = 0.15 + dist * 0.12;
+
+    // Update mesh key mapping
+    const destKey = 'r' + toRow + 'c' + toCol;
+    if (pieceMeshes[destKey] && pieceMeshes[destKey] !== mesh) {
+      pieceMeshes[destKey].dispose();
+    }
+    delete pieceMeshes[key];
+    pieceMeshes[destKey] = mesh;
+
+    // Use Babylon animation system for smooth arc
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) {
+      mesh.position = endPos;
+      if (callback) callback();
+      return;
+    }
+
+    const fps = 30;
+    const frames = 15; // ~500ms
+
+    // Position X animation
+    const animX = new BABYLON.Animation('moveX', 'position.x', fps, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+    animX.setKeys([{ frame: 0, value: startPos.x }, { frame: frames, value: endPos.x }]);
+
+    // Position Z animation
+    const animZ = new BABYLON.Animation('moveZ', 'position.z', fps, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+    animZ.setKeys([{ frame: 0, value: startPos.z }, { frame: frames, value: endPos.z }]);
+
+    // Arc Y animation (rise then fall)
+    const animY = new BABYLON.Animation('moveY', 'position.y', fps, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+    animY.setKeys([
+      { frame: 0, value: startPos.y },
+      { frame: Math.floor(frames / 2), value: peakH },
+      { frame: frames, value: endPos.y },
+    ]);
+
+    // Landing bounce — scale pulse
+    const animScale = new BABYLON.Animation('bounce', 'scaling.y', fps, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+    animScale.setKeys([
+      { frame: frames, value: 1.0 },
+      { frame: frames + 3, value: 1.15 },
+      { frame: frames + 6, value: 0.92 },
+      { frame: frames + 9, value: 1.0 },
+    ]);
+
+    // Ease
+    const ease = new BABYLON.CubicEase();
+    ease.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
+    animX.setEasingFunction(ease);
+    animZ.setEasingFunction(ease);
+
+    mesh.animations = [animX, animZ, animY, animScale];
+    scene.beginAnimation(mesh, 0, frames + 9, false, 1, () => {
+      mesh.position = endPos;
+      mesh.scaling = new BABYLON.Vector3(1, 1, 1);
+      if (callback) callback();
+    });
   }
 
   // 3D captured pieces displayed on table sides
@@ -2932,40 +3018,56 @@
       // Detect captures and moves by diffing FEN
       const changes = mpDetectChanges(state.fen);
 
-      // Update 3D board
-      placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
       clearHighlights();
       for (const m of lastMoveHighlights) m.dispose();
       lastMoveHighlights = [];
       clearCheckHighlight();
 
-      // Play capture feedback based on piece type
-      if (changes?.captured) {
-        const ct = changes.captured.type;
-        const soundType = 'capture-' + ({ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen' }[ct] || 'pawn');
-        sound.play(soundType);
-        showCaptureEffect(changes.captured.row, changes.captured.col, ct);
-        srAnnounce((ct === 'q' ? 'Queen' : ct === 'r' ? 'Rook' : ct === 'b' ? 'Bishop' : ct === 'n' ? 'Knight' : 'Pawn') + ' captured!');
-      } else if (changes && !changes.captured) {
-        sound.play('move');
+      // Animate the move if we detected from→to, otherwise just rebuild
+      if (changes?.movedFrom && changes?.movedTo) {
+        // Animate the piece from old position to new
+        mpAnimateMove(changes.movedFrom.row, changes.movedFrom.col, changes.movedTo.row, changes.movedTo.col, () => {
+          // After animation: show last move highlight
+          showLastMove(changes.movedFrom.row, changes.movedFrom.col, changes.movedTo.row, changes.movedTo.col);
+
+          // Check indicator after animation completes
+          if (changes.isCheck || chessEngine.isCheck()) {
+            const king = chessEngine._findKing(chessEngine.getTurn());
+            if (king) showCheckHighlight(king[0], king[1]);
+            sound.play('check');
+          }
+        });
+
+        // Play sound immediately (don't wait for animation)
+        if (changes.captured) {
+          const ct = changes.captured.type;
+          const soundType = 'capture-' + ({ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen' }[ct] || 'pawn');
+          sound.play(soundType);
+          showCaptureEffect(changes.captured.row, changes.captured.col, ct);
+          srAnnounce((ct === 'q' ? 'Queen' : ct === 'r' ? 'Rook' : ct === 'b' ? 'Bishop' : ct === 'n' ? 'Knight' : 'Pawn') + ' captured!');
+        } else if (changes.isCastle) {
+          sound.play('castle');
+        } else {
+          sound.play('move');
+        }
+      } else {
+        // No move detected (initial state or complex change) — full rebuild
+        placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
       }
 
-      // Place captured pieces on the table sides
+      // Update captured pieces display + move history
       placeCapturedPieces3D(chessEngine);
-
-      // Show last move highlight
       if (state.moveHistory && state.moveHistory.length > 0) {
         updateMoveHistory();
         updateCapturedPieces();
-      placeCapturedPieces3D(chessEngine);
+        placeCapturedPieces3D(chessEngine);
       }
 
-      // Check indicator
-      if (changes?.isCheck || chessEngine.isCheck()) {
+      // Check indicator (if not already shown by animation callback)
+      if (!changes?.movedFrom && (changes?.isCheck || chessEngine.isCheck())) {
         const king = chessEngine._findKing(chessEngine.getTurn());
         if (king) showCheckHighlight(king[0], king[1]);
-        if (changes?.captured) { setTimeout(() => sound.play('check'), 300); }
-        else { sound.play('check'); }
+        sound.play('check');
       }
 
       // Turn indicator + timer
