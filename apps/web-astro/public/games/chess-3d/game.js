@@ -869,6 +869,8 @@
 
       let bestMove = ordered[0];
       let bestScore = -Infinity;
+      let secondBestMove = null;
+      let secondBestScore = -Infinity;
       let alpha = -Infinity;
       const beta = Infinity;
 
@@ -878,13 +880,24 @@
         this.engine._undoMoveRaw(undo);
 
         if (score > bestScore) {
+          secondBestScore = bestScore;
+          secondBestMove = bestMove;
           bestScore = score;
           bestMove = move;
+        } else if (score > secondBestScore) {
+          secondBestScore = score;
+          secondBestMove = move;
         }
         if (score > alpha) alpha = score;
 
         // Time check
         if (Date.now() - startTime > timeLimit) break;
+      }
+
+      // Medium AI blundering: 20% chance to play 2nd-best move
+      // This smooths the Easy→Medium difficulty gap significantly
+      if (difficulty === 'medium' && secondBestMove && Math.random() < 0.2) {
+        return secondBestMove;
       }
 
       return bestMove;

@@ -1,7 +1,7 @@
 # Post-Launch Plan: Chess 3D
 
 **Created**: 2026-04-01
-**Last Updated**: 2026-04-01
+**Last Updated**: 2026-04-01 (Patch #7 applied)
 **Status**: IN_PROGRESS
 
 ---
@@ -52,9 +52,10 @@ Ordered by improvement matrix score (highest first).
   - Files: internal.controller.ts, game.js
   - Applied: 2026-04-01
 
-- [ ] **#7 Medium AI blundering** (Score: 28) — Add 20% chance of 2nd-best move to smooth Easy→Medium gap
+- [x] **#7 Medium AI blundering** (Score: 28) — Add 20% chance of 2nd-best move to smooth Easy→Medium gap
   - Category: CONFUSING
-  - Files: game.js (ChessAI._alphaBeta or findBestMove)
+  - Files: game.js (ChessAI.findBestMove)
+  - Applied: 2026-04-01
 
 - [ ] **#8 Expert AI iterative deepening** (Score: 26) — Depth 6-7 with time limit, null-move pruning
   - Category: UNFUN
