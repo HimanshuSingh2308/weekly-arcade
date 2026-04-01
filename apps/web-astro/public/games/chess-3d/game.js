@@ -2464,16 +2464,23 @@
         }
         if (earliestExpiry < Infinity) {
           const remaining = earliestExpiry - Date.now();
+          console.log('[Chess3D] Session limit — earliest expiry in', Math.round(remaining / 1000), 's');
           if (remaining > 0) {
             mpShowErrorWithCountdown(
-              'Session limit reached (3 max). Oldest session expiring soon.',
+              'Session limit reached (3 max).',
               remaining
             );
+            return;
+          } else {
+            // Already expired — tell user to try again now
+            mpShowError('Session limit reached but oldest session has expired. Try again now!');
             return;
           }
         }
       }
-    } catch (e) { /* fallback to static message */ }
+    } catch (e) {
+      console.error('[Chess3D] Failed to fetch sessions for countdown:', e);
+    }
 
     mpShowError('Session limit reached (3 max). Your oldest session will expire within 5 minutes. Try again shortly.');
   }
