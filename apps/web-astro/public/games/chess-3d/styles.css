@@ -354,10 +354,10 @@
   text-align: right;
 }
 
-/* Turn indicator */
+/* Turn indicator — sits below the top player bar */
 .chess3d-turn-indicator {
   position: absolute;
-  top: calc(52px + var(--c3d-safe-top));
+  top: calc(96px + var(--c3d-safe-top));
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 14px;
@@ -602,7 +602,7 @@
   }
 
   .chess3d-turn-indicator {
-    top: 56px;
+    top: calc(96px + var(--c3d-safe-top));
   }
 }
 

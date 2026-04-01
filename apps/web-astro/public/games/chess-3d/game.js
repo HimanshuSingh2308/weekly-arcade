@@ -1254,11 +1254,13 @@
     scene.clearColor = new BABYLON.Color4(0.11, 0.11, 0.18, 1);
     scene.ambientColor = new BABYLON.Color3(0.1, 0.1, 0.15);
 
-    // Camera
-    camera = new BABYLON.ArcRotateCamera('cam', Math.PI / 4, Math.PI / 3.5, 22, new BABYLON.Vector3(3.5, 0, 3.5), scene);
+    // Camera — zoom out more on mobile so the board fits
+    const isMobile = window.innerWidth < 768;
+    const camRadius = isMobile ? 28 : 22;
+    camera = new BABYLON.ArcRotateCamera('cam', Math.PI / 4, Math.PI / 3.5, camRadius, new BABYLON.Vector3(3.5, 0, 3.5), scene);
     camera.attachControl(canvas, true);
-    camera.lowerRadiusLimit = 10;
-    camera.upperRadiusLimit = 35;
+    camera.lowerRadiusLimit = isMobile ? 16 : 10;
+    camera.upperRadiusLimit = 40;
     camera.lowerBetaLimit = Math.PI / 6;
     camera.upperBetaLimit = Math.PI / 2.2;
     camera.wheelPrecision = 20;
@@ -1847,7 +1849,7 @@
   function resetCamera(forBlack) {
     const targetAlpha = forBlack ? Math.PI / 4 + Math.PI : Math.PI / 4;
     const targetBeta = Math.PI / 3.5;
-    const targetRadius = 22;
+    const targetRadius = window.innerWidth < 768 ? 28 : 22;
 
     BABYLON.Animation.CreateAndStartAnimation('camAlpha', camera, 'alpha', 30, 20,
       camera.alpha, targetAlpha, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
