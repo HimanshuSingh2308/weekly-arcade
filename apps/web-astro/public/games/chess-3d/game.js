@@ -2770,14 +2770,27 @@
   }
 
   function mpCleanup() {
+    const sid = mpSessionId;
     gameActive = false;
     gameMode = 'ai';
     mpSessionId = null;
     mpStopPolling();
+    // Leave the session so server knows to clean up
+    if (sid) {
+      window.multiplayerClient?.leaveSession(sid).catch(() => {});
+    }
     try { window.multiplayerClient?.disconnect(); } catch (e) {}
     $('gameHud').style.display = 'none';
     $('undoBtn').style.display = '';
   }
+
+  // Clean up multiplayer session if user closes/navigates away
+  window.addEventListener('beforeunload', () => {
+    if (gameMode === 'multiplayer') {
+      // Disconnect WebSocket — server detects all players left and abandons session
+      try { window.multiplayerClient?.disconnect(); } catch (e) {}
+    }
+  });
 
   /* ================================================================
      9b. GAME FLOW

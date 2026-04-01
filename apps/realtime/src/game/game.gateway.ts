@@ -156,6 +156,21 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Broadcast disconnect
       const roomName = `session:${sessionId}`;
       client.to(roomName).emit('session:player-left', { uid, reason: 'disconnected' });
+
+      // If no players remain connected, abandon the session immediately
+      const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
+      if (connectedPlayers.length === 0) {
+        this.logger.log(`All players left session ${sessionId} — abandoning`);
+        try {
+          await this.firebase.doc(`sessions/${sessionId}`).update({
+            status: 'abandoned',
+            finishedAt: new Date(),
+          });
+          this.stateManager.evictSession(sessionId);
+        } catch {
+          // Already cleaned up
+        }
+      }
     }
 
     this.logger.log(`${wasSpectator ? 'Spectator' : 'Player'} disconnected: uid=${uid} session=${sessionId}`);
