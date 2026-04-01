@@ -252,6 +252,8 @@ export class MultiplayerService {
   async getActiveSessionsForUser(uid: string): Promise<Session[]> {
     const activeStatuses: SessionStatus[] = ['waiting', 'starting', 'playing'];
     const sessions: Session[] = [];
+    const now = Date.now();
+    const staleRefs: FirebaseFirestore.DocumentReference[] = [];
 
     // Firestore doesn't support querying nested map keys efficiently,
     // so we query by status and filter in-memory
@@ -264,10 +266,39 @@ export class MultiplayerService {
 
       for (const doc of snapshot.docs) {
         const session = doc.data() as Session;
+
+        // Lazy cleanup: expire stale waiting sessions (5 min idle)
+        if (session.status === 'waiting' && session.lastActivityAt) {
+          const idleMs = now - new Date(session.lastActivityAt as unknown as string).getTime();
+          if (idleMs > MULTIPLAYER_DEFAULTS.LOBBY_IDLE_TIMEOUT_MS) {
+            staleRefs.push(doc.ref);
+            continue; // Don't include in active list
+          }
+        }
+
+        // Lazy cleanup: expire stale playing sessions (30 min max)
+        if (session.status === 'playing' && session.startedAt) {
+          const durationMs = now - new Date(session.startedAt as unknown as string).getTime();
+          if (durationMs > MULTIPLAYER_DEFAULTS.SESSION_MAX_DURATION_MIN * 60 * 1000) {
+            staleRefs.push(doc.ref);
+            continue;
+          }
+        }
+
         if (session.players[uid] && session.players[uid].status !== 'left') {
           sessions.push(session);
         }
       }
+    }
+
+    // Fire-and-forget: mark stale sessions as abandoned
+    if (staleRefs.length > 0) {
+      const batch = this.firebase.batch();
+      for (const ref of staleRefs) {
+        batch.update(ref, { status: 'abandoned', finishedAt: new Date() });
+      }
+      batch.commit().catch(err => this.logger.warn('Stale session cleanup failed:', err.message));
+      this.logger.log(`Lazy cleanup: ${staleRefs.length} stale sessions abandoned`);
     }
 
     return sessions;
