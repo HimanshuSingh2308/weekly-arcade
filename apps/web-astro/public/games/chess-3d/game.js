@@ -2860,11 +2860,12 @@
     mpSessionId = null;
     mpStopPolling();
     mpStopTimers();
-    // Leave the session so server knows to clean up
+    // Disconnect WebSocket first — server detects disconnect and cleans up
+    try { window.multiplayerClient?.disconnect(); } catch (e) {}
+    // REST leave as fallback (ignore errors — server may have already cleaned up)
     if (sid) {
       window.multiplayerClient?.leaveSession(sid).catch(() => {});
     }
-    try { window.multiplayerClient?.disconnect(); } catch (e) {}
     $('gameHud').style.display = 'none';
     $('undoBtn').style.display = '';
   }
