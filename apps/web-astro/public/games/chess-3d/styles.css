@@ -619,13 +619,14 @@
     font-size: 0.76rem;
   }
 
-  /* Move HUD buttons to BOTTOM-RIGHT for right-thumb access */
+  /* Center HUD buttons for both-hand access */
   .chess3d-hud-buttons {
-    left: auto;
-    right: calc(6px + var(--c3d-safe-right));
-    bottom: calc(56px + var(--c3d-safe-bottom));
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(52px + var(--c3d-safe-bottom));
     flex-direction: row;
-    gap: 8px;
+    gap: 10px;
   }
 
   .chess3d-hud-btn {
@@ -652,12 +653,12 @@
     padding: 2px 8px;
   }
 
-  .chess3d-player-top { top: calc(44px + var(--c3d-safe-top)); }
+  .chess3d-player-top { top: calc(52px + var(--c3d-safe-top)); }
   .chess3d-player-bottom { bottom: calc(6px + var(--c3d-safe-bottom)); }
 
-  /* Turn indicator — smaller, tucked under top bar */
+  /* Turn indicator — below top player bar with 8px gap */
   .chess3d-turn-indicator {
-    top: calc(82px + var(--c3d-safe-top));
+    top: calc(92px + var(--c3d-safe-top));
     font-size: 0.7rem;
     padding: 3px 10px;
   }

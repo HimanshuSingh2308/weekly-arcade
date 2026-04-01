@@ -1254,13 +1254,19 @@
     scene.clearColor = new BABYLON.Color4(0.11, 0.11, 0.18, 1);
     scene.ambientColor = new BABYLON.Color3(0.1, 0.1, 0.15);
 
-    // Camera — zoom out more on mobile so the board fits
-    const isMobile = window.innerWidth < 768;
-    const camRadius = isMobile ? 28 : 22;
+    // Camera — adapt to viewport aspect ratio
+    const aspect = canvas.width / canvas.height;
+    const isPortrait = aspect < 0.7;
+    const camRadius = isPortrait ? Math.max(28, 16 / aspect) : 22;
     camera = new BABYLON.ArcRotateCamera('cam', Math.PI / 4, Math.PI / 3.5, camRadius, new BABYLON.Vector3(3.5, 0, 3.5), scene);
     camera.attachControl(canvas, true);
-    camera.lowerRadiusLimit = isMobile ? 16 : 10;
-    camera.upperRadiusLimit = 40;
+    // Fix horizontal FOV on portrait — prevents board right-edge clipping
+    if (isPortrait) {
+      camera.fovMode = BABYLON.Camera.FOVMODE_HORIZONTAL_FIXED;
+      camera.fov = 1.2; // wider horizontal FOV to fit all 8 columns
+    }
+    camera.lowerRadiusLimit = isPortrait ? 20 : 10;
+    camera.upperRadiusLimit = 45;
     camera.lowerBetaLimit = Math.PI / 6;
     camera.upperBetaLimit = Math.PI / 2.2;
     camera.wheelPrecision = 20;
@@ -1854,7 +1860,8 @@
   function resetCamera(forBlack) {
     const targetAlpha = forBlack ? Math.PI / 4 + Math.PI : Math.PI / 4;
     const targetBeta = Math.PI / 3.5;
-    const targetRadius = window.innerWidth < 768 ? 28 : 22;
+    const aspect = window.innerWidth / window.innerHeight;
+    const targetRadius = aspect < 0.7 ? Math.max(28, 16 / aspect) : 22;
 
     BABYLON.Animation.CreateAndStartAnimation('camAlpha', camera, 'alpha', 30, 20,
       camera.alpha, targetAlpha, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
