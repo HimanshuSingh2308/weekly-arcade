@@ -193,80 +193,90 @@
   // ─── Session Management (via REST → apiClient) ────────────────────
 
   async function createSession(gameId, config) {
-    return window.apiClient?.request('POST', '/multiplayer/sessions', {
-      gameId,
-      mode: config?.mode || 'private',
-      maxPlayers: config?.maxPlayers || 2,
-      minPlayers: config?.minPlayers,
-      gameConfig: config?.gameConfig,
-      spectatorAllowed: config?.spectatorAllowed,
+    return window.apiClient?.request('/multiplayer/sessions', {
+      method: 'POST',
+      body: JSON.stringify({
+        gameId,
+        mode: config?.mode || 'private',
+        maxPlayers: config?.maxPlayers || 2,
+        minPlayers: config?.minPlayers,
+        gameConfig: config?.gameConfig,
+        spectatorAllowed: config?.spectatorAllowed,
+      }),
     });
   }
 
   async function joinSession(sessionId) {
-    return window.apiClient?.request('POST', `/multiplayer/sessions/${sessionId}/join`);
+    return window.apiClient?.request(`/multiplayer/sessions/${sessionId}/join`, { method: 'POST' });
   }
 
   async function joinByCode(code) {
-    return window.apiClient?.request('POST', `/multiplayer/sessions/join-code/${code}`);
+    return window.apiClient?.request(`/multiplayer/sessions/join-code/${code}`, { method: 'POST' });
   }
 
   async function leaveSession(sessionId) {
     const sid = sessionId || currentSessionId;
     disconnect();
-    return window.apiClient?.request('POST', `/multiplayer/sessions/${sid}/leave`);
+    return window.apiClient?.request(`/multiplayer/sessions/${sid}/leave`, { method: 'POST' });
   }
 
   async function startGame(sessionId) {
-    return window.apiClient?.request('POST', `/multiplayer/sessions/${sessionId || currentSessionId}/start`);
+    return window.apiClient?.request(`/multiplayer/sessions/${sessionId || currentSessionId}/start`, { method: 'POST' });
   }
 
   async function getSession(sessionId) {
-    return window.apiClient?.request('GET', `/multiplayer/sessions/${sessionId || currentSessionId}`);
+    return window.apiClient?.request(`/multiplayer/sessions/${sessionId || currentSessionId}`);
   }
 
   async function getActiveSessions() {
-    return window.apiClient?.request('GET', '/multiplayer/sessions/active');
+    return window.apiClient?.request('/multiplayer/sessions/active');
   }
 
   // ─── Matchmaking (via REST) ───────────────────────────────────────
 
   async function findMatch(gameId) {
-    return window.apiClient?.request('POST', '/multiplayer/matchmaking/find', { gameId });
+    return window.apiClient?.request('/multiplayer/matchmaking/find', {
+      method: 'POST',
+      body: JSON.stringify({ gameId }),
+    });
   }
 
   async function cancelMatchmaking() {
-    return window.apiClient?.request('DELETE', '/multiplayer/matchmaking/cancel');
+    return window.apiClient?.request('/multiplayer/matchmaking/cancel', { method: 'DELETE' });
   }
 
   async function getMatchmakingStatus() {
-    return window.apiClient?.request('GET', '/multiplayer/matchmaking/status');
+    return window.apiClient?.request('/multiplayer/matchmaking/status');
   }
 
   // ─── Invitations (via REST) ───────────────────────────────────────
 
   async function inviteFriend(sessionId, friendUid) {
-    return window.apiClient?.request('POST', '/multiplayer/invitations', { sessionId, friendUid });
+    return window.apiClient?.request('/multiplayer/invitations', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, friendUid }),
+    });
   }
 
   async function getInvitations() {
-    return window.apiClient?.request('GET', '/multiplayer/invitations');
+    return window.apiClient?.request('/multiplayer/invitations');
   }
 
   async function respondToInvitation(invitationId, accept) {
-    return window.apiClient?.request('POST', `/multiplayer/invitations/${invitationId}/respond`, {
-      action: accept ? 'accept' : 'decline',
+    return window.apiClient?.request(`/multiplayer/invitations/${invitationId}/respond`, {
+      method: 'POST',
+      body: JSON.stringify({ action: accept ? 'accept' : 'decline' }),
     });
   }
 
   // ─── History & Stats (via REST) ───────────────────────────────────
 
   async function getMatchHistory() {
-    return window.apiClient?.request('GET', '/multiplayer/history');
+    return window.apiClient?.request('/multiplayer/history');
   }
 
   async function getMultiplayerStats() {
-    return window.apiClient?.request('GET', '/multiplayer/stats');
+    return window.apiClient?.request('/multiplayer/stats');
   }
 
   // ─── Token Refresh ────────────────────────────────────────────────
