@@ -1586,12 +1586,17 @@
 
   function showLegalMoveHighlights(moves) {
     clearHighlights();
+    const isMobile = window.innerWidth < 768;
+    // Larger dots on mobile for easier tapping
+    const moveRadius = isMobile ? 0.22 : 0.16;
+    const captureRadius = isMobile ? 0.48 : 0.42;
+
     for (const move of moves) {
       const r = move.to[0], c = move.to[1];
       const isCapture = move.capture;
 
       const disc = BABYLON.MeshBuilder.CreateDisc('highlight', {
-        radius: isCapture ? 0.42 : 0.16,
+        radius: isCapture ? captureRadius : moveRadius,
         tessellation: 24
       }, scene);
       disc.rotation.x = Math.PI / 2;
