@@ -11,14 +11,14 @@ export const MULTIPLAYER_DEFAULTS = {
   /** Matchmaking */
   INITIAL_RATING_WINDOW: 100,
   RATING_WINDOW_STEP: 50,
-  RATING_WINDOW_MAX: 500,
+  RATING_WINDOW_MAX: 300,
   MATCHMAKING_WIDEN_INTERVAL_SEC: 10,
-  MATCHMAKING_ANYONE_AFTER_SEC: 60,
-  MATCHMAKING_EXPIRE_SEC: 120,
+  MATCHMAKING_ANYONE_AFTER_SEC: 300, // 5 min — only match anyone as last resort
+  MATCHMAKING_EXPIRE_SEC: 180, // 3 min queue before expiry (was 2 min)
   MATCHMAKING_SCAN_INTERVAL_SEC: 5,
   DEFAULT_RATING: 1000,
   RATING_FLOOR: 100,
-  ELO_K_FACTOR: 32,
+  ELO_K_FACTOR: 32, // Matches chess-3d client K-factor for provisional players
 
   /** Limits */
   MAX_CONCURRENT_SESSIONS: 3,

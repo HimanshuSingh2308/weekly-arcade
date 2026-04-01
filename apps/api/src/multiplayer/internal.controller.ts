@@ -137,7 +137,31 @@ export class InternalController {
     batch.set(this.firebase.doc(`matchResults/${sessionId}`) as FirebaseFirestore.DocumentReference, matchResult);
     await batch.commit();
 
-    this.logger.log(`Game results processed: ${uids.length} players, ratings updated`);
+    // Submit leaderboard scores server-side for each player
+    // This prevents client-side score manipulation in multiplayer
+    for (const uid of uids) {
+      const pr = playerResults[uid];
+      try {
+        await this.firebase.collection('scores').add({
+          uid,
+          gameId,
+          score: pr.ratingAfter,
+          timeMs: 0, // Not tracked per-player in multiplayer
+          metadata: {
+            result: pr.outcome,
+            opponent: 'human',
+            movesPlayed: matchResult.totalTurns || 0,
+            eloDelta: pr.ratingChange,
+            terminationType: reason === 'forfeit' ? 'resignation' : 'completed',
+          },
+          createdAt: new Date(),
+        });
+      } catch (e) {
+        this.logger.warn(`Failed to submit leaderboard score for ${uid}: ${(e as Error).message}`);
+      }
+    }
+
+    this.logger.log(`Game results processed: ${uids.length} players, ratings updated, scores submitted`);
     return { success: true, playerResults };
   }
 }

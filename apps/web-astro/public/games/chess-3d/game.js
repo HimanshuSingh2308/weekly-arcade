@@ -3238,6 +3238,8 @@
 
   async function submitScore(result, gameTimeMs, terminationType, eloDelta) {
     if (!currentUser || !window.apiClient) return;
+    // In multiplayer, the server submits scores — skip client submission
+    if (gameMode === 'multiplayer') return;
 
     try {
       await window.apiClient.submitScore(GAME_ID, {
