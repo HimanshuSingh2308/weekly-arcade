@@ -1870,12 +1870,28 @@
         sound.play('click');
         const code = prompt('Enter join code:');
         if (!code) return;
+
+        // Show joining state
+        hideOverlay('mpLobbyOverlay');
+        showOverlay('mpJoiningOverlay');
+        $('mpJoiningStatus').textContent = 'Connecting...';
+
         try {
           const session = await window.multiplayerClient.joinByCode(code);
           mpSessionId = session.sessionId;
           mpIsHost = false;
+
+          $('mpJoiningStatus').textContent = 'Joined! Waiting for host to start...';
+          $('mpJoiningIcon').textContent = '✓';
+          $('mpJoiningIcon').style.color = 'var(--c3d-emerald)';
+          sound.play('click');
+          srAnnounce('Joined game lobby. Waiting for host to start the game.');
+
           await mpJoinAndPlay(session.sessionId);
         } catch (err) {
+          hideOverlay('mpJoiningOverlay');
+          showOverlay('mpLobbyOverlay');
+          sound.play('error');
           mpShowError('Could not join game. The code may be invalid or the server is not available yet.');
         }
       });
@@ -2397,28 +2413,61 @@
     hideOverlay('mpLobbyOverlay');
     hideOverlay('mpWaitingOverlay');
 
+    // Show joining overlay if not already showing
+    if (!$('mpJoiningOverlay')?.classList.contains('chess3d-visible')) {
+      showOverlay('mpJoiningOverlay');
+      $('mpJoiningStatus').textContent = 'Connecting...';
+      $('mpJoiningIcon').textContent = '⏳';
+      $('mpJoiningIcon').style.color = 'var(--c3d-gold)';
+    }
+
     try {
       const session = await window.multiplayerClient.getSession(sessionId);
       mpIsHost = session.hostUid === currentUser?.uid;
+
+      $('mpJoiningStatus').textContent = 'Connected! Joining lobby...';
+
       await window.multiplayerClient.connect(sessionId);
       mpRegisterListeners();
+
+      // Update joining overlay to show success
+      $('mpJoiningIcon').textContent = '✓';
+      $('mpJoiningIcon').style.color = 'var(--c3d-emerald)';
+      $('mpJoiningStatus').textContent = mpIsHost
+        ? 'Waiting for opponent to join...'
+        : 'Joined! Waiting for host to start...';
+      sound.play('click');
+      srAnnounce(mpIsHost ? 'Lobby created. Waiting for opponent.' : 'Joined the game lobby.');
 
       // Signal ready
       window.multiplayerClient.signalReady();
     } catch (err) {
       console.error('[Chess3D] MP join error:', err);
-      showOverlay('mainMenuOverlay');
+      hideOverlay('mpJoiningOverlay');
+      showOverlay('mpLobbyOverlay');
+      sound.play('error');
+      mpShowError('Could not connect to the game server.');
     }
   }
 
   function mpRegisterListeners() {
-    window.multiplayerClient.onPlayerJoined(async () => {
-      // Opponent joined — if we're host, start the game
+    window.multiplayerClient.onPlayerJoined(async (player) => {
+      sound.play('click');
+      srAnnounce('Opponent joined the game!');
+
+      // Update joining overlay
+      $('mpJoiningIcon').textContent = '♟️';
+      $('mpJoiningIcon').style.color = '';
+      $('mpJoiningStatus').textContent = 'Opponent joined! Starting game...';
+
+      // If we're host, auto-start
       if (mpIsHost) {
         try {
           await window.multiplayerClient.startGame(mpSessionId);
         } catch (e) {
           console.error('[Chess3D] Start game error:', e);
+          $('mpJoiningStatus').textContent = 'Failed to start game.';
+          sound.play('error');
         }
       }
     });
@@ -2438,9 +2487,10 @@
       if (state.fen) chessEngine.loadFEN(state.fen);
       chessEngine.sanHistory = state.moveHistory || [];
 
-      // Transition from waiting/lobby to game
+      // Transition from waiting/lobby/joining to game
       hideOverlay('mpWaitingOverlay');
       hideOverlay('mpLobbyOverlay');
+      hideOverlay('mpJoiningOverlay');
       if (!gameActive) {
         gameActive = true;
         gameStartTime = Date.now();
