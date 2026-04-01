@@ -2619,6 +2619,15 @@
       if (mpIsHost) {
         try {
           await window.multiplayerClient.startGame(mpSessionId);
+          // Signal ready via WebSocket so Realtime server runs tryStartGame
+          window.multiplayerClient.signalReady();
+          // Retry every 2s in case of race condition with Firestore status
+          let retries = 0;
+          const retryInterval = setInterval(() => {
+            if (gameActive || retries >= 5) { clearInterval(retryInterval); return; }
+            retries++;
+            window.multiplayerClient.signalReady();
+          }, 2000);
         } catch (e) {
           console.error('[Chess3D] Start game error:', e);
           $('mpJoiningStatus').textContent = 'Failed to start game.';
