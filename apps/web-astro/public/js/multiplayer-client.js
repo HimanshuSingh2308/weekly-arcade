@@ -296,6 +296,71 @@
     }
   }
 
+  // ─── Pre-warm & Keep-alive ───────────────────────────────────────
+
+  let warmSocket = null;
+  let keepAliveTimer = null;
+
+  /**
+   * Pre-warm the WebSocket connection on page load.
+   * Creates a lightweight connection to wake up the server (cold start)
+   * and keeps it alive with periodic pings so the server stays warm.
+   * The warm socket is disconnected and replaced when a real game connect() happens.
+   */
+  function warmUp() {
+    if (warmSocket || (socket && socket.connected)) return;
+
+    const token = window.apiClient?.token;
+    if (!token) return; // Not signed in yet, skip
+
+    warmSocket = io(`${REALTIME_URL}/game`, {
+      auth: { token },
+      query: { sessionId: '_warmup' },
+      reconnection: false,
+      timeout: 15000,
+      transports: ['websocket'], // Skip polling, go straight to WS
+    });
+
+    warmSocket.on('connect', () => {
+      console.log('[MP] Warm-up connection established');
+      // Send periodic pings to keep the server process alive
+      keepAliveTimer = setInterval(() => {
+        if (warmSocket?.connected) {
+          warmSocket.emit('ping');
+        }
+      }, 25000); // Every 25s (Render idles after 30s of inactivity)
+    });
+
+    warmSocket.on('connect_error', () => {
+      // Silently fail — warm-up is best-effort
+      _cleanupWarm();
+    });
+
+    warmSocket.on('disconnect', () => {
+      _cleanupWarm();
+    });
+  }
+
+  function _cleanupWarm() {
+    if (keepAliveTimer) { clearInterval(keepAliveTimer); keepAliveTimer = null; }
+    if (warmSocket) { try { warmSocket.disconnect(); } catch (e) {} warmSocket = null; }
+  }
+
+  // Override connect to tear down warm socket first
+  const _originalConnect = connect;
+  connect = async function (sessionId) {
+    _cleanupWarm(); // Close warm-up connection before real game connection
+    return _originalConnect(sessionId);
+  };
+
+  // Auto-warm when auth is ready (non-blocking)
+  const warmCheck = setInterval(() => {
+    if (window.authManager?.isInitialized && window.apiClient?.token) {
+      clearInterval(warmCheck);
+      setTimeout(warmUp, 1000); // Slight delay to not compete with page load
+    }
+  }, 500);
+
   // ─── Public API ───────────────────────────────────────────────────
 
   window.multiplayerClient = {
@@ -303,6 +368,7 @@
     connect,
     disconnect,
     isConnected,
+    warmUp,
 
     // Game actions (WebSocket)
     submitMove,

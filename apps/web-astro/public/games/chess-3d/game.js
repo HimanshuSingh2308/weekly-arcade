@@ -1826,6 +1826,10 @@
       $('mpQuickMatchBtn').addEventListener('click', async () => {
         if (!currentUser) { window.authNudge?.show(); return; }
         sound.play('click');
+
+        // Cancel any stale matchmaking entry first
+        await window.multiplayerClient.cancelMatchmaking().catch(() => {});
+
         window.multiplayerUI?.showMatchmaking('Chess 3D', async () => {
           await window.multiplayerClient.cancelMatchmaking().catch(() => {});
         });
@@ -1839,7 +1843,7 @@
           }
         } catch (err) {
           window.multiplayerUI?.hideMatchmaking();
-          mpShowError('Matchmaking is not available yet. The multiplayer server is being deployed.');
+          mpShowError(mpParseError(err, 'matchmaking'));
         }
       });
     }
@@ -1859,7 +1863,7 @@
           mpIsHost = true;
           mpShowWaitingRoom(session);
         } catch (err) {
-          mpShowError('Private games are not available yet. The multiplayer server is being deployed.');
+          mpShowError(mpParseError(err, 'create'));
         }
       });
     }
@@ -1892,7 +1896,7 @@
           hideOverlay('mpJoiningOverlay');
           showOverlay('mpLobbyOverlay');
           sound.play('error');
-          mpShowError('Could not join game. The code may be invalid or the server is not available yet.');
+          mpShowError(mpParseError(err, 'join'));
         }
       });
     }
@@ -2348,10 +2352,39 @@
     if (el) {
       el.textContent = message;
       el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 5000);
+      setTimeout(() => { el.style.display = 'none'; }, 8000);
     } else {
       alert(message);
     }
+    sound.play('error');
+  }
+
+  function mpParseError(err, context) {
+    const msg = err?.message || '';
+
+    // 409 Conflict — already in queue or session
+    if (msg.includes('409') || msg.includes('Conflict')) {
+      if (context === 'matchmaking') return 'You already have an active matchmaking request. Please wait for it to expire (2 min) or try again shortly.';
+      if (context === 'create') return 'You already have an active session. Leave your current session first, or wait for it to expire.';
+      return 'Conflict — you may already have an active session or request.';
+    }
+
+    // 401/403 — auth issues
+    if (msg.includes('401') || msg.includes('Unauthorized')) return 'Please sign in to play multiplayer.';
+    if (msg.includes('403') || msg.includes('Forbidden')) return 'Your account cannot access multiplayer yet. Try signing out and back in.';
+
+    // 404 — endpoint not found (server not deployed)
+    if (msg.includes('404') || msg.includes('Not Found')) return 'Multiplayer server is not available yet. It may still be deploying.';
+
+    // 429 — rate limited
+    if (msg.includes('429') || msg.includes('Too Many')) return 'Too many requests. Please wait a moment and try again.';
+
+    // Network/timeout
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) return 'Network error. Check your internet connection and try again.';
+    if (msg.includes('timeout')) return 'Server is taking too long to respond. It may be waking up — try again in 30 seconds.';
+
+    // Generic fallback
+    return 'Something went wrong. Please try again. (' + (msg.slice(0, 60)) + ')';
   }
 
   function mpShowWaitingRoom(session) {
