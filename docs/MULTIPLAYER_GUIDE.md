@@ -819,3 +819,87 @@ When adding a new multiplayer game, you need to create/modify these files:
 8. **Both tabs:** Play moves and verify state syncs
 
 For WebSocket debugging, open browser DevTools → Network → WS tab to inspect Socket.IO frames.
+
+---
+
+## Known Issues & Solutions (Lessons from Chess 3D)
+
+These issues were discovered during the Chess 3D multiplayer integration. New games should follow these patterns to avoid them.
+
+### 1. API Client Signature Mismatch
+
+**Problem:** `multiplayer-client.js` called `apiClient.request('POST', '/path', body)` but `apiClient.request` expects `request(endpoint, options)`. Resulted in `Cannot GET /apiPOST`.
+
+**Fix:** Always use `request('/path', { method: 'POST', body: JSON.stringify(data) })`.
+
+### 2. Firestore Composite Indexes
+
+**Problem:** All compound Firestore queries need composite indexes deployed to the **production** project. The dev Firebase project and production project may differ.
+
+**Fix:** Add indexes to `firestore.indexes.json` and deploy with:
+```bash
+firebase deploy --only firestore:indexes --project=loyal-curve-425715-h6
+```
+
+**Required indexes for multiplayer:**
+- `matchmakingQueue`: uid + status
+- `matchmakingQueue`: uid + joinedAt (desc)
+- `matchmakingQueue`: gameId + status + ratingWindowMin
+- `invitations`: toUid + status + createdAt (desc)
+- `invitations`: fromUid + toUid + sessionId + status
+- `invitations`: fromUid + status
+- `sessions`: joinCode + status
+
+### 3. Session Expiry on Serverless
+
+**Problem:** `@Cron` decorators don't run when Cloud Run scales to zero. Stale sessions pile up, blocking users from creating new ones (MAX_CONCURRENT_SESSIONS = 3).
+
+**Fix:** Lazy cleanup in `getActiveSessionsForUser()` — checks `lastActivityAt` on every session query and marks stale ones as abandoned inline. Don't rely solely on cron for cleanup.
+
+### 4. Matchmaking Cron Doesn't Re-Match
+
+**Problem:** The matchmaking cron only widened rating windows but never re-attempted matching. Two players in the queue would never be matched by the cron.
+
+**Fix:** After widening windows, call `tryMatchPlayer()` for each waiting entry.
+
+### 5. Game Start Flow
+
+**Problem:** API's `/start` endpoint only updates Firestore status. The Realtime server never called `createInitialState()` or broadcast `game:state`. Games showed "started" in API but the board never appeared.
+
+**Fix:** `tryStartGame()` in the gateway checks if all players are connected + ready, then calls `stateManager.initializeGame()` and broadcasts `game:state`. Called on both `game:ready` and `handleConnection` (auto-ready on connect).
+
+### 6. Babylon.js Captures Pointer Events Over Overlays
+
+**Problem:** Babylon's `ArcRotateCamera.attachControl()` captures all pointer events at the document level. Lobby buttons and overlays on top of the canvas were unclickable.
+
+**Fix:** `showOverlay()` calls `camera.detachControl()`. `hideOverlay()` calls `camera.attachControl()` only when no overlays remain open.
+
+### 7. WebSocket Pre-Warming for Cold Starts
+
+**Problem:** Render free tier idles after 30s. First WebSocket connection takes 30-60s (cold start). Users see "Connection Lost" while waiting.
+
+**Fix:** `multiplayer-client.js` auto-connects a lightweight warm-up socket on page load. Sends pings every 25s to keep the server alive. Warm socket is torn down before real game connection.
+
+### 8. Disconnect Overlay Never Hides
+
+**Problem:** `multiplayerUI.showDisconnectOverlay()` was shown on disconnect but never hidden on reconnect.
+
+**Fix:** Added `'reconnected'` event to multiplayer-client. Socket.IO's `connect` event fires on reconnect — detect it and emit `'reconnected'`. Game listens and hides the overlay.
+
+### 9. Deep Link Join
+
+**Problem:** Share links (`?join=CODE`) opened the game on the title screen instead of auto-joining.
+
+**Fix:** `initGame()` checks `URLSearchParams` for `?join=CODE` or `?session=ID`. Waits for auth, then auto-joins. Cleans URL after joining.
+
+### 10. iOS Safe Areas
+
+**Problem:** HUD elements (player bars, buttons) were hidden behind the notch on iOS.
+
+**Fix:** Use `env(safe-area-inset-*, 0px)` CSS variables on all edge-positioned elements. `viewport-fit=cover` is set in BaseLayout.
+
+### 11. Session Limit UX
+
+**Problem:** 409 "Maximum 3 concurrent sessions" with no indication of when a slot would free up.
+
+**Fix:** On 409, fetch active sessions, find earliest expiry, show live countdown timer: "Expires in 2m 34s". When it hits 0, show "Ready now! Try again." in green.
