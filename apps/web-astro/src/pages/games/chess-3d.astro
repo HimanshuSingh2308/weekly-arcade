@@ -326,6 +326,12 @@ import gameData from '../../data/games/chess-3d.json';
     </div>
   </div>
 
+  <!-- End game splash (Checkmate/Draw dramatic display) -->
+  <div id="endSplash" style="display:none;position:fixed;inset:0;z-index:110;align-items:center;justify-content:center;flex-direction:column;background:rgba(0,0,0,0.6);pointer-events:none;">
+    <h1 id="endSplashTitle" style="font-size:3rem;font-weight:900;letter-spacing:0.1em;margin:0;text-shadow:0 4px 20px rgba(0,0,0,0.5);"></h1>
+    <p id="endSplashSub" style="font-size:1.2rem;color:var(--c3d-text-dim);margin:8px 0 0;font-weight:600;"></p>
+  </div>
+
   <!-- Screen reader announcements -->
   <div id="srAnnounce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 

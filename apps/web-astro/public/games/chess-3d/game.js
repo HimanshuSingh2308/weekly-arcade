@@ -2886,17 +2886,60 @@
   function checkGameEnd() {
     if (chessEngine.isCheckmate()) {
       const winner = chessEngine.getTurn() === WHITE ? 'black' : 'white';
+      const isPlayerWin = (winner === 'white' && playerColor === WHITE) || (winner === 'black' && playerColor === BLACK);
       srAnnounce('Checkmate! ' + winner + ' wins.');
-      setTimeout(() => endGame(winner, 'Checkmate'), 400);
+      sound.play('checkmate');
+
+      // Show dramatic checkmate splash before game over
+      showEndSplash(
+        isPlayerWin ? 'CHECKMATE!' : 'CHECKMATED',
+        isPlayerWin ? 'You win!' : 'You lose',
+        isPlayerWin ? 'var(--c3d-gold)' : 'var(--c3d-red)',
+        () => endGame(winner, 'Checkmate')
+      );
       return true;
     }
     if (chessEngine.isDraw()) {
       const reason = chessEngine.getDrawReason();
       srAnnounce('Game drawn: ' + reason);
-      setTimeout(() => endGame('draw', reason), 400);
+
+      showEndSplash('DRAW', reason, 'var(--c3d-text-dim)', () => endGame('draw', reason));
       return true;
     }
     return false;
+  }
+
+  function showEndSplash(title, subtitle, color, callback) {
+    const splash = $('endSplash');
+    const titleEl = $('endSplashTitle');
+    const subEl = $('endSplashSub');
+    if (!splash || !titleEl) {
+      // Fallback if elements don't exist
+      setTimeout(callback, 400);
+      return;
+    }
+
+    titleEl.textContent = title;
+    titleEl.style.color = color;
+    subEl.textContent = subtitle || '';
+    splash.style.display = 'flex';
+    splash.style.opacity = '0';
+
+    // Fade in
+    requestAnimationFrame(() => {
+      splash.style.transition = 'opacity 0.4s ease';
+      splash.style.opacity = '1';
+    });
+
+    // Hold for 2.5 seconds, then fade out and show game over
+    setTimeout(() => {
+      splash.style.transition = 'opacity 0.5s ease';
+      splash.style.opacity = '0';
+      setTimeout(() => {
+        splash.style.display = 'none';
+        callback();
+      }, 500);
+    }, 2500);
   }
 
   function handleUndo() {
