@@ -1996,29 +1996,29 @@
     // Sort by value (most valuable first)
     const sortByValue = (a, b) => (PIECE_VALUES[b] || 0) - (PIECE_VALUES[a] || 0);
 
-    // White pieces captured (displayed on black's side — right of board)
+    // White pieces captured — displayed above the board (behind black's side)
     const whiteCaptured = captured.w.sort(sortByValue);
     whiteCaptured.forEach((type, i) => {
       const masterKey = WHITE + type;
       if (!pieceMasters[masterKey]) return;
       const mesh = pieceMasters[masterKey].createInstance('cap_w_' + i);
-      const row = Math.floor(i / 4);
-      const col = i % 4;
-      mesh.position = new BABYLON.Vector3(8.5 + col * 0.7, 0.1, 1 + row * 0.7);
-      mesh.scaling = new BABYLON.Vector3(0.6, 0.6, 0.6);
+      const col = i % 8;
+      const row = Math.floor(i / 8);
+      mesh.position = new BABYLON.Vector3(col * 0.65 + 1.2, 0.1, 8.5 + row * 0.7);
+      mesh.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
       mesh.isPickable = false;
       capturedMeshes3D.push(mesh);
     });
 
-    // Black pieces captured (displayed on white's side — left of board)
+    // Black pieces captured — displayed below the board (behind white's side)
     const blackCaptured = captured.b.sort(sortByValue);
     blackCaptured.forEach((type, i) => {
       const masterKey = BLACK + type;
       if (!pieceMasters[masterKey]) return;
       const mesh = pieceMasters[masterKey].createInstance('cap_b_' + i);
-      const row = Math.floor(i / 4);
-      const col = i % 4;
-      mesh.position = new BABYLON.Vector3(-1.5 - col * 0.7, 0.1, 6 - row * 0.7);
+      const col = i % 8;
+      const row = Math.floor(i / 8);
+      mesh.position = new BABYLON.Vector3(col * 0.65 + 1.2, 0.1, -1.2 - row * 0.7);
       mesh.scaling = new BABYLON.Vector3(0.6, 0.6, 0.6);
       mesh.isPickable = false;
       capturedMeshes3D.push(mesh);
@@ -2115,8 +2115,9 @@
           // Try to load cloud state
           if (user && window.apiClient) {
             window.apiClient.getGameState(GAME_ID).then(state => {
-              if (state?.elo) {
-                elo.rating = state.elo;
+              const eloVal = state?.additionalData?.elo || state?.elo;
+            if (eloVal) {
+                elo.rating = eloVal;
                 elo._saveStats();
                 updateMenuDisplay();
               }
@@ -3867,15 +3868,18 @@
         }
       });
 
-      // Save cloud state
+      // Save cloud state (map to DTO: currentLevel=tier, gamesWon=wins)
       await window.apiClient.saveGameState(GAME_ID, {
-        elo: elo.rating,
+        currentLevel: Math.max(1, Math.floor(elo.rating / 200)),
+        currentStreak: Math.max(0, elo.streak),
+        bestStreak: Math.max(0, elo.bestStreak),
         gamesPlayed: elo.gamesPlayed,
-        wins: elo.wins,
-        losses: elo.losses,
-        draws: elo.draws,
-        streak: elo.streak,
-        bestStreak: elo.bestStreak
+        gamesWon: elo.wins,
+        additionalData: {
+          elo: elo.rating,
+          losses: elo.losses,
+          draws: elo.draws,
+        }
       });
     } catch (e) {
       console.warn('[Chess3D] Score submission failed:', e);
