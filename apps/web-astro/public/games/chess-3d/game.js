@@ -2429,19 +2429,38 @@
     tick();
   }
 
+  // Parse Firestore timestamp (can be ISO string, Date, or {_seconds, _nanoseconds})
+  function mpParseTimestamp(ts) {
+    if (!ts) return 0;
+    if (typeof ts === 'string') return new Date(ts).getTime();
+    if (ts._seconds) return ts._seconds * 1000;
+    if (ts.seconds) return ts.seconds * 1000;
+    if (ts instanceof Date) return ts.getTime();
+    return new Date(ts).getTime() || 0;
+  }
+
   async function mpHandleSessionLimit(context) {
     // Fetch active sessions to find earliest expiry
     try {
       const sessions = await window.multiplayerClient.getActiveSessions();
       if (sessions && sessions.length > 0) {
-        // Find the oldest waiting session (will expire first)
+        // Find the session that will expire soonest
+        // waiting = 5 min idle, playing = 30 min max
         let earliestExpiry = Infinity;
         for (const s of sessions) {
-          if (s.status === 'waiting' && s.lastActivityAt) {
-            const activityTime = new Date(s.lastActivityAt).getTime();
-            const expiresAt = activityTime + 5 * 60 * 1000; // 5 min idle timeout
-            if (expiresAt < earliestExpiry) earliestExpiry = expiresAt;
+          const activityTime = mpParseTimestamp(s.lastActivityAt);
+          if (!activityTime) continue;
+
+          let expiresAt;
+          if (s.status === 'waiting') {
+            expiresAt = activityTime + 5 * 60 * 1000; // 5 min idle
+          } else if (s.status === 'playing' || s.status === 'starting') {
+            const startTime = mpParseTimestamp(s.startedAt) || activityTime;
+            expiresAt = startTime + 30 * 60 * 1000; // 30 min max
+          } else {
+            continue;
           }
+          if (expiresAt < earliestExpiry) earliestExpiry = expiresAt;
         }
         if (earliestExpiry < Infinity) {
           const remaining = earliestExpiry - Date.now();
