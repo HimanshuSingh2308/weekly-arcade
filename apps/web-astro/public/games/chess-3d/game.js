@@ -34,166 +34,40 @@
   let COL_LIGHT_SQ, COL_DARK_SQ, COL_WHITE_PIECE, COL_BLACK_PIECE;
   let COL_GOLD, COL_EMERALD, COL_RED, COL_BLUE;
 
-  /* ---- Board Themes ---- */
-  const BOARD_THEMES = {
-    classic:  { name: 'Classic',  light: '#F0D9B5', dark: '#5C3317', frame: '#3B1E08', desc: 'Default wood' },
-    marble:   { name: 'Marble',   light: '#E8E8E8', dark: '#6B6B6B', frame: '#404040', desc: 'Grey marble' },
-    forest:   { name: 'Forest',   light: '#AECF9F', dark: '#4A7B3C', frame: '#2D4A24', desc: 'Green tournament' },
-    midnight: { name: 'Midnight', light: '#4A5568', dark: '#1A202C', frame: '#0D1117', desc: 'Dark mode' }
-  };
+  // Module references (loaded from themes.js, skins.js, puzzles.js before game.js)
+  const _t = window._chess3dThemes || {};
+  const _sk = window._chess3dSkins || {};
+  const _pz = window._chess3dPuzzles || {};
 
-  let currentTheme = localStorage.getItem('chess3d-theme') || 'classic';
-
-  function _hexToColor3(hex) {
+  // Aliases for backward compatibility with inline references
+  const BOARD_THEMES = _t.BOARD_THEMES || { classic: { light: '#F0D9B5', dark: '#5C3317', frame: '#3B1E08' } };
+  const PIECE_SKINS = _sk.PIECE_SKINS || { classic: { name: 'Classic', unlock: null } };
+  const DAILY_PUZZLES = _pz.DAILY_PUZZLES || [];
+  const currentTheme = _t.currentTheme ? _t.currentTheme() : 'classic';
+  const currentSkin = _sk.currentSkin ? _sk.currentSkin() : 'classic';
+  const _hexToColor3 = _t.hexToColor3 || ((hex) => {
     const r = parseInt(hex.slice(1, 3), 16) / 255;
     const g = parseInt(hex.slice(3, 5), 16) / 255;
     const b = parseInt(hex.slice(5, 7), 16) / 255;
     return new BABYLON.Color3(r, g, b);
-  }
+  });
 
-  function applyBoardTheme(themeName) {
-    const theme = BOARD_THEMES[themeName];
-    if (!theme) return;
-    currentTheme = themeName;
-    localStorage.setItem('chess3d-theme', themeName);
+  // Shorthand functions
+  function applyBoardTheme(n) { _t.applyBoardTheme?.(n); }
+  function applySkin(n) { return _sk.applySkin?.(n) || false; }
+  function isSkinUnlocked(n) { return _sk.isSkinUnlocked?.(n) || false; }
+  function getDailyPuzzleIndex() { return _pz.getDailyPuzzleIndex?.() || 0; }
+  function getPuzzleSolvedSet() { return _pz.getPuzzleSolvedSet?.() || new Set(); }
+  function markPuzzleSolved(idx) { _pz.markPuzzleSolved?.(idx); }
 
-    const lightCol = _hexToColor3(theme.light);
-    const darkCol = _hexToColor3(theme.dark);
-    const frameCol = _hexToColor3(theme.frame);
-
-    COL_LIGHT_SQ = lightCol;
-    COL_DARK_SQ = darkCol;
-
-    // Update board square materials
-    for (const sq of boardMeshes) {
-      if (!sq.metadata || sq.metadata.type !== 'square') continue;
-      const r = sq.metadata.row, c = sq.metadata.col;
-      if (sq.material && sq.material.albedoColor) {
-        sq.material.albedoColor = (r + c) % 2 === 0 ? darkCol.clone() : lightCol.clone();
-      }
-    }
-
-    // Update board frame (baseMat)
-    if (scene) {
-      const baseMat = scene.getMaterialByName('baseMat');
-      if (baseMat && baseMat.albedoColor) {
-        baseMat.albedoColor = frameCol.clone();
-      }
-    }
-
-    // Update theme selector UI
-    document.querySelectorAll('.chess3d-theme-btn').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.theme === themeName);
-    });
-  }
-
-  /* ---- Piece Skins ---- */
-  const PIECE_SKINS = {
-    classic:  { name: 'Classic',  desc: 'Standard pieces', unlock: null },
-    minimal:  { name: 'Minimal',  desc: 'Simple cylinders', unlock: { type: 'elo', value: 1000, text: 'Reach Knight tier (ELO 1000)' } },
-    royal:    { name: 'Royal',    desc: '20% taller + gold trim', unlock: { type: 'difficulty', value: 'hard', text: 'Beat Hard AI' } }
-  };
-
-  let currentSkin = localStorage.getItem('chess3d-skin') || 'classic';
-
-  function isSkinUnlocked(skinName) {
-    const skin = PIECE_SKINS[skinName];
-    if (!skin || !skin.unlock) return true;
-    if (skin.unlock.type === 'elo') {
-      return elo && elo.rating >= skin.unlock.value;
-    }
-    if (skin.unlock.type === 'difficulty') {
-      try {
-        const stats = JSON.parse(localStorage.getItem('chess3d-stats') || '{}');
-        return !!(stats.beatHard);
-      } catch (e) { return false; }
-    }
-    return false;
-  }
-
-  function applySkin(skinName) {
-    if (!isSkinUnlocked(skinName)) return false;
-    currentSkin = skinName;
-    localStorage.setItem('chess3d-skin', skinName);
-
-    // Rebuild piece masters with new skin
-    if (scene && babylonSetup) {
-      // Dispose old masters
-      for (const key of Object.keys(pieceMasters)) {
-        if (pieceMasters[key]) { pieceMasters[key].dispose(); delete pieceMasters[key]; }
-      }
-      createPieceMasters(scene, babylonSetup.shadowGen);
-      placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
-    }
-
-    // Update skin selector UI
-    document.querySelectorAll('.chess3d-skin-btn').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.skin === skinName);
-    });
-    return true;
-  }
-
-  /* ---- Daily Puzzles ---- */
-  const DAILY_PUZZLES = [
-    // 10 well-known puzzles
-    { fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4', solution: ['h5f7'], title: 'Mate in 1', difficulty: 'Easy', desc: "Scholar's Mate" },
-    { fen: 'r1b1k2r/ppppqppp/2n2n2/2b5/3NP3/2P5/PP3PPP/RNBQKB1R w KQkq - 0 1', solution: ['d4f5', 'e7e5', 'f5d6'], title: 'Mate in 2', difficulty: 'Medium', desc: 'Fork & Mate' },
-    { fen: '6k1/5ppp/8/8/8/8/1Q6/K7 w - - 0 1', solution: ['b2g7'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Queen Mate' },
-    { fen: 'r1bqk2r/pppp1ppp/2n5/2b1p3/2BnP3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 1', solution: ['f3e5'], title: 'Find the Best Move', difficulty: 'Medium', desc: 'Tactical' },
-    { fen: '8/8/8/8/8/5k2/4R3/4K3 w - - 0 1', solution: ['e2f2'], title: 'Mate in 1', difficulty: 'Easy', desc: 'King & Rook Mate' },
-    { fen: 'r1bqkbnr/pppppppp/2n5/8/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 0 2', solution: ['e7e5'], title: 'Best Opening Move', difficulty: 'Easy', desc: 'Find best response' },
-    { fen: '6k1/pp3ppp/8/8/8/8/PPR2PPP/6K1 w - - 0 1', solution: ['c2c8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Back rank mate' },
-    { fen: 'r1bq1rk1/ppp2ppp/2np1n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 w - - 0 1', solution: ['c4f7'], title: 'Find the Sacrifice', difficulty: 'Hard', desc: 'Bishop sacrifice' },
-    { fen: '3r2k1/pp3ppp/8/3Q4/8/8/PPP2PPP/6K1 w - - 0 1', solution: ['d5d8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Back rank' },
-    { fen: 'r1b1kb1r/pppp1ppp/5n2/4p1q1/2BnP3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 1', solution: ['f3e5'], title: 'Find the Tactic', difficulty: 'Medium', desc: 'Counter-attack' },
-    // 20 additional puzzles
-    { fen: '5rk1/5ppp/8/3Q4/8/8/5PPP/6K1 w - - 0 1', solution: ['d5f7'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Queen delivers mate' },
-    { fen: '6k1/4Rppp/8/8/8/8/5PPP/6K1 w - - 0 1', solution: ['e7e8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Rook back rank' },
-    { fen: 'r4rk1/ppp2ppp/8/3q4/8/1B6/PPP2PPP/R4RK1 w - - 0 1', solution: ['b3f7'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Bishop snipe' },
-    { fen: '6k1/5ppp/4p3/8/8/8/2R2PPP/6K1 w - - 0 1', solution: ['c2c8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Back rank pattern' },
-    { fen: 'r1bk3r/pppp1ppp/8/4N3/8/8/PPP2PPP/R1B1K2R w KQ - 0 1', solution: ['e5f7'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Knight smothered fork' },
-    { fen: '2r3k1/5ppp/8/8/3B4/8/5PPP/4R1K1 w - - 0 1', solution: ['e1e8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Rook invades' },
-    { fen: 'r1bqr1k1/pppp1ppp/2n2n2/8/1bB5/2N1PN2/PPPP1PPP/R1BQK2R w KQ - 0 1', solution: ['e1g1'], title: 'Best Move', difficulty: 'Easy', desc: 'Castle to safety' },
-    { fen: '5r1k/pp4pp/8/3Q4/8/7P/PP4P1/6K1 w - - 0 1', solution: ['d5d8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Queen back rank' },
-    { fen: 'r4rk1/pppb1ppp/2n5/3np3/8/3B1N2/PPP2PPP/R1B1R1K1 w - - 0 1', solution: ['d3h7'], title: 'Find the Sacrifice', difficulty: 'Medium', desc: 'Greek gift setup' },
-    { fen: '2kr4/ppp2ppp/8/4N3/8/8/PPP2PPP/2KR4 w - - 0 1', solution: ['d1d8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Rook delivers mate' },
-    { fen: 'r3k2r/ppp2ppp/2n5/3qN3/8/8/PPP2PPP/R2QK2R w KQkq - 0 1', solution: ['e5c6'], title: 'Find the Fork', difficulty: 'Medium', desc: 'Knight fork' },
-    { fen: '4r1k1/5ppp/8/q7/8/4B3/5PPP/3Q2K1 w - - 0 1', solution: ['d1d8'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Queen exchange mate' },
-    { fen: 'r2qk2r/ppp2ppp/2n1bn2/3pp3/4P3/2NP1N2/PPP2PPP/R1BQKB1R w KQkq - 0 1', solution: ['e4d5'], title: 'Best Capture', difficulty: 'Easy', desc: 'Central pawn grab' },
-    { fen: 'r1b1k1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1', solution: ['c4f7'], title: 'Find the Sacrifice', difficulty: 'Hard', desc: 'Fried Liver Attack' },
-    { fen: '3rr1k1/ppp2ppp/8/3Q4/8/8/PPP2PPP/4R1K1 w - - 0 1', solution: ['d5d8', 'e8d8', 'e1d1'], title: 'Mate in 2', difficulty: 'Medium', desc: 'Exchange and mate' },
-    { fen: 'rnb1kbnr/pppp1ppp/8/4p3/5PPq/8/PPPPP2P/RNBQKBNR w KQkq - 0 1', solution: ['g4g5'], title: 'Defend!', difficulty: 'Medium', desc: 'Block the queen' },
-    { fen: '6k1/5p1p/6pQ/8/8/8/5PPP/6K1 w - - 0 1', solution: ['h6g7'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Queen corner mate' },
-    { fen: '2r2rk1/pp3ppp/8/2bQ4/8/6P1/PP3P1P/R3R1K1 w - - 0 1', solution: ['d5f7'], title: 'Mate in 1', difficulty: 'Easy', desc: 'Queen attacks f7' },
-    { fen: 'r1bqkbnr/pppppppp/2n5/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq - 0 2', solution: ['d7d5'], title: 'Best Defense', difficulty: 'Easy', desc: 'Counter in center' },
-    { fen: 'r3kb1r/ppp1pppp/2n2n2/3q4/3P4/2N2N2/PPP2PPP/R1BQKB1R w KQkq - 0 1', solution: ['c3d5'], title: 'Win Material', difficulty: 'Medium', desc: 'Knight captures queen' }
-  ];
-
-  let puzzleMode = false;
-  let puzzleIndex = -1;
-  let puzzleMoveIndex = 0;
-  let puzzleSolved = false;
-  let puzzleFenSnapshot = '';
-
-  function getDailyPuzzleIndex() {
-    return Math.floor(Date.now() / 86400000) % DAILY_PUZZLES.length;
-  }
-
-  function getPuzzleSolvedSet() {
-    try { return new Set(JSON.parse(localStorage.getItem('chess3d-puzzles-solved') || '[]')); }
-    catch (e) { return new Set(); }
-  }
-
-  function markPuzzleSolved(idx) {
-    const set = getPuzzleSolvedSet();
-    set.add(idx);
-    localStorage.setItem('chess3d-puzzles-solved', JSON.stringify([...set]));
-  }
+  // Puzzle state proxied to module
+  const puzzleState = _pz;
+  // For code that reads puzzleMode/puzzleIndex directly, these are now on _pz
 
   function initColors() {
-    const theme = BOARD_THEMES[currentTheme] || BOARD_THEMES.classic;
-    COL_LIGHT_SQ = _hexToColor3(theme.light);
-    COL_DARK_SQ = _hexToColor3(theme.dark);
+    const tc = _themes()?.getThemeColors();
+    COL_LIGHT_SQ = tc?.light || new BABYLON.Color3(0.94, 0.85, 0.71);
+    COL_DARK_SQ = tc?.dark || new BABYLON.Color3(0.36, 0.20, 0.09);
     COL_WHITE_PIECE = new BABYLON.Color3(0.96, 0.94, 0.91); // #F5F0E8
     COL_BLACK_PIECE = new BABYLON.Color3(0.17, 0.17, 0.17); // #2C2C2C
     COL_GOLD = new BABYLON.Color3(0.79, 0.66, 0.30);       // #C9A84C
@@ -2205,6 +2079,24 @@
     elo = new EloSystem();
     sound = new SoundManager();
     multiplayer = new MultiplayerManager();
+
+    // Expose shared state for theme/skin/puzzle modules
+    window._chess3d = {
+      get scene() { return scene; },
+      get boardMeshes() { return boardMeshes; },
+      get elo() { return elo; },
+      get chessEngine() { return chessEngine; },
+      setColors(light, dark) { COL_LIGHT_SQ = light; COL_DARK_SQ = dark; },
+      rebuildPieces() {
+        if (scene && babylonSetup) {
+          for (const key of Object.keys(pieceMasters)) {
+            if (pieceMasters[key]) { pieceMasters[key].dispose(); delete pieceMasters[key]; }
+          }
+          createPieceMasters(scene, babylonSetup.shadowGen);
+          placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
+        }
+      },
+    };
 
     // Init Babylon
     const canvas = $('renderCanvas');

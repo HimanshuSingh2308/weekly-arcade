@@ -326,6 +326,10 @@ import gameData from '../../data/games/chess-3d.json';
     <script is:inline src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script is:inline src="/js/multiplayer-client.js"></script>
     <script is:inline src="/js/multiplayer-ui.js"></script>
+    <!-- Cosmetic modules (loaded before game.js, expose via window._chess3d*) -->
+    <script is:inline src="/games/chess-3d/themes.js"></script>
+    <script is:inline src="/games/chess-3d/skins.js"></script>
+    <script is:inline src="/games/chess-3d/puzzles.js"></script>
     <script is:inline src="/games/chess-3d/game.js"></script>
   </Fragment>
 </GameLayout>
