@@ -3566,6 +3566,7 @@
 
       // On rematch/menu, clean up MP
       $('menuBtn').onclick = () => {
+        gameMode = 'ai'; // Set before cleanup to prevent reconnect overlay
         hideOverlay('gameOverOverlay');
         showOverlay('mainMenuOverlay');
         mpCleanup();
@@ -3580,18 +3581,29 @@
     });
 
     window.multiplayerClient.onError(({ code }) => {
-      if (code === 'DISCONNECTED') {
+      if (code === 'DISCONNECTED' && gameMode === 'multiplayer' && gameActive) {
         window.multiplayerUI?.showDisconnectOverlay();
-        // Pause timers — don't penalize players during connection loss
         mpPauseTimers();
       }
     });
 
     window.multiplayerClient.onReconnected(() => {
       window.multiplayerUI?.hideDisconnectOverlay();
-      // Resume timers from where they were paused
       mpResumeTimers();
       srAnnounce('Reconnected to game server.');
+    });
+
+    // Turn timeout — server tells us a player ran out of time
+    window.multiplayerClient.on('game:turn-timeout', ({ uid }) => {
+      const isMe = uid === currentUser?.uid;
+      srAnnounce(isMe ? 'Time\'s up! You lost on time.' : 'Opponent ran out of time!');
+    });
+
+    // Player left — server tells us opponent disconnected
+    window.multiplayerClient.onPlayerLeft(({ uid, reason }) => {
+      if (uid !== currentUser?.uid && reason === 'disconnected') {
+        $('turnText').textContent = mpOpponentName + ' disconnected — waiting 2 min...';
+      }
     });
   }
 

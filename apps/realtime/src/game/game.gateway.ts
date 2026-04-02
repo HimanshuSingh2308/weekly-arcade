@@ -37,6 +37,9 @@ const ALLOWED_ORIGINS = [
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(GameGateway.name);
 
+  // Turn timeout timers: sessionId → NodeJS.Timeout
+  private turnTimers = new Map<string, NodeJS.Timeout>();
+
   @WebSocketServer()
   server: Server;
 
@@ -157,10 +160,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const roomName = `session:${sessionId}`;
       client.to(roomName).emit('session:player-left', { uid, reason: 'disconnected' });
 
-      // If no players remain connected, abandon the session immediately
+      // Check remaining connected players
       const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
       if (connectedPlayers.length === 0) {
+        // No players left — abandon immediately
         this.logger.log(`All players left session ${sessionId} — abandoning`);
+        this.clearTurnTimer(sessionId);
         try {
           await this.firebase.doc(`sessions/${sessionId}`).update({
             status: 'abandoned',
@@ -169,6 +174,28 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           this.stateManager.evictSession(sessionId);
         } catch {
           // Already cleaned up
+        }
+      } else if (connectedPlayers.length === 1) {
+        // One player left during an active game — give 2 min reconnect window
+        // After that, the remaining player wins by abandonment
+        const activeSession = this.stateManager.getSession(sessionId);
+        if (activeSession && activeSession.version > 0) {
+          this.logger.log(`Player ${uid} left active game ${sessionId} — 2 min reconnect window`);
+          const disconnectedUid = uid;
+          const remainingUid = connectedPlayers[0];
+
+          setTimeout(async () => {
+            // Check if the player reconnected
+            const currentConnected = this.roomManager.getConnectedPlayers(sessionId);
+            if (!currentConnected.includes(disconnectedUid)) {
+              this.logger.log(`Player ${disconnectedUid} did not reconnect — ${remainingUid} wins`);
+              this.clearTurnTimer(sessionId);
+              const results: Record<string, { score: number; rank: number; outcome: 'win' | 'loss' | 'draw' }> = {};
+              results[disconnectedUid] = { score: 0, rank: 2, outcome: 'loss' };
+              results[remainingUid] = { score: 0, rank: 1, outcome: 'win' };
+              await this.handleGameFinished(sessionId, { players: results, reason: 'disconnect' });
+            }
+          }, 120_000); // 2 minute reconnect window
         }
       }
     }
@@ -209,7 +236,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       // If game is over, handle finish
       if (gameResult) {
+        this.clearTurnTimer(sessionId);
         await this.handleGameFinished(sessionId, gameResult);
+      } else if (turnUid) {
+        // Restart turn timer for the next player (120s default)
+        this.startTurnTimer(sessionId, turnUid, 120);
       }
     } catch (error) {
       client.emit('game:move-rejected', { reason: (error as Error).message });
@@ -283,6 +314,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       };
       this.server.to(roomName).emit('game:state', payload);
 
+      // Start turn timer for the first player
+      if (turnUid) {
+        this.startTurnTimer(sessionId, turnUid, 120);
+      }
+
       this.logger.log(`Game started: session=${sessionId} players=${playerUids.join(',')}`);
     } catch (error) {
       this.logger.error(`Failed to start game: ${(error as Error).message}`);
@@ -299,6 +335,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const { sessionId } = client.data;
 
     this.logger.log(`Player forfeited: uid=${uid} session=${sessionId}`);
+    this.clearTurnTimer(sessionId);
 
     // Get other players to determine winner
     const session = this.stateManager.getSession(sessionId);
@@ -332,6 +369,43 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   // ─── Private helpers ────────────────────────────────────────────────
+
+  /**
+   * Start/restart the turn timer for a session.
+   * When the timer expires, the current player auto-forfeits.
+   */
+  private startTurnTimer(sessionId: string, turnUid: string | null, timeoutSec: number): void {
+    this.clearTurnTimer(sessionId);
+    if (!turnUid || !timeoutSec) return;
+
+    this.turnTimers.set(sessionId, setTimeout(async () => {
+      this.logger.log(`Turn timeout: ${turnUid} in session ${sessionId} — auto-forfeit`);
+
+      const roomName = `session:${sessionId}`;
+      this.server.to(roomName).emit('game:turn-timeout', { uid: turnUid });
+
+      // Treat as forfeit by the timed-out player
+      const session = this.stateManager.getSession(sessionId);
+      if (!session) return;
+
+      const otherPlayers = Array.from(session.players).filter(p => p !== turnUid);
+      const results: Record<string, { score: number; rank: number; outcome: 'win' | 'loss' | 'draw' }> = {};
+      results[turnUid] = { score: 0, rank: otherPlayers.length + 1, outcome: 'loss' };
+      otherPlayers.forEach((p, i) => {
+        results[p] = { score: 0, rank: i + 1, outcome: 'win' };
+      });
+
+      await this.handleGameFinished(sessionId, { players: results, reason: 'timeout' });
+    }, timeoutSec * 1000));
+  }
+
+  private clearTurnTimer(sessionId: string): void {
+    const timer = this.turnTimers.get(sessionId);
+    if (timer) {
+      clearTimeout(timer);
+      this.turnTimers.delete(sessionId);
+    }
+  }
 
   private async handleGameFinished(
     sessionId: string,
