@@ -2045,6 +2045,7 @@
   function mpAnimateMove(fromRow, fromCol, toRow, toCol, callback) {
     const key = 'r' + fromRow + 'c' + fromCol;
     const mesh = pieceMeshes[key];
+    console.log('[Chess3D] mpAnimateMove', key, mesh ? 'found' : 'NOT FOUND', Object.keys(pieceMeshes).length, 'meshes');
     if (!mesh) { if (callback) callback(); return; }
 
     const startPos = mesh.position.clone();
@@ -3452,6 +3453,11 @@
       clearCheckHighlight();
 
       // Animate the move if we detected from→to, otherwise just rebuild
+      if (changes) {
+        console.log('[Chess3D] MP changes:', JSON.stringify({ from: changes.movedFrom, to: changes.movedTo, captured: changes.captured?.type, castle: changes.isCastle }));
+      } else {
+        console.log('[Chess3D] MP no changes detected (initial state or same FEN)');
+      }
       if (changes?.movedFrom && changes?.movedTo) {
         // Animate the piece from old position to new
         mpAnimateMove(changes.movedFrom.row, changes.movedFrom.col, changes.movedTo.row, changes.movedTo.col, () => {
