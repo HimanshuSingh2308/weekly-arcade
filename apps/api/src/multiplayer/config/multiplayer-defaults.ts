@@ -8,13 +8,13 @@ export const MULTIPLAYER_DEFAULTS = {
   DISCONNECT_DETECTION_MS: 45 * 1000,            // 45 seconds
   FINISHED_CLEANUP_HOURS: 24,
 
-  /** Matchmaking */
-  INITIAL_RATING_WINDOW: 100,
-  RATING_WINDOW_STEP: 50,
-  RATING_WINDOW_MAX: 300,
+  /** Matchmaking — tuned for small player base, widens fast */
+  INITIAL_RATING_WINDOW: 200,
+  RATING_WINDOW_STEP: 200,
+  RATING_WINDOW_MAX: 9999, // Effectively no cap — match anyone after 30s
   MATCHMAKING_WIDEN_INTERVAL_SEC: 10,
-  MATCHMAKING_ANYONE_AFTER_SEC: 300, // 5 min — only match anyone as last resort
-  MATCHMAKING_EXPIRE_SEC: 180, // 3 min queue before expiry (was 2 min)
+  MATCHMAKING_ANYONE_AFTER_SEC: 30, // Match anyone after 30s (small player base)
+  MATCHMAKING_EXPIRE_SEC: 120, // 2 min queue before expiry
   MATCHMAKING_SCAN_INTERVAL_SEC: 5,
   DEFAULT_RATING: 1000,
   RATING_FLOOR: 100,
