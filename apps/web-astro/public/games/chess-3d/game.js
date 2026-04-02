@@ -1189,6 +1189,25 @@
     toggle() {
       this.muted = !this.muted;
       localStorage.setItem('chess3d-mute', this.muted.toString());
+
+      // Stop/start ambient music on toggle
+      if (this.muted) {
+        stopAmbientMusic();
+        // Suspend audio context to fully silence everything
+        if (this.ctx && this.ctx.state === 'running') {
+          this.ctx.suspend();
+        }
+      } else {
+        // Resume audio context
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        // Restart ambient if game is active
+        if (typeof gameActive !== 'undefined' && gameActive) {
+          startAmbientMusic();
+        }
+      }
+
       return !this.muted;
     }
 
