@@ -1321,7 +1321,7 @@
     const aspect = canvas.width / canvas.height;
     const isPortrait = aspect < 0.7;
     // Portrait: more top-down angle (higher beta) + moderate zoom to fit board width
-    const camRadius = isPortrait ? 18 : 22;
+    const camRadius = isPortrait ? 20 : 22;
     const camBeta = isPortrait ? Math.PI / 3 : Math.PI / 3.5; // More overhead on portrait
     camera = new BABYLON.ArcRotateCamera('cam', Math.PI / 4, camBeta, camRadius, new BABYLON.Vector3(3.5, 0, 3.5), scene);
     camera.attachControl(canvas, true);
@@ -2127,7 +2127,7 @@
     const aspect = window.innerWidth / window.innerHeight;
     const isPortrait = aspect < 0.7;
     const targetBeta = isPortrait ? Math.PI / 3 : Math.PI / 3.5;
-    const targetRadius = isPortrait ? 18 : 22;
+    const targetRadius = isPortrait ? 20 : 22;
 
     BABYLON.Animation.CreateAndStartAnimation('camAlpha', camera, 'alpha', 30, 20,
       camera.alpha, targetAlpha, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT,
