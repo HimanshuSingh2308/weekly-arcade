@@ -2068,6 +2068,18 @@
       return;
     }
 
+    // Trail behind the moving piece
+    let trail = null;
+    try {
+      trail = new BABYLON.TrailMesh('mpTrail', mesh, scene, 0.12, 20, true);
+      const trailMat = new BABYLON.StandardMaterial('mpTrailMat', scene);
+      trailMat.emissiveColor = COL_GOLD ? COL_GOLD.clone() : new BABYLON.Color3(0.79, 0.66, 0.30);
+      trailMat.alpha = 0.4;
+      trailMat.disableLighting = true;
+      trailMat.backFaceCulling = false;
+      trail.material = trailMat;
+    } catch (e) { /* TrailMesh may not be available */ }
+
     const fps = 30;
     const frames = 24; // ~800ms
 
@@ -2106,6 +2118,8 @@
     scene.beginAnimation(mesh, 0, frames + 12, false, 1, () => {
       mesh.position = endPos;
       mesh.scaling = new BABYLON.Vector3(1, 1, 1);
+      // Dispose trail after animation
+      if (trail) setTimeout(() => { try { trail.dispose(); } catch (e) {} }, 200);
       if (callback) callback();
     });
   }
