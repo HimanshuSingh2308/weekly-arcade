@@ -22,15 +22,35 @@ export class MatchmakingService {
    * Add a player to the matchmaking queue.
    */
   async findMatch(uid: string, displayName: string, avatarUrl: string | null, gameId: string): Promise<{ queueEntryId: string; matchedSessionId?: string }> {
-    // Check if already in queue
+    // Check if already in queue — but expire stale entries first
     const existing = await this.firebase
       .collection('matchmakingQueue')
       .where('uid', '==', uid)
       .where('status', '==', 'waiting')
-      .limit(1)
+      .limit(5)
       .get();
 
-    if (!existing.empty) {
+    const now = Date.now();
+    const maxAgeMs = MULTIPLAYER_DEFAULTS.MATCHMAKING_EXPIRE_SEC * 1000;
+    let hasActiveEntry = false;
+
+    for (const doc of existing.docs) {
+      const data = doc.data() as MatchmakingEntry;
+      const joinedAt = data.joinedAt instanceof Date
+        ? data.joinedAt.getTime()
+        : (data.joinedAt as any)?._seconds
+          ? (data.joinedAt as any)._seconds * 1000
+          : new Date(data.joinedAt as any).getTime();
+
+      if (now - joinedAt > maxAgeMs) {
+        // Stale — expire it
+        doc.ref.update({ status: 'expired' }).catch(() => {});
+      } else {
+        hasActiveEntry = true;
+      }
+    }
+
+    if (hasActiveEntry) {
       throw new ConflictException('Already in matchmaking queue');
     }
 
@@ -117,17 +137,47 @@ export class MatchmakingService {
       .limit(10)
       .get();
 
-    // Filter: not self, rating window includes us
+    // Filter: not self, rating window includes us, not stale
+    const now = Date.now();
+    const maxAgeMs = MULTIPLAYER_DEFAULTS.MATCHMAKING_EXPIRE_SEC * 1000;
+    const staleRefs: FirebaseFirestore.DocumentReference[] = [];
+
     const match = candidates.docs
       .filter(doc => {
         const data = doc.data() as MatchmakingEntry;
-        return data.uid !== uid && data.ratingWindowMax >= rating;
+
+        // Skip self
+        if (data.uid === uid) return false;
+
+        // Skip stale entries (older than expire timeout)
+        const joinedAt = data.joinedAt instanceof Date
+          ? data.joinedAt.getTime()
+          : (data.joinedAt as any)?._seconds
+            ? (data.joinedAt as any)._seconds * 1000
+            : new Date(data.joinedAt as any).getTime();
+        if (now - joinedAt > maxAgeMs) {
+          staleRefs.push(doc.ref);
+          return false;
+        }
+
+        // Rating window check
+        return data.ratingWindowMax >= rating;
       })
       .sort((a, b) => {
         const aData = a.data() as MatchmakingEntry;
         const bData = b.data() as MatchmakingEntry;
         return Math.abs(aData.skillRating - rating) - Math.abs(bData.skillRating - rating);
       })[0];
+
+    // Clean up stale entries in background
+    if (staleRefs.length > 0) {
+      const batch = this.firebase.batch();
+      for (const ref of staleRefs) {
+        batch.update(ref, { status: 'expired' });
+      }
+      batch.commit().catch(err => this.logger.warn('Stale queue cleanup failed:', err.message));
+      this.logger.log(`Cleaned ${staleRefs.length} stale matchmaking entries`);
+    }
 
     if (!match) return null;
 
