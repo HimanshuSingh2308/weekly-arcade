@@ -1522,71 +1522,99 @@
   }
 
   function _createPawnMesh(scene) {
-    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.3, diameter: 0.5, tessellation: 16 }, scene);
-    const stem = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.35, diameter: 0.22, tessellation: 12 }, scene);
-    stem.position.y = 0.32;
-    const head = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.3, segments: 12 }, scene);
+    // Short piece: wide base, narrow stem, ball head
+    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.15, diameter: 0.55, tessellation: 16 }, scene);
+    base.position.y = 0.075;
+    const collar = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.08, diameterTop: 0.3, diameterBottom: 0.45, tessellation: 16 }, scene);
+    collar.position.y = 0.19;
+    const stem = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.25, diameterTop: 0.2, diameterBottom: 0.28, tessellation: 12 }, scene);
+    stem.position.y = 0.36;
+    const head = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.28, segments: 14 }, scene);
     head.position.y = 0.56;
-    const merged = BABYLON.Mesh.MergeMeshes([base, stem, head], true, true, undefined, false, true);
-    merged.scaling.y = 1;
-    return merged;
+    return BABYLON.Mesh.MergeMeshes([base, collar, stem, head], true, true, undefined, false, true);
   }
 
   function _createRookMesh(scene) {
-    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.3, diameter: 0.55, tessellation: 16 }, scene);
-    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.55, diameter: 0.38, tessellation: 16 }, scene);
-    body.position.y = 0.4;
-    const top = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.12, diameter: 0.48, tessellation: 16 }, scene);
-    top.position.y = 0.73;
-    const merged = BABYLON.Mesh.MergeMeshes([base, body, top], true, true, undefined, false, true);
-    return merged;
+    // Castle tower: wide base, thick body, flat crenellated top
+    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.15, diameter: 0.6, tessellation: 16 }, scene);
+    base.position.y = 0.075;
+    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.55, diameterTop: 0.4, diameterBottom: 0.45, tessellation: 16 }, scene);
+    body.position.y = 0.42;
+    const rim = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.08, diameter: 0.5, tessellation: 16 }, scene);
+    rim.position.y = 0.74;
+    const top = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.12, diameter: 0.46, tessellation: 8 }, scene); // 8-sided = more angular
+    top.position.y = 0.84;
+    return BABYLON.Mesh.MergeMeshes([base, body, rim, top], true, true, undefined, false, true);
   }
 
   function _createKnightMesh(scene) {
-    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.3, diameter: 0.55, tessellation: 16 }, scene);
-    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.5, diameter: 0.3, tessellation: 12 }, scene);
-    body.position.y = 0.38;
-    const head = BABYLON.MeshBuilder.CreateBox('', { width: 0.2, height: 0.35, depth: 0.4 }, scene);
-    head.position.y = 0.72;
-    head.position.z = 0.08;
-    head.rotation.x = -0.3;
-    const merged = BABYLON.Mesh.MergeMeshes([base, body, head], true, true, undefined, false, true);
-    return merged;
+    // Horse head: base, angled neck, distinctive angular head
+    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.15, diameter: 0.55, tessellation: 16 }, scene);
+    base.position.y = 0.075;
+    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.45, diameterTop: 0.25, diameterBottom: 0.4, tessellation: 12 }, scene);
+    body.position.y = 0.35;
+    // Angled horse head
+    const neck = BABYLON.MeshBuilder.CreateBox('', { width: 0.22, height: 0.4, depth: 0.3 }, scene);
+    neck.position.y = 0.72;
+    neck.position.z = 0.06;
+    neck.rotation.x = -0.25;
+    // Muzzle
+    const muzzle = BABYLON.MeshBuilder.CreateBox('', { width: 0.16, height: 0.15, depth: 0.22 }, scene);
+    muzzle.position.y = 0.78;
+    muzzle.position.z = 0.2;
+    muzzle.rotation.x = -0.1;
+    return BABYLON.Mesh.MergeMeshes([base, body, neck, muzzle], true, true, undefined, false, true);
   }
 
   function _createBishopMesh(scene) {
-    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.3, diameter: 0.55, tessellation: 16 }, scene);
-    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.6, diameterTop: 0.18, diameterBottom: 0.35, tessellation: 16 }, scene);
-    body.position.y = 0.45;
-    const tip = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.15, segments: 10 }, scene);
-    tip.position.y = 0.85;
-    const merged = BABYLON.Mesh.MergeMeshes([base, body, tip], true, true, undefined, false, true);
-    return merged;
+    // Tall tapered piece with pointed mitre top
+    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.15, diameter: 0.55, tessellation: 16 }, scene);
+    base.position.y = 0.075;
+    const collar = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.08, diameterTop: 0.32, diameterBottom: 0.45, tessellation: 16 }, scene);
+    collar.position.y = 0.19;
+    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.55, diameterTop: 0.15, diameterBottom: 0.3, tessellation: 16 }, scene);
+    body.position.y = 0.52;
+    // Mitre (pointed bishop hat)
+    const mitre = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.22, diameterTop: 0.0, diameterBottom: 0.18, tessellation: 12 }, scene);
+    mitre.position.y = 0.91;
+    const ball = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.1, segments: 8 }, scene);
+    ball.position.y = 1.05;
+    return BABYLON.Mesh.MergeMeshes([base, collar, body, mitre, ball], true, true, undefined, false, true);
   }
 
   function _createQueenMesh(scene) {
-    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.3, diameter: 0.6, tessellation: 16 }, scene);
-    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.65, diameterTop: 0.22, diameterBottom: 0.4, tessellation: 16 }, scene);
-    body.position.y = 0.47;
-    const crown = BABYLON.MeshBuilder.CreateTorus('', { diameter: 0.3, thickness: 0.06, tessellation: 16 }, scene);
-    crown.position.y = 0.88;
-    const tip = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.18, segments: 10 }, scene);
-    tip.position.y = 0.98;
-    const merged = BABYLON.Mesh.MergeMeshes([base, body, crown, tip], true, true, undefined, false, true);
-    return merged;
+    // Tall elegant piece with crown ring and orb
+    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.15, diameter: 0.6, tessellation: 16 }, scene);
+    base.position.y = 0.075;
+    const collar = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.08, diameterTop: 0.38, diameterBottom: 0.5, tessellation: 16 }, scene);
+    collar.position.y = 0.19;
+    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.6, diameterTop: 0.2, diameterBottom: 0.36, tessellation: 16 }, scene);
+    body.position.y = 0.53;
+    const rim = BABYLON.MeshBuilder.CreateTorus('', { diameter: 0.28, thickness: 0.05, tessellation: 20 }, scene);
+    rim.position.y = 0.9;
+    const crown = BABYLON.MeshBuilder.CreateTorus('', { diameter: 0.22, thickness: 0.04, tessellation: 16 }, scene);
+    crown.position.y = 0.98;
+    const orb = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.14, segments: 10 }, scene);
+    orb.position.y = 1.08;
+    return BABYLON.Mesh.MergeMeshes([base, collar, body, rim, crown, orb], true, true, undefined, false, true);
   }
 
   function _createKingMesh(scene) {
-    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.3, diameter: 0.6, tessellation: 16 }, scene);
-    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.7, diameterTop: 0.25, diameterBottom: 0.42, tessellation: 16 }, scene);
-    body.position.y = 0.50;
-    // Cross
-    const crossV = BABYLON.MeshBuilder.CreateBox('', { width: 0.08, height: 0.28, depth: 0.08 }, scene);
-    crossV.position.y = 1.03;
-    const crossH = BABYLON.MeshBuilder.CreateBox('', { width: 0.22, height: 0.08, depth: 0.08 }, scene);
-    crossH.position.y = 1.08;
-    const merged = BABYLON.Mesh.MergeMeshes([base, body, crossV, crossH], true, true, undefined, false, true);
-    return merged;
+    // Tallest piece with prominent cross on top
+    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.15, diameter: 0.6, tessellation: 16 }, scene);
+    base.position.y = 0.075;
+    const collar = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.08, diameterTop: 0.4, diameterBottom: 0.5, tessellation: 16 }, scene);
+    collar.position.y = 0.19;
+    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.65, diameterTop: 0.22, diameterBottom: 0.38, tessellation: 16 }, scene);
+    body.position.y = 0.56;
+    const rim = BABYLON.MeshBuilder.CreateTorus('', { diameter: 0.3, thickness: 0.05, tessellation: 20 }, scene);
+    rim.position.y = 0.95;
+    // Prominent cross
+    const crossV = BABYLON.MeshBuilder.CreateBox('', { width: 0.1, height: 0.32, depth: 0.1 }, scene);
+    crossV.position.y = 1.18;
+    const crossH = BABYLON.MeshBuilder.CreateBox('', { width: 0.26, height: 0.1, depth: 0.1 }, scene);
+    crossH.position.y = 1.24;
+    return BABYLON.Mesh.MergeMeshes([base, collar, body, rim, crossV, crossH], true, true, undefined, false, true);
   }
 
   function placePiecesFromBoard(chessEngine, scene, shadowGen) {
