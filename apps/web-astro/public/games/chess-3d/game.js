@@ -1766,7 +1766,7 @@
     highlightMeshes.push(ring);
   }
 
-  // Last move highlight — overlay planes raised above board to avoid z-fighting
+  // Last move highlight — destination square + gold glow ring on piece
   function showLastMove(fromRow, fromCol, toRow, toCol) {
     // Clear previous
     for (const m of lastMoveHighlights) {
@@ -1776,20 +1776,35 @@
 
     if (!scene) return;
 
-    for (const [r, c] of [[fromRow, fromCol], [toRow, toCol]]) {
-      const sq = BABYLON.MeshBuilder.CreatePlane('lastMove_' + r + '_' + c, { size: 0.98 }, scene);
-      sq.rotation.x = Math.PI / 2;
-      sq.position = new BABYLON.Vector3(c, 0.025, r); // Above board (0.01) to avoid z-fighting
-      const mat = new BABYLON.StandardMaterial('lmMat_' + r + '_' + c, scene);
-      mat.diffuseColor = new BABYLON.Color3(0.25, 0.5, 0.9);
-      mat.emissiveColor = new BABYLON.Color3(0.2, 0.4, 0.8);
-      mat.alpha = 0.5;
-      mat.disableLighting = true;
-      mat.zOffset = -2; // Force render on top of board squares
-      sq.material = mat;
-      sq.isPickable = false;
-      lastMoveHighlights.push(sq);
-    }
+    // Highlight ONLY the destination square (where the piece landed)
+    const sq = BABYLON.MeshBuilder.CreatePlane('lastMove', { size: 0.98 }, scene);
+    sq.rotation.x = Math.PI / 2;
+    sq.position = new BABYLON.Vector3(toCol, 0.025, toRow);
+    const sqMat = new BABYLON.StandardMaterial('lmMat', scene);
+    sqMat.diffuseColor = new BABYLON.Color3(0.25, 0.5, 0.9);
+    sqMat.emissiveColor = new BABYLON.Color3(0.2, 0.4, 0.8);
+    sqMat.alpha = 0.5;
+    sqMat.disableLighting = true;
+    sqMat.zOffset = -2;
+    sq.material = sqMat;
+    sq.isPickable = false;
+    lastMoveHighlights.push(sq);
+
+    // Gold glow ring around the moved piece
+    const ring = BABYLON.MeshBuilder.CreateTorus('lastMoveRing', {
+      diameter: 0.7, thickness: 0.05, tessellation: 24
+    }, scene);
+    ring.rotation.x = Math.PI / 2;
+    ring.position = new BABYLON.Vector3(toCol, 0.03, toRow);
+    const ringMat = new BABYLON.StandardMaterial('lmRingMat', scene);
+    const goldCol = COL_GOLD || new BABYLON.Color3(0.79, 0.66, 0.30);
+    ringMat.diffuseColor = goldCol.clone();
+    ringMat.emissiveColor = goldCol.clone();
+    ringMat.alpha = 0.7;
+    ringMat.disableLighting = true;
+    ring.material = ringMat;
+    ring.isPickable = false;
+    lastMoveHighlights.push(ring);
   }
 
   function showCheckHighlight(row, col) {
