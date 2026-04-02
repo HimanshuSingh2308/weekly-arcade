@@ -3521,17 +3521,42 @@
 
     window.multiplayerClient.onGameFinished(({ results }) => {
       gameActive = false;
+      stopAmbientMusic();
+      mpStopTimers();
       const myResult = results?.[currentUser?.uid];
-      if (myResult?.outcome === 'win') { sound.play('win'); }
+      if (myResult?.outcome === 'win') { sound.play('checkmate'); }
       else if (myResult?.outcome === 'loss') { sound.play('loss'); }
       else { sound.play('draw'); }
 
-      $('gameOverTitle').textContent = myResult?.outcome === 'win' ? 'You Win!' :
-        myResult?.outcome === 'loss' ? 'You Lose' : 'Draw';
-      $('gameOverReason').textContent = '';
-      $('gameOverElo').textContent = '';
-      $('gameOverStats').textContent = moveCount + ' moves';
-      showOverlay('gameOverOverlay');
+      // Get move count from engine history (updated from server FEN)
+      const mpMoves = chessEngine.sanHistory?.length || chessEngine.getHistory?.()?.length || moveCount;
+      const gameTimeMs = Date.now() - gameStartTime;
+
+      const isWin = myResult?.outcome === 'win';
+      const isLoss = myResult?.outcome === 'loss';
+
+      // Show dramatic splash first, then game over
+      showEndSplash(
+        isWin ? 'CHECKMATE!' : isLoss ? 'CHECKMATED' : 'DRAW',
+        isWin ? 'You win!' : isLoss ? 'You lose' : 'Game drawn',
+        isWin ? 'var(--c3d-gold)' : isLoss ? 'var(--c3d-red)' : 'var(--c3d-text-dim)',
+        () => {
+          $('gameOverTitle').textContent = isWin ? 'You Win!' : isLoss ? 'You Lose' : 'Draw';
+          $('gameOverReason').textContent = '';
+          $('gameOverElo').textContent = '';
+          $('gameOverStats').textContent = mpMoves + ' moves \u00b7 ' + formatTime(gameTimeMs);
+
+          // Near-miss tease
+          const tease = getNearMissTease(elo.rating, myResult?.outcome || 'loss', mpMoves);
+          const teaseEl = $('gameOverTease');
+          if (teaseEl) {
+            teaseEl.textContent = tease || '';
+            teaseEl.style.display = tease ? '' : 'none';
+          }
+
+          showOverlay('gameOverOverlay');
+        }
+      );
 
       // On rematch/menu, clean up MP
       $('menuBtn').onclick = () => {
