@@ -1651,7 +1651,7 @@
     try {
       trail = new BABYLON.TrailMesh('moveTrail', mesh, scene, 0.12, 20, true);
       const trailMat = new BABYLON.StandardMaterial('trailMat', scene);
-      trailMat.emissiveColor = COL_GOLD.clone();
+      trailMat.emissiveColor = COL_GOLD ? COL_GOLD.clone() : new BABYLON.Color3(0.79, 0.66, 0.30);
       trailMat.alpha = 0.4;
       trailMat.disableLighting = true;
       trailMat.backFaceCulling = false;
@@ -1738,49 +1738,29 @@
     highlightMeshes.push(ring);
   }
 
-  // Babylon.js HighlightLayer for last move — no z-fighting
-  let _highlightLayer = null;
-
-  function _ensureHighlightLayer() {
-    if (!_highlightLayer && scene) {
-      _highlightLayer = new BABYLON.HighlightLayer('lastMoveHL', scene, {
-        blurHorizontalSize: 0.5,
-        blurVerticalSize: 0.5,
-      });
-    }
-    return _highlightLayer;
-  }
-
+  // Last move highlight — overlay planes raised above board to avoid z-fighting
   function showLastMove(fromRow, fromCol, toRow, toCol) {
-    // Clear previous highlights
+    // Clear previous
     for (const m of lastMoveHighlights) {
-      const hl = _ensureHighlightLayer();
-      if (hl) hl.removeMesh(m);
+      try { m.dispose(); } catch (e) {}
     }
     lastMoveHighlights = [];
 
-    const hl = _ensureHighlightLayer();
-    if (!hl) return;
+    if (!scene) return;
 
-    const highlightColor = new BABYLON.Color3(0.3, 0.55, 1.0); // Bright blue
-
-    // Find the board square meshes at from/to positions and highlight them
     for (const [r, c] of [[fromRow, fromCol], [toRow, toCol]]) {
-      const sqMesh = boardMeshes.find(m =>
-        m.metadata?.type === 'square' && m.metadata.row === r && m.metadata.col === c
-      );
-      if (sqMesh) {
-        hl.addMesh(sqMesh, highlightColor);
-        lastMoveHighlights.push(sqMesh);
-      }
-    }
-
-    // Also highlight the piece that moved (at destination)
-    const destKey = 'r' + toRow + 'c' + toCol;
-    const pieceMesh = pieceMeshes[destKey];
-    if (pieceMesh) {
-      hl.addMesh(pieceMesh, BABYLON.Color3.Yellow());
-      lastMoveHighlights.push(pieceMesh);
+      const sq = BABYLON.MeshBuilder.CreatePlane('lastMove_' + r + '_' + c, { size: 0.98 }, scene);
+      sq.rotation.x = Math.PI / 2;
+      sq.position = new BABYLON.Vector3(c, 0.025, r); // Above board (0.01) to avoid z-fighting
+      const mat = new BABYLON.StandardMaterial('lmMat_' + r + '_' + c, scene);
+      mat.diffuseColor = new BABYLON.Color3(0.25, 0.5, 0.9);
+      mat.emissiveColor = new BABYLON.Color3(0.2, 0.4, 0.8);
+      mat.alpha = 0.5;
+      mat.disableLighting = true;
+      mat.zOffset = -2; // Force render on top of board squares
+      sq.material = mat;
+      sq.isPickable = false;
+      lastMoveHighlights.push(sq);
     }
   }
 
@@ -3011,7 +2991,7 @@
     // Rebuild pieces
     placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
     clearHighlights();
-    for (const m of lastMoveHighlights) { if (_highlightLayer) _highlightLayer.removeMesh(m); }
+    for (const m of lastMoveHighlights) { try { m.dispose(); } catch(e) {} }
     lastMoveHighlights = [];
     clearCheckHighlight();
 
@@ -3336,7 +3316,7 @@
       const changes = mpDetectChanges(state.fen);
 
       clearHighlights();
-      for (const m of lastMoveHighlights) { if (_highlightLayer) _highlightLayer.removeMesh(m); }
+      for (const m of lastMoveHighlights) { try { m.dispose(); } catch(e) {} }
       lastMoveHighlights = [];
       clearCheckHighlight();
 
@@ -3616,7 +3596,7 @@
 
     placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
     clearHighlights();
-    for (const m of lastMoveHighlights) { if (_highlightLayer) _highlightLayer.removeMesh(m); }
+    for (const m of lastMoveHighlights) { try { m.dispose(); } catch(e) {} }
     lastMoveHighlights = [];
     clearCheckHighlight();
     isAnimating = false;
@@ -3787,7 +3767,7 @@
         }
         placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
         clearHighlights();
-        for (const m of lastMoveHighlights) { if (_highlightLayer) _highlightLayer.removeMesh(m); }
+        for (const m of lastMoveHighlights) { try { m.dispose(); } catch(e) {} }
         lastMoveHighlights = [];
         isAnimating = false;
         $('puzzleMoveStatus').textContent = 'Find the winning move!';
@@ -3850,7 +3830,7 @@
     // Setup pieces
     placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
     clearHighlights();
-    for (const m of lastMoveHighlights) { if (_highlightLayer) _highlightLayer.removeMesh(m); }
+    for (const m of lastMoveHighlights) { try { m.dispose(); } catch(e) {} }
     lastMoveHighlights = [];
     clearCheckHighlight();
 
