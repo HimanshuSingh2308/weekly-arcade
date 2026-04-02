@@ -1521,23 +1521,78 @@
   }
 
   function _createMinimalPieceMesh(type, scene) {
-    // Minimal skin: simple cylinders + spheres only
-    const heights = { p: 0.5, r: 0.7, n: 0.65, b: 0.75, q: 0.9, k: 1.0 };
-    const diameters = { p: 0.35, r: 0.4, n: 0.38, b: 0.36, q: 0.42, k: 0.44 };
-    const h = heights[type] || 0.5;
-    const d = diameters[type] || 0.35;
+    // Minimal skin: clean geometric shapes, each piece has a unique top
+    const parts = [];
 
-    const body = BABYLON.MeshBuilder.CreateCylinder('', { height: h, diameter: d, tessellation: 16 }, scene);
-    body.position.y = h / 2;
-
-    const top = BABYLON.MeshBuilder.CreateSphere('', { diameter: d * 0.8, segments: 10 }, scene);
-    top.position.y = h + d * 0.2;
-
-    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.1, diameter: d + 0.12, tessellation: 16 }, scene);
+    // All pieces share a flat base disc
+    const base = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.1, diameter: 0.5, tessellation: 20 }, scene);
     base.position.y = 0.05;
+    parts.push(base);
 
-    const merged = BABYLON.Mesh.MergeMeshes([base, body, top], true, true, undefined, false, true);
-    return merged;
+    switch (type) {
+      case 'p': {
+        // Pawn: short cylinder + small sphere
+        const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.3, diameter: 0.28, tessellation: 16 }, scene);
+        body.position.y = 0.25;
+        const head = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.24, segments: 12 }, scene);
+        head.position.y = 0.48;
+        parts.push(body, head);
+        break;
+      }
+      case 'r': {
+        // Rook: thick cylinder + flat wide disc on top (battlement)
+        const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.5, diameter: 0.34, tessellation: 16 }, scene);
+        body.position.y = 0.35;
+        const top = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.08, diameter: 0.42, tessellation: 8 }, scene);
+        top.position.y = 0.64;
+        parts.push(body, top);
+        break;
+      }
+      case 'n': {
+        // Knight: cylinder + angled flat box (L-shape head)
+        const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.4, diameter: 0.3, tessellation: 16 }, scene);
+        body.position.y = 0.3;
+        const head = BABYLON.MeshBuilder.CreateBox('', { width: 0.18, height: 0.28, depth: 0.32 }, scene);
+        head.position.y = 0.6;
+        head.position.z = 0.06;
+        head.rotation.x = -0.2;
+        parts.push(body, head);
+        break;
+      }
+      case 'b': {
+        // Bishop: tapered cylinder + pointed cone tip
+        const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.5, diameterTop: 0.18, diameterBottom: 0.3, tessellation: 16 }, scene);
+        body.position.y = 0.35;
+        const tip = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.2, diameterTop: 0, diameterBottom: 0.16, tessellation: 12 }, scene);
+        tip.position.y = 0.7;
+        parts.push(body, tip);
+        break;
+      }
+      case 'q': {
+        // Queen: tall tapered + torus ring + small sphere
+        const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.55, diameterTop: 0.2, diameterBottom: 0.32, tessellation: 16 }, scene);
+        body.position.y = 0.38;
+        const crown = BABYLON.MeshBuilder.CreateTorus('', { diameter: 0.24, thickness: 0.04, tessellation: 16 }, scene);
+        crown.position.y = 0.72;
+        const orb = BABYLON.MeshBuilder.CreateSphere('', { diameter: 0.12, segments: 10 }, scene);
+        orb.position.y = 0.82;
+        parts.push(body, crown, orb);
+        break;
+      }
+      case 'k': {
+        // King: tallest tapered + cross on top
+        const body = BABYLON.MeshBuilder.CreateCylinder('', { height: 0.6, diameterTop: 0.22, diameterBottom: 0.34, tessellation: 16 }, scene);
+        body.position.y = 0.4;
+        const crossV = BABYLON.MeshBuilder.CreateBox('', { width: 0.08, height: 0.25, depth: 0.08 }, scene);
+        crossV.position.y = 0.83;
+        const crossH = BABYLON.MeshBuilder.CreateBox('', { width: 0.2, height: 0.08, depth: 0.08 }, scene);
+        crossH.position.y = 0.88;
+        parts.push(body, crossV, crossH);
+        break;
+      }
+    }
+
+    return BABYLON.Mesh.MergeMeshes(parts, true, true, undefined, false, true);
   }
 
   function _createPawnMesh(scene) {
