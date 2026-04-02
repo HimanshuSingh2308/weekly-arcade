@@ -39,6 +39,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   // Turn timeout timers: sessionId → NodeJS.Timeout
   private turnTimers = new Map<string, NodeJS.Timeout>();
+  // Consecutive timeout count per player: `sessionId:uid` → count
+  private timeoutCounts = new Map<string, number>();
+  private readonly MAX_CONSECUTIVE_TIMEOUTS = 3;
 
   @WebSocketServer()
   server: Server;
@@ -227,6 +230,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         payload.moveData,
       );
 
+      // Player made a real move — reset their timeout counter
+      this.timeoutCounts.delete(`${sessionId}:${uid}`);
+
       const turnUid = gameResult ? null : this.stateManager.getNextTurn(sessionId);
 
       // Broadcast new state to all clients in the room
@@ -372,30 +378,83 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   /**
    * Start/restart the turn timer for a session.
-   * When the timer expires, the current player auto-forfeits.
+   * When the timer expires, make a random legal move for the timed-out player
+   * (skip their turn gracefully instead of instant loss).
    */
   private startTurnTimer(sessionId: string, turnUid: string | null, timeoutSec: number): void {
     this.clearTurnTimer(sessionId);
     if (!turnUid || !timeoutSec) return;
 
     this.turnTimers.set(sessionId, setTimeout(async () => {
-      this.logger.log(`Turn timeout: ${turnUid} in session ${sessionId} — auto-forfeit`);
+      const timeoutKey = `${sessionId}:${turnUid}`;
+      const count = (this.timeoutCounts.get(timeoutKey) || 0) + 1;
+      this.timeoutCounts.set(timeoutKey, count);
 
       const roomName = `session:${sessionId}`;
-      this.server.to(roomName).emit('game:turn-timeout', { uid: turnUid });
 
-      // Treat as forfeit by the timed-out player
-      const session = this.stateManager.getSession(sessionId);
-      if (!session) return;
+      // After 3 consecutive timeouts, forfeit the AFK player
+      if (count >= this.MAX_CONSECUTIVE_TIMEOUTS) {
+        this.logger.log(`AFK forfeit: ${turnUid} in session ${sessionId} — ${count} consecutive timeouts`);
+        this.server.to(roomName).emit('game:turn-timeout', { uid: turnUid, action: 'forfeit', count });
 
-      const otherPlayers = Array.from(session.players).filter(p => p !== turnUid);
-      const results: Record<string, { score: number; rank: number; outcome: 'win' | 'loss' | 'draw' }> = {};
-      results[turnUid] = { score: 0, rank: otherPlayers.length + 1, outcome: 'loss' };
-      otherPlayers.forEach((p, i) => {
-        results[p] = { score: 0, rank: i + 1, outcome: 'win' };
-      });
+        const session = this.stateManager.getSession(sessionId);
+        if (!session) return;
+        const otherPlayers = Array.from(session.players).filter(p => p !== turnUid);
+        const results: Record<string, { score: number; rank: number; outcome: 'win' | 'loss' | 'draw' }> = {};
+        results[turnUid] = { score: 0, rank: 2, outcome: 'loss' };
+        otherPlayers.forEach((p, i) => { results[p] = { score: 0, rank: 1, outcome: 'win' }; });
+        this.clearTurnTimer(sessionId);
+        await this.handleGameFinished(sessionId, { players: results, reason: 'timeout' });
+        return;
+      }
 
-      await this.handleGameFinished(sessionId, { players: results, reason: 'timeout' });
+      this.logger.log(`Turn timeout: ${turnUid} in session ${sessionId} — auto-move (${count}/${this.MAX_CONSECUTIVE_TIMEOUTS})`);
+
+      try {
+        // Get the current game state and find a random legal move
+        const session = this.stateManager.getSession(sessionId);
+        if (!session || !session.state) return;
+
+        const state = session.state as any;
+        if (!state.fen) return;
+
+        // Use the chess engine to find legal moves
+        const { ChessEngine: ChessEngineClass } = await import('./game-logic/chess-3d.logic');
+        const engine = new ChessEngineClass(state.fen);
+        const legalMoves = engine.getLegalMoves();
+
+        if (legalMoves.length === 0) return; // No moves = game should end via checkGameOver
+
+        // Pick a random legal move
+        const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+
+        this.logger.log(`Auto-move for ${turnUid}: ${JSON.stringify(randomMove.from)} → ${JSON.stringify(randomMove.to)}`);
+
+        // Notify clients that this was a timeout auto-move
+        this.server.to(roomName).emit('game:turn-timeout', { uid: turnUid, action: 'auto-move' });
+
+        // Apply the move through the normal flow
+        const { state: newState, version, gameResult } = this.stateManager.applyMove(
+          sessionId, turnUid, 'chess-move',
+          { from: randomMove.from, to: randomMove.to, promotion: randomMove.promotion || undefined },
+        );
+
+        const nextTurnUid = gameResult ? null : this.stateManager.getNextTurn(sessionId);
+        const statePayload: WsGameStatePayload = { state: newState, version, turnUid: nextTurnUid };
+        this.server.to(roomName).emit('game:state', statePayload);
+
+        if (gameResult) {
+          this.clearTurnTimer(sessionId);
+          await this.handleGameFinished(sessionId, gameResult);
+        } else if (nextTurnUid) {
+          // Start timer for the next player
+          this.startTurnTimer(sessionId, nextTurnUid, timeoutSec);
+        }
+      } catch (error) {
+        this.logger.error(`Auto-move failed: ${(error as Error).message}`);
+        // Fallback: just notify, don't crash
+        this.server.to(roomName).emit('game:turn-timeout', { uid: turnUid, action: 'failed' });
+      }
     }, timeoutSec * 1000));
   }
 

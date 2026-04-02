@@ -51,7 +51,7 @@ interface ChessState {
 }
 
 // ─── Chess Engine (Server-side) ─────────────────────────────────────
-class ChessEngine {
+export class ChessEngine {
   board: (Piece | null)[][];
   turn: string;
   castling: Record<string, boolean>;

@@ -1241,6 +1241,10 @@
         case 'draw': this._playChime([440, 494, 554], 0.5, 0.3); break;
         case 'click': this._playTone(800, 0.02, 'sine', 0.15); break;
         case 'error': this._playTone(150, 0.15, 'square', 0.2); break;
+        // Timeout / auto-move sounds
+        case 'timeout': this._playChime([440, 330, 220], 0.2, 0.3); break; // Descending warning
+        case 'timeout-warning': this._playChime([880, 880], 0.1, 0.25); setTimeout(() => this._playChime([880, 880], 0.1, 0.25), 300); break; // Urgent double beep
+        case 'opponent-timeout': this._playTone(600, 0.12, 'triangle', 0.2); break; // Neutral notification
       }
     }
 
@@ -3593,10 +3597,25 @@
       srAnnounce('Reconnected to game server.');
     });
 
-    // Turn timeout — server tells us a player ran out of time
-    window.multiplayerClient.on('game:turn-timeout', ({ uid }) => {
+    // Turn timeout — server auto-moves or forfeits
+    window.multiplayerClient.on('game:turn-timeout', ({ uid, action, count }) => {
       const isMe = uid === currentUser?.uid;
-      srAnnounce(isMe ? 'Time\'s up! You lost on time.' : 'Opponent ran out of time!');
+      if (action === 'forfeit') {
+        srAnnounce(isMe ? 'You were AFK too long — forfeited!' : 'Opponent was AFK — you win!');
+        sound.play(isMe ? 'loss' : 'win');
+      } else if (action === 'auto-move') {
+        if (isMe) {
+          sound.play('timeout');
+          srAnnounce('Time\'s up! A random move was made for you.');
+          if (count >= 2) {
+            sound.play('timeout-warning');
+            $('turnText').textContent = 'Warning: 1 more timeout = forfeit!';
+          }
+        } else {
+          sound.play('opponent-timeout');
+          srAnnounce('Opponent timed out — random move played.');
+        }
+      }
     });
 
     // Player left — server tells us opponent disconnected
