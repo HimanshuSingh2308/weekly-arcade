@@ -3627,23 +3627,66 @@
   }
 
   let mpPollTimer = null;
+  let mpPollStartTime = 0;
+  const MP_POLL_TIMEOUT = 120000; // 2 min max search time
+
   function mpPollForMatch() {
-    mpStopPolling(); // Clear any existing poll
+    mpStopPolling();
+    mpPollStartTime = Date.now();
+
     mpPollTimer = setInterval(async () => {
+      const elapsed = Date.now() - mpPollStartTime;
+
       try {
         const status = await window.multiplayerClient.getMatchmakingStatus();
+
         if (status?.status === 'matched' && status.sessionId) {
           mpStopPolling();
           window.multiplayerUI?.hideMatchmaking();
           await mpJoinAndPlay(status.sessionId);
-        } else if (status?.status === 'expired') {
+          return;
+        }
+
+        if (status?.status === 'expired') {
+          // Entry expired but we still have time — re-queue automatically
+          if (elapsed < MP_POLL_TIMEOUT) {
+            try {
+              const result = await window.multiplayerClient.findMatch('chess-3d');
+              if (result.matchedSessionId) {
+                mpStopPolling();
+                window.multiplayerUI?.hideMatchmaking();
+                await mpJoinAndPlay(result.matchedSessionId);
+                return;
+              }
+              // Re-queued successfully, keep polling
+            } catch (e) {
+              // findMatch failed (maybe 409) — keep polling existing entry
+            }
+          } else {
+            // Time's up — give up
+            mpStopPolling();
+            window.multiplayerUI?.hideMatchmaking();
+            showOverlay('mpLobbyOverlay');
+            mpShowError('No opponents found after 2 minutes. Try again later.');
+            return;
+          }
+        }
+
+        // Update matchmaking UI with elapsed time
+        if (window.multiplayerUI?.updateMatchmakingTime) {
+          window.multiplayerUI.updateMatchmakingTime(Math.floor(elapsed / 1000));
+        }
+
+        // Timeout — give up after 2 min
+        if (elapsed >= MP_POLL_TIMEOUT) {
           mpStopPolling();
+          await window.multiplayerClient.cancelMatchmaking().catch(() => {});
           window.multiplayerUI?.hideMatchmaking();
           showOverlay('mpLobbyOverlay');
-          mpShowError('Matchmaking timed out. No opponents found. Try again.');
+          mpShowError('No opponents found after 2 minutes. Try again later.');
         }
       } catch (e) { /* ignore polling errors */ }
-    }, 5000); // Poll every 5s (was 2s — avoids 429 rate limits)
+    }, 5000);
   }
 
   function mpStopPolling() {
