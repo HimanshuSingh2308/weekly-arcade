@@ -62,9 +62,35 @@ class AuthManager {
         }));
       } else {
         localStorage.removeItem(this._cacheKey);
+        localStorage.removeItem('wa-cached-token');
       }
+    } catch (e) {}
+  }
+
+  _cacheToken(token) {
+    try {
+      if (token) {
+        localStorage.setItem('wa-cached-token', JSON.stringify({
+          token,
+          _ts: Date.now(),
+        }));
+      }
+    } catch (e) {}
+  }
+
+  _getCachedToken() {
+    try {
+      const cached = localStorage.getItem('wa-cached-token');
+      if (!cached) return null;
+      const data = JSON.parse(cached);
+      // Firebase ID tokens expire after 1 hour — use if less than 55 min old
+      if (data._ts && Date.now() - data._ts > 55 * 60 * 1000) {
+        localStorage.removeItem('wa-cached-token');
+        return null;
+      }
+      return data.token;
     } catch (e) {
-      // Storage unavailable (private browsing etc)
+      return null;
     }
   }
 
@@ -81,6 +107,14 @@ class AuthManager {
       this.isInitialized = true;
       this.notifyListeners();
       console.log('[Auth] Cached user notified at', Math.round(performance.now() - _t0), 'ms');
+
+      // Try to restore the Firebase ID token from localStorage cache
+      // (Firebase stores it but onAuthStateChanged takes 20-30s to fire)
+      const cachedToken = this._getCachedToken();
+      if (cachedToken) {
+        window.apiClient?.setToken(cachedToken);
+        console.log('[Auth] Cached token restored at', Math.round(performance.now() - _t0), 'ms');
+      }
     }
 
     try {
@@ -126,6 +160,8 @@ class AuthManager {
             try {
               const token = await user.getIdToken();
               window.apiClient?.setToken(token);
+              this._cacheToken(token); // Cache for instant restore on next page load
+              console.log('[Auth] Token set + cached at', Math.round(performance.now() - _t0), 'ms');
             } catch (e) {
               console.warn('[Auth] Token fetch in onAuthStateChanged failed:', e.message);
             } finally {
@@ -169,6 +205,7 @@ class AuthManager {
           try {
             const token = await this.user.getIdToken(true);
             window.apiClient?.setToken(token);
+            this._cacheToken(token);
           } catch (e) {
             console.warn('[Auth] Periodic token refresh failed:', e.message);
           } finally {
