@@ -25,7 +25,7 @@ const { activePage = 'games', showAuth = true } = Astro.props;
   </nav>
   {showAuth && (
     <div class="header-right">
-      <button class="auth-btn" id="signInBtn" onclick="showAuthModal()">Sign In</button>
+      <button class="auth-btn" id="signInBtn" onclick="if(window.authManager){window.authManager.signInWithGoogle()}else if(typeof showAuthModal==='function'){showAuthModal()}">Sign In</button>
       <div class="user-menu" id="userMenu" onclick="toggleUserMenu()">
         <img class="user-avatar" id="userAvatar" src="" alt="User">
         <span class="user-name" id="userName"></span>
