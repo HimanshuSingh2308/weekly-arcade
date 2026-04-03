@@ -1,0 +1,27 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'chess-3d', title: 'Chess 3D', description: '3D chess with smart AI! 4 difficulty levels, ELO rating, rotatable board.', thumbnail: 'chess-3d.svg', alt: 'Chess 3D - free 3D chess game vs AI', tags: [{ label: 'Strategy' }, { label: '3D' }, { label: 'Multiplayer' }], isNew: true },
+  { slug: 'cricket-blitz', title: 'Cricket Blitz', description: '3D IPL-style cricket! Bat, bowl, win the match. Toss, powerplay, super over!', thumbnail: 'cricket-blitz.svg', alt: 'Cricket Blitz - free IPL-style 3D cricket game', tags: [{ label: 'Sports' }, { label: '3D' }], isNew: true },
+  { slug: 'lumble', title: 'Lumble', description: '3D platformer! Latch, swing, and collect 50 Sparks!', thumbnail: 'lumble.svg', alt: 'Lumble - free 3D platformer browser game', tags: [{ label: '3D' }, { label: 'Platformer' }] },
+];
+---
+
+<CategoryPage
+  category="3D Games"
+  categorySlug="3d"
+  title="Free 3D Browser Games — Play Instantly | Weekly Arcade"
+  metaDescription="Play free 3D games in your browser — no downloads required. 3D chess, cricket, and platformer games with full 3D graphics running on any device. New 3D games added weekly."
+  keywords="free 3D browser games, 3D games online, free 3D games no download, browser 3D games, play 3D games free, WebGL games"
+  h1="Free 3D Browser Games"
+  introText="Play <strong>free 3D browser games</strong> with full 3D graphics — right in your browser. Chess with a rotatable board, IPL-style cricket, and a 3D platformer, all running smoothly on desktop and mobile with no downloads."
+  seoHeading="Play Free 3D Games in Your Browser"
+  seoText="Weekly Arcade pushes what's possible in browser gaming with full 3D experiences. Using WebGL and modern rendering, these games deliver console-quality visuals directly in your web browser — no plugins, no downloads."
+  seoBullets={[
+    '<strong>3D Chess</strong> — Rotatable board, smart AI, and 4 difficulty levels',
+    '<strong>3D Cricket</strong> — Full IPL-style match with batting, bowling, toss, and super over',
+    '<strong>3D Platformer</strong> — Latch, swing, and collect Sparks in Lumble',
+  ]}
+  games={games}
+/>

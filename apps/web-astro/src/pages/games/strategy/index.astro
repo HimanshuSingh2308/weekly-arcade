@@ -1,0 +1,29 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'chess-3d', title: 'Chess 3D', description: '3D chess with smart AI! 4 difficulty levels, ELO rating, rotatable board.', thumbnail: 'chess-3d.svg', alt: 'Chess 3D - free 3D chess game vs AI', tags: [{ label: 'Strategy' }, { label: '3D' }, { label: 'Multiplayer' }], isNew: true },
+  { slug: 'fieldstone', title: 'Fieldstone', description: 'Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!', thumbnail: 'fieldstone.svg', alt: 'Fieldstone - free Tetris kingdom builder strategy game', tags: [{ label: 'Strategy' }, { label: 'Puzzle' }] },
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - free number merge strategy game', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - free strategic card game', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+];
+---
+
+<CategoryPage
+  category="Strategy"
+  categorySlug="strategy"
+  title="Free Strategy Games Online — Play Instantly | Weekly Arcade"
+  metaDescription="Play free strategy games online in your browser — no downloads required. Chess, kingdom building, number puzzles, and card strategy games. New strategy games added weekly."
+  keywords="free strategy games, online strategy games, free browser strategy, chess online free, strategy games no download, brain strategy games"
+  h1="Free Strategy Games"
+  introText="Test your tactical thinking with <strong>free strategy games</strong> in your browser. Play chess against AI, build kingdoms, merge numbers, and outsmart card decks — no downloads, no signup, works on any device."
+  seoHeading="Play Free Strategy Games Online"
+  seoText="Weekly Arcade's strategy collection features games that reward careful planning and smart decisions. From classic chess to innovative kingdom builders, every game runs instantly in your browser."
+  seoBullets={[
+    '<strong>Chess</strong> — Play 3D chess vs AI with 4 difficulty levels and ELO rating',
+    '<strong>Kingdom building</strong> — Tetris meets strategy in Fieldstone with terrain placement',
+    '<strong>Number strategy</strong> — Plan your merges carefully to reach 2048',
+    '<strong>Card strategy</strong> — Use Joker powers wisely in Solitaire Roguelite',
+  ]}
+  games={games}
+/>

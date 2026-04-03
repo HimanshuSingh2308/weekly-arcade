@@ -1,0 +1,31 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - free card puzzle game with Joker powers', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+  { slug: 'fieldstone', title: 'Fieldstone', description: 'Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!', thumbnail: 'fieldstone.svg', alt: 'Fieldstone - free Tetris kingdom builder puzzle game', tags: [{ label: 'Strategy' }, { label: 'Puzzle' }] },
+  { slug: 'wordle', title: 'Wordle', description: 'Guess the 5-letter word in 6 tries. A new word every day!', thumbnail: 'wordle.svg', alt: 'Wordle - free daily word puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Daily' }] },
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - free number merge puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'memory-match', title: 'Memory Match', description: 'Flip cards and find matching pairs. Test your memory!', thumbnail: 'memory-match.svg', alt: 'Memory Match - free card matching puzzle game', tags: [{ label: 'Casual' }, { label: 'Memory' }] },
+];
+---
+
+<CategoryPage
+  category="Puzzle"
+  categorySlug="puzzle"
+  title="Free Puzzle Games Online — Play Instantly | Weekly Arcade"
+  metaDescription="Play free puzzle games online in your browser — no downloads required. Word puzzles, number games, card challenges, and brain teasers. New puzzle games added weekly."
+  keywords="free puzzle games, online puzzle games, brain games, word puzzle, number puzzle, free browser puzzle games, puzzle games no download"
+  h1="Free Puzzle Games"
+  introText="Challenge your brain with <strong>free puzzle games</strong> you can play instantly in your browser. From word puzzles and number challenges to card games and spatial reasoning — no downloads, no signup, works on any device."
+  seoHeading="Play Free Puzzle Games Online"
+  seoText="Weekly Arcade's puzzle collection features hand-crafted brain teasers designed to challenge and entertain. Every puzzle game runs directly in your browser with no downloads or installations needed."
+  seoBullets={[
+    '<strong>Word puzzles</strong> — Guess daily words in Wordle with 5-letter challenges',
+    '<strong>Number games</strong> — Slide and merge tiles to reach 2048',
+    '<strong>Card puzzles</strong> — Classic Solitaire with a roguelite twist and Joker powers',
+    '<strong>Strategy puzzles</strong> — Tetris meets kingdom building in Fieldstone',
+    '<strong>Memory games</strong> — Test your recall with card-matching challenges',
+  ]}
+  games={games}
+/>

@@ -1,0 +1,418 @@
+---
+/**
+ * CategoryPage — shared layout for genre category pages (/games/puzzle/, /games/arcade/, etc.)
+ * Provides: SEO head, breadcrumb, page hero, games grid, SEO content, footer.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from './SiteHeader.astro';
+
+interface Game {
+  slug: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  alt: string;
+  tags: { label: string }[];
+  isNew?: boolean;
+}
+
+interface Props {
+  category: string;
+  categorySlug: string;
+  title: string;
+  metaDescription: string;
+  keywords: string;
+  h1: string;
+  introText: string;
+  seoHeading: string;
+  seoText: string;
+  seoBullets: string[];
+  games: Game[];
+}
+
+const {
+  category,
+  categorySlug,
+  title,
+  metaDescription,
+  keywords,
+  h1,
+  introText,
+  seoHeading,
+  seoText,
+  seoBullets,
+  games,
+} = Astro.props;
+
+const siteUrl = 'https://weeklyarcade.games';
+const pageUrl = `${siteUrl}/games/${categorySlug}/`;
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'Games', item: `${siteUrl}/games/` },
+    { '@type': 'ListItem', position: 3, name: category, item: pageUrl },
+  ],
+};
+
+const itemListSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: `Free ${category} Browser Games`,
+  description: metaDescription,
+  numberOfItems: games.length,
+  itemListElement: games.map((g, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: g.title,
+    url: `${siteUrl}/games/${g.slug}/`,
+  })),
+};
+---
+
+<BaseLayout title={title}>
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+
+    <!-- SEO -->
+    <meta name="description" content={metaDescription}>
+    <meta name="keywords" content={keywords}>
+    <link rel="canonical" href={pageUrl}>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title}>
+    <meta property="og:description" content={metaDescription}>
+    <meta property="og:type" content="website">
+    <meta property="og:url" content={pageUrl}>
+    <meta property="og:image" content={`${siteUrl}/og-image.png`}>
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Weekly Arcade">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content={title}>
+    <meta name="twitter:description" content={metaDescription}>
+    <meta name="twitter:image" content={`${siteUrl}/og-image.png`}>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#e94560">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  </Fragment>
+
+  <SiteHeader activePage="games" />
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/games/">Games</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">{category}</span>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="page-hero">
+    <h1>{h1}</h1>
+    <p class="page-desc" set:html={introText} />
+  </section>
+
+  <main class="container">
+    <div class="section-header">
+      <h2 class="section-title">{category} Games</h2>
+      <span class="game-count">{games.length} {games.length === 1 ? 'game' : 'games'}</span>
+    </div>
+
+    <div class="games-grid">
+      {games.map((game) => (
+        <a href={`/games/${game.slug}/`} class="game-card">
+          <div class="game-thumb">
+            {game.isNew && <span class="thumb-badge">NEW</span>}
+            <img src={`/images/thumbnails/${game.slug}.svg`} alt={game.alt} loading="lazy">
+          </div>
+          <div class="game-info">
+            <div class="game-title">{game.title}</div>
+            <div class="game-desc">{game.description}</div>
+            <div class="game-tags">
+              {game.tags.map((t) => <span class="tag">{t.label}</span>)}
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <div class="browse-all">
+      <a href="/games/" class="browse-all-link">Browse All Games <span>→</span></a>
+    </div>
+  </main>
+
+  <!-- SEO Content -->
+  <section class="seo-content">
+    <h2>{seoHeading}</h2>
+    <p>{seoText}</p>
+    <ul>
+      {seoBullets.map((b) => <li set:html={b} />)}
+    </ul>
+  </section>
+
+  <footer class="footer">
+    <p><strong>Weekly Arcade</strong> - New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">Built with care | Free browser games, no downloads required.</p>
+    <p style="margin-top: 1rem;">
+      <a href="/privacy/">Privacy Policy</a> &nbsp;|&nbsp; <a href="/terms/">Terms of Service</a>
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
+  </footer>
+
+  <script is:inline>
+    function toggleMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.toggle('open');
+      btn.textContent = nav.classList.contains('open') ? '\u2715' : '\u2630';
+    }
+  </script>
+</BaseLayout>
+
+<style is:global>
+    :root {
+      --bg-primary: #0a0a12;
+      --bg-secondary: #12121f;
+      --bg-card: rgba(22, 33, 62, 0.6);
+      --bg-card-solid: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --accent-glow: rgba(233, 69, 96, 0.3);
+      --purple: #7c3aed;
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a8;
+      --border: rgba(255, 255, 255, 0.06);
+      --glass: rgba(255, 255, 255, 0.03);
+      --radius: 16px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .breadcrumb {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 2rem 0;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+    .breadcrumb a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb-sep { margin: 0 0.4rem; opacity: 0.5; }
+    .breadcrumb-current { color: var(--text-primary); font-weight: 600; }
+
+    .page-hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 2rem 0;
+    }
+    .page-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 700px;
+    }
+    .page-desc :global(strong) { color: var(--text-primary); }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.75rem 2rem 2rem;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .section-title { font-size: 1.2rem; font-weight: 700; }
+    .game-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .game-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 0 24px var(--accent-glow);
+      border-color: rgba(233, 69, 96, 0.15);
+    }
+
+    .game-thumb {
+      height: 160px;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card-solid));
+    }
+    .game-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .game-card:hover .game-thumb img { transform: scale(1.08); }
+
+    .thumb-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+
+    .game-info { padding: 1rem 1.15rem; }
+    .game-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: -0.01em; }
+    .game-desc { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.45; }
+    .game-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .tag {
+      font-size: 0.68rem;
+      padding: 0.2rem 0.6rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .browse-all { text-align: center; margin-top: 2rem; }
+    .browse-all-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.75rem 1.5rem;
+      border: 1px solid rgba(233, 69, 96, 0.25);
+      border-radius: 12px;
+      transition: all var(--transition);
+    }
+    .browse-all-link:hover {
+      background: rgba(233, 69, 96, 0.08);
+      border-color: var(--accent);
+    }
+    .browse-all-link span { transition: transform var(--transition); }
+    .browse-all-link:hover span { transform: translateX(3px); }
+
+    .seo-content {
+      max-width: 1100px;
+      margin: 2rem auto 0;
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .seo-content h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .seo-content p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7; }
+    .seo-content ul { list-style: none; padding: 0; margin-top: 0.75rem; }
+    .seo-content li {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      padding: 0.3rem 0 0.3rem 1.25rem;
+      position: relative;
+    }
+    .seo-content li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.75rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .seo-content li :global(strong) { color: var(--text-primary); }
+
+    .footer {
+      text-align: center;
+      padding: 2.5rem 2rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+      background: linear-gradient(180deg, transparent, rgba(18, 18, 31, 0.5));
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    .footer a:hover { color: var(--accent-hover); }
+
+    @media (max-width: 768px) {
+      .page-hero { padding: 1.5rem 1.25rem 0; }
+      .page-hero h1 { font-size: 1.8rem; }
+      .breadcrumb { padding: 0.75rem 1.25rem 0; }
+    }
+    @media (max-width: 600px) {
+      .page-hero h1 { font-size: 1.5rem; }
+      .page-desc { font-size: 0.9rem; }
+      .container { padding: 1.25rem; }
+      .games-grid { grid-template-columns: 1fr; }
+    }
+</style>

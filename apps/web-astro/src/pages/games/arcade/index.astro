@@ -1,0 +1,33 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'coin-cascade', title: 'Coin Cascade', description: 'Drop coins onto a physics pusher to cascade prizes off the edge!', thumbnail: 'coin-cascade.svg', alt: 'Coin Cascade - free physics coin pusher arcade game', tags: [{ label: 'Arcade' }, { label: 'Physics' }] },
+  { slug: 'stack-tower', title: 'Stack Tower', description: 'Stack blocks with perfect timing to build the tallest tower!', thumbnail: 'stack-tower.svg', alt: 'Stack Tower - free block stacking arcade game', tags: [{ label: 'Arcade' }, { label: 'Timing' }] },
+  { slug: 'voidbreak', title: 'Voidbreak', description: 'Smash asteroids, upgrade your ship, go deeper. How far can you get?', thumbnail: 'voidbreak.svg', alt: 'Voidbreak - free asteroid shooter roguelite arcade game', tags: [{ label: 'Action' }, { label: 'Roguelite' }] },
+  { slug: 'snake', title: 'Snake', description: "Classic snake game. Eat, grow, don't hit the walls!", thumbnail: 'snake.svg', alt: 'Snake - free classic arcade game', tags: [{ label: 'Arcade' }, { label: 'Classic' }] },
+  { slug: 'cricket-blitz', title: 'Cricket Blitz', description: '3D IPL-style cricket! Bat, bowl, win the match. Toss, powerplay, super over!', thumbnail: 'cricket-blitz.svg', alt: 'Cricket Blitz - free IPL-style 3D cricket arcade game', tags: [{ label: 'Sports' }, { label: '3D' }], isNew: true },
+  { slug: 'chaos-kitchen', title: 'Chaos Kitchen', description: 'Run a chaotic kitchen! Fulfill orders and survive chaos events!', thumbnail: 'chaos-kitchen.svg', alt: 'Chaos Kitchen - free cooking time management arcade game', tags: [{ label: 'Action' }, { label: 'Time Management' }] },
+];
+---
+
+<CategoryPage
+  category="Arcade"
+  categorySlug="arcade"
+  title="Free Arcade Games Online — Play Instantly | Weekly Arcade"
+  metaDescription="Play free arcade games online in your browser — no downloads required. Physics games, shooters, classic arcade, sports, and action games. New arcade games added weekly."
+  keywords="free arcade games, online arcade games, free browser arcade, classic arcade games online, play arcade games free, arcade games no download"
+  h1="Free Arcade Games"
+  introText="Jump into <strong>free arcade games</strong> you can play instantly in your browser. Classic snake, physics coin pushers, asteroid shooters, and 3D cricket — fast-paced fun with no downloads and no signup."
+  seoHeading="Play Free Arcade Games Online"
+  seoText="Weekly Arcade's collection features hand-crafted arcade games designed for quick sessions and high-score chasing. Every game runs directly in your browser with instant load times."
+  seoBullets={[
+    '<strong>Physics games</strong> — Drop coins and cascade prizes in Coin Cascade',
+    '<strong>Classic arcade</strong> — Play the timeless Snake game with modern polish',
+    '<strong>Space shooters</strong> — Smash asteroids and upgrade your ship in Voidbreak',
+    '<strong>Timing challenges</strong> — Stack blocks perfectly in Stack Tower',
+    '<strong>Sports arcade</strong> — Full 3D IPL-style cricket in Cricket Blitz',
+    '<strong>Action cooking</strong> — Survive kitchen chaos in Chaos Kitchen',
+  ]}
+  games={games}
+/>
