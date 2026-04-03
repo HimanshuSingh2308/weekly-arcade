@@ -230,10 +230,15 @@ export class LeaderboardService {
 
     const existing = await entryRef.get();
 
-    // Only write if new score is higher (or first entry)
-    if (!existing.exists || score > (existing.data()?.score || 0)) {
+    // For ELO-based games (chess-3d), always write the latest rating
+    // For other games, only write if new score is higher
+    const isEloGame = gameId === 'chess-3d';
+    const shouldWrite = !existing.exists || isEloGame || score > (existing.data()?.score || 0);
+    if (shouldWrite) {
       await entryRef.set({
         odId: uid,
+        odName: displayName || '',
+        odAvatarUrl: avatarUrl || null,
         score,
         updatedAt: new Date(),
       });
