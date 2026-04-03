@@ -370,6 +370,10 @@ import SiteHeader from '../components/SiteHeader.astro';
         <div class="no-results-text">No games match this filter</div>
       </div>
     </div>
+
+    <div class="browse-all">
+      <a href="/games/" class="browse-all-link">Browse All Games <span>→</span></a>
+    </div>
   </main>
 
   <!-- FAQ Section -->
@@ -1203,6 +1207,36 @@ import SiteHeader from '../components/SiteHeader.astro';
       color: var(--text-secondary);
       font-weight: 500;
     }
+
+    /* ─── Browse All Link ─── */
+    .browse-all {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .browse-all-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.75rem 1.5rem;
+      border: 1px solid rgba(233, 69, 96, 0.25);
+      border-radius: 12px;
+      transition: all var(--transition);
+    }
+
+    .browse-all-link:hover {
+      background: rgba(233, 69, 96, 0.08);
+      border-color: var(--accent);
+    }
+
+    .browse-all-link span {
+      transition: transform var(--transition);
+    }
+    .browse-all-link:hover span { transform: translateX(3px); }
 
     /* ─── Footer ─── */
     .footer {

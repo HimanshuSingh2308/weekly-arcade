@@ -1,0 +1,712 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+---
+
+<BaseLayout title="Free Browser Games — Play Online Instantly | Weekly Arcade">
+  <Fragment slot="head">
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+
+    <!-- SEO -->
+    <meta name="description" content="Browse all free browser games on Weekly Arcade. Play puzzle, arcade, strategy, 3D, sports, and card games instantly — no downloads, no signup. New games added every week.">
+    <meta name="keywords" content="free browser games, play online games, no download games, free arcade games, free puzzle games, browser games 2026, online games no signup">
+    <link rel="canonical" href="https://weeklyarcade.games/games/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Free Browser Games — Play Online Instantly | Weekly Arcade">
+    <meta property="og:description" content="Browse all free browser games. Puzzle, arcade, strategy, 3D, sports, and card games — no downloads, no signup.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://weeklyarcade.games/games/">
+    <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Weekly Arcade — free browser games catalog">
+    <meta property="og:site_name" content="Weekly Arcade">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Free Browser Games — Play Online Instantly | Weekly Arcade">
+    <meta name="twitter:description" content="Browse all free browser games. Puzzle, arcade, strategy, 3D, sports, and card games — no downloads, no signup.">
+    <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+    <meta name="twitter:image:alt" content="Weekly Arcade — free browser games catalog">
+
+    <!-- Structured Data: BreadcrumbList -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weeklyarcade.games/" },
+        { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://weeklyarcade.games/games/" }
+      ]
+    }</script>
+
+    <!-- Structured Data: ItemList (helps Google show rich game listings) -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Free Browser Games on Weekly Arcade",
+      "description": "All free browser games available on Weekly Arcade — play instantly, no downloads required.",
+      "numberOfItems": 14,
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Chess 3D", "url": "https://weeklyarcade.games/games/chess-3d/" },
+        { "@type": "ListItem", "position": 2, "name": "Cricket Blitz", "url": "https://weeklyarcade.games/games/cricket-blitz/" },
+        { "@type": "ListItem", "position": 3, "name": "Coin Cascade", "url": "https://weeklyarcade.games/games/coin-cascade/" },
+        { "@type": "ListItem", "position": 4, "name": "Solitaire Roguelite", "url": "https://weeklyarcade.games/games/solitaire-roguelite/" },
+        { "@type": "ListItem", "position": 5, "name": "Stack Tower", "url": "https://weeklyarcade.games/games/stack-tower/" },
+        { "@type": "ListItem", "position": 6, "name": "Voidbreak", "url": "https://weeklyarcade.games/games/voidbreak/" },
+        { "@type": "ListItem", "position": 7, "name": "Fieldstone", "url": "https://weeklyarcade.games/games/fieldstone/" },
+        { "@type": "ListItem", "position": 8, "name": "Wordle", "url": "https://weeklyarcade.games/games/wordle/" },
+        { "@type": "ListItem", "position": 9, "name": "Snake", "url": "https://weeklyarcade.games/games/snake/" },
+        { "@type": "ListItem", "position": 10, "name": "2048", "url": "https://weeklyarcade.games/games/2048/" },
+        { "@type": "ListItem", "position": 11, "name": "Chaos Kitchen", "url": "https://weeklyarcade.games/games/chaos-kitchen/" },
+        { "@type": "ListItem", "position": 12, "name": "Memory Match", "url": "https://weeklyarcade.games/games/memory-match/" },
+        { "@type": "ListItem", "position": 13, "name": "Lumble", "url": "https://weeklyarcade.games/games/lumble/" },
+        { "@type": "ListItem", "position": 14, "name": "Tiny Tycoon", "url": "https://weeklyarcade.games/games/tiny-tycoon/" }
+      ]
+    }</script>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#e94560">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  </Fragment>
+
+  <SiteHeader activePage="games" />
+
+  <!-- Breadcrumb nav -->
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Games</span>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="page-hero">
+    <h1>Free Browser Games</h1>
+    <p class="page-desc">Play <strong>14 free browser games</strong> instantly — no downloads, no signup, no ads. From puzzles and card games to 3D action and sports, every game works on desktop, tablet, and mobile. New games added every week.</p>
+  </section>
+
+  <!-- Genre Filters -->
+  <div class="filters">
+    <div class="filter-row" id="filterRow">
+      <button class="filter-chip active" data-filter="all">All Games</button>
+      <button class="filter-chip" data-filter="arcade">Arcade</button>
+      <button class="filter-chip" data-filter="puzzle">Puzzle</button>
+      <button class="filter-chip" data-filter="strategy">Strategy</button>
+      <button class="filter-chip" data-filter="action">Action</button>
+      <button class="filter-chip" data-filter="card">Card</button>
+      <button class="filter-chip" data-filter="simulation">Simulation</button>
+      <button class="filter-chip" data-filter="casual">Casual</button>
+      <button class="filter-chip" data-filter="3d">3D</button>
+      <button class="filter-chip" data-filter="sports">Sports</button>
+      <button class="filter-chip" data-filter="multiplayer">Multiplayer</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <div class="section-header">
+      <h2 class="section-title">All Games</h2>
+      <span class="game-count" id="gameCount">14 games</span>
+    </div>
+
+    <div class="games-grid" id="gamesGrid">
+      <!-- Chess 3D -->
+      <a href="/games/chess-3d/" class="game-card" data-genres="strategy,board,3d,multiplayer">
+        <div class="game-thumb">
+          <span class="thumb-badge">NEW</span>
+          <img src="/images/thumbnails/chess-3d.svg" alt="Chess 3D - free 3D chess game vs AI" loading="lazy">
+        </div>
+        <div class="game-info">
+          <div class="game-title">Chess 3D</div>
+          <div class="game-desc">3D chess with smart AI! 4 difficulty levels, ELO rating, rotatable board.</div>
+          <div class="game-tags">
+            <span class="tag">Strategy</span>
+            <span class="tag">3D</span>
+            <span class="tag">Multiplayer</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Cricket Blitz -->
+      <a href="/games/cricket-blitz/" class="game-card" data-genres="arcade,sports">
+        <div class="game-thumb">
+          <span class="thumb-badge">NEW</span>
+          <img src="/images/thumbnails/cricket-blitz.svg" alt="Cricket Blitz - free IPL-style 3D cricket game" loading="lazy">
+        </div>
+        <div class="game-info">
+          <div class="game-title">Cricket Blitz</div>
+          <div class="game-desc">3D IPL-style cricket! Bat, bowl, win the match. Toss, powerplay, super over!</div>
+          <div class="game-tags">
+            <span class="tag">Sports</span>
+            <span class="tag">3D</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Coin Cascade -->
+      <a href="/games/coin-cascade/" class="game-card" data-genres="arcade,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/coin-cascade.svg" alt="Coin Cascade - free physics coin pusher arcade game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Coin Cascade</div>
+          <div class="game-desc">Drop coins onto a physics pusher to cascade prizes off the edge!</div>
+          <div class="game-tags">
+            <span class="tag">Arcade</span>
+            <span class="tag">Physics</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Solitaire Roguelite -->
+      <a href="/games/solitaire-roguelite/" class="game-card" data-genres="card,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/solitaire-roguelite.svg" alt="Solitaire Roguelite - free card game with Joker powers" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Solitaire Roguelite</div>
+          <div class="game-desc">Classic Solitaire with rule-breaking Joker cards. How high can you score?</div>
+          <div class="game-tags">
+            <span class="tag">Card</span>
+            <span class="tag">Roguelite</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Stack Tower -->
+      <a href="/games/stack-tower/" class="game-card" data-genres="arcade,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/stack-tower.svg" alt="Stack Tower - free block stacking arcade game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Stack Tower</div>
+          <div class="game-desc">Stack blocks with perfect timing to build the tallest tower!</div>
+          <div class="game-tags">
+            <span class="tag">Arcade</span>
+            <span class="tag">Timing</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Voidbreak -->
+      <a href="/games/voidbreak/" class="game-card" data-genres="action,arcade">
+        <div class="game-thumb"><img src="/images/thumbnails/voidbreak.svg" alt="Voidbreak - free asteroid shooter roguelite game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Voidbreak</div>
+          <div class="game-desc">Smash asteroids, upgrade your ship, go deeper. How far can you get?</div>
+          <div class="game-tags">
+            <span class="tag">Action</span>
+            <span class="tag">Roguelite</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Fieldstone -->
+      <a href="/games/fieldstone/" class="game-card" data-genres="strategy,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/fieldstone.svg" alt="Fieldstone - free Tetris kingdom builder strategy game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Fieldstone</div>
+          <div class="game-desc">Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!</div>
+          <div class="game-tags">
+            <span class="tag">Strategy</span>
+            <span class="tag">Puzzle</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Wordle -->
+      <a href="/games/wordle/" class="game-card" data-genres="puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/wordle.svg" alt="Wordle - free daily word puzzle game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Wordle</div>
+          <div class="game-desc">Guess the 5-letter word in 6 tries. A new word every day!</div>
+          <div class="game-tags">
+            <span class="tag">Puzzle</span>
+            <span class="tag">Daily</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Snake -->
+      <a href="/games/snake/" class="game-card" data-genres="arcade">
+        <div class="game-thumb"><img src="/images/thumbnails/snake.svg" alt="Snake - free classic arcade game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Snake</div>
+          <div class="game-desc">Classic snake game. Eat, grow, don't hit the walls!</div>
+          <div class="game-tags">
+            <span class="tag">Arcade</span>
+            <span class="tag">Classic</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- 2048 -->
+      <a href="/games/2048/" class="game-card" data-genres="puzzle,strategy">
+        <div class="game-thumb"><img src="/images/thumbnails/2048.svg" alt="2048 - free number merge puzzle game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">2048</div>
+          <div class="game-desc">Slide tiles and merge numbers to reach 2048.</div>
+          <div class="game-tags">
+            <span class="tag">Puzzle</span>
+            <span class="tag">Strategy</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Chaos Kitchen -->
+      <a href="/games/chaos-kitchen/" class="game-card" data-genres="action,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/chaos-kitchen.svg" alt="Chaos Kitchen - free cooking time management game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Chaos Kitchen</div>
+          <div class="game-desc">Run a chaotic kitchen! Fulfill orders and survive chaos events!</div>
+          <div class="game-tags">
+            <span class="tag">Action</span>
+            <span class="tag">Time Management</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Memory Match -->
+      <a href="/games/memory-match/" class="game-card" data-genres="casual,puzzle">
+        <div class="game-thumb"><img src="/images/thumbnails/memory-match.svg" alt="Memory Match - free card matching puzzle game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Memory Match</div>
+          <div class="game-desc">Flip cards and find matching pairs. Test your memory!</div>
+          <div class="game-tags">
+            <span class="tag">Casual</span>
+            <span class="tag">Memory</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Lumble -->
+      <a href="/games/lumble/" class="game-card" data-genres="3d,action">
+        <div class="game-thumb"><img src="/images/thumbnails/lumble.svg" alt="Lumble - free 3D platformer browser game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Lumble</div>
+          <div class="game-desc">3D platformer! Latch, swing, and collect 50 Sparks!</div>
+          <div class="game-tags">
+            <span class="tag">3D</span>
+            <span class="tag">Platformer</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Tiny Tycoon -->
+      <a href="/games/tiny-tycoon/" class="game-card" data-genres="simulation,casual">
+        <div class="game-thumb"><img src="/images/thumbnails/tiny-tycoon.svg" alt="Tiny Tycoon - free boba tea shop simulator game" loading="lazy"></div>
+        <div class="game-info">
+          <div class="game-title">Tiny Tycoon</div>
+          <div class="game-desc">Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!</div>
+          <div class="game-tags">
+            <span class="tag">Simulation</span>
+            <span class="tag">Idle</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- No Results Message -->
+      <div class="no-results" id="noResults">
+        <div class="no-results-icon">🔍</div>
+        <div class="no-results-text">No games match this filter</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- SEO Content -->
+  <section class="seo-content">
+    <h2>Play Free Browser Games Online</h2>
+    <p>Weekly Arcade is a curated collection of free browser games you can play instantly on any device. Every game is hand-crafted and optimized for both desktop and mobile — no downloads, no accounts, no ads. We add a new game every week across genres including puzzle, arcade, strategy, action, card, simulation, sports, and 3D games.</p>
+    <h3>Why Play Browser Games on Weekly Arcade?</h3>
+    <ul>
+      <li><strong>Instant play</strong> — Every game loads in seconds directly in your browser</li>
+      <li><strong>No downloads or installs</strong> — Works on Chrome, Safari, Firefox, and Edge</li>
+      <li><strong>Mobile-first design</strong> — Touch controls and responsive layouts for phones and tablets</li>
+      <li><strong>100% free</strong> — No paywalls, no premium tiers, no in-app purchases</li>
+      <li><strong>New games weekly</strong> — Fresh content every week, from classic arcade to modern 3D</li>
+      <li><strong>Cloud saves</strong> — Sign in to save your progress and compete on global leaderboards</li>
+    </ul>
+  </section>
+
+  <footer class="footer">
+    <p><strong>Weekly Arcade</strong> - New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">Built with care | Free browser games, no downloads required.</p>
+    <p style="margin-top: 1rem;">
+      <a href="/privacy/">Privacy Policy</a> &nbsp;|&nbsp; <a href="/terms/">Terms of Service</a>
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
+  </footer>
+
+  <script is:inline>
+    // ─── Genre Filter ───
+    const filterRow = document.getElementById('filterRow');
+    const gamesGrid = document.getElementById('gamesGrid');
+    const gameCount = document.getElementById('gameCount');
+    const noResults = document.getElementById('noResults');
+
+    filterRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+
+      filterRow.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      const filter = chip.dataset.filter;
+      const cards = gamesGrid.querySelectorAll('.game-card');
+      let visible = 0;
+
+      cards.forEach(card => {
+        const genres = card.dataset.genres || '';
+        const show = filter === 'all' || genres.includes(filter);
+        card.dataset.hidden = !show;
+        if (show) visible++;
+      });
+
+      gameCount.textContent = visible + (visible === 1 ? ' game' : ' games');
+      noResults.classList.toggle('show', visible === 0);
+    });
+
+    // ─── Mobile Menu ───
+    function toggleMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.toggle('open');
+      btn.textContent = nav.classList.contains('open') ? '\u2715' : '\u2630';
+    }
+  </script>
+
+</BaseLayout>
+
+<style is:global>
+    :root {
+      --bg-primary: #0a0a12;
+      --bg-secondary: #12121f;
+      --bg-card: rgba(22, 33, 62, 0.6);
+      --bg-card-solid: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --accent-glow: rgba(233, 69, 96, 0.3);
+      --purple: #7c3aed;
+      --purple-glow: rgba(124, 58, 237, 0.2);
+      --text-primary: #f0f0f5;
+      --text-secondary: #8888a8;
+      --border: rgba(255, 255, 255, 0.06);
+      --glass: rgba(255, 255, 255, 0.03);
+      --radius: 16px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* ─── Breadcrumb ─── */
+    .breadcrumb {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 2rem 0;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .breadcrumb a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb-sep { margin: 0 0.4rem; opacity: 0.5; }
+    .breadcrumb-current { color: var(--text-primary); font-weight: 600; }
+
+    /* ─── Page Hero ─── */
+    .page-hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 2rem 0;
+    }
+
+    .page-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-desc {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 700px;
+    }
+
+    .page-desc strong {
+      color: var(--text-primary);
+    }
+
+    /* ─── Filter Chips ─── */
+    .filters {
+      max-width: 1100px;
+      margin: 2rem auto 0;
+      padding: 0 2rem;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .filter-chip {
+      flex-shrink: 0;
+      padding: 0.5rem 1.15rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--glass);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .filter-chip:hover {
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .filter-chip.active {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      border-color: transparent;
+      box-shadow: 0 2px 12px rgba(233, 69, 96, 0.3);
+    }
+
+    /* ─── Games Grid ─── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.75rem 2rem 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .game-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ─── Game Card ─── */
+    .game-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 0 24px var(--accent-glow);
+      border-color: rgba(233, 69, 96, 0.15);
+    }
+
+    .game-card[data-hidden="true"] { display: none; }
+
+    .game-thumb {
+      height: 160px;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card-solid));
+    }
+
+    .game-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .game-card:hover .game-thumb img { transform: scale(1.08); }
+
+    .thumb-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), #c73e54);
+      color: white;
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 2;
+    }
+
+    .game-info { padding: 1rem 1.15rem; }
+
+    .game-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      letter-spacing: -0.01em;
+    }
+
+    .game-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      line-height: 1.45;
+    }
+
+    .game-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    .tag {
+      font-size: 0.68rem;
+      padding: 0.2rem 0.6rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ─── SEO Content ─── */
+    .seo-content {
+      max-width: 1100px;
+      margin: 2rem auto 0;
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .seo-content h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .seo-content h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    .seo-content p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .seo-content ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .seo-content li {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      padding: 0.3rem 0;
+      padding-left: 1.25rem;
+      position: relative;
+    }
+
+    .seo-content li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.75rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .seo-content li strong {
+      color: var(--text-primary);
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      text-align: center;
+      padding: 2.5rem 2rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+      background: linear-gradient(180deg, transparent, rgba(18, 18, 31, 0.5));
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    .footer a:hover { color: var(--accent-hover); }
+
+    /* ─── No Results ─── */
+    .no-results {
+      display: none;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-secondary);
+      grid-column: 1 / -1;
+    }
+    .no-results.show { display: block; }
+    .no-results-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .no-results-text { font-size: 1.1rem; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .page-hero { padding: 1.5rem 1.25rem 0; }
+      .page-hero h1 { font-size: 1.8rem; }
+      .filters { padding: 0 1.25rem; }
+      .breadcrumb { padding: 0.75rem 1.25rem 0; }
+    }
+
+    @media (max-width: 600px) {
+      .page-hero h1 { font-size: 1.5rem; }
+      .page-desc { font-size: 0.9rem; }
+      .container { padding: 1.25rem; }
+      .games-grid { grid-template-columns: 1fr; }
+    }
+</style>

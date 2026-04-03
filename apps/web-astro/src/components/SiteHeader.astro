@@ -19,7 +19,7 @@ const { activePage = 'games', showAuth = true } = Astro.props;
   </a>
   <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">☰</button>
   <nav class="nav" id="mobileNav">
-    <a href="/" class:list={[{ active: activePage === 'games' }]}>Games</a>
+    <a href="/games/" class:list={[{ active: activePage === 'games' }]}>Games</a>
     <a href="/leaderboard/" class:list={[{ active: activePage === 'leaderboards' }]}>Leaderboards</a>
     <a href="/about/" class:list={[{ active: activePage === 'about' }]}>About</a>
   </nav>
