@@ -39,8 +39,8 @@
     if (cached) {
       currentUser = cached;
       _updateAuthBtn(opts);
-      // Call onSignIn immediately if we have a cached token (user is functional)
-      if (window.apiClient?.token && opts.onSignIn) opts.onSignIn(cached);
+      // Don't call onSignIn for cached users — no valid API token yet.
+      // onSignIn will fire when Firebase confirms with a real token.
     }
 
     // Poll for Firebase to finish initializing

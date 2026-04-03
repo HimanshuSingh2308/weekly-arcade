@@ -108,13 +108,12 @@ class AuthManager {
       this.notifyListeners();
       console.log('[Auth] Cached user notified at', Math.round(performance.now() - _t0), 'ms');
 
-      // Try to restore the Firebase ID token from localStorage cache
-      // (Firebase stores it but onAuthStateChanged takes 20-30s to fire)
-      const cachedToken = this._getCachedToken();
-      if (cachedToken) {
-        window.apiClient?.setToken(cachedToken);
-        console.log('[Auth] Cached token restored at', Math.round(performance.now() - _t0), 'ms');
-      }
+      // Note: we DON'T set the cached token on apiClient here.
+      // The cached user is for UI only (name, avatar). API calls need
+      // a verified token from Firebase, which arrives in ~25s via
+      // onAuthStateChanged. Setting an expired cached token causes
+      // 401 errors on all API calls (profile, game states, etc.)
+      console.log('[Auth] Cached user for UI — API token will come from Firebase');
     }
 
     try {
