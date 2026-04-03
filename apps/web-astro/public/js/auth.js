@@ -74,6 +74,13 @@ class AuthManager {
   async init() {
     if (this.isInitialized) return;
 
+    // If we have a cached user, notify listeners immediately for instant UI
+    // (Firebase SDK will confirm/replace later)
+    if (this.user && this.user._cached) {
+      this.isInitialized = true; // Allow code to proceed with cached user
+      this.notifyListeners();
+    }
+
     try {
       // Dynamically load Firebase SDK if not already present
       if (typeof firebase === 'undefined') {
@@ -306,6 +313,8 @@ class AuthManager {
    */
   async _loadFirebaseSDK() {
     const loadScript = (src) => new Promise((resolve, reject) => {
+      // Check if already loaded
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
       const script = document.createElement('script');
       script.src = src;
       script.onload = resolve;
@@ -314,9 +323,13 @@ class AuthManager {
     });
 
     try {
+      // firebase-app must load first (others depend on it)
       await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+      // auth and messaging can load in parallel
+      await Promise.all([
+        loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js'),
+        loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js'),
+      ]);
     } catch (e) {
       console.warn('Failed to load Firebase SDK:', e);
     }
