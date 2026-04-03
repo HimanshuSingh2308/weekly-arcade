@@ -78,6 +78,47 @@ class AuthManager {
     } catch (e) {}
   }
 
+  /**
+   * Read Firebase auth token directly from IndexedDB.
+   * Firebase compat SDK stores auth state in 'firebaseLocalStorageDb'.
+   * This is ~100ms vs ~25s for onAuthStateChanged.
+   */
+  _readTokenFromIDB() {
+    return new Promise((resolve, reject) => {
+      try {
+        const dbReq = indexedDB.open('firebaseLocalStorageDb');
+        dbReq.onerror = () => reject(new Error('IDB open failed'));
+        dbReq.onsuccess = (e) => {
+          try {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('firebaseLocalStorage')) { resolve(null); return; }
+            const tx = db.transaction('firebaseLocalStorage', 'readonly');
+            const store = tx.objectStore('firebaseLocalStorage');
+            const getAll = store.getAll();
+            getAll.onsuccess = () => {
+              const authEntry = getAll.result?.find(r =>
+                r.fbase_key?.includes('authUser')
+              );
+              if (authEntry?.value?.stsTokenManager?.accessToken) {
+                const expiry = authEntry.value.stsTokenManager.expirationTime;
+                // Only use if not expired (1 hour token lifetime)
+                if (expiry && Date.now() < expiry) {
+                  resolve(authEntry.value.stsTokenManager.accessToken);
+                } else {
+                  console.log('[Auth] IDB token expired');
+                  resolve(null);
+                }
+              } else {
+                resolve(null);
+              }
+            };
+            getAll.onerror = () => resolve(null);
+          } catch (e) { resolve(null); }
+        };
+      } catch (e) { reject(e); }
+    });
+  }
+
   _getCachedToken() {
     try {
       const cached = localStorage.getItem('wa-cached-token');
@@ -142,18 +183,20 @@ class AuthManager {
 
       this.auth = firebase.auth();
       console.log('[Auth] firebase.auth() created at', Math.round(performance.now() - _t0), 'ms');
-      console.log('[Auth] auth.currentUser:', this.auth.currentUser ? 'EXISTS' : 'null');
-      console.log('[Auth] auth persistence:', firebase.auth.Auth.Persistence?.LOCAL);
 
-      // Check if Firebase already has a user in memory (faster than onAuthStateChanged)
-      if (this.auth.currentUser) {
-        console.log('[Auth] currentUser already available! Skipping onAuthStateChanged wait');
-      }
+      // Read token directly from IndexedDB — MUCH faster than onAuthStateChanged (~25s)
+      // Firebase compat stores auth state in firebaseLocalStorageDb
+      this._readTokenFromIDB().then(token => {
+        if (token && !window.apiClient?.token) {
+          window.apiClient?.setToken(token);
+          console.log('[Auth] Token from IndexedDB at', Math.round(performance.now() - _t0), 'ms');
+        }
+      }).catch(() => {});
 
       // Guard against concurrent getIdToken calls (Firebase SDK race condition)
       let _tokenRefreshInProgress = false;
 
-      // Listen for auth state changes
+      // Listen for auth state changes (still needed — confirms user + refreshes token)
       console.log('[Auth] Registering onAuthStateChanged at', Math.round(performance.now() - _t0), 'ms');
       this.auth.onAuthStateChanged(async (user) => {
         console.log('[Auth] onAuthStateChanged fired at', Math.round(performance.now() - _t0), 'ms', user ? 'SIGNED IN' : 'SIGNED OUT');
