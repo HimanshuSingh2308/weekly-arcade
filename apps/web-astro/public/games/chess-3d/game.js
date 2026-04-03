@@ -1987,8 +1987,10 @@
       return null;
     }
 
-    const oldEngine = new ChessEngine(mpPreviousFen);
-    const newEngine = new ChessEngine(newFen);
+    const oldEngine = new ChessEngine();
+    oldEngine.loadFEN(mpPreviousFen);
+    const newEngine = new ChessEngine();
+    newEngine.loadFEN(newFen);
     const changes = { captured: null, movedFrom: null, movedTo: null, movedPiece: null, isCheck: false, isCastle: false };
 
     // Find squares that changed
