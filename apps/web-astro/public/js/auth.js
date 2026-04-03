@@ -104,10 +104,25 @@ class AuthManager {
       this._auth = getAuth(this._app);
       console.log('[Auth] Firebase app + auth initialized at', Math.round(performance.now() - _t0), 'ms');
 
+      // FAST PATH: Read token directly from IndexedDB (bypasses onAuthStateChanged delay)
+      // Firebase stores the token in firebaseLocalStorageDb — we read it in ~50ms
+      try {
+        const idbToken = await this._readTokenFromIDB();
+        if (idbToken) {
+          window.apiClient?.setToken(idbToken);
+          this.isInitialized = true;
+          // Also set user from cache if available (for UI)
+          if (this.user) this.notifyListeners();
+          console.log('[Auth] IDB token set at', Math.round(performance.now() - _t0), 'ms — API ready!');
+        }
+      } catch (e) {
+        console.warn('[Auth] IDB fast path failed:', e.message);
+      }
+
       // Token refresh guard
       let _tokenRefreshInProgress = false;
 
-      // Listen for auth state changes — modular SDK fires in ~1-3s (not 25s)
+      // onAuthStateChanged still needed: confirms user, refreshes expired tokens, handles sign-out
       console.log('[Auth] Registering onAuthStateChanged at', Math.round(performance.now() - _t0), 'ms');
       onAuthStateChanged(this._auth, async (user) => {
         console.log('[Auth] onAuthStateChanged fired at', Math.round(performance.now() - _t0), 'ms', user ? 'SIGNED IN' : 'SIGNED OUT');
@@ -240,6 +255,43 @@ class AuthManager {
 
   isSignedIn() {
     return !!this.user;
+  }
+
+  /**
+   * Read Firebase auth token directly from IndexedDB (~50ms).
+   * Firebase stores auth state in 'firebaseLocalStorageDb'.
+   * This bypasses onAuthStateChanged which takes ~25s on web.
+   */
+  _readTokenFromIDB() {
+    return new Promise((resolve, reject) => {
+      try {
+        const dbReq = indexedDB.open('firebaseLocalStorageDb');
+        dbReq.onerror = () => reject(new Error('IDB open failed'));
+        dbReq.onsuccess = (e) => {
+          try {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('firebaseLocalStorage')) { resolve(null); return; }
+            const tx = db.transaction('firebaseLocalStorage', 'readonly');
+            const store = tx.objectStore('firebaseLocalStorage');
+            const getAll = store.getAll();
+            getAll.onsuccess = () => {
+              const authEntry = getAll.result?.find(r => r.fbase_key?.includes('authUser'));
+              if (authEntry?.value?.stsTokenManager?.accessToken) {
+                const expiry = authEntry.value.stsTokenManager.expirationTime;
+                if (expiry && Date.now() < expiry) {
+                  resolve(authEntry.value.stsTokenManager.accessToken);
+                } else {
+                  resolve(null); // Expired
+                }
+              } else {
+                resolve(null);
+              }
+            };
+            getAll.onerror = () => resolve(null);
+          } catch (e) { resolve(null); }
+        };
+      } catch (e) { reject(e); }
+    });
   }
 
   onAuthStateChanged(callback) {
