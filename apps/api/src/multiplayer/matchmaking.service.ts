@@ -183,6 +183,22 @@ export class MatchmakingService {
 
     const matchData = match.data() as MatchmakingEntry;
 
+    // Atomically claim the match — prevent race conditions where two players
+    // both try to match with the same queue entry simultaneously
+    try {
+      await this.firebase.runTransaction(async (txn) => {
+        const freshDoc = await txn.get(match.ref);
+        if (!freshDoc.exists || freshDoc.data()?.status !== 'waiting') {
+          throw new Error('Match entry already claimed');
+        }
+        // Mark as matched inside the transaction to prevent double-matching
+        txn.update(match.ref, { status: 'matched' });
+      });
+    } catch (e) {
+      this.logger.warn(`Match race condition: ${matchData.uid} already claimed`);
+      return null; // Someone else matched with them first
+    }
+
     // Resolve display name if not provided (e.g., called from cron)
     if (!displayName) {
       const userDoc = await this.firebase.doc(`users/${uid}`).get();
@@ -216,14 +232,14 @@ export class MatchmakingService {
       // startGame may fail if minPlayers not met yet — that's OK
     }
 
-    // Update both queue entries to matched
+    // Update both queue entries with the session ID
     const batch = this.firebase.batch();
     batch.update(this.firebase.doc(`matchmakingQueue/${entryId}`), {
       status: 'matched',
       matchedSessionId: session.sessionId,
     });
+    // Opponent was marked 'matched' in the transaction — now add the sessionId
     batch.update(match.ref, {
-      status: 'matched',
       matchedSessionId: session.sessionId,
     });
     await batch.commit();
