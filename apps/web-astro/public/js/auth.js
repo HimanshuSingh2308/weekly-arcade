@@ -335,7 +335,11 @@ class AuthManager {
     // Slow path: read refresh token from IDB and call Google token endpoint directly
     try {
       const refreshToken = await this._readRefreshTokenFromIDB();
-      if (!refreshToken) return null;
+      if (!refreshToken) {
+        console.log('[Auth] refreshToken: no refresh token in IDB');
+        return null;
+      }
+      console.log('[Auth] refreshToken: got refresh token from IDB, calling securetoken API...');
 
       const resp = await fetch(
         `https://securetoken.googleapis.com/v1/token?key=${firebaseConfig.apiKey}`,
@@ -346,7 +350,10 @@ class AuthManager {
         }
       );
 
-      if (!resp.ok) return null;
+      if (!resp.ok) {
+        console.warn('[Auth] refreshToken: securetoken API returned', resp.status);
+        return null;
+      }
 
       const data = await resp.json();
       const idToken = data.id_token;
@@ -355,6 +362,7 @@ class AuthManager {
         console.log('[Auth] Token refreshed via IDB refresh token');
         return idToken;
       }
+      console.warn('[Auth] refreshToken: securetoken response missing id_token');
     } catch (e) {
       console.warn('[Auth] refreshToken via IDB failed:', e.message);
     }

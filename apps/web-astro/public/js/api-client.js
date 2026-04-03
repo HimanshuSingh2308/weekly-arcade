@@ -31,6 +31,16 @@ class ApiClient {
    * Make an authenticated API request
    */
   async request(endpoint, options = {}, _retried = false) {
+    // If no token yet and auth is still loading, wait for Firebase to resolve
+    if (!this.token && !_retried && window.authManager && !window.authManager._auth?.currentUser) {
+      console.log(`[ApiClient] No token for ${endpoint} — waiting for auth...`);
+      await window.authManager.waitForFirebase();
+      // Token should now be set by onAuthStateChanged
+      if (this.token) {
+        console.log(`[ApiClient] Auth resolved — proceeding with token`);
+      }
+    }
+
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
@@ -53,7 +63,16 @@ class ApiClient {
       if (response.status === 401 && !_retried && window.authManager) {
         console.log('[ApiClient] 401 — attempting token refresh...');
         try {
-          const freshToken = await window.authManager.refreshToken();
+          // Try direct token refresh first
+          let freshToken = await window.authManager.refreshToken();
+
+          // If that failed, wait for Firebase to fully resolve and try again
+          if (!freshToken && !window.authManager._auth?.currentUser) {
+            console.log('[ApiClient] Refresh failed — waiting for Firebase auth...');
+            await window.authManager.waitForFirebase();
+            freshToken = this.token; // onAuthStateChanged should have set it
+          }
+
           if (freshToken) {
             console.log('[ApiClient] Token refreshed — retrying request');
             return this.request(endpoint, options, true); // retry once
