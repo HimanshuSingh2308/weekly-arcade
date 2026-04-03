@@ -73,18 +73,24 @@ class AuthManager {
    */
   async init() {
     if (this.isInitialized) return;
+    const _t0 = performance.now();
+    console.log('[Auth] init() started at', Math.round(_t0), 'ms');
 
     // If we have a cached user, notify listeners immediately for instant UI
-    // (Firebase SDK will confirm/replace later)
     if (this.user && this.user._cached) {
-      this.isInitialized = true; // Allow code to proceed with cached user
+      this.isInitialized = true;
       this.notifyListeners();
+      console.log('[Auth] Cached user notified at', Math.round(performance.now() - _t0), 'ms');
     }
 
     try {
       // Dynamically load Firebase SDK if not already present
       if (typeof firebase === 'undefined') {
+        console.log('[Auth] Loading Firebase SDK...');
         await this._loadFirebaseSDK();
+        console.log('[Auth] Firebase SDK loaded at', Math.round(performance.now() - _t0), 'ms');
+      } else {
+        console.log('[Auth] Firebase SDK already present at', Math.round(performance.now() - _t0), 'ms');
       }
 
       if (typeof firebase === 'undefined') {
@@ -99,6 +105,7 @@ class AuthManager {
       } else {
         this.firebase = firebase.app();
       }
+      console.log('[Auth] Firebase app initialized at', Math.round(performance.now() - _t0), 'ms');
 
       this.auth = firebase.auth();
 
@@ -106,7 +113,9 @@ class AuthManager {
       let _tokenRefreshInProgress = false;
 
       // Listen for auth state changes
+      console.log('[Auth] Registering onAuthStateChanged at', Math.round(performance.now() - _t0), 'ms');
       this.auth.onAuthStateChanged(async (user) => {
+        console.log('[Auth] onAuthStateChanged fired at', Math.round(performance.now() - _t0), 'ms', user ? 'SIGNED IN' : 'SIGNED OUT');
         this.user = user;
         this._cacheUser(user);
 
