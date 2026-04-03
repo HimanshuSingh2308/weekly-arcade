@@ -238,6 +238,10 @@ class AuthManager {
     return this.user;
   }
 
+  isSignedIn() {
+    return !!this.user;
+  }
+
   onAuthStateChanged(callback) {
     this.listeners.push(callback);
     if (this.user) {
