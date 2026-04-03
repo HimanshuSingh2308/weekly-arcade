@@ -120,19 +120,18 @@ class AuthManager {
       this._auth = getAuth(this._app);
       console.log('[Auth] Firebase app + auth initialized at', Math.round(performance.now() - _t0), 'ms');
 
-      // FAST PATH: Read token directly from IndexedDB (bypasses onAuthStateChanged delay)
-      // Firebase stores the token in firebaseLocalStorageDb — we read it in ~50ms
+      // FAST PATH: Read token directly from localStorage (bypasses onAuthStateChanged delay)
+      // Firebase stores auth in localStorage key: firebase:authUser:{apiKey}:[DEFAULT]
       try {
-        const idbToken = await this._readTokenFromIDB();
-        if (idbToken) {
-          window.apiClient?.setToken(idbToken);
+        const storedToken = this._readTokenFromLocalStorage();
+        if (storedToken) {
+          window.apiClient?.setToken(storedToken);
           this.isInitialized = true;
-          // Also set user from cache if available (for UI)
           if (this.user) this.notifyListeners();
-          console.log('[Auth] IDB token set at', Math.round(performance.now() - _t0), 'ms — API ready!');
+          console.log('[Auth] localStorage token set at', Math.round(performance.now() - _t0), 'ms — API ready!');
         }
       } catch (e) {
-        console.warn('[Auth] IDB fast path failed:', e.message);
+        console.warn('[Auth] Fast path failed:', e.message);
       }
 
       // Token refresh guard
@@ -279,45 +278,45 @@ class AuthManager {
   }
 
   /**
-   * Read Firebase auth token directly from IndexedDB (~50ms).
-   * Firebase stores auth state in 'firebaseLocalStorageDb'.
-   * This bypasses onAuthStateChanged which takes ~25s on web.
+   * Read Firebase auth user data from localStorage.
+   * Firebase stores auth in: firebase:authUser:{apiKey}:[DEFAULT]
    */
-  _readTokenFromIDB() {
-    return new Promise((resolve, reject) => {
-      try {
-        const dbReq = indexedDB.open('firebaseLocalStorageDb');
-        dbReq.onerror = () => reject(new Error('IDB open failed'));
-        dbReq.onsuccess = (e) => {
-          try {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('firebaseLocalStorage')) { resolve(null); return; }
-            const tx = db.transaction('firebaseLocalStorage', 'readonly');
-            const store = tx.objectStore('firebaseLocalStorage');
-            const getAll = store.getAll();
-            getAll.onsuccess = () => {
-              const authEntry = getAll.result?.find(r => r.fbase_key?.includes('authUser'));
-              if (authEntry?.value?.stsTokenManager?.accessToken) {
-                const expiry = authEntry.value.stsTokenManager.expirationTime;
-                if (expiry && Date.now() < expiry) {
-                  resolve(authEntry.value.stsTokenManager.accessToken);
-                } else {
-                  resolve(null); // Expired
-                }
-              } else {
-                resolve(null);
-              }
-            };
-            getAll.onerror = () => resolve(null);
-          } catch (e) { resolve(null); }
-        };
-      } catch (e) { reject(e); }
-    });
+  _getFirebaseAuthEntry() {
+    try {
+      const key = `firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`;
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Read access token from localStorage (instant, synchronous).
+   * Returns token if valid (not expired), null otherwise.
+   */
+  _readTokenFromLocalStorage() {
+    const entry = this._getFirebaseAuthEntry();
+    if (!entry?.stsTokenManager?.accessToken) return null;
+    const expiry = entry.stsTokenManager.expirationTime;
+    if (expiry && Date.now() < expiry) {
+      return entry.stsTokenManager.accessToken;
+    }
+    return null; // Expired
+  }
+
+  /**
+   * Read refresh token from localStorage (instant, synchronous).
+   */
+  _readRefreshTokenFromLocalStorage() {
+    const entry = this._getFirebaseAuthEntry();
+    return entry?.stsTokenManager?.refreshToken || null;
   }
 
   /**
    * Refresh the ID token without waiting for onAuthStateChanged.
-   * Strategy: (1) use auth.currentUser if available, (2) fall back to IDB refresh token.
+   * Strategy: (1) use auth.currentUser if available, (2) use refresh token from localStorage.
    * Returns a fresh ID token or null.
    */
   async refreshToken() {
@@ -332,14 +331,13 @@ class AuthManager {
       }
     }
 
-    // Slow path: read refresh token from IDB and call Google token endpoint directly
+    // Fallback: read refresh token from localStorage and call Google token endpoint directly
     try {
-      const refreshToken = await this._readRefreshTokenFromIDB();
+      const refreshToken = this._readRefreshTokenFromLocalStorage();
       if (!refreshToken) {
-        console.log('[Auth] refreshToken: no refresh token in IDB');
+        console.log('[Auth] refreshToken: no refresh token in localStorage');
         return null;
       }
-      console.log('[Auth] refreshToken: got refresh token from IDB, calling securetoken API...');
 
       const resp = await fetch(
         `https://securetoken.googleapis.com/v1/token?key=${firebaseConfig.apiKey}`,
@@ -359,41 +357,14 @@ class AuthManager {
       const idToken = data.id_token;
       if (idToken) {
         window.apiClient?.setToken(idToken);
-        console.log('[Auth] Token refreshed via IDB refresh token');
+        console.log('[Auth] Token refreshed via localStorage refresh token');
         return idToken;
       }
-      console.warn('[Auth] refreshToken: securetoken response missing id_token');
     } catch (e) {
-      console.warn('[Auth] refreshToken via IDB failed:', e.message);
+      console.warn('[Auth] refreshToken via localStorage failed:', e.message);
     }
 
     return null;
-  }
-
-  /**
-   * Read Firebase refresh token from IndexedDB.
-   */
-  _readRefreshTokenFromIDB() {
-    return new Promise((resolve) => {
-      try {
-        const dbReq = indexedDB.open('firebaseLocalStorageDb');
-        dbReq.onerror = () => resolve(null);
-        dbReq.onsuccess = (e) => {
-          try {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('firebaseLocalStorage')) { resolve(null); return; }
-            const tx = db.transaction('firebaseLocalStorage', 'readonly');
-            const store = tx.objectStore('firebaseLocalStorage');
-            const getAll = store.getAll();
-            getAll.onsuccess = () => {
-              const authEntry = getAll.result?.find(r => r.fbase_key?.includes('authUser'));
-              resolve(authEntry?.value?.stsTokenManager?.refreshToken || null);
-            };
-            getAll.onerror = () => resolve(null);
-          } catch { resolve(null); }
-        };
-      } catch { resolve(null); }
-    });
   }
 
   onAuthStateChanged(callback) {
