@@ -5,8 +5,94 @@ import SiteHeader from '../components/SiteHeader.astro';
 
 <BaseLayout title="Weekly Arcade | New Free Browser Games Every Week">
   <Fragment slot="head">
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+
+    <!-- SEO -->
+    <meta name="description" content="Play 14+ free browser games instantly — no downloads, no signup. New games added every week including puzzle, arcade, strategy, 3D, and multiplayer games. Works on desktop, tablet, and mobile.">
+    <meta name="keywords" content="free browser games, online games, no download games, free games, browser games 2026, arcade games, puzzle games, play online free">
+    <link rel="canonical" href="https://weeklyarcade.games/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Weekly Arcade | New Free Browser Games Every Week">
+    <meta property="og:description" content="Play 14+ free browser games instantly — no downloads, no signup. New games added every week.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://weeklyarcade.games/">
+    <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Weekly Arcade — free browser games, no downloads required">
+    <meta property="og:site_name" content="Weekly Arcade">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Weekly Arcade | New Free Browser Games Every Week">
+    <meta name="twitter:description" content="Play 14+ free browser games instantly — no downloads, no signup. New games added every week.">
+    <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+    <meta name="twitter:image:alt" content="Weekly Arcade — free browser games, no downloads required">
+
+    <!-- Structured Data: Organization -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Weekly Arcade",
+      "url": "https://weeklyarcade.games",
+      "logo": "https://weeklyarcade.games/icons/icon-512.png",
+      "description": "Free browser games released every week — no downloads, no signup. Puzzle, arcade, strategy, 3D, and multiplayer games playable instantly on any device.",
+      "foundingDate": "2026"
+    }</script>
+
+    <!-- Structured Data: FAQPage -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Are all the games on Weekly Arcade free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, every game on Weekly Arcade is 100% free to play. No hidden paywalls, no premium tiers. Sign-in is optional and only needed for leaderboards and cloud saves."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to download or install anything?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No downloads or installations required. All games run directly in your browser on any device — desktop, tablet, or phone. Just open the page and play."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How often are new games added?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We release a new game every week. Each game is a unique, polished browser game — from puzzles and card games to arcade and simulation games."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I play on my phone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, all Weekly Arcade games are designed mobile-first with touch controls, responsive layouts, and optimized performance for phones and tablets."
+          }
+        }
+      ]
+    }</script>
+
+    <!-- Structured Data: WebSite (enables sitelinks search box) -->
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Weekly Arcade",
+      "url": "https://weeklyarcade.games"
+    }</script>
+
+    <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#e94560">
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
