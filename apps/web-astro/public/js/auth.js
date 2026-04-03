@@ -1,9 +1,9 @@
 /**
  * Firebase Authentication for Weekly Arcade
- * Handles user sign-in, sign-out, and auth state management
+ * Uses Firebase Modular SDK for fast auth state detection (~1-3s vs ~25s compat).
+ * Loaded as a regular script (not module) — dynamically imports Firebase ESM.
  */
 
-// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAFA4KwOaQpa0A-v2auCulStCrOgScrz-g",
   authDomain: "loyal-curve-425715-h6.firebaseapp.com",
@@ -13,14 +13,18 @@ const firebaseConfig = {
   appId: "1:5171085645:web:b01fbc558d626f649e3704"
 };
 
+const FIREBASE_VERSION = '10.14.1';
+const CDN = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+
 class AuthManager {
   constructor() {
     this.user = null;
     this.isInitialized = false;
     this.listeners = [];
-    this.firebase = null;
-    this.auth = null;
+    this._auth = null;
+    this._app = null;
     this._cacheKey = 'wa-cached-user';
+    this._modules = {}; // Stores imported Firebase modules
 
     // Restore cached user immediately (before Firebase loads)
     this._restoreCachedUser();
@@ -31,21 +35,18 @@ class AuthManager {
       const cached = localStorage.getItem(this._cacheKey);
       if (!cached) return;
       const data = JSON.parse(cached);
-      // Expire after 24 hours to prevent stale sessions
       if (data._ts && Date.now() - data._ts > 86400000) {
         localStorage.removeItem(this._cacheKey);
         return;
       }
-      // Create a lightweight user-like object for instant UI rendering
       this.user = {
         uid: data.uid,
         email: data.email,
         displayName: data.displayName,
         photoURL: data.photoURL,
-        _cached: true, // flag so we know this isn't a real Firebase user
+        _cached: true,
       };
     } catch (e) {
-      // Cache corrupted — ignore
       localStorage.removeItem(this._cacheKey);
     }
   }
@@ -62,200 +63,88 @@ class AuthManager {
         }));
       } else {
         localStorage.removeItem(this._cacheKey);
-        localStorage.removeItem('wa-cached-token');
       }
     } catch (e) {}
   }
 
-  _cacheToken(token) {
-    try {
-      if (token) {
-        localStorage.setItem('wa-cached-token', JSON.stringify({
-          token,
-          _ts: Date.now(),
-        }));
-      }
-    } catch (e) {}
-  }
-
-  /**
-   * Read Firebase auth token directly from IndexedDB.
-   * Firebase compat SDK stores auth state in 'firebaseLocalStorageDb'.
-   * This is ~100ms vs ~25s for onAuthStateChanged.
-   */
-  _readTokenFromIDB() {
-    return new Promise((resolve, reject) => {
-      try {
-        const dbReq = indexedDB.open('firebaseLocalStorageDb');
-        dbReq.onerror = () => reject(new Error('IDB open failed'));
-        dbReq.onsuccess = (e) => {
-          try {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('firebaseLocalStorage')) { resolve(null); return; }
-            const tx = db.transaction('firebaseLocalStorage', 'readonly');
-            const store = tx.objectStore('firebaseLocalStorage');
-            const getAll = store.getAll();
-            getAll.onsuccess = () => {
-              const authEntry = getAll.result?.find(r =>
-                r.fbase_key?.includes('authUser')
-              );
-              if (authEntry?.value?.stsTokenManager?.accessToken) {
-                const expiry = authEntry.value.stsTokenManager.expirationTime;
-                // Only use if not expired (1 hour token lifetime)
-                if (expiry && Date.now() < expiry) {
-                  resolve(authEntry.value.stsTokenManager.accessToken);
-                } else {
-                  console.log('[Auth] IDB token expired');
-                  resolve(null);
-                }
-              } else {
-                resolve(null);
-              }
-            };
-            getAll.onerror = () => resolve(null);
-          } catch (e) { resolve(null); }
-        };
-      } catch (e) { reject(e); }
-    });
-  }
-
-  _getCachedToken() {
-    try {
-      const cached = localStorage.getItem('wa-cached-token');
-      if (!cached) return null;
-      const data = JSON.parse(cached);
-      // Firebase ID tokens expire after 1 hour — use if less than 55 min old
-      if (data._ts && Date.now() - data._ts > 55 * 60 * 1000) {
-        localStorage.removeItem('wa-cached-token');
-        return null;
-      }
-      return data.token;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /**
-   * Initialize Firebase Auth
-   */
   async init() {
     if (this.isInitialized) return;
     const _t0 = performance.now();
     console.log('[Auth] init() started at', Math.round(_t0), 'ms');
 
-    // If we have a cached user, notify listeners immediately for instant UI
+    // Show cached user in UI immediately
     if (this.user && this.user._cached) {
       this.isInitialized = true;
       this.notifyListeners();
       console.log('[Auth] Cached user notified at', Math.round(performance.now() - _t0), 'ms');
-
-      // Note: we DON'T set the cached token on apiClient here.
-      // The cached user is for UI only (name, avatar). API calls need
-      // a verified token from Firebase, which arrives in ~25s via
-      // onAuthStateChanged. Setting an expired cached token causes
-      // 401 errors on all API calls (profile, game states, etc.)
-      console.log('[Auth] Cached user for UI — API token will come from Firebase');
     }
 
     try {
-      // Dynamically load Firebase SDK if not already present
-      if (typeof firebase === 'undefined') {
-        console.log('[Auth] Loading Firebase SDK...');
-        await this._loadFirebaseSDK();
-        console.log('[Auth] Firebase SDK loaded at', Math.round(performance.now() - _t0), 'ms');
-      } else {
-        console.log('[Auth] Firebase SDK already present at', Math.round(performance.now() - _t0), 'ms');
-      }
+      // Dynamically import Firebase modular SDK
+      const [appModule, authModule] = await Promise.all([
+        import(/* webpackIgnore: true */ `${CDN}/firebase-app.js`),
+        import(/* webpackIgnore: true */ `${CDN}/firebase-auth.js`),
+      ]);
+      console.log('[Auth] Modular SDK loaded at', Math.round(performance.now() - _t0), 'ms');
 
-      if (typeof firebase === 'undefined') {
-        console.warn('Firebase SDK failed to load. Auth features disabled.');
-        this.isInitialized = true;
-        return;
-      }
+      this._modules = { ...appModule, ...authModule };
 
-      // Initialize Firebase if not already initialized
-      if (!firebase.apps.length) {
-        this.firebase = firebase.initializeApp(firebaseConfig);
-      } else {
-        this.firebase = firebase.app();
-      }
-      console.log('[Auth] Firebase app initialized at', Math.round(performance.now() - _t0), 'ms');
+      // Initialize app
+      const { initializeApp } = appModule;
+      const { getAuth, onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword,
+              createUserWithEmailAndPassword, updateProfile, signOut: fbSignOut,
+              GoogleAuthProvider, getIdToken } = authModule;
 
-      this.auth = firebase.auth();
-      console.log('[Auth] firebase.auth() created at', Math.round(performance.now() - _t0), 'ms');
+      // Store for use in methods
+      this._fbModules = { signInWithPopup, signInWithEmailAndPassword,
+        createUserWithEmailAndPassword, updateProfile, fbSignOut,
+        GoogleAuthProvider, getIdToken };
 
-      // Read token directly from IndexedDB — MUCH faster than onAuthStateChanged (~25s)
-      // Firebase compat stores auth state in firebaseLocalStorageDb
-      this._readTokenFromIDB().then(token => {
-        if (token && !window.apiClient?.token) {
-          window.apiClient?.setToken(token);
-          console.log('[Auth] Token from IndexedDB at', Math.round(performance.now() - _t0), 'ms');
-        }
-      }).catch(() => {});
+      this._app = initializeApp(firebaseConfig);
+      this._auth = getAuth(this._app);
+      console.log('[Auth] Firebase app + auth initialized at', Math.round(performance.now() - _t0), 'ms');
 
-      // Guard against concurrent getIdToken calls (Firebase SDK race condition)
+      // Token refresh guard
       let _tokenRefreshInProgress = false;
 
-      // Listen for auth state changes (still needed — confirms user + refreshes token)
+      // Listen for auth state changes — modular SDK fires in ~1-3s (not 25s)
       console.log('[Auth] Registering onAuthStateChanged at', Math.round(performance.now() - _t0), 'ms');
-      this.auth.onAuthStateChanged(async (user) => {
+      onAuthStateChanged(this._auth, async (user) => {
         console.log('[Auth] onAuthStateChanged fired at', Math.round(performance.now() - _t0), 'ms', user ? 'SIGNED IN' : 'SIGNED OUT');
         this.user = user;
         this._cacheUser(user);
 
         if (user) {
-          // Get ID token — skip if another refresh is in progress
           if (!_tokenRefreshInProgress) {
             _tokenRefreshInProgress = true;
             try {
-              const token = await user.getIdToken();
+              const token = await getIdToken(user);
               window.apiClient?.setToken(token);
-              this._cacheToken(token); // Cache for instant restore on next page load
-              console.log('[Auth] Token set + cached at', Math.round(performance.now() - _t0), 'ms');
+              console.log('[Auth] Token set at', Math.round(performance.now() - _t0), 'ms');
             } catch (e) {
-              console.warn('[Auth] Token fetch in onAuthStateChanged failed:', e.message);
+              console.warn('[Auth] Token fetch failed:', e.message);
             } finally {
               _tokenRefreshInProgress = false;
             }
           }
 
-          // Register/update user on backend with retry
-          const registerUser = async (retries = 3) => {
-            try {
-              await window.apiClient?.register({
-                email: user.email,
-                displayName: user.displayName || user.email?.split('@')[0] || 'Player',
-                avatarUrl: user.photoURL,
-              });
-              console.log('User registered on backend');
-            } catch (error) {
-              console.error('Failed to register user on backend:', error);
-              if (retries > 0) {
-                // Retry after a short delay
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                return registerUser(retries - 1);
-              }
-            }
-          };
-
-          // Register in background (don't block auth state notification)
-          registerUser();
+          // Register user on backend (background, non-blocking)
+          this._registerUser(user);
         } else {
           window.apiClient?.clearToken();
         }
 
-        // Notify listeners
+        this.isInitialized = true;
         this.notifyListeners();
       });
 
       // Refresh token periodically (every 50 minutes)
       setInterval(async () => {
-        if (this.user && !_tokenRefreshInProgress) {
+        if (this._auth?.currentUser && !_tokenRefreshInProgress) {
           _tokenRefreshInProgress = true;
           try {
-            const token = await this.user.getIdToken(true);
+            const token = await getIdToken(this._auth.currentUser, true);
             window.apiClient?.setToken(token);
-            this._cacheToken(token);
           } catch (e) {
             console.warn('[Auth] Periodic token refresh failed:', e.message);
           } finally {
@@ -264,25 +153,39 @@ class AuthManager {
         }
       }, 50 * 60 * 1000);
 
-      this.isInitialized = true;
     } catch (error) {
-      console.error('Failed to initialize Firebase Auth:', error);
+      console.error('[Auth] Failed to initialize:', error);
       this.isInitialized = true;
     }
   }
 
-  /**
-   * Sign in with Google
-   */
+  async _registerUser(user) {
+    const register = async (retries = 3) => {
+      try {
+        await window.apiClient?.register({
+          email: user.email,
+          displayName: user.displayName || user.email?.split('@')[0] || 'Player',
+          avatarUrl: user.photoURL,
+        });
+      } catch (error) {
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 1000));
+          return register(retries - 1);
+        }
+      }
+    };
+    register();
+  }
+
   async signInWithGoogle() {
-    if (!this.auth) {
+    if (!this._auth || !this._fbModules) {
       console.warn('Auth not initialized');
       return null;
     }
-
     try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const result = await this.auth.signInWithPopup(provider);
+      const { signInWithPopup, GoogleAuthProvider } = this._fbModules;
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(this._auth, provider);
       return result.user;
     } catch (error) {
       console.error('Google sign-in failed:', error);
@@ -290,17 +193,11 @@ class AuthManager {
     }
   }
 
-  /**
-   * Sign in with email and password
-   */
   async signInWithEmail(email, password) {
-    if (!this.auth) {
-      console.warn('Auth not initialized');
-      return null;
-    }
-
+    if (!this._auth || !this._fbModules) return null;
     try {
-      const result = await this.auth.signInWithEmailAndPassword(email, password);
+      const { signInWithEmailAndPassword } = this._fbModules;
+      const result = await signInWithEmailAndPassword(this._auth, email, password);
       return result.user;
     } catch (error) {
       console.error('Email sign-in failed:', error);
@@ -308,23 +205,14 @@ class AuthManager {
     }
   }
 
-  /**
-   * Create account with email and password
-   */
   async createAccount(email, password, displayName) {
-    if (!this.auth) {
-      console.warn('Auth not initialized');
-      return null;
-    }
-
+    if (!this._auth || !this._fbModules) return null;
     try {
-      const result = await this.auth.createUserWithEmailAndPassword(email, password);
-
-      // Update display name
+      const { createUserWithEmailAndPassword, updateProfile } = this._fbModules;
+      const result = await createUserWithEmailAndPassword(this._auth, email, password);
       if (displayName) {
-        await result.user.updateProfile({ displayName });
+        await updateProfile(result.user, { displayName });
       }
-
       return result.user;
     } catch (error) {
       console.error('Account creation failed:', error);
@@ -332,60 +220,26 @@ class AuthManager {
     }
   }
 
-  /**
-   * Sign out
-   */
   async signOut() {
-    if (!this.auth) {
-      console.warn('Auth not initialized');
-      return;
-    }
-
+    if (!this._auth || !this._fbModules) return;
     try {
+      const { fbSignOut } = this._fbModules;
+      await fbSignOut(this._auth);
+      this.user = null;
       this._cacheUser(null);
-      await this.auth.signOut();
+      window.apiClient?.clearToken();
+      this.notifyListeners();
     } catch (error) {
       console.error('Sign-out failed:', error);
-      throw error;
     }
   }
 
-  /**
-   * Check if user is signed in
-   */
-  isSignedIn() {
-    return this.user !== null;
-  }
-
-  /**
-   * Get current user
-   */
-  getUser() {
-    return this.user;
-  }
-
-  /**
-   * Get current user (alias for compatibility)
-   */
   get currentUser() {
     return this.user;
   }
 
-  /**
-   * Get current user's ID token
-   */
-  async getIdToken() {
-    if (!this.user) return null;
-    return this.user.getIdToken();
-  }
-
-  /**
-   * Add auth state change listener
-   */
   onAuthStateChanged(callback) {
     this.listeners.push(callback);
-    // Immediately call with current state
-    // Cached users now have a valid token (cached alongside user), so they're usable
     if (this.user) {
       callback(this.user);
     } else {
@@ -396,45 +250,12 @@ class AuthManager {
     };
   }
 
-  /**
-   * Notify all listeners of auth state change
-   */
   notifyListeners() {
     this.listeners.forEach(listener => listener(this.user));
-  }
-
-  /**
-   * Dynamically load Firebase SDK scripts
-   */
-  async _loadFirebaseSDK() {
-    const loadScript = (src) => new Promise((resolve, reject) => {
-      // Check if already loaded
-      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-
-    try {
-      // firebase-app must load first (others depend on it)
-      await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-      // auth and messaging can load in parallel
-      await Promise.all([
-        loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js'),
-        loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js'),
-      ]);
-    } catch (e) {
-      console.warn('Failed to load Firebase SDK:', e);
-    }
   }
 }
 
 // ─── Auth Nudge ───
-// Prompts guest players to sign in after a game round.
-// Triggered automatically when apiClient.submitScore() is called without auth.
-// Self-injects HTML/CSS on first show — no per-game markup needed.
 const AuthNudge = (() => {
   const DISMISS_KEY = 'auth-nudge-dismissed';
   const DISMISS_HOURS = 1;
@@ -462,15 +283,11 @@ const AuthNudge = (() => {
       .auth-nudge-overlay.visible .auth-nudge{transform:translateY(0) scale(1)}
       .auth-nudge-icon{font-size:2.5rem;margin-bottom:.75rem}
       .auth-nudge h3{font-size:1.25rem;font-weight:700;margin-bottom:.4rem}
-      .auth-nudge p{color:#8888a8;font-size:.9rem;margin-bottom:1.25rem;line-height:1.5}
-      .auth-nudge-benefits{display:flex;gap:1rem;justify-content:center;margin-bottom:1.25rem;flex-wrap:wrap}
-      .auth-nudge-benefit{font-size:.78rem;color:#8888a8;display:flex;align-items:center;gap:.3rem}
-      .auth-nudge-benefit span{font-size:1rem}
-      .auth-nudge-google{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;padding:.8rem 1rem;background:#fff;color:#333;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;transition:transform .2s,background .2s}
-      .auth-nudge-google:hover{background:#f5f5f5;transform:scale(1.02)}
-      .auth-nudge-google img{width:18px;height:18px}
-      .auth-nudge-skip{margin-top:.75rem;background:none;border:none;color:#8888a8;font-size:.82rem;cursor:pointer;padding:.5rem;transition:color .2s}
-      .auth-nudge-skip:hover{color:#f0f0f5}
+      .auth-nudge p{font-size:.9rem;color:#999;margin-bottom:1.2rem;line-height:1.4}
+      .auth-nudge-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.7rem;border-radius:12px;font-weight:600;font-size:.95rem;cursor:pointer;border:none;transition:transform .15s}
+      .auth-nudge-btn:active{transform:scale(.97)}
+      .auth-nudge-google{background:#fff;color:#222;margin-bottom:.5rem}
+      .auth-nudge-dismiss{background:transparent;color:#888;font-size:.8rem;margin-top:.25rem;padding:.4rem;border:none;cursor:pointer}
     `;
     document.head.appendChild(style);
 
@@ -480,39 +297,36 @@ const AuthNudge = (() => {
     overlay.innerHTML = `
       <div class="auth-nudge">
         <div class="auth-nudge-icon">🏆</div>
-        <h3>Nice game!</h3>
-        <p>Sign in to save your score to the leaderboard and track your progress.</p>
-        <div class="auth-nudge-benefits">
-          <div class="auth-nudge-benefit"><span>📊</span> Leaderboards</div>
-          <div class="auth-nudge-benefit"><span>💾</span> Cloud saves</div>
-          <div class="auth-nudge-benefit"><span>🏅</span> Achievements</div>
-        </div>
-        <button class="auth-nudge-google" id="authNudgeSignIn">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        <h3>Save Your Progress</h3>
+        <p>Sign in to save scores, track achievements, and compete on leaderboards.</p>
+        <button class="auth-nudge-btn auth-nudge-google" id="authNudgeGoogle">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="20" height="20" style="flex-shrink:0;">
           Continue with Google
         </button>
-        <button class="auth-nudge-skip" id="authNudgeSkip">Maybe later</button>
+        <button class="auth-nudge-dismiss" id="authNudgeDismiss">Not now</button>
       </div>
     `;
     document.body.appendChild(overlay);
 
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
-    document.getElementById('authNudgeSignIn').addEventListener('click', async () => {
-      try { await window.authManager.signInWithGoogle(); hide(); } catch (e) { console.error('Nudge sign-in failed:', e); }
+    document.getElementById('authNudgeGoogle').addEventListener('click', async () => {
+      try {
+        await window.authManager.signInWithGoogle();
+        hide();
+      } catch (e) {}
     });
-    document.getElementById('authNudgeSkip').addEventListener('click', dismiss);
+    document.getElementById('authNudgeDismiss').addEventListener('click', dismiss);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
   }
 
   function show() {
     if (!shouldShow()) return;
     inject();
     shown++;
-    setTimeout(() => { document.getElementById('authNudgeOverlay').classList.add('visible'); }, 1200);
+    document.getElementById('authNudgeOverlay')?.classList.add('visible');
   }
 
   function hide() {
-    const el = document.getElementById('authNudgeOverlay');
-    if (el) el.classList.remove('visible');
+    document.getElementById('authNudgeOverlay')?.classList.remove('visible');
   }
 
   function dismiss() {
@@ -523,15 +337,13 @@ const AuthNudge = (() => {
   return { show, hide, dismiss };
 })();
 
-// Export singleton instance
+// Export singleton
 window.authManager = new AuthManager();
 window.authNudge = AuthNudge;
 
-// Auto-initialize when DOM is ready
+// Auto-initialize
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.authManager.init();
-  });
+  document.addEventListener('DOMContentLoaded', () => window.authManager.init());
 } else {
   window.authManager.init();
 }
