@@ -1,6 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
+
+// Dynamically load all game data JSON files — auto-updates when games are added
+const gameModules = import.meta.glob('../../data/games/*.json', { eager: true });
+const games = Object.values(gameModules).map((mod: any) => mod.default || mod) as Array<{ id: string; name: string; icon: string }>;
+const gameCount = games.length;
 ---
 
 <BaseLayout title="About | Weekly Arcade">
@@ -22,7 +27,7 @@ import SiteHeader from '../../components/SiteHeader.astro';
   <main class="container">
     <div class="stats-banner">
       <div class="stat">
-        <div class="stat-value">12</div>
+        <div class="stat-value">{gameCount}</div>
         <div class="stat-label">Games</div>
       </div>
       <div class="stat">
@@ -49,18 +54,12 @@ import SiteHeader from '../../components/SiteHeader.astro';
       <h2><span class="icon">🕹️</span> Our Games</h2>
       <p>From classic arcade games to modern puzzles, we've got something for everyone:</p>
       <div class="games-grid">
-        <a href="/games/tiny-tycoon/" class="game-card"><div class="game-icon">🧋</div><div class="game-name">Tiny Tycoon</div></a>
-        <a href="/games/coin-cascade/" class="game-card"><div class="game-icon">🪙</div><div class="game-name">Coin Cascade</div></a>
-        <a href="/games/solitaire-roguelite/" class="game-card"><div class="game-icon">🃏</div><div class="game-name">Solitaire Roguelite</div></a>
-        <a href="/games/stack-tower/" class="game-card"><div class="game-icon">🏗️</div><div class="game-name">Stack Tower</div></a>
-        <a href="/games/voidbreak/" class="game-card"><div class="game-icon">☄️</div><div class="game-name">Voidbreak</div></a>
-        <a href="/games/fieldstone/" class="game-card"><div class="game-icon">🏰</div><div class="game-name">Fieldstone</div></a>
-        <a href="/games/lumble/" class="game-card"><div class="game-icon">🌟</div><div class="game-name">Lumble</div></a>
-        <a href="/games/wordle/" class="game-card"><div class="game-icon">🔤</div><div class="game-name">Wordle</div></a>
-        <a href="/games/snake/" class="game-card"><div class="game-icon">🐍</div><div class="game-name">Snake</div></a>
-        <a href="/games/2048/" class="game-card"><div class="game-icon">🔢</div><div class="game-name">2048</div></a>
-        <a href="/games/chaos-kitchen/" class="game-card"><div class="game-icon">👨‍🍳</div><div class="game-name">Chaos Kitchen</div></a>
-        <a href="/games/memory-match/" class="game-card"><div class="game-icon">🧠</div><div class="game-name">Memory Match</div></a>
+        {games.map((game) => (
+          <a href={`/games/${game.id}/`} class="game-card">
+            <div class="game-icon">{game.icon}</div>
+            <div class="game-name">{game.name}</div>
+          </a>
+        ))}
       </div>
     </div>
 

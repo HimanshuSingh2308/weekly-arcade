@@ -1,6 +1,27 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
+
+// Dynamic game data — auto-updates when game JSON files are added
+const gameModules = import.meta.glob('../../data/games/*.json', { eager: true });
+const allGames = Object.values(gameModules).map((mod: any) => mod.default || mod) as Array<{ id: string; name: string; icon: string }>;
+const gameCount = allGames.length;
+
+const siteUrl = 'https://weeklyarcade.games';
+
+const itemListSchema = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Free Browser Games on Weekly Arcade',
+  description: 'All free browser games available on Weekly Arcade — play instantly, no downloads required.',
+  numberOfItems: gameCount,
+  itemListElement: allGames.map((g, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: g.name,
+    url: `${siteUrl}/games/${g.id}/`,
+  })),
+});
 ---
 
 <BaseLayout title="Free Browser Games — Play Online Instantly | Weekly Arcade">
@@ -10,13 +31,13 @@ import SiteHeader from '../../components/SiteHeader.astro';
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 
     <!-- SEO -->
-    <meta name="description" content="Browse all free browser games on Weekly Arcade. Play puzzle, arcade, strategy, 3D, sports, and card games instantly — no downloads, no signup. New games added every week.">
+    <meta name="description" content={`Browse all ${gameCount} free browser games on Weekly Arcade. Play puzzle, arcade, strategy, 3D, sports, and card games instantly — no downloads, no signup. New games added every week.`}>
     <meta name="keywords" content="free browser games, play online games, no download games, free arcade games, free puzzle games, browser games 2026, online games no signup">
     <link rel="canonical" href="https://weeklyarcade.games/games/">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Free Browser Games — Play Online Instantly | Weekly Arcade">
-    <meta property="og:description" content="Browse all free browser games. Puzzle, arcade, strategy, 3D, sports, and card games — no downloads, no signup.">
+    <meta property="og:description" content={`Browse all ${gameCount} free browser games. Puzzle, arcade, strategy, 3D, sports, and card games — no downloads, no signup.`}>
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://weeklyarcade.games/games/">
     <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
@@ -29,7 +50,7 @@ import SiteHeader from '../../components/SiteHeader.astro';
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Free Browser Games — Play Online Instantly | Weekly Arcade">
-    <meta name="twitter:description" content="Browse all free browser games. Puzzle, arcade, strategy, 3D, sports, and card games — no downloads, no signup.">
+    <meta name="twitter:description" content={`Browse all ${gameCount} free browser games. Puzzle, arcade, strategy, 3D, sports, and card games — no downloads, no signup.`}>
     <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
     <meta name="twitter:image:alt" content="Weekly Arcade — free browser games catalog">
 
@@ -43,30 +64,8 @@ import SiteHeader from '../../components/SiteHeader.astro';
       ]
     }</script>
 
-    <!-- Structured Data: ItemList (helps Google show rich game listings) -->
-    <script type="application/ld+json">{
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      "name": "Free Browser Games on Weekly Arcade",
-      "description": "All free browser games available on Weekly Arcade — play instantly, no downloads required.",
-      "numberOfItems": 14,
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Chess 3D", "url": "https://weeklyarcade.games/games/chess-3d/" },
-        { "@type": "ListItem", "position": 2, "name": "Cricket Blitz", "url": "https://weeklyarcade.games/games/cricket-blitz/" },
-        { "@type": "ListItem", "position": 3, "name": "Coin Cascade", "url": "https://weeklyarcade.games/games/coin-cascade/" },
-        { "@type": "ListItem", "position": 4, "name": "Solitaire Roguelite", "url": "https://weeklyarcade.games/games/solitaire-roguelite/" },
-        { "@type": "ListItem", "position": 5, "name": "Stack Tower", "url": "https://weeklyarcade.games/games/stack-tower/" },
-        { "@type": "ListItem", "position": 6, "name": "Voidbreak", "url": "https://weeklyarcade.games/games/voidbreak/" },
-        { "@type": "ListItem", "position": 7, "name": "Fieldstone", "url": "https://weeklyarcade.games/games/fieldstone/" },
-        { "@type": "ListItem", "position": 8, "name": "Wordle", "url": "https://weeklyarcade.games/games/wordle/" },
-        { "@type": "ListItem", "position": 9, "name": "Snake", "url": "https://weeklyarcade.games/games/snake/" },
-        { "@type": "ListItem", "position": 10, "name": "2048", "url": "https://weeklyarcade.games/games/2048/" },
-        { "@type": "ListItem", "position": 11, "name": "Chaos Kitchen", "url": "https://weeklyarcade.games/games/chaos-kitchen/" },
-        { "@type": "ListItem", "position": 12, "name": "Memory Match", "url": "https://weeklyarcade.games/games/memory-match/" },
-        { "@type": "ListItem", "position": 13, "name": "Lumble", "url": "https://weeklyarcade.games/games/lumble/" },
-        { "@type": "ListItem", "position": 14, "name": "Tiny Tycoon", "url": "https://weeklyarcade.games/games/tiny-tycoon/" }
-      ]
-    }</script>
+    <!-- Structured Data: ItemList (dynamically generated from game data files) -->
+    <script type="application/ld+json" set:html={itemListSchema} />
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
@@ -86,7 +85,7 @@ import SiteHeader from '../../components/SiteHeader.astro';
   <!-- Page Header -->
   <section class="page-hero">
     <h1>Free Browser Games</h1>
-    <p class="page-desc">Play <strong>14 free browser games</strong> instantly — no downloads, no signup, no ads. From puzzles and card games to 3D action and sports, every game works on desktop, tablet, and mobile. New games added every week.</p>
+    <p class="page-desc">Play <strong>{gameCount} free browser games</strong> instantly — no downloads, no signup, no ads. From puzzles and card games to 3D action and sports, every game works on desktop, tablet, and mobile. New games added every week.</p>
   </section>
 
   <!-- Genre Filters -->
@@ -109,7 +108,7 @@ import SiteHeader from '../../components/SiteHeader.astro';
   <main class="container">
     <div class="section-header">
       <h2 class="section-title">All Games</h2>
-      <span class="game-count" id="gameCount">14 games</span>
+      <span class="game-count" id="gameCount">{gameCount} games</span>
     </div>
 
     <div class="games-grid" id="gamesGrid">

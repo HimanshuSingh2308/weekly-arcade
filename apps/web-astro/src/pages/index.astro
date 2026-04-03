@@ -1,6 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SiteHeader from '../components/SiteHeader.astro';
+
+// Dynamic game count — auto-updates when game JSON files are added
+const gameModules = import.meta.glob('../data/games/*.json', { eager: true });
+const gameCount = Object.keys(gameModules).length;
 ---
 
 <BaseLayout title="Weekly Arcade | New Free Browser Games Every Week">
@@ -10,13 +14,13 @@ import SiteHeader from '../components/SiteHeader.astro';
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 
     <!-- SEO -->
-    <meta name="description" content="Play 14+ free browser games instantly — no downloads, no signup. New games added every week including puzzle, arcade, strategy, 3D, and multiplayer games. Works on desktop, tablet, and mobile.">
+    <meta name="description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. New games added every week including puzzle, arcade, strategy, 3D, and multiplayer games. Works on desktop, tablet, and mobile.`}>
     <meta name="keywords" content="free browser games, online games, no download games, free games, browser games 2026, arcade games, puzzle games, play online free">
     <link rel="canonical" href="https://weeklyarcade.games/">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Weekly Arcade | New Free Browser Games Every Week">
-    <meta property="og:description" content="Play 14+ free browser games instantly — no downloads, no signup. New games added every week.">
+    <meta property="og:description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. New games added every week.`}>
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://weeklyarcade.games/">
     <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
@@ -29,7 +33,7 @@ import SiteHeader from '../components/SiteHeader.astro';
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Weekly Arcade | New Free Browser Games Every Week">
-    <meta name="twitter:description" content="Play 14+ free browser games instantly — no downloads, no signup. New games added every week.">
+    <meta name="twitter:description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. New games added every week.`}>
     <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
     <meta name="twitter:image:alt" content="Weekly Arcade — free browser games, no downloads required">
 
@@ -105,7 +109,7 @@ import SiteHeader from '../components/SiteHeader.astro';
     <div class="hero-inner">
       <div class="hero-content">
         <h1>New <span class="highlight">Free Browser Games</span> Every Week</h1>
-        <p class="hero-desc">Play 13+ games instantly in your browser — no downloads, no signup. New games added weekly.</p>
+        <p class="hero-desc">Play {gameCount}+ games instantly in your browser — no downloads, no signup. New games added weekly.</p>
         <div class="hero-featured">
           <div class="hero-badge">NEW THIS WEEK</div>
           <h2 class="hero-game-name">Cricket Blitz</h2>
@@ -131,7 +135,7 @@ import SiteHeader from '../components/SiteHeader.astro';
     <div class="stats-inner">
       <div class="stat-item">
         <span class="stat-icon">🎮</span>
-        <span class="stat-value">13</span> Games
+        <span class="stat-value">{gameCount}</span> Games
       </div>
       <div class="stat-divider"></div>
       <div class="stat-item">
@@ -169,7 +173,7 @@ import SiteHeader from '../components/SiteHeader.astro';
   <main class="container">
     <div class="section-header">
       <h2 class="section-title">Free Browser Games to Play Now</h2>
-      <span class="game-count" id="gameCount">12 games</span>
+      <span class="game-count" id="gameCount">{gameCount} games</span>
     </div>
 
     <div class="games-grid" id="gamesGrid">
