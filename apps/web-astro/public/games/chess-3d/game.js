@@ -3808,14 +3808,8 @@
   }
 
   async function _checkRejoinableSession() {
-    const rejoinBtn = $('rejoinBtn');
-    if (!rejoinBtn) return;
-
-    rejoinBtn.style.display = 'none';
-
     if (!currentUser || !window.multiplayerClient) return;
 
-    // Check localStorage for recent session
     const savedSid = localStorage.getItem('chess3d-rejoin-session');
     if (!savedSid) return;
 
@@ -3823,27 +3817,22 @@
     try {
       const session = await window.multiplayerClient.getSession(savedSid);
       if (session && (session.status === 'playing' || session.status === 'starting')) {
-        rejoinBtn.style.display = '';
-        rejoinBtn.textContent = 'Rejoin Game';
-        rejoinBtn.onclick = async () => {
-          sound.play('click');
-          gameMode = 'multiplayer';
-          mpSessionId = savedSid;
-          hideOverlay('mainMenuOverlay');
-          showOverlay('mpJoiningOverlay');
-          $('mpJoiningStatus').textContent = 'Rejoining game...';
-          try {
-            await mpJoinAndPlay(savedSid);
-            localStorage.removeItem('chess3d-rejoin-session');
-          } catch (e) {
-            showOverlay('mainMenuOverlay');
-            hideOverlay('mpJoiningOverlay');
-            mpShowError('Could not rejoin — game may have ended.');
-            localStorage.removeItem('chess3d-rejoin-session');
-          }
-        };
+        // Auto-rejoin immediately — don't wait for user to click
+        gameMode = 'multiplayer';
+        mpSessionId = savedSid;
+        hideOverlay('mainMenuOverlay');
+        showOverlay('mpJoiningOverlay');
+        $('mpJoiningStatus').textContent = 'Rejoining game...';
+        $('mpJoiningIcon').textContent = '♟️';
+        try {
+          await mpJoinAndPlay(savedSid);
+          localStorage.removeItem('chess3d-rejoin-session');
+        } catch (e) {
+          showOverlay('mainMenuOverlay');
+          hideOverlay('mpJoiningOverlay');
+          localStorage.removeItem('chess3d-rejoin-session');
+        }
       } else {
-        // Session ended — clean up
         localStorage.removeItem('chess3d-rejoin-session');
       }
     } catch (e) {
