@@ -141,6 +141,14 @@ class AuthManager {
       console.log('[Auth] Firebase app initialized at', Math.round(performance.now() - _t0), 'ms');
 
       this.auth = firebase.auth();
+      console.log('[Auth] firebase.auth() created at', Math.round(performance.now() - _t0), 'ms');
+      console.log('[Auth] auth.currentUser:', this.auth.currentUser ? 'EXISTS' : 'null');
+      console.log('[Auth] auth persistence:', firebase.auth.Auth.Persistence?.LOCAL);
+
+      // Check if Firebase already has a user in memory (faster than onAuthStateChanged)
+      if (this.auth.currentUser) {
+        console.log('[Auth] currentUser already available! Skipping onAuthStateChanged wait');
+      }
 
       // Guard against concurrent getIdToken calls (Firebase SDK race condition)
       let _tokenRefreshInProgress = false;

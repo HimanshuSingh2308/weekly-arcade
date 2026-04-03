@@ -58,7 +58,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 36;
+const CACHE_VERSION = 37;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -161,6 +161,17 @@ self.addEventListener('fetch', (e) => {
 
   // Only handle http/https requests — skip chrome-extension://, etc.
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  // NEVER intercept Firebase/Google auth requests — SW adds latency
+  // These need to go directly to the network for fastest auth
+  if (url.hostname.includes('googleapis.com') ||
+      url.hostname.includes('gstatic.com') ||
+      url.hostname.includes('firebaseapp.com') ||
+      url.hostname.includes('firebaseinstallations.googleapis.com') ||
+      url.hostname.includes('identitytoolkit.googleapis.com') ||
+      url.hostname.includes('securetoken.googleapis.com')) {
+    return; // Let browser handle directly — no SW interception
+  }
 
   // Network-first for HTML pages (ensures fresh content)
   if (e.request.mode === 'navigate' || e.request.destination === 'document') {
