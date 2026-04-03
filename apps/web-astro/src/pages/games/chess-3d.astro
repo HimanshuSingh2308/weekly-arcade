@@ -24,6 +24,8 @@ import gameData from '../../data/games/chess-3d.json';
 >
   <Fragment slot="head">
     <link rel="stylesheet" href="/games/chess-3d/styles.css">
+    <!-- Preload heavy assets — start downloading before scripts execute -->
+    <link rel="preload" href="https://cdn.babylonjs.com/babylon.js" as="script" crossorigin>
     <style is:global>
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
