@@ -95,15 +95,27 @@ class AuthManager {
 
       this.auth = firebase.auth();
 
+      // Guard against concurrent getIdToken calls (Firebase SDK race condition)
+      let _tokenRefreshInProgress = false;
+
       // Listen for auth state changes
       this.auth.onAuthStateChanged(async (user) => {
         this.user = user;
         this._cacheUser(user);
 
         if (user) {
-          // Get ID token and set it on the API client
-          const token = await user.getIdToken();
-          window.apiClient?.setToken(token);
+          // Get ID token — skip if another refresh is in progress
+          if (!_tokenRefreshInProgress) {
+            _tokenRefreshInProgress = true;
+            try {
+              const token = await user.getIdToken();
+              window.apiClient?.setToken(token);
+            } catch (e) {
+              console.warn('[Auth] Token fetch in onAuthStateChanged failed:', e.message);
+            } finally {
+              _tokenRefreshInProgress = false;
+            }
+          }
 
           // Register/update user on backend with retry
           const registerUser = async (retries = 3) => {
@@ -136,9 +148,16 @@ class AuthManager {
 
       // Refresh token periodically (every 50 minutes)
       setInterval(async () => {
-        if (this.user) {
-          const token = await this.user.getIdToken(true);
-          window.apiClient?.setToken(token);
+        if (this.user && !_tokenRefreshInProgress) {
+          _tokenRefreshInProgress = true;
+          try {
+            const token = await this.user.getIdToken(true);
+            window.apiClient?.setToken(token);
+          } catch (e) {
+            console.warn('[Auth] Periodic token refresh failed:', e.message);
+          } finally {
+            _tokenRefreshInProgress = false;
+          }
         }
       }, 50 * 60 * 1000);
 
