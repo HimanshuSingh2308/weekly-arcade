@@ -35,10 +35,12 @@
 
     // Instant render from cached user (before Firebase loads)
     const cached = window.authManager?.user;
+    console.log('[GameCloud] initAuth — cached user:', cached ? cached.displayName : 'none');
     if (cached) {
       currentUser = cached;
       _updateAuthBtn(opts);
-      // Don't call onSignIn yet — wait for Firebase to confirm
+      // Call onSignIn immediately if we have a cached token (user is functional)
+      if (window.apiClient?.token && opts.onSignIn) opts.onSignIn(cached);
     }
 
     // Poll for Firebase to finish initializing
