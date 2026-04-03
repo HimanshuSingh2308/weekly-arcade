@@ -333,6 +333,10 @@ const itemListSchema = JSON.stringify({
     <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
   </footer>
 
+  <!-- Auth Scripts -->
+  <script is:inline src="/js/api-client.js"></script>
+  <script is:inline src="/js/auth.js"></script>
+
   <script is:inline>
     // ─── Genre Filter ───
     const filterRow = document.getElementById('filterRow');
@@ -369,6 +373,49 @@ const itemListSchema = JSON.stringify({
       nav.classList.toggle('open');
       btn.textContent = nav.classList.contains('open') ? '\u2715' : '\u2630';
     }
+
+    // ─── Auth UI for SiteHeader ───
+    function toggleUserMenu() {
+      document.getElementById('userMenu').classList.toggle('open');
+    }
+
+    function handleSignOut(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.authManager.signOut();
+      document.getElementById('userMenu').classList.remove('open');
+    }
+
+    function updateAuthUI(user) {
+      const signInBtn = document.getElementById('signInBtn');
+      const userMenu = document.getElementById('userMenu');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+
+      if (user) {
+        if (signInBtn) signInBtn.style.display = 'none';
+        if (userMenu) userMenu.classList.add('signed-in');
+        if (userAvatar) userAvatar.src = user.photoURL || '';
+        if (userName) userName.textContent = user.displayName || 'Player';
+      } else {
+        if (signInBtn) signInBtn.style.display = 'block';
+        if (userMenu) userMenu.classList.remove('signed-in');
+      }
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const userMenu = document.getElementById('userMenu');
+      if (userMenu && !userMenu.contains(e.target)) userMenu.classList.remove('open');
+    });
+
+    // Init auth listener
+    const checkAuth = setInterval(() => {
+      if (window.authManager?.isInitialized) {
+        clearInterval(checkAuth);
+        window.authManager.onAuthStateChanged(updateAuthUI);
+      }
+    }, 100);
   </script>
 
 </BaseLayout>

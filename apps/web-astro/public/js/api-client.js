@@ -50,14 +50,11 @@ class ApiClient {
       });
 
       // 401 = token expired or invalid — try refreshing once
-      if (response.status === 401 && !_retried && window.authManager?._auth) {
+      if (response.status === 401 && !_retried && window.authManager) {
         console.log('[ApiClient] 401 — attempting token refresh...');
         try {
-          const { getIdToken } = window.authManager._fbModules || {};
-          const user = window.authManager._auth.currentUser;
-          if (user && getIdToken) {
-            const freshToken = await getIdToken(user, true); // force refresh
-            this.setToken(freshToken);
+          const freshToken = await window.authManager.refreshToken();
+          if (freshToken) {
             console.log('[ApiClient] Token refreshed — retrying request');
             return this.request(endpoint, options, true); // retry once
           }

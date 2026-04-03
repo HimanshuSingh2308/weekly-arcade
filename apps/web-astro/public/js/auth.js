@@ -26,8 +26,24 @@ class AuthManager {
     this._cacheKey = 'wa-cached-user';
     this._modules = {}; // Stores imported Firebase modules
 
+    // Promise that resolves when Firebase confirms auth state (not cached)
+    this._firebaseReadyResolve = null;
+    this._firebaseReady = new Promise(r => { this._firebaseReadyResolve = r; });
+
     // Restore cached user immediately (before Firebase loads)
     this._restoreCachedUser();
+  }
+
+  /**
+   * Wait for Firebase to confirm auth state.
+   * Resolves when onAuthStateChanged fires for the first time.
+   * Times out after 30s to prevent indefinite blocking.
+   */
+  waitForFirebase() {
+    return Promise.race([
+      this._firebaseReady,
+      new Promise(r => setTimeout(r, 30000)),
+    ]);
   }
 
   _restoreCachedUser() {
@@ -150,6 +166,11 @@ class AuthManager {
         }
 
         this.isInitialized = true;
+        // Resolve Firebase ready promise (first onAuthStateChanged)
+        if (this._firebaseReadyResolve) {
+          this._firebaseReadyResolve();
+          this._firebaseReadyResolve = null;
+        }
         this.notifyListeners();
       });
 
@@ -291,6 +312,79 @@ class AuthManager {
           } catch (e) { resolve(null); }
         };
       } catch (e) { reject(e); }
+    });
+  }
+
+  /**
+   * Refresh the ID token without waiting for onAuthStateChanged.
+   * Strategy: (1) use auth.currentUser if available, (2) fall back to IDB refresh token.
+   * Returns a fresh ID token or null.
+   */
+  async refreshToken() {
+    // Fast path: Firebase user is already available
+    if (this._auth?.currentUser && this._fbModules?.getIdToken) {
+      try {
+        const token = await this._fbModules.getIdToken(this._auth.currentUser, true);
+        window.apiClient?.setToken(token);
+        return token;
+      } catch (e) {
+        console.warn('[Auth] refreshToken via currentUser failed:', e.message);
+      }
+    }
+
+    // Slow path: read refresh token from IDB and call Google token endpoint directly
+    try {
+      const refreshToken = await this._readRefreshTokenFromIDB();
+      if (!refreshToken) return null;
+
+      const resp = await fetch(
+        `https://securetoken.googleapis.com/v1/token?key=${firebaseConfig.apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(refreshToken)}`,
+        }
+      );
+
+      if (!resp.ok) return null;
+
+      const data = await resp.json();
+      const idToken = data.id_token;
+      if (idToken) {
+        window.apiClient?.setToken(idToken);
+        console.log('[Auth] Token refreshed via IDB refresh token');
+        return idToken;
+      }
+    } catch (e) {
+      console.warn('[Auth] refreshToken via IDB failed:', e.message);
+    }
+
+    return null;
+  }
+
+  /**
+   * Read Firebase refresh token from IndexedDB.
+   */
+  _readRefreshTokenFromIDB() {
+    return new Promise((resolve) => {
+      try {
+        const dbReq = indexedDB.open('firebaseLocalStorageDb');
+        dbReq.onerror = () => resolve(null);
+        dbReq.onsuccess = (e) => {
+          try {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('firebaseLocalStorage')) { resolve(null); return; }
+            const tx = db.transaction('firebaseLocalStorage', 'readonly');
+            const store = tx.objectStore('firebaseLocalStorage');
+            const getAll = store.getAll();
+            getAll.onsuccess = () => {
+              const authEntry = getAll.result?.find(r => r.fbase_key?.includes('authUser'));
+              resolve(authEntry?.value?.stsTokenManager?.refreshToken || null);
+            };
+            getAll.onerror = () => resolve(null);
+          } catch { resolve(null); }
+        };
+      } catch { resolve(null); }
     });
   }
 
