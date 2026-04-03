@@ -503,16 +503,37 @@
       camera.position.set(0, 8, 15);
       camera.lookAt(0, 0, 0);
 
-      // Renderer with better settings
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      // Renderer with iOS-safe settings
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: !(/iPhone|iPad|iPod/.test(navigator.userAgent)), // Disable AA on iOS for perf
+          alpha: false,
+          powerPreference: 'default',
+        });
+      } catch (e) {
+        document.getElementById('gameContainer').innerHTML =
+          '<p style="color:white;text-align:center;padding:40px;">3D not supported on this device. Try a different browser.</p>';
+        return;
+      }
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      // iOS Safari has strict memory limits — detect and adjust
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = isIOS ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.2;
       renderer.outputEncoding = THREE.sRGBEncoding;
       document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+      // Handle WebGL context loss (iOS suspends WebGL in background)
+      renderer.domElement.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        console.warn('[Lumble] WebGL context lost — pausing render');
+      });
+      renderer.domElement.addEventListener('webglcontextrestored', () => {
+        console.log('[Lumble] WebGL context restored — resuming');
+      });
 
       // Hemisphere light - sky/ground ambient
       const hemiLight = new THREE.HemisphereLight(lighting.hemiSky, lighting.hemiGround, lighting.hemiIntensity);
@@ -523,8 +544,10 @@
       const sunLight = new THREE.DirectionalLight(lighting.sunColor, lighting.sunIntensity);
       sunLight.position.set(30, 50, 20);
       sunLight.castShadow = true;
-      sunLight.shadow.mapSize.width = 4096;
-      sunLight.shadow.mapSize.height = 4096;
+      // iOS crashes with 4096 shadow maps — use 1024 on mobile, 2048 on desktop
+      const shadowSize = isIOS ? 1024 : (window.innerWidth < 768 ? 1024 : 2048);
+      sunLight.shadow.mapSize.width = shadowSize;
+      sunLight.shadow.mapSize.height = shadowSize;
       sunLight.shadow.camera.near = 0.5;
       sunLight.shadow.camera.far = 150;
       sunLight.shadow.camera.left = -60;
@@ -3431,6 +3454,16 @@
       if (soundMuted) return null;
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // iOS: suspend/resume AudioContext on visibility change
+        document.addEventListener('visibilitychange', () => {
+          if (!audioCtx) return;
+          if (document.hidden) audioCtx.suspend();
+          else audioCtx.resume();
+        });
+      }
+      // iOS can put AudioContext in 'interrupted' state
+      if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+        audioCtx.resume().catch(() => {});
       }
       return audioCtx;
     }
