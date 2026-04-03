@@ -1,0 +1,92 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1C1C2E"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C9A84C"/>
+      <stop offset="100%" stop-color="#A08030"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Chess board (perspective, center-right) -->
+  <g transform="translate(650, 180)">
+    <!-- Board rows -->
+    <g opacity="0.8">
+      <rect x="0" y="0" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="60" y="0" width="60" height="60" fill="#5C3317"/>
+      <rect x="120" y="0" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="180" y="0" width="60" height="60" fill="#5C3317"/>
+      <rect x="240" y="0" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="0" y="60" width="60" height="60" fill="#5C3317"/>
+      <rect x="60" y="60" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="120" y="60" width="60" height="60" fill="#5C3317"/>
+      <rect x="180" y="60" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="240" y="60" width="60" height="60" fill="#5C3317"/>
+      <rect x="0" y="120" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="60" y="120" width="60" height="60" fill="#5C3317"/>
+      <rect x="120" y="120" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="180" y="120" width="60" height="60" fill="#5C3317"/>
+      <rect x="240" y="120" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="0" y="180" width="60" height="60" fill="#5C3317"/>
+      <rect x="60" y="180" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="120" y="180" width="60" height="60" fill="#5C3317"/>
+      <rect x="180" y="180" width="60" height="60" fill="#F0D9B5"/>
+      <rect x="240" y="180" width="60" height="60" fill="#5C3317"/>
+    </g>
+    <!-- Board border -->
+    <rect x="-5" y="-5" width="310" height="250" fill="none" stroke="#C9A84C" stroke-width="3" rx="4" opacity="0.4"/>
+
+    <!-- White pieces (bottom) -->
+    <text x="30" y="225" text-anchor="middle" font-size="40" fill="#F0E6D3">&#9812;</text>
+    <text x="90" y="225" text-anchor="middle" font-size="40" fill="#F0E6D3">&#9813;</text>
+    <text x="150" y="225" text-anchor="middle" font-size="40" fill="#F0E6D3">&#9814;</text>
+    <text x="210" y="225" text-anchor="middle" font-size="40" fill="#F0E6D3">&#9816;</text>
+    <text x="270" y="225" text-anchor="middle" font-size="40" fill="#F0E6D3">&#9817;</text>
+    <text x="30" y="165" text-anchor="middle" font-size="32" fill="#F0E6D3">&#9817;</text>
+    <text x="90" y="165" text-anchor="middle" font-size="32" fill="#F0E6D3">&#9817;</text>
+    <text x="150" y="165" text-anchor="middle" font-size="32" fill="#F0E6D3">&#9817;</text>
+
+    <!-- Black pieces (top) -->
+    <text x="30" y="45" text-anchor="middle" font-size="40" fill="#2C2C2C">&#9818;</text>
+    <text x="90" y="45" text-anchor="middle" font-size="40" fill="#2C2C2C">&#9819;</text>
+    <text x="150" y="45" text-anchor="middle" font-size="40" fill="#2C2C2C">&#9820;</text>
+    <text x="210" y="45" text-anchor="middle" font-size="40" fill="#2C2C2C">&#9822;</text>
+    <text x="270" y="45" text-anchor="middle" font-size="40" fill="#2C2C2C">&#9823;</text>
+    <text x="30" y="105" text-anchor="middle" font-size="32" fill="#2C2C2C">&#9823;</text>
+    <text x="90" y="105" text-anchor="middle" font-size="32" fill="#2C2C2C">&#9823;</text>
+
+    <!-- Move highlight -->
+    <rect x="120" y="120" width="60" height="60" fill="#3366CC" opacity="0.4" rx="4"/>
+    <circle cx="150" cy="90" r="8" fill="#3DAA62" opacity="0.6"/>
+  </g>
+
+  <!-- Text (left side) -->
+  <text x="80" y="200" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="72" fill="url(#gold)" letter-spacing="4">CHESS 3D</text>
+  <text x="80" y="250" font-family="system-ui, sans-serif" font-weight="600" font-size="24" fill="#A09AB8">Play Free Online | 3D Board | Smart AI</text>
+
+  <!-- Features -->
+  <g transform="translate(80, 300)" font-family="system-ui, sans-serif" font-size="20" fill="#E8DCC8">
+    <text y="0">♟️ 4 AI Difficulty Levels</text>
+    <text y="40">🏆 ELO Rating System</text>
+    <text y="80">🤝 Play vs Friends Online</text>
+    <text y="120">📱 Mobile Friendly</text>
+  </g>
+
+  <!-- Weekly Arcade branding -->
+  <text x="80" y="560" font-family="system-ui, sans-serif" font-weight="700" font-size="18" fill="#C9A84C" opacity="0.6">weeklyarcade.games</text>
+
+  <!-- 3D badge -->
+  <rect x="80" y="460" width="80" height="32" rx="16" fill="#C9A84C" opacity="0.15"/>
+  <rect x="80" y="460" width="80" height="32" rx="16" fill="none" stroke="#C9A84C" stroke-width="1" opacity="0.4"/>
+  <text x="120" y="481" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="800" font-size="14" fill="#C9A84C">3D WebGL</text>
+
+  <!-- Multiplayer badge -->
+  <rect x="175" y="460" width="110" height="32" rx="16" fill="#3DAA62" opacity="0.15"/>
+  <rect x="175" y="460" width="110" height="32" rx="16" fill="none" stroke="#3DAA62" stroke-width="1" opacity="0.4"/>
+  <text x="230" y="481" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="800" font-size="14" fill="#3DAA62">Multiplayer</text>
+</svg>

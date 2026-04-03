@@ -28,7 +28,9 @@ const {
 } = Astro.props;
 
 const siteUrl = 'https://weeklyarcade.games';
-const ogImage = `${siteUrl}/og-image.png`;
+// Use game-specific OG image if it exists, fallback to generic
+const gameSlug = url.replace(/^\/games\//, '').replace(/\/$/, '');
+const ogImage = `${siteUrl}/og/${gameSlug}.png`;
 
 const videoGameSchema = {
   '@context': 'https://schema.org',
@@ -37,7 +39,7 @@ const videoGameSchema = {
   url: `${siteUrl}${url}`,
   description,
   genre: genres,
-  playMode: 'SinglePlayer',
+  playMode: genres.some(g => g.toLowerCase().includes('multiplayer')) ? ['SinglePlayer', 'MultiPlayer'] : 'SinglePlayer',
   applicationCategory: 'Game',
   operatingSystem: 'Web Browser',
   gamePlatform: 'Web Browser',
