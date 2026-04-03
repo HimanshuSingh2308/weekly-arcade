@@ -63,17 +63,26 @@ const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
 const ASSETS = [
+  // Shell
   '/',
   '/index.html',
   '/manifest.json',
+
+  // Shared JS
   '/js/api-client.js',
   '/js/auth.js',
   '/js/sync.js',
   '/js/game-cloud.js',
   '/js/game-header.js',
   '/js/notification-manager.js',
+  '/js/multiplayer-client.js',
+  '/js/multiplayer-ui.js',
+
+  // Pages
   '/leaderboard/',
   '/leaderboard/index.html',
+
+  // Games — pages
   '/games/wordle/',
   '/games/wordle/index.html',
   '/games/memory-match/',
@@ -97,7 +106,18 @@ const ASSETS = [
   '/games/coin-cascade/',
   '/games/coin-cascade/index.html',
   '/games/tiny-tycoon/',
-  '/games/tiny-tycoon/index.html'
+  '/games/tiny-tycoon/index.html',
+  '/games/cricket-blitz/',
+  '/games/cricket-blitz/index.html',
+  '/games/chess-3d/',
+  '/games/chess-3d/index.html',
+
+  // Chess 3D assets (heavy — loaded separately)
+  '/games/chess-3d/game.js',
+  '/games/chess-3d/styles.css',
+  '/games/chess-3d/themes.js',
+  '/games/chess-3d/skins.js',
+  '/games/chess-3d/puzzles.js',
 ];
 
 // Install - cache assets (don't skipWaiting automatically, let user decide)
