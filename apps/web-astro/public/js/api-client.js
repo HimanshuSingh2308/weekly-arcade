@@ -30,7 +30,7 @@ class ApiClient {
   /**
    * Make an authenticated API request
    */
-  async request(endpoint, options = {}) {
+  async request(endpoint, options = {}, _retried = false) {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
@@ -48,6 +48,23 @@ class ApiClient {
         ...options,
         headers,
       });
+
+      // 401 = token expired or invalid — try refreshing once
+      if (response.status === 401 && !_retried && window.authManager?._auth) {
+        console.log('[ApiClient] 401 — attempting token refresh...');
+        try {
+          const { getIdToken } = window.authManager._fbModules || {};
+          const user = window.authManager._auth.currentUser;
+          if (user && getIdToken) {
+            const freshToken = await getIdToken(user, true); // force refresh
+            this.setToken(freshToken);
+            console.log('[ApiClient] Token refreshed — retrying request');
+            return this.request(endpoint, options, true); // retry once
+          }
+        } catch (refreshErr) {
+          console.warn('[ApiClient] Token refresh failed:', refreshErr.message);
+        }
+      }
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: response.statusText }));
