@@ -20,6 +20,10 @@ const { title } = Astro.props;
     />
     <title>{title}</title>
 
+    <!-- Preload Firebase SDK — start download immediately, don't wait for auth.js -->
+    <link rel="preload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js" as="script" crossorigin>
+    <link rel="preload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js" as="script" crossorigin>
+
     <!-- Google Analytics 4 -->
     <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-YCS3JQN8ZH"></script>
     <script is:inline>
