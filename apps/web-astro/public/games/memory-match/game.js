@@ -617,6 +617,7 @@
 
       const scoreData = {
         score: gameState.score,
+        level: { easy: 1, medium: 2, hard: 3 }[gameState.difficulty] || 1,
         timeMs: Math.round(gameState.timer * 1000),
         metadata: {
           difficulty: gameState.difficulty,

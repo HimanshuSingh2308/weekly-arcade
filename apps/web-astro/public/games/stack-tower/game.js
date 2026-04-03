@@ -773,7 +773,7 @@
           blocksPlaced: totalStacks,
           perfectStacks: perfectStacks,
           maxCombo: maxCombo,
-          perfectRate: totalStacks > 0 ? ((perfectStacks / totalStacks) * 100).toFixed(1) : '0'
+          perfectRate: totalStacks > 0 ? Math.round((perfectStacks / totalStacks) * 1000) / 10 : 0
         }
       });
     }

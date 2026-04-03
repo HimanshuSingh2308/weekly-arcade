@@ -5963,9 +5963,8 @@ import * as THREE from 'three';
     const MAX_PLAUSIBLE_SCORE = 500;
     const clampedScore = Math.min(Math.max(0, finalScore), MAX_PLAUSIBLE_SCORE);
     try {
-      if (window.apiClient) {
-        // Submit even without auth — api-client shows login nudge for guests
-        await window.apiClient.submitScore('cricket-blitz', {
+      if (window.gameCloud) {
+        await window.gameCloud.submitOrQueue('cricket-blitz', {
           score: clampedScore,
           level: 1,
           timeMs: Date.now() - state.gameStartTime,
