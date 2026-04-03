@@ -787,6 +787,26 @@
   color: var(--c3d-text);
 }
 
+/* ---------- Rejoin Button ---------- */
+.chess3d-btn-rejoin {
+  width: 100%;
+  margin-bottom: 8px;
+  background: rgba(212, 80, 74, 0.2);
+  color: var(--c3d-red);
+  border: 1px solid rgba(212, 80, 74, 0.5);
+  font-weight: 700;
+  animation: rejoinPulse 2s ease-in-out infinite;
+}
+
+.chess3d-btn-rejoin:hover {
+  background: rgba(212, 80, 74, 0.3);
+}
+
+@keyframes rejoinPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 80, 74, 0.3); }
+  50% { box-shadow: 0 0 12px 4px rgba(212, 80, 74, 0.2); }
+}
+
 /* ---------- Board Theme Selector ---------- */
 .chess3d-theme-select {
   margin-bottom: 10px;

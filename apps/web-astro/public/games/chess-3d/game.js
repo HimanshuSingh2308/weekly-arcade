@@ -3311,7 +3311,7 @@
       try { await window.multiplayerClient.leaveSession(mpSessionId); } catch (e) {}
       hideOverlay('mpWaitingOverlay');
       showOverlay('mainMenuOverlay');
-      mpCleanup();
+      mpCleanup(true); // Full leave — cancel waiting room
     });
 
     // Connect WebSocket and listen for opponent
@@ -3575,7 +3575,7 @@
         gameMode = 'ai'; // Set before cleanup to prevent reconnect overlay
         hideOverlay('gameOverOverlay');
         showOverlay('mainMenuOverlay');
-        mpCleanup();
+        mpCleanup(true); // Game is finished — full leave
         updateMenuDisplay();
       };
     });
@@ -3784,21 +3784,71 @@
     mpStartGameClock();
   }
 
-  function mpCleanup() {
+  function mpCleanup(fullLeave) {
     const sid = mpSessionId;
     gameActive = false;
     gameMode = 'ai';
     mpSessionId = null;
     mpStopPolling();
     mpStopTimers();
-    // Disconnect WebSocket first — server detects disconnect and cleans up
+    // Disconnect WebSocket — server gives 2 min reconnect window
     try { window.multiplayerClient?.disconnect(); } catch (e) {}
-    // REST leave as fallback (ignore errors — server may have already cleaned up)
-    if (sid) {
+    // Only call leaveSession if fully leaving (not just going to menu to rejoin)
+    if (fullLeave && sid) {
       window.multiplayerClient?.leaveSession(sid).catch(() => {});
+    }
+    // Save session ID for rejoin (unless fully leaving)
+    if (!fullLeave && sid) {
+      localStorage.setItem('chess3d-rejoin-session', sid);
+    } else {
+      localStorage.removeItem('chess3d-rejoin-session');
     }
     $('gameHud').style.display = 'none';
     $('undoBtn').style.display = '';
+  }
+
+  async function _checkRejoinableSession() {
+    const rejoinBtn = $('rejoinBtn');
+    if (!rejoinBtn) return;
+
+    rejoinBtn.style.display = 'none';
+
+    if (!currentUser || !window.multiplayerClient) return;
+
+    // Check localStorage for recent session
+    const savedSid = localStorage.getItem('chess3d-rejoin-session');
+    if (!savedSid) return;
+
+    // Verify session is still active
+    try {
+      const session = await window.multiplayerClient.getSession(savedSid);
+      if (session && (session.status === 'playing' || session.status === 'starting')) {
+        rejoinBtn.style.display = '';
+        rejoinBtn.textContent = 'Rejoin Game';
+        rejoinBtn.onclick = async () => {
+          sound.play('click');
+          gameMode = 'multiplayer';
+          mpSessionId = savedSid;
+          hideOverlay('mainMenuOverlay');
+          showOverlay('mpJoiningOverlay');
+          $('mpJoiningStatus').textContent = 'Rejoining game...';
+          try {
+            await mpJoinAndPlay(savedSid);
+            localStorage.removeItem('chess3d-rejoin-session');
+          } catch (e) {
+            showOverlay('mainMenuOverlay');
+            hideOverlay('mpJoiningOverlay');
+            mpShowError('Could not rejoin — game may have ended.');
+            localStorage.removeItem('chess3d-rejoin-session');
+          }
+        };
+      } else {
+        // Session ended — clean up
+        localStorage.removeItem('chess3d-rejoin-session');
+      }
+    } catch (e) {
+      localStorage.removeItem('chess3d-rejoin-session');
+    }
   }
 
   // Clean up multiplayer session if user closes/navigates away
@@ -4247,6 +4297,9 @@
       stats.push(winRate + '% win rate');
     }
     $('menuStats').textContent = stats.join(' \u00b7 ') || 'No games played yet';
+
+    // Check for active MP sessions to rejoin
+    _checkRejoinableSession();
 
     // Update skin unlock indicators
     document.querySelectorAll('.chess3d-skin-btn').forEach(btn => {
