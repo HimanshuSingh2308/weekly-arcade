@@ -122,7 +122,7 @@
       const steerInput = inputs.steer || 0;
       const speedFactor = Math.min(this.speed / (cfg.topSpeed * 0.3), 1);
 
-      if (inputs.drift && this.speed > cfg.topSpeed * 0.2 && Math.abs(steerInput) > 0.1) {
+      if (inputs.drift && this.speed > cfg.topSpeed * 0.15) {
         // Drift mode
         if (!this.isDrifting) {
           this.isDrifting = true;
