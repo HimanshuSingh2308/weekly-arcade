@@ -65,16 +65,18 @@ import gameData from '../../data/games/drift-legends.json';
         touch-action: none;
         -webkit-touch-callout: none;
       }
-      /* Suppress browser video overlay on canvas */
+      /* Suppress browser video/media overlay on canvas */
       video::-webkit-media-controls,
-      canvas::-webkit-media-controls {
+      canvas::-webkit-media-controls,
+      ::-webkit-media-controls,
+      ::-webkit-media-controls-panel,
+      ::-webkit-media-controls-overlay-play-button,
+      ::-webkit-media-controls-start-playback-button,
+      ::-webkit-media-controls-play-button {
         display: none !important;
-      }
-      ::-webkit-media-controls-overlay-play-button {
-        display: none !important;
-      }
-      *::-webkit-media-controls-start-playback-button {
-        display: none !important;
+        -webkit-appearance: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
       }
       .dl-wrap {
         position: fixed;
@@ -340,7 +342,7 @@ import gameData from '../../data/games/drift-legends.json';
 
   <!-- 3D Canvas Container -->
   <div class="dl-wrap" id="gameWrap">
-    <canvas id="renderCanvas" role="application" aria-label="Drift Legends 3D racing game"></canvas>
+    <canvas id="renderCanvas" role="application" aria-label="Drift Legends 3D racing game" playsinline></canvas>
     <div id="dl-announcer" aria-live="polite" aria-atomic="true"
          style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;"></div>
   </div>
