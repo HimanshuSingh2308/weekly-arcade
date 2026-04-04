@@ -1279,16 +1279,18 @@
     }
 
     _showGaragePreview(visible) {
-      if (this._garageCar) this._garageCar.isVisible = visible;
-      if (this._garageCam && visible) {
+      if (this._garageCar) this._garageCar.isVisible = !!visible;
+      if (visible && this._garageCam) {
         this._savedCamForGarage = this.scene.activeCamera;
         this.scene.activeCamera = this._garageCam;
-      } else if (this._savedCamForGarage && !visible) {
-        this.scene.activeCamera = this._savedCamForGarage;
+      } else if (!visible) {
+        if (this._savedCamForGarage) this.scene.activeCamera = this._savedCamForGarage;
+        // Dispose garage car when leaving
+        if (this._garageCar) { this._garageCar.dispose(false, true); this._garageCar = null; }
       }
-      if (this._garageKeyLight) this._garageKeyLight.setEnabled(visible);
-      if (this._garageFillLight) this._garageFillLight.setEnabled(visible);
-      if (this._garageHemi) this._garageHemi.setEnabled(visible);
+      if (this._garageKeyLight) this._garageKeyLight.setEnabled(!!visible);
+      if (this._garageFillLight) this._garageFillLight.setEnabled(!!visible);
+      if (this._garageHemi) this._garageHemi.setEnabled(!!visible);
     }
 
     updateCarSelectCards(progress) {
