@@ -257,6 +257,68 @@ import gameData from '../../data/games/drift-legends.json';
     </svg>
   </div>
 
+  <!-- Mountain Road SVG for Story Select (hidden by default) -->
+  <div id="storyMtnBg" style="display:none;position:fixed;top:62px;left:0;right:0;bottom:0;z-index:0;background:#0a0a1a;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 800" preserveAspectRatio="none" style="width:100%;height:100%;">
+      <defs>
+        <linearGradient id="mtnSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a0820"/>
+          <stop offset="50%" stop-color="#12153a"/>
+          <stop offset="100%" stop-color="#1a2040"/>
+        </linearGradient>
+        <linearGradient id="mtnGround" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#141a12"/>
+          <stop offset="100%" stop-color="#0a0e08"/>
+        </linearGradient>
+      </defs>
+      <!-- Sky -->
+      <rect width="1600" height="800" fill="url(#mtnSky)"/>
+      <!-- Stars -->
+      <circle cx="100" cy="60" r="1" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="350" cy="40" r="1.2" fill="rgba(255,255,255,0.4)"/>
+      <circle cx="600" cy="80" r="1" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="900" cy="50" r="1.5" fill="rgba(255,255,255,0.3)"/>
+      <circle cx="1200" cy="70" r="1" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="1450" cy="45" r="1.2" fill="rgba(255,255,255,0.4)"/>
+      <!-- Moon -->
+      <circle cx="1400" cy="80" r="20" fill="rgba(200,200,255,0.06)"/>
+      <circle cx="1405" cy="76" r="18" fill="#0a0820"/>
+      <!-- Back mountains — large, muted blue -->
+      <polygon points="0,500 100,280 250,350 400,220 550,300 700,180 850,260 1000,200 1150,300 1300,240 1450,320 1600,280 1600,500" fill="#0e1225"/>
+      <!-- Mid mountains — darker, greener -->
+      <polygon points="0,550 80,380 200,420 350,340 500,400 650,320 800,380 950,300 1100,360 1250,310 1400,380 1550,350 1600,550" fill="#0c1420"/>
+      <!-- Front mountains — darkest, closest -->
+      <polygon points="0,600 120,450 280,500 400,430 550,480 700,420 850,470 1000,410 1150,460 1300,430 1450,480 1600,440 1600,600" fill="#0a1018"/>
+      <!-- Ground -->
+      <rect x="0" y="550" width="1600" height="250" fill="url(#mtnGround)"/>
+      <!-- Pine trees (scattered along mountain edges) -->
+      <polygon points="150,450 155,410 160,450" fill="#0d2010"/>
+      <polygon points="155,420 158,390 161,420" fill="#0d2010"/>
+      <polygon points="320,490 326,440 332,490" fill="#0c1e0e"/>
+      <polygon points="326,450 329,425 332,450" fill="#0c1e0e"/>
+      <polygon points="500,470 506,420 512,470" fill="#0d2010"/>
+      <polygon points="680,440 686,390 692,440" fill="#0e2212"/>
+      <polygon points="686,400 689,375 692,400" fill="#0e2212"/>
+      <polygon points="850,460 856,410 862,460" fill="#0c1e0e"/>
+      <polygon points="1020,430 1026,380 1032,430" fill="#0d2010"/>
+      <polygon points="1026,390 1029,365 1032,390" fill="#0d2010"/>
+      <polygon points="1200,450 1206,400 1212,450" fill="#0e2212"/>
+      <polygon points="1380,470 1386,425 1392,470" fill="#0c1e0e"/>
+      <polygon points="1500,440 1506,395 1512,440" fill="#0d2010"/>
+      <!-- Winding road path (thick, dark) -->
+      <path d="M 50,700 C 200,600 300,500 450,550 C 600,600 650,450 800,400 C 950,350 1000,500 1150,450 C 1300,400 1350,300 1550,250"
+            fill="none" stroke="#1a1a2e" stroke-width="28" stroke-linecap="round"/>
+      <!-- Road center dashes (orange) -->
+      <path d="M 50,700 C 200,600 300,500 450,550 C 600,600 650,450 800,400 C 950,350 1000,500 1150,450 C 1300,400 1350,300 1550,250"
+            fill="none" stroke="#ff660044" stroke-width="3" stroke-dasharray="20,15" stroke-linecap="round"/>
+      <!-- Road edge lines -->
+      <path d="M 50,700 C 200,600 300,500 450,550 C 600,600 650,450 800,400 C 950,350 1000,500 1150,450 C 1300,400 1350,300 1550,250"
+            fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="30" stroke-linecap="round" stroke-dasharray="2,60"/>
+      <!-- Atmosphere fog at base -->
+      <rect x="0" y="650" width="1600" height="150" fill="rgba(10,14,8,0.4)"/>
+    </svg>
+  </div>
+
   <!-- Rotate device hint (portrait only) -->
   <div class="dl-rotate-hint" style="display:none;position:fixed;inset:0;z-index:9999;background:#0d0d1a;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:monospace;text-align:center;padding:2rem;">
     <div style="font-size:3rem;margin-bottom:1rem;">&#x1F4F1;&#x27A1;&#xFE0F;</div>
