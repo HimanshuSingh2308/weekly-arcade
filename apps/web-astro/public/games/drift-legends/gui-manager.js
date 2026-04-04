@@ -35,8 +35,8 @@
   const CH_COLORS = [COLORS.ch1, COLORS.ch2, COLORS.ch3, COLORS.ch4, COLORS.ch5];
   const FONT = 'bold 24px monospace';
   const FONT_SMALL = '16px monospace';
-  const STAR_FILLED = '\u2605';   // ★
-  const STAR_EMPTY = '\u2606';    // ☆
+  const STAR_FILLED = '*';
+  const STAR_EMPTY = '-';
 
   class GUIManager {
     constructor(scene) {
@@ -1719,7 +1719,8 @@
       panel.addControl(this.resultStars);
 
       // Center — stats + goals in a compact card
-      var statsCard = new GUI.Rectangle('resStatsCard');
+      this._resultStatsCard = new GUI.Rectangle('resStatsCard');
+      var statsCard = this._resultStatsCard;
       statsCard.isHitTestVisible = false;
       statsCard.width = '520px';
       statsCard.height = '240px';
@@ -1809,7 +1810,14 @@
       this.resultTitle.shadowColor = won ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.2)';
       this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' Place';
       this.resultPosition.color = won ? COLORS.gold : COLORS.text;
-      this.resultStars.text = '\u2b50'.repeat(data.stars) + '\u2606'.repeat(3 - data.stars);
+      // Stars as filled/empty blocks — works in all fonts
+      var starStr = '';
+      for (var si = 0; si < 3; si++) {
+        starStr += si < data.stars ? '[*]' : '[ ]';
+        if (si < 2) starStr += ' ';
+      }
+      this.resultStars.text = starStr;
+      this.resultStars.color = data.stars >= 2 ? COLORS.gold : COLORS.textDim;
       this.resultScore.text = 'Score: ' + data.raceScore + (data.driftScore ? '  Drift: ' + data.driftScore : '');
       this.resultCoins.text = '+' + data.coins + ' coins';
       if (data.totalTimeMs) {
@@ -1818,7 +1826,7 @@
       } else {
         this.resultTime.text = '';
       }
-      // Show goal results
+      // Show goal results — dynamically size card to fit
       if (data.goalResults && data.goalResults.length) {
         var goalStr = '';
         data.goalResults.forEach(function(g) {
@@ -1827,11 +1835,18 @@
         if (data.allGoalsPassed && data.unlockText) {
           goalStr += '\n' + data.unlockText;
         } else if (!data.allGoalsPassed) {
-          goalStr += '\nComplete all goals to advance!';
+          goalStr += '\nComplete all goals\nto advance!';
         }
         this.resultUnlock.text = goalStr;
         this.resultUnlock.color = data.allGoalsPassed ? COLORS.green : COLORS.accent;
-        this.resultUnlock.height = (data.goalResults.length * 18 + 30) + 'px';
+        // Dynamic height: 20px per goal line + 50px for advance text
+        var goalLines = data.goalResults.length + (data.allGoalsPassed ? 0 : 2);
+        var textHeight = goalLines * 20 + 40;
+        this.resultUnlock.height = textHeight + 'px';
+        // Resize stats card to match
+        if (this._resultStatsCard) {
+          this._resultStatsCard.height = Math.max(200, textHeight + 60) + 'px';
+        }
       } else if (data.unlockText) {
         this.resultUnlock.text = data.unlockText;
         this.resultUnlock.color = COLORS.green;
