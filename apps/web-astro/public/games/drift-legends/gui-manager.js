@@ -64,11 +64,20 @@
         this.screens[screenName].isVisible = true;
       }
       this.currentScreen = screenName;
+      // Hide touch controls for menu/overlay screens — they block clicks
+      if (this.touchControls) {
+        var racingScreens = ['RACE_HUD', 'COUNTDOWN', 'CINEMATIC_INTRO'];
+        this.touchControls.isVisible = racingScreens.indexOf(screenName) >= 0 && window.DriftLegends.Input.isMobile();
+      }
       // Hide result buttons when leaving result screen
       if (screenName !== 'RACE_RESULT') {
         if (this._resultNextBtn) this._resultNextBtn.isVisible = false;
         if (this._resultRetryBtn) this._resultRetryBtn.isVisible = false;
         if (this._resultMenuBtn) this._resultMenuBtn.isVisible = false;
+      }
+      // Re-enable mesh picking when leaving overlay screens
+      if (screenName !== 'RACE_RESULT' && screenName !== 'PAUSE') {
+        if (this.scene) this.scene.meshes.forEach(function(m) { m.isPickable = true; });
       }
       // Toggle HTML backgrounds based on screen
       var mtnBg = document.getElementById('storyMtnBg');
