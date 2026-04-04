@@ -92,7 +92,7 @@
   scene.autoClear = true; // needed for transparent background (HTML skyline shows through)
   scene.autoClearDepthAndStencil = true;
   scene.blockMaterialDirtyMechanism = true;
-  // scene.skipPointerMovePicking = true; // DISABLED — breaks Babylon.js GUI button clicks
+  scene.skipPointerMovePicking = false; // MUST be false for GUI buttons to work
 
   const isLowEnd = navigator.hardwareConcurrency <= 2;
   if (!isLowEnd) {
