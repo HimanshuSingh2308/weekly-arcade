@@ -67,6 +67,7 @@
   let raceFinished = false;
   let wasDrifting = false;
   let wasBoosting = false;
+  var _offRoadSoundCd = 0;
   let countdownTimer = 0;
   let countdownNumber = 3;
 
@@ -675,10 +676,10 @@
         // Off-road: friction slowdown + rumble sound
         playerPhysics.velocity.scaleInPlace(0.96);
         playerPhysics.speed = playerPhysics.velocity.length();
-        if (!this._offRoadSoundCd) this._offRoadSoundCd = 0;
-        if (raceTime > this._offRoadSoundCd) {
+        if (!_offRoadSoundCd) _offRoadSoundCd = 0;
+        if (raceTime > _offRoadSoundCd) {
           DL.Audio.play('offroad');
-          this._offRoadSoundCd = raceTime + 0.5; // cooldown
+          _offRoadSoundCd = raceTime + 0.5; // cooldown
         }
       }
       if (!onTrackWide) {
