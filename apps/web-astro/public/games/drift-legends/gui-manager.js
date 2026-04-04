@@ -162,6 +162,7 @@
       this._buildPauseMenu();
       this._buildDisconnect();
       this._buildMobileTouchControls();
+      this._buildTutorialOverlay();
     }
 
     _createPanel(name, transparent) {
@@ -2220,6 +2221,81 @@
       if (this.screens['PAUSE']) this.screens['PAUSE'].isVisible = false;
       // Restore touch controls
       if (this.touchControls && window.DriftLegends.Input.isMobile()) this.touchControls.isVisible = true;
+    }
+
+    // ─── Tutorial Overlay ──────────────────────────────────────────
+    _buildTutorialOverlay() {
+      // Top banner for tutorial steps
+      var banner = new GUI.Rectangle('tutBanner');
+      banner.width = '100%';
+      banner.height = '60px';
+      banner.background = 'rgba(255,77,0,0.9)';
+      banner.thickness = 0;
+      banner.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      banner.top = '0px';
+      banner.isVisible = false;
+      banner.zIndex = 40;
+      banner.isHitTestVisible = false;
+      this.ui.addControl(banner);
+      this._tutBanner = banner;
+
+      // Accent stripe on left
+      var stripe = new GUI.Rectangle('tutStripe');
+      stripe.width = '6px';
+      stripe.height = '100%';
+      stripe.background = '#cc0000';
+      stripe.thickness = 0;
+      stripe.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      banner.addControl(stripe);
+
+      // Step text
+      this._tutText = new GUI.TextBlock('tutText', '');
+      this._tutText.fontSize = 16;
+      this._tutText.fontFamily = 'monospace';
+      this._tutText.fontWeight = 'bold';
+      this._tutText.color = '#ffffff';
+      this._tutText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._tutText.left = '20px';
+      this._tutText.isHitTestVisible = false;
+      banner.addControl(this._tutText);
+
+      // Sub-text (hint)
+      this._tutHint = new GUI.TextBlock('tutHint', '');
+      this._tutHint.fontSize = 12;
+      this._tutHint.fontFamily = 'monospace';
+      this._tutHint.color = 'rgba(255,255,255,0.7)';
+      this._tutHint.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._tutHint.left = '20px';
+      this._tutHint.top = '12px';
+      this._tutHint.isHitTestVisible = false;
+      banner.addControl(this._tutHint);
+
+      // Skip button (right side)
+      var skipBtn = GUI.Button.CreateSimpleButton('tutSkip', 'SKIP >>');
+      skipBtn.width = '90px';
+      skipBtn.height = '34px';
+      skipBtn.color = '#ffffff';
+      skipBtn.background = 'rgba(0,0,0,0.3)';
+      skipBtn.cornerRadius = 6;
+      skipBtn.thickness = 0;
+      skipBtn.fontSize = 12;
+      skipBtn.fontFamily = 'monospace';
+      skipBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      skipBtn.left = '-16px';
+      skipBtn.onPointerClickObservable.add(() => { this._fire('tutorialSkip'); });
+      banner.addControl(skipBtn);
+    }
+
+    showTutorialStep(text, hint) {
+      if (this._tutBanner) {
+        this._tutBanner.isVisible = true;
+        this._tutText.text = text || '';
+        this._tutHint.text = hint || '';
+      }
+    }
+
+    hideTutorial() {
+      if (this._tutBanner) this._tutBanner.isVisible = false;
     }
 
     // ─── Disconnect Overlay ───────────────────────────────────────
