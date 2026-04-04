@@ -706,7 +706,7 @@
     for (let i = playerCheckpoint; i < checkpoints.length; i++) {
       const cp = checkpoints[i];
       const dist = V3.Distance(playerCar.position, cp.position);
-      if (dist < trackData.trackDef.trackWidth) {
+      if (dist < trackData.trackDef.trackWidth * 1.5) {
         playerCheckpoint = i + 1;
         playerCheckpointSeq.push(i);
         // Visual + audio feedback
@@ -727,7 +727,7 @@
       const distToStart = V3.Distance(playerCar.position, trackData.startPosition);
       const lapElapsed = raceTime - lapStartTime;
       // Minimum 20 seconds per lap to prevent exploit
-      if (distToStart < trackData.trackDef.trackWidth * 1.5 && lapElapsed > 20) {
+      if (distToStart < trackData.trackDef.trackWidth * 2.5 && lapElapsed > 15) {
         _completeLap();
       }
     }
