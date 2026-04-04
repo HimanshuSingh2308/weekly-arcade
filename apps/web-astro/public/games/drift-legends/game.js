@@ -268,10 +268,12 @@
       } else {
         selectedTrackId = selectedChapter.races[selectedRaceIndex];
         const track = DL.TrackBuilder.TRACKS[selectedTrackId];
+        var nextGoals = DL.StoryMode.getGoalsForRace(selectedChapter.id, selectedTrackId);
         gui.showPreRace(
           track?.name || selectedTrackId,
           selectedChapter.rival.name,
-          selectedChapter.rival.preRaceLine
+          selectedChapter.rival.preRaceLine,
+          nextGoals
         );
         state = STATE.PRE_RACE;
       }
@@ -432,7 +434,8 @@
 
     // Start cinematic intro (camera sweeps over all cars, then locks to player)
     gui.hideAll();
-    gui.showTrackIntro(selectedTrackId, selectedChapter ? selectedChapter.name : 'Race');
+    var introGoals = selectedChapter ? DL.StoryMode.getGoalsForRace(selectedChapter.id, selectedTrackId) : [];
+    gui.showTrackIntro(selectedTrackId, selectedChapter ? selectedChapter.name : 'Race', introGoals);
     chaseCamera.setTarget(playerCar);
     chaseCamera.startCinematicIntro(allCarMeshes, trackData, 5, function() {
       // Cinematic done → start countdown
