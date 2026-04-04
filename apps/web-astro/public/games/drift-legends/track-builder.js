@@ -466,10 +466,27 @@
     ground.position.y = -0.05;
     result.meshes.push(ground);
 
-    // Calculate checkpoint positions
+    // Calculate checkpoint positions + add glowing ring visuals
+    var cpMat = getCachedMat(scene, 'checkpoint_ring', function() {
+      var m = new BABYLON.StandardMaterial('cpMat', scene);
+      m.emissiveColor = new Color3(0, 0.8, 1);
+      m.diffuseColor = new Color3(0, 0.8, 1);
+      m.alpha = 0.4;
+      m.freeze();
+      return m;
+    });
     trackDef.checkpoints.forEach(t => {
       const pos = getSplinePoint(result.splinePoints, t);
+      const tangent = getSplineTangent(result.splinePoints, t);
       result.checkpointPositions.push({ t, position: pos });
+
+      // Glowing ring on track surface
+      var ring = MB.CreateTorus('cp', { diameter: trackDef.trackWidth * 0.8, thickness: 0.3, tessellation: 16 }, scene);
+      ring.position = pos.add(new V3(0, 0.2, 0));
+      ring.rotation.y = Math.atan2(tangent.x, tangent.z);
+      ring.material = cpMat;
+      ring.freezeWorldMatrix();
+      result.meshes.push(ring);
     });
 
     // Nitro zones
