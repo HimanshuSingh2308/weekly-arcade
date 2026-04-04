@@ -43,6 +43,8 @@ export const GAME_REGISTRY: GameInfo[] = [
   { id: 'cricket-blitz',    name: 'Cricket Blitz',       icon: '🏏', description: '3D IPL-style cricket',  genres: ['sports', '3d'] },
   { id: 'chess-3d',          name: 'Chess 3D',            icon: '♟️', description: '3D chess vs AI & friends', genres: ['strategy', 'board', '3d', 'multiplayer'],
     multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'turn-based', turnTimeoutSec: 120, sessionTimeoutMin: 90, spectatorAllowed: true } },
+  { id: 'drift-legends',     name: 'Drift Legends',        icon: '🏎️', description: '3D kart racing with story mode & multiplayer', genres: ['racing', '3d', 'story', 'multiplayer'],
+    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'real-time', sessionTimeoutMin: 15, spectatorAllowed: false } },
 ];
 
 /** Lookup a game by ID */

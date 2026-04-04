@@ -1,0 +1,294 @@
+---
+/**
+ * Drift Legends -- 3D Kart Racing with Story Mode & Real-Time Multiplayer (Babylon.js 9).
+ *
+ * GameLayout handles: meta, SEO, structured data, header, shared modules, fallback, more-games.
+ * All in-game UI is rendered via Babylon.js GUI (AdvancedDynamicTexture) -- no HTML overlays.
+ */
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/drift-legends.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+>
+  <Fragment slot="head">
+    <meta name="screen-orientation" content="landscape">
+    <link rel="preload" href="https://cdn.babylonjs.com/babylon.js" as="script">
+    <style is:global>
+      /* Custom header logo for Drift Legends */
+      #gameHeader .gh-title-static span:first-child {
+        display: none; /* hide emoji */
+      }
+      #gameHeader .gh-title-static {
+        gap: 0;
+      }
+      #gameHeader .gh-title-static::before {
+        content: '';
+        display: inline-block;
+        width: 32px;
+        height: 20px;
+        margin-right: 8px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 40'%3E%3Crect x='15' y='10' width='50' height='18' rx='4' fill='%23ff4d00'/%3E%3Cpath d='M25 10 L32 2 L55 2 L62 10' fill='%23ff4d00'/%3E%3Cpath d='M33 9 L36 4 L52 4 L55 9' fill='%2300d4ff' opacity='0.7'/%3E%3Ccircle cx='63' cy='15' r='2.5' fill='%23ffd700'/%3E%3Ccircle cx='63' cy='23' r='2.5' fill='%23ffd700'/%3E%3Ccircle cx='15' cy='15' r='2' fill='%23ff2222'/%3E%3Ccircle cx='15' cy='23' r='2' fill='%23ff2222'/%3E%3Crect x='55' y='27' width='12' height='8' rx='2' fill='%23333'/%3E%3Crect x='18' y='27' width='12' height='8' rx='2' fill='%23333'/%3E%3Crect x='10' y='7' width='14' height='3' rx='1' fill='%23ff4d00' opacity='0.6'/%3E%3C/svg%3E") no-repeat center/contain;
+      }
+    </style>
+    <style is:global>
+      body {
+        background: #0d0d1a;
+        color: #ffffff;
+        touch-action: manipulation;
+        overflow: hidden;
+      }
+      /* Landscape lock hint for mobile */
+      @media (orientation: portrait) and (max-width: 768px) {
+        .dl-rotate-hint {
+          display: flex !important;
+        }
+        .dl-wrap { display: none !important; }
+      }
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        outline: none;
+        touch-action: none;
+      }
+      .dl-wrap {
+        position: fixed;
+        top: 62px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+      }
+      /* Animated SVG cityscape behind the canvas — also below header */
+      .dl-skyline-bg {
+        position: fixed;
+        top: 62px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+        background: #0d0d1a;
+      }
+      .dl-skyline-bg svg {
+        width: 100%;
+        height: 100%;
+      }
+      @keyframes dl-blink {
+        0%, 90% { opacity: 1; }
+        95% { opacity: 0.2; }
+        100% { opacity: 1; }
+      }
+      @keyframes dl-neon-pulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+      }
+      @keyframes dl-star-shoot {
+        0% { transform: translateX(0) translateY(0); opacity: 1; }
+        100% { transform: translateX(120px) translateY(60px); opacity: 0; }
+      }
+      @keyframes dl-glow-breathe {
+        0%, 100% { filter: blur(4px) brightness(0.8); }
+        50% { filter: blur(6px) brightness(1.2); }
+      }
+      .dl-win-blink { animation: dl-blink 3s infinite; }
+      .dl-neon-pulse { animation: dl-neon-pulse 2s ease-in-out infinite; }
+      .dl-star-shoot {
+        animation: dl-star-shoot 2s linear infinite;
+        opacity: 0;
+      }
+      .dl-glow { animation: dl-glow-breathe 4s ease-in-out infinite; }
+    </style>
+  </Fragment>
+
+  <!-- Animated SVG Cityscape Background (behind 3D canvas) -->
+  <div class="dl-skyline-bg" id="skylineBg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#050510"/>
+          <stop offset="40%" stop-color="#0a0820"/>
+          <stop offset="80%" stop-color="#0f1028"/>
+          <stop offset="100%" stop-color="#1a1035"/>
+        </linearGradient>
+        <filter id="nGlow">
+          <feGaussianBlur stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="nGlowSm">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Sky -->
+      <rect width="1600" height="900" fill="url(#skyGrad)"/>
+
+      <!-- Stars — spread across 40% sky zone (y: 80-340) -->
+      <circle cx="120" cy="120" r="1" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="300" cy="160" r="1.5" fill="rgba(255,255,255,0.4)"/>
+      <circle cx="500" cy="200" r="1" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="700" cy="140" r="1.2" fill="rgba(255,255,255,0.3)"/>
+      <circle cx="950" cy="180" r="1" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="1100" cy="130" r="1.5" fill="rgba(255,255,255,0.4)"/>
+      <circle cx="1350" cy="220" r="1" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="200" cy="260" r="0.8" fill="rgba(255,255,255,0.3)"/>
+      <circle cx="850" cy="240" r="1.2" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="1450" cy="170" r="1" fill="rgba(255,255,255,0.4)"/>
+      <circle cx="50" cy="190" r="1" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="600" cy="100" r="1.3" fill="rgba(255,255,255,0.3)"/>
+      <circle cx="1200" cy="280" r="0.8" fill="rgba(255,255,255,0.4)"/>
+
+      <!-- Shooting stars — in sky zone -->
+      <line x1="400" y1="180" x2="420" y2="188" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" class="dl-star-shoot" style="animation-delay:0s"/>
+      <line x1="1000" y1="150" x2="1020" y2="158" stroke="rgba(255,255,255,0.5)" stroke-width="1" class="dl-star-shoot" style="animation-delay:3s"/>
+      <line x1="250" y1="250" x2="270" y2="258" stroke="rgba(255,255,255,0.4)" stroke-width="1" class="dl-star-shoot" style="animation-delay:6s"/>
+
+      <!-- Moon — centered in sky zone -->
+      <circle cx="1300" cy="200" r="25" fill="rgba(200,200,255,0.08)"/>
+      <circle cx="1306" cy="196" r="23" fill="#050510"/>
+
+      <!-- Buildings — 40% sky (y<360), 60% buildings (y>=360 to 900) -->
+      <rect x="0" y="560" width="80" height="340" fill="#10101e"/>
+      <rect x="70" y="480" width="65" height="420" fill="#131322"/>
+      <rect x="125" y="530" width="95" height="370" fill="#10101e"/>
+      <rect x="210" y="420" width="75" height="480" fill="#151528"/>
+      <rect x="275" y="500" width="100" height="400" fill="#121220"/>
+      <rect x="365" y="390" width="65" height="510" fill="#131322"/>
+      <rect x="420" y="480" width="85" height="420" fill="#10101e"/>
+      <rect x="495" y="360" width="110" height="540" fill="#151528"/>
+      <rect x="595" y="460" width="75" height="440" fill="#121220"/>
+      <rect x="660" y="400" width="95" height="500" fill="#131322"/>
+      <rect x="745" y="500" width="65" height="400" fill="#10101e"/>
+      <rect x="800" y="370" width="105" height="530" fill="#151528"/>
+      <rect x="895" y="450" width="80" height="450" fill="#121220"/>
+      <rect x="965" y="380" width="75" height="520" fill="#131322"/>
+      <rect x="1030" y="430" width="95" height="470" fill="#10101e"/>
+      <rect x="1115" y="490" width="80" height="410" fill="#151528"/>
+      <rect x="1185" y="410" width="70" height="490" fill="#121220"/>
+      <rect x="1245" y="520" width="90" height="380" fill="#131322"/>
+      <rect x="1325" y="450" width="75" height="450" fill="#10101e"/>
+      <rect x="1390" y="540" width="85" height="360" fill="#151528"/>
+      <rect x="1465" y="440" width="70" height="460" fill="#121220"/>
+      <rect x="1525" y="500" width="75" height="400" fill="#131322"/>
+
+      <!-- Window grids — shifted down to match new building positions -->
+      <!-- Building 4 (x=210, starts y=420) -->
+      <rect x="220" y="450" width="6" height="5" fill="rgba(255,200,100,0.6)" class="dl-win-blink" style="animation-delay:1.2s"/>
+      <rect x="235" y="450" width="6" height="5" fill="rgba(150,180,255,0.25)"/>
+      <rect x="250" y="450" width="6" height="5" fill="rgba(255,200,100,0.5)"/>
+      <rect x="220" y="480" width="6" height="5" fill="rgba(150,180,255,0.2)"/>
+      <rect x="235" y="480" width="6" height="5" fill="rgba(255,200,100,0.6)" class="dl-win-blink" style="animation-delay:2.5s"/>
+      <rect x="250" y="480" width="6" height="5" fill="rgba(150,180,255,0.25)"/>
+      <rect x="220" y="510" width="6" height="5" fill="rgba(255,200,100,0.5)"/>
+      <rect x="250" y="510" width="6" height="5" fill="rgba(150,180,255,0.2)" class="dl-win-blink" style="animation-delay:4s"/>
+      <!-- Building 8 (x=495, tallest, starts y=360) -->
+      <rect x="510" y="390" width="6" height="5" fill="rgba(255,200,100,0.7)" class="dl-win-blink" style="animation-delay:0.8s"/>
+      <rect x="525" y="390" width="6" height="5" fill="rgba(150,180,255,0.3)"/>
+      <rect x="540" y="390" width="6" height="5" fill="rgba(255,200,100,0.5)"/>
+      <rect x="555" y="390" width="6" height="5" fill="rgba(150,180,255,0.2)"/>
+      <rect x="510" y="420" width="6" height="5" fill="rgba(150,180,255,0.25)"/>
+      <rect x="525" y="420" width="6" height="5" fill="rgba(255,200,100,0.6)" class="dl-win-blink" style="animation-delay:3.2s"/>
+      <rect x="540" y="420" width="6" height="5" fill="rgba(150,180,255,0.2)"/>
+      <rect x="555" y="420" width="6" height="5" fill="rgba(255,200,100,0.5)"/>
+      <rect x="510" y="450" width="6" height="5" fill="rgba(255,200,100,0.5)" class="dl-win-blink" style="animation-delay:1.8s"/>
+      <rect x="540" y="450" width="6" height="5" fill="rgba(150,180,255,0.3)"/>
+      <!-- Building 12 (x=800, starts y=370) -->
+      <rect x="815" y="400" width="6" height="5" fill="rgba(255,200,100,0.6)"/>
+      <rect x="830" y="400" width="6" height="5" fill="rgba(150,180,255,0.3)" class="dl-win-blink" style="animation-delay:2.1s"/>
+      <rect x="845" y="400" width="6" height="5" fill="rgba(255,200,100,0.5)"/>
+      <rect x="860" y="400" width="6" height="5" fill="rgba(150,180,255,0.2)"/>
+      <rect x="815" y="430" width="6" height="5" fill="rgba(150,180,255,0.25)" class="dl-win-blink" style="animation-delay:4.5s"/>
+      <rect x="830" y="430" width="6" height="5" fill="rgba(255,200,100,0.7)"/>
+      <rect x="845" y="430" width="6" height="5" fill="rgba(150,180,255,0.2)"/>
+      <rect x="860" y="430" width="6" height="5" fill="rgba(255,200,100,0.5)"/>
+      <!-- Scattered windows -->
+      <rect x="85" y="590" width="5" height="4" fill="rgba(255,200,100,0.5)"/>
+      <rect x="140" y="560" width="5" height="4" fill="rgba(150,180,255,0.3)" class="dl-win-blink" style="animation-delay:3.7s"/>
+      <rect x="380" y="430" width="5" height="4" fill="rgba(255,200,100,0.6)"/>
+      <rect x="680" y="440" width="5" height="4" fill="rgba(150,180,255,0.25)" class="dl-win-blink" style="animation-delay:1.5s"/>
+      <rect x="760" y="540" width="5" height="4" fill="rgba(255,200,100,0.5)"/>
+      <rect x="910" y="490" width="5" height="4" fill="rgba(255,200,100,0.6)" class="dl-win-blink" style="animation-delay:2.8s"/>
+      <rect x="980" y="420" width="5" height="4" fill="rgba(150,180,255,0.3)"/>
+      <rect x="1050" y="470" width="5" height="4" fill="rgba(255,200,100,0.5)"/>
+      <rect x="1130" y="530" width="5" height="4" fill="rgba(150,180,255,0.2)" class="dl-win-blink" style="animation-delay:4.2s"/>
+      <rect x="1260" y="560" width="5" height="4" fill="rgba(255,200,100,0.6)"/>
+      <rect x="1340" y="490" width="5" height="4" fill="rgba(150,180,255,0.25)"/>
+      <rect x="1480" y="480" width="5" height="4" fill="rgba(255,200,100,0.5)" class="dl-win-blink" style="animation-delay:0.5s"/>
+
+      <!-- Neon strips — shifted down -->
+      <rect x="0" y="680" width="80" height="5" fill="#00d4ff" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:0s"/>
+      <rect x="70" y="600" width="65" height="4" fill="#ff4d00" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:0.5s"/>
+      <rect x="210" y="550" width="75" height="5" fill="#00ff88" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:1s"/>
+      <rect x="365" y="510" width="65" height="4" fill="#ff0066" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:1.5s"/>
+      <rect x="495" y="480" width="110" height="5" fill="#00d4ff" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:0.3s"/>
+      <rect x="660" y="540" width="95" height="4" fill="#8844ff" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:0.8s"/>
+      <rect x="800" y="500" width="105" height="5" fill="#ffaa00" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:1.2s"/>
+      <rect x="965" y="520" width="75" height="4" fill="#ff4d00" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:0.6s"/>
+      <rect x="1115" y="610" width="80" height="5" fill="#00ff88" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:1.8s"/>
+      <rect x="1325" y="580" width="75" height="4" fill="#00d4ff" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:0.2s"/>
+      <rect x="1465" y="560" width="70" height="5" fill="#ff0066" filter="url(#nGlow)" class="dl-neon-pulse" style="animation-delay:1.1s"/>
+
+      <!-- Second neon on tallest buildings -->
+      <rect x="495" y="400" width="110" height="3" fill="#ff4d00" filter="url(#nGlowSm)" opacity="0.5"/>
+      <rect x="800" y="410" width="105" height="3" fill="#8844ff" filter="url(#nGlowSm)" opacity="0.5"/>
+
+      <!-- Rooftop red lights -->
+      <circle cx="248" cy="418" r="3" fill="#ff0000" filter="url(#nGlowSm)" class="dl-neon-pulse" style="animation-delay:2s"/>
+      <circle cx="550" cy="358" r="3" fill="#ff0000" filter="url(#nGlowSm)" class="dl-neon-pulse" style="animation-delay:0.7s"/>
+      <circle cx="852" cy="368" r="3" fill="#ff0000" filter="url(#nGlowSm)" class="dl-neon-pulse" style="animation-delay:3s"/>
+      <circle cx="1002" cy="378" r="3" fill="#ff0000" filter="url(#nGlowSm)" class="dl-neon-pulse" style="animation-delay:1.3s"/>
+      <circle cx="1280" cy="408" r="3" fill="#ff0000" filter="url(#nGlowSm)" class="dl-neon-pulse" style="animation-delay:4s"/>
+
+      <!-- Horizon haze at building base -->
+      <rect x="0" y="850" width="1600" height="50" fill="rgba(13,13,26,0.6)"/>
+    </svg>
+  </div>
+
+  <!-- Rotate device hint (portrait only) -->
+  <div class="dl-rotate-hint" style="display:none;position:fixed;inset:0;z-index:9999;background:#0d0d1a;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:monospace;text-align:center;padding:2rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">&#x1F4F1;&#x27A1;&#xFE0F;</div>
+    <div style="font-size:1.2rem;font-weight:bold;">Rotate your device</div>
+    <div style="font-size:0.9rem;color:#999;margin-top:0.5rem;">Drift Legends is best in landscape</div>
+  </div>
+
+  <!-- 3D Canvas Container -->
+  <div class="dl-wrap" id="gameWrap">
+    <canvas id="renderCanvas" role="application" aria-label="Drift Legends 3D racing game"></canvas>
+    <div id="dl-announcer" aria-live="polite" aria-atomic="true"
+         style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;"></div>
+  </div>
+
+  <Fragment slot="scripts">
+    <script is:inline src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script is:inline src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script is:inline src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script is:inline src="/js/multiplayer-client.js"></script>
+    <script is:inline src="/js/multiplayer-ui.js"></script>
+    <!-- Game modules loaded sequentially (later modules reference earlier ones via window.DriftLegends) -->
+    <script is:inline src="/games/drift-legends/audio.js"></script>
+    <script is:inline src="/games/drift-legends/input.js"></script>
+    <script is:inline src="/games/drift-legends/particles.js"></script>
+    <script is:inline src="/games/drift-legends/physics.js"></script>
+    <script is:inline src="/games/drift-legends/camera.js"></script>
+    <script is:inline src="/games/drift-legends/car-builder.js"></script>
+    <script is:inline src="/games/drift-legends/track-builder.js"></script>
+    <script is:inline src="/games/drift-legends/story-mode.js"></script>
+    <script is:inline src="/games/drift-legends/ai-racer.js"></script>
+    <script is:inline src="/games/drift-legends/gui-manager.js"></script>
+    <script is:inline src="/games/drift-legends/multiplayer.js"></script>
+    <script is:inline src="/games/drift-legends/game.js"></script>
+  </Fragment>
+</GameLayout>

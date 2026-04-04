@@ -1,0 +1,304 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { MultiplayerGameLogic, GameResult } from '@weekly-arcade/shared';
+
+// ─── Types ──────────────────────────────────────────────────────────
+interface PlayerPosition {
+  x: number;
+  z: number;
+  rotY: number;
+  speed: number;
+  driftScore: number;
+  checkpointIndex: number;
+  lapCheckpointSeq: number[];
+}
+
+interface DriftLegendsState {
+  players: string[];
+  trackId: string;
+  startedAt: number;
+  positions: Record<string, PlayerPosition>;
+  laps: Record<string, number>;
+  lapTimes: Record<string, number[]>;
+  finished: Record<string, boolean>;
+  finishedAt: Record<string, number>;
+  finalRanks: Record<string, number> | null;
+  totalLaps: number;
+  checkpointCount: number;
+}
+
+// ─── Constants ──────────────────────────────────────────────────────
+const TOTAL_LAPS_MP = 2;
+const CHECKPOINT_COUNT = 5;
+
+// Minimum lap times per track (ms) for anti-cheat
+const MIN_LAP_TIMES: Record<string, number> = {
+  'city-circuit': 45000,
+  'neon-alley': 50000,
+  'blaze-showdown': 50000,
+  'mesa-loop': 50000,
+  'canyon-rush': 53000,
+  'sandstorm-duel': 53000,
+  'frozen-peaks': 55000,
+  'glacier-gorge': 60000,
+  'ice-crown': 60000,
+  'jungle-run': 53000,
+  'ruin-dash': 60000,
+  'vipers-lair': 63000,
+  'cloud-circuit': 53000,
+  'grand-prix-qualify': 43000,
+  'apex-final': 43000,
+};
+
+@Injectable()
+export class DriftLegendsLogic implements MultiplayerGameLogic {
+  private readonly logger = new Logger(DriftLegendsLogic.name);
+  readonly gameId = 'drift-legends';
+
+  createInitialState(
+    players: string[],
+    config: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const trackId = (config.trackId as string) || 'city-circuit';
+    const positions: Record<string, PlayerPosition> = {};
+    const laps: Record<string, number> = {};
+    const lapTimes: Record<string, number[]> = {};
+    const finished: Record<string, boolean> = {};
+    const finishedAt: Record<string, number> = {};
+
+    players.forEach((uid) => {
+      positions[uid] = {
+        x: 0,
+        z: 0,
+        rotY: 0,
+        speed: 0,
+        driftScore: 0,
+        checkpointIndex: 0,
+        lapCheckpointSeq: [],
+      };
+      laps[uid] = 0;
+      lapTimes[uid] = [];
+      finished[uid] = false;
+      finishedAt[uid] = 0;
+    });
+
+    const state: DriftLegendsState = {
+      players,
+      trackId,
+      startedAt: Date.now(),
+      positions,
+      laps,
+      lapTimes,
+      finished,
+      finishedAt,
+      finalRanks: null,
+      totalLaps: TOTAL_LAPS_MP,
+      checkpointCount: CHECKPOINT_COUNT,
+    };
+
+    return state as unknown as Record<string, unknown>;
+  }
+
+  applyMove(
+    state: Record<string, unknown>,
+    uid: string,
+    moveType: string,
+    moveData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const s = state as unknown as DriftLegendsState;
+
+    if (!s.players.includes(uid)) {
+      throw new Error('Player not in this game');
+    }
+
+    if (s.finished[uid]) {
+      throw new Error('Player already finished');
+    }
+
+    switch (moveType) {
+      case 'position-update':
+        return this.handlePositionUpdate(s, uid, moveData);
+      case 'lap-complete':
+        return this.handleLapComplete(s, uid, moveData);
+      case 'race-finish':
+        return this.handleRaceFinish(s, uid, moveData);
+      default:
+        throw new Error(`Unknown move type: ${moveType}`);
+    }
+  }
+
+  checkGameOver(state: Record<string, unknown>): GameResult | null {
+    const s = state as unknown as DriftLegendsState;
+
+    // Check if all players finished
+    const allFinished = s.players.every((uid) => s.finished[uid]);
+    if (!allFinished) {
+      // Check if one player finished and 30s timeout elapsed
+      const anyFinished = s.players.some((uid) => s.finished[uid]);
+      if (anyFinished) {
+        const firstFinishTime = Math.min(
+          ...s.players
+            .filter((uid) => s.finished[uid])
+            .map((uid) => s.finishedAt[uid]),
+        );
+        if (Date.now() - firstFinishTime > 30000) {
+          // Timeout: finisher wins, other loses
+          return this.buildResult(s);
+        }
+      }
+      return null;
+    }
+
+    return this.buildResult(s);
+  }
+
+  getNextTurn(_state: Record<string, unknown>): string | null {
+    return null; // Real-time mode: all players move simultaneously
+  }
+
+  // ─── Move Handlers ────────────────────────────────────────────────
+
+  private handlePositionUpdate(
+    s: DriftLegendsState,
+    uid: string,
+    moveData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const checkpointIndex = moveData.checkpointIndex as number;
+    const currentCheckpoint = s.positions[uid]?.checkpointIndex || 0;
+
+    // Anti-cheat: checkpoint can only advance by +1 at a time
+    if (
+      checkpointIndex !== undefined &&
+      checkpointIndex > currentCheckpoint + 1
+    ) {
+      this.logger.warn(
+        `Suspicious checkpoint jump for ${uid}: ${currentCheckpoint} -> ${checkpointIndex}`,
+      );
+      // Reject the checkpoint advance, keep previous value
+      moveData.checkpointIndex = currentCheckpoint;
+    }
+    {
+      s.positions[uid] = {
+        x: moveData.x as number,
+        z: moveData.z as number,
+        rotY: moveData.rotY as number,
+        speed: moveData.speed as number,
+        driftScore: (moveData.driftScore as number) || 0,
+        checkpointIndex:
+          checkpointIndex !== undefined ? checkpointIndex : currentCheckpoint,
+        lapCheckpointSeq: s.positions[uid]?.lapCheckpointSeq || [],
+      };
+    }
+
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private handleLapComplete(
+    s: DriftLegendsState,
+    uid: string,
+    moveData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const lapTimeMs = moveData.lapTimeMs as number;
+    const lapNumber = moveData.lapNumber as number;
+    const checkpointSequence = moveData.checkpointSequence as number[];
+
+    // Validate checkpoint sequence (all checkpoints must be present)
+    if (
+      !checkpointSequence ||
+      checkpointSequence.length < s.checkpointCount
+    ) {
+      throw new Error('Invalid checkpoint sequence: missed checkpoints');
+    }
+
+    // Validate checkpoint values are non-decreasing and in range
+    for (let i = 0; i < checkpointSequence.length; i++) {
+      if (checkpointSequence[i] < 0 || checkpointSequence[i] >= s.checkpointCount) {
+        throw new Error('Invalid checkpoint value out of range');
+      }
+      if (i > 0 && checkpointSequence[i] < checkpointSequence[i - 1]) {
+        throw new Error('Invalid checkpoint sequence: out of order');
+      }
+    }
+
+    // Validate lap number matches server-tracked lap count
+    if (lapNumber !== (s.laps[uid] || 0) + 1) {
+      throw new Error(`Invalid lap number: expected ${(s.laps[uid] || 0) + 1}, got ${lapNumber}`);
+    }
+
+    // Validate minimum lap time
+    const minLapTime = MIN_LAP_TIMES[s.trackId] || 40000;
+    if (lapTimeMs < minLapTime * 0.95) {
+      throw new Error(
+        `Lap time ${lapTimeMs}ms is below minimum ${minLapTime * 0.95}ms`,
+      );
+    }
+
+    s.laps[uid] = (s.laps[uid] || 0) + 1;
+    s.lapTimes[uid].push(lapTimeMs);
+
+    // Reset checkpoint tracking for new lap
+    if (s.positions[uid]) {
+      s.positions[uid].checkpointIndex = 0;
+      s.positions[uid].lapCheckpointSeq = [];
+    }
+
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private handleRaceFinish(
+    s: DriftLegendsState,
+    uid: string,
+    moveData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const totalTimeMs = moveData.totalTimeMs as number;
+
+    // Validate total time against server clock — reject if > 5s delta
+    const serverElapsed = Date.now() - s.startedAt;
+    if (Math.abs(totalTimeMs - serverElapsed) > 5000) {
+      this.logger.warn(
+        `Rejected finish time for ${uid}: client=${totalTimeMs}ms server=${serverElapsed}ms`,
+      );
+      throw new Error('Race finish time does not match server clock');
+    }
+
+    // Validate all laps were completed
+    if ((s.laps[uid] || 0) < s.totalLaps) {
+      throw new Error(`Not all laps completed: ${s.laps[uid]}/${s.totalLaps}`);
+    }
+
+    s.finished[uid] = true;
+    s.finishedAt[uid] = Date.now();
+
+    return s as unknown as Record<string, unknown>;
+  }
+
+  // ─── Result Builder ───────────────────────────────────────────────
+
+  private buildResult(s: DriftLegendsState): GameResult {
+    // Rank by finish time (earlier = better). Unfinished players rank last.
+    const ranked = [...s.players].sort((a, b) => {
+      if (s.finished[a] && !s.finished[b]) return -1;
+      if (!s.finished[a] && s.finished[b]) return 1;
+      if (!s.finished[a] && !s.finished[b]) return 0;
+      return s.finishedAt[a] - s.finishedAt[b];
+    });
+
+    const players: Record<
+      string,
+      { score: number; rank: number; outcome: 'win' | 'loss' | 'draw' }
+    > = {};
+
+    ranked.forEach((uid, index) => {
+      const totalTime = s.lapTimes[uid]?.reduce(
+        (sum: number, t: number) => sum + t,
+        0,
+      ) || 0;
+      players[uid] = {
+        score: totalTime > 0 ? -totalTime : 0, // negative time (lower is better)
+        rank: index + 1,
+        outcome: index === 0 ? 'win' : 'loss',
+      };
+    });
+
+    return { players, reason: 'completed' };
+  }
+}
