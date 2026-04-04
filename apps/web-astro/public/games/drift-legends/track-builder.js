@@ -552,18 +552,17 @@
       return m;
     });
     var startRight = V3.Cross(startTangent, V3.Up()).normalize();
-    var cheqSize = 1.2;
+    var cheqSize = 1.0;
     var cheqCols = Math.floor(trackDef.trackWidth / cheqSize);
-    for (var cr = 0; cr < 2; cr++) { // 2 rows deep
+    for (var cr = 0; cr < 3; cr++) { // 3 rows deep
       for (var cc = 0; cc < cheqCols; cc++) {
         var isWhite = (cr + cc) % 2 === 0;
         var cheq = MB.CreateBox('cheq', { width: cheqSize, height: 0.03, depth: cheqSize }, scene);
-        var offset = (-trackDef.trackWidth / 2 + cc * cheqSize + cheqSize / 2);
-        cheq.position = result.startPosition.add(
-          startRight.scale(offset)
-        ).add(startTangent.scale(cr * cheqSize - cheqSize));
+        // Position using vectors — no individual rotation needed
+        cheq.position = result.startPosition
+          .add(startRight.scale(-trackDef.trackWidth / 2 + cc * cheqSize + cheqSize / 2))
+          .add(startTangent.scale((cr - 1) * cheqSize));
         cheq.position.y = 0.04;
-        cheq.rotation.y = result.startRotation;
         cheq.material = isWhite ? chequeredWhite : chequeredBlack;
         cheq.freezeWorldMatrix();
         result.meshes.push(cheq);
@@ -598,33 +597,37 @@
 
       // Place props to the sides of the road
       const side = (i % 2 === 0) ? 1 : -1;
-      const offset = trackDef.trackWidth * 1.2 + 4 + Math.random() * 15;
+      const offset = trackDef.trackWidth * 1.5 + 5 + Math.random() * 12;
       const propPos = pos.add(right.scale(side * offset));
 
       // Also add a closer prop on opposite side every 3rd position
-      var nearOffset = trackDef.trackWidth * 1.1 + 3 + Math.random() * 8;
+      var nearOffset = trackDef.trackWidth * 1.3 + 4 + Math.random() * 8;
       var nearPropPos = pos.add(right.scale(-side * nearOffset));
+
+      // Skip if prop would be on the track
+      if (isOnTrack(splinePoints, trackDef.trackWidth + 6, propPos)) continue;
+      if (isOnTrack(splinePoints, trackDef.trackWidth + 6, nearPropPos)) nearPropPos = null;
 
       switch (envType) {
         case 'city':
           buildCityProp(scene, propPos, env, i);
-          if (i % 3 === 0) buildStreetLamp(scene, nearPropPos);
+          if (i % 3 === 0 && nearPropPos) buildStreetLamp(scene, nearPropPos);
           break;
         case 'desert':
           buildDesertProp(scene, propPos, env);
-          if (i % 4 === 0) buildDesertProp(scene, nearPropPos, env);
+          if (i % 4 === 0 && nearPropPos) buildDesertProp(scene, nearPropPos, env);
           break;
         case 'ice':
           buildIceProp(scene, propPos, env);
-          if (i % 3 === 0) buildIceProp(scene, nearPropPos, env);
+          if (i % 3 === 0 && nearPropPos) buildIceProp(scene, nearPropPos, env);
           break;
         case 'jungle':
           buildJungleProp(scene, propPos, env);
-          if (i % 3 === 0) buildJungleProp(scene, nearPropPos, env);
+          if (i % 3 === 0 && nearPropPos) buildJungleProp(scene, nearPropPos, env);
           break;
         case 'sky':
           buildSkyProp(scene, propPos, env);
-          if (i % 4 === 0) buildSkyProp(scene, nearPropPos, env);
+          if (i % 4 === 0 && nearPropPos) buildSkyProp(scene, nearPropPos, env);
           break;
       }
     }
