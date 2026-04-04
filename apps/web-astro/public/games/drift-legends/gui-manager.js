@@ -1,0 +1,1817 @@
+'use strict';
+/**
+ * Drift Legends -- GUI Manager
+ * ALL UI via Babylon.js GUI AdvancedDynamicTexture.
+ * Manages screen state machine: MENU, STORY_SELECT, CAR_SELECT, RACE_HUD,
+ * RACE_RESULT, MP_LOBBY, SETTINGS, LOADING, COUNTDOWN, DISCONNECT.
+ */
+(function () {
+  const GUI = BABYLON.GUI;
+
+  // ─── Design Tokens ────────────────────────────────────────────────
+  const COLORS = {
+    bg: '#0d0d1a',
+    bgPanel: 'rgba(13,13,26,0.92)',
+    bgCard: 'rgba(20,20,40,0.85)',
+    accent: '#ff4d00',
+    accentGlow: 'rgba(255,77,0,0.35)',
+    accentDark: '#cc3d00',
+    accentLight: '#ff7733',
+    text: '#ffffff',
+    textDim: '#999999',
+    textMuted: '#666666',
+    gold: '#ffd700',
+    silver: '#c0c0c0',
+    bronze: '#cd7f32',
+    green: '#00ff88',
+    red: '#ff4444',
+    // Chapter theme colors
+    ch1: '#00d4ff',  // City neon cyan
+    ch2: '#ff9933',  // Desert orange
+    ch3: '#88ccff',  // Ice blue
+    ch4: '#33cc66',  // Jungle green
+    ch5: '#cc66ff',  // Sky purple
+  };
+  const CH_COLORS = [COLORS.ch1, COLORS.ch2, COLORS.ch3, COLORS.ch4, COLORS.ch5];
+  const FONT = 'bold 24px monospace';
+  const FONT_SMALL = '16px monospace';
+  const STAR_FILLED = '\u2605';   // ★
+  const STAR_EMPTY = '\u2606';    // ☆
+
+  class GUIManager {
+    constructor(scene) {
+      this.scene = scene;
+      this.ui = GUI.AdvancedDynamicTexture.CreateFullscreenUI('driftLegendsUI', true, scene);
+      this.screens = {};
+      this.currentScreen = null;
+      this.callbacks = {};
+
+      // HUD elements (updated each frame)
+      this.hud = {};
+
+      // Mobile touch controls
+      this.touchControls = null;
+
+      this._buildAllScreens();
+    }
+
+    // ─── Screen Management ────────────────────────────────────────
+    show(screenName) {
+      if (this.currentScreen && this.screens[this.currentScreen]) {
+        this.screens[this.currentScreen].isVisible = false;
+      }
+      if (this.screens[screenName]) {
+        this.screens[screenName].isVisible = true;
+      }
+      this.currentScreen = screenName;
+    }
+
+    hide(screenName) {
+      if (this.screens[screenName]) {
+        this.screens[screenName].isVisible = false;
+      }
+    }
+
+    hideAll() {
+      Object.values(this.screens).forEach(s => s.isVisible = false);
+      this.currentScreen = null;
+    }
+
+    onAction(name, callback) {
+      this.callbacks[name] = callback;
+    }
+
+    _fire(name, data) {
+      if (this.callbacks[name]) this.callbacks[name](data);
+    }
+
+    // ─── Screen Builders ──────────────────────────────────────────
+    _buildAllScreens() {
+      this._buildMainMenu();
+      this._buildStorySelect();
+      this._buildCarSelect();
+      this._buildPreRace();
+      this._buildRaceHUD();
+      this._buildCountdown();
+      this._buildRaceResult();
+      this._buildMPMenu();
+      this._buildSettings();
+      this._buildLoading();
+      this._buildDisconnect();
+      this._buildMobileTouchControls();
+    }
+
+    _createPanel(name, transparent) {
+      const panel = new GUI.Rectangle(name);
+      panel.width = '100%';
+      panel.height = '100%';
+      panel.background = transparent ? 'transparent' : COLORS.bg;
+      panel.thickness = 0;
+      panel.isVisible = false;
+      this.ui.addControl(panel);
+      this.screens[name] = panel;
+
+      // Add vignette overlay for non-transparent menu panels (game-like depth)
+      if (!transparent) {
+        var vignette = new GUI.Rectangle(name + '_vig');
+        vignette.width = '100%';
+        vignette.height = '100%';
+        vignette.thickness = 0;
+        vignette.background = 'transparent';
+        // Top accent line
+        var topLine = new GUI.Rectangle(name + '_topLine');
+        topLine.width = '100%';
+        topLine.height = '2px';
+        topLine.background = 'rgba(255,77,0,0.3)';
+        topLine.thickness = 0;
+        topLine.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        topLine.top = '0px';
+        panel.addControl(topLine);
+        // Bottom accent line
+        var botLine = new GUI.Rectangle(name + '_botLine');
+        botLine.width = '100%';
+        botLine.height = '1px';
+        botLine.background = 'rgba(255,77,0,0.15)';
+        botLine.thickness = 0;
+        botLine.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        botLine.top = '-10px';
+        panel.addControl(botLine);
+      }
+
+      return panel;
+    }
+
+    // Gradient-style card container with glow border
+    _createCard(name, width, height, parent, glowColor) {
+      const card = new GUI.Rectangle(name);
+      card.width = width || '320px';
+      card.height = height || '70px';
+      card.cornerRadius = 12;
+      card.background = COLORS.bgCard;
+      card.thickness = 1.5;
+      card.color = glowColor || COLORS.accent;
+      card.shadowColor = glowColor || COLORS.accentGlow;
+      card.shadowBlur = 12;
+      card.shadowOffsetX = 0;
+      card.shadowOffsetY = 2;
+      card.paddingBottom = '8px';
+      if (parent) parent.addControl(card);
+      return card;
+    }
+
+    _createButton(text, width, height, parent) {
+      const btn = GUI.Button.CreateSimpleButton('btn_' + text, text);
+      btn.width = width || '260px';
+      btn.height = height || '54px';
+      btn.color = '#0d0d1a';
+      btn.background = COLORS.accent;
+      btn.cornerRadius = 10;
+      btn.thickness = 0;
+      btn.fontFamily = 'monospace';
+      btn.fontWeight = 'bold';
+      btn.fontSize = 18;
+      btn.hoverCursor = 'pointer';
+      btn.shadowColor = COLORS.accentGlow;
+      btn.shadowBlur = 16;
+      btn.shadowOffsetY = 3;
+      // Hover: scale + brighten
+      btn.onPointerEnterObservable.add(() => {
+        btn.scaleX = 1.04; btn.scaleY = 1.04;
+        btn.background = COLORS.accentLight;
+        btn.shadowBlur = 24;
+      });
+      btn.onPointerOutObservable.add(() => {
+        btn.scaleX = 1; btn.scaleY = 1;
+        btn.background = COLORS.accent;
+        btn.shadowBlur = 16;
+      });
+      // Press: shrink
+      btn.onPointerDownObservable.add(() => { btn.scaleX = 0.97; btn.scaleY = 0.97; });
+      btn.onPointerUpObservable.add(() => { btn.scaleX = 1.04; btn.scaleY = 1.04; });
+      if (parent) parent.addControl(btn);
+      return btn;
+    }
+
+    _createSecondaryButton(text, width, height, parent) {
+      const btn = GUI.Button.CreateSimpleButton('btn_' + text, text);
+      btn.width = width || '260px';
+      btn.height = height || '50px';
+      btn.color = COLORS.accent;
+      btn.background = 'rgba(255,77,0,0.08)';
+      btn.cornerRadius = 10;
+      btn.thickness = 1.5;
+      btn.fontFamily = 'monospace';
+      btn.fontWeight = 'bold';
+      btn.fontSize = 18;
+      btn.hoverCursor = 'pointer';
+      // Hover glow
+      btn.onPointerEnterObservable.add(() => {
+        btn.scaleX = 1.03; btn.scaleY = 1.03;
+        btn.background = 'rgba(255,77,0,0.15)';
+        btn.shadowColor = COLORS.accentGlow;
+        btn.shadowBlur = 14;
+      });
+      btn.onPointerOutObservable.add(() => {
+        btn.scaleX = 1; btn.scaleY = 1;
+        btn.background = 'rgba(255,77,0,0.08)';
+        btn.shadowBlur = 0;
+      });
+      btn.onPointerDownObservable.add(() => { btn.scaleX = 0.97; btn.scaleY = 0.97; });
+      btn.onPointerUpObservable.add(() => { btn.scaleX = 1.03; btn.scaleY = 1.03; });
+      if (parent) parent.addControl(btn);
+      return btn;
+    }
+
+    _createText(text, fontSize, color, parent) {
+      const tb = new GUI.TextBlock();
+      tb.text = text;
+      tb.color = color || COLORS.text;
+      tb.fontSize = fontSize || 24;
+      tb.fontFamily = 'monospace';
+      tb.fontWeight = 'bold';
+      tb.resizeToFit = true;
+      tb.height = (fontSize || 24) + 12 + 'px';
+      if (parent) parent.addControl(tb);
+      return tb;
+    }
+
+    // Large title text with shadow effect
+    _createTitle(text, fontSize, color, parent) {
+      const tb = new GUI.TextBlock();
+      tb.text = text;
+      tb.color = color || COLORS.text;
+      tb.fontSize = fontSize || 36;
+      tb.fontFamily = 'monospace';
+      tb.fontWeight = 'bold';
+      tb.resizeToFit = true;
+      tb.height = (fontSize || 36) + 16 + 'px';
+      tb.shadowColor = COLORS.accentGlow;
+      tb.shadowBlur = 8;
+      tb.shadowOffsetX = 0;
+      tb.shadowOffsetY = 2;
+      if (parent) parent.addControl(tb);
+      return tb;
+    }
+
+    // ─── SVG Scene Generators ──────────────────────────────────────
+    _buildCitySkylineSVG() {
+      // Procedural neon city skyline — no external files
+      var w = 1200, h = 600;
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '">';
+      // Sky gradient
+      svg += '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">';
+      svg += '<stop offset="0%" stop-color="#0a0820"/>';
+      svg += '<stop offset="60%" stop-color="#0f1028"/>';
+      svg += '<stop offset="100%" stop-color="#1a1035"/>';
+      svg += '</linearGradient>';
+      // Neon glow filter
+      svg += '<filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/>';
+      svg += '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+      svg += '</defs>';
+      svg += '<rect width="' + w + '" height="' + h + '" fill="url(#sky)"/>';
+
+      // Stars
+      for (var s = 0; s < 40; s++) {
+        var sx = Math.random() * w, sy = Math.random() * h * 0.4;
+        var sr = 0.5 + Math.random() * 1.5;
+        svg += '<circle cx="' + sx + '" cy="' + sy + '" r="' + sr + '" fill="rgba(255,255,255,' + (0.2 + Math.random() * 0.5) + ')"/>';
+      }
+
+      // Moon
+      svg += '<circle cx="900" cy="80" r="30" fill="#1a1a40" stroke="rgba(200,200,255,0.3)" stroke-width="2"/>';
+      svg += '<circle cx="908" cy="74" r="28" fill="#0f1028"/>';
+
+      // Buildings (back row — darker, taller)
+      var buildings = [
+        { x: 0, w: 80, h: 280 }, { x: 70, w: 60, h: 350 }, { x: 120, w: 90, h: 300 },
+        { x: 200, w: 70, h: 400 }, { x: 260, w: 100, h: 320 }, { x: 350, w: 60, h: 380 },
+        { x: 400, w: 80, h: 290 }, { x: 470, w: 110, h: 420 }, { x: 570, w: 70, h: 340 },
+        { x: 630, w: 90, h: 370 }, { x: 710, w: 60, h: 310 }, { x: 760, w: 100, h: 450 },
+        { x: 850, w: 80, h: 330 }, { x: 920, w: 70, h: 390 }, { x: 980, w: 90, h: 360 },
+        { x: 1060, w: 80, h: 300 }, { x: 1130, w: 70, h: 340 },
+      ];
+      var neonColors = ['#00d4ff', '#ff4d00', '#00ff88', '#ff0066', '#8844ff', '#ffaa00'];
+
+      buildings.forEach(function(b, i) {
+        var by = h - b.h;
+        // Building body
+        svg += '<rect x="' + b.x + '" y="' + by + '" width="' + b.w + '" height="' + b.h + '" fill="#0c0c1a" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>';
+
+        // Window grid
+        var wCols = Math.floor(b.w / 14);
+        var wRows = Math.floor(b.h / 20);
+        for (var wr = 1; wr < wRows; wr++) {
+          for (var wc = 0; wc < wCols; wc++) {
+            var lit = Math.random() > 0.5;
+            if (!lit) continue;
+            var wx = b.x + 6 + wc * 14;
+            var wy = by + 8 + wr * 20;
+            var wColor = Math.random() > 0.8 ? 'rgba(255,200,100,0.6)' : 'rgba(180,200,255,0.25)';
+            svg += '<rect x="' + wx + '" y="' + wy + '" width="8" height="10" fill="' + wColor + '" rx="1"/>';
+          }
+        }
+
+        // Neon strip
+        var nColor = neonColors[i % neonColors.length];
+        var ny = by + b.h * (0.2 + Math.random() * 0.4);
+        svg += '<rect x="' + b.x + '" y="' + ny + '" width="' + b.w + '" height="4" fill="' + nColor + '" filter="url(#glow)" opacity="0.8"/>';
+
+        // Second neon on tall buildings
+        if (b.h > 350) {
+          var n2Color = neonColors[(i + 3) % neonColors.length];
+          var n2y = by + b.h * 0.15;
+          svg += '<rect x="' + b.x + '" y="' + n2y + '" width="' + b.w + '" height="3" fill="' + n2Color + '" filter="url(#glow)" opacity="0.6"/>';
+        }
+
+        // Rooftop antenna/light on some
+        if (Math.random() > 0.6) {
+          var ax = b.x + b.w / 2;
+          svg += '<line x1="' + ax + '" y1="' + by + '" x2="' + ax + '" y2="' + (by - 15) + '" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>';
+          svg += '<circle cx="' + ax + '" cy="' + (by - 15) + '" r="2" fill="#ff0000" filter="url(#glow)"/>';
+        }
+      });
+
+      // Road at bottom
+      svg += '<rect x="0" y="' + (h - 50) + '" width="' + w + '" height="50" fill="#1a1a2e"/>';
+      // Center line dashes
+      for (var d = 0; d < w; d += 40) {
+        svg += '<rect x="' + d + '" y="' + (h - 27) + '" width="20" height="3" fill="#ff6600" rx="1" opacity="0.7"/>';
+      }
+      // Edge lines
+      svg += '<rect x="0" y="' + (h - 50) + '" width="' + w + '" height="2" fill="rgba(255,255,255,0.4)"/>';
+      svg += '<rect x="0" y="' + (h - 2) + '" width="' + w + '" height="2" fill="rgba(255,255,255,0.3)"/>';
+
+      // Reflection/fog at base
+      svg += '<rect x="0" y="' + (h - 80) + '" width="' + w + '" height="30" fill="rgba(15,16,40,0.6)"/>';
+
+      svg += '</svg>';
+      return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    }
+
+    _buildTrackLoadingSVG() {
+      // Abstract track/road scene for loading screen
+      var w = 800, h = 400;
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '">';
+      svg += '<defs><linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1">';
+      svg += '<stop offset="0%" stop-color="#0a0820"/><stop offset="100%" stop-color="#0f1028"/>';
+      svg += '</linearGradient>';
+      svg += '<filter id="lglow"><feGaussianBlur stdDeviation="3" result="b"/>';
+      svg += '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+      svg += '</defs>';
+      svg += '<rect width="' + w + '" height="' + h + '" fill="url(#lsky)"/>';
+
+      // Perspective road vanishing to center
+      svg += '<polygon points="300,' + h + ' 500,' + h + ' 420,180 380,180" fill="#2a2a3a"/>';
+      // Edge lines
+      svg += '<line x1="300" y1="' + h + '" x2="380" y2="180" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>';
+      svg += '<line x1="500" y1="' + h + '" x2="420" y2="180" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>';
+      // Center dashes
+      for (var d = 0; d < 8; d++) {
+        var t = d / 8;
+        var y1 = h - t * (h - 180);
+        var y2 = y1 - 15 * (1 - t * 0.7);
+        var cx = 400;
+        var dw = 3 * (1 - t * 0.6);
+        svg += '<rect x="' + (cx - dw / 2) + '" y="' + y2 + '" width="' + dw + '" height="' + (y1 - y2) + '" fill="#ff6600" opacity="' + (0.8 - t * 0.4) + '"/>';
+      }
+
+      // Wall barriers
+      svg += '<line x1="280" y1="' + h + '" x2="370" y2="180" stroke="#ff4d00" stroke-width="3" filter="url(#lglow)" opacity="0.6"/>';
+      svg += '<line x1="520" y1="' + h + '" x2="430" y2="180" stroke="#ff4d00" stroke-width="3" filter="url(#lglow)" opacity="0.6"/>';
+
+      // Horizon glow
+      svg += '<ellipse cx="400" cy="180" rx="120" ry="30" fill="rgba(255,77,0,0.08)"/>';
+
+      // City silhouette at horizon
+      var bldgs = [
+        { x: 200, w: 30, h: 40 }, { x: 225, w: 20, h: 60 }, { x: 240, w: 35, h: 45 },
+        { x: 270, w: 25, h: 70 }, { x: 290, w: 40, h: 50 }, { x: 325, w: 20, h: 80 },
+        { x: 340, w: 30, h: 55 }, { x: 365, w: 25, h: 65 }, { x: 385, w: 35, h: 90 },
+        { x: 415, w: 20, h: 60 }, { x: 430, w: 30, h: 75 }, { x: 455, w: 25, h: 50 },
+        { x: 475, w: 35, h: 70 }, { x: 505, w: 20, h: 45 }, { x: 520, w: 30, h: 55 },
+        { x: 545, w: 25, h: 40 }, { x: 565, w: 20, h: 60 },
+      ];
+      bldgs.forEach(function(b) {
+        svg += '<rect x="' + b.x + '" y="' + (180 - b.h) + '" width="' + b.w + '" height="' + b.h + '" fill="#080812" opacity="0.8"/>';
+      });
+
+      svg += '</svg>';
+      return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    }
+
+    _buildGUISkyline(panel) {
+      var neonColors = ['#00d4ff', '#ff4d00', '#00ff88', '#ff0066', '#8844ff', '#ffaa00'];
+      // Building definitions: left%, width%, height% (from bottom)
+      var bldgs = [
+        { l: 0, w: 6, h: 35 }, { l: 5, w: 5, h: 50 }, { l: 9, w: 7, h: 40 },
+        { l: 15, w: 5, h: 55 }, { l: 19, w: 8, h: 42 }, { l: 26, w: 5, h: 60 },
+        { l: 30, w: 6, h: 38 }, { l: 35, w: 9, h: 65 }, { l: 43, w: 5, h: 45 },
+        { l: 47, w: 7, h: 55 }, { l: 53, w: 5, h: 48 }, { l: 57, w: 8, h: 70 },
+        { l: 64, w: 6, h: 43 }, { l: 69, w: 5, h: 58 }, { l: 73, w: 7, h: 50 },
+        { l: 79, w: 6, h: 40 }, { l: 84, w: 5, h: 52 }, { l: 88, w: 7, h: 45 },
+        { l: 94, w: 6, h: 38 },
+      ];
+
+      bldgs.forEach(function(b, i) {
+        // Building body
+        var bldg = new GUI.Rectangle('skyBldg_' + i);
+        bldg.width = b.w + '%';
+        bldg.height = b.h + '%';
+        bldg.background = '#0c0c1a';
+        bldg.thickness = 0.5;
+        bldg.color = 'rgba(255,255,255,0.04)';
+        bldg.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        bldg.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        bldg.left = b.l + '%';
+        bldg.top = '-8%'; // above the road area
+        panel.addControl(bldg);
+
+        // Window dots — small emissive rectangles
+        var wRows = Math.min(6, Math.floor(b.h / 8));
+        var wCols = Math.max(1, Math.floor(b.w / 3));
+        for (var r = 0; r < wRows; r++) {
+          for (var c = 0; c < wCols; c++) {
+            if (Math.random() > 0.45) continue; // many windows dark
+            var win = new GUI.Rectangle('w_' + i + '_' + r + '_' + c);
+            win.width = '6px';
+            win.height = '4px';
+            win.background = Math.random() > 0.7 ? 'rgba(255,200,100,0.7)' : 'rgba(150,180,255,0.25)';
+            win.thickness = 0;
+            win.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            win.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            win.left = (15 + c * (70 / Math.max(1, wCols))) + '%';
+            win.top = (8 + r * (80 / Math.max(1, wRows))) + '%';
+            bldg.addControl(win);
+          }
+        }
+
+        // Neon strip
+        var neon = new GUI.Rectangle('neon_' + i);
+        neon.width = '100%';
+        neon.height = '3px';
+        neon.background = neonColors[i % neonColors.length];
+        neon.thickness = 0;
+        neon.shadowColor = neonColors[i % neonColors.length];
+        neon.shadowBlur = 12;
+        neon.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        neon.top = (20 + Math.random() * 40) + '%';
+        bldg.addControl(neon);
+
+        // Second neon on tall buildings
+        if (b.h > 50) {
+          var neon2 = new GUI.Rectangle('neon2_' + i);
+          neon2.width = '100%';
+          neon2.height = '2px';
+          neon2.background = neonColors[(i + 3) % neonColors.length];
+          neon2.thickness = 0;
+          neon2.shadowColor = neonColors[(i + 3) % neonColors.length];
+          neon2.shadowBlur = 8;
+          neon2.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+          neon2.top = '10%';
+          bldg.addControl(neon2);
+        }
+
+        // Rooftop red light on some
+        if (Math.random() > 0.5) {
+          var roofLight = new GUI.Ellipse('roof_' + i);
+          roofLight.width = '6px';
+          roofLight.height = '6px';
+          roofLight.background = '#ff0000';
+          roofLight.thickness = 0;
+          roofLight.shadowColor = '#ff0000';
+          roofLight.shadowBlur = 8;
+          roofLight.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+          roofLight.top = '-4px';
+          bldg.addControl(roofLight);
+        }
+      });
+
+      // Road strip at bottom
+      var road = new GUI.Rectangle('skyRoad');
+      road.width = '100%';
+      road.height = '8%';
+      road.background = '#1a1a2e';
+      road.thickness = 0;
+      road.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      panel.addControl(road);
+
+      // Road center dashes
+      for (var d = 0; d < 20; d++) {
+        var dash = new GUI.Rectangle('roadDash_' + d);
+        dash.width = '2%';
+        dash.height = '3px';
+        dash.background = '#ff6600';
+        dash.thickness = 0;
+        dash.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        dash.left = (d * 5 + 1) + '%';
+        dash.alpha = 0.7;
+        road.addControl(dash);
+      }
+
+      // Road edge lines
+      var edgeTop = new GUI.Rectangle('roadEdge1');
+      edgeTop.width = '100%'; edgeTop.height = '2px';
+      edgeTop.background = 'rgba(255,255,255,0.4)'; edgeTop.thickness = 0;
+      edgeTop.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      road.addControl(edgeTop);
+    }
+
+    // ─── Main Menu ────────────────────────────────────────────────
+    _buildMainMenu() {
+      const panel = this._createPanel('MENU');
+
+      // Menu background is semi-transparent — HTML SVG skyline shows through
+      panel.background = 'rgba(13,13,26,0.35)';
+
+      // Speed-line particle effect (diagonal lines shooting across)
+      this._menuSpeedLines = [];
+      for (let i = 0; i < 16; i++) {
+        const line = new GUI.Rectangle('speed_line_' + i);
+        line.width = (80 + Math.random() * 200) + 'px';
+        line.height = '1.5px';
+        line.background = 'rgba(255,77,0,' + (0.06 + Math.random() * 0.12) + ')';
+        line.thickness = 0;
+        line.rotation = -0.35;
+        line.left = (-600 + Math.random() * 1200) + 'px';
+        line.top = (-400 + Math.random() * 800) + 'px';
+        panel.addControl(line);
+        this._menuSpeedLines.push({ el: line, speed: 1.5 + Math.random() * 3, startLeft: parseFloat(line.left) });
+      }
+
+      // Animate speed lines
+      this.scene.registerBeforeRender(() => {
+        if (!this.screens['MENU'] || !this.screens['MENU'].isVisible) return;
+        this._menuSpeedLines.forEach(sl => {
+          var currentLeft = parseFloat(sl.el.left) || 0;
+          currentLeft += sl.speed;
+          if (currentLeft > 700) currentLeft = -700;
+          sl.el.left = currentLeft + 'px';
+        });
+      });
+
+      // 3D car preview (rotating slowly behind menu)
+      this._buildMenuCarPreview();
+
+      // ─── Top section: Title (left-aligned, game-style) ─────────
+      var titleBlock = new GUI.StackPanel('menuTitleBlock');
+      titleBlock.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      titleBlock.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      titleBlock.width = '500px';
+      titleBlock.left = '40px';
+      titleBlock.top = '16px';
+      panel.addControl(titleBlock);
+
+      // Title — bold, left-aligned, game-style
+      const title = this._createTitle('DRIFT LEGENDS', 44, COLORS.text, titleBlock);
+      title.shadowColor = COLORS.accent;
+      title.shadowBlur = 24;
+      title.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      title.paddingBottom = '2px';
+
+      // Tagline
+      const tagline = this._createText('Master the drift. Claim the crown.', 14, COLORS.textDim, titleBlock);
+      tagline.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      tagline.paddingBottom = '4px';
+
+      // Completion progress
+      this.menuCompletionText = this._createText('', 13, COLORS.textMuted, titleBlock);
+      this.menuCompletionText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+
+      // ─── Top-right: Game stats (mirrors title on top-left) ───────
+      var statsBlock = new GUI.StackPanel('menuStatsBlock');
+      statsBlock.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      statsBlock.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      statsBlock.width = '220px';
+      statsBlock.left = '-40px';
+      statsBlock.top = '16px'; // same as title block
+      panel.addControl(statsBlock);
+
+      // Stats — right-aligned text rows, no card box (cleaner)
+      this.menuStatsCompletion = this._createText('0% Complete', 15, COLORS.text, statsBlock);
+      this.menuStatsCompletion.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.menuStatsCompletion.paddingBottom = '4px';
+
+      this.menuStatsStars = this._createText('\u2605 0 / 45', 13, COLORS.gold, statsBlock);
+      this.menuStatsStars.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.menuStatsStars.paddingBottom = '4px';
+
+      this.menuStatsCoins = this._createText('0 coins', 13, COLORS.textDim, statsBlock);
+      this.menuStatsCoins.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.menuStatsCoins.paddingBottom = '4px';
+
+      this.menuStatsChapter = this._createText('Ch 1: Street Rookie', 12, COLORS.textMuted, statsBlock);
+      this.menuStatsChapter.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+
+      // ─── Bottom section: Buttons (center-bottom, horizontal) ───
+      var btnBar = new GUI.StackPanel('menuBtnBar');
+      btnBar.isVertical = false;
+      btnBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      btnBar.height = '70px';
+      btnBar.top = '-30px';
+      panel.addControl(btnBar);
+
+      const storyBtn = this._createButton('STORY MODE', '220px', '54px', btnBar);
+      storyBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('storyMode'); });
+
+      // Spacer
+      var sp1 = new GUI.Rectangle(); sp1.width = '16px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnBar.addControl(sp1);
+
+      const mpBtn = this._createSecondaryButton('MULTIPLAYER', '220px', '54px', btnBar);
+      mpBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('multiplayer'); });
+
+      var sp2 = new GUI.Rectangle(); sp2.width = '16px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnBar.addControl(sp2);
+
+      const settingsBtn = this._createSecondaryButton('SETTINGS', '160px', '54px', btnBar);
+      settingsBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('settings'); });
+    }
+
+    // Animated 3D car rotating on the menu background (positioned below and behind text)
+    _buildMenuCarPreview() {
+      try {
+        const CB = window.DriftLegends.CarBuilder;
+        if (!CB || !CB.buildCar) return;
+        // Build a bright accent-colored car for menu display
+        this._menuCar = CB.buildCar(this.scene, 'street-kart', '#ff4d00');
+        // Use a dedicated ArcRotateCamera for menu — orbits around the car
+        this._menuArcCam = new BABYLON.ArcRotateCamera('menuCam',
+          Math.PI * 0.8,   // alpha (horizontal angle)
+          Math.PI * 0.25,  // beta (low angle = looking down more = car at bottom of viewport)
+          9,               // radius (distance from target)
+          new BABYLON.Vector3(0, 2, 0),   // target above car = car appears lower
+          this.scene
+        );
+        this._menuArcCam.lowerRadiusLimit = 9;
+        this._menuArcCam.upperRadiusLimit = 9;
+        this._menuArcCam.fov = 0.9;
+        // Don't attach controls — this is display only
+
+        // Position car at origin, camera orbits it
+        this._menuCar.position = new BABYLON.Vector3(0, 0, 0);
+        this._menuCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
+        this._menuCar.rotation.y = Math.PI * 0.15;
+        this._menuCarPos = null; // not needed with ArcRotateCamera
+
+        // Strong ambient hemi light for menu car visibility
+        var carHemi = new BABYLON.HemisphericLight('menuCarHemi', new BABYLON.Vector3(0, 1, 0), this.scene);
+        carHemi.intensity = 1.5;
+        carHemi.diffuse = new BABYLON.Color3(1, 0.95, 0.9);
+        this._menuCarHemi = carHemi;
+        // Key light (warm, strong, from right-above car at origin)
+        var carLight = new BABYLON.PointLight('menuCarLight', new BABYLON.Vector3(5, 4, -3), this.scene);
+        carLight.intensity = 3.0;
+        carLight.diffuse = new BABYLON.Color3(1, 0.7, 0.4);
+        // Cool fill (from left)
+        var carFill = new BABYLON.PointLight('menuCarFill', new BABYLON.Vector3(-4, 3, 2), this.scene);
+        carFill.intensity = 1.5;
+        carFill.diffuse = new BABYLON.Color3(0.4, 0.6, 1.0);
+        this._menuCarFill = carFill;
+        // Rim light (from behind, orange)
+        var carRim = new BABYLON.PointLight('menuCarRim', new BABYLON.Vector3(0, 1, 5), this.scene);
+        carRim.intensity = 1.0;
+        carRim.diffuse = new BABYLON.Color3(1, 0.3, 0);
+        this._menuCarRim = carRim;
+        this._menuCarLight = carLight;
+
+        // Slow rotation animation
+        this.scene.registerBeforeRender(() => {
+          if (this._menuCar && this.screens['MENU'] && this.screens['MENU'].isVisible) {
+            this._menuCar.rotation.y += 0.004;
+            this._menuCar.isVisible = true;
+            // Use the dedicated menu camera
+            if (this._menuArcCam && this.scene.activeCamera !== this._menuArcCam) {
+              this._savedCamera = this.scene.activeCamera;
+              this.scene.activeCamera = this._menuArcCam;
+            }
+            // Slowly orbit
+            if (this._menuArcCam) this._menuArcCam.alpha += 0.002;
+            if (this._menuCarLight) this._menuCarLight.setEnabled(true);
+            if (this._menuCarFill) this._menuCarFill.setEnabled(true);
+            if (this._menuCarRim) this._menuCarRim.setEnabled(true);
+            if (this._menuCarHemi) this._menuCarHemi.setEnabled(true);
+          } else if (this._menuCar) {
+            this._menuCar.isVisible = false;
+            // Restore the chase camera
+            if (this._savedCamera && this.scene.activeCamera === this._menuArcCam) {
+              this.scene.activeCamera = this._savedCamera;
+            }
+            if (this._menuCarLight) this._menuCarLight.setEnabled(false);
+            if (this._menuCarFill) this._menuCarFill.setEnabled(false);
+            if (this._menuCarRim) this._menuCarRim.setEnabled(false);
+            if (this._menuCarHemi) this._menuCarHemi.setEnabled(false);
+          }
+        });
+      } catch (_) { /* car builder may not be ready */ }
+    }
+
+    updateMenuCompletion(percent, progress) {
+      if (this.menuCompletionText) {
+        this.menuCompletionText.text = percent > 0 ? percent + '% complete' : 'New here? Start your career.';
+      }
+      // Update right-side stats panel
+      if (this.menuStatsCompletion) {
+        this.menuStatsCompletion.text = percent + '% Complete';
+      }
+      if (progress && this.menuStatsStars) {
+        var totalStars = 0;
+        Object.values(progress.raceResults || {}).forEach(function(r) { totalStars += (r.bestStars || 0); });
+        this.menuStatsStars.text = '\u2605 ' + totalStars + ' / 45';
+      }
+      if (progress && this.menuStatsCoins) {
+        this.menuStatsCoins.text = '\ud83d\udcb0 ' + (progress.coins || 0) + ' coins';
+      }
+      if (progress && this.menuStatsChapter) {
+        var maxCh = 1;
+        (progress.chaptersUnlocked || []).forEach(function(c) { if (c > maxCh) maxCh = c; });
+        var chNames = { 1: 'Street Rookie', 2: 'Desert Dash', 3: 'Frozen Peak', 4: 'Jungle Fury', 5: 'Sky Championship' };
+        this.menuStatsChapter.text = 'Ch ' + maxCh + ': ' + (chNames[maxCh] || '');
+      }
+    }
+
+    // ─── Story Select ─────────────────────────────────────────────
+    _buildStorySelect() {
+      const panel = this._createPanel('STORY_SELECT');
+      var chThemes = ['\ud83c\udfd9\ufe0f', '\ud83c\udfdc\ufe0f', '\u2744\ufe0f', '\ud83c\udf34', '\u2601\ufe0f'];
+      var chRivals = ['vs Blaze', 'vs Sandstorm', 'vs Glacier', 'vs Viper', 'vs Apex'];
+
+      // Title top-left
+      var titleRow = new GUI.StackPanel('storyTitleRow');
+      titleRow.isVertical = false;
+      titleRow.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      titleRow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      titleRow.top = '16px';
+      titleRow.left = '30px';
+      titleRow.height = '44px';
+      panel.addControl(titleRow);
+
+      const backBtn = this._createSecondaryButton('< BACK', '100px', '38px', titleRow);
+      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('MENU'); });
+
+      var sp = new GUI.Rectangle(); sp.width = '16px'; sp.height = '1px'; sp.thickness = 0; sp.background = 'transparent'; titleRow.addControl(sp);
+
+      this._createTitle('STORY MODE', 28, COLORS.text, titleRow);
+
+      // Horizontal scrollable chapter cards row
+      this.chapterCards = [];
+      var cardRow = new GUI.StackPanel('chCardRow');
+      cardRow.isVertical = false;
+      cardRow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      cardRow.top = '20px';
+      cardRow.height = '180px';
+      panel.addControl(cardRow);
+
+      for (let i = 0; i < 5; i++) {
+        var chColor = CH_COLORS[i];
+
+        // Card — taller, shows chapter info vertically
+        var card = new GUI.Rectangle('ch_' + i);
+        card.width = '150px';
+        card.height = '170px';
+        card.cornerRadius = 12;
+        card.background = COLORS.bgCard;
+        card.thickness = 2;
+        card.color = chColor;
+        card.shadowColor = chColor;
+        card.shadowBlur = 12;
+        card.shadowOffsetY = 2;
+        card.paddingLeft = '6px';
+        card.paddingRight = '6px';
+
+        var inner = new GUI.StackPanel('chInner_' + i);
+        inner.width = '130px';
+        card.addControl(inner);
+
+        // Theme emoji — large
+        var themeText = this._createText(chThemes[i], 30, COLORS.text, inner);
+        themeText.paddingTop = '10px';
+        themeText.paddingBottom = '2px';
+
+        // Chapter number
+        var numText = this._createText((i + 1) + '', 28, chColor, inner);
+        numText.fontWeight = 'bold';
+        numText.paddingBottom = '2px';
+
+        // Chapter name
+        var nameText = this._createText('', 13, COLORS.text, inner);
+        nameText.paddingBottom = '2px';
+
+        // Rival
+        var rivalText = this._createText(chRivals[i], 11, COLORS.textDim, inner);
+        rivalText.paddingBottom = '4px';
+
+        // Stars
+        var starsText = this._createText('', 12, COLORS.gold, inner);
+
+        // Hover
+        card.onPointerEnterObservable.add(() => { card.shadowBlur = 24; card.scaleX = 1.05; card.scaleY = 1.05; });
+        card.onPointerOutObservable.add(() => { card.shadowBlur = 12; card.scaleX = 1; card.scaleY = 1; });
+
+        card.onPointerClickObservable.add((function(idx) {
+          return function() {
+            this._fire('click');
+            this._fire('selectChapter', { chapterIndex: idx });
+          }.bind(this);
+        }).call(this, i));
+
+        cardRow.addControl(card);
+        this.chapterCards.push({ card: card, nameText: nameText, starsText: starsText, accentBar: null });
+      }
+    }
+
+    updateChapterCards(chapters, progress) {
+      const SM = window.DriftLegends.StoryMode;
+      chapters.forEach((ch, i) => {
+        if (i >= this.chapterCards.length) return;
+        const cc = this.chapterCards[i];
+        const unlocked = SM.isChapterUnlocked(progress, ch.id);
+        cc.nameText.text = unlocked ? ch.name : '\ud83d\udd12 LOCKED';
+        cc.nameText.color = unlocked ? COLORS.text : COLORS.textMuted;
+        // Stars — compact for card layout
+        if (unlocked) {
+          const earned = SM.getChapterStars ? SM.getChapterStars(progress, ch.id) : 0;
+          cc.starsText.text = STAR_FILLED + ' ' + earned + '/9';
+        } else {
+          cc.starsText.text = '';
+        }
+        cc.card.alpha = unlocked ? 1 : 0.35;
+        cc.card.isEnabled = unlocked;
+        if (cc.accentBar) cc.accentBar.alpha = unlocked ? 1 : 0.3;
+      });
+    }
+
+    // ─── Car Select ───────────────────────────────────────────────
+    _buildCarSelect() {
+      const panel = this._createPanel('CAR_SELECT');
+      const stack = new GUI.StackPanel();
+      stack.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      stack.width = '440px';
+      panel.addControl(stack);
+
+      this._createText('SELECT YOUR CAR', 24, COLORS.text, stack).paddingBottom = '16px';
+
+      this.carSelectCards = [];
+      const carDefs = [
+        { id: 'street-kart', name: 'Street Kart', speed: 6, handling: 7, drift: 6 },
+        { id: 'drift-racer', name: 'Drift Racer', speed: 5, handling: 8, drift: 9 },
+        { id: 'sand-runner', name: 'Sand Runner', speed: 9, handling: 5, drift: 5 },
+      ];
+
+      carDefs.forEach((car, i) => {
+        const card = this._createCard('car_' + i, '420px', '80px', null, COLORS.accent);
+
+        const inner = new GUI.StackPanel();
+        card.addControl(inner);
+
+        const nameText = this._createText(car.name, 17, COLORS.text, inner);
+        nameText.shadowColor = 'rgba(0,0,0,0.4)';
+        nameText.shadowBlur = 4;
+
+        // Stat bars as visual blocks instead of plain text
+        const statsRow = new GUI.StackPanel();
+        statsRow.isVertical = false;
+        statsRow.height = '18px';
+        inner.addControl(statsRow);
+        var labels = ['SPD', 'HND', 'DFT'];
+        var vals = [car.speed, car.handling, car.drift];
+        labels.forEach(function(lbl, j) {
+          var lblTb = new GUI.TextBlock();
+          lblTb.text = lbl;
+          lblTb.color = COLORS.textDim;
+          lblTb.fontSize = 12;
+          lblTb.fontFamily = 'monospace';
+          lblTb.fontWeight = 'bold';
+          lblTb.width = '34px';
+          lblTb.resizeToFit = false;
+          statsRow.addControl(lblTb);
+          // Stat bar (filled portion)
+          var barBg = new GUI.Rectangle();
+          barBg.width = '70px';
+          barBg.height = '10px';
+          barBg.cornerRadius = 4;
+          barBg.background = 'rgba(255,255,255,0.1)';
+          barBg.thickness = 0;
+          statsRow.addControl(barBg);
+          var barFill = new GUI.Rectangle();
+          barFill.width = Math.round(vals[j] / 10 * 100) + '%';
+          barFill.height = '100%';
+          barFill.cornerRadius = 4;
+          barFill.background = vals[j] >= 7 ? COLORS.accent : COLORS.textDim;
+          barFill.thickness = 0;
+          barFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+          barBg.addControl(barFill);
+          // Spacer
+          var sp = new GUI.Rectangle();
+          sp.width = '8px';
+          sp.height = '1px';
+          sp.thickness = 0;
+          sp.background = 'transparent';
+          statsRow.addControl(sp);
+        });
+
+        const statusText = this._createText('', 13, COLORS.gold, inner);
+
+        // Hover
+        card.onPointerEnterObservable.add(() => { card.shadowBlur = 20; card.scaleX = 1.02; card.scaleY = 1.02; });
+        card.onPointerOutObservable.add(() => { card.shadowBlur = 12; card.scaleX = 1; card.scaleY = 1; });
+
+        card.onPointerClickObservable.add(() => {
+          this._fire('click');
+          this._fire('selectCar', { carId: car.id });
+        });
+
+        stack.addControl(card);
+        this.carSelectCards.push({ card, nameText, statusText, carId: car.id });
+      });
+
+      const backBtn = this._createSecondaryButton('< BACK', '120px', '44px', stack);
+      backBtn.paddingTop = '12px';
+      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('STORY_SELECT'); });
+    }
+
+    updateCarSelectCards(progress) {
+      const SM = window.DriftLegends.StoryMode;
+      this.carSelectCards.forEach(cc => {
+        const status = SM.isCarUnlockable(progress, cc.carId);
+        if (status === 'owned') {
+          cc.statusText.text = 'OWNED';
+          cc.statusText.color = COLORS.green;
+          cc.card.alpha = 1;
+          cc.card.isEnabled = true;
+        } else if (status === 'available') {
+          const cost = cc.carId === 'drift-racer' ? 200 : 300;
+          cc.statusText.text = 'UNLOCK (' + cost + ' coins)';
+          cc.statusText.color = COLORS.gold;
+          cc.card.alpha = 1;
+          cc.card.isEnabled = true;
+        } else {
+          cc.statusText.text = 'LOCKED';
+          cc.statusText.color = COLORS.red;
+          cc.card.alpha = 0.4;
+          cc.card.isEnabled = false;
+        }
+      });
+    }
+
+    // ─── Pre-Race ─────────────────────────────────────────────────
+    _buildPreRace() {
+      const panel = this._createPanel('PRE_RACE');
+
+      // Track name — large, center
+      this.preRaceTrackName = new GUI.TextBlock('preTrack', '');
+      this.preRaceTrackName.fontSize = 42;
+      this.preRaceTrackName.fontFamily = 'monospace';
+      this.preRaceTrackName.fontWeight = 'bold';
+      this.preRaceTrackName.color = COLORS.text;
+      this.preRaceTrackName.shadowColor = 'rgba(0,0,0,0.6)';
+      this.preRaceTrackName.shadowBlur = 12;
+      this.preRaceTrackName.top = '-40px';
+      panel.addControl(this.preRaceTrackName);
+
+      // Rival name — accent colored, below track name
+      this.preRaceRivalName = new GUI.TextBlock('preRival', '');
+      this.preRaceRivalName.fontSize = 20;
+      this.preRaceRivalName.fontFamily = 'monospace';
+      this.preRaceRivalName.fontWeight = 'bold';
+      this.preRaceRivalName.color = COLORS.accent;
+      this.preRaceRivalName.shadowColor = COLORS.accentGlow;
+      this.preRaceRivalName.shadowBlur = 10;
+      this.preRaceRivalName.top = '10px';
+      panel.addControl(this.preRaceRivalName);
+
+      // Rival trash talk — italic, dimmed
+      this.preRaceRivalLine = new GUI.TextBlock('preRivalLine', '');
+      this.preRaceRivalLine.fontSize = 15;
+      this.preRaceRivalLine.fontFamily = 'monospace';
+      this.preRaceRivalLine.color = COLORS.textDim;
+      this.preRaceRivalLine.textWrapping = GUI.TextWrapping.WordWrap;
+      this.preRaceRivalLine.width = '500px';
+      this.preRaceRivalLine.height = '50px';
+      this.preRaceRivalLine.top = '44px';
+      panel.addControl(this.preRaceRivalLine);
+
+      // RACE! button — bottom center, large
+      const raceBtn = this._createButton('RACE!', '280px', '60px');
+      raceBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      raceBtn.top = '-40px';
+      raceBtn.fontSize = 24;
+      panel.addControl(raceBtn);
+      raceBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('startRace'); });
+
+      // Decorative top/bottom bars for cinematic feel
+      var topStrip = new GUI.Rectangle('preTopStrip');
+      topStrip.width = '100%'; topStrip.height = '3px';
+      topStrip.background = COLORS.accent; topStrip.thickness = 0;
+      topStrip.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      topStrip.top = '0px';
+      panel.addControl(topStrip);
+    }
+
+    showPreRace(trackName, rivalName, rivalLine) {
+      this.preRaceTrackName.text = trackName;
+      this.preRaceRivalName.text = rivalName ? 'VS ' + rivalName.toUpperCase() : '';
+      this.preRaceRivalLine.text = rivalLine ? '"' + rivalLine + '"' : '';
+      this.show('PRE_RACE');
+    }
+
+    // ─── Countdown ────────────────────────────────────────────────
+    _buildCountdown() {
+      const panel = this._createPanel('COUNTDOWN');
+      panel.background = 'transparent';
+      this.countdownText = new GUI.TextBlock('countdownNum', '3');
+      this.countdownText.color = COLORS.accent;
+      this.countdownText.fontSize = 100;
+      this.countdownText.fontFamily = 'monospace';
+      this.countdownText.fontWeight = 'bold';
+      this.countdownText.shadowColor = COLORS.accentGlow;
+      this.countdownText.shadowBlur = 30;
+      this.countdownText.shadowOffsetY = 4;
+      panel.addControl(this.countdownText);
+    }
+
+    showCountdown(number) {
+      this.countdownText.text = number === 0 ? 'GO!' : String(number);
+      this.countdownText.color = number === 0 ? COLORS.green : COLORS.accent;
+      this.countdownText.fontSize = number === 0 ? 120 : 100;
+      this.countdownText.shadowColor = number === 0 ? 'rgba(0,255,136,0.4)' : COLORS.accentGlow;
+      this.show('COUNTDOWN');
+    }
+
+    // ─── Track Intro Overlay (shown during cinematic camera sweep) ──
+    showTrackIntro(trackId, chapterName) {
+      if (!this._trackIntroPanel) {
+        var panel = new GUI.Rectangle('TRACK_INTRO');
+        panel.width = '100%';
+        panel.height = '100%';
+        panel.thickness = 0;
+        panel.background = 'transparent';
+        this.ui.addControl(panel);
+        this._trackIntroPanel = panel;
+
+        // Track name (big, bottom-center)
+        this._introTrackName = new GUI.TextBlock('introTrack', '');
+        this._introTrackName.fontSize = 36;
+        this._introTrackName.fontFamily = 'monospace';
+        this._introTrackName.fontWeight = 'bold';
+        this._introTrackName.color = COLORS.text;
+        this._introTrackName.shadowColor = 'rgba(0,0,0,0.6)';
+        this._introTrackName.shadowBlur = 12;
+        this._introTrackName.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this._introTrackName.top = '-120px';
+        panel.addControl(this._introTrackName);
+
+        // Chapter name (smaller, above track name)
+        this._introChapterName = new GUI.TextBlock('introChapter', '');
+        this._introChapterName.fontSize = 16;
+        this._introChapterName.fontFamily = 'monospace';
+        this._introChapterName.color = COLORS.accent;
+        this._introChapterName.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this._introChapterName.top = '-160px';
+        panel.addControl(this._introChapterName);
+
+        // "GET READY" text (top center, pulsing)
+        this._introGetReady = new GUI.TextBlock('introReady', 'GET READY');
+        this._introGetReady.fontSize = 24;
+        this._introGetReady.fontFamily = 'monospace';
+        this._introGetReady.fontWeight = 'bold';
+        this._introGetReady.color = COLORS.accent;
+        this._introGetReady.shadowColor = COLORS.accentGlow;
+        this._introGetReady.shadowBlur = 15;
+        this._introGetReady.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this._introGetReady.top = '80px';
+        panel.addControl(this._introGetReady);
+
+        // Subtle cinematic bars (top and bottom black strips)
+        var topBar = new GUI.Rectangle('cinBar1');
+        topBar.width = '100%';
+        topBar.height = '50px';
+        topBar.background = 'rgba(0,0,0,0.7)';
+        topBar.thickness = 0;
+        topBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        topBar.top = '0px'; // below header
+        panel.addControl(topBar);
+
+        var botBar = new GUI.Rectangle('cinBar2');
+        botBar.width = '100%';
+        botBar.height = '50px';
+        botBar.background = 'rgba(0,0,0,0.7)';
+        botBar.thickness = 0;
+        botBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        panel.addControl(botBar);
+      }
+
+      // Find track name from TRACKS data
+      var trackName = trackId;
+      try {
+        var trackDef = window.DriftLegends.TrackBuilder.TRACKS[trackId];
+        if (trackDef) trackName = trackDef.name;
+      } catch(_) {}
+
+      this._introTrackName.text = trackName;
+      this._introChapterName.text = chapterName || '';
+      this._trackIntroPanel.isVisible = true;
+    }
+
+    hideTrackIntro() {
+      if (this._trackIntroPanel) this._trackIntroPanel.isVisible = false;
+    }
+
+    // ─── Race HUD ─────────────────────────────────────────────────
+    _buildRaceHUD() {
+      const panel = this._createPanel('RACE_HUD');
+      panel.background = 'transparent';
+
+      // ─── Bottom Bar (inspired by #DRIVE) ─────────────────────────
+      var bottomBar = new GUI.Rectangle('bottomBar');
+      bottomBar.width = '100%';
+      bottomBar.height = '52px';
+      bottomBar.background = 'rgba(13,13,26,0.75)';
+      bottomBar.thickness = 0;
+      bottomBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      panel.addControl(bottomBar);
+
+      // Top accent line on bottom bar
+      var barAccent = new GUI.Rectangle('barAccent');
+      barAccent.width = '100%';
+      barAccent.height = '2px';
+      barAccent.background = COLORS.accent;
+      barAccent.thickness = 0;
+      barAccent.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      bottomBar.addControl(barAccent);
+
+      // Position (bottom-bar left) — bold and large
+      this.hud.position = new GUI.TextBlock('hudPos', '1ST');
+      this.hud.position.color = COLORS.gold;
+      this.hud.position.fontSize = 32;
+      this.hud.position.fontFamily = 'monospace';
+      this.hud.position.fontWeight = 'bold';
+      this.hud.position.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this.hud.position.left = '20px';
+      this.hud.position.width = '100px';
+      bottomBar.addControl(this.hud.position);
+
+      // Drift meter (bottom-bar center-left)
+      this.hud.driftLabel = new GUI.TextBlock('driftLabel', 'DRIFT');
+      this.hud.driftLabel.color = COLORS.textDim;
+      this.hud.driftLabel.fontSize = 10;
+      this.hud.driftLabel.fontFamily = 'monospace';
+      this.hud.driftLabel.fontWeight = 'bold';
+      this.hud.driftLabel.top = '-12px';
+      this.hud.driftLabel.left = '-80px';
+      this.hud.driftLabel.width = '120px';
+      bottomBar.addControl(this.hud.driftLabel);
+
+      var driftContainer = new GUI.Rectangle('driftContainer');
+      driftContainer.width = '140px';
+      driftContainer.height = '12px';
+      driftContainer.cornerRadius = 6;
+      driftContainer.background = 'rgba(255,255,255,0.12)';
+      driftContainer.thickness = 1;
+      driftContainer.color = 'rgba(255,255,255,0.2)';
+      driftContainer.left = '-80px';
+      driftContainer.top = '6px';
+      bottomBar.addControl(driftContainer);
+
+      this.hud.driftFill = new GUI.Rectangle('driftFill');
+      this.hud.driftFill.width = '0%';
+      this.hud.driftFill.height = '100%';
+      this.hud.driftFill.background = COLORS.accent;
+      this.hud.driftFill.thickness = 0;
+      this.hud.driftFill.cornerRadius = 6;
+      this.hud.driftFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      driftContainer.addControl(this.hud.driftFill);
+
+      // Lap counter (bottom-bar center)
+      this.hud.lap = new GUI.TextBlock('hudLap', 'LAP 1/3');
+      this.hud.lap.color = COLORS.text;
+      this.hud.lap.fontSize = 18;
+      this.hud.lap.fontFamily = 'monospace';
+      this.hud.lap.fontWeight = 'bold';
+      this.hud.lap.width = '120px';
+      this.hud.lap.left = '60px';
+      bottomBar.addControl(this.hud.lap);
+
+      // Speed (bottom-bar right) — large and bold
+      this.hud.speed = new GUI.TextBlock('hudSpeed', '0');
+      this.hud.speed.color = COLORS.text;
+      this.hud.speed.fontSize = 30;
+      this.hud.speed.fontFamily = 'monospace';
+      this.hud.speed.fontWeight = 'bold';
+      this.hud.speed.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.hud.speed.left = '-60px';
+      this.hud.speed.width = '100px';
+      bottomBar.addControl(this.hud.speed);
+
+      // KM/H label (smaller, next to speed)
+      var speedUnit = new GUI.TextBlock('speedUnit', 'KM/H');
+      speedUnit.color = COLORS.textDim;
+      speedUnit.fontSize = 11;
+      speedUnit.fontFamily = 'monospace';
+      speedUnit.fontWeight = 'bold';
+      speedUnit.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      speedUnit.left = '-20px';
+      speedUnit.top = '4px';
+      speedUnit.width = '40px';
+      bottomBar.addControl(speedUnit);
+
+      // ─── Top overlays ────────────────────────────────────────────
+
+      // Race time (top-right, subtle)
+      this.hud.time = new GUI.TextBlock('hudTime', '0:00');
+      this.hud.time.color = 'rgba(255,255,255,0.5)';
+      this.hud.time.fontSize = 16;
+      this.hud.time.fontFamily = 'monospace';
+      this.hud.time.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.hud.time.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.hud.time.left = '-20px';
+      this.hud.time.top = '70px';
+      panel.addControl(this.hud.time);
+
+      // Wrong way indicator (center, hidden by default)
+      this.hud.wrongWay = this._createText('WRONG WAY!', 30, COLORS.red, panel);
+      this.hud.wrongWay.isVisible = false;
+
+      // Boost indicator (center, flash on boost)
+      this.hud.boostText = new GUI.TextBlock('boostText', 'BOOST!');
+      this.hud.boostText.color = COLORS.accent;
+      this.hud.boostText.fontSize = 28;
+      this.hud.boostText.fontFamily = 'monospace';
+      this.hud.boostText.fontWeight = 'bold';
+      this.hud.boostText.isVisible = false;
+      this.hud.boostText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      this.hud.boostText.top = '-60px';
+      this.hud.boostText.shadowColor = COLORS.accentGlow;
+      this.hud.boostText.shadowBlur = 20;
+      panel.addControl(this.hud.boostText);
+    }
+
+    updateHUD(data) {
+      if (!data) return;
+      // Position
+      const posColors = { 1: COLORS.gold, 2: COLORS.silver, 3: COLORS.bronze, 4: COLORS.text };
+      const posSuffix = { 1: 'ST', 2: 'ND', 3: 'RD', 4: 'TH' };
+      this.hud.position.text = data.position + (posSuffix[data.position] || 'TH');
+      this.hud.position.color = posColors[data.position] || COLORS.text;
+
+      // Lap
+      this.hud.lap.text = 'LAP ' + data.lap + '/' + data.totalLaps;
+
+      // Speed (number only — unit label is separate)
+      this.hud.speed.text = '' + data.speed;
+
+      // Drift meter
+      const pct = Math.round(data.driftMeter * 100);
+      this.hud.driftFill.width = pct + '%';
+      if (pct < 33) {
+        this.hud.driftFill.background = COLORS.textDim;
+      } else if (pct < 66) {
+        this.hud.driftFill.background = COLORS.accent;
+      } else {
+        this.hud.driftFill.background = '#00aaff';
+      }
+
+      // Boost
+      this.hud.boostText.isVisible = !!data.isBoosting;
+
+      // Time
+      if (data.raceTime !== undefined) {
+        const totalSec = Math.floor(data.raceTime);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        this.hud.time.text = min + ':' + String(sec).padStart(2, '0');
+      }
+    }
+
+    // ─── Race Result ──────────────────────────────────────────────
+    _buildRaceResult() {
+      const panel = this._createPanel('RACE_RESULT');
+
+      // Large title — VICTORY! or RACE COMPLETE
+      this.resultTitle = new GUI.TextBlock('resTitle', '');
+      this.resultTitle.fontSize = 52;
+      this.resultTitle.fontFamily = 'monospace';
+      this.resultTitle.fontWeight = 'bold';
+      this.resultTitle.color = COLORS.gold;
+      this.resultTitle.shadowColor = 'rgba(255,215,0,0.4)';
+      this.resultTitle.shadowBlur = 30;
+      this.resultTitle.top = '-80px';
+      panel.addControl(this.resultTitle);
+
+      // Stars — big, centered
+      this.resultStars = new GUI.TextBlock('resStars', '');
+      this.resultStars.fontSize = 36;
+      this.resultStars.fontFamily = 'monospace';
+      this.resultStars.color = COLORS.gold;
+      this.resultStars.top = '-30px';
+      panel.addControl(this.resultStars);
+
+      // Stats row — horizontal layout: position | score | coins | time
+      var statsBar = new GUI.Rectangle('resStatsBar');
+      statsBar.width = '600px';
+      statsBar.height = '50px';
+      statsBar.background = 'rgba(13,13,26,0.7)';
+      statsBar.cornerRadius = 10;
+      statsBar.thickness = 1;
+      statsBar.color = 'rgba(255,255,255,0.1)';
+      statsBar.top = '20px';
+      panel.addControl(statsBar);
+
+      var statsRow = new GUI.StackPanel('resStatsRow');
+      statsRow.isVertical = false;
+      statsBar.addControl(statsRow);
+
+      this.resultPosition = this._createText('', 20, COLORS.text, statsRow);
+      this.resultPosition.width = '120px';
+      this.resultScore = this._createText('', 16, COLORS.textDim, statsRow);
+      this.resultScore.width = '140px';
+      this.resultCoins = this._createText('', 18, COLORS.gold, statsRow);
+      this.resultCoins.width = '140px';
+      this.resultTime = this._createText('', 16, COLORS.textDim, statsRow);
+      this.resultTime.width = '140px';
+
+      // Unlock text
+      this.resultUnlock = new GUI.TextBlock('resUnlock', '');
+      this.resultUnlock.fontSize = 15;
+      this.resultUnlock.fontFamily = 'monospace';
+      this.resultUnlock.color = COLORS.green;
+      this.resultUnlock.textWrapping = GUI.TextWrapping.WordWrap;
+      this.resultUnlock.width = '500px';
+      this.resultUnlock.height = '40px';
+      this.resultUnlock.top = '65px';
+      panel.addControl(this.resultUnlock);
+
+      // Buttons — horizontal at bottom
+      var btnBar = new GUI.StackPanel('resBtnBar');
+      btnBar.isVertical = false;
+      btnBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      btnBar.height = '70px';
+      btnBar.top = '-30px';
+      panel.addControl(btnBar);
+
+      const nextBtn = this._createButton('NEXT RACE', '200px', '52px', btnBar);
+      nextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
+
+      var sp1 = new GUI.Rectangle(); sp1.width = '12px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnBar.addControl(sp1);
+
+      const retryBtn = this._createSecondaryButton('RETRY', '160px', '52px', btnBar);
+      retryBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultRetry'); });
+
+      var sp2 = new GUI.Rectangle(); sp2.width = '12px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnBar.addControl(sp2);
+
+      const menuBtn = this._createSecondaryButton('MENU', '120px', '52px', btnBar);
+      menuBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultMenu'); });
+    }
+
+    showRaceResult(data) {
+      const won = data.position === 1;
+      this.resultTitle.text = won ? 'VICTORY!' : 'RACE COMPLETE';
+      this.resultTitle.color = won ? COLORS.gold : COLORS.text;
+      this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' Place';
+      this.resultStars.text = '\u2b50'.repeat(data.stars) + '\u2606'.repeat(3 - data.stars);
+      this.resultScore.text = 'Score: ' + data.raceScore;
+      this.resultCoins.text = '+' + data.coins + ' coins';
+      if (data.totalTimeMs) {
+        const sec = (data.totalTimeMs / 1000).toFixed(1);
+        this.resultTime.text = 'Time: ' + sec + 's';
+      } else {
+        this.resultTime.text = '';
+      }
+      this.resultUnlock.text = data.unlockText || '';
+      this.show('RACE_RESULT');
+    }
+
+    _ordSuffix(n) {
+      return { 1: 'st', 2: 'nd', 3: 'rd' }[n] || 'th';
+    }
+
+    // ─── Multiplayer Menu ─────────────────────────────────────────
+    _buildMPMenu() {
+      const panel = this._createPanel('MP_MENU');
+
+      // Header
+      this._createTitle('MULTIPLAYER', 32, COLORS.text, panel).top = '-120px';
+
+      // Buttons — horizontal row, center
+      var btnRow = new GUI.StackPanel('mpBtnRow');
+      btnRow.isVertical = false;
+      btnRow.height = '60px';
+      panel.addControl(btnRow);
+
+      const quickBtn = this._createButton('QUICK MATCH', '220px', '54px', btnRow);
+      quickBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpQuickMatch'); });
+
+      var sp1 = new GUI.Rectangle(); sp1.width = '16px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow.addControl(sp1);
+
+      const privateBtn = this._createSecondaryButton('CREATE ROOM', '200px', '54px', btnRow);
+      privateBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpCreatePrivate'); });
+
+      var sp2 = new GUI.Rectangle(); sp2.width = '16px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnRow.addControl(sp2);
+
+      const joinBtn = this._createSecondaryButton('JOIN CODE', '180px', '54px', btnRow);
+      joinBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpJoinCode'); });
+
+      // Status text
+      this.mpStatusText = this._createText('', 16, COLORS.textDim, panel);
+      this.mpStatusText.top = '50px';
+
+      // Back — bottom center
+      const backBtn = this._createSecondaryButton('< BACK', '120px', '44px');
+      backBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      backBtn.top = '-30px';
+      panel.addControl(backBtn);
+      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('MENU'); });
+    }
+
+    // ─── Settings ─────────────────────────────────────────────────
+    _buildSettings() {
+      const panel = this._createPanel('SETTINGS');
+
+      // Header
+      this._createTitle('SETTINGS', 32, COLORS.text, panel).top = '-120px';
+
+      // Settings card — centered, contained
+      var settingsCard = new GUI.Rectangle('settingsCard');
+      settingsCard.width = '500px';
+      settingsCard.height = '200px';
+      settingsCard.cornerRadius = 12;
+      settingsCard.background = 'rgba(20,20,40,0.8)';
+      settingsCard.thickness = 1;
+      settingsCard.color = 'rgba(255,255,255,0.1)';
+      panel.addControl(settingsCard);
+
+      var stack = new GUI.StackPanel();
+      stack.width = '440px';
+      settingsCard.addControl(stack);
+
+      this._createText('AUDIO VOLUME', 14, COLORS.textDim, stack).paddingBottom = '4px';
+      const slider = new GUI.Slider('volumeSlider');
+      slider.minimum = 0;
+      slider.maximum = 1;
+      slider.value = 0.4;
+      slider.width = '380px';
+      slider.height = '44px';
+      slider.color = COLORS.accent;
+      slider.background = 'rgba(255,255,255,0.1)';
+      slider.thumbWidth = 24;
+      slider.paddingBottom = '16px';
+      slider.onValueChangedObservable.add(val => this._fire('volumeChange', val));
+      stack.addControl(slider);
+      this.volumeSlider = slider;
+
+      // Controls reference — horizontal layout
+      var controlsRow = new GUI.StackPanel();
+      controlsRow.isVertical = false;
+      controlsRow.height = '40px';
+      stack.addControl(controlsRow);
+
+      this._createText('WASD / Arrows = Drive', 12, COLORS.textDim, controlsRow).width = '180px';
+      this._createText('Space = Drift', 12, COLORS.textDim, controlsRow).width = '110px';
+      this._createText('M = Mute', 12, COLORS.textDim, controlsRow).width = '80px';
+
+      // Done — bottom center
+      const backBtn = this._createButton('DONE', '160px', '50px');
+      backBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      backBtn.top = '-30px';
+      panel.addControl(backBtn);
+      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('MENU'); });
+    }
+
+    // ─── Loading Screen ───────────────────────────────────────────
+    _buildLoading() {
+      const panel = this._createPanel('LOADING');
+
+      // Semi-transparent — HTML SVG shows through
+      panel.background = 'rgba(13,13,26,0.7)';
+
+      // Track name — large, top area
+      this.loadingTrackName = new GUI.TextBlock('loadTrack', '');
+      this.loadingTrackName.fontSize = 36;
+      this.loadingTrackName.fontFamily = 'monospace';
+      this.loadingTrackName.fontWeight = 'bold';
+      this.loadingTrackName.color = COLORS.text;
+      this.loadingTrackName.shadowColor = COLORS.accentGlow;
+      this.loadingTrackName.shadowBlur = 16;
+      this.loadingTrackName.top = '-60px';
+      panel.addControl(this.loadingTrackName);
+
+      // Loading status text
+      this.loadingText = new GUI.TextBlock('loadStatus', 'Building track...');
+      this.loadingText.fontSize = 14;
+      this.loadingText.fontFamily = 'monospace';
+      this.loadingText.color = COLORS.textDim;
+      this.loadingText.top = '-20px';
+      panel.addControl(this.loadingText);
+
+      // Loading bar (animated)
+      var loadBarBg = new GUI.Rectangle('loadBarBg');
+      loadBarBg.width = '300px';
+      loadBarBg.height = '4px';
+      loadBarBg.cornerRadius = 2;
+      loadBarBg.background = 'rgba(255,255,255,0.1)';
+      loadBarBg.thickness = 0;
+      loadBarBg.top = '10px';
+      panel.addControl(loadBarBg);
+
+      this._loadBarFill = new GUI.Rectangle('loadBarFill');
+      this._loadBarFill.width = '0%';
+      this._loadBarFill.height = '100%';
+      this._loadBarFill.cornerRadius = 2;
+      this._loadBarFill.background = COLORS.accent;
+      this._loadBarFill.thickness = 0;
+      this._loadBarFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      loadBarBg.addControl(this._loadBarFill);
+
+      // Tip/quote at bottom — rotates through tips
+      this._loadingTip = new GUI.TextBlock('loadTip', '');
+      this._loadingTip.fontSize = 13;
+      this._loadingTip.fontFamily = 'monospace';
+      this._loadingTip.color = COLORS.textMuted;
+      this._loadingTip.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      this._loadingTip.top = '-40px';
+      this._loadingTip.width = '600px';
+      this._loadingTip.textWrapping = GUI.TextWrapping.WordWrap;
+      panel.addControl(this._loadingTip);
+
+      // "TIP" label
+      var tipLabel = new GUI.TextBlock('tipLabel', 'TIP');
+      tipLabel.fontSize = 11;
+      tipLabel.fontFamily = 'monospace';
+      tipLabel.fontWeight = 'bold';
+      tipLabel.color = COLORS.accent;
+      tipLabel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      tipLabel.top = '-60px';
+      panel.addControl(tipLabel);
+
+      // Animate loading bar and rotate tips
+      this._loadProgress = 0;
+      this._tipIndex = 0;
+      this._tipTimer = 0;
+      this.scene.registerBeforeRender(() => {
+        if (!this.screens['LOADING'] || !this.screens['LOADING'].isVisible) return;
+        var dt = this.scene.getEngine().getDeltaTime() / 1000;
+        // Animate loading bar (fake progress that accelerates)
+        if (this._loadProgress < 90) {
+          this._loadProgress += dt * 25;
+          this._loadBarFill.width = Math.min(90, this._loadProgress) + '%';
+        }
+        // Rotate tips every 3 seconds
+        this._tipTimer += dt;
+        if (this._tipTimer > 3) {
+          this._tipTimer = 0;
+          this._tipIndex = (this._tipIndex + 1) % this._TIPS.length;
+          this._loadingTip.text = this._TIPS[this._tipIndex];
+        }
+      });
+
+      // Tips/quotes pool
+      this._TIPS = [
+        'Hold Space while turning to initiate a drift — build boost meter for a speed burst!',
+        'Complete chapters to unlock new cars with unique handling stats.',
+        'Clean laps (no wall hits) earn bonus points toward your star rating.',
+        'Each rival has a unique personality — Blaze is aggressive, Sandstorm is technical.',
+        'Drift through corners to fill your boost meter. Release at full for maximum speed!',
+        'Yellow nitro pads on the track give you an instant speed boost.',
+        'Earn 3 stars on every race to unlock the "Perfectionist" achievement.',
+        'Play at night (10 PM - 6 AM) to unlock the "Night Racer" achievement.',
+        'The Sand Runner has the highest top speed but the worst drift handling.',
+        'Your best lap times are saved to the leaderboard — compete globally!',
+        'Sign in to save your progress to the cloud and sync across devices.',
+        'Beat all 5 chapter rivals to complete the story and unlock multiplayer tracks.',
+      ];
+    }
+
+    showLoading(trackName) {
+      this.loadingTrackName.text = trackName || 'Loading Track...';
+      this.loadingText.text = 'Building track...';
+      this._loadProgress = 0;
+      this._tipIndex = Math.floor(Math.random() * this._TIPS.length);
+      this._loadingTip.text = this._TIPS[this._tipIndex];
+      this._tipTimer = 0;
+      this.show('LOADING');
+    }
+
+    // ─── Disconnect Overlay ───────────────────────────────────────
+    _buildDisconnect() {
+      const panel = this._createPanel('DISCONNECT');
+      panel.background = 'rgba(0,0,0,0.7)';
+      this._createText('Reconnecting...', 24, COLORS.accent, panel);
+    }
+
+    showDisconnectOverlay() { this.show('DISCONNECT'); }
+    hideDisconnectOverlay() { this.hide('DISCONNECT'); }
+
+    // ─── Mobile Gesture Controls (Asphalt-style) ──────────────────
+    // Left half: hold = accelerate, swipe left/right = steer
+    // Right half: tap = boost/nitro, swipe down = brake
+    // Two-finger hold anywhere = drift
+    // Thin visual indicators at screen edges show steer direction
+    _buildMobileTouchControls() {
+      const container = new GUI.Rectangle('touchControls');
+      container.width = '100%';
+      container.height = '100%';
+      container.thickness = 0;
+      container.background = 'transparent';
+      container.isVisible = false;
+      this.ui.addControl(container);
+      this.touchControls = container;
+
+      const Input = () => window.DriftLegends.Input;
+
+      // ── Visual indicators (subtle, Asphalt-style) ──
+
+      // Left steer arrow indicator
+      const leftIndicator = new GUI.TextBlock('steer_left_ind', '\u25C0');
+      leftIndicator.fontSize = 40;
+      leftIndicator.color = 'rgba(255,255,255,0.12)';
+      leftIndicator.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      leftIndicator.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      leftIndicator.left = '16px';
+      container.addControl(leftIndicator);
+      this._steerLeftInd = leftIndicator;
+
+      // Right steer arrow indicator
+      const rightIndicator = new GUI.TextBlock('steer_right_ind', '\u25B6');
+      rightIndicator.fontSize = 40;
+      rightIndicator.color = 'rgba(255,255,255,0.12)';
+      rightIndicator.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      rightIndicator.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      rightIndicator.left = '-16px';
+      container.addControl(rightIndicator);
+      this._steerRightInd = rightIndicator;
+
+      // Brake indicator (bottom center)
+      const brakeInd = new GUI.TextBlock('brake_ind', 'BRAKE');
+      brakeInd.fontSize = 14;
+      brakeInd.fontFamily = 'monospace';
+      brakeInd.color = 'rgba(255,80,80,0.0)';
+      brakeInd.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      brakeInd.top = '-60px';
+      container.addControl(brakeInd);
+      this._brakeInd = brakeInd;
+
+      // Drift indicator (top center, shows when drifting)
+      const driftInd = new GUI.TextBlock('drift_active_ind', 'DRIFTING');
+      driftInd.fontSize = 16;
+      driftInd.fontFamily = 'monospace';
+      driftInd.fontWeight = 'bold';
+      driftInd.color = 'rgba(0,170,255,0.0)';
+      driftInd.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      driftInd.top = '80px';
+      container.addControl(driftInd);
+      this._driftInd = driftInd;
+
+      // ── Gesture zone hint at first touch ──
+      const hintText = new GUI.TextBlock('gesture_hint', 'Swipe to steer \u2022 Hold to accelerate \u2022 Two fingers to drift');
+      hintText.fontSize = 12;
+      hintText.fontFamily = 'monospace';
+      hintText.color = 'rgba(255,255,255,0.4)';
+      hintText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      hintText.top = '-20px';
+      container.addControl(hintText);
+      this._gestureHint = hintText;
+
+      // ── Touch gesture tracking via canvas pointer events ──
+      const canvas = document.getElementById('renderCanvas');
+      if (!canvas) return;
+
+      const touches = {};    // Track active touches by identifier
+      let swipeStartX = 0;
+      let swipeStartY = 0;
+      const SWIPE_THRESHOLD = 20; // px to count as a swipe
+      const STEER_SENSITIVITY = 0.015; // steer per px of horizontal drag
+      let gestureActive = false;
+
+      canvas.addEventListener('touchstart', (e) => {
+        if (!this.touchControls.isVisible) return;
+        e.preventDefault();
+
+        // Hide hint after first interaction
+        if (this._gestureHint.alpha > 0) {
+          this._gestureHint.alpha = 0;
+        }
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          touches[t.identifier] = {
+            startX: t.clientX,
+            startY: t.clientY,
+            currentX: t.clientX,
+            currentY: t.clientY,
+            startTime: Date.now(),
+          };
+        }
+
+        const touchCount = Object.keys(touches).length;
+
+        // Two-finger = drift (Asphalt style)
+        if (touchCount >= 2) {
+          Input().setTouch('drift', true);
+          this._driftInd.color = 'rgba(0,170,255,0.7)';
+        }
+
+        // Single touch = auto-accelerate
+        if (touchCount >= 1) {
+          Input().setTouch('accelerate', true);
+        }
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (!this.touchControls.isVisible) return;
+        e.preventDefault();
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (touches[t.identifier]) {
+            touches[t.identifier].currentX = t.clientX;
+            touches[t.identifier].currentY = t.clientY;
+          }
+        }
+
+        // Use the first touch for steering
+        const firstId = Object.keys(touches)[0];
+        if (firstId !== undefined && touches[firstId]) {
+          const dx = touches[firstId].currentX - touches[firstId].startX;
+          const dy = touches[firstId].currentY - touches[firstId].startY;
+
+          // Horizontal swipe = steer
+          if (Math.abs(dx) > SWIPE_THRESHOLD) {
+            const steerAmount = dx * STEER_SENSITIVITY;
+            if (steerAmount < -0.1) {
+              Input().setTouch('steerLeft', true);
+              Input().setTouch('steerRight', false);
+              this._steerLeftInd.color = 'rgba(255,77,0,0.5)';
+              this._steerRightInd.color = 'rgba(255,255,255,0.12)';
+            } else if (steerAmount > 0.1) {
+              Input().setTouch('steerRight', true);
+              Input().setTouch('steerLeft', false);
+              this._steerRightInd.color = 'rgba(255,77,0,0.5)';
+              this._steerLeftInd.color = 'rgba(255,255,255,0.12)';
+            }
+            // Update start for continuous drag steering (relative, not absolute)
+            touches[firstId].startX = touches[firstId].currentX - (dx * 0.3);
+          } else {
+            Input().setTouch('steerLeft', false);
+            Input().setTouch('steerRight', false);
+            this._steerLeftInd.color = 'rgba(255,255,255,0.12)';
+            this._steerRightInd.color = 'rgba(255,255,255,0.12)';
+          }
+
+          // Vertical swipe down = brake
+          if (dy > SWIPE_THRESHOLD * 2) {
+            Input().setTouch('brake', true);
+            Input().setTouch('accelerate', false);
+            this._brakeInd.color = 'rgba(255,80,80,0.7)';
+          } else {
+            Input().setTouch('brake', false);
+            if (Object.keys(touches).length >= 1) {
+              Input().setTouch('accelerate', true);
+            }
+            this._brakeInd.color = 'rgba(255,80,80,0.0)';
+          }
+        }
+      }, { passive: false });
+
+      const endTouch = (e) => {
+        if (!this.touchControls.isVisible) return;
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          delete touches[e.changedTouches[i].identifier];
+        }
+
+        const touchCount = Object.keys(touches).length;
+
+        // Release drift when fewer than 2 fingers
+        if (touchCount < 2) {
+          Input().setTouch('drift', false);
+          this._driftInd.color = 'rgba(0,170,255,0.0)';
+        }
+
+        // Release everything when no touches
+        if (touchCount === 0) {
+          Input().setTouch('accelerate', false);
+          Input().setTouch('brake', false);
+          Input().setTouch('steerLeft', false);
+          Input().setTouch('steerRight', false);
+          Input().setTouch('drift', false);
+          this._steerLeftInd.color = 'rgba(255,255,255,0.12)';
+          this._steerRightInd.color = 'rgba(255,255,255,0.12)';
+          this._brakeInd.color = 'rgba(255,80,80,0.0)';
+          this._driftInd.color = 'rgba(0,170,255,0.0)';
+        }
+      };
+
+      canvas.addEventListener('touchend', endTouch, { passive: false });
+      canvas.addEventListener('touchcancel', endTouch, { passive: false });
+    }
+
+    showTouchControls(visible) {
+      if (this.touchControls) this.touchControls.isVisible = !!visible;
+    }
+
+    // ─── Utility ──────────────────────────────────────────────────
+    dispose() {
+      if (this.ui) this.ui.dispose();
+    }
+  }
+
+  window.DriftLegends = window.DriftLegends || {};
+  window.DriftLegends.GUIManager = GUIManager;
+})();

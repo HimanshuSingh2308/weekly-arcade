@@ -1,0 +1,16 @@
+{
+  "id": "drift-legends",
+  "name": "Drift Legends",
+  "icon": "\ud83c\udfce\ufe0f",
+  "title": "Drift Legends | Free 3D Racing Game with Story Mode & Multiplayer | Weekly Arcade",
+  "description": "Play Drift Legends free online. Race through 5 stunning 3D worlds, master drift mechanics, defeat rival racers in story mode, and challenge friends in real-time multiplayer. No download required.",
+  "keywords": "drift legends, kart racing game, 3D racing browser game, multiplayer racing, story mode racing, drift game online, kart game browser, free racing game, browser racing 3D, weekly arcade",
+  "url": "/games/drift-legends/",
+  "themeColor": "#0d0d1a",
+  "accentColor": "#ff4d00",
+  "genres": ["Racing", "3D", "Story", "Multiplayer"],
+  "ratingValue": "4.8",
+  "ratingCount": "500",
+  "category": "racing",
+  "rendering": "webgl"
+}

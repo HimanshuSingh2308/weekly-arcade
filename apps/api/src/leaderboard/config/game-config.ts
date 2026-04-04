@@ -330,6 +330,48 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxLevel: 10,            // Levels for progression
     allowedMetadataKeys: ['battingScore', 'battingWickets', 'battingFours', 'battingSixes', 'bowlingAIScore', 'bowlingAIWickets', 'team', 'result', 'matchMode'],
   },
+
+  // Drift Legends: 3D kart racing (score = negative race time in ms; lower = better)
+  'drift-legends': {
+    maxScore: 0,             // Score is negative time (0 is theoretical best / fastest)
+    maxScorePerSecond: 100,  // Not meaningful for time-based scoring
+    minTimeMs: 40000,        // Minimum ~40 seconds for fastest 3-lap track
+    allowedMetadataKeys: ['trackId', 'driftScore', 'chapter', 'stars'],
+    customValidation: (dto) => {
+      // Score must be negative (it's -totalTimeMs)
+      if (dto.score > 0) {
+        return { valid: false, reason: 'Drift Legends score must be negative (time-based)' };
+      }
+
+      // Per-track minimum race times (3 laps × per-lap minimum × 0.95 tolerance)
+      const perTrackMinMs: Record<string, number> = {
+        'city-circuit': 128250, 'neon-alley': 142500, 'blaze-showdown': 142500,
+        'mesa-loop': 142500, 'canyon-rush': 150750, 'sandstorm-duel': 150750,
+        'frozen-peaks': 156750, 'glacier-gorge': 171000, 'ice-crown': 171000,
+        'jungle-run': 150750, 'ruin-dash': 171000, 'vipers-lair': 179550,
+        'cloud-circuit': 150750, 'grand-prix-qualify': 122550, 'apex-final': 122550,
+      };
+      const trackId = dto.metadata?.trackId as string;
+      const minTime = trackId ? (perTrackMinMs[trackId] || 40000) : 40000;
+      if (dto.timeMs && dto.timeMs < minTime) {
+        return { valid: false, reason: `Race time too fast for track ${trackId}` };
+      }
+
+      // Validate stars range (1-3)
+      const stars = dto.metadata?.stars as number;
+      if (stars !== undefined && (stars < 1 || stars > 3 || !Number.isInteger(stars))) {
+        return { valid: false, reason: 'Invalid star rating' };
+      }
+
+      // Validate drift score is non-negative and reasonable
+      const driftScore = dto.metadata?.driftScore as number;
+      if (driftScore !== undefined && (driftScore < 0 || driftScore > 50000)) {
+        return { valid: false, reason: 'Invalid drift score' };
+      }
+
+      return { valid: true };
+    },
+  },
 };
 
 /**
