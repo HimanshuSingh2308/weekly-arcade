@@ -112,6 +112,12 @@
   chaseCamera = new DL.ChaseCamera(scene);
   scene.activeCamera = chaseCamera.camera;
 
+  // CRITICAL: Force pointer picking ON after GUI creation
+  // CreateFullscreenUI or other init may reset these to true
+  scene.skipPointerMovePicking = false;
+  scene.skipPointerDownPicking = false;
+  scene.skipPointerUpPicking = false;
+
   // Pre-warm multiplayer
   DL.Multiplayer.warmUp();
 
@@ -976,6 +982,11 @@
   _updateMenuUI();
   gui.show('MENU');
   state = STATE.MENU;
+
+  // Ensure pointer picking is enabled for GUI (Babylon.js may reset this)
+  scene.skipPointerMovePicking = false;
+  scene.skipPointerDownPicking = false;
+  scene.skipPointerUpPicking = false;
 
   // Start render loop
   engine.runRenderLoop(() => scene.render());
