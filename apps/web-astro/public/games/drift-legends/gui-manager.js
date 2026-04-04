@@ -1681,6 +1681,7 @@
       const panel = this._createPanel('RACE_RESULT');
       panel.background = 'rgba(8,8,20,0.88)';
       panel.isPointerBlocker = true;
+      panel.zIndex = 50; // above touch controls and HUD
 
       // Top section — title + stars (absolute positioned, not in stack)
       this.resultTitle = this._createTitle('', 38, COLORS.gold);
@@ -1754,6 +1755,7 @@
       this._resultNextBtn.top = '-20px';
       this._resultNextBtn.left = '-140px';
       this._resultNextBtn.isVisible = false;
+      this._resultNextBtn.zIndex = 60;
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
       this.ui.addControl(this._resultNextBtn);
 
@@ -1763,6 +1765,7 @@
       this._resultRetryBtn.top = '-20px';
       this._resultRetryBtn.left = '10px';
       this._resultRetryBtn.isVisible = false;
+      this._resultRetryBtn.zIndex = 60;
       this._resultRetryBtn.onPointerClickObservable.add(() => { console.log('[GUI] RETRY clicked'); this._fire('click'); this._fire('resultRetry'); });
       this.ui.addControl(this._resultRetryBtn);
 
@@ -1772,6 +1775,7 @@
       this._resultMenuBtn.top = '-20px';
       this._resultMenuBtn.left = '150px';
       this._resultMenuBtn.isVisible = false;
+      this._resultMenuBtn.zIndex = 60;
       this._resultMenuBtn.onPointerClickObservable.add(() => { console.log('[GUI] MENU clicked'); this._fire('click'); this._fire('resultMenu'); });
       this.ui.addControl(this._resultMenuBtn);
     }
@@ -2037,6 +2041,7 @@
       var panel = this._createPanel('PAUSE', true);
       panel.background = 'rgba(8,8,20,0.8)';
       panel.isPointerBlocker = true;
+      panel.zIndex = 50; // above touch controls and HUD
       this.screens['PAUSE'] = panel;
 
       // Center card
@@ -2086,9 +2091,13 @@
     showPause() {
       // Don't use show() — keep RACE_HUD visible underneath
       if (this.screens['PAUSE']) this.screens['PAUSE'].isVisible = true;
+      // Hide touch controls so they don't intercept clicks
+      if (this.touchControls) this.touchControls.isVisible = false;
     }
     hidePause() {
       if (this.screens['PAUSE']) this.screens['PAUSE'].isVisible = false;
+      // Restore touch controls
+      if (this.touchControls && window.DriftLegends.Input.isMobile()) this.touchControls.isVisible = true;
     }
 
     // ─── Disconnect Overlay ───────────────────────────────────────
