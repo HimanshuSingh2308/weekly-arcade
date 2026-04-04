@@ -1734,80 +1734,69 @@
     // ─── Race Result ──────────────────────────────────────────────
     _buildRaceResult() {
       const panel = this._createPanel('RACE_RESULT');
-      panel.background = 'rgba(8,8,20,0.88)';
+      panel.background = 'rgba(8,8,20,0.9)';
       panel.isPointerBlocker = true;
-      panel.zIndex = 50; // above touch controls and HUD
+      panel.zIndex = 50;
 
-      // Top section — title + stars (absolute positioned, not in stack)
-      this.resultTitle = this._createTitle('', 38, COLORS.gold);
+      // Single centered column — no cramped card
+      var col = new GUI.StackPanel('resCol');
+      col.width = '90%';
+      col.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      col.top = '-20px';
+      col.isHitTestVisible = false;
+      panel.addControl(col);
+
+      // Title
+      this.resultTitle = this._createTitle('', 36, COLORS.gold, col);
       this.resultTitle.shadowColor = 'rgba(255,215,0,0.5)';
-      this.resultTitle.shadowBlur = 24;
-      this.resultTitle.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      this.resultTitle.top = '20px';
-      panel.addControl(this.resultTitle);
+      this.resultTitle.shadowBlur = 20;
+      this.resultTitle.paddingBottom = '4px';
 
-      this.resultStars = this._createText('', 30, COLORS.gold);
-      this.resultStars.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      this.resultStars.top = '65px';
-      panel.addControl(this.resultStars);
+      // Stars
+      this.resultStars = this._createText('', 26, COLORS.gold, col);
+      this.resultStars.paddingBottom = '8px';
 
-      // Center — stats + goals in a compact card
-      this._resultStatsCard = new GUI.Rectangle('resStatsCard');
-      var statsCard = this._resultStatsCard;
-      statsCard.isHitTestVisible = false;
-      statsCard.width = '520px';
-      statsCard.height = '240px';
-      statsCard.cornerRadius = 10;
-      statsCard.background = 'rgba(13,13,26,0.7)';
-      statsCard.thickness = 1;
-      statsCard.color = 'rgba(255,255,255,0.08)';
-      panel.addControl(statsCard);
+      // Position
+      this.resultPosition = this._createText('', 20, COLORS.text, col);
+      this.resultPosition.paddingBottom = '6px';
 
-      // Left side of card — position + stats
-      var leftStats = new GUI.StackPanel('resLeftStats');
-      leftStats.width = '200px';
-      leftStats.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      leftStats.left = '20px';
-      statsCard.addControl(leftStats);
+      // Stats row — horizontal: score | drift | coins | time
+      var statsRow = new GUI.StackPanel('resStatsRow');
+      statsRow.isVertical = false;
+      statsRow.height = '24px';
+      statsRow.paddingBottom = '8px';
+      col.addControl(statsRow);
 
-      this.resultPosition = this._createText('', 22, COLORS.text, leftStats);
-      this.resultPosition.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.resultPosition.paddingTop = '14px';
-      this.resultPosition.paddingBottom = '4px';
-      this.resultScore = this._createText('', 14, COLORS.textDim, leftStats);
-      this.resultScore.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.resultScore.paddingBottom = '3px';
-      this.resultCoins = this._createText('', 16, COLORS.gold, leftStats);
-      this.resultCoins.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.resultCoins.paddingBottom = '3px';
-      this.resultTime = this._createText('', 14, COLORS.textDim, leftStats);
-      this.resultTime.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this.resultScore = this._createText('', 13, COLORS.textDim, statsRow);
+      this.resultScore.width = '25%';
+      this.resultCoins = this._createText('', 14, COLORS.gold, statsRow);
+      this.resultCoins.width = '25%';
+      this.resultTime = this._createText('', 13, COLORS.textDim, statsRow);
+      this.resultTime.width = '25%';
 
-      // Right side of card — goals checklist
-      var rightGoals = new GUI.StackPanel('resRightGoals');
-      rightGoals.width = '220px';
-      rightGoals.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-      rightGoals.left = '-10px';
-      statsCard.addControl(rightGoals);
+      // Divider
+      var div = new GUI.Rectangle('resDiv');
+      div.width = '80px'; div.height = '2px';
+      div.background = COLORS.accent; div.thickness = 0;
+      div.isHitTestVisible = false;
+      div.paddingBottom = '8px';
+      col.addControl(div);
 
-      this._createText('GOALS', 11, COLORS.accent, rightGoals).paddingTop = '14px';
+      // Goals — full width, each on its own line
       this.resultUnlock = new GUI.TextBlock('resUnlock', '');
-      this.resultUnlock.fontSize = 13;
+      this.resultUnlock.fontSize = 14;
       this.resultUnlock.fontFamily = 'monospace';
+      this.resultUnlock.fontWeight = 'bold';
       this.resultUnlock.color = COLORS.green;
       this.resultUnlock.textWrapping = GUI.TextWrapping.WordWrap;
-      this.resultUnlock.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.resultUnlock.width = '210px';
-      this.resultUnlock.height = '160px';
-      this.resultUnlock.paddingTop = '6px';
-      rightGoals.addControl(this.resultUnlock);
+      this.resultUnlock.width = '90%';
+      this.resultUnlock.height = '80px';
+      this.resultUnlock.isHitTestVisible = false;
+      col.addControl(this.resultUnlock);
 
-      // Buttons — bottom bar with background
-      // Buttons — directly on panel (not nested in extra containers)
-      // Buttons added to UI ROOT (not panel) — ensures they receive clicks
+      // Buttons on UI root — guaranteed clickable
       this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px');
       this._resultNextBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this._resultNextBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
       this._resultNextBtn.top = '-20px';
       this._resultNextBtn.left = '-140px';
       this._resultNextBtn.isVisible = false;
@@ -1815,9 +1804,8 @@
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
       this.ui.addControl(this._resultNextBtn);
 
-      this._resultRetryBtn = this._createSecondaryButton('RETRY', '120px', '48px');
+      this._resultRetryBtn = this._createSecondaryButton('RETRY', '130px', '48px');
       this._resultRetryBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this._resultRetryBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
       this._resultRetryBtn.top = '-20px';
       this._resultRetryBtn.left = '10px';
       this._resultRetryBtn.isVisible = false;
@@ -1825,11 +1813,10 @@
       this._resultRetryBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultRetry'); });
       this.ui.addControl(this._resultRetryBtn);
 
-      this._resultMenuBtn = this._createSecondaryButton('MENU', '100px', '48px');
+      this._resultMenuBtn = this._createSecondaryButton('MENU', '110px', '48px');
       this._resultMenuBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this._resultMenuBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
       this._resultMenuBtn.top = '-20px';
-      this._resultMenuBtn.left = '150px';
+      this._resultMenuBtn.left = '160px';
       this._resultMenuBtn.isVisible = false;
       this._resultMenuBtn.zIndex = 60;
       this._resultMenuBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultMenu'); });
@@ -1874,12 +1861,7 @@
         this.resultUnlock.color = data.allGoalsPassed ? COLORS.green : COLORS.accent;
         // Dynamic height: 20px per goal line + 50px for advance text
         var goalLines = data.goalResults.length + (data.allGoalsPassed ? 0 : 2);
-        var textHeight = goalLines * 20 + 40;
-        this.resultUnlock.height = textHeight + 'px';
-        // Resize stats card to match
-        if (this._resultStatsCard) {
-          this._resultStatsCard.height = Math.max(200, textHeight + 60) + 'px';
-        }
+        this.resultUnlock.height = (goalLines * 20 + 30) + 'px';
       } else if (data.unlockText) {
         this.resultUnlock.text = data.unlockText;
         this.resultUnlock.color = COLORS.green;
@@ -2192,6 +2174,8 @@
       container.thickness = 0;
       container.background = 'transparent';
       container.isVisible = false;
+      container.isHitTestVisible = false; // don't block GUI buttons
+      container.zIndex = 5; // below pause/result overlays (50+)
       this.ui.addControl(container);
       this.touchControls = container;
 
