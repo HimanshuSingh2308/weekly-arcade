@@ -482,8 +482,15 @@
     }
     chaseCamera.setTarget(playerCar);
     chaseCamera.startCinematicIntro(allCarMeshes, trackData, 5, function() {
-      // Cinematic done → start countdown
+      // Cinematic done → snap camera behind player → start countdown
       gui.hideTrackIntro();
+      scene.activeCamera = chaseCamera.camera;
+      chaseCamera.setTarget(playerCar);
+      // Force camera position behind car immediately
+      chaseCamera.camera.position = playerCar.position.add(
+        new BABYLON.Vector3(-Math.sin(playerCar.rotation.y) * 8, 3.5, -Math.cos(playerCar.rotation.y) * 8)
+      );
+      chaseCamera.camera.setTarget(playerCar.position.add(new BABYLON.Vector3(0, 1, 0)));
       countdownTimer = 0;
       countdownNumber = 3;
       gui.showCountdown(3);
