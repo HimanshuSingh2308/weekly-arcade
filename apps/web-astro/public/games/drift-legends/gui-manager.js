@@ -738,7 +738,20 @@
 
         // Slow rotation animation
         this.scene.registerBeforeRender(() => {
-          if (this._menuCar && this.screens['MENU'] && this.screens['MENU'].isVisible) {
+          if (this.screens['MENU'] && this.screens['MENU'].isVisible) {
+            // Rebuild menu car if it was disposed (e.g. after racing)
+            if (!this._menuCar) {
+              try {
+                var CB = window.DriftLegends.CarBuilder;
+                if (CB && CB.buildCar) {
+                  this._menuCar = CB.buildCar(this.scene, 'street-kart', '#ff4d00');
+                  this._menuCar.position = new BABYLON.Vector3(0, 0, 0);
+                  this._menuCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
+                  this._menuCar.rotation.y = Math.PI * 0.2;
+                }
+              } catch(_) {}
+            }
+            if (!this._menuCar) return;
             this._menuCar.rotation.y += 0.004;
             this._menuCar.isVisible = true;
             // Use the dedicated menu camera
