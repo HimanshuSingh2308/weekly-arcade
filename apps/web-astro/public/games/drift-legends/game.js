@@ -240,6 +240,13 @@
   });
 
   gui.onAction('resultNext', () => {
+    // Only advance if the current race was completed (won)
+    var currentResult = progress?.raceResults?.[selectedTrackId];
+    if (!currentResult || !currentResult.completed) {
+      // Didn't win — retry the same race
+      _startLoading();
+      return;
+    }
     // Advance to next race or chapter
     if (selectedChapter) {
       selectedRaceIndex++;
@@ -723,13 +730,13 @@
       DL.Particles.createConfetti(scene, playerCar.position.add(new V3(0, 3, 0)));
     }
 
-    // Update progress
+    // Update progress — only mark completed on win (1st place)
     if (progress && selectedTrackId) {
       const existing = progress.raceResults[selectedTrackId] || {};
       progress.raceResults[selectedTrackId] = {
         bestStars: Math.max(existing.bestStars || 0, stars),
         bestTime: existing.bestTime ? Math.min(existing.bestTime, totalTimeMs) : totalTimeMs,
-        completed: true,
+        completed: existing.completed || won,  // only true on 1st place
         attempts: (existing.attempts || 0) + 1,
       };
       progress.coins += coins;

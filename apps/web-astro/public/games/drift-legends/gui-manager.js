@@ -1581,98 +1581,103 @@
     // ─── Race Result ──────────────────────────────────────────────
     _buildRaceResult() {
       const panel = this._createPanel('RACE_RESULT');
+      panel.background = 'rgba(8,8,20,0.85)';
 
-      // Large title — VICTORY! or RACE COMPLETE
-      this.resultTitle = new GUI.TextBlock('resTitle', '');
-      this.resultTitle.fontSize = 52;
-      this.resultTitle.fontFamily = 'monospace';
-      this.resultTitle.fontWeight = 'bold';
-      this.resultTitle.color = COLORS.gold;
-      this.resultTitle.shadowColor = 'rgba(255,215,0,0.4)';
-      this.resultTitle.shadowBlur = 30;
-      this.resultTitle.top = '-80px';
-      panel.addControl(this.resultTitle);
+      // Centered content
+      var center = new GUI.StackPanel('resCenter');
+      center.width = '400px';
+      center.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      center.top = '-30px';
+      panel.addControl(center);
 
-      // Stars — big, centered
-      this.resultStars = new GUI.TextBlock('resStars', '');
-      this.resultStars.fontSize = 36;
-      this.resultStars.fontFamily = 'monospace';
-      this.resultStars.color = COLORS.gold;
-      this.resultStars.top = '-30px';
-      panel.addControl(this.resultStars);
+      // Title — VICTORY! or RACE COMPLETE
+      this.resultTitle = this._createTitle('', 44, COLORS.gold, center);
+      this.resultTitle.shadowColor = 'rgba(255,215,0,0.5)';
+      this.resultTitle.shadowBlur = 24;
+      this.resultTitle.paddingBottom = '6px';
 
-      // Stats row — horizontal layout: position | score | coins | time
-      var statsBar = new GUI.Rectangle('resStatsBar');
-      statsBar.width = '600px';
-      statsBar.height = '50px';
-      statsBar.background = 'rgba(13,13,26,0.7)';
-      statsBar.cornerRadius = 10;
-      statsBar.thickness = 1;
-      statsBar.color = 'rgba(255,255,255,0.1)';
-      statsBar.top = '20px';
-      panel.addControl(statsBar);
+      // Stars
+      this.resultStars = this._createText('', 36, COLORS.gold, center);
+      this.resultStars.paddingBottom = '12px';
 
-      var statsRow = new GUI.StackPanel('resStatsRow');
-      statsRow.isVertical = false;
-      statsBar.addControl(statsRow);
+      // Position — large
+      this.resultPosition = this._createText('', 24, COLORS.text, center);
+      this.resultPosition.paddingBottom = '12px';
 
-      this.resultPosition = this._createText('', 20, COLORS.text, statsRow);
-      this.resultPosition.width = '120px';
-      this.resultScore = this._createText('', 16, COLORS.textDim, statsRow);
-      this.resultScore.width = '140px';
-      this.resultCoins = this._createText('', 18, COLORS.gold, statsRow);
-      this.resultCoins.width = '140px';
-      this.resultTime = this._createText('', 16, COLORS.textDim, statsRow);
-      this.resultTime.width = '140px';
+      // Divider
+      var div = new GUI.Rectangle('resDiv');
+      div.width = '60px'; div.height = '2px';
+      div.background = COLORS.accent; div.thickness = 0;
+      div.paddingBottom = '12px';
+      center.addControl(div);
+
+      // Stats — vertical, separated
+      this.resultScore = this._createText('', 16, COLORS.textDim, center);
+      this.resultScore.paddingBottom = '4px';
+      this.resultCoins = this._createText('', 18, COLORS.gold, center);
+      this.resultCoins.paddingBottom = '4px';
+      this.resultTime = this._createText('', 15, COLORS.textDim, center);
+      this.resultTime.paddingBottom = '8px';
 
       // Unlock text
       this.resultUnlock = new GUI.TextBlock('resUnlock', '');
-      this.resultUnlock.fontSize = 15;
+      this.resultUnlock.fontSize = 14;
       this.resultUnlock.fontFamily = 'monospace';
+      this.resultUnlock.fontWeight = 'bold';
       this.resultUnlock.color = COLORS.green;
       this.resultUnlock.textWrapping = GUI.TextWrapping.WordWrap;
-      this.resultUnlock.width = '500px';
+      this.resultUnlock.width = '380px';
       this.resultUnlock.height = '40px';
-      this.resultUnlock.top = '65px';
-      panel.addControl(this.resultUnlock);
+      this.resultUnlock.paddingBottom = '12px';
+      center.addControl(this.resultUnlock);
 
-      // Buttons — horizontal at bottom
-      var btnBar = new GUI.StackPanel('resBtnBar');
-      btnBar.isVertical = false;
-      btnBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      btnBar.height = '70px';
-      btnBar.top = '-30px';
-      panel.addControl(btnBar);
+      // Buttons — inside center stack
+      var btnRow = new GUI.StackPanel('resBtnRow');
+      btnRow.isVertical = false;
+      btnRow.height = '56px';
+      btnRow.paddingTop = '8px';
+      center.addControl(btnRow);
 
-      const nextBtn = this._createButton('NEXT RACE', '200px', '52px', btnBar);
+      var nextBtn = this._createButton('NEXT RACE', '160px', '48px', btnRow);
       nextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
 
-      var sp1 = new GUI.Rectangle(); sp1.width = '12px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnBar.addControl(sp1);
+      var sp1 = new GUI.Rectangle(); sp1.width = '10px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow.addControl(sp1);
 
-      const retryBtn = this._createSecondaryButton('RETRY', '160px', '52px', btnBar);
+      var retryBtn = this._createSecondaryButton('RETRY', '120px', '48px', btnRow);
       retryBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultRetry'); });
 
-      var sp2 = new GUI.Rectangle(); sp2.width = '12px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnBar.addControl(sp2);
+      var sp2 = new GUI.Rectangle(); sp2.width = '10px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnRow.addControl(sp2);
 
-      const menuBtn = this._createSecondaryButton('MENU', '120px', '52px', btnBar);
+      var menuBtn = this._createSecondaryButton('MENU', '100px', '48px', btnRow);
       menuBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultMenu'); });
     }
 
     showRaceResult(data) {
       const won = data.position === 1;
-      this.resultTitle.text = won ? 'VICTORY!' : 'RACE COMPLETE';
+      this.resultTitle.text = won ? '\ud83c\udfc6 VICTORY!' : 'RACE COMPLETE';
       this.resultTitle.color = won ? COLORS.gold : COLORS.text;
+      this.resultTitle.shadowColor = won ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.2)';
       this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' Place';
+      this.resultPosition.color = won ? COLORS.gold : COLORS.text;
       this.resultStars.text = '\u2b50'.repeat(data.stars) + '\u2606'.repeat(3 - data.stars);
       this.resultScore.text = 'Score: ' + data.raceScore;
       this.resultCoins.text = '+' + data.coins + ' coins';
       if (data.totalTimeMs) {
-        const sec = (data.totalTimeMs / 1000).toFixed(1);
+        var sec = (data.totalTimeMs / 1000).toFixed(1);
         this.resultTime.text = 'Time: ' + sec + 's';
       } else {
         this.resultTime.text = '';
       }
-      this.resultUnlock.text = data.unlockText || '';
+      // Show unlock text on win, or "need 1st" message on loss
+      if (won && data.unlockText) {
+        this.resultUnlock.text = data.unlockText;
+        this.resultUnlock.color = COLORS.green;
+      } else if (!won) {
+        this.resultUnlock.text = 'Win 1st place to advance!';
+        this.resultUnlock.color = COLORS.accent;
+      } else {
+        this.resultUnlock.text = '';
+      }
       this.show('RACE_RESULT');
     }
 
