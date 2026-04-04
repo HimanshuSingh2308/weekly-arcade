@@ -661,6 +661,15 @@
       if (dist < trackData.trackDef.trackWidth) {
         playerCheckpoint = i + 1;
         playerCheckpointSeq.push(i);
+        // Visual + audio feedback
+        DL.Audio.play('click');
+        if (!prefersReducedMotion) chaseCamera.shake(0.08);
+        // Flash the checkpoint arch (briefly brighten then fade)
+        if (trackData._cpMeshes && trackData._cpMeshes[i]) {
+          var cpMesh = trackData._cpMeshes[i];
+          cpMesh.visibility = 0.8;
+          setTimeout(function() { if (cpMesh && !cpMesh.isDisposed()) cpMesh.visibility = 0; }, 300);
+        }
         break;
       }
     }
