@@ -311,6 +311,16 @@
     DL.Audio.setVolume(val);
   });
 
+  // Pause button (HUD touch button)
+  gui.onAction('pauseClick', () => {
+    if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
+      state = STATE.PAUSED;
+      DL.Audio.stopEngine();
+      scene.meshes.forEach(function(m) { m.isPickable = false; });
+      gui.showPause();
+    }
+  });
+
   // Pause menu callbacks
   function _resumeFromPause() {
     gui.hidePause();
@@ -452,6 +462,10 @@
     gui.hideAll();
     var introGoals = selectedChapter ? DL.StoryMode.getGoalsForRace(selectedChapter.id, selectedTrackId) : [];
     gui.showTrackIntro(selectedTrackId, selectedChapter ? selectedChapter.name : 'Race', introGoals);
+    // Set HUD goal reminder
+    if (gui.hud && gui.hud.goalReminder && introGoals && introGoals.length) {
+      gui.hud.goalReminder.text = 'GOAL: ' + introGoals.map(function(g) { return g.label; }).join(' | ');
+    }
     chaseCamera.setTarget(playerCar);
     chaseCamera.startCinematicIntro(allCarMeshes, trackData, 5, function() {
       // Cinematic done → start countdown
