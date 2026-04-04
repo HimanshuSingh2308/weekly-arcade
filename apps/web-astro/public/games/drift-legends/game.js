@@ -290,11 +290,15 @@
   });
 
   gui.onAction('resultRetry', () => {
+    // Re-enable mesh picking before rebuilding race
+    scene.meshes.forEach(function(m) { m.isPickable = true; });
     _startLoading();
   });
 
   gui.onAction('resultMenu', () => {
     _cleanupRace();
+    // Re-enable mesh picking for menu
+    scene.meshes.forEach(function(m) { m.isPickable = true; });
     // Restore HTML skyline and transparent scene
     if (skylineBg) skylineBg.style.display = '';
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
@@ -320,12 +324,14 @@
 
   gui.onAction('pauseRestart', () => {
     gui.hidePause();
+    scene.meshes.forEach(function(m) { m.isPickable = true; });
     _startLoading();
   });
 
   gui.onAction('pauseQuit', () => {
     gui.hidePause();
     _cleanupRace();
+    scene.meshes.forEach(function(m) { m.isPickable = true; });
     if (skylineBg) skylineBg.style.display = '';
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
     gui.show('MENU');
@@ -355,6 +361,8 @@
 
   // ─── Race Loading & Setup ─────────────────────────────────────────
   function _startLoading() {
+    // Re-enable mesh picking (may have been disabled by result/pause overlay)
+    scene.meshes.forEach(function(m) { m.isPickable = true; });
     const track = DL.TrackBuilder.TRACKS[selectedTrackId];
     gui.showLoading(track?.name || 'Track');
     state = STATE.LOADING;
