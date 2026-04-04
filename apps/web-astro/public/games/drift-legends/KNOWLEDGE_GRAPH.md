@@ -300,6 +300,17 @@ INIT → MENU ─┬─► STORY_SELECT → CAR_SELECT → PRE_RACE → LOADING 
 
 ---
 
+## GUI Button Click Requirements (CRITICAL)
+
+For Babylon.js GUI buttons to work:
+1. `scene.skipPointerMovePicking` must be `false`
+2. Touch controls container must be HIDDEN when showing overlays (pause/result)
+3. Overlay panels need `zIndex >= 50` to be above touch controls
+4. Result buttons on `this.ui` root need `zIndex = 60`
+5. 3D meshes should be `isPickable = false` during overlay screens
+6. TextBlocks need `isHitTestVisible = false` to not block button clicks
+7. Decorative Rectangles need `isHitTestVisible = false`
+
 ## Common Change Scenarios
 
 | Task | Files to read | Files to modify |
