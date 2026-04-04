@@ -475,6 +475,7 @@
       gui.showCountdown(3);
       DL.Audio.play('countdown');
       DL.Audio.startEngine();
+      DL.Audio.startBGM(trackData.trackDef.environment);
       gui.showTouchControls(DL.Input.isMobile());
       state = STATE.COUNTDOWN;
     });
@@ -505,6 +506,7 @@
     playerPhysics = null;
     gui.showTouchControls(false);
     DL.Audio.stopEngine();
+    DL.Audio.stopBGM();
   }
 
   // ─── Game Loop ────────────────────────────────────────────────────
@@ -608,9 +610,14 @@
         playerCar.position
       );
       if (!onTrack) {
-        // Off-road: friction slowdown
+        // Off-road: friction slowdown + rumble sound
         playerPhysics.velocity.scaleInPlace(0.96);
         playerPhysics.speed = playerPhysics.velocity.length();
+        if (!this._offRoadSoundCd) this._offRoadSoundCd = 0;
+        if (raceTime > this._offRoadSoundCd) {
+          DL.Audio.play('offroad');
+          this._offRoadSoundCd = raceTime + 0.5; // cooldown
+        }
       }
       if (!onTrackWide) {
         // Way off track: counts as dirty lap (minor off-road is OK)
@@ -760,7 +767,7 @@
         playerCheckpoint = i + 1;
         playerCheckpointSeq.push(i);
         // Visual + audio feedback
-        DL.Audio.play('click');
+        DL.Audio.play('checkpoint');
         if (!prefersReducedMotion) chaseCamera.shake(0.08);
         // Flash the checkpoint arch (briefly brighten then fade)
         if (trackData._cpMeshes && trackData._cpMeshes[i]) {
@@ -816,6 +823,7 @@
     raceFinished = true;
     state = STATE.RACE_FINISH;
     DL.Audio.stopEngine();
+    DL.Audio.stopBGM();
 
     // Calculate results
     const playerT = totalLaps + 1;
