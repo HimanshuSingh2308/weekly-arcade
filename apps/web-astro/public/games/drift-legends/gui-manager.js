@@ -64,6 +64,12 @@
         this.screens[screenName].isVisible = true;
       }
       this.currentScreen = screenName;
+      // Hide result buttons when leaving result screen
+      if (screenName !== 'RACE_RESULT') {
+        if (this._resultNextBtn) this._resultNextBtn.isVisible = false;
+        if (this._resultRetryBtn) this._resultRetryBtn.isVisible = false;
+        if (this._resultMenuBtn) this._resultMenuBtn.isVisible = false;
+      }
       // Toggle HTML backgrounds based on screen
       var mtnBg = document.getElementById('storyMtnBg');
       var skyBg = document.getElementById('skylineBg');
@@ -139,7 +145,6 @@
       panel.background = transparent ? 'transparent' : COLORS.bg;
       panel.thickness = 0;
       panel.isVisible = false;
-      panel.isHitTestVisible = false; // let clicks pass through to child buttons
       this.ui.addControl(panel);
       this.screens[name] = panel;
 
@@ -1742,34 +1747,33 @@
 
       // Buttons — bottom bar with background
       // Buttons — directly on panel (not nested in extra containers)
+      // Buttons added to UI ROOT (not panel) — ensures they receive clicks
       this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px');
       this._resultNextBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       this._resultNextBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
       this._resultNextBtn.top = '-20px';
       this._resultNextBtn.left = '-140px';
-      this._resultNextBtn.zIndex = 100;
+      this._resultNextBtn.isVisible = false;
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
-      panel.addControl(this._resultNextBtn);
+      this.ui.addControl(this._resultNextBtn);
 
       this._resultRetryBtn = this._createSecondaryButton('RETRY', '120px', '48px');
-      var retryBtn = this._resultRetryBtn;
-      retryBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      retryBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-      retryBtn.top = '-20px';
-      retryBtn.left = '10px';
-      retryBtn.zIndex = 100;
-      retryBtn.onPointerClickObservable.add(() => { console.log('[GUI] RETRY clicked'); this._fire('click'); this._fire('resultRetry'); });
-      panel.addControl(retryBtn);
+      this._resultRetryBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      this._resultRetryBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      this._resultRetryBtn.top = '-20px';
+      this._resultRetryBtn.left = '10px';
+      this._resultRetryBtn.isVisible = false;
+      this._resultRetryBtn.onPointerClickObservable.add(() => { console.log('[GUI] RETRY clicked'); this._fire('click'); this._fire('resultRetry'); });
+      this.ui.addControl(this._resultRetryBtn);
 
       this._resultMenuBtn = this._createSecondaryButton('MENU', '100px', '48px');
-      var menuBtn = this._resultMenuBtn;
-      menuBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      menuBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-      menuBtn.top = '-20px';
-      menuBtn.left = '150px';
-      menuBtn.zIndex = 100;
-      menuBtn.onPointerClickObservable.add(() => { console.log('[GUI] MENU clicked'); this._fire('click'); this._fire('resultMenu'); });
-      panel.addControl(menuBtn);
+      this._resultMenuBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      this._resultMenuBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      this._resultMenuBtn.top = '-20px';
+      this._resultMenuBtn.left = '150px';
+      this._resultMenuBtn.isVisible = false;
+      this._resultMenuBtn.onPointerClickObservable.add(() => { console.log('[GUI] MENU clicked'); this._fire('click'); this._fire('resultMenu'); });
+      this.ui.addControl(this._resultMenuBtn);
     }
 
     showRaceResult(data) {
@@ -1808,17 +1812,18 @@
       } else {
         this.resultUnlock.text = '';
       }
-      // Hide NEXT RACE if goals not met, reposition remaining buttons to center
+      // Show buttons (they're on ui root, not inside panel)
+      if (this._resultRetryBtn) this._resultRetryBtn.isVisible = true;
+      if (this._resultMenuBtn) this._resultMenuBtn.isVisible = true;
       if (this._resultNextBtn) {
         this._resultNextBtn.isVisible = !!(data.allGoalsPassed);
       }
+      // Reposition based on which buttons are visible
       if (this._resultRetryBtn && this._resultMenuBtn) {
         if (data.allGoalsPassed) {
-          // All 3 buttons: spread out
           this._resultRetryBtn.left = '10px';
           this._resultMenuBtn.left = '150px';
         } else {
-          // Only retry + menu: center them
           this._resultRetryBtn.left = '-70px';
           this._resultMenuBtn.left = '70px';
         }
