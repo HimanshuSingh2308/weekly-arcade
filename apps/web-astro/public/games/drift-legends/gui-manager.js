@@ -88,6 +88,10 @@
           });
         } catch(_) {}
       }
+      // Toggle garage 3D car preview
+      if (this._showGaragePreview) {
+        this._showGaragePreview(screenName === 'CAR_SELECT');
+      }
       // Re-enable mesh picking when leaving overlay screens
       if (screenName !== 'RACE_RESULT' && screenName !== 'PAUSE') {
         if (this.scene) this.scene.meshes.forEach(function(m) { m.isPickable = true; });
@@ -760,6 +764,14 @@
           }
         });
       } catch (_) { /* car builder may not be ready */ }
+
+      // Garage car rotation
+      this.scene.registerBeforeRender(() => {
+        if (this._garageCar && this.screens['CAR_SELECT'] && this.screens['CAR_SELECT'].isVisible) {
+          this._garageCar.rotation.y += 0.005;
+          if (this._garageCam) this._garageCam.alpha += 0.002;
+        }
+      });
     }
 
     updateMenuCompletion(percent, progress) {
@@ -1043,6 +1055,9 @@
       // Subtitle
       this._createText('TAP A CAR TO SELECT', 12, COLORS.textMuted, centerStack).paddingBottom = '12px';
 
+      // Show default car preview on first load
+      try { this._showGarageCarPreview('street-kart'); } catch(_) {}
+
       // Large stat bars for selected car
       this._garageStatBars = {};
       var statDefs = [
@@ -1207,6 +1222,9 @@
             cc.card.thickness = cc.carId === car.id ? 3 : 1;
             cc.card.shadowBlur = cc.carId === car.id ? 20 : 8;
           });
+          // 3D car preview — swap to selected car
+          this._showGarageCarPreview(car.id);
+          this._showGaragePreview(true);
           this._fire('selectCar', { carId: car.id });
         });
 
@@ -1218,6 +1236,58 @@
 
         this.carSelectCards.push({ card: card, nameText: nameText, statusText: statusText, carId: car.id });
       });
+    }
+
+    _showGarageCarPreview(carId) {
+      try {
+        var CB = window.DriftLegends.CarBuilder;
+        if (!CB || !CB.buildCar) return;
+
+        // Remove previous preview car
+        if (this._garageCar) {
+          this._garageCar.dispose(false, true);
+          this._garageCar = null;
+        }
+
+        // Build new car at origin
+        this._garageCar = CB.buildCar(this.scene, carId, COLORS.accent);
+        this._garageCar.position = new BABYLON.Vector3(0, 0, 0);
+        this._garageCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
+        this._garageCar.rotation.y = Math.PI * 0.2;
+
+        // Create garage camera if not exists
+        if (!this._garageCam) {
+          this._garageCam = new BABYLON.ArcRotateCamera('garageCam',
+            Math.PI * 0.7, Math.PI * 0.35, 8,
+            new BABYLON.Vector3(0, 0.5, 0), this.scene);
+          this._garageCam.lowerRadiusLimit = 8;
+          this._garageCam.upperRadiusLimit = 8;
+          this._garageCam.fov = 0.9;
+
+          // Garage lighting
+          this._garageKeyLight = new BABYLON.PointLight('garageKey', new BABYLON.Vector3(5, 4, -3), this.scene);
+          this._garageKeyLight.intensity = 2.5;
+          this._garageKeyLight.diffuse = new BABYLON.Color3(1, 0.7, 0.4);
+          this._garageFillLight = new BABYLON.PointLight('garageFill', new BABYLON.Vector3(-4, 3, 2), this.scene);
+          this._garageFillLight.intensity = 1.2;
+          this._garageFillLight.diffuse = new BABYLON.Color3(0.4, 0.6, 1.0);
+          this._garageHemi = new BABYLON.HemisphericLight('garageHemi', new BABYLON.Vector3(0, 1, 0), this.scene);
+          this._garageHemi.intensity = 1.0;
+        }
+      } catch (_) {}
+    }
+
+    _showGaragePreview(visible) {
+      if (this._garageCar) this._garageCar.isVisible = visible;
+      if (this._garageCam && visible) {
+        this._savedCamForGarage = this.scene.activeCamera;
+        this.scene.activeCamera = this._garageCam;
+      } else if (this._savedCamForGarage && !visible) {
+        this.scene.activeCamera = this._savedCamForGarage;
+      }
+      if (this._garageKeyLight) this._garageKeyLight.setEnabled(visible);
+      if (this._garageFillLight) this._garageFillLight.setEnabled(visible);
+      if (this._garageHemi) this._garageHemi.setEnabled(visible);
     }
 
     updateCarSelectCards(progress) {
