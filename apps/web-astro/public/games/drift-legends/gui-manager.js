@@ -90,6 +90,31 @@
       if (this.callbacks[name]) this.callbacks[name](data);
     }
 
+    // Standard back button — always top-left, same position on every screen
+    _addBackButton(panel, targetScreen) {
+      var btn = this._createSecondaryButton('\u2190 BACK', '110px', '36px');
+      btn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      btn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      btn.left = '16px';
+      btn.top = '12px';
+      btn.fontSize = 13;
+      panel.addControl(btn);
+      btn.onPointerClickObservable.add(() => { this._fire('click'); this.show(targetScreen); });
+      return btn;
+    }
+
+    // Standard screen title — top-right for balance with back button on left
+    _addScreenTitle(panel, text) {
+      var title = this._createTitle(text, 24, COLORS.text);
+      title.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      title.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      title.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      title.left = '-20px';
+      title.top = '14px';
+      panel.addControl(title);
+      return title;
+    }
+
     // ─── Screen Builders ──────────────────────────────────────────
     _buildAllScreens() {
       this._buildMainMenu();
@@ -740,22 +765,8 @@
       var chRivals = ['vs Blaze', 'vs Sandstorm', 'vs Glacier', 'vs Viper', 'vs Apex'];
       var chEnvNames = ['CITY', 'DESERT', 'ICE', 'JUNGLE', 'SKY'];
 
-      // Back button — top-left
-      var backBtn = this._createSecondaryButton('< BACK', '100px', '38px');
-      backBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      backBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      backBtn.top = '12px';
-      backBtn.left = '20px';
-      panel.addControl(backBtn);
-      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('MENU'); });
-
-      // Title
-      var stTitle = this._createTitle('STORY MODE', 24, COLORS.text);
-      stTitle.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      stTitle.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      stTitle.top = '16px';
-      stTitle.left = '140px';
-      panel.addControl(stTitle);
+      this._addBackButton(panel, 'MENU');
+      this._addScreenTitle(panel, 'STORY MODE');
 
       // Mountain SVG background is toggled by show() method
 
@@ -977,90 +988,204 @@
     // ─── Car Select ───────────────────────────────────────────────
     _buildCarSelect() {
       const panel = this._createPanel('CAR_SELECT');
-      const stack = new GUI.StackPanel();
-      stack.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      stack.width = '440px';
-      panel.addControl(stack);
+      panel.background = COLORS.bg; // opaque — hides HTML content underneath
 
-      this._createText('SELECT YOUR CAR', 24, COLORS.text, stack).paddingBottom = '16px';
+      this._addBackButton(panel, 'STORY_SELECT');
+      this._addScreenTitle(panel, 'GARAGE');
+
+      // Center — selected car info display
+      var centerStack = new GUI.StackPanel('carCenterStack');
+      centerStack.width = '300px';
+      centerStack.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      centerStack.top = '-20px';
+      panel.addControl(centerStack);
+
+      // Large car emoji
+      this._garageCarEmoji = this._createText('\ud83d\ude97', 80, COLORS.text, centerStack);
+      this._garageCarEmoji.paddingBottom = '8px';
+
+      // Selected car name
+      this._garageCarName = this._createTitle('Street Kart', 32, COLORS.text, centerStack);
+      this._garageCarName.paddingBottom = '4px';
+
+      // Subtitle
+      this._createText('TAP A CAR TO SELECT', 12, COLORS.textMuted, centerStack).paddingBottom = '12px';
+
+      // Large stat bars for selected car
+      this._garageStatBars = {};
+      var statDefs = [
+        { key: 'speed', label: 'SPEED', color: '#00d4ff' },
+        { key: 'handling', label: 'HANDLING', color: COLORS.accent },
+        { key: 'drift', label: 'DRIFT', color: '#00ff88' },
+      ];
+      statDefs.forEach((sd) => {
+        var row = new GUI.StackPanel('garageStat_' + sd.key);
+        row.isVertical = false;
+        row.height = '22px';
+        row.paddingBottom = '4px';
+        centerStack.addControl(row);
+
+        var lbl = this._createText(sd.label, 11, COLORS.textDim, row);
+        lbl.width = '80px';
+        lbl.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+
+        var sp = new GUI.Rectangle(); sp.width = '8px'; sp.height = '1px'; sp.thickness = 0; sp.background = 'transparent'; row.addControl(sp);
+
+        var barBg = new GUI.Rectangle('gStatBg_' + sd.key);
+        barBg.width = '160px';
+        barBg.height = '10px';
+        barBg.cornerRadius = 5;
+        barBg.background = 'rgba(255,255,255,0.08)';
+        barBg.thickness = 0;
+        row.addControl(barBg);
+
+        var barFill = new GUI.Rectangle('gStatFill_' + sd.key);
+        barFill.width = '60%';
+        barFill.height = '100%';
+        barFill.cornerRadius = 5;
+        barFill.background = sd.color;
+        barFill.thickness = 0;
+        barFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        barBg.addControl(barFill);
+
+        this._garageStatBars[sd.key] = barFill;
+      });
+
+      // ─── Bottom: Horizontal car cards ─────────────────────────
+      var bottomBar = new GUI.Rectangle('carBottomBar');
+      bottomBar.width = '100%';
+      bottomBar.height = '130px';
+      bottomBar.background = 'rgba(13,13,26,0.8)';
+      bottomBar.thickness = 0;
+      bottomBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      bottomBar.top = '-10px'; // lift above device toolbar
+      panel.addControl(bottomBar);
+
+      // Top accent line
+      var barAccent = new GUI.Rectangle('carBarAccent');
+      barAccent.width = '100%';
+      barAccent.height = '2px';
+      barAccent.background = COLORS.accent;
+      barAccent.thickness = 0;
+      barAccent.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      bottomBar.addControl(barAccent);
+
+      var cardRow = new GUI.StackPanel('carCardRow');
+      cardRow.isVertical = false;
+      cardRow.height = '120px';
+      cardRow.top = '10px';
+      bottomBar.addControl(cardRow);
 
       this.carSelectCards = [];
-      const carDefs = [
-        { id: 'street-kart', name: 'Street Kart', speed: 6, handling: 7, drift: 6 },
-        { id: 'drift-racer', name: 'Drift Racer', speed: 5, handling: 8, drift: 9 },
-        { id: 'sand-runner', name: 'Sand Runner', speed: 9, handling: 5, drift: 5 },
+      var carDefs = [
+        { id: 'street-kart', name: 'Street Kart', speed: 6, handling: 7, drift: 6, emoji: '\ud83d\ude97' },
+        { id: 'drift-racer', name: 'Drift Racer', speed: 5, handling: 8, drift: 9, emoji: '\ud83c\udfce\ufe0f' },
+        { id: 'sand-runner', name: 'Sand Runner', speed: 9, handling: 5, drift: 5, emoji: '\ud83d\ude99' },
       ];
 
       carDefs.forEach((car, i) => {
-        const card = this._createCard('car_' + i, '420px', '80px', null, COLORS.accent);
+        // Car card — vertical layout inside horizontal row
+        var card = new GUI.Rectangle('car_' + i);
+        card.width = '200px';
+        card.height = '110px';
+        card.cornerRadius = 10;
+        card.background = COLORS.bgCard;
+        card.thickness = 2;
+        card.color = COLORS.accent;
+        card.shadowColor = COLORS.accentGlow;
+        card.shadowBlur = 10;
+        card.paddingLeft = '8px';
+        card.paddingRight = '8px';
 
-        const inner = new GUI.StackPanel();
+        var inner = new GUI.StackPanel('carInner_' + i);
+        inner.width = '180px';
         card.addControl(inner);
 
-        const nameText = this._createText(car.name, 17, COLORS.text, inner);
-        nameText.shadowColor = 'rgba(0,0,0,0.4)';
-        nameText.shadowBlur = 4;
+        // Car name + emoji
+        var nameRow = new GUI.StackPanel('carNameRow_' + i);
+        nameRow.isVertical = false;
+        nameRow.height = '28px';
+        nameRow.paddingTop = '6px';
+        inner.addControl(nameRow);
 
-        // Stat bars as visual blocks instead of plain text
-        const statsRow = new GUI.StackPanel();
+        var emoji = this._createText(car.emoji, 18, COLORS.text, nameRow);
+        emoji.width = '28px';
+        var nameText = this._createText(car.name, 16, COLORS.text, nameRow);
+        nameText.fontWeight = 'bold';
+        nameText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        nameText.width = '140px';
+
+        // Stat bars — compact row
+        var statsRow = new GUI.StackPanel('carStats_' + i);
         statsRow.isVertical = false;
-        statsRow.height = '18px';
+        statsRow.height = '16px';
+        statsRow.paddingTop = '4px';
         inner.addControl(statsRow);
+
         var labels = ['SPD', 'HND', 'DFT'];
         var vals = [car.speed, car.handling, car.drift];
+        var statColors = ['#00d4ff', COLORS.accent, '#00ff88'];
         labels.forEach(function(lbl, j) {
           var lblTb = new GUI.TextBlock();
           lblTb.text = lbl;
           lblTb.color = COLORS.textDim;
-          lblTb.fontSize = 12;
+          lblTb.fontSize = 10;
           lblTb.fontFamily = 'monospace';
-          lblTb.fontWeight = 'bold';
-          lblTb.width = '34px';
-          lblTb.resizeToFit = false;
+          lblTb.width = '26px';
           statsRow.addControl(lblTb);
-          // Stat bar (filled portion)
+
           var barBg = new GUI.Rectangle();
-          barBg.width = '70px';
-          barBg.height = '10px';
-          barBg.cornerRadius = 4;
-          barBg.background = 'rgba(255,255,255,0.1)';
+          barBg.width = '36px';
+          barBg.height = '6px';
+          barBg.cornerRadius = 3;
+          barBg.background = 'rgba(255,255,255,0.08)';
           barBg.thickness = 0;
           statsRow.addControl(barBg);
+
           var barFill = new GUI.Rectangle();
           barFill.width = Math.round(vals[j] / 10 * 100) + '%';
           barFill.height = '100%';
-          barFill.cornerRadius = 4;
-          barFill.background = vals[j] >= 7 ? COLORS.accent : COLORS.textDim;
+          barFill.cornerRadius = 3;
+          barFill.background = statColors[j];
           barFill.thickness = 0;
           barFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
           barBg.addControl(barFill);
-          // Spacer
-          var sp = new GUI.Rectangle();
-          sp.width = '8px';
-          sp.height = '1px';
-          sp.thickness = 0;
-          sp.background = 'transparent';
-          statsRow.addControl(sp);
         });
 
-        const statusText = this._createText('', 13, COLORS.gold, inner);
+        // Status text (OWNED / LOCKED / UNLOCK)
+        var statusText = this._createText('', 12, COLORS.gold, inner);
+        statusText.paddingTop = '4px';
 
         // Hover
-        card.onPointerEnterObservable.add(() => { card.shadowBlur = 20; card.scaleX = 1.02; card.scaleY = 1.02; });
-        card.onPointerOutObservable.add(() => { card.shadowBlur = 12; card.scaleX = 1; card.scaleY = 1; });
+        card.onPointerEnterObservable.add(() => { card.shadowBlur = 20; card.scaleX = 1.04; card.scaleY = 1.04; });
+        card.onPointerOutObservable.add(() => { card.shadowBlur = 10; card.scaleX = 1; card.scaleY = 1; });
 
         card.onPointerClickObservable.add(() => {
           this._fire('click');
+          // Update center display
+          if (this._garageCarEmoji) this._garageCarEmoji.text = car.emoji;
+          if (this._garageCarName) this._garageCarName.text = car.name;
+          if (this._garageStatBars) {
+            if (this._garageStatBars.speed) this._garageStatBars.speed.width = (car.speed * 10) + '%';
+            if (this._garageStatBars.handling) this._garageStatBars.handling.width = (car.handling * 10) + '%';
+            if (this._garageStatBars.drift) this._garageStatBars.drift.width = (car.drift * 10) + '%';
+          }
+          // Highlight selected card
+          this.carSelectCards.forEach(function(cc) {
+            cc.card.thickness = cc.carId === car.id ? 3 : 1;
+            cc.card.shadowBlur = cc.carId === car.id ? 20 : 8;
+          });
           this._fire('selectCar', { carId: car.id });
         });
 
-        stack.addControl(card);
-        this.carSelectCards.push({ card, nameText, statusText, carId: car.id });
-      });
+        cardRow.addControl(card);
+        // Spacer between cards
+        if (i < carDefs.length - 1) {
+          var csp = new GUI.Rectangle(); csp.width = '12px'; csp.height = '1px'; csp.thickness = 0; csp.background = 'transparent'; cardRow.addControl(csp);
+        }
 
-      const backBtn = this._createSecondaryButton('< BACK', '120px', '44px', stack);
-      backBtn.paddingTop = '12px';
-      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('STORY_SELECT'); });
+        this.carSelectCards.push({ card: card, nameText: nameText, statusText: statusText, carId: car.id });
+      });
     }
 
     updateCarSelectCards(progress) {
@@ -1523,7 +1648,7 @@
       const panel = this._createPanel('MP_MENU');
 
       // Header
-      this._createTitle('MULTIPLAYER', 32, COLORS.text, panel).top = '-120px';
+      this._addScreenTitle(panel, 'MULTIPLAYER');
 
       // Buttons — horizontal row, center
       var btnRow = new GUI.StackPanel('mpBtnRow');
@@ -1548,12 +1673,7 @@
       this.mpStatusText = this._createText('', 16, COLORS.textDim, panel);
       this.mpStatusText.top = '50px';
 
-      // Back — bottom center
-      const backBtn = this._createSecondaryButton('< BACK', '120px', '44px');
-      backBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      backBtn.top = '-30px';
-      panel.addControl(backBtn);
-      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('MENU'); });
+      this._addBackButton(panel, 'MENU');
     }
 
     // ─── Settings ─────────────────────────────────────────────────
@@ -1561,7 +1681,8 @@
       const panel = this._createPanel('SETTINGS');
 
       // Header
-      this._createTitle('SETTINGS', 32, COLORS.text, panel).top = '-120px';
+      this._addBackButton(panel, 'MENU');
+      this._addScreenTitle(panel, 'SETTINGS');
 
       // Settings card — centered, contained
       var settingsCard = new GUI.Rectangle('settingsCard');
@@ -1602,12 +1723,6 @@
       this._createText('Space = Drift', 12, COLORS.textDim, controlsRow).width = '110px';
       this._createText('M = Mute', 12, COLORS.textDim, controlsRow).width = '80px';
 
-      // Done — bottom center
-      const backBtn = this._createButton('DONE', '160px', '50px');
-      backBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      backBtn.top = '-30px';
-      panel.addControl(backBtn);
-      backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('MENU'); });
     }
 
     // ─── Loading Screen ───────────────────────────────────────────
