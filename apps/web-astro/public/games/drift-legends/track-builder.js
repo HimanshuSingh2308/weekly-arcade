@@ -149,7 +149,7 @@
         { x: 50, z: 70 }, { x: 55, z: 50 }, { x: 30, z: -10 },
       ],
       nitroZones: [0.2, 0.5, 0.8],
-      checkpoints: [0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.9],
+      checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
       environment: 'ice',
     },
     // ═══════════════════════════════════════════════════════════════
@@ -231,7 +231,7 @@
         { x: 30, z: 70 }, { x: 10, z: 60 }, { x: -10, z: 35 },
       ],
       nitroZones: [0.1, 0.5],
-      checkpoints: [0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 0.95],
+      checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
       environment: 'sky',
     },
     'apex-final': {
@@ -434,7 +434,7 @@
       m.freeze();
       return m;
     });
-    for (var ei = 0; ei < numSegments; ei += 4) {
+    for (var ei = 0; ei < numSegments; ei += 8) {
       var et = ei / (numSegments - 1);
       var eTan = getSplineTangent(result.splinePoints, et);
       var eAngle = Math.atan2(eTan.x, eTan.z);
@@ -825,19 +825,12 @@
       snowCap.material = snowMat;
       snowCap.freezeWorldMatrix();
     } else if (r > 0.2) {
-      // Ice crystal cluster — smaller to avoid road clipping
-      var h = 0.8 + Math.random() * 1.5;
-      var shard = MB.CreateCylinder('shard', { height: h, diameterTop: 0, diameterBottom: 0.6, tessellation: 5 }, scene);
-      shard.position = pos.add(new V3(0, h / 2, 0));
+      // Ice crystal — small, upright
+      var h = 0.6 + Math.random() * 1.0;
+      var shard = MB.CreateCylinder('shard', { height: h, diameterTop: 0, diameterBottom: 0.4, tessellation: 5 }, scene);
+      shard.position = pos.add(new V3(0, h / 2 + 0.1, 0));
       shard.material = shardMat;
       shard.freezeWorldMatrix();
-      // Second smaller shard
-      var h2 = h * 0.6;
-      var shard2 = MB.CreateCylinder('shard2', { height: h2, diameterTop: 0, diameterBottom: 0.4, tessellation: 5 }, scene);
-      shard2.position = pos.add(new V3(0.5, h2 / 2, 0.3));
-      shard2.rotation.z = 0.3;
-      shard2.material = shardMat;
-      shard2.freezeWorldMatrix();
     } else {
       // Snow bank
       var bank = MB.CreateSphere('snowBank', { diameter: 2.5, segments: 5 }, scene);
