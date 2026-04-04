@@ -127,15 +127,22 @@
         if (!this.isDrifting) {
           this.isDrifting = true;
           this.driftAngle = 0;
+          console.log('[DRIFT] Started! speed:', this.speed.toFixed(1), 'threshold:', (cfg.topSpeed * 0.15).toFixed(1));
         }
         this.angularVelocity = steerInput * cfg.driftTurnRate * speedFactor;
         this._applyDriftPhysics(dt, steerInput);
 
-        // Fill drift meter — fills while drifting, faster with steering
-        var steerFactor = 0.3 + Math.abs(steerInput) * 0.7; // 30% base, up to 100% with full steer
-        this.driftMeter = Math.min(1, this.driftMeter + cfg.driftFillRate * steerFactor * dt);
+        // Fill drift meter based on real lateral angle (how sideways the car is)
         this.driftAngle = Math.min(45, Math.abs(this._getLateralAngle()));
-        this.driftScore += (10 + this.driftAngle) * dt * 0.5;
+        var fillRate = Math.max(0.2, this.driftAngle / 30) * cfg.driftFillRate;
+        this.driftMeter = Math.min(1, this.driftMeter + fillRate * dt);
+        this.driftScore += this.driftAngle * dt * 0.5;
+        // Debug log every 30 frames
+        if (!this._driftLogCounter) this._driftLogCounter = 0;
+        this._driftLogCounter++;
+        if (this._driftLogCounter % 30 === 0) {
+          console.log('[DRIFT] angle:', this.driftAngle.toFixed(1), 'fillRate:', fillRate.toFixed(3), 'meter:', this.driftMeter.toFixed(2), 'steer:', steerInput.toFixed(2));
+        }
       } else {
         // Normal steering
         this.angularVelocity = steerInput * cfg.turnRate * speedFactor;
@@ -173,10 +180,25 @@
     }
 
     _applyDriftPhysics(dt, steerDir) {
+      const forward = this.getForward();
       const right = this.getRight();
       const lateralSpeed = V3.Dot(this.velocity, right);
-      // Reduce lateral grip during drift (creates slide sensation)
-      this.velocity.subtractInPlace(right.scale(lateralSpeed * 0.25 * dt * 60));
+      const forwardSpeed = V3.Dot(this.velocity, forward);
+
+      // During drift: car rotates faster than velocity changes direction
+      // This creates the angle between facing and movement (= the drift)
+
+      // 1. Reduce lateral grip (car slides more)
+      this.velocity.subtractInPlace(right.scale(lateralSpeed * 0.15 * dt * 60));
+
+      // 2. Push velocity sideways (opposite to steer direction = tail kicks out)
+      var kickForce = steerDir * forwardSpeed * 0.08;
+      this.velocity.addInPlace(right.scale(-kickForce * dt * 60));
+
+      // 3. Maintain forward momentum (don't lose too much speed while drifting)
+      if (forwardSpeed > 0) {
+        this.velocity.addInPlace(forward.scale(forwardSpeed * 0.02 * dt * 60));
+      }
     }
 
     _getLateralAngle() {
