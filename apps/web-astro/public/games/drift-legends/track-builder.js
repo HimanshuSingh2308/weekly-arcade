@@ -598,11 +598,11 @@
 
       // Place props to the sides of the road
       const side = (i % 2 === 0) ? 1 : -1;
-      const offset = trackDef.trackWidth * 1.0 + Math.random() * 15;
+      const offset = trackDef.trackWidth * 1.2 + 4 + Math.random() * 15;
       const propPos = pos.add(right.scale(side * offset));
 
       // Also add a closer prop on opposite side every 3rd position
-      var nearOffset = trackDef.trackWidth * 0.9 + Math.random() * 8;
+      var nearOffset = trackDef.trackWidth * 1.1 + 3 + Math.random() * 8;
       var nearPropPos = pos.add(right.scale(-side * nearOffset));
 
       switch (envType) {
