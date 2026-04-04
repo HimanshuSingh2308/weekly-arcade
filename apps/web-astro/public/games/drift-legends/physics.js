@@ -46,6 +46,8 @@
       this.driftAngle = 0;
       this.driftScore = 0;
       this.totalDriftScore = 0;
+      this.driftCombo = 1;         // combo multiplier (1x, 2x, 3x...)
+      this.driftTime = 0;          // seconds in current drift
 
       // Boost state
       this.isBoosting = false;
@@ -143,11 +145,17 @@
 
         // Fill drift meter based on real lateral angle
         this.driftAngle = Math.min(45, Math.abs(this._getLateralAngle()));
-        // Scale: full meter in ~2s at max angle, ~5s at low angle
         var angleFactor = Math.max(0.3, this.driftAngle / 20);
         var fillRate = angleFactor * cfg.driftFillRate * 1.5;
         this.driftMeter = Math.min(1, this.driftMeter + fillRate * dt);
-        this.driftScore += (5 + this.driftAngle) * dt * 0.5;
+
+        // Drift duration tracking → combo multiplier
+        this.driftTime += dt;
+        // Combo: 1x at 0s, 2x at 1s, 3x at 2s, max 5x at 4s
+        this.driftCombo = Math.min(5, 1 + Math.floor(this.driftTime));
+
+        // Drift score: 5x base * angle * combo
+        this.driftScore += (25 + this.driftAngle * 2.5) * this.driftCombo * dt;
       } else {
         // Normal steering
         this.angularVelocity = steerInput * cfg.turnRate * speedFactor;
@@ -217,6 +225,8 @@
     _releaseDrift() {
       this.totalDriftScore += this.driftScore;
       this.driftScore = 0;
+      this.driftCombo = 1;
+      this.driftTime = 0;
 
       if (this.driftMeter < 0.33) {
         this.boostLevel = 0;

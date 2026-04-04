@@ -1642,15 +1642,18 @@
         this.hud.driftFill.background = '#00aaff';
       }
 
-      // Drift score — shows active during drift, total otherwise
+      // Drift score with combo multiplier
       if (this.hud.driftScore) {
         if (data.isDrifting && data.driftScoreActive > 0) {
-          this.hud.driftScore.text = '+' + data.driftScoreActive;
-          this.hud.driftScore.color = COLORS.accent;
+          var comboText = data.driftCombo > 1 ? ' x' + data.driftCombo : '';
+          this.hud.driftScore.text = '+' + data.driftScoreActive + comboText;
+          this.hud.driftScore.color = data.driftCombo >= 3 ? COLORS.gold : COLORS.accent;
+          this.hud.driftScore.fontSize = data.driftCombo >= 3 ? 18 : 14;
           this.hud.driftScore.isVisible = true;
         } else if (data.driftScoreTotal > 0) {
           this.hud.driftScore.text = 'DRIFT: ' + data.driftScoreTotal;
           this.hud.driftScore.color = COLORS.textDim;
+          this.hud.driftScore.fontSize = 14;
           this.hud.driftScore.isVisible = true;
         } else {
           this.hud.driftScore.isVisible = false;
@@ -1742,25 +1745,28 @@
       this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px');
       this._resultNextBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       this._resultNextBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-      this._resultNextBtn.top = '-70px';
+      this._resultNextBtn.top = '-20px';
       this._resultNextBtn.left = '-140px';
+      this._resultNextBtn.zIndex = 100;
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
       panel.addControl(this._resultNextBtn);
 
       var retryBtn = this._createSecondaryButton('RETRY', '120px', '48px');
       retryBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       retryBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-      retryBtn.top = '-70px';
+      retryBtn.top = '-20px';
       retryBtn.left = '10px';
-      retryBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultRetry'); });
+      retryBtn.zIndex = 100;
+      retryBtn.onPointerClickObservable.add(() => { console.log('[GUI] RETRY clicked'); this._fire('click'); this._fire('resultRetry'); });
       panel.addControl(retryBtn);
 
       var menuBtn = this._createSecondaryButton('MENU', '100px', '48px');
       menuBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       menuBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-      menuBtn.top = '-70px';
+      menuBtn.top = '-20px';
       menuBtn.left = '150px';
-      menuBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultMenu'); });
+      menuBtn.zIndex = 100;
+      menuBtn.onPointerClickObservable.add(() => { console.log('[GUI] MENU clicked'); this._fire('click'); this._fire('resultMenu'); });
       panel.addControl(menuBtn);
     }
 
