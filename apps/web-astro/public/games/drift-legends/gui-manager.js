@@ -1833,19 +1833,13 @@
       this.resultPosition = this._createText('', 20, COLORS.text, col);
       this.resultPosition.paddingBottom = '6px';
 
-      // Stats row — horizontal: score | drift | coins | time
-      var statsRow = new GUI.StackPanel('resStatsRow');
-      statsRow.isVertical = false;
-      statsRow.height = '24px';
-      statsRow.paddingBottom = '8px';
-      col.addControl(statsRow);
-
-      this.resultScore = this._createText('', 13, COLORS.textDim, statsRow);
-      this.resultScore.width = '25%';
-      this.resultCoins = this._createText('', 14, COLORS.gold, statsRow);
-      this.resultCoins.width = '25%';
-      this.resultTime = this._createText('', 13, COLORS.textDim, statsRow);
-      this.resultTime.width = '25%';
+      // Stats — vertical, each on own line
+      this.resultScore = this._createText('', 13, COLORS.textDim, col);
+      this.resultScore.paddingBottom = '2px';
+      this.resultCoins = this._createText('', 15, COLORS.gold, col);
+      this.resultCoins.paddingBottom = '2px';
+      this.resultTime = this._createText('', 13, COLORS.textDim, col);
+      this.resultTime.paddingBottom = '6px';
 
       // Divider
       var div = new GUI.Rectangle('resDiv');
@@ -1903,15 +1897,12 @@
       this.resultTitle.shadowColor = won ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.2)';
       this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' Place';
       this.resultPosition.color = won ? COLORS.gold : COLORS.text;
-      // Stars as filled/empty blocks — works in all fonts
-      var starStr = '';
-      for (var si = 0; si < 3; si++) {
-        starStr += si < data.stars ? '[*]' : '[ ]';
-        if (si < 2) starStr += ' ';
-      }
-      this.resultStars.text = starStr;
+      // Stars
+      this.resultStars.text = '* '.repeat(data.stars) + '. '.repeat(3 - data.stars);
       this.resultStars.color = data.stars >= 2 ? COLORS.gold : COLORS.textDim;
-      this.resultScore.text = 'Score: ' + data.raceScore + (data.driftScore ? '  Drift: ' + data.driftScore : '');
+      this.resultStars.fontSize = data.stars === 3 ? 32 : 26;
+      // Stats — each on separate line
+      this.resultScore.text = 'Score: ' + data.raceScore + (data.driftScore ? '   Drift: ' + data.driftScore : '');
       this.resultCoins.text = '+' + data.coins + ' coins';
       if (data.totalTimeMs) {
         var sec = (data.totalTimeMs / 1000).toFixed(1);
