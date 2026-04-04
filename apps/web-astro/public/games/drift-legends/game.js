@@ -588,10 +588,18 @@
         trackData.trackDef.trackWidth,
         playerCar.position
       );
+      var onTrackWide = DL.TrackBuilder.isOnTrack(
+        trackData.splinePoints,
+        trackData.trackDef.trackWidth * 2,
+        playerCar.position
+      );
       if (!onTrack) {
-        // Off-road: heavy friction slowdown
+        // Off-road: friction slowdown
         playerPhysics.velocity.scaleInPlace(0.96);
         playerPhysics.speed = playerPhysics.velocity.length();
+      }
+      if (!onTrackWide) {
+        // Way off track: counts as dirty lap (minor off-road is OK)
         playerPhysics.wallHitThisLap = true;
       }
 

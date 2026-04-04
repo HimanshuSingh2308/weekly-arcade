@@ -12,15 +12,18 @@
   // ─── Track Definitions ──────────────────────────────────────────
   // Each track: id, name, chapter, race, controlPoints (spline), trackWidth, environment
   const TRACKS = {
-    // Chapter 1: City
+    // ═══════════════════════════════════════════════════════════════
+    // Chapter 1: City — wide roads, gentle curves, beginner-friendly
+    // ═══════════════════════════════════════════════════════════════
     'city-circuit': {
       id: 'city-circuit', name: 'City Circuit', chapter: 1, race: 1, laps: 3,
       minimumLapTimeMs: 45000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 14,
+      trackWidth: 15,
+      // Simple oval — wide and forgiving
       controlPoints: [
-        { x: 0, z: 0 }, { x: 30, z: 5 }, { x: 55, z: 25 }, { x: 60, z: 55 },
-        { x: 45, z: 75 }, { x: 15, z: 80 }, { x: -10, z: 65 }, { x: -15, z: 35 },
+        { x: 0, z: 0 }, { x: 40, z: 5 }, { x: 70, z: 30 }, { x: 65, z: 65 },
+        { x: 35, z: 80 }, { x: 5, z: 70 }, { x: -10, z: 40 },
       ],
       nitroZones: [0.35, 0.7],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -30,10 +33,11 @@
       id: 'neon-alley', name: 'Neon Alley', chapter: 1, race: 2, laps: 3,
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 12,
+      trackWidth: 13,
+      // Figure-8 crossover — teaches awareness
       controlPoints: [
-        { x: 0, z: 0 }, { x: 20, z: 15 }, { x: 45, z: 10 }, { x: 60, z: 30 },
-        { x: 50, z: 55 }, { x: 25, z: 65 }, { x: 0, z: 55 }, { x: -10, z: 30 },
+        { x: 0, z: 0 }, { x: 40, z: 20 }, { x: 10, z: 50 }, { x: 50, z: 70 },
+        { x: 80, z: 50 }, { x: 50, z: 30 }, { x: 70, z: 0 }, { x: 30, z: -10 },
       ],
       nitroZones: [0.2, 0.5, 0.8],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -44,26 +48,30 @@
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
+      // Long straight + tight hairpin — tests braking
       controlPoints: [
-        { x: 0, z: 0 }, { x: 25, z: 10 }, { x: 50, z: 0 }, { x: 65, z: 20 },
-        { x: 55, z: 50 }, { x: 30, z: 65 }, { x: 5, z: 60 }, { x: -15, z: 40 },
-        { x: -10, z: 15 },
+        { x: 0, z: 0 }, { x: 60, z: 5 }, { x: 90, z: 10 }, { x: 95, z: 35 },
+        { x: 80, z: 45 }, { x: 30, z: 50 }, { x: 10, z: 65 }, { x: 5, z: 85 },
+        { x: -15, z: 70 }, { x: -20, z: 35 },
       ],
-      nitroZones: [0.3, 0.6],
+      nitroZones: [0.15, 0.6],
       checkpoints: [0.1, 0.25, 0.4, 0.6, 0.8, 0.9],
       environment: 'city',
     },
-    // Chapter 2: Desert
+    // ═══════════════════════════════════════════════════════════════
+    // Chapter 2: Desert — wider tracks, sweeping curves, high speed
+    // ═══════════════════════════════════════════════════════════════
     'mesa-loop': {
       id: 'mesa-loop', name: 'Mesa Loop', chapter: 2, race: 1, laps: 3,
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 14,
+      // Big sweeping loop — fast, wide turns
       controlPoints: [
-        { x: 0, z: 0 }, { x: 35, z: 10 }, { x: 60, z: 35 }, { x: 50, z: 65 },
-        { x: 20, z: 75 }, { x: -10, z: 55 }, { x: -5, z: 25 },
+        { x: 0, z: 0 }, { x: 50, z: 0 }, { x: 90, z: 20 }, { x: 100, z: 60 },
+        { x: 80, z: 90 }, { x: 40, z: 95 }, { x: 0, z: 80 }, { x: -15, z: 45 },
       ],
-      nitroZones: [0.4, 0.75],
+      nitroZones: [0.15, 0.55],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
       environment: 'desert',
     },
@@ -72,10 +80,11 @@
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
+      // Zigzag canyon — tight alternating turns
       controlPoints: [
-        { x: 0, z: 0 }, { x: 20, z: 20 }, { x: 45, z: 15 }, { x: 60, z: 35 },
-        { x: 45, z: 60 }, { x: 20, z: 55 }, { x: 5, z: 70 }, { x: -10, z: 45 },
-        { x: -5, z: 15 },
+        { x: 0, z: 0 }, { x: 30, z: 25 }, { x: 10, z: 45 }, { x: 40, z: 65 },
+        { x: 15, z: 85 }, { x: 45, z: 100 }, { x: 70, z: 80 }, { x: 55, z: 55 },
+        { x: 75, z: 30 }, { x: 50, z: 10 },
       ],
       nitroZones: [0.3, 0.65],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -85,24 +94,28 @@
       id: 'sandstorm-duel', name: 'Sandstorm Duel', chapter: 2, race: 3, laps: 3,
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 11,
+      trackWidth: 12,
+      // Diamond shape — 4 long straights, 4 sharp corners
       controlPoints: [
-        { x: 0, z: 0 }, { x: 25, z: 15 }, { x: 50, z: 5 }, { x: 70, z: 25 },
-        { x: 60, z: 55 }, { x: 35, z: 70 }, { x: 10, z: 60 }, { x: -5, z: 35 },
+        { x: 0, z: 0 }, { x: 50, z: -10 }, { x: 90, z: 40 }, { x: 50, z: 90 },
+        { x: 0, z: 80 }, { x: -30, z: 40 },
       ],
-      nitroZones: [0.2, 0.5, 0.8],
+      nitroZones: [0.1, 0.4, 0.7],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
       environment: 'desert',
     },
-    // Chapter 3: Ice
+    // ═══════════════════════════════════════════════════════════════
+    // Chapter 3: Ice — narrow, technical, slippery feel
+    // ═══════════════════════════════════════════════════════════════
     'frozen-peaks': {
       id: 'frozen-peaks', name: 'Frozen Peaks', chapter: 3, race: 1, laps: 3,
       minimumLapTimeMs: 55000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 14,
+      trackWidth: 13,
+      // Winding mountain road — gentle S-curves
       controlPoints: [
-        { x: 0, z: 0 }, { x: 30, z: 15 }, { x: 55, z: 30 }, { x: 50, z: 60 },
-        { x: 25, z: 70 }, { x: 0, z: 55 }, { x: -10, z: 30 },
+        { x: 0, z: 0 }, { x: 25, z: 30 }, { x: 50, z: 15 }, { x: 75, z: 40 },
+        { x: 60, z: 70 }, { x: 30, z: 60 }, { x: 10, z: 80 }, { x: -10, z: 50 },
       ],
       nitroZones: [0.4],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -113,9 +126,11 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 10,
+      // Narrow chicane sequence — precision required
       controlPoints: [
-        { x: 0, z: 0 }, { x: 15, z: 20 }, { x: 35, z: 15 }, { x: 50, z: 35 },
-        { x: 40, z: 60 }, { x: 20, z: 65 }, { x: 5, z: 50 }, { x: -10, z: 25 },
+        { x: 0, z: 0 }, { x: 15, z: 20 }, { x: 35, z: 10 }, { x: 45, z: 30 },
+        { x: 30, z: 45 }, { x: 50, z: 60 }, { x: 35, z: 80 }, { x: 15, z: 65 },
+        { x: -5, z: 45 }, { x: 10, z: 25 },
       ],
       nitroZones: [0.35, 0.7],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -126,23 +141,30 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 10,
+      // Spiral inward then back out — disorienting
       controlPoints: [
-        { x: 0, z: 0 }, { x: 20, z: 10 }, { x: 40, z: 0 }, { x: 55, z: 20 },
-        { x: 45, z: 45 }, { x: 25, z: 55 }, { x: 5, z: 45 }, { x: -10, z: 20 },
+        { x: 0, z: 0 }, { x: 40, z: 0 }, { x: 60, z: 30 }, { x: 40, z: 55 },
+        { x: 15, z: 45 }, { x: 25, z: 25 }, { x: 10, z: 10 },
+        { x: -15, z: 30 }, { x: -10, z: 60 }, { x: 20, z: 75 },
+        { x: 50, z: 70 }, { x: 55, z: 50 }, { x: 30, z: -10 },
       ],
-      nitroZones: [0.25, 0.6, 0.85],
-      checkpoints: [0.1, 0.25, 0.4, 0.6, 0.8, 0.9],
+      nitroZones: [0.2, 0.5, 0.8],
+      checkpoints: [0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.9],
       environment: 'ice',
     },
-    // Chapter 4: Jungle
+    // ═══════════════════════════════════════════════════════════════
+    // Chapter 4: Jungle — twisty, organic, tight
+    // ═══════════════════════════════════════════════════════════════
     'jungle-run': {
       id: 'jungle-run', name: 'Jungle Run', chapter: 4, race: 1, laps: 3,
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 13,
+      trackWidth: 12,
+      // Organic winding path — no straight sections
       controlPoints: [
-        { x: 0, z: 0 }, { x: 25, z: 15 }, { x: 50, z: 10 }, { x: 65, z: 35 },
-        { x: 50, z: 60 }, { x: 25, z: 65 }, { x: 5, z: 50 }, { x: -5, z: 25 },
+        { x: 0, z: 0 }, { x: 20, z: 20 }, { x: 40, z: 5 }, { x: 55, z: 25 },
+        { x: 45, z: 50 }, { x: 60, z: 70 }, { x: 35, z: 85 },
+        { x: 10, z: 70 }, { x: -5, z: 45 }, { x: 15, z: 25 },
       ],
       nitroZones: [0.4, 0.75],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -153,10 +175,11 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
+      // Hairpin switchbacks — mountain descent feel
       controlPoints: [
-        { x: 0, z: 0 }, { x: 20, z: 20 }, { x: 45, z: 10 }, { x: 60, z: 30 },
-        { x: 50, z: 55 }, { x: 30, z: 70 }, { x: 10, z: 60 }, { x: -5, z: 35 },
-        { x: -10, z: 15 },
+        { x: 0, z: 0 }, { x: 35, z: 10 }, { x: 15, z: 30 }, { x: 45, z: 40 },
+        { x: 20, z: 60 }, { x: 50, z: 70 }, { x: 30, z: 90 },
+        { x: 5, z: 80 }, { x: -15, z: 55 }, { x: -5, z: 25 },
       ],
       nitroZones: [0.3, 0.65],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -166,54 +189,65 @@
       id: 'vipers-lair', name: "Viper's Lair", chapter: 4, race: 3, laps: 3,
       minimumLapTimeMs: 63000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 10,
+      trackWidth: 9,
+      // Very tight, narrow, snake-like — hardest jungle track
       controlPoints: [
-        { x: 0, z: 0 }, { x: 15, z: 15 }, { x: 35, z: 10 }, { x: 50, z: 25 },
-        { x: 45, z: 50 }, { x: 25, z: 60 }, { x: 10, z: 50 }, { x: 0, z: 35 },
-        { x: -10, z: 15 },
+        { x: 0, z: 0 }, { x: 10, z: 15 }, { x: 25, z: 5 }, { x: 35, z: 20 },
+        { x: 25, z: 35 }, { x: 40, z: 50 }, { x: 30, z: 65 },
+        { x: 15, z: 55 }, { x: 5, z: 70 }, { x: -10, z: 55 },
+        { x: -5, z: 35 }, { x: -15, z: 20 },
       ],
-      nitroZones: [0.25, 0.55, 0.85],
-      checkpoints: [0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 0.95],
+      nitroZones: [0.2, 0.5, 0.8],
+      checkpoints: [0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.9],
       environment: 'jungle',
     },
-    // Chapter 5: Sky
+    // ═══════════════════════════════════════════════════════════════
+    // Chapter 5: Sky — fast, dramatic, wide open then tight
+    // ═══════════════════════════════════════════════════════════════
     'cloud-circuit': {
       id: 'cloud-circuit', name: 'Cloud Circuit', chapter: 5, race: 1, laps: 3,
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 13,
+      trackWidth: 14,
+      // Fast flowing — long curves connected by straights
       controlPoints: [
-        { x: 0, z: 0 }, { x: 30, z: 10 }, { x: 55, z: 30 }, { x: 50, z: 60 },
-        { x: 25, z: 70 }, { x: 0, z: 55 }, { x: -10, z: 25 },
+        { x: 0, z: 0 }, { x: 50, z: -5 }, { x: 85, z: 15 }, { x: 95, z: 50 },
+        { x: 70, z: 75 }, { x: 30, z: 85 }, { x: -5, z: 65 },
+        { x: -15, z: 30 },
       ],
-      nitroZones: [0.35, 0.7],
+      nitroZones: [0.15, 0.55],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
       environment: 'sky',
     },
     'grand-prix-qualify': {
       id: 'grand-prix-qualify', name: 'Grand Prix Qualify', chapter: 5, race: 2, laps: 3,
-      minimumLapTimeMs: 43000,
+      minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
+      // Technical F1-style — chicanes + long straight + hairpin
       controlPoints: [
-        { x: 0, z: 0 }, { x: 25, z: 5 }, { x: 50, z: 0 }, { x: 65, z: 20 },
-        { x: 55, z: 45 }, { x: 30, z: 55 }, { x: 5, z: 45 }, { x: -5, z: 20 },
+        { x: 0, z: 0 }, { x: 60, z: 0 }, { x: 80, z: 15 }, { x: 70, z: 30 },
+        { x: 85, z: 45 }, { x: 75, z: 65 }, { x: 50, z: 55 },
+        { x: 30, z: 70 }, { x: 10, z: 60 }, { x: -10, z: 35 },
       ],
-      nitroZones: [0.3, 0.65],
-      checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
+      nitroZones: [0.1, 0.5],
+      checkpoints: [0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 0.95],
       environment: 'sky',
     },
     'apex-final': {
       id: 'apex-final', name: 'Apex Final', chapter: 5, race: 3, laps: 3,
-      minimumLapTimeMs: 43000,
+      minimumLapTimeMs: 55000,
       starThresholds: { one: 30, two: 100, three: 180 },
-      trackWidth: 12,
+      trackWidth: 11,
+      // The ultimate test — everything combined: straights, hairpins, chicanes, sweepers
       controlPoints: [
-        { x: 0, z: 0 }, { x: 25, z: 5 }, { x: 50, z: 0 }, { x: 65, z: 20 },
-        { x: 55, z: 45 }, { x: 30, z: 55 }, { x: 5, z: 45 }, { x: -5, z: 20 },
+        { x: 0, z: 0 }, { x: 50, z: -5 }, { x: 80, z: 10 }, { x: 85, z: 35 },
+        { x: 65, z: 40 }, { x: 75, z: 60 }, { x: 55, z: 80 },
+        { x: 25, z: 90 }, { x: 5, z: 75 }, { x: 15, z: 55 },
+        { x: -5, z: 40 }, { x: 10, z: 20 }, { x: -10, z: 10 },
       ],
-      nitroZones: [0.3, 0.65],
-      checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
+      nitroZones: [0.1, 0.35, 0.65, 0.85],
+      checkpoints: [0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.9],
       environment: 'sky',
     },
   };
