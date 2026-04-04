@@ -139,6 +139,7 @@
       panel.background = transparent ? 'transparent' : COLORS.bg;
       panel.thickness = 0;
       panel.isVisible = false;
+      panel.isHitTestVisible = false; // let clicks pass through to child buttons
       this.ui.addControl(panel);
       this.screens[name] = panel;
 
