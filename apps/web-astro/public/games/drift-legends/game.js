@@ -699,7 +699,10 @@
     }
 
     // Drift audio — only trigger on state transition, not every frame
-    if (playerPhysics.isDrifting && !wasDrifting) DL.Audio.play('drift');
+    if (playerPhysics.isDrifting && !wasDrifting) {
+      DL.Audio.play('handbrake');
+      DL.Audio.play('drift');
+    }
     wasDrifting = playerPhysics.isDrifting;
 
     // Boost trigger audio — only on state transition
