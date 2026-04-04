@@ -1753,7 +1753,7 @@
       if (data.goalResults && data.goalResults.length) {
         var goalStr = '';
         data.goalResults.forEach(function(g) {
-          goalStr += (g.passed ? '[OK]' : '[X]') + g.label + '\n';
+          goalStr += (g.passed ? '[OK] ' : '[X] ') + g.label + '\n';
         });
         if (data.allGoalsPassed && data.unlockText) {
           goalStr += '\n' + data.unlockText;
