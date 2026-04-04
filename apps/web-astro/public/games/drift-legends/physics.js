@@ -134,11 +134,15 @@
       var wantsDrift = this._driftHoldTimer > 0 && this.speed > cfg.topSpeed * 0.1;
 
       if (wantsDrift) {
-        // Drift mode
+        // Handbrake drift mode — slows car + enables slide
         if (!this.isDrifting) {
           this.isDrifting = true;
           this.driftAngle = 0;
-          console.log('[DRIFT] Started! speed:', this.speed.toFixed(1));
+        }
+        // Handbrake effect: slow down while held (but not to zero)
+        if (inputs.drift) {
+          var brakeFactor = Math.max(0.4, 1 - 0.8 * dt); // lose speed rapidly
+          this.velocity.scaleInPlace(brakeFactor);
         }
         this.angularVelocity = steerInput * cfg.driftTurnRate * speedFactor;
         this._applyDriftPhysics(dt, steerInput);

@@ -144,17 +144,13 @@
 
       // Add vignette overlay for non-transparent menu panels (game-like depth)
       if (!transparent) {
-        var vignette = new GUI.Rectangle(name + '_vig');
-        vignette.width = '100%';
-        vignette.height = '100%';
-        vignette.thickness = 0;
-        vignette.background = 'transparent';
         // Top accent line
         var topLine = new GUI.Rectangle(name + '_topLine');
         topLine.width = '100%';
         topLine.height = '2px';
         topLine.background = 'rgba(255,77,0,0.3)';
         topLine.thickness = 0;
+        topLine.isHitTestVisible = false;
         topLine.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
         topLine.top = '0px';
         panel.addControl(topLine);
@@ -164,6 +160,7 @@
         botLine.height = '1px';
         botLine.background = 'rgba(255,77,0,0.15)';
         botLine.thickness = 0;
+        botLine.isHitTestVisible = false;
         botLine.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
         botLine.top = '-10px';
         panel.addControl(botLine);
@@ -180,6 +177,7 @@
       card.cornerRadius = 12;
       card.background = COLORS.bgCard;
       card.thickness = 1.5;
+      card.isHitTestVisible = false; // don't block clicks to buttons behind
       card.color = glowColor || COLORS.accent;
       card.shadowColor = glowColor || COLORS.accentGlow;
       card.shadowBlur = 12;
@@ -1693,6 +1691,7 @@
 
       // Center — stats + goals in a compact card
       var statsCard = new GUI.Rectangle('resStatsCard');
+      statsCard.isHitTestVisible = false;
       statsCard.width = '450px';
       statsCard.height = '200px';
       statsCard.cornerRadius = 10;
