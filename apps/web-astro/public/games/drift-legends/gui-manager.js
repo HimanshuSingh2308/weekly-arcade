@@ -127,6 +127,7 @@
       this._buildMPMenu();
       this._buildSettings();
       this._buildLoading();
+      this._buildPauseMenu();
       this._buildDisconnect();
       this._buildMobileTouchControls();
     }
@@ -1276,8 +1277,15 @@
       center.addControl(this.preRaceRivalLine);
 
       // RACE! button — part of center stack, not at bottom edge
+      // Race goals list
+      this.preRaceGoals = this._createText('', 13, COLORS.textDim, center);
+      this.preRaceGoals.textWrapping = GUI.TextWrapping.WordWrap;
+      this.preRaceGoals.width = '400px';
+      this.preRaceGoals.height = '50px';
+      this.preRaceGoals.paddingTop = '8px';
+
       var raceBtn = this._createButton('RACE!', '260px', '58px', center);
-      raceBtn.paddingTop = '20px';
+      raceBtn.paddingTop = '16px';
       raceBtn.fontSize = 24;
       raceBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('startRace'); });
 
@@ -1285,7 +1293,7 @@
       this._addScreenTitle(panel, 'RACE BRIEFING');
     }
 
-    showPreRace(trackName, rivalName, rivalLine) {
+    showPreRace(trackName, rivalName, rivalLine, goals) {
       this.preRaceTrackName.text = trackName || '';
       this.preRaceRivalName.text = rivalName ? rivalName.toUpperCase() : '';
       this.preRaceRivalLine.text = rivalLine ? '\u201c' + rivalLine + '\u201d' : '';
@@ -1305,6 +1313,16 @@
       if (this.preRaceDifficulty) {
         var diff = '\u2b50\u2b50\u2b50'; // default 3 stars difficulty
         this.preRaceDifficulty.text = 'Difficulty: ' + diff;
+      }
+
+      // Display race goals
+      if (this.preRaceGoals && goals && goals.length) {
+        var goalsStr = 'RACE GOALS:\n';
+        goals.forEach(function(g) { goalsStr += '\u25c6 ' + g.label + '\n'; });
+        this.preRaceGoals.text = goalsStr;
+        this.preRaceGoals.color = COLORS.accent;
+      } else if (this.preRaceGoals) {
+        this.preRaceGoals.text = '';
       }
 
       this.show('PRE_RACE');
@@ -1668,13 +1686,23 @@
       } else {
         this.resultTime.text = '';
       }
-      // Show unlock text on win, or "need 1st" message on loss
-      if (won && data.unlockText) {
+      // Show goal results
+      if (data.goalResults && data.goalResults.length) {
+        var goalStr = '';
+        data.goalResults.forEach(function(g) {
+          goalStr += (g.passed ? '\u2705 ' : '\u274c ') + g.label + '\n';
+        });
+        if (data.allGoalsPassed && data.unlockText) {
+          goalStr += '\n' + data.unlockText;
+        } else if (!data.allGoalsPassed) {
+          goalStr += '\nComplete all goals to advance!';
+        }
+        this.resultUnlock.text = goalStr;
+        this.resultUnlock.color = data.allGoalsPassed ? COLORS.green : COLORS.accent;
+        this.resultUnlock.height = (data.goalResults.length * 18 + 30) + 'px';
+      } else if (data.unlockText) {
         this.resultUnlock.text = data.unlockText;
         this.resultUnlock.color = COLORS.green;
-      } else if (!won) {
-        this.resultUnlock.text = 'Win 1st place to advance!';
-        this.resultUnlock.color = COLORS.accent;
       } else {
         this.resultUnlock.text = '';
       }
@@ -1880,6 +1908,59 @@
       this._tipTimer = 0;
       this.show('LOADING');
     }
+
+    // ─── Pause Menu ──────────────────────────────────────────────
+    _buildPauseMenu() {
+      var panel = this._createPanel('PAUSE', true);
+      panel.background = 'rgba(8,8,20,0.8)';
+      this.screens['PAUSE'] = panel;
+
+      // Center card
+      var card = new GUI.Rectangle('pauseCard');
+      card.width = '320px';
+      card.height = '280px';
+      card.cornerRadius = 14;
+      card.background = 'rgba(20,20,40,0.9)';
+      card.thickness = 2;
+      card.color = COLORS.accent;
+      card.shadowColor = COLORS.accentGlow;
+      card.shadowBlur = 20;
+      panel.addControl(card);
+
+      var stack = new GUI.StackPanel('pauseStack');
+      stack.width = '260px';
+      card.addControl(stack);
+
+      // Title
+      this._createTitle('PAUSED', 30, COLORS.text, stack).paddingTop = '20px';
+      this._createText('', 1, 'transparent', stack).height = '16px'; // spacer
+
+      // Resume
+      var resumeBtn = this._createButton('RESUME', '240px', '48px', stack);
+      resumeBtn.paddingBottom = '10px';
+      resumeBtn.onPointerClickObservable.add(() => {
+        this._fire('click');
+        this._fire('pauseResume');
+      });
+
+      // Restart
+      var restartBtn = this._createSecondaryButton('RESTART RACE', '240px', '44px', stack);
+      restartBtn.paddingBottom = '10px';
+      restartBtn.onPointerClickObservable.add(() => {
+        this._fire('click');
+        this._fire('pauseRestart');
+      });
+
+      // Quit to menu
+      var quitBtn = this._createSecondaryButton('QUIT TO MENU', '240px', '44px', stack);
+      quitBtn.onPointerClickObservable.add(() => {
+        this._fire('click');
+        this._fire('pauseQuit');
+      });
+    }
+
+    showPause() { this.show('PAUSE'); }
+    hidePause() { if (this.screens['PAUSE']) this.screens['PAUSE'].isVisible = false; this.currentScreen = 'RACE_HUD'; }
 
     // ─── Disconnect Overlay ───────────────────────────────────────
     _buildDisconnect() {

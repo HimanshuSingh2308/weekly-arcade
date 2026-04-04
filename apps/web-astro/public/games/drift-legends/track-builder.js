@@ -537,6 +537,39 @@
     const startTangent = getSplineTangent(result.splinePoints, 0);
     result.startRotation = Math.atan2(startTangent.x, startTangent.z);
 
+    // Chequered start/finish line — thick, alternating black/white
+    var chequeredWhite = getCachedMat(scene, 'cheq_white', function() {
+      var m = new BABYLON.StandardMaterial('cheqW', scene);
+      m.diffuseColor = new Color3(1, 1, 1);
+      m.emissiveColor = new Color3(0.3, 0.3, 0.3);
+      m.freeze();
+      return m;
+    });
+    var chequeredBlack = getCachedMat(scene, 'cheq_black', function() {
+      var m = new BABYLON.StandardMaterial('cheqB', scene);
+      m.diffuseColor = new Color3(0.1, 0.1, 0.1);
+      m.freeze();
+      return m;
+    });
+    var startRight = V3.Cross(startTangent, V3.Up()).normalize();
+    var cheqSize = 1.2;
+    var cheqCols = Math.floor(trackDef.trackWidth / cheqSize);
+    for (var cr = 0; cr < 2; cr++) { // 2 rows deep
+      for (var cc = 0; cc < cheqCols; cc++) {
+        var isWhite = (cr + cc) % 2 === 0;
+        var cheq = MB.CreateBox('cheq', { width: cheqSize, height: 0.03, depth: cheqSize }, scene);
+        var offset = (-trackDef.trackWidth / 2 + cc * cheqSize + cheqSize / 2);
+        cheq.position = result.startPosition.add(
+          startRight.scale(offset)
+        ).add(startTangent.scale(cr * cheqSize - cheqSize));
+        cheq.position.y = 0.04;
+        cheq.rotation.y = result.startRotation;
+        cheq.material = isWhite ? chequeredWhite : chequeredBlack;
+        cheq.freezeWorldMatrix();
+        result.meshes.push(cheq);
+      }
+    }
+
     // Store road boundaries for collision detection
     result.leftWall = roadPaths[0];
     result.rightWall = roadPaths[1];

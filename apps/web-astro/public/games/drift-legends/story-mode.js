@@ -19,6 +19,11 @@
         lostLine: "Told you. Streets are mine.",
       },
       races: ['city-circuit', 'neon-alley', 'blaze-showdown'],
+      raceGoals: {
+        'city-circuit': [{ type: 'finish', label: 'Finish the race' }],
+        'neon-alley': [{ type: 'top3', label: 'Finish in Top 3' }],
+        'blaze-showdown': [{ type: 'win', label: 'Beat Blaze (1st place)' }],
+      },
       unlockRequirement: null,
       reward: { coins: 200, carUnlock: 'drift-racer', unlockText: 'The city circuit is yours. But Sandstorm rules the desert...' },
       aiSpeedMultiplier: 0.7,
@@ -38,6 +43,11 @@
         lostLine: 'Precision always wins.',
       },
       races: ['mesa-loop', 'canyon-rush', 'sandstorm-duel'],
+      raceGoals: {
+        'mesa-loop': [{ type: 'top3', label: 'Finish in Top 3' }],
+        'canyon-rush': [{ type: 'top3', label: 'Finish in Top 3' }, { type: 'drift_score', value: 500, label: 'Earn 500 drift points' }],
+        'sandstorm-duel': [{ type: 'win', label: 'Beat Sandstorm (1st place)' }],
+      },
       unlockRequirement: { chapter: 1, allRacesComplete: true },
       reward: { coins: 300, carUnlock: 'sand-runner', unlockText: 'Desert tamed. But Glacier owns the ice peaks...' },
       aiSpeedMultiplier: 0.75,
@@ -57,6 +67,11 @@
         lostLine: 'Cold and calculated. Every time.',
       },
       races: ['frozen-peaks', 'glacier-gorge', 'ice-crown'],
+      raceGoals: {
+        'frozen-peaks': [{ type: 'top3', label: 'Finish in Top 3' }, { type: 'clean_lap', label: 'Complete 1 clean lap' }],
+        'glacier-gorge': [{ type: 'win', label: 'Win the race' }],
+        'ice-crown': [{ type: 'win', label: 'Beat Glacier (1st place)' }, { type: 'stars', value: 2, label: 'Earn 2+ stars' }],
+      },
       unlockRequirement: { chapter: 2, allRacesComplete: true, minAvgStars: 2, avgStarsChapter: 1 },
       reward: { coins: 350, carUnlock: null, unlockText: 'The frost is behind you. Viper lurks in the jungle...' },
       aiSpeedMultiplier: 0.80,
@@ -76,6 +91,11 @@
         lostLine: 'The jungle takes what it wants.',
       },
       races: ['jungle-run', 'ruin-dash', 'vipers-lair'],
+      raceGoals: {
+        'jungle-run': [{ type: 'win', label: 'Win the race' }, { type: 'drift_score', value: 1000, label: 'Earn 1000 drift points' }],
+        'ruin-dash': [{ type: 'win', label: 'Win the race' }, { type: 'clean_lap', label: 'Complete 1 clean lap' }],
+        'vipers-lair': [{ type: 'win', label: 'Beat Viper (1st place)' }, { type: 'stars', value: 2, label: 'Earn 2+ stars' }],
+      },
       unlockRequirement: { chapter: 3, allRacesComplete: true, minAvgStars: 2, avgStarsChapter: 2 },
       reward: { coins: 400, carUnlock: null, unlockText: 'The jungle bows to you. One final race stands between you and legend status...' },
       aiSpeedMultiplier: 0.85,
@@ -95,6 +115,11 @@
         lostLine: 'Not good enough. Not yet.',
       },
       races: ['cloud-circuit', 'grand-prix-qualify', 'apex-final'],
+      raceGoals: {
+        'cloud-circuit': [{ type: 'win', label: 'Win the race' }, { type: 'drift_score', value: 1500, label: 'Earn 1500 drift points' }],
+        'grand-prix-qualify': [{ type: 'win', label: 'Win the race' }, { type: 'clean_lap', label: 'Complete 2 clean laps' }],
+        'apex-final': [{ type: 'win', label: 'Beat Apex (1st place)' }, { type: 'stars', value: 3, label: 'Earn 3 stars' }],
+      },
       unlockRequirement: { chapter: 4, allRacesComplete: true, minAvgStars: 2, avgStarsChapter: 3 },
       reward: { coins: 500, carUnlock: null, unlockText: "Drift Legends. That's what they'll call you now." },
       aiSpeedMultiplier: 0.90,
@@ -218,6 +243,29 @@
     return total > 0 ? Math.round((completed / total) * 100) : 0;
   }
 
+  function getGoalsForRace(chapterId, trackId) {
+    var ch = CHAPTERS.find(function(c) { return c.id === chapterId; });
+    if (!ch || !ch.raceGoals) return [{ type: 'finish', label: 'Finish the race' }];
+    return ch.raceGoals[trackId] || [{ type: 'finish', label: 'Finish the race' }];
+  }
+
+  function checkGoals(goals, result) {
+    // result: { position, stars, driftScore, cleanLaps, totalLaps }
+    return goals.map(function(g) {
+      var passed = false;
+      switch (g.type) {
+        case 'finish': passed = true; break;
+        case 'top3': passed = result.position <= 3; break;
+        case 'win': passed = result.position === 1; break;
+        case 'drift_score': passed = result.driftScore >= (g.value || 0); break;
+        case 'clean_lap': passed = result.cleanLaps >= 1; break;
+        case 'stars': passed = result.stars >= (g.value || 1); break;
+        default: passed = true;
+      }
+      return { label: g.label, type: g.type, passed: passed };
+    });
+  }
+
   // ─── Cloud Save ───────────────────────────────────────────────────
   const SAVE_KEY = 'dl-progress';
 
@@ -303,6 +351,8 @@
     isCarUnlockable,
     unlockCar,
     getCompletionPercent,
+    getGoalsForRace,
+    checkGoals,
     loadLocalProgress,
     saveLocalProgress,
     loadCloudProgress,
