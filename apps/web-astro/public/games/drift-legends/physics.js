@@ -131,11 +131,11 @@
         this.angularVelocity = steerInput * cfg.driftTurnRate * speedFactor;
         this._applyDriftPhysics(dt, steerInput);
 
-        // Fill drift meter
+        // Fill drift meter — fills while drifting, faster with steering
+        var steerFactor = 0.3 + Math.abs(steerInput) * 0.7; // 30% base, up to 100% with full steer
+        this.driftMeter = Math.min(1, this.driftMeter + cfg.driftFillRate * steerFactor * dt);
         this.driftAngle = Math.min(45, Math.abs(this._getLateralAngle()));
-        const fillRate = this.driftAngle / 45 * cfg.driftFillRate;
-        this.driftMeter = Math.min(1, this.driftMeter + fillRate * dt);
-        this.driftScore += this.driftAngle * dt * 0.5;
+        this.driftScore += (10 + this.driftAngle) * dt * 0.5;
       } else {
         // Normal steering
         this.angularVelocity = steerInput * cfg.turnRate * speedFactor;
