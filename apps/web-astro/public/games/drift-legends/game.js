@@ -563,18 +563,18 @@
     // Update player physics
     playerPhysics.update(dt, input, null);
 
-    // Wall collision detection
+    // Off-road detection — speed penalty instead of wall bounce
     if (trackData && trackData.splinePoints) {
-      const wallNormal = DL.TrackBuilder.getWallNormal(
+      var onTrack = DL.TrackBuilder.isOnTrack(
         trackData.splinePoints,
         trackData.trackDef.trackWidth,
         playerCar.position
       );
-      if (wallNormal) {
-        playerPhysics.applyWallBounce(wallNormal);
-        chaseCamera.shake(0.2);
-        DL.Audio.play('collision');
-        DL.Particles.burstSparks(sparksPS, playerCar.position, 15);
+      if (!onTrack) {
+        // Off-road: heavy friction slowdown
+        playerPhysics.velocity.scaleInPlace(0.96);
+        playerPhysics.speed = playerPhysics.velocity.length();
+        playerPhysics.wallHitThisLap = true;
       }
 
       // Car-to-car collision detection (player vs AI racers)
@@ -701,7 +701,8 @@
       speed: playerPhysics.getDisplaySpeed(),
       driftMeter: playerPhysics.driftMeter,
       isDrifting: playerPhysics.isDrifting,
-      driftScoreActive: playerPhysics.driftScore,
+      driftScoreActive: Math.round(playerPhysics.driftScore),
+      driftScoreTotal: Math.round(playerPhysics.totalDriftScore),
       isBoosting: playerPhysics.isBoosting,
       raceTime,
     });

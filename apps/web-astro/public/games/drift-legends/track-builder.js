@@ -416,44 +416,25 @@
       }
     }
 
-    // Build walls — accent-colored for visibility
-    const wallHeight = 1.5;
-    [0, 1].forEach(side => {
-      const wallPath = roadPaths[side];
-      const wallTop = wallPath.map(p => p.add(new V3(0, wallHeight, 0)));
-      const wall = MB.CreateRibbon('wall_' + side, {
-        pathArray: [wallPath, wallTop],
+    // Low curbs instead of tall walls — car can go off-road
+    var curbHeight = 0.15;
+    var curbMat = getCachedMat(scene, 'curb_' + trackDef.environment, function() {
+      var m = new BABYLON.StandardMaterial('curbMat', scene);
+      m.emissiveColor = env.wallColor;
+      m.diffuseColor = env.wallColor.scale(0.6);
+      m.freeze();
+      return m;
+    });
+    [0, 1].forEach(function(side) {
+      var wallPath = roadPaths[side];
+      var curbTop = wallPath.map(function(p) { return p.add(new V3(0, curbHeight, 0)); });
+      var curb = MB.CreateRibbon('curb_' + side, {
+        pathArray: [wallPath, curbTop],
         sideOrientation: BABYLON.Mesh.DOUBLESIDE,
       }, scene);
-      const wallMat = new BABYLON.PBRMaterial('wallMat_' + side, scene);
-      wallMat.albedoColor = env.wallColor.scale(0.5);
-      wallMat.emissiveColor = env.wallColor.scale(0.15);
-      wallMat.metallic = 0.3;
-      wallMat.roughness = 0.6;
-      wall.material = wallMat;
-      result.meshes.push(wall);
-
-      // Guardrail light strip on top of wall
-      var guardStripMat = getCachedMat(scene, 'guardrail_' + trackDef.environment, function() {
-        var m = new BABYLON.StandardMaterial('guardMat', scene);
-        m.emissiveColor = env.wallColor;
-        m.diffuseColor = env.wallColor;
-        m.freeze();
-        return m;
-      });
-      for (var gi = 0; gi < wallPath.length; gi += 8) {
-        var gPos = wallPath[gi];
-        if (!gPos) continue;
-        var gStrip = MB.CreateBox('guard', { width: 0.3, height: 0.1, depth: 3.0 }, scene);
-        gStrip.position = gPos.add(new V3(0, wallHeight + 0.05, 0));
-        if (gi + 1 < wallPath.length) {
-          var gTan = wallPath[Math.min(gi + 1, wallPath.length - 1)].subtract(gPos).normalize();
-          gStrip.rotation.y = Math.atan2(gTan.x, gTan.z);
-        }
-        gStrip.material = guardStripMat;
-        gStrip.freezeWorldMatrix();
-        result.meshes.push(gStrip);
-      }
+      curb.material = curbMat;
+      curb.freezeWorldMatrix();
+      result.meshes.push(curb);
     });
 
     // Ground plane — larger for open environments
