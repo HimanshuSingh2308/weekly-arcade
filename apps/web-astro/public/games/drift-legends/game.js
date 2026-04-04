@@ -27,6 +27,7 @@
     RESULT: 'RESULT',
     MP_MENU: 'MP_MENU',
     SETTINGS: 'SETTINGS',
+    PAUSED: 'PAUSED',
   };
 
   let state = STATE.INIT;
@@ -227,10 +228,12 @@
     isMultiplayerRace = false;
     selectedTrackId = selectedChapter.races[selectedRaceIndex];
     const track = DL.TrackBuilder.TRACKS[selectedTrackId];
+    var goals = DL.StoryMode.getGoalsForRace(selectedChapter.id, selectedTrackId);
     gui.showPreRace(
       track?.name || selectedTrackId,
       selectedChapter.rival.name,
-      selectedChapter.rival.preRaceLine
+      selectedChapter.rival.preRaceLine,
+      goals
     );
     state = STATE.PRE_RACE;
   });
@@ -294,6 +297,30 @@
 
   gui.onAction('volumeChange', (val) => {
     DL.Audio.setVolume(val);
+  });
+
+  // Pause menu callbacks
+  function _resumeFromPause() {
+    gui.hidePause();
+    DL.Audio.startEngine();
+    state = STATE.RACING;
+  }
+
+  gui.onAction('pauseResume', () => { _resumeFromPause(); });
+
+  gui.onAction('pauseRestart', () => {
+    gui.hidePause();
+    _startLoading();
+  });
+
+  gui.onAction('pauseQuit', () => {
+    gui.hidePause();
+    _cleanupRace();
+    if (skylineBg) skylineBg.style.display = '';
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+    gui.show('MENU');
+    state = STATE.MENU;
+    _updateMenuUI();
   });
 
   // Multiplayer callbacks
@@ -458,6 +485,21 @@
     if (DL.Input.consumeMute()) {
       DL.Audio.toggle();
     }
+
+    // ESC/P = pause (only during racing states)
+    if (DL.Input.consumePause()) {
+      if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
+        state = STATE.PAUSED;
+        DL.Audio.stopEngine();
+        gui.showPause();
+        return; // skip frame
+      } else if (state === STATE.PAUSED) {
+        _resumeFromPause();
+      }
+    }
+
+    // Skip frame if paused
+    if (state === STATE.PAUSED) return;
 
     switch (state) {
       case STATE.CINEMATIC_INTRO:
@@ -739,13 +781,24 @@
       DL.Particles.createConfetti(scene, playerCar.position.add(new V3(0, 3, 0)));
     }
 
-    // Update progress — only mark completed on win (1st place)
+    // Check race goals
+    var goals = selectedChapter ? DL.StoryMode.getGoalsForRace(selectedChapter.id, selectedTrackId) : [];
+    var goalResults = DL.StoryMode.checkGoals(goals, {
+      position: playerPosition,
+      stars: stars,
+      driftScore: driftScoreTotal,
+      cleanLaps: cleanLapsCount,
+      totalLaps: totalLaps,
+    });
+    var allGoalsPassed = goalResults.every(function(g) { return g.passed; });
+
+    // Update progress — only mark completed if ALL goals passed
     if (progress && selectedTrackId) {
       const existing = progress.raceResults[selectedTrackId] || {};
       progress.raceResults[selectedTrackId] = {
         bestStars: Math.max(existing.bestStars || 0, stars),
         bestTime: existing.bestTime ? Math.min(existing.bestTime, totalTimeMs) : totalTimeMs,
-        completed: existing.completed || won,  // only true on 1st place
+        completed: existing.completed || allGoalsPassed,
         attempts: (existing.attempts || 0) + 1,
       };
       progress.coins += coins;
@@ -796,6 +849,8 @@
         coins,
         totalTimeMs,
         unlockText,
+        goalResults: goalResults,
+        allGoalsPassed: allGoalsPassed,
       });
       state = STATE.RESULT;
     }, 1500);
