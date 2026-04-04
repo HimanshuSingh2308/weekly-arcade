@@ -414,9 +414,14 @@
     scene.activeCamera = chaseCamera.camera;
     chaseCamera.setTarget(playerCar);
 
-    // Hide menu/garage preview cars
-    if (gui._menuCar) gui._menuCar.isVisible = false;
+    // Dispose menu/garage preview cars — they persist and show during racing
+    if (gui._menuCar) { gui._menuCar.dispose(false, true); gui._menuCar = null; }
     if (gui._garageCar) { gui._garageCar.dispose(false, true); gui._garageCar = null; }
+    // Disable menu lights
+    if (gui._menuCarLight) gui._menuCarLight.setEnabled(false);
+    if (gui._menuCarFill) gui._menuCarFill.setEnabled(false);
+    if (gui._menuCarRim) gui._menuCarRim.setEnabled(false);
+    if (gui._menuCarHemi) gui._menuCarHemi.setEnabled(false);
 
     // Particles
     driftSmoke = DL.Particles.createDriftSmoke(scene);
