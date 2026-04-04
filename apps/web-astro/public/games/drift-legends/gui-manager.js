@@ -262,6 +262,7 @@
       tb.fontWeight = 'bold';
       tb.resizeToFit = true;
       tb.height = (fontSize || 24) + 12 + 'px';
+      tb.isHitTestVisible = false; // don't intercept clicks
       if (parent) parent.addControl(tb);
       return tb;
     }
@@ -271,6 +272,7 @@
       const tb = new GUI.TextBlock();
       tb.text = text;
       tb.color = color || COLORS.text;
+      tb.isHitTestVisible = false; // don't intercept clicks
       tb.fontSize = fontSize || 36;
       tb.fontFamily = 'monospace';
       tb.fontWeight = 'bold';
