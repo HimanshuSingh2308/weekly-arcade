@@ -466,27 +466,32 @@
     ground.position.y = -0.05;
     result.meshes.push(ground);
 
-    // Calculate checkpoint positions + add glowing ring visuals
+    // Calculate checkpoint positions + add vertical arch visuals
     var cpMat = getCachedMat(scene, 'checkpoint_ring', function() {
       var m = new BABYLON.StandardMaterial('cpMat', scene);
       m.emissiveColor = new Color3(0, 0.8, 1);
       m.diffuseColor = new Color3(0, 0.8, 1);
-      m.alpha = 0.4;
+      m.alpha = 0.35;
       m.freeze();
       return m;
     });
+    result._cpMeshes = [];
     trackDef.checkpoints.forEach(t => {
       const pos = getSplinePoint(result.splinePoints, t);
       const tangent = getSplineTangent(result.splinePoints, t);
       result.checkpointPositions.push({ t, position: pos });
 
-      // Glowing ring on track surface
-      var ring = MB.CreateTorus('cp', { diameter: trackDef.trackWidth * 0.8, thickness: 0.3, tessellation: 16 }, scene);
-      ring.position = pos.add(new V3(0, 0.2, 0));
-      ring.rotation.y = Math.atan2(tangent.x, tangent.z);
-      ring.material = cpMat;
-      ring.freezeWorldMatrix();
-      result.meshes.push(ring);
+      // Vertical arch across the road — torus rotated 90° on X axis
+      var arch = MB.CreateTorus('cp', { diameter: trackDef.trackWidth * 0.9, thickness: 0.25, tessellation: 20 }, scene);
+      arch.position = pos.add(new V3(0, trackDef.trackWidth * 0.45, 0)); // center of arch at road width/2 height
+      // Rotate to face along the road direction
+      var roadAngle = Math.atan2(tangent.x, tangent.z);
+      arch.rotation.y = roadAngle;
+      arch.rotation.x = Math.PI / 2; // stand upright
+      arch.material = cpMat;
+      arch.freezeWorldMatrix();
+      result.meshes.push(arch);
+      result._cpMeshes.push(arch);
     });
 
     // Nitro zones
@@ -560,11 +565,11 @@
 
       // Place props to the sides of the road
       const side = (i % 2 === 0) ? 1 : -1;
-      const offset = trackDef.trackWidth * 0.7 + Math.random() * 15;
+      const offset = trackDef.trackWidth * 1.0 + Math.random() * 15;
       const propPos = pos.add(right.scale(side * offset));
 
       // Also add a closer prop on opposite side every 3rd position
-      var nearOffset = trackDef.trackWidth * 0.6 + Math.random() * 5;
+      var nearOffset = trackDef.trackWidth * 0.9 + Math.random() * 8;
       var nearPropPos = pos.add(right.scale(-side * nearOffset));
 
       switch (envType) {

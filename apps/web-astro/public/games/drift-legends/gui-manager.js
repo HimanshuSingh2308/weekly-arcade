@@ -1960,6 +1960,8 @@
       hintText.top = '-20px';
       container.addControl(hintText);
       this._gestureHint = hintText;
+      // Auto-hide hint after 5 seconds
+      setTimeout(function() { if (hintText) hintText.isVisible = false; }, 5000);
 
       // ── Touch gesture tracking via canvas pointer events ──
       const canvas = document.getElementById('renderCanvas');
