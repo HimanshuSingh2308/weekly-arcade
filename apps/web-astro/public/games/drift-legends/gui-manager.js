@@ -801,12 +801,15 @@
 
       // ─── Winding Mountain Road ─────────────────────────────────
       // Chapter positions — zigzag from bottom-left to top-right
+      // Positions mapped to SVG road curve path:
+      // SVG road: M 50,700 → C 450,550 → C 800,400 → C 1150,450 → C 1550,250
+      // GUI left: -40% to +35%, top: % of canvas height
       var chPositions = [
-        { x: -32, y: 80 },    // Ch1: bottom-left (City)
-        { x: -10, y: 20 },    // Ch2: mid-left (Desert)
-        { x: 12,  y: 70 },    // Ch3: mid-right-low (Ice)
-        { x: 22,  y: -10 },   // Ch4: upper-right (Jungle)
-        { x: 35,  y: -60 },   // Ch5: top-right (Sky)
+        { x: -35, y: 38 },    // Ch1: road start, bottom-left (City)
+        { x: -12, y: 15 },    // Ch2: first curve apex (Desert)
+        { x: 8,   y: 25 },    // Ch3: mid road dip (Ice)
+        { x: 22,  y: 5 },     // Ch4: third curve (Jungle)
+        { x: 38,  y: -18 },   // Ch5: road end, top-right (Sky)
       ];
 
       // Road is drawn by the SVG background — no GUI dashes needed
@@ -1474,7 +1477,7 @@
 
       // Show goals in cinematic bar
       if (this._introGoalsText && goals && goals.length) {
-        this._introGoalsText.text = goals.map(function(g) { return '-' + g.label; }).join('   ');
+        this._introGoalsText.text = goals.map(function(g) { return '> ' + g.label; }).join('   ');
       } else if (this._introGoalsText) {
         this._introGoalsText.text = '';
       }
@@ -1613,6 +1616,36 @@
       bottomBar.addControl(speedUnit);
 
       // ─── Top overlays ────────────────────────────────────────────
+
+      // Pause button (top-left) — for mobile/touch
+      var pauseBtn = GUI.Button.CreateSimpleButton('pauseBtn', '||');
+      pauseBtn.width = '44px';
+      pauseBtn.height = '44px';
+      pauseBtn.color = COLORS.text;
+      pauseBtn.background = 'rgba(13,13,26,0.5)';
+      pauseBtn.cornerRadius = 8;
+      pauseBtn.thickness = 1;
+      pauseBtn.fontSize = 18;
+      pauseBtn.fontFamily = 'monospace';
+      pauseBtn.fontWeight = 'bold';
+      pauseBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      pauseBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      pauseBtn.left = '16px';
+      pauseBtn.top = '10px';
+      pauseBtn.onPointerClickObservable.add(() => {
+        this._fire('pauseClick');
+      });
+      panel.addControl(pauseBtn);
+
+      // Race goal reminder (top-center, small)
+      this.hud.goalReminder = new GUI.TextBlock('hudGoal', '');
+      this.hud.goalReminder.fontSize = 12;
+      this.hud.goalReminder.fontFamily = 'monospace';
+      this.hud.goalReminder.color = 'rgba(255,200,100,0.6)';
+      this.hud.goalReminder.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.hud.goalReminder.top = '10px';
+      this.hud.goalReminder.isHitTestVisible = false;
+      panel.addControl(this.hud.goalReminder);
 
       // Race time (top-right, subtle)
       this.hud.time = new GUI.TextBlock('hudTime', '0:00');
