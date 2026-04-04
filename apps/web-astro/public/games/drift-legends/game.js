@@ -310,6 +310,8 @@
   // Pause menu callbacks
   function _resumeFromPause() {
     gui.hidePause();
+    // Re-enable 3D mesh picking
+    scene.meshes.forEach(function(m) { m.isPickable = true; });
     DL.Audio.startEngine();
     state = STATE.RACING;
   }
@@ -500,6 +502,8 @@
       if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
         state = STATE.PAUSED;
         DL.Audio.stopEngine();
+        // Disable 3D mesh picking so pause buttons receive clicks
+        scene.meshes.forEach(function(m) { m.isPickable = false; });
         gui.showPause();
         return; // skip frame
       } else if (state === STATE.PAUSED) {
@@ -864,6 +868,8 @@
     // Show result with delay for dramatic effect
     setTimeout(() => {
       chaseCamera.setResultView(playerCar.position);
+      // Disable 3D mesh picking so GUI buttons receive clicks
+      scene.meshes.forEach(function(m) { m.isPickable = false; });
       gui.showRaceResult({
         position: playerPosition,
         stars,
