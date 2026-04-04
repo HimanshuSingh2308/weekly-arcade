@@ -1535,18 +1535,21 @@
       this.hud.driftFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       driftContainer.addControl(this.hud.driftFill);
 
-      // Drift score (above drift bar)
+      // Drift score — above the bottom bar, left-aligned
       this.hud.driftScore = new GUI.TextBlock('hudDriftScore', '');
       this.hud.driftScore.color = COLORS.accent;
       this.hud.driftScore.fontSize = 14;
       this.hud.driftScore.fontFamily = 'monospace';
       this.hud.driftScore.fontWeight = 'bold';
       this.hud.driftScore.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.hud.driftScore.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.hud.driftScore.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      this.hud.driftScore.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       this.hud.driftScore.left = '16px';
-      this.hud.driftScore.top = '-22px';
+      this.hud.driftScore.top = '-56px';
+      this.hud.driftScore.width = '160px';
       this.hud.driftScore.isVisible = false;
-      bottomBar.addControl(this.hud.driftScore);
+      this.hud.driftScore.isHitTestVisible = false;
+      panel.addControl(this.hud.driftScore);
 
       // Center: Lap
       this.hud.lap = new GUI.TextBlock('hudLap', 'LAP 1/3');
