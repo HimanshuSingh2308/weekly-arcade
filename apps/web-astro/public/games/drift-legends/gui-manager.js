@@ -1789,7 +1789,7 @@
       this._resultRetryBtn.left = '10px';
       this._resultRetryBtn.isVisible = false;
       this._resultRetryBtn.zIndex = 60;
-      this._resultRetryBtn.onPointerClickObservable.add(() => { console.log('[GUI] RETRY clicked'); this._fire('click'); this._fire('resultRetry'); });
+      this._resultRetryBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultRetry'); });
       this.ui.addControl(this._resultRetryBtn);
 
       this._resultMenuBtn = this._createSecondaryButton('MENU', '100px', '48px');
@@ -1799,7 +1799,7 @@
       this._resultMenuBtn.left = '150px';
       this._resultMenuBtn.isVisible = false;
       this._resultMenuBtn.zIndex = 60;
-      this._resultMenuBtn.onPointerClickObservable.add(() => { console.log('[GUI] MENU clicked'); this._fire('click'); this._fire('resultMenu'); });
+      this._resultMenuBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultMenu'); });
       this.ui.addControl(this._resultMenuBtn);
     }
 
