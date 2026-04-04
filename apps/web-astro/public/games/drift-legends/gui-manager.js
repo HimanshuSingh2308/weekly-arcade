@@ -1728,32 +1728,30 @@
       rightGoals.addControl(this.resultUnlock);
 
       // Buttons — bottom bar with background
-      var btnBar = new GUI.Rectangle('resBtnBar');
-      btnBar.width = '100%';
-      btnBar.height = '60px';
-      btnBar.background = 'rgba(13,13,26,0.8)';
-      btnBar.thickness = 0;
-      btnBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      btnBar.isPointerBlocker = true;
-      panel.addControl(btnBar);
-
-      var btnRow = new GUI.StackPanel('resBtnRow');
-      btnRow.isVertical = false;
-      btnRow.height = '54px';
-      btnBar.addControl(btnRow);
-
-      this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px', btnRow);
+      // Buttons — directly on panel (not nested in extra containers)
+      this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px');
+      this._resultNextBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      this._resultNextBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      this._resultNextBtn.top = '-70px';
+      this._resultNextBtn.left = '-140px';
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
+      panel.addControl(this._resultNextBtn);
 
-      var sp1 = new GUI.Rectangle(); sp1.width = '10px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow.addControl(sp1);
-
-      var retryBtn = this._createSecondaryButton('RETRY', '120px', '48px', btnRow);
+      var retryBtn = this._createSecondaryButton('RETRY', '120px', '48px');
+      retryBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      retryBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      retryBtn.top = '-70px';
+      retryBtn.left = '10px';
       retryBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultRetry'); });
+      panel.addControl(retryBtn);
 
-      var sp2 = new GUI.Rectangle(); sp2.width = '10px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnRow.addControl(sp2);
-
-      var menuBtn = this._createSecondaryButton('MENU', '100px', '48px', btnRow);
+      var menuBtn = this._createSecondaryButton('MENU', '100px', '48px');
+      menuBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      menuBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      menuBtn.top = '-70px';
+      menuBtn.left = '150px';
       menuBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultMenu'); });
+      panel.addControl(menuBtn);
     }
 
     showRaceResult(data) {
@@ -1764,7 +1762,7 @@
       this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' Place';
       this.resultPosition.color = won ? COLORS.gold : COLORS.text;
       this.resultStars.text = '\u2b50'.repeat(data.stars) + '\u2606'.repeat(3 - data.stars);
-      this.resultScore.text = 'Score: ' + data.raceScore;
+      this.resultScore.text = 'Score: ' + data.raceScore + (data.driftScore ? '  Drift: ' + data.driftScore : '');
       this.resultCoins.text = '+' + data.coins + ' coins';
       if (data.totalTimeMs) {
         var sec = (data.totalTimeMs / 1000).toFixed(1);

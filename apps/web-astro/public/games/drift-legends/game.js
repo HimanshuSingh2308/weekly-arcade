@@ -860,6 +860,7 @@
         position: playerPosition,
         stars,
         raceScore,
+        driftScore: Math.round(driftScoreTotal),
         coins,
         totalTimeMs,
         unlockText,
