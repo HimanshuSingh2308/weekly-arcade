@@ -1627,7 +1627,8 @@
     // ─── Race Result ──────────────────────────────────────────────
     _buildRaceResult() {
       const panel = this._createPanel('RACE_RESULT');
-      panel.background = 'rgba(8,8,20,0.85)';
+      panel.background = 'rgba(8,8,20,0.88)';
+      panel.isPointerBlocker = true;
 
       // Top section — title + stars (absolute positioned, not in stack)
       this.resultTitle = this._createTitle('', 38, COLORS.gold);
@@ -1699,8 +1700,8 @@
       btnRow.top = '-16px';
       panel.addControl(btnRow);
 
-      var nextBtn = this._createButton('NEXT RACE', '160px', '48px', btnRow);
-      nextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
+      this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px', btnRow);
+      this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
 
       var sp1 = new GUI.Rectangle(); sp1.width = '10px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow.addControl(sp1);
 
@@ -1749,6 +1750,11 @@
       } else {
         this.resultUnlock.text = '';
       }
+      // Hide NEXT RACE if goals not met
+      if (this._resultNextBtn) {
+        this._resultNextBtn.isVisible = !!(data.allGoalsPassed);
+      }
+
       this.show('RACE_RESULT');
     }
 
