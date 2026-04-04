@@ -414,6 +414,10 @@
     scene.activeCamera = chaseCamera.camera;
     chaseCamera.setTarget(playerCar);
 
+    // Hide menu/garage preview cars
+    if (gui._menuCar) gui._menuCar.isVisible = false;
+    if (gui._garageCar) { gui._garageCar.dispose(false, true); gui._garageCar = null; }
+
     // Particles
     driftSmoke = DL.Particles.createDriftSmoke(scene);
     driftSmoke.emitter = playerCar;
