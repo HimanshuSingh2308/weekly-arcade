@@ -1956,6 +1956,7 @@
     _buildPauseMenu() {
       var panel = this._createPanel('PAUSE', true);
       panel.background = 'rgba(8,8,20,0.8)';
+      panel.isPointerBlocker = true;
       this.screens['PAUSE'] = panel;
 
       // Center card
@@ -2002,8 +2003,13 @@
       });
     }
 
-    showPause() { this.show('PAUSE'); }
-    hidePause() { if (this.screens['PAUSE']) this.screens['PAUSE'].isVisible = false; this.currentScreen = 'RACE_HUD'; }
+    showPause() {
+      // Don't use show() — keep RACE_HUD visible underneath
+      if (this.screens['PAUSE']) this.screens['PAUSE'].isVisible = true;
+    }
+    hidePause() {
+      if (this.screens['PAUSE']) this.screens['PAUSE'].isVisible = false;
+    }
 
     // ─── Disconnect Overlay ───────────────────────────────────────
     _buildDisconnect() {
