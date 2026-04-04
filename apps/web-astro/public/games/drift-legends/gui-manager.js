@@ -1721,8 +1721,8 @@
       // Center — stats + goals in a compact card
       var statsCard = new GUI.Rectangle('resStatsCard');
       statsCard.isHitTestVisible = false;
-      statsCard.width = '450px';
-      statsCard.height = '200px';
+      statsCard.width = '520px';
+      statsCard.height = '240px';
       statsCard.cornerRadius = 10;
       statsCard.background = 'rgba(13,13,26,0.7)';
       statsCard.thickness = 1;
@@ -1764,7 +1764,7 @@
       this.resultUnlock.textWrapping = GUI.TextWrapping.WordWrap;
       this.resultUnlock.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       this.resultUnlock.width = '210px';
-      this.resultUnlock.height = '120px';
+      this.resultUnlock.height = '160px';
       this.resultUnlock.paddingTop = '6px';
       rightGoals.addControl(this.resultUnlock);
 
