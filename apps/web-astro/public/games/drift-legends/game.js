@@ -501,8 +501,11 @@
       }
     }
 
-    // Skip frame if paused
-    if (state === STATE.PAUSED) return;
+    // When paused — still render scene (for GUI) but skip game logic
+    if (state === STATE.PAUSED) {
+      // Allow scene to render so GUI buttons work, but skip game update
+      return;
+    }
 
     switch (state) {
       case STATE.CINEMATIC_INTRO:
