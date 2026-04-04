@@ -387,7 +387,10 @@
 
     // Hide HTML skyline, make scene opaque for 3D racing
     if (skylineBg) skylineBg.style.display = 'none';
+    var mtnBg = document.getElementById('storyMtnBg');
+    if (mtnBg) mtnBg.style.display = 'none';
     scene.clearColor = new BABYLON.Color4(0.05, 0.05, 0.1, 1);
+    scene.autoClear = true;
 
     // Build track
     trackData = DL.TrackBuilder.buildTrack(scene, selectedTrackId);
@@ -407,7 +410,8 @@
     playerCar.rotation.y = startRot;
     playerPhysics = new DL.Physics.ArcadeVehicle(playerCar, selectedCarId);
 
-    // Camera
+    // Camera — ensure chase camera is active (may be ArcRotateCamera from menu/garage)
+    scene.activeCamera = chaseCamera.camera;
     chaseCamera.setTarget(playerCar);
 
     // Particles
