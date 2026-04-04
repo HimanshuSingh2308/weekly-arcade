@@ -769,53 +769,62 @@
         { x: 35,  y: -60 },   // Ch5: top-right (Sky)
       ];
 
-      // Road segments — thicker dashes with glow for active
+      // Road is drawn by the SVG background — no GUI dashes needed
       this._storyRoadSegs = [];
-      for (var r = 0; r < 4; r++) {
-        var from = chPositions[r];
-        var to = chPositions[r + 1];
-        var steps = 10;
-        for (var s = 0; s < steps; s++) {
-          if (s % 2 === 1) continue; // dashed — skip every other
-          var t = (s + 0.5) / steps;
-          var dashX = from.x + (to.x - from.x) * t;
-          var dashY = from.y + (to.y - from.y) * t;
-          var dx = (to.x - from.x);
-          var dy = (to.y - from.y);
-          var angle = Math.atan2(dy, dx * 6);
-          var dash = new GUI.Rectangle('roadDash_' + r + '_' + s);
-          dash.width = '28px';
-          dash.height = '5px';
-          dash.background = 'rgba(255,255,255,0.15)';
-          dash.thickness = 0;
-          dash.cornerRadius = 3;
-          dash.left = dashX + '%';
-          dash.top = dashY + 'px';
-          dash.rotation = angle;
-          panel.addControl(dash);
-          this._storyRoadSegs.push({ el: dash, segIdx: r });
-        }
-      }
 
-      // "You are here" animated car marker — pulses at current chapter
+      // "You are here" — pulsing ring around current chapter (not separate element)
       this._storyCarMarker = new GUI.Ellipse('storyCarMarker');
-      this._storyCarMarker.width = '18px';
-      this._storyCarMarker.height = '18px';
-      this._storyCarMarker.thickness = 0;
-      this._storyCarMarker.background = COLORS.accent;
+      this._storyCarMarker.width = '24px';
+      this._storyCarMarker.height = '24px';
+      this._storyCarMarker.thickness = 4;
+      this._storyCarMarker.color = COLORS.accent;
+      this._storyCarMarker.background = 'transparent';
       this._storyCarMarker.shadowColor = COLORS.accent;
-      this._storyCarMarker.shadowBlur = 20;
+      this._storyCarMarker.shadowBlur = 25;
       panel.addControl(this._storyCarMarker);
 
-      // Pulse animation for car marker
+      // Dynamic sizing + pulse animation
       var markerPulse = 0;
+      var lastH = 0;
       this.scene.registerBeforeRender(() => {
         if (!this.screens['STORY_SELECT'] || !this.screens['STORY_SELECT'].isVisible) return;
+        // Pulse car marker
         markerPulse += 0.05;
         if (this._storyCarMarker) {
-          var s = 1 + Math.sin(markerPulse) * 0.2;
+          var s = 1 + Math.sin(markerPulse) * 0.15;
           this._storyCarMarker.scaleX = s;
           this._storyCarMarker.scaleY = s;
+          this._storyCarMarker.alpha = 0.5 + Math.sin(markerPulse) * 0.4;
+        }
+        // Dynamic sizing — recalc on resize
+        var ch = this.scene.getEngine().getRenderHeight();
+        if (ch !== lastH && ch > 0) {
+          lastH = ch;
+          var ringSize = Math.max(70, Math.min(120, ch * 0.15));
+          var emojiSize = Math.max(28, ringSize * 0.42);
+          var numSize = Math.max(16, ringSize * 0.22);
+          var markerSize = ringSize + 20; // slightly bigger than chapter circle
+          if (this._storyCarMarker) {
+            this._storyCarMarker.widthInPixels = markerSize;
+            this._storyCarMarker.heightInPixels = markerSize;
+          }
+          this.chapterCards.forEach(function(cc) {
+            if (cc.card && cc.card.widthInPixels !== undefined) {
+              cc.card.widthInPixels = ringSize;
+              cc.card.heightInPixels = ringSize;
+              if (cc.card._themeText) cc.card._themeText.fontSize = emojiSize;
+              if (cc.card._numText) {
+                cc.card._numText.fontSize = numSize;
+                cc.card._numText.top = Math.round(ringSize * 0.22) + 'px';
+              }
+              if (cc.card._themeText) cc.card._themeText.top = -Math.round(ringSize * 0.12) + 'px';
+              // Reposition labels based on ring size
+              var halfR = Math.round(ringSize / 2);
+              if (cc.nameText) cc.nameText.top = (cc.baseY + halfR + 8) + 'px';
+              if (cc.starsText) cc.starsText.top = (cc.baseY + halfR + 26) + 'px';
+              if (cc.envTag) cc.envTag.top = (cc.baseY - halfR - 18) + 'px';
+            }
+          });
         }
       });
       // Position updated in updateChapterCards
@@ -830,74 +839,78 @@
         var chColor = CH_COLORS[i];
         var pos = chPositions[i];
 
-        // Outer ring (glow)
+        // Outer ring — sized relative to viewport height (bigger on bigger screens)
         var ring = new GUI.Ellipse('chRing_' + i);
-        ring.width = '70px';
-        ring.height = '70px';
+        ring.widthInPixels = 0; // set dynamically below
+        ring.heightInPixels = 0;
         ring.thickness = 3;
         ring.color = chColor;
         ring.background = 'rgba(13,13,26,0.85)';
         ring.shadowColor = chColor;
-        ring.shadowBlur = 16;
+        ring.shadowBlur = 20;
         ring.left = pos.x + '%';
         ring.top = pos.y + 'px';
         panel.addControl(ring);
 
         // Theme emoji inside circle
         var themeText = new GUI.TextBlock('chTheme_' + i, chThemes[i]);
-        themeText.fontSize = 24;
-        themeText.top = '-8px';
+        themeText.fontSize = 0; // set dynamically
+        themeText.top = '-10px';
         ring.addControl(themeText);
 
         // Chapter number below emoji
         var numText = new GUI.TextBlock('chNum_' + i, (i + 1) + '');
-        numText.fontSize = 14;
+        numText.fontSize = 0; // set dynamically
         numText.fontFamily = 'monospace';
         numText.fontWeight = 'bold';
         numText.color = chColor;
-        numText.top = '16px';
+        numText.top = '18px';
         ring.addControl(numText);
 
-        // Name label below the circle — bigger, brighter
+        // Store refs for dynamic sizing
+        ring._themeText = themeText;
+        ring._numText = numText;
+
+        // Name label below circle (positioned dynamically)
         var nameText = new GUI.TextBlock('chName_' + i, '');
-        nameText.fontSize = 14;
+        nameText.fontSize = 15;
         nameText.fontFamily = 'monospace';
         nameText.fontWeight = 'bold';
         nameText.color = COLORS.text;
-        nameText.shadowColor = 'rgba(0,0,0,0.8)';
-        nameText.shadowBlur = 6;
+        nameText.shadowColor = 'rgba(0,0,0,0.9)';
+        nameText.shadowBlur = 8;
         nameText.left = pos.x + '%';
-        nameText.top = (pos.y + 46) + 'px';
+        nameText.top = '0px'; // set dynamically
         nameText.resizeToFit = true;
-        nameText.height = '18px';
+        nameText.height = '20px';
         panel.addControl(nameText);
 
-        // Stars below name
+        // Stars below name (positioned dynamically)
         var starsText = new GUI.TextBlock('chStars_' + i, '');
-        starsText.fontSize = 12;
+        starsText.fontSize = 14;
         starsText.fontFamily = 'monospace';
         starsText.fontWeight = 'bold';
         starsText.color = COLORS.gold;
-        starsText.shadowColor = 'rgba(0,0,0,0.8)';
-        starsText.shadowBlur = 4;
+        starsText.shadowColor = 'rgba(0,0,0,0.9)';
+        starsText.shadowBlur = 6;
         starsText.left = pos.x + '%';
-        starsText.top = (pos.y + 64) + 'px';
+        starsText.top = '0px'; // set dynamically
         starsText.resizeToFit = true;
-        starsText.height = '16px';
+        starsText.height = '18px';
         panel.addControl(starsText);
 
-        // Environment tag above circle
+        // Environment tag above circle (positioned dynamically)
         var envTag = new GUI.TextBlock('chEnv_' + i, chEnvNames[i]);
-        envTag.fontSize = 10;
+        envTag.fontSize = 12;
         envTag.fontFamily = 'monospace';
         envTag.fontWeight = 'bold';
         envTag.color = chColor;
-        envTag.shadowColor = 'rgba(0,0,0,0.8)';
-        envTag.shadowBlur = 4;
+        envTag.shadowColor = 'rgba(0,0,0,0.9)';
+        envTag.shadowBlur = 6;
         envTag.left = pos.x + '%';
-        envTag.top = (pos.y - 46) + 'px';
+        envTag.top = '0px'; // set dynamically
         envTag.resizeToFit = true;
-        envTag.height = '14px';
+        envTag.height = '16px';
         panel.addControl(envTag);
 
         // Click handler on the ring
@@ -915,7 +928,7 @@
           }.bind(this);
         }).call(this, i));
 
-        this.chapterCards.push({ card: ring, nameText: nameText, starsText: starsText, accentBar: null, roadSegs: this._storyRoadSegs });
+        this.chapterCards.push({ card: ring, nameText: nameText, starsText: starsText, envTag: envTag, baseY: pos.y, accentBar: null });
       }
     }
 
@@ -956,7 +969,7 @@
         var pos = this._storyChPositions[highestUnlocked];
         if (pos) {
           this._storyCarMarker.left = pos.x + '%';
-          this._storyCarMarker.top = (pos.y - 50) + 'px'; // above the chapter node
+          this._storyCarMarker.top = pos.y + 'px'; // same position as chapter — pulses around it
         }
       }
     }
