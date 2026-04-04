@@ -64,6 +64,11 @@
         this.screens[screenName].isVisible = true;
       }
       this.currentScreen = screenName;
+      // Toggle HTML backgrounds based on screen
+      var mtnBg = document.getElementById('storyMtnBg');
+      var skyBg = document.getElementById('skylineBg');
+      if (mtnBg) mtnBg.style.display = (screenName === 'STORY_SELECT') ? '' : 'none';
+      if (skyBg) skyBg.style.display = (screenName === 'MENU') ? '' : 'none';
     }
 
     hide(screenName) {
@@ -730,112 +735,230 @@
     // ─── Story Select ─────────────────────────────────────────────
     _buildStorySelect() {
       const panel = this._createPanel('STORY_SELECT');
+      panel.background = 'rgba(8,8,20,0.45)'; // semi-transparent — mountain SVG shows through
       var chThemes = ['\ud83c\udfd9\ufe0f', '\ud83c\udfdc\ufe0f', '\u2744\ufe0f', '\ud83c\udf34', '\u2601\ufe0f'];
       var chRivals = ['vs Blaze', 'vs Sandstorm', 'vs Glacier', 'vs Viper', 'vs Apex'];
+      var chEnvNames = ['CITY', 'DESERT', 'ICE', 'JUNGLE', 'SKY'];
 
-      // Title top-left
-      var titleRow = new GUI.StackPanel('storyTitleRow');
-      titleRow.isVertical = false;
-      titleRow.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      titleRow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      titleRow.top = '16px';
-      titleRow.left = '30px';
-      titleRow.height = '44px';
-      panel.addControl(titleRow);
-
-      const backBtn = this._createSecondaryButton('< BACK', '100px', '38px', titleRow);
+      // Back button — top-left
+      var backBtn = this._createSecondaryButton('< BACK', '100px', '38px');
+      backBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      backBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      backBtn.top = '12px';
+      backBtn.left = '20px';
+      panel.addControl(backBtn);
       backBtn.onPointerClickObservable.add(() => { this._fire('click'); this.show('MENU'); });
 
-      var sp = new GUI.Rectangle(); sp.width = '16px'; sp.height = '1px'; sp.thickness = 0; sp.background = 'transparent'; titleRow.addControl(sp);
+      // Title
+      var stTitle = this._createTitle('STORY MODE', 24, COLORS.text);
+      stTitle.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      stTitle.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      stTitle.top = '16px';
+      stTitle.left = '140px';
+      panel.addControl(stTitle);
 
-      this._createTitle('STORY MODE', 28, COLORS.text, titleRow);
+      // Mountain SVG background is toggled by show() method
 
-      // Horizontal scrollable chapter cards row
+      // ─── Winding Mountain Road ─────────────────────────────────
+      // Chapter positions — zigzag from bottom-left to top-right
+      var chPositions = [
+        { x: -32, y: 80 },    // Ch1: bottom-left (City)
+        { x: -10, y: 20 },    // Ch2: mid-left (Desert)
+        { x: 12,  y: 70 },    // Ch3: mid-right-low (Ice)
+        { x: 22,  y: -10 },   // Ch4: upper-right (Jungle)
+        { x: 35,  y: -60 },   // Ch5: top-right (Sky)
+      ];
+
+      // Road segments — thicker dashes with glow for active
+      this._storyRoadSegs = [];
+      for (var r = 0; r < 4; r++) {
+        var from = chPositions[r];
+        var to = chPositions[r + 1];
+        var steps = 10;
+        for (var s = 0; s < steps; s++) {
+          if (s % 2 === 1) continue; // dashed — skip every other
+          var t = (s + 0.5) / steps;
+          var dashX = from.x + (to.x - from.x) * t;
+          var dashY = from.y + (to.y - from.y) * t;
+          var dx = (to.x - from.x);
+          var dy = (to.y - from.y);
+          var angle = Math.atan2(dy, dx * 6);
+          var dash = new GUI.Rectangle('roadDash_' + r + '_' + s);
+          dash.width = '28px';
+          dash.height = '5px';
+          dash.background = 'rgba(255,255,255,0.15)';
+          dash.thickness = 0;
+          dash.cornerRadius = 3;
+          dash.left = dashX + '%';
+          dash.top = dashY + 'px';
+          dash.rotation = angle;
+          panel.addControl(dash);
+          this._storyRoadSegs.push({ el: dash, segIdx: r });
+        }
+      }
+
+      // "You are here" animated car marker — pulses at current chapter
+      this._storyCarMarker = new GUI.Ellipse('storyCarMarker');
+      this._storyCarMarker.width = '18px';
+      this._storyCarMarker.height = '18px';
+      this._storyCarMarker.thickness = 0;
+      this._storyCarMarker.background = COLORS.accent;
+      this._storyCarMarker.shadowColor = COLORS.accent;
+      this._storyCarMarker.shadowBlur = 20;
+      panel.addControl(this._storyCarMarker);
+
+      // Pulse animation for car marker
+      var markerPulse = 0;
+      this.scene.registerBeforeRender(() => {
+        if (!this.screens['STORY_SELECT'] || !this.screens['STORY_SELECT'].isVisible) return;
+        markerPulse += 0.05;
+        if (this._storyCarMarker) {
+          var s = 1 + Math.sin(markerPulse) * 0.2;
+          this._storyCarMarker.scaleX = s;
+          this._storyCarMarker.scaleY = s;
+        }
+      });
+      // Position updated in updateChapterCards
+
+      // Store positions for updateChapterCards
+      this._storyChPositions = chPositions;
+
+      // Chapter nodes — circular markers along the road
       this.chapterCards = [];
-      var cardRow = new GUI.StackPanel('chCardRow');
-      cardRow.isVertical = false;
-      cardRow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      cardRow.top = '20px';
-      cardRow.height = '180px';
-      panel.addControl(cardRow);
 
-      for (let i = 0; i < 5; i++) {
+      for (var i = 0; i < 5; i++) {
         var chColor = CH_COLORS[i];
+        var pos = chPositions[i];
 
-        // Card — taller, shows chapter info vertically
-        var card = new GUI.Rectangle('ch_' + i);
-        card.width = '150px';
-        card.height = '170px';
-        card.cornerRadius = 12;
-        card.background = COLORS.bgCard;
-        card.thickness = 2;
-        card.color = chColor;
-        card.shadowColor = chColor;
-        card.shadowBlur = 12;
-        card.shadowOffsetY = 2;
-        card.paddingLeft = '6px';
-        card.paddingRight = '6px';
+        // Outer ring (glow)
+        var ring = new GUI.Ellipse('chRing_' + i);
+        ring.width = '70px';
+        ring.height = '70px';
+        ring.thickness = 3;
+        ring.color = chColor;
+        ring.background = 'rgba(13,13,26,0.85)';
+        ring.shadowColor = chColor;
+        ring.shadowBlur = 16;
+        ring.left = pos.x + '%';
+        ring.top = pos.y + 'px';
+        panel.addControl(ring);
 
-        var inner = new GUI.StackPanel('chInner_' + i);
-        inner.width = '130px';
-        card.addControl(inner);
+        // Theme emoji inside circle
+        var themeText = new GUI.TextBlock('chTheme_' + i, chThemes[i]);
+        themeText.fontSize = 24;
+        themeText.top = '-8px';
+        ring.addControl(themeText);
 
-        // Theme emoji — large
-        var themeText = this._createText(chThemes[i], 30, COLORS.text, inner);
-        themeText.paddingTop = '10px';
-        themeText.paddingBottom = '2px';
-
-        // Chapter number
-        var numText = this._createText((i + 1) + '', 28, chColor, inner);
+        // Chapter number below emoji
+        var numText = new GUI.TextBlock('chNum_' + i, (i + 1) + '');
+        numText.fontSize = 14;
+        numText.fontFamily = 'monospace';
         numText.fontWeight = 'bold';
-        numText.paddingBottom = '2px';
+        numText.color = chColor;
+        numText.top = '16px';
+        ring.addControl(numText);
 
-        // Chapter name
-        var nameText = this._createText('', 13, COLORS.text, inner);
-        nameText.paddingBottom = '2px';
+        // Name label below the circle — bigger, brighter
+        var nameText = new GUI.TextBlock('chName_' + i, '');
+        nameText.fontSize = 14;
+        nameText.fontFamily = 'monospace';
+        nameText.fontWeight = 'bold';
+        nameText.color = COLORS.text;
+        nameText.shadowColor = 'rgba(0,0,0,0.8)';
+        nameText.shadowBlur = 6;
+        nameText.left = pos.x + '%';
+        nameText.top = (pos.y + 46) + 'px';
+        nameText.resizeToFit = true;
+        nameText.height = '18px';
+        panel.addControl(nameText);
 
-        // Rival
-        var rivalText = this._createText(chRivals[i], 11, COLORS.textDim, inner);
-        rivalText.paddingBottom = '4px';
+        // Stars below name
+        var starsText = new GUI.TextBlock('chStars_' + i, '');
+        starsText.fontSize = 12;
+        starsText.fontFamily = 'monospace';
+        starsText.fontWeight = 'bold';
+        starsText.color = COLORS.gold;
+        starsText.shadowColor = 'rgba(0,0,0,0.8)';
+        starsText.shadowBlur = 4;
+        starsText.left = pos.x + '%';
+        starsText.top = (pos.y + 64) + 'px';
+        starsText.resizeToFit = true;
+        starsText.height = '16px';
+        panel.addControl(starsText);
 
-        // Stars
-        var starsText = this._createText('', 12, COLORS.gold, inner);
+        // Environment tag above circle
+        var envTag = new GUI.TextBlock('chEnv_' + i, chEnvNames[i]);
+        envTag.fontSize = 10;
+        envTag.fontFamily = 'monospace';
+        envTag.fontWeight = 'bold';
+        envTag.color = chColor;
+        envTag.shadowColor = 'rgba(0,0,0,0.8)';
+        envTag.shadowBlur = 4;
+        envTag.left = pos.x + '%';
+        envTag.top = (pos.y - 46) + 'px';
+        envTag.resizeToFit = true;
+        envTag.height = '14px';
+        panel.addControl(envTag);
 
-        // Hover
-        card.onPointerEnterObservable.add(() => { card.shadowBlur = 24; card.scaleX = 1.05; card.scaleY = 1.05; });
-        card.onPointerOutObservable.add(() => { card.shadowBlur = 12; card.scaleX = 1; card.scaleY = 1; });
+        // Click handler on the ring
+        ring.onPointerEnterObservable.add((function(rng, clr) {
+          return function() { rng.shadowBlur = 28; rng.scaleX = 1.1; rng.scaleY = 1.1; rng.thickness = 4; };
+        })(ring, chColor));
+        ring.onPointerOutObservable.add((function(rng) {
+          return function() { rng.shadowBlur = 16; rng.scaleX = 1; rng.scaleY = 1; rng.thickness = 3; };
+        })(ring));
 
-        card.onPointerClickObservable.add((function(idx) {
+        ring.onPointerClickObservable.add((function(idx) {
           return function() {
             this._fire('click');
             this._fire('selectChapter', { chapterIndex: idx });
           }.bind(this);
         }).call(this, i));
 
-        cardRow.addControl(card);
-        this.chapterCards.push({ card: card, nameText: nameText, starsText: starsText, accentBar: null });
+        this.chapterCards.push({ card: ring, nameText: nameText, starsText: starsText, accentBar: null, roadSegs: this._storyRoadSegs });
       }
     }
 
     updateChapterCards(chapters, progress) {
       const SM = window.DriftLegends.StoryMode;
+      var highestUnlocked = 0;
       chapters.forEach((ch, i) => {
         if (i >= this.chapterCards.length) return;
         const cc = this.chapterCards[i];
         const unlocked = SM.isChapterUnlocked(progress, ch.id);
         cc.nameText.text = unlocked ? ch.name : '\ud83d\udd12 LOCKED';
         cc.nameText.color = unlocked ? COLORS.text : COLORS.textMuted;
-        // Stars — compact for card layout
         if (unlocked) {
+          highestUnlocked = i;
           const earned = SM.getChapterStars ? SM.getChapterStars(progress, ch.id) : 0;
           cc.starsText.text = STAR_FILLED + ' ' + earned + '/9';
         } else {
           cc.starsText.text = '';
         }
-        cc.card.alpha = unlocked ? 1 : 0.35;
+        cc.card.alpha = unlocked ? 1 : 0.3;
         cc.card.isEnabled = unlocked;
-        if (cc.accentBar) cc.accentBar.alpha = unlocked ? 1 : 0.3;
       });
+      // Light up road segments for completed chapters
+      if (this._storyRoadSegs) {
+        this._storyRoadSegs.forEach(function(seg) {
+          if (seg.segIdx < highestUnlocked) {
+            seg.el.background = COLORS.accent;
+            seg.el.shadowColor = COLORS.accentGlow;
+            seg.el.shadowBlur = 8;
+          } else {
+            seg.el.background = 'rgba(255,255,255,0.15)';
+            seg.el.shadowBlur = 0;
+          }
+        });
+      }
+      // Move car marker to current chapter position
+      if (this._storyCarMarker && this._storyChPositions) {
+        var pos = this._storyChPositions[highestUnlocked];
+        if (pos) {
+          this._storyCarMarker.left = pos.x + '%';
+          this._storyCarMarker.top = (pos.y - 50) + 'px'; // above the chapter node
+        }
+      }
     }
 
     // ─── Car Select ───────────────────────────────────────────────
