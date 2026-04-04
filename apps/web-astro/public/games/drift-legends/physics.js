@@ -122,27 +122,32 @@
       const steerInput = inputs.steer || 0;
       const speedFactor = Math.min(this.speed / (cfg.topSpeed * 0.3), 1);
 
+      // Grace period — don't end drift for 0.3s after releasing Space
       if (inputs.drift && this.speed > cfg.topSpeed * 0.15) {
+        this._driftHoldTimer = 0.3; // reset grace timer while holding drift
+      }
+      if (this._driftHoldTimer === undefined) this._driftHoldTimer = 0;
+      if (this._driftHoldTimer > 0) this._driftHoldTimer -= dt;
+
+      var wantsDrift = this._driftHoldTimer > 0 && this.speed > cfg.topSpeed * 0.1;
+
+      if (wantsDrift) {
         // Drift mode
         if (!this.isDrifting) {
           this.isDrifting = true;
           this.driftAngle = 0;
-          console.log('[DRIFT] Started! speed:', this.speed.toFixed(1), 'threshold:', (cfg.topSpeed * 0.15).toFixed(1));
+          console.log('[DRIFT] Started! speed:', this.speed.toFixed(1));
         }
         this.angularVelocity = steerInput * cfg.driftTurnRate * speedFactor;
         this._applyDriftPhysics(dt, steerInput);
 
-        // Fill drift meter based on real lateral angle (how sideways the car is)
+        // Fill drift meter based on real lateral angle
         this.driftAngle = Math.min(45, Math.abs(this._getLateralAngle()));
-        var fillRate = Math.max(0.2, this.driftAngle / 30) * cfg.driftFillRate;
+        // Scale: full meter in ~2s at max angle, ~5s at low angle
+        var angleFactor = Math.max(0.3, this.driftAngle / 20);
+        var fillRate = angleFactor * cfg.driftFillRate * 1.5;
         this.driftMeter = Math.min(1, this.driftMeter + fillRate * dt);
-        this.driftScore += this.driftAngle * dt * 0.5;
-        // Debug log every 30 frames
-        if (!this._driftLogCounter) this._driftLogCounter = 0;
-        this._driftLogCounter++;
-        if (this._driftLogCounter % 30 === 0) {
-          console.log('[DRIFT] angle:', this.driftAngle.toFixed(1), 'fillRate:', fillRate.toFixed(3), 'meter:', this.driftMeter.toFixed(2), 'steer:', steerInput.toFixed(2));
-        }
+        this.driftScore += (5 + this.driftAngle) * dt * 0.5;
       } else {
         // Normal steering
         this.angularVelocity = steerInput * cfg.turnRate * speedFactor;
