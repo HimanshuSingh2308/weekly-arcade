@@ -683,7 +683,13 @@
     }
 
     // Calculate race position
-    const playerT = (playerLap - 1) + (playerCheckpoint / Math.max(1, trackData?.checkpointPositions.length || 5));
+    // Calculate accurate position on track using closest spline point
+    var closestT = 0;
+    if (trackData && trackData.splinePoints) {
+      var closest = DL.TrackBuilder.getClosestPointOnTrack(trackData.splinePoints, playerCar.position);
+      closestT = closest.t;
+    }
+    const playerT = (playerLap - 1) + closestT;
     const positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
     const playerPos = positions.findIndex(p => p.id === 'player') + 1;
 

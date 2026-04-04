@@ -92,7 +92,7 @@
 
       // Move along spline
       const splineLength = splinePoints.length;
-      const advance = (currentSpeed * dt) / (splineLength * 0.3);
+      const advance = (currentSpeed * dt) / (splineLength * 1.2);
       this.splineT += advance;
 
       // Lap completion
