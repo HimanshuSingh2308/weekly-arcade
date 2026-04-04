@@ -1318,7 +1318,7 @@
       // Display race goals
       if (this.preRaceGoals && goals && goals.length) {
         var goalsStr = 'RACE GOALS:\n';
-        goals.forEach(function(g) { goalsStr += '\u25c6 ' + g.label + '\n'; });
+        goals.forEach(function(g) { goalsStr += '-' + g.label + '\n'; });
         this.preRaceGoals.text = goalsStr;
         this.preRaceGoals.color = COLORS.accent;
       } else if (this.preRaceGoals) {
@@ -1446,7 +1446,7 @@
 
       // Show goals in cinematic bar
       if (this._introGoalsText && goals && goals.length) {
-        this._introGoalsText.text = goals.map(function(g) { return '\u25c6 ' + g.label; }).join('   ');
+        this._introGoalsText.text = goals.map(function(g) { return '-' + g.label; }).join('   ');
       } else if (this._introGoalsText) {
         this._introGoalsText.text = '';
       }
@@ -1734,7 +1734,7 @@
       if (data.goalResults && data.goalResults.length) {
         var goalStr = '';
         data.goalResults.forEach(function(g) {
-          goalStr += (g.passed ? '\u2705 ' : '\u274c ') + g.label + '\n';
+          goalStr += (g.passed ? '[OK]' : '[X]') + g.label + '\n';
         });
         if (data.allGoalsPassed && data.unlockText) {
           goalStr += '\n' + data.unlockText;
