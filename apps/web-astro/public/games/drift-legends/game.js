@@ -650,6 +650,9 @@
     if (countdownTimer >= 4) {
       gui.hideAll();
       gui.show('RACE_HUD');
+      // Force camera to chase mode
+      scene.activeCamera = chaseCamera.camera;
+      chaseCamera.setTarget(playerCar);
       state = STATE.RACING;
       lapStartTime = 0;
     }
