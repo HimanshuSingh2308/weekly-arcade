@@ -324,9 +324,9 @@
   // Pause menu callbacks
   function _resumeFromPause() {
     gui.hidePause();
-    // Re-enable 3D mesh picking
     scene.meshes.forEach(function(m) { m.isPickable = true; });
     DL.Audio.startEngine();
+    DL.Audio.resumeBGM();
     state = STATE.RACING;
   }
 
@@ -486,6 +486,14 @@
     scene.blockMaterialDirtyMechanism = true;
 
     state = STATE.CINEMATIC_INTRO;
+
+    // Activate tutorial on first race if not completed
+    if (!progress || !progress.tutorialComplete) {
+      tutorialStep = 0;
+      tutorialTimer = 0;
+    } else {
+      tutorialStep = -1;
+    }
   }
 
   function _cleanupRace() {
@@ -509,6 +517,58 @@
     DL.Audio.stopBGM();
   }
 
+  // ─── Tutorial System ──────────────────────────────────────────────
+  var tutorialStep = -1; // -1 = inactive
+  var tutorialTimer = 0;
+  var TUTORIAL_STEPS = [
+    { text: 'HOLD W OR TAP TO ACCELERATE', hint: 'Build up speed to start racing', trigger: 'start', delay: 1 },
+    { text: 'STEER WITH A/D OR SWIPE', hint: 'Turn left and right to follow the road', trigger: 'speed10', delay: 0 },
+    { text: 'HOLD SPACE FOR HANDBRAKE', hint: 'Slow down and slide into corners', trigger: 'speed20', delay: 3 },
+    { text: 'DRIFT FILLS YOUR BOOST METER', hint: 'Hold handbrake + steer to build boost', trigger: 'drifting', delay: 0 },
+    { text: 'RELEASE SPACE FOR BOOST!', hint: 'Let go of handbrake when meter is high', trigger: 'driftMeter30', delay: 0 },
+    { text: 'HIT YELLOW PADS FOR NITRO', hint: 'Drive over the yellow strips on the track', trigger: 'checkpoint1', delay: 2 },
+    { text: 'PASS THROUGH CHECKPOINT ARCHES', hint: 'Complete all checkpoints to finish a lap', trigger: 'checkpoint2', delay: 0 },
+    { text: 'COMPLETE THE RACE TO ADVANCE', hint: 'Win 1st place and complete all goals', trigger: 'lap2', delay: 2 },
+  ];
+
+  function _checkTutorialTrigger() {
+    if (tutorialStep < 0 || tutorialStep >= TUTORIAL_STEPS.length) return;
+    var step = TUTORIAL_STEPS[tutorialStep];
+    var triggered = false;
+    switch (step.trigger) {
+      case 'start': triggered = (raceTime > 0.5); break;
+      case 'speed10': triggered = (playerPhysics && playerPhysics.speed > 10); break;
+      case 'speed20': triggered = (playerPhysics && playerPhysics.speed > 20); break;
+      case 'drifting': triggered = (playerPhysics && playerPhysics.isDrifting); break;
+      case 'driftMeter30': triggered = (playerPhysics && playerPhysics.driftMeter > 0.3); break;
+      case 'checkpoint1': triggered = (playerCheckpoint >= 1); break;
+      case 'checkpoint2': triggered = (playerCheckpoint >= 2); break;
+      case 'lap2': triggered = (playerLap >= 2); break;
+      default: triggered = true;
+    }
+    if (triggered) {
+      tutorialTimer += engine.getDeltaTime() / 1000;
+      if (tutorialTimer > (step.delay || 0)) {
+        gui.showTutorialStep(step.text, step.hint);
+        // Auto-advance after 4 seconds
+        setTimeout(function() {
+          tutorialStep++;
+          tutorialTimer = 0;
+          if (tutorialStep >= TUTORIAL_STEPS.length) {
+            gui.hideTutorial();
+            if (progress) { progress.tutorialComplete = true; _saveProgress(); }
+          }
+        }, 4000);
+      }
+    }
+  }
+
+  gui.onAction('tutorialSkip', () => {
+    tutorialStep = TUTORIAL_STEPS.length; // skip all
+    gui.hideTutorial();
+    if (progress) { progress.tutorialComplete = true; _saveProgress(); }
+  });
+
   // ─── Game Loop ────────────────────────────────────────────────────
   scene.registerBeforeRender(() => {
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.05); // cap at 50ms to prevent physics explosions
@@ -526,6 +586,7 @@
       if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
         state = STATE.PAUSED;
         DL.Audio.stopEngine();
+        DL.Audio.pauseBGM();
         // Disable 3D mesh picking so pause buttons receive clicks
         scene.meshes.forEach(function(m) { m.isPickable = false; });
         gui.showPause();
@@ -558,6 +619,7 @@
 
       case STATE.RACING:
         _updateRacing(dt);
+        if (tutorialStep >= 0) _checkTutorialTrigger();
         break;
 
       case STATE.MENU:
@@ -827,6 +889,8 @@
     state = STATE.RACE_FINISH;
     DL.Audio.stopEngine();
     DL.Audio.stopBGM();
+    gui.hideTutorial();
+    tutorialStep = -1;
 
     // Calculate results
     const playerT = totalLaps + 1;

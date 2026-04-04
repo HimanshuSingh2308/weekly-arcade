@@ -290,6 +290,16 @@
       } catch (_) { /* ignore */ }
     },
 
+    pauseBGM() {
+      try { if (this._bgmGain) this._bgmGain.gain.value = 0; } catch (_) {}
+      try { if (this._bgmHatGain) this._bgmHatGain.gain.value = 0; } catch (_) {}
+    },
+
+    resumeBGM() {
+      try { if (this._bgmGain && !muted) this._bgmGain.gain.value = 0.04 * volume; } catch (_) {}
+      try { if (this._bgmHatGain && !muted) this._bgmHatGain.gain.value = 0.015 * volume; } catch (_) {}
+    },
+
     stopBGM() {
       try { if (this._bgmOsc) this._bgmOsc.stop(); } catch (_) {}
       try { if (this._bgmHat) this._bgmHat.stop(); } catch (_) {}
