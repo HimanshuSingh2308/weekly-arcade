@@ -1215,61 +1215,98 @@
     // ─── Pre-Race ─────────────────────────────────────────────────
     _buildPreRace() {
       const panel = this._createPanel('PRE_RACE');
+      this._addBackButton(panel, 'CAR_SELECT');
 
-      // Track name — large, center
+      // Centered content stack
+      var center = new GUI.StackPanel('preCenter');
+      center.width = '500px';
+      center.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      center.top = '-20px';
+      panel.addControl(center);
+
+      // Environment emoji — big
+      this.preRaceEnvEmoji = this._createText('', 48, COLORS.text, center);
+      this.preRaceEnvEmoji.paddingBottom = '4px';
+
+      // Track name — large, dramatic
       this.preRaceTrackName = new GUI.TextBlock('preTrack', '');
-      this.preRaceTrackName.fontSize = 42;
+      this.preRaceTrackName.fontSize = 40;
       this.preRaceTrackName.fontFamily = 'monospace';
       this.preRaceTrackName.fontWeight = 'bold';
       this.preRaceTrackName.color = COLORS.text;
-      this.preRaceTrackName.shadowColor = 'rgba(0,0,0,0.6)';
-      this.preRaceTrackName.shadowBlur = 12;
-      this.preRaceTrackName.top = '-40px';
-      panel.addControl(this.preRaceTrackName);
+      this.preRaceTrackName.shadowColor = COLORS.accentGlow;
+      this.preRaceTrackName.shadowBlur = 16;
+      this.preRaceTrackName.resizeToFit = true;
+      this.preRaceTrackName.height = '52px';
+      this.preRaceTrackName.paddingBottom = '6px';
+      center.addControl(this.preRaceTrackName);
 
-      // Rival name — accent colored, below track name
+      // Info row: laps + environment
+      this.preRaceInfo = this._createText('3 LAPS', 13, COLORS.textDim, center);
+      this.preRaceInfo.paddingBottom = '12px';
+
+      // Divider
+      var div = new GUI.Rectangle('prDiv');
+      div.width = '60px'; div.height = '2px';
+      div.background = COLORS.accent; div.thickness = 0;
+      div.paddingBottom = '12px';
+      center.addControl(div);
+
+      // Rival line — "VS BLAZE"
       this.preRaceRivalName = new GUI.TextBlock('preRival', '');
-      this.preRaceRivalName.fontSize = 20;
+      this.preRaceRivalName.fontSize = 22;
       this.preRaceRivalName.fontFamily = 'monospace';
       this.preRaceRivalName.fontWeight = 'bold';
       this.preRaceRivalName.color = COLORS.accent;
       this.preRaceRivalName.shadowColor = COLORS.accentGlow;
-      this.preRaceRivalName.shadowBlur = 10;
-      this.preRaceRivalName.top = '10px';
-      panel.addControl(this.preRaceRivalName);
+      this.preRaceRivalName.shadowBlur = 12;
+      this.preRaceRivalName.resizeToFit = true;
+      this.preRaceRivalName.height = '30px';
+      this.preRaceRivalName.paddingBottom = '6px';
+      center.addControl(this.preRaceRivalName);
 
-      // Rival trash talk — italic, dimmed
+      // Rival quote
       this.preRaceRivalLine = new GUI.TextBlock('preRivalLine', '');
-      this.preRaceRivalLine.fontSize = 15;
+      this.preRaceRivalLine.fontSize = 14;
       this.preRaceRivalLine.fontFamily = 'monospace';
       this.preRaceRivalLine.color = COLORS.textDim;
       this.preRaceRivalLine.textWrapping = GUI.TextWrapping.WordWrap;
-      this.preRaceRivalLine.width = '500px';
-      this.preRaceRivalLine.height = '50px';
-      this.preRaceRivalLine.top = '44px';
-      panel.addControl(this.preRaceRivalLine);
+      this.preRaceRivalLine.width = '400px';
+      this.preRaceRivalLine.height = '40px';
+      center.addControl(this.preRaceRivalLine);
 
-      // RACE! button — bottom center, large
-      const raceBtn = this._createButton('RACE!', '280px', '60px');
-      raceBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      raceBtn.top = '-40px';
+      // RACE! button — part of center stack, not at bottom edge
+      var raceBtn = this._createButton('RACE!', '260px', '58px', center);
+      raceBtn.paddingTop = '20px';
       raceBtn.fontSize = 24;
-      panel.addControl(raceBtn);
       raceBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('startRace'); });
 
-      // Decorative top/bottom bars for cinematic feel
-      var topStrip = new GUI.Rectangle('preTopStrip');
-      topStrip.width = '100%'; topStrip.height = '3px';
-      topStrip.background = COLORS.accent; topStrip.thickness = 0;
-      topStrip.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      topStrip.top = '0px';
-      panel.addControl(topStrip);
+      // Screen title
+      this._addScreenTitle(panel, 'RACE BRIEFING');
     }
 
     showPreRace(trackName, rivalName, rivalLine) {
-      this.preRaceTrackName.text = trackName;
-      this.preRaceRivalName.text = rivalName ? 'VS ' + rivalName.toUpperCase() : '';
-      this.preRaceRivalLine.text = rivalLine ? '"' + rivalLine + '"' : '';
+      this.preRaceTrackName.text = trackName || '';
+      this.preRaceRivalName.text = rivalName ? rivalName.toUpperCase() : '';
+      this.preRaceRivalLine.text = rivalLine ? '\u201c' + rivalLine + '\u201d' : '';
+
+      // Determine environment emoji from track name
+      var envEmojis = { 'city': '\ud83c\udfd9\ufe0f', 'neon': '\ud83c\udfd9\ufe0f', 'blaze': '\ud83d\udd25',
+        'mesa': '\ud83c\udfdc\ufe0f', 'canyon': '\ud83c\udfdc\ufe0f', 'sandstorm': '\ud83c\udfdc\ufe0f',
+        'frost': '\u2744\ufe0f', 'glacier': '\u2744\ufe0f',
+        'vine': '\ud83c\udf34', 'canopy': '\ud83c\udf34', 'viper': '\ud83c\udf34',
+        'cloud': '\u2601\ufe0f', 'grand': '\u2601\ufe0f', 'apex': '\ud83c\udfc6' };
+      var emoji = '\ud83c\udfc1';
+      var tn = (trackName || '').toLowerCase();
+      Object.keys(envEmojis).forEach(function(k) { if (tn.indexOf(k) >= 0) emoji = envEmojis[k]; });
+      if (this.preRaceEnvEmoji) this.preRaceEnvEmoji.text = emoji;
+
+      // Difficulty
+      if (this.preRaceDifficulty) {
+        var diff = '\u2b50\u2b50\u2b50'; // default 3 stars difficulty
+        this.preRaceDifficulty.text = 'Difficulty: ' + diff;
+      }
+
       this.show('PRE_RACE');
     }
 
