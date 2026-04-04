@@ -1463,16 +1463,36 @@
       const panel = this._createPanel('RACE_HUD');
       panel.background = 'transparent';
 
-      // ─── Bottom Bar (inspired by #DRIVE) ─────────────────────────
+      // ─── Top-right: Position indicator ───────────────────────────
+      var posBox = new GUI.Rectangle('posBox');
+      posBox.width = '90px';
+      posBox.height = '50px';
+      posBox.cornerRadius = 8;
+      posBox.background = 'rgba(13,13,26,0.7)';
+      posBox.thickness = 1;
+      posBox.color = 'rgba(255,255,255,0.1)';
+      posBox.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      posBox.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      posBox.left = '-16px';
+      posBox.top = '10px';
+      panel.addControl(posBox);
+
+      this.hud.position = new GUI.TextBlock('hudPos', '1ST');
+      this.hud.position.color = COLORS.gold;
+      this.hud.position.fontSize = 28;
+      this.hud.position.fontFamily = 'monospace';
+      this.hud.position.fontWeight = 'bold';
+      posBox.addControl(this.hud.position);
+
+      // ─── Bottom Bar ──────────────────────────────────────────────
       var bottomBar = new GUI.Rectangle('bottomBar');
       bottomBar.width = '100%';
-      bottomBar.height = '52px';
+      bottomBar.height = '48px';
       bottomBar.background = 'rgba(13,13,26,0.75)';
       bottomBar.thickness = 0;
       bottomBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       panel.addControl(bottomBar);
 
-      // Top accent line on bottom bar
       var barAccent = new GUI.Rectangle('barAccent');
       barAccent.width = '100%';
       barAccent.height = '2px';
@@ -1481,37 +1501,27 @@
       barAccent.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
       bottomBar.addControl(barAccent);
 
-      // Position (bottom-bar left) — bold and large
-      this.hud.position = new GUI.TextBlock('hudPos', '1ST');
-      this.hud.position.color = COLORS.gold;
-      this.hud.position.fontSize = 32;
-      this.hud.position.fontFamily = 'monospace';
-      this.hud.position.fontWeight = 'bold';
-      this.hud.position.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.hud.position.left = '20px';
-      this.hud.position.width = '100px';
-      bottomBar.addControl(this.hud.position);
-
-      // Drift meter (bottom-bar center-left)
+      // Left: Drift meter
       this.hud.driftLabel = new GUI.TextBlock('driftLabel', 'DRIFT');
       this.hud.driftLabel.color = COLORS.textDim;
       this.hud.driftLabel.fontSize = 10;
       this.hud.driftLabel.fontFamily = 'monospace';
       this.hud.driftLabel.fontWeight = 'bold';
-      this.hud.driftLabel.top = '-12px';
-      this.hud.driftLabel.left = '-80px';
-      this.hud.driftLabel.width = '120px';
+      this.hud.driftLabel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this.hud.driftLabel.left = '16px';
+      this.hud.driftLabel.top = '-10px';
+      this.hud.driftLabel.width = '50px';
       bottomBar.addControl(this.hud.driftLabel);
 
       var driftContainer = new GUI.Rectangle('driftContainer');
-      driftContainer.width = '140px';
-      driftContainer.height = '12px';
-      driftContainer.cornerRadius = 6;
-      driftContainer.background = 'rgba(255,255,255,0.12)';
-      driftContainer.thickness = 1;
-      driftContainer.color = 'rgba(255,255,255,0.2)';
-      driftContainer.left = '-80px';
-      driftContainer.top = '6px';
+      driftContainer.width = '120px';
+      driftContainer.height = '10px';
+      driftContainer.cornerRadius = 5;
+      driftContainer.background = 'rgba(255,255,255,0.1)';
+      driftContainer.thickness = 0;
+      driftContainer.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      driftContainer.left = '16px';
+      driftContainer.top = '8px';
       bottomBar.addControl(driftContainer);
 
       this.hud.driftFill = new GUI.Rectangle('driftFill');
@@ -1519,26 +1529,28 @@
       this.hud.driftFill.height = '100%';
       this.hud.driftFill.background = COLORS.accent;
       this.hud.driftFill.thickness = 0;
-      this.hud.driftFill.cornerRadius = 6;
+      this.hud.driftFill.cornerRadius = 5;
       this.hud.driftFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       driftContainer.addControl(this.hud.driftFill);
 
-      // Lap counter (bottom-bar center)
+      // Center: Lap
       this.hud.lap = new GUI.TextBlock('hudLap', 'LAP 1/3');
       this.hud.lap.color = COLORS.text;
-      this.hud.lap.fontSize = 18;
+      this.hud.lap.fontSize = 16;
       this.hud.lap.fontFamily = 'monospace';
       this.hud.lap.fontWeight = 'bold';
-      this.hud.lap.width = '120px';
-      this.hud.lap.left = '60px';
       bottomBar.addControl(this.hud.lap);
 
-      // Speed (bottom-bar right) — large and bold
+      // Right: Speed
       this.hud.speed = new GUI.TextBlock('hudSpeed', '0');
       this.hud.speed.color = COLORS.text;
-      this.hud.speed.fontSize = 30;
+      this.hud.speed.fontSize = 26;
       this.hud.speed.fontFamily = 'monospace';
       this.hud.speed.fontWeight = 'bold';
+      this.hud.speed.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.hud.speed.left = '-50px';
+      this.hud.speed.width = '80px';
+      bottomBar.addControl(this.hud.speed);
       this.hud.speed.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
       this.hud.speed.left = '-60px';
       this.hud.speed.width = '100px';
@@ -1646,7 +1658,7 @@
       // Center — stats + goals in a compact card
       var statsCard = new GUI.Rectangle('resStatsCard');
       statsCard.width = '450px';
-      statsCard.height = '160px';
+      statsCard.height = '200px';
       statsCard.cornerRadius = 10;
       statsCard.background = 'rgba(13,13,26,0.7)';
       statsCard.thickness = 1;
@@ -1692,13 +1704,20 @@
       this.resultUnlock.paddingTop = '6px';
       rightGoals.addControl(this.resultUnlock);
 
-      // Buttons — bottom
+      // Buttons — bottom bar with background
+      var btnBar = new GUI.Rectangle('resBtnBar');
+      btnBar.width = '100%';
+      btnBar.height = '60px';
+      btnBar.background = 'rgba(13,13,26,0.8)';
+      btnBar.thickness = 0;
+      btnBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      btnBar.isPointerBlocker = true;
+      panel.addControl(btnBar);
+
       var btnRow = new GUI.StackPanel('resBtnRow');
       btnRow.isVertical = false;
-      btnRow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      btnRow.height = '60px';
-      btnRow.top = '-16px';
-      panel.addControl(btnRow);
+      btnRow.height = '54px';
+      btnBar.addControl(btnRow);
 
       this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px', btnRow);
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
