@@ -75,6 +75,19 @@
         if (this._resultRetryBtn) this._resultRetryBtn.isVisible = false;
         if (this._resultMenuBtn) this._resultMenuBtn.isVisible = false;
       }
+      // Auto-unlock chapters when entering story select
+      if (screenName === 'STORY_SELECT') {
+        try {
+          var SM = window.DriftLegends.StoryMode;
+          var prog = SM.loadLocalProgress();
+          SM.CHAPTERS.forEach(function(ch) {
+            if (ch.id > 1 && SM.isChapterUnlocked(prog, ch.id) && !prog.chaptersUnlocked.includes(ch.id)) {
+              prog.chaptersUnlocked.push(ch.id);
+              SM.saveLocalProgress(prog);
+            }
+          });
+        } catch(_) {}
+      }
       // Re-enable mesh picking when leaving overlay screens
       if (screenName !== 'RACE_RESULT' && screenName !== 'PAUSE') {
         if (this.scene) this.scene.meshes.forEach(function(m) { m.isPickable = true; });
