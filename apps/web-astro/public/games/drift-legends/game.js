@@ -703,6 +703,7 @@
       isDrifting: playerPhysics.isDrifting,
       driftScoreActive: Math.round(playerPhysics.driftScore),
       driftScoreTotal: Math.round(playerPhysics.totalDriftScore),
+      driftCombo: playerPhysics.driftCombo,
       isBoosting: playerPhysics.isBoosting,
       raceTime,
     });
