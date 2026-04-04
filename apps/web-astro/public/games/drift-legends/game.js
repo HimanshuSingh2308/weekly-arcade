@@ -700,6 +700,8 @@
       totalLaps,
       speed: playerPhysics.getDisplaySpeed(),
       driftMeter: playerPhysics.driftMeter,
+      isDrifting: playerPhysics.isDrifting,
+      driftScoreActive: playerPhysics.driftScore,
       isBoosting: playerPhysics.isBoosting,
       raceTime,
     });

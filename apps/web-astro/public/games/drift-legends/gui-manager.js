@@ -1533,6 +1533,19 @@
       this.hud.driftFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       driftContainer.addControl(this.hud.driftFill);
 
+      // Drift score (above drift bar)
+      this.hud.driftScore = new GUI.TextBlock('hudDriftScore', '');
+      this.hud.driftScore.color = COLORS.accent;
+      this.hud.driftScore.fontSize = 14;
+      this.hud.driftScore.fontFamily = 'monospace';
+      this.hud.driftScore.fontWeight = 'bold';
+      this.hud.driftScore.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this.hud.driftScore.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.hud.driftScore.left = '16px';
+      this.hud.driftScore.top = '-22px';
+      this.hud.driftScore.isVisible = false;
+      bottomBar.addControl(this.hud.driftScore);
+
       // Center: Lap
       this.hud.lap = new GUI.TextBlock('hudLap', 'LAP 1/3');
       this.hud.lap.color = COLORS.text;
@@ -1622,6 +1635,16 @@
         this.hud.driftFill.background = COLORS.accent;
       } else {
         this.hud.driftFill.background = '#00aaff';
+      }
+
+      // Drift score popup (shows while drifting)
+      if (this.hud.driftScore) {
+        if (pct > 0 && data.isDrifting) {
+          this.hud.driftScore.text = '+' + Math.round(data.driftScoreActive || 0);
+          this.hud.driftScore.isVisible = true;
+        } else {
+          this.hud.driftScore.isVisible = false;
+        }
       }
 
       // Boost
