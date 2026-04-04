@@ -1639,10 +1639,15 @@
         this.hud.driftFill.background = '#00aaff';
       }
 
-      // Drift score popup (shows while drifting)
+      // Drift score — shows active during drift, total otherwise
       if (this.hud.driftScore) {
-        if (pct > 0 && data.isDrifting) {
-          this.hud.driftScore.text = '+' + Math.round(data.driftScoreActive || 0);
+        if (data.isDrifting && data.driftScoreActive > 0) {
+          this.hud.driftScore.text = '+' + data.driftScoreActive;
+          this.hud.driftScore.color = COLORS.accent;
+          this.hud.driftScore.isVisible = true;
+        } else if (data.driftScoreTotal > 0) {
+          this.hud.driftScore.text = 'DRIFT: ' + data.driftScoreTotal;
+          this.hud.driftScore.color = COLORS.textDim;
           this.hud.driftScore.isVisible = true;
         } else {
           this.hud.driftScore.isVisible = false;
