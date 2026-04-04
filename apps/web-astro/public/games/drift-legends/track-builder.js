@@ -484,25 +484,24 @@
     // Calculate checkpoint positions + add vertical arch visuals
     var cpMat = getCachedMat(scene, 'checkpoint_ring', function() {
       var m = new BABYLON.StandardMaterial('cpMat', scene);
-      m.emissiveColor = new Color3(0, 0.8, 1);
-      m.diffuseColor = new Color3(0, 0.8, 1);
-      m.alpha = 0.35;
+      m.emissiveColor = new Color3(0, 0.6, 1);
+      m.diffuseColor = new Color3(0, 0.6, 1);
+      m.alpha = 0.2;
       m.freeze();
       return m;
     });
     result._cpMeshes = [];
     trackDef.checkpoints.forEach(t => {
-      const pos = getSplinePoint(result.splinePoints, t);
-      const tangent = getSplineTangent(result.splinePoints, t);
+      var pos = getSplinePoint(result.splinePoints, t);
+      var tangent = getSplineTangent(result.splinePoints, t);
       result.checkpointPositions.push({ t, position: pos });
 
-      // Vertical arch across the road — torus rotated 90° on X axis
-      var arch = MB.CreateTorus('cp', { diameter: trackDef.trackWidth * 0.9, thickness: 0.25, tessellation: 20 }, scene);
-      arch.position = pos.add(new V3(0, trackDef.trackWidth * 0.45, 0)); // center of arch at road width/2 height
-      // Rotate to face along the road direction
+      // Subtle arch — thinner, smaller
+      var arch = MB.CreateTorus('cp', { diameter: trackDef.trackWidth * 0.7, thickness: 0.15, tessellation: 14 }, scene);
+      arch.position = pos.add(new V3(0, trackDef.trackWidth * 0.35, 0));
       var roadAngle = Math.atan2(tangent.x, tangent.z);
       arch.rotation.y = roadAngle;
-      arch.rotation.x = Math.PI / 2; // stand upright
+      arch.rotation.x = Math.PI / 2;
       arch.material = cpMat;
       arch.freezeWorldMatrix();
       result.meshes.push(arch);
@@ -826,8 +825,8 @@
       snowCap.material = snowMat;
       snowCap.freezeWorldMatrix();
     } else if (r > 0.2) {
-      // Ice crystal cluster
-      var h = 1 + Math.random() * 3;
+      // Ice crystal cluster — smaller to avoid road clipping
+      var h = 0.8 + Math.random() * 1.5;
       var shard = MB.CreateCylinder('shard', { height: h, diameterTop: 0, diameterBottom: 0.6, tessellation: 5 }, scene);
       shard.position = pos.add(new V3(0, h / 2, 0));
       shard.material = shardMat;

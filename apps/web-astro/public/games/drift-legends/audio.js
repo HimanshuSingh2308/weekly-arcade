@@ -224,69 +224,105 @@
       if (muted) return;
       try {
         var c = ensureContext();
-        // Bass patterns per environment (note frequencies)
-        var patterns = {
-          city:   [65, 82, 98, 82, 65, 98, 110, 82],       // E2-based, dark
-          desert: [73, 87, 110, 87, 73, 110, 130, 87],      // D2-based, rhythmic
-          ice:    [55, 65, 82, 65, 55, 82, 98, 65],         // A1-based, ambient
-          jungle: [82, 98, 110, 130, 110, 98, 82, 65],      // E2-based, driving
-          sky:    [98, 110, 130, 165, 130, 110, 98, 82],    // G2-based, epic
-        };
-        var notes = patterns[envType] || patterns.city;
-        var beatDuration = 0.25; // 240 BPM feel
-        var loopDuration = notes.length * beatDuration;
-
-        // Create a looping bass oscillator
-        this._bgmOsc = c.createOscillator();
-        this._bgmGain = c.createGain();
-        this._bgmOsc.type = 'triangle';
-        this._bgmGain.gain.value = 0.04 * volume;
-
-        // Low-pass filter for warmth
-        this._bgmFilter = c.createBiquadFilter();
-        this._bgmFilter.type = 'lowpass';
-        this._bgmFilter.frequency.value = 200;
-        this._bgmFilter.Q.value = 2;
-
-        this._bgmOsc.connect(this._bgmFilter);
-        this._bgmFilter.connect(this._bgmGain);
-        this._bgmGain.connect(masterGain);
-
-        // Schedule note changes
         var now = c.currentTime;
-        this._bgmOsc.frequency.setValueAtTime(notes[0], now);
-        // Schedule 20 loops worth of notes (~40 seconds)
-        for (var loop = 0; loop < 20; loop++) {
-          for (var n = 0; n < notes.length; n++) {
-            var t = now + (loop * loopDuration) + (n * beatDuration);
-            this._bgmOsc.frequency.setValueAtTime(notes[n], t);
-          }
-        }
-        this._bgmOsc.start();
+        var bpm = { city: 130, desert: 120, ice: 110, jungle: 140, sky: 150 }[envType] || 130;
+        var beat = 60 / bpm;
+        var totalBeats = 256; // ~2 min at 130bpm
+        this._bgmNodes = [];
 
-        // Hi-hat rhythm — quiet noise ticks
-        this._bgmHat = c.createBufferSource();
-        var hatDuration = loopDuration * 20;
-        var hatBuffer = c.createBuffer(1, c.sampleRate * hatDuration, c.sampleRate);
-        var hatData = hatBuffer.getChannelData(0);
-        var samplesPerBeat = Math.floor(c.sampleRate * beatDuration / 2);
-        for (var s = 0; s < hatData.length; s++) {
-          // Click on every half-beat
-          if (s % samplesPerBeat < 200) {
-            hatData[s] = (Math.random() * 2 - 1) * 0.3;
+        // Bass notes per environment (root notes for power chords)
+        var bassNotes = {
+          city:   [82, 82, 110, 98, 82, 82, 110, 130],
+          desert: [73, 73, 98, 87, 73, 73, 98, 110],
+          ice:    [65, 65, 82, 73, 65, 65, 82, 98],
+          jungle: [98, 98, 130, 110, 98, 98, 130, 165],
+          sky:    [110, 110, 147, 130, 110, 110, 147, 165],
+        };
+        var notes = bassNotes[envType] || bassNotes.city;
+        var barLength = notes.length * beat;
+
+        // ── BASS (triangle, low-passed) ──
+        var bassOsc = c.createOscillator();
+        var bassGain = c.createGain();
+        var bassFilter = c.createBiquadFilter();
+        bassOsc.type = 'triangle';
+        bassGain.gain.value = 0.05 * volume;
+        bassFilter.type = 'lowpass'; bassFilter.frequency.value = 250;
+        bassOsc.connect(bassFilter); bassFilter.connect(bassGain); bassGain.connect(masterGain);
+        for (var loop = 0; loop < 32; loop++) {
+          for (var n = 0; n < notes.length; n++) {
+            bassOsc.frequency.setValueAtTime(notes[n], now + loop * barLength + n * beat);
           }
         }
-        this._bgmHat.buffer = hatBuffer;
-        var hatGain = c.createGain();
-        hatGain.gain.value = 0.015 * volume;
-        var hatFilter = c.createBiquadFilter();
-        hatFilter.type = 'highpass';
-        hatFilter.frequency.value = 6000;
-        this._bgmHat.connect(hatFilter);
-        hatFilter.connect(hatGain);
-        hatGain.connect(masterGain);
-        this._bgmHat.start();
-        this._bgmHatGain = hatGain;
+        bassOsc.start(now); bassOsc.stop(now + totalBeats * beat);
+        this._bgmNodes.push(bassOsc);
+        this._bgmGain = bassGain;
+
+        // ── DISTORTED GUITAR (sawtooth → waveshaper → bandpass) ──
+        var guitarOsc = c.createOscillator();
+        var guitarGain = c.createGain();
+        var distortion = c.createWaveShaper();
+        var guitarFilter = c.createBiquadFilter();
+        guitarOsc.type = 'sawtooth';
+        guitarGain.gain.value = 0.025 * volume;
+        // Distortion curve
+        var curve = new Float32Array(256);
+        for (var i = 0; i < 256; i++) { var x = (i / 128) - 1; curve[i] = (Math.PI + 200) * x / (Math.PI + 200 * Math.abs(x)); }
+        distortion.curve = curve;
+        distortion.oversample = '2x';
+        guitarFilter.type = 'bandpass'; guitarFilter.frequency.value = 800; guitarFilter.Q.value = 1;
+        guitarOsc.connect(distortion); distortion.connect(guitarFilter); guitarFilter.connect(guitarGain); guitarGain.connect(masterGain);
+        // Power chords: root + fifth (1.5x freq)
+        for (var loop = 0; loop < 32; loop++) {
+          for (var n = 0; n < notes.length; n++) {
+            var t = now + loop * barLength + n * beat;
+            guitarOsc.frequency.setValueAtTime(notes[n] * 2, t); // one octave up
+            // Staccato: brief volume punch on each note
+            guitarGain.gain.setValueAtTime(0.03 * volume, t);
+            guitarGain.gain.setTargetAtTime(0.015 * volume, t + beat * 0.3, beat * 0.2);
+          }
+        }
+        guitarOsc.start(now); guitarOsc.stop(now + totalBeats * beat);
+        this._bgmNodes.push(guitarOsc);
+
+        // ── DRUMS (noise-based kick + snare + hi-hat) ──
+        var drumDuration = totalBeats * beat;
+        var drumBuffer = c.createBuffer(1, Math.floor(c.sampleRate * drumDuration), c.sampleRate);
+        var d = drumBuffer.getChannelData(0);
+        var sr = c.sampleRate;
+        for (var b = 0; b < totalBeats; b++) {
+          var sampleStart = Math.floor(b * beat * sr);
+          var beatInBar = b % 4;
+          // Kick on 1 and 3
+          if (beatInBar === 0 || beatInBar === 2) {
+            for (var k = 0; k < Math.min(sr * 0.08, d.length - sampleStart); k++) {
+              d[sampleStart + k] += Math.sin(k / sr * 2 * Math.PI * (80 - k / sr * 300)) * Math.exp(-k / sr * 30) * 0.4;
+            }
+          }
+          // Snare on 2 and 4
+          if (beatInBar === 1 || beatInBar === 3) {
+            for (var s = 0; s < Math.min(sr * 0.06, d.length - sampleStart); s++) {
+              d[sampleStart + s] += (Math.random() * 2 - 1) * Math.exp(-s / sr * 40) * 0.3;
+            }
+          }
+          // Hi-hat on every 8th note
+          var eighthOffset = Math.floor(beat * 0.5 * sr);
+          for (var h = 0; h < 2; h++) {
+            var hStart = sampleStart + h * eighthOffset;
+            if (hStart >= d.length) break;
+            for (var hi = 0; hi < Math.min(sr * 0.02, d.length - hStart); hi++) {
+              d[hStart + hi] += (Math.random() * 2 - 1) * Math.exp(-hi / sr * 80) * 0.12;
+            }
+          }
+        }
+        var drumSrc = c.createBufferSource();
+        drumSrc.buffer = drumBuffer;
+        var drumGain = c.createGain();
+        drumGain.gain.value = 0.06 * volume;
+        drumSrc.connect(drumGain); drumGain.connect(masterGain);
+        drumSrc.start(now);
+        this._bgmNodes.push(drumSrc);
+        this._bgmHatGain = drumGain;
       } catch (_) { /* ignore */ }
     },
 
@@ -301,10 +337,10 @@
     },
 
     stopBGM() {
-      try { if (this._bgmOsc) this._bgmOsc.stop(); } catch (_) {}
-      try { if (this._bgmHat) this._bgmHat.stop(); } catch (_) {}
-      this._bgmOsc = null; this._bgmGain = null; this._bgmFilter = null;
-      this._bgmHat = null; this._bgmHatGain = null;
+      if (this._bgmNodes) {
+        this._bgmNodes.forEach(function(node) { try { node.stop(); } catch(_) {} });
+      }
+      this._bgmNodes = null; this._bgmGain = null; this._bgmHatGain = null;
     },
   };
 
