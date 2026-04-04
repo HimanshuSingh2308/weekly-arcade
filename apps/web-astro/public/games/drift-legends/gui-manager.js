@@ -1751,7 +1751,8 @@
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
       panel.addControl(this._resultNextBtn);
 
-      var retryBtn = this._createSecondaryButton('RETRY', '120px', '48px');
+      this._resultRetryBtn = this._createSecondaryButton('RETRY', '120px', '48px');
+      var retryBtn = this._resultRetryBtn;
       retryBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       retryBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
       retryBtn.top = '-20px';
@@ -1760,7 +1761,8 @@
       retryBtn.onPointerClickObservable.add(() => { console.log('[GUI] RETRY clicked'); this._fire('click'); this._fire('resultRetry'); });
       panel.addControl(retryBtn);
 
-      var menuBtn = this._createSecondaryButton('MENU', '100px', '48px');
+      this._resultMenuBtn = this._createSecondaryButton('MENU', '100px', '48px');
+      var menuBtn = this._resultMenuBtn;
       menuBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       menuBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
       menuBtn.top = '-20px';
@@ -1806,9 +1808,20 @@
       } else {
         this.resultUnlock.text = '';
       }
-      // Hide NEXT RACE if goals not met
+      // Hide NEXT RACE if goals not met, reposition remaining buttons to center
       if (this._resultNextBtn) {
         this._resultNextBtn.isVisible = !!(data.allGoalsPassed);
+      }
+      if (this._resultRetryBtn && this._resultMenuBtn) {
+        if (data.allGoalsPassed) {
+          // All 3 buttons: spread out
+          this._resultRetryBtn.left = '10px';
+          this._resultMenuBtn.left = '150px';
+        } else {
+          // Only retry + menu: center them
+          this._resultRetryBtn.left = '-70px';
+          this._resultMenuBtn.left = '70px';
+        }
       }
 
       this.show('RACE_RESULT');
