@@ -1350,8 +1350,8 @@
         // Create/recreate garage camera + lights (may have been disposed by _returnToMenu)
         if (!this._garageCam || this._garageCam.isDisposed()) {
           this._garageCam = new BABYLON.ArcRotateCamera('garageCam',
-            Math.PI, Math.PI * 0.4, 10,
-            new BABYLON.Vector3(3, 0.5, 0), this.scene);
+            Math.PI, Math.PI * 0.45, 9,
+            new BABYLON.Vector3(3, 0.2, 0), this.scene);
           this._garageCam.lowerRadiusLimit = 10;
           this._garageCam.upperRadiusLimit = 10;
           this._garageCam.fov = 0.9;
