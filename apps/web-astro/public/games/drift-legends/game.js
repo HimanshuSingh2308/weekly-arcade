@@ -524,6 +524,8 @@
     if (exhaustSmoke) { exhaustSmoke.dispose(); exhaustSmoke = null; }
 
     playerPhysics = null;
+    // Dispose tire marks
+    DL.Particles.disposeTireMarks();
     gui.showTouchControls(false);
     DL.Audio.stopEngine();
     DL.Audio.stopBGM();

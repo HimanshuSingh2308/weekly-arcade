@@ -192,6 +192,11 @@
     placeTireMark,
     createExhaustSmoke,
     createCityAmbient,
+    disposeTireMarks() {
+      _tireMarkPool.forEach(function(m) { if (m && !m.isDisposed()) m.dispose(); });
+      _tireMarkPool = [];
+      _tireMarkIdx = 0;
+    },
   };
 
   window.DriftLegends = window.DriftLegends || {};
