@@ -1405,10 +1405,11 @@
         this._garageEnv.push(wallStripe);
 
         // Back wall light — illuminate the wall so it's visible
-        var wallLight = new BABYLON.PointLight('gWallLight', new V3(cx, 4, 6), this.scene);
-        wallLight.diffuse = new Color3(0.7, 0.7, 0.8);
-        wallLight.intensity = 3;
-        wallLight.range = 8;
+        // Back wall light — brighter, wider range
+        var wallLight = new BABYLON.PointLight('gWallLight', new V3(cx, 4, 5), this.scene);
+        wallLight.diffuse = new Color3(0.8, 0.8, 0.9);
+        wallLight.intensity = 6;
+        wallLight.range = 14;
         this._garageEnv.push(wallLight);
 
         // Pegboard section on back wall (right of sign)
@@ -1618,7 +1619,7 @@
 
         // Ambient hemi — bright enough to see car details
         var hemi = new BABYLON.HemisphericLight('gHemi', new V3(0, 1, 0), this.scene);
-        hemi.intensity = 1.5;
+        hemi.intensity = 2.0;
         hemi.diffuse = new Color3(0.8, 0.8, 0.9);
         hemi.groundColor = new Color3(0.15, 0.15, 0.2);
         this._garageEnv.push(hemi);
