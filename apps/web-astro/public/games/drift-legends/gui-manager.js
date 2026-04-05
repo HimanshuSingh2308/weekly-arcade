@@ -80,35 +80,35 @@
         try {
           var SM = window.DriftLegends.StoryMode;
           var prog = SM.loadLocalProgress();
-          SM.CHAPTERS.forEach(function(ch) {
+          SM.CHAPTERS.forEach(function (ch) {
             if (ch.id > 1 && SM.isChapterUnlocked(prog, ch.id) && !prog.chaptersUnlocked.includes(ch.id)) {
               prog.chaptersUnlocked.push(ch.id);
               SM.saveLocalProgress(prog);
             }
           });
-        } catch(_) {}
+        } catch (_) { }
       }
       // Toggle garage 3D car preview
       if (this._showGaragePreview) {
-      if (screenName === 'CAR_SELECT') {
-        // Dispose menu car — it conflicts with garage car
-        if (this._menuCar) { this._menuCar.dispose(false, true); this._menuCar = null; }
-        if (this._menuCarLight) this._menuCarLight.setEnabled(false);
-        if (this._menuCarFill) this._menuCarFill.setEnabled(false);
-        if (this._menuCarRim) this._menuCarRim.setEnabled(false);
-        if (this._menuCarHemi) this._menuCarHemi.setEnabled(false);
-        // Build garage preview
-        if (!this._garageCar && this._selectedCarId) {
-          this._showGarageCarPreview(this._selectedCarId);
+        if (screenName === 'CAR_SELECT') {
+          // Dispose menu car — it conflicts with garage car
+          if (this._menuCar) { this._menuCar.dispose(false, true); this._menuCar = null; }
+          if (this._menuCarLight) this._menuCarLight.setEnabled(false);
+          if (this._menuCarFill) this._menuCarFill.setEnabled(false);
+          if (this._menuCarRim) this._menuCarRim.setEnabled(false);
+          if (this._menuCarHemi) this._menuCarHemi.setEnabled(false);
+          // Build garage preview
+          if (!this._garageCar && this._selectedCarId) {
+            this._showGarageCarPreview(this._selectedCarId);
+          }
+          this._showGaragePreview(true);
+        } else {
+          this._showGaragePreview(false);
         }
-        this._showGaragePreview(true);
-      } else {
-        this._showGaragePreview(false);
-      }
       }
       // Re-enable mesh picking when leaving overlay screens
       if (screenName !== 'RACE_RESULT' && screenName !== 'PAUSE') {
-        if (this.scene) this.scene.meshes.forEach(function(m) { m.isPickable = true; });
+        if (this.scene) this.scene.meshes.forEach(function (m) { m.isPickable = true; });
       }
       // Toggle HTML backgrounds based on screen
       var mtnBg = document.getElementById('storyMtnBg');
@@ -375,7 +375,7 @@
       ];
       var neonColors = ['#00d4ff', '#ff4d00', '#00ff88', '#ff0066', '#8844ff', '#ffaa00'];
 
-      buildings.forEach(function(b, i) {
+      buildings.forEach(function (b, i) {
         var by = h - b.h;
         // Building body
         svg += '<rect x="' + b.x + '" y="' + by + '" width="' + b.w + '" height="' + b.h + '" fill="#0c0c1a" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>';
@@ -474,7 +474,7 @@
         { x: 475, w: 35, h: 70 }, { x: 505, w: 20, h: 45 }, { x: 520, w: 30, h: 55 },
         { x: 545, w: 25, h: 40 }, { x: 565, w: 20, h: 60 },
       ];
-      bldgs.forEach(function(b) {
+      bldgs.forEach(function (b) {
         svg += '<rect x="' + b.x + '" y="' + (180 - b.h) + '" width="' + b.w + '" height="' + b.h + '" fill="#080812" opacity="0.8"/>';
       });
 
@@ -495,7 +495,7 @@
         { l: 94, w: 6, h: 38 },
       ];
 
-      bldgs.forEach(function(b, i) {
+      bldgs.forEach(function (b, i) {
         // Building body
         var bldg = new GUI.Rectangle('skyBldg_' + i);
         bldg.width = b.w + '%';
@@ -768,7 +768,7 @@
                   this._menuCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
                   this._menuCar.rotation.y = Math.PI * 0.2;
                 }
-              } catch(_) {}
+              } catch (_) { }
             }
             if (!this._menuCar) return;
             this._menuCar.rotation.y += 0.004;
@@ -817,7 +817,7 @@
       }
       if (progress && this.menuStatsStars) {
         var totalStars = 0;
-        Object.values(progress.raceResults || {}).forEach(function(r) { totalStars += (r.bestStars || 0); });
+        Object.values(progress.raceResults || {}).forEach(function (r) { totalStars += (r.bestStars || 0); });
         this.menuStatsStars.text = '\u2605 ' + totalStars + ' / 45';
       }
       if (progress && this.menuStatsCoins) {
@@ -825,7 +825,7 @@
       }
       if (progress && this.menuStatsChapter) {
         var maxCh = 1;
-        (progress.chaptersUnlocked || []).forEach(function(c) { if (c > maxCh) maxCh = c; });
+        (progress.chaptersUnlocked || []).forEach(function (c) { if (c > maxCh) maxCh = c; });
         var chNames = { 1: 'Street Rookie', 2: 'Desert Dash', 3: 'Frozen Peak', 4: 'Jungle Fury', 5: 'Sky Championship' };
         this.menuStatsChapter.text = 'Ch ' + maxCh + ': ' + (chNames[maxCh] || '');
       }
@@ -852,9 +852,9 @@
       var chPositions = [
         { x: -35, y: 38 },    // Ch1: road start, bottom-left (City)
         { x: -12, y: 15 },    // Ch2: first curve apex (Desert)
-        { x: 8,   y: 25 },    // Ch3: mid road dip (Ice)
-        { x: 22,  y: 5 },     // Ch4: third curve (Jungle)
-        { x: 38,  y: -18 },   // Ch5: road end, top-right (Sky)
+        { x: 8, y: 25 },    // Ch3: mid road dip (Ice)
+        { x: 22, y: 5 },     // Ch4: third curve (Jungle)
+        { x: 38, y: -18 },   // Ch5: road end, top-right (Sky)
       ];
 
       // Road is drawn by the SVG background — no GUI dashes needed
@@ -896,7 +896,7 @@
             this._storyCarMarker.widthInPixels = markerSize;
             this._storyCarMarker.heightInPixels = markerSize;
           }
-          this.chapterCards.forEach(function(cc) {
+          this.chapterCards.forEach(function (cc) {
             if (cc.card && cc.card.widthInPixels !== undefined) {
               cc.card.widthInPixels = ringSize;
               cc.card.heightInPixels = ringSize;
@@ -1002,15 +1002,15 @@
         panel.addControl(envTag);
 
         // Click handler on the ring
-        ring.onPointerEnterObservable.add((function(rng, clr) {
-          return function() { rng.shadowBlur = 28; rng.scaleX = 1.1; rng.scaleY = 1.1; rng.thickness = 4; };
+        ring.onPointerEnterObservable.add((function (rng, clr) {
+          return function () { rng.shadowBlur = 28; rng.scaleX = 1.1; rng.scaleY = 1.1; rng.thickness = 4; };
         })(ring, chColor));
-        ring.onPointerOutObservable.add((function(rng) {
-          return function() { rng.shadowBlur = 16; rng.scaleX = 1; rng.scaleY = 1; rng.thickness = 3; };
+        ring.onPointerOutObservable.add((function (rng) {
+          return function () { rng.shadowBlur = 16; rng.scaleX = 1; rng.scaleY = 1; rng.thickness = 3; };
         })(ring));
 
-        ring.onPointerClickObservable.add((function(idx) {
-          return function() {
+        ring.onPointerClickObservable.add((function (idx) {
+          return function () {
             this._fire('click');
             this._fire('selectChapter', { chapterIndex: idx });
           }.bind(this);
@@ -1041,7 +1041,7 @@
       });
       // Light up road segments for completed chapters
       if (this._storyRoadSegs) {
-        this._storyRoadSegs.forEach(function(seg) {
+        this._storyRoadSegs.forEach(function (seg) {
           if (seg.segIdx < highestUnlocked) {
             seg.el.background = COLORS.accent;
             seg.el.shadowColor = COLORS.accentGlow;
@@ -1249,7 +1249,7 @@
         var labels = ['SPD', 'HND', 'DFT'];
         var vals = [car.speed, car.handling, car.drift];
         var statColors = ['#00d4ff', COLORS.accent, '#00ff88'];
-        labels.forEach(function(lbl, j) {
+        labels.forEach(function (lbl, j) {
           var lblTb = new GUI.TextBlock();
           lblTb.text = lbl;
           lblTb.color = COLORS.textDim;
@@ -1295,7 +1295,7 @@
             if (this._garageStatBars.drift) this._garageStatBars.drift.width = (car.drift * 10) + '%';
           }
           // Highlight selected card
-          this.carSelectCards.forEach(function(cc) {
+          this.carSelectCards.forEach(function (cc) {
             cc.card.thickness = cc.carId === car.id ? 3 : 1;
             cc.card.shadowBlur = cc.carId === car.id ? 20 : 8;
           });
@@ -1348,7 +1348,7 @@
         // ═══ GARAGE ENVIRONMENT ═══
         // Dispose old garage meshes/lights
         if (this._garageEnv) {
-          this._garageEnv.forEach(function(obj) { try { obj.dispose(); } catch(_) {} });
+          this._garageEnv.forEach(function (obj) { try { obj.dispose(); } catch (_) { } });
         }
         this._garageEnv = [];
         var MB = BABYLON.MeshBuilder;
@@ -1401,7 +1401,7 @@
         this._garageEnv.push(pegboard);
 
         // Small tools on pegboard (simple boxes)
-        [[6, 3.5], [6.5, 4], [7.5, 3.2], [8, 3.8]].forEach(function(pos, i) {
+        [[6, 3.5], [6.5, 4], [7.5, 3.2], [8, 3.8]].forEach(function (pos, i) {
           var tool = MB.CreateBox('gTool_' + i, { width: 0.1, height: 0.8, depth: 0.05 }, this.scene);
           tool.position = new V3(cx + pos[0], pos[1], 7.8);
           tool.rotation.z = (Math.random() - 0.5) * 0.3;
@@ -1412,12 +1412,18 @@
         }.bind(this));
 
         // ── Side walls ──
-        [-12, 12].forEach(function(x) {
-          var sideWall = MB.CreateBox('gSideWall', { width: 0.3, height: 8, depth: 16 }, this.scene);
-          sideWall.position = new V3(cx + x, 3.5, 0);
-          sideWall.material = wallMat;
-          this._garageEnv.push(sideWall);
-        }.bind(this));
+        // Left wall (was x=-9, repositioned from inspector)
+        var leftWall = MB.CreateBox('gSideWall', { width: 0.3, height: 8, depth: 16 }, this.scene);
+        leftWall.position = new V3(6.85, 3.48, -7.910);
+        leftWall.rotation.y = 90 * Math.PI / 180;
+        leftWall.material = wallMat;
+        this._garageEnv.push(leftWall);
+
+        // Right wall
+        var rightWall = MB.CreateBox('gSideWall', { width: 0.3, height: 8, depth: 16 }, this.scene);
+        rightWall.position = new V3(cx + 12, 3.5, 0);
+        rightWall.material = wallMat;
+        this._garageEnv.push(rightWall);
 
         // ── Ceiling ──
         var ceiling = MB.CreateBox('gCeiling', { width: 24, height: 0.2, depth: 16 }, this.scene);
@@ -1447,7 +1453,7 @@
         this._garageHemi = hemi;
 
         // Sign glow — warm orange accent
-        var signGlowLight = new BABYLON.PointLight('gSignGlow2', new V3(9, 2, 0.5), this.scene);
+        var signGlowLight = new BABYLON.PointLight('gSignGlow2', new V3(9, 0.3, 0.5), this.scene);
         signGlowLight.diffuse = new Color3(1, 0.4, 0.1);
         signGlowLight.intensity = 0.2;
         signGlowLight.range = 6;
@@ -1484,7 +1490,7 @@
         var glitchTimer = 0;
         var nextGlitch = 2 + Math.random() * 3;
         var scene = this.scene;
-        scene.registerBeforeRender(function() {
+        scene.registerBeforeRender(function () {
           if (!signPlane || signPlane.isDisposed()) return;
           glitchTimer += scene.getEngine().getDeltaTime() * 0.001;
           if (glitchTimer > nextGlitch) {
@@ -1493,7 +1499,7 @@
             signPlane.position.x = 14.6 + (Math.random() - 0.5) * 0.15;
             signPlane.position.y = 2.9 + (Math.random() - 0.5) * 0.05;
             // Recover after short delay
-            setTimeout(function() {
+            setTimeout(function () {
               if (signPlane && !signPlane.isDisposed()) {
                 signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
                 signPlane.position.x = 14.6;
@@ -1502,10 +1508,10 @@
             }, 80 + Math.random() * 120);
             // Double glitch sometimes
             if (Math.random() > 0.5) {
-              setTimeout(function() {
+              setTimeout(function () {
                 if (signPlane && !signPlane.isDisposed()) {
                   signMat.emissiveColor = new BABYLON.Color3(0.1, 0.02, 0);
-                  setTimeout(function() {
+                  setTimeout(function () {
                     if (signPlane && !signPlane.isDisposed()) {
                       signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
                     }
@@ -1564,7 +1570,7 @@
         rimMat.specularPower = 64;
 
         // Tires ON the shelf — leaning against wall
-        [-0.8, 0, 0.8].forEach(function(zOff, idx) {
+        [-0.8, 0, 0.8].forEach(function (zOff, idx) {
           var tire = MB.CreateTorus('gTire_' + idx, { diameter: 0.85, thickness: 0.28, tessellation: 20 }, this.scene);
           tire.position = new V3(cx + 10.5 + idx * 0.3, 1.5 + idx * 0.05, 4 + zOff);
           tire.rotation.y = Math.PI / 2;
@@ -1606,7 +1612,7 @@
         this._garageEnv.push(barrel2);
 
         // (hemi already created above in 3-light setup)
-      } catch (_) {}
+      } catch (_) { }
     }
 
     _showGaragePreview(visible) {
@@ -1620,14 +1626,14 @@
         if (this._savedCamForGarage) this.scene.activeCamera = this._savedCamForGarage;
         if (this._garageCar) { this._garageCar.dispose(false, true); this._garageCar = null; }
         if (this._garageEnv) {
-          this._garageEnv.forEach(function(obj) { try { obj.dispose(); } catch(_) {} });
+          this._garageEnv.forEach(function (obj) { try { obj.dispose(); } catch (_) { } });
           this._garageEnv = null;
         }
         // Restore transparent bg for menu
         this.scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
       }
       if (this._garageEnv) {
-        this._garageEnv.forEach(function(obj) {
+        this._garageEnv.forEach(function (obj) {
           if (obj && !obj.isDisposed()) {
             if (obj.setEnabled) obj.setEnabled(!!visible);
             if (obj.isVisible !== undefined) obj.isVisible = !!visible;
@@ -1746,14 +1752,16 @@
       this.preRaceRivalLine.text = rivalLine ? '\u201c' + rivalLine + '\u201d' : '';
 
       // Determine environment emoji from track name
-      var envEmojis = { 'city': '\ud83c\udfd9\ufe0f', 'neon': '\ud83c\udfd9\ufe0f', 'blaze': '\ud83d\udd25',
+      var envEmojis = {
+        'city': '\ud83c\udfd9\ufe0f', 'neon': '\ud83c\udfd9\ufe0f', 'blaze': '\ud83d\udd25',
         'mesa': '\ud83c\udfdc\ufe0f', 'canyon': '\ud83c\udfdc\ufe0f', 'sandstorm': '\ud83c\udfdc\ufe0f',
         'frost': '\u2744\ufe0f', 'glacier': '\u2744\ufe0f',
         'vine': '\ud83c\udf34', 'canopy': '\ud83c\udf34', 'viper': '\ud83c\udf34',
-        'cloud': '\u2601\ufe0f', 'grand': '\u2601\ufe0f', 'apex': '\ud83c\udfc6' };
+        'cloud': '\u2601\ufe0f', 'grand': '\u2601\ufe0f', 'apex': '\ud83c\udfc6'
+      };
       var emoji = '\ud83c\udfc1';
       var tn = (trackName || '').toLowerCase();
-      Object.keys(envEmojis).forEach(function(k) { if (tn.indexOf(k) >= 0) emoji = envEmojis[k]; });
+      Object.keys(envEmojis).forEach(function (k) { if (tn.indexOf(k) >= 0) emoji = envEmojis[k]; });
       if (this.preRaceEnvEmoji) this.preRaceEnvEmoji.text = emoji;
 
       // Difficulty
@@ -1765,7 +1773,7 @@
       // Display race goals
       if (this.preRaceGoals && goals && goals.length) {
         var goalsStr = 'RACE GOALS:\n';
-        goals.forEach(function(g) { goalsStr += '-' + g.label + '\n'; });
+        goals.forEach(function (g) { goalsStr += '-' + g.label + '\n'; });
         this.preRaceGoals.text = goalsStr;
         this.preRaceGoals.color = COLORS.accent;
       } else if (this.preRaceGoals) {
@@ -1886,14 +1894,14 @@
       try {
         var trackDef = window.DriftLegends.TrackBuilder.TRACKS[trackId];
         if (trackDef) trackName = trackDef.name;
-      } catch(_) {}
+      } catch (_) { }
 
       this._introTrackName.text = trackName;
       this._introChapterName.text = chapterName || '';
 
       // Show goals in cinematic bar
       if (this._introGoalsText && goals && goals.length) {
-        this._introGoalsText.text = goals.map(function(g) { return '> ' + g.label; }).join('   ');
+        this._introGoalsText.text = goals.map(function (g) { return '> ' + g.label; }).join('   ');
       } else if (this._introGoalsText) {
         this._introGoalsText.text = '';
       }
@@ -2256,7 +2264,7 @@
       // Show goal results — dynamically size card to fit
       if (data.goalResults && data.goalResults.length) {
         var goalStr = '';
-        data.goalResults.forEach(function(g) {
+        data.goalResults.forEach(function (g) {
           goalStr += (g.passed ? '\u2705' : '\u274c') + g.label + '\n';
         });
         if (data.allGoalsPassed && data.unlockText) {
@@ -2716,7 +2724,7 @@
       container.addControl(hintText);
       this._gestureHint = hintText;
       // Auto-hide hint after 5 seconds
-      setTimeout(function() { if (hintText) hintText.isVisible = false; }, 5000);
+      setTimeout(function () { if (hintText) hintText.isVisible = false; }, 5000);
 
       // ── Touch gesture tracking via canvas pointer events ──
       const canvas = document.getElementById('renderCanvas');
