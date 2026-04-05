@@ -1404,13 +1404,7 @@
         wallStripe.material = stripeDark;
         this._garageEnv.push(wallStripe);
 
-        // Back wall light — illuminate the wall so it's visible
-        // Back wall light — brighter, wider range
-        var wallLight = new BABYLON.PointLight('gWallLight', new V3(cx, 4, 5), this.scene);
-        wallLight.diffuse = new Color3(0.8, 0.8, 0.9);
-        wallLight.intensity = 6;
-        wallLight.range = 14;
-        this._garageEnv.push(wallLight);
+        // (wall light removed — hemi handles ambient)
 
         // Pegboard section on back wall (right of sign)
         var pegboard = MB.CreateBox('gPegboard', { width: 4, height: 3, depth: 0.1 }, this.scene);
@@ -1456,58 +1450,40 @@
         softbox.material = softboxMat;
         this._garageEnv.push(softbox);
 
-        // ── Ceiling strip lights (emissive — like area lights) ──
+        // ── SIMPLE 3-LIGHT SETUP (no harsh spots) ──
+
+        // 1. Ambient hemi — fills entire room evenly
+        var hemi = new BABYLON.HemisphericLight('gHemi', new V3(0, 1, 0), this.scene);
+        hemi.intensity = 2.5;
+        hemi.diffuse = new Color3(0.85, 0.85, 0.95);
+        hemi.groundColor = new Color3(0.2, 0.2, 0.25);
+        this._garageEnv.push(hemi);
+        this._garageHemi = hemi;
+
+        // 2. Soft overhead — one wide spot, very soft falloff
+        var overhead = new BABYLON.SpotLight('gOverhead', new V3(cx, 12, 0), new V3(0, -1, 0), Math.PI / 2, 0.3, this.scene);
+        overhead.diffuse = new Color3(1, 0.95, 0.9);
+        overhead.intensity = 5;
+        overhead.range = 20;
+        this._garageEnv.push(overhead);
+
+        // 3. Sign glow — orange accent from the GARAGE sign
+        var signGlowLight = new BABYLON.PointLight('gSignGlow2', new V3(9, 2, 0.5), this.scene);
+        signGlowLight.diffuse = new Color3(1, 0.4, 0.1);
+        signGlowLight.intensity = 2;
+        signGlowLight.range = 6;
+        this._garageEnv.push(signGlowLight);
+
+        // One emissive ceiling panel (softbox visual)
         var stripMat = new BABYLON.StandardMaterial('gStripMat', this.scene);
-        stripMat.emissiveColor = new Color3(1, 0.95, 0.9);
+        stripMat.emissiveColor = new Color3(0.9, 0.9, 1);
         stripMat.diffuseColor = Color3.Black();
         stripMat.disableLighting = true;
-
-        // ── Ceiling strip lights (flush with ceiling, pointing down) ──
-        [-3, 3].forEach(function(zOff) {
-          var strip = MB.CreateBox('gStrip', { width: 14, height: 0.03, depth: 0.5 }, this.scene);
-          strip.position = new V3(cx, 7.45, zOff);
-          strip.material = stripMat;
-          this._garageEnv.push(strip);
-
-          // Soft ceiling light — wide angle, low exponent for soft falloff
-          var spotLight = new BABYLON.SpotLight('gSpot_' + zOff, new V3(cx, 10, zOff), new V3(0, -1, 0), Math.PI / 2, 0.5, this.scene);
-          spotLight.diffuse = new Color3(1, 0.95, 0.9);
-          spotLight.intensity = 6;
-          spotLight.range = 16;
-          this._garageEnv.push(spotLight);
-        }.bind(this));
-
-        // ── Direct overhead spot on car (above ceiling — orb not visible) ──
-        // Hero spot — wide, soft, above car
-        var heroSpot = new BABYLON.SpotLight('gHero', new V3(cx, 12, 0), new V3(0, -1, 0), Math.PI / 3, 0.5, this.scene);
-        heroSpot.diffuse = new Color3(1, 0.95, 0.85);
-        heroSpot.intensity = 10;
-        heroSpot.range = 18;
-        this._garageEnv.push(heroSpot);
-
-        // Front light on car (so face is lit, not just top)
-        var frontLight = new BABYLON.PointLight('gFront', new V3(cx, 2, -5), this.scene);
-        frontLight.diffuse = new Color3(0.9, 0.9, 1);
-        frontLight.intensity = 4;
-        frontLight.range = 10;
-        this._garageEnv.push(frontLight);
-
-        // ── Accent lights ──
-        var key = new BABYLON.PointLight('gKey', new V3(cx + 6, 4, -2), this.scene);
-        key.diffuse = new Color3(1, 0.7, 0.4);
-        key.intensity = 3;
-        key.range = 10;
-        this._garageEnv.push(key);
-        this._garageKeyLight = key;
-
-        var fill = new BABYLON.PointLight('gFill', new V3(cx - 6, 3, 1), this.scene);
-        fill.diffuse = new Color3(0.4, 0.5, 1);
-        fill.intensity = 2;
-        fill.range = 10;
-        this._garageEnv.push(fill);
-        this._garageFillLight = fill;
-
-        // (neon strip removed — not needed)
+        stripMat.alpha = 0.3;
+        var ceilingPanel = MB.CreateBox('gCeilingPanel', { width: 16, height: 0.03, depth: 8 }, this.scene);
+        ceilingPanel.position = new V3(cx, 7.4, 0);
+        ceilingPanel.material = stripMat;
+        this._garageEnv.push(ceilingPanel);
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
@@ -1617,13 +1593,7 @@
         benchTop.material = propMat;
         this._garageEnv.push(benchTop);
 
-        // Ambient hemi — bright enough to see car details
-        var hemi = new BABYLON.HemisphericLight('gHemi', new V3(0, 1, 0), this.scene);
-        hemi.intensity = 2.0;
-        hemi.diffuse = new Color3(0.8, 0.8, 0.9);
-        hemi.groundColor = new Color3(0.15, 0.15, 0.2);
-        this._garageEnv.push(hemi);
-        this._garageHemi = hemi;
+        // (hemi already created above in 3-light setup)
       } catch (_) {}
     }
 
