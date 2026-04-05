@@ -711,6 +711,12 @@
     const input = DL.Input.state;
 
     // Update player physics
+    // Set road elevation for bridge following
+    if (trackData && trackData.splinePoints) {
+      var closestPt = DL.TrackBuilder.getClosestPointOnTrack(trackData.splinePoints, playerCar.position);
+      playerPhysics._roadY = closestPt.point.y;
+    }
+
     playerPhysics.update(dt, input, null);
 
     // Off-road detection — speed penalty instead of wall bounce

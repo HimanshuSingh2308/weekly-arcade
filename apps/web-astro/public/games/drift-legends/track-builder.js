@@ -34,9 +34,9 @@
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 13,
-      // Figure-8 crossover — teaches awareness
+      // Figure-8 crossover — bridge at center crossing
       controlPoints: [
-        { x: 0, z: 0 }, { x: 40, z: 20 }, { x: 10, z: 50 }, { x: 50, z: 70 },
+        { x: 0, z: 0 }, { x: 40, z: 20 }, { x: 10, z: 50, y: 4 }, { x: 50, z: 70 },
         { x: 80, z: 50 }, { x: 50, z: 30 }, { x: 70, z: 0 }, { x: 30, z: -10 },
       ],
       nitroZones: [0.2, 0.5, 0.8],
@@ -80,10 +80,10 @@
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
-      // Zigzag canyon — tight alternating turns
+      // Zigzag canyon — bridge over return section
       controlPoints: [
         { x: 0, z: 0 }, { x: 30, z: 25 }, { x: 10, z: 45 }, { x: 40, z: 65 },
-        { x: 15, z: 85 }, { x: 45, z: 100 }, { x: 70, z: 80 }, { x: 55, z: 55 },
+        { x: 15, z: 85 }, { x: 45, z: 100 }, { x: 70, z: 80, y: 3 }, { x: 55, z: 55, y: 3 },
         { x: 75, z: 30 }, { x: 50, z: 10 },
       ],
       nitroZones: [0.3, 0.65],
@@ -112,9 +112,9 @@
       minimumLapTimeMs: 55000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 13,
-      // Winding mountain road — gentle S-curves
+      // Winding mountain road — bridge over return path
       controlPoints: [
-        { x: 0, z: 0 }, { x: 25, z: 30 }, { x: 50, z: 15 }, { x: 75, z: 40 },
+        { x: 0, z: 0 }, { x: 25, z: 30 }, { x: 50, z: 15, y: 3 }, { x: 75, z: 40 },
         { x: 60, z: 70 }, { x: 30, z: 60 }, { x: 10, z: 80 }, { x: -10, z: 50 },
       ],
       nitroZones: [0.4],
@@ -126,10 +126,10 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 10,
-      // Narrow chicane sequence — precision required
+      // Narrow chicane — bridge over return section
       controlPoints: [
-        { x: 0, z: 0 }, { x: 15, z: 20 }, { x: 35, z: 10 }, { x: 45, z: 30 },
-        { x: 30, z: 45 }, { x: 50, z: 60 }, { x: 35, z: 80 }, { x: 15, z: 65 },
+        { x: 0, z: 0 }, { x: 15, z: 20 }, { x: 35, z: 10 }, { x: 45, z: 30, y: 3 },
+        { x: 30, z: 45, y: 3 }, { x: 50, z: 60 }, { x: 35, z: 80 }, { x: 15, z: 65 },
         { x: -5, z: 45 }, { x: 10, z: 25 },
       ],
       nitroZones: [0.35, 0.7],
@@ -141,10 +141,10 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 10,
-      // Spiral inward then back out — disorienting
+      // Spiral — inner loop elevated as bridge over outer
       controlPoints: [
         { x: 0, z: 0 }, { x: 40, z: 0 }, { x: 60, z: 30 }, { x: 40, z: 55 },
-        { x: 15, z: 45 }, { x: 25, z: 25 }, { x: 10, z: 10 },
+        { x: 15, z: 45, y: 4 }, { x: 25, z: 25, y: 4 }, { x: 10, z: 10, y: 2 },
         { x: -15, z: 30 }, { x: -10, z: 60 }, { x: 20, z: 75 },
         { x: 50, z: 70 }, { x: 55, z: 50 }, { x: 30, z: -10 },
       ],
@@ -160,9 +160,9 @@
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
-      // Organic winding path — no straight sections
+      // Organic winding — bridge over return path
       controlPoints: [
-        { x: 0, z: 0 }, { x: 20, z: 20 }, { x: 40, z: 5 }, { x: 55, z: 25 },
+        { x: 0, z: 0 }, { x: 20, z: 20 }, { x: 40, z: 5, y: 3 }, { x: 55, z: 25 },
         { x: 45, z: 50 }, { x: 60, z: 70 }, { x: 35, z: 85 },
         { x: 10, z: 70 }, { x: -5, z: 45 }, { x: 15, z: 25 },
       ],
@@ -175,10 +175,10 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
-      // Hairpin switchbacks — mountain descent feel
+      // Hairpin switchbacks — bridges at crossover points
       controlPoints: [
-        { x: 0, z: 0 }, { x: 35, z: 10 }, { x: 15, z: 30 }, { x: 45, z: 40 },
-        { x: 20, z: 60 }, { x: 50, z: 70 }, { x: 30, z: 90 },
+        { x: 0, z: 0 }, { x: 35, z: 10 }, { x: 15, z: 30, y: 3 }, { x: 45, z: 40 },
+        { x: 20, z: 60, y: 3 }, { x: 50, z: 70 }, { x: 30, z: 90 },
         { x: 5, z: 80 }, { x: -15, z: 55 }, { x: -5, z: 25 },
       ],
       nitroZones: [0.3, 0.65],
@@ -190,10 +190,10 @@
       minimumLapTimeMs: 63000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 9,
-      // Very tight, narrow, snake-like — hardest jungle track
+      // Snake with bridges — elevated at crossover points
       controlPoints: [
-        { x: 0, z: 0 }, { x: 10, z: 15 }, { x: 25, z: 5 }, { x: 35, z: 20 },
-        { x: 25, z: 35 }, { x: 40, z: 50 }, { x: 30, z: 65 },
+        { x: 0, z: 0 }, { x: 10, z: 15 }, { x: 25, z: 5, y: 3 }, { x: 35, z: 20 },
+        { x: 25, z: 35, y: 3 }, { x: 40, z: 50 }, { x: 30, z: 65, y: 3 },
         { x: 15, z: 55 }, { x: 5, z: 70 }, { x: -10, z: 55 },
         { x: -5, z: 35 }, { x: -15, z: 20 },
       ],
@@ -224,9 +224,9 @@
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
-      // Technical F1-style — chicanes + long straight + hairpin
+      // Technical F1-style — bridge at tight chicane section
       controlPoints: [
-        { x: 0, z: 0 }, { x: 60, z: 0 }, { x: 80, z: 15 }, { x: 70, z: 30 },
+        { x: 0, z: 0 }, { x: 60, z: 0 }, { x: 80, z: 15 }, { x: 70, z: 30, y: 3 },
         { x: 85, z: 45 }, { x: 75, z: 65 }, { x: 50, z: 55 },
         { x: 30, z: 70 }, { x: 10, z: 60 }, { x: -10, z: 35 },
       ],
@@ -239,11 +239,11 @@
       minimumLapTimeMs: 55000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
-      // The ultimate test — everything combined: straights, hairpins, chicanes, sweepers
+      // Ultimate test — bridges at crossover points
       controlPoints: [
         { x: 0, z: 0 }, { x: 50, z: -5 }, { x: 80, z: 10 }, { x: 85, z: 35 },
-        { x: 65, z: 40 }, { x: 75, z: 60 }, { x: 55, z: 80 },
-        { x: 25, z: 90 }, { x: 5, z: 75 }, { x: 15, z: 55 },
+        { x: 65, z: 40, y: 4 }, { x: 75, z: 60 }, { x: 55, z: 80 },
+        { x: 25, z: 90 }, { x: 5, z: 75, y: 4 }, { x: 15, z: 55 },
         { x: -5, z: 40 }, { x: 10, z: 20 }, { x: -10, z: 10 },
       ],
       nitroZones: [0.1, 0.35, 0.65, 0.85],
@@ -308,7 +308,7 @@
 
   // ─── Spline Helpers ───────────────────────────────────────────────
   function createClosedSpline(controlPoints) {
-    const pts = controlPoints.map(p => new V3(p.x, 0, p.z));
+    const pts = controlPoints.map(p => new V3(p.x, p.y || 0, p.z));
     // Close the loop
     pts.push(pts[0].clone());
     return BABYLON.Curve3.CreateCatmullRomSpline(pts, 20, true);
@@ -470,6 +470,31 @@
       curb.freezeWorldMatrix();
       result.meshes.push(curb);
     });
+
+    // ── Direction arrows on road surface ──
+    var arrowMat = getCachedMat(scene, 'road_arrow', function() {
+      var m = new BABYLON.StandardMaterial('arrowMat', scene);
+      m.emissiveColor = new Color3(1, 1, 1);
+      m.diffuseColor = new Color3(1, 1, 1);
+      m.alpha = 0.15;
+      m.freeze();
+      return m;
+    });
+    var arrowCount = 20;
+    for (var ai = 0; ai < arrowCount; ai++) {
+      var at = ai / arrowCount;
+      var aPos = getSplinePoint(result.splinePoints, at);
+      var aTan = getSplineTangent(result.splinePoints, at);
+      var aAngle = Math.atan2(aTan.x, aTan.z);
+
+      // Arrow shape: thin triangle pointing forward
+      var arrow = MB.CreateBox('arrow', { width: 1.5, height: 0.02, depth: 2.5 }, scene);
+      arrow.position = aPos.add(new V3(0, 0.04, 0));
+      arrow.rotation.y = aAngle;
+      arrow.material = arrowMat;
+      arrow.freezeWorldMatrix();
+      result.meshes.push(arrow);
+    }
 
     // Ground plane — larger for open environments
     const ground = MB.CreateGround('ground', { width: 400, height: 400 }, scene);
