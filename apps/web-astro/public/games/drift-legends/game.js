@@ -642,7 +642,14 @@
 
       case STATE.COUNTDOWN:
         _updateCountdown(dt);
-        chaseCamera.update(dt, false);
+        // Fast camera snap during countdown (smoothing is too slow from cinematic position)
+        if (playerCar && chaseCamera.camera) {
+          var m = playerCar.getWorldMatrix();
+          var back = new BABYLON.Vector3(-m.m[8], -m.m[9], -m.m[10]).normalize();
+          var idealPos = playerCar.position.add(back.scale(8)).add(new BABYLON.Vector3(0, 3.5, 0));
+          BABYLON.Vector3.LerpToRef(chaseCamera.camera.position, idealPos, 0.3, chaseCamera.camera.position);
+          chaseCamera.camera.setTarget(playerCar.position.add(new BABYLON.Vector3(0, 1, 0)));
+        }
         break;
 
       case STATE.RACING:
