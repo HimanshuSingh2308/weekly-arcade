@@ -1046,28 +1046,35 @@
     // ─── Car Select ───────────────────────────────────────────────
     _buildCarSelect() {
       const panel = this._createPanel('CAR_SELECT');
-      panel.background = 'rgba(13,13,26,0.4)'; // semi-transparent — 3D car preview shows through
+      panel.background = 'rgba(13,13,26,0.85)'; // mostly opaque — 3D car shows in center gap
 
       this._addBackButton(panel, 'STORY_SELECT');
       this._addScreenTitle(panel, 'GARAGE');
 
       // Center — selected car info display
+      // Car info — LEFT side (3D car renders in the right/center area)
       var centerStack = new GUI.StackPanel('carCenterStack');
-      centerStack.width = '300px';
+      centerStack.width = '260px';
+      centerStack.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       centerStack.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      centerStack.top = '-20px';
+      centerStack.left = '40px';
+      centerStack.top = '-10px';
       panel.addControl(centerStack);
 
-      // Large car emoji
-      this._garageCarEmoji = this._createText('\ud83d\ude97', 80, COLORS.text, centerStack);
-      this._garageCarEmoji.paddingBottom = '8px';
+      // Car emoji (small, above name)
+      this._garageCarEmoji = this._createText('\ud83d\ude97', 36, COLORS.text, centerStack);
+      this._garageCarEmoji.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._garageCarEmoji.paddingBottom = '4px';
 
       // Selected car name
-      this._garageCarName = this._createTitle('Street Kart', 32, COLORS.text, centerStack);
+      this._garageCarName = this._createTitle('Street Kart', 28, COLORS.text, centerStack);
+      this._garageCarName.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       this._garageCarName.paddingBottom = '4px';
 
       // Subtitle
-      this._createText('TAP A CAR TO SELECT', 12, COLORS.textMuted, centerStack).paddingBottom = '12px';
+      var tapHint = this._createText('TAP A CAR TO SELECT', 11, COLORS.textMuted, centerStack);
+      tapHint.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      tapHint.paddingBottom = '12px';
 
       // Show default car preview on first load
       this._selectedCarId = 'street-kart';
@@ -1282,7 +1289,7 @@
 
         // Build new car at origin
         this._garageCar = CB.buildCar(this.scene, carId, COLORS.accent);
-        this._garageCar.position = new BABYLON.Vector3(0, 0, 0);
+        this._garageCar.position = new BABYLON.Vector3(3, 0, 0); // offset right so it doesn't overlap left panel
         this._garageCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
         this._garageCar.rotation.y = Math.PI * 0.2;
 
@@ -1290,7 +1297,7 @@
         if (!this._garageCam || this._garageCam.isDisposed()) {
           this._garageCam = new BABYLON.ArcRotateCamera('garageCam',
             Math.PI * 0.7, Math.PI * 0.35, 8,
-            new BABYLON.Vector3(0, 0.5, 0), this.scene);
+            new BABYLON.Vector3(3, 0.5, 0), this.scene);
           this._garageCam.lowerRadiusLimit = 8;
           this._garageCam.upperRadiusLimit = 8;
           this._garageCam.fov = 0.9;
