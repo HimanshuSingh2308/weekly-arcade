@@ -1064,8 +1064,7 @@
 
     // ─── Car Select ───────────────────────────────────────────────
     _buildCarSelect() {
-      const panel = this._createPanel('CAR_SELECT');
-      panel.background = 'transparent'; // fully transparent — 3D garage scene shows clean
+      const panel = this._createPanel('CAR_SELECT', true); // transparent, no vignette lines
 
       this._addBackButton(panel, 'STORY_SELECT');
       this._addScreenTitle(panel, 'GARAGE');
