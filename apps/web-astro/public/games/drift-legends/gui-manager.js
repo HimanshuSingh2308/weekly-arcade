@@ -1070,16 +1070,34 @@
       this._addBackButton(panel, 'STORY_SELECT');
       this._addScreenTitle(panel, 'GARAGE');
 
-      // Center — selected car info display
-      // Car name — TOP CENTER (above 3D car)
-      this._garageCarEmoji = this._createText('\ud83d\ude97', 28, COLORS.text);
-      this._garageCarEmoji.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      this._garageCarEmoji.top = '50px';
-      panel.addControl(this._garageCarEmoji);
+      // Garage floor — subtle gradient at bottom half
+      var floor = new GUI.Rectangle('garageFloor');
+      floor.width = '100%';
+      floor.height = '40%';
+      floor.background = 'rgba(20,20,30,0.4)';
+      floor.thickness = 0;
+      floor.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      floor.top = '-130px';
+      floor.isHitTestVisible = false;
+      panel.addControl(floor);
 
-      this._garageCarName = this._createTitle('Street Kart', 30, COLORS.text);
+      // Spotlight glow on floor (ellipse)
+      var spotlight = new GUI.Ellipse('garageSpotlight');
+      spotlight.width = '400px';
+      spotlight.height = '80px';
+      spotlight.background = 'rgba(255,255,255,0.04)';
+      spotlight.thickness = 0;
+      spotlight.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+      spotlight.top = '60px';
+      spotlight.isHitTestVisible = false;
+      panel.addControl(spotlight);
+
+      // Center — selected car info display
+      // Car name — TOP CENTER
+      this._garageCarEmoji = null; // no emoji needed — 3D car is the visual
+      this._garageCarName = this._createTitle('Street Kart', 32, COLORS.text);
       this._garageCarName.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      this._garageCarName.top = '80px';
+      this._garageCarName.top = '55px';
       this._garageCarName.shadowColor = COLORS.accentGlow;
       this._garageCarName.shadowBlur = 12;
       panel.addControl(this._garageCarName);
@@ -1090,34 +1108,42 @@
       // Stats bar — HORIZONTAL, above the car cards
       var statsBar = new GUI.StackPanel('garageStatsBar');
       statsBar.isVertical = false;
-      statsBar.height = '40px';
+      statsBar.height = '50px';
       statsBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
       statsBar.top = '-145px';
       panel.addControl(statsBar);
 
       this._garageStatBars = {};
       var statDefs = [
-        { key: 'speed', label: 'SPD', color: '#00d4ff' },
-        { key: 'handling', label: 'HND', color: COLORS.accent },
-        { key: 'drift', label: 'DFT', color: '#00ff88' },
+        { key: 'speed', label: 'SPEED', color: '#00d4ff' },
+        { key: 'handling', label: 'HANDLING', color: COLORS.accent },
+        { key: 'drift', label: 'DRIFT', color: '#00ff88' },
       ];
       statDefs.forEach((sd) => {
-        var lbl = this._createText(sd.label, 13, COLORS.textDim, statsBar);
-        lbl.width = '40px';
+        // Each stat: vertical stack (label on top, bar below)
+        var statCol = new GUI.StackPanel('gStatCol_' + sd.key);
+        statCol.width = '140px';
+        statsBar.addControl(statCol);
 
+        // Label — centered above bar
+        var lbl = this._createText(sd.label, 11, COLORS.textDim, statCol);
+        lbl.paddingBottom = '3px';
+
+        // Bar with outline
         var barBg = new GUI.Rectangle('gStatBg_' + sd.key);
         barBg.width = '120px';
-        barBg.height = '14px';
-        barBg.cornerRadius = 7;
-        barBg.background = 'rgba(255,255,255,0.08)';
-        barBg.thickness = 0;
+        barBg.height = '18px';
+        barBg.cornerRadius = 9;
+        barBg.background = 'rgba(255,255,255,0.06)';
+        barBg.thickness = 1.5;
+        barBg.color = 'rgba(255,255,255,0.15)';
         barBg.isHitTestVisible = false;
-        statsBar.addControl(barBg);
+        statCol.addControl(barBg);
 
         var barFill = new GUI.Rectangle('gStatFill_' + sd.key);
         barFill.width = '60%';
         barFill.height = '100%';
-        barFill.cornerRadius = 7;
+        barFill.cornerRadius = 9;
         barFill.background = sd.color;
         barFill.thickness = 0;
         barFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -1126,7 +1152,7 @@
         this._garageStatBars[sd.key] = barFill;
 
         // Spacer
-        var sp = new GUI.Rectangle(); sp.width = '20px'; sp.height = '1px'; sp.thickness = 0; sp.background = 'transparent'; statsBar.addControl(sp);
+        var sp = new GUI.Rectangle(); sp.width = '10px'; sp.height = '1px'; sp.thickness = 0; sp.background = 'transparent'; statsBar.addControl(sp);
       });
 
       // ─── Bottom: Horizontal car cards ─────────────────────────
