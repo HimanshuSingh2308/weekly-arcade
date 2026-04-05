@@ -1106,7 +1106,7 @@
         statsBar.addControl(statCol);
 
         // Label — centered above bar
-        var lbl = this._createText(sd.label, 11, COLORS.textDim, statCol);
+        var lbl = this._createText(sd.label, 15, COLORS.text, statCol);
         lbl.paddingBottom = '3px';
 
         // Bar with outline
