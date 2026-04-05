@@ -1386,13 +1386,47 @@
           }
         }
 
-        // ── Back wall ──
+        // ── Back wall — lighter, with details ──
         var backWall = MB.CreateBox('gBackWall', { width: 24, height: 8, depth: 0.3 }, this.scene);
         backWall.position = new V3(cx, 3.5, 8);
         var wallMat = new BABYLON.StandardMaterial('gWallMat', this.scene);
-        wallMat.diffuseColor = new Color3(0.12, 0.12, 0.15);
+        wallMat.diffuseColor = new Color3(0.18, 0.18, 0.22);
         backWall.material = wallMat;
         this._garageEnv.push(backWall);
+
+        // Back wall horizontal stripe (dark accent)
+        var wallStripe = MB.CreateBox('gWallStripe', { width: 24, height: 0.4, depth: 0.1 }, this.scene);
+        wallStripe.position = new V3(cx, 1.5, 7.85);
+        var stripeDark = new BABYLON.StandardMaterial('gStripeDark', this.scene);
+        stripeDark.diffuseColor = new Color3(0.08, 0.08, 0.1);
+        wallStripe.material = stripeDark;
+        this._garageEnv.push(wallStripe);
+
+        // Back wall light — illuminate the wall so it's visible
+        var wallLight = new BABYLON.PointLight('gWallLight', new V3(cx, 4, 6), this.scene);
+        wallLight.diffuse = new Color3(0.7, 0.7, 0.8);
+        wallLight.intensity = 3;
+        wallLight.range = 8;
+        this._garageEnv.push(wallLight);
+
+        // Pegboard section on back wall (right of sign)
+        var pegboard = MB.CreateBox('gPegboard', { width: 4, height: 3, depth: 0.1 }, this.scene);
+        pegboard.position = new V3(cx + 7, 3, 7.85);
+        var pegMat = new BABYLON.StandardMaterial('gPegMat', this.scene);
+        pegMat.diffuseColor = new Color3(0.25, 0.22, 0.18);
+        pegboard.material = pegMat;
+        this._garageEnv.push(pegboard);
+
+        // Small tools on pegboard (simple boxes)
+        [[6, 3.5], [6.5, 4], [7.5, 3.2], [8, 3.8]].forEach(function(pos, i) {
+          var tool = MB.CreateBox('gTool_' + i, { width: 0.1, height: 0.8, depth: 0.05 }, this.scene);
+          tool.position = new V3(cx + pos[0], pos[1], 7.8);
+          tool.rotation.z = (Math.random() - 0.5) * 0.3;
+          var toolMat = new BABYLON.StandardMaterial('gToolMat_' + i, this.scene);
+          toolMat.diffuseColor = new Color3(0.4, 0.4, 0.45);
+          tool.material = toolMat;
+          this._garageEnv.push(tool);
+        }.bind(this));
 
         // ── Side walls ──
         [-12, 12].forEach(function(x) {
@@ -1489,8 +1523,7 @@
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
-        signPlane.position = new V3(cx, 3.5, 7.5); // lower, visible behind car
-        // No rotation needed — default plane faces -Z which is toward camera
+        signPlane.position = new V3(cx, 2.5, 7.5); // on back wall, centered behind car
         var signMat = new BABYLON.StandardMaterial('gSignMat', this.scene);
         signMat.emissiveColor = new Color3(1, 0.3, 0);
         signMat.diffuseColor = Color3.Black();
@@ -1512,19 +1545,40 @@
         signPlane.material = signMat;
         this._garageEnv.push(signPlane);
 
-        // Glitch animation — flicker the sign
-        var signFlickerTime = 0;
-        this.scene.registerBeforeRender(function() {
+        // Glitch animation — random flicker + position jitter
+        var glitchTimer = 0;
+        var nextGlitch = 2 + Math.random() * 3;
+        var scene = this.scene;
+        scene.registerBeforeRender(function() {
           if (!signPlane || signPlane.isDisposed()) return;
-          signFlickerTime += 0.016;
-          // Random flicker every few seconds
-          var flicker = Math.sin(signFlickerTime * 47) * Math.sin(signFlickerTime * 113);
-          if (flicker > 0.95) {
-            signMat.emissiveColor = new Color3(0.2, 0.05, 0); // dim
-            signPlane.position.x = cx + (Math.random() - 0.5) * 0.05; // horizontal glitch
-          } else {
-            signMat.emissiveColor = new Color3(1, 0.3, 0); // full brightness
-            signPlane.position.x = cx;
+          glitchTimer += scene.getEngine().getDeltaTime() * 0.001;
+          if (glitchTimer > nextGlitch) {
+            // Glitch! Flicker for a brief moment
+            signMat.emissiveColor = new BABYLON.Color3(0.15, 0.03, 0);
+            signPlane.position.x = cx + (Math.random() - 0.5) * 0.15;
+            signPlane.position.y = 2.5 + (Math.random() - 0.5) * 0.05;
+            // Recover after short delay
+            setTimeout(function() {
+              if (signPlane && !signPlane.isDisposed()) {
+                signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
+                signPlane.position.x = cx;
+                signPlane.position.y = 2.5;
+              }
+            }, 80 + Math.random() * 120);
+            // Double glitch sometimes
+            if (Math.random() > 0.5) {
+              setTimeout(function() {
+                if (signPlane && !signPlane.isDisposed()) {
+                  signMat.emissiveColor = new BABYLON.Color3(0.1, 0.02, 0);
+                  setTimeout(function() {
+                    if (signPlane && !signPlane.isDisposed()) {
+                      signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
+                    }
+                  }, 50);
+                }
+              }, 200);
+            }
+            nextGlitch = glitchTimer + 2 + Math.random() * 4;
           }
         });
 
