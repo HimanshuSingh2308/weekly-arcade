@@ -1358,11 +1358,11 @@
 
         // ── Floor — checkerboard tile pattern ──
         var floorLight = new BABYLON.StandardMaterial('gFloorL', this.scene);
-        floorLight.diffuseColor = new Color3(0.18, 0.18, 0.22);
-        floorLight.specularColor = new Color3(0.3, 0.3, 0.35);
+        floorLight.diffuseColor = new Color3(0.22, 0.22, 0.26);
+        floorLight.specularColor = new Color3(0.2, 0.2, 0.25);
         var floorDark = new BABYLON.StandardMaterial('gFloorD', this.scene);
-        floorDark.diffuseColor = new Color3(0.1, 0.1, 0.13);
-        floorDark.specularColor = new Color3(0.2, 0.2, 0.25);
+        floorDark.diffuseColor = new Color3(0.16, 0.16, 0.19);
+        floorDark.specularColor = new Color3(0.15, 0.15, 0.2);
 
         var tileSize = 2;
         for (var tx = -6; tx < 6; tx++) {
@@ -1384,7 +1384,7 @@
 
         // Back wall horizontal stripe (dark accent)
         var wallStripe = MB.CreateBox('gWallStripe', { width: 24, height: 0.4, depth: 0.1 }, this.scene);
-        wallStripe.position = new V3(cx, 1.5, 7.85);
+        wallStripe.position = new V3(cx, 1.23, 7.85);
         var stripeDark = new BABYLON.StandardMaterial('gStripeDark', this.scene);
         stripeDark.diffuseColor = new Color3(0.08, 0.08, 0.1);
         wallStripe.material = stripeDark;
@@ -1455,7 +1455,7 @@
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
-        signPlane.position = new V3(10.01, 2.0, 0.119);
+        signPlane.position = new V3(14.8, 2.9, 0.119);
         signPlane.rotation.x = 38 * Math.PI / 180;
         signPlane.rotation.y = 90 * Math.PI / 180;
         signPlane.rotation.z = 0;
@@ -1490,14 +1490,14 @@
           if (glitchTimer > nextGlitch) {
             // Glitch! Flicker for a brief moment
             signMat.emissiveColor = new BABYLON.Color3(0.15, 0.03, 0);
-            signPlane.position.x = 10.01 + (Math.random() - 0.5) * 0.15;
-            signPlane.position.y = 2.0 + (Math.random() - 0.5) * 0.05;
+            signPlane.position.x = 14.8 + (Math.random() - 0.5) * 0.15;
+            signPlane.position.y = 2.9 + (Math.random() - 0.5) * 0.05;
             // Recover after short delay
             setTimeout(function() {
               if (signPlane && !signPlane.isDisposed()) {
                 signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
-                signPlane.position.x = 10.01;
-                signPlane.position.y = 2.0;
+                signPlane.position.x = 14.8;
+                signPlane.position.y = 2.9;
               }
             }, 80 + Math.random() * 120);
             // Double glitch sometimes
@@ -1518,7 +1518,7 @@
         });
 
         // Sign glow
-        var signGlow = new BABYLON.PointLight('gSignGlow', new V3(9, 2.0, 0.1), this.scene);
+        var signGlow = new BABYLON.PointLight('gSignGlow', new V3(13, 2.9, 0.1), this.scene);
         signGlow.diffuse = new Color3(1, 0.3, 0);
         signGlow.intensity = 2;
         signGlow.range = 5;
@@ -1528,11 +1528,21 @@
         var propMat = new BABYLON.StandardMaterial('gPropMat', this.scene);
         propMat.diffuseColor = new Color3(0.2, 0.2, 0.25);
 
-        // Tool shelf — right wall
-        var shelf = MB.CreateBox('gShelf', { width: 0.3, height: 3, depth: 4 }, this.scene);
-        shelf.position = new V3(cx + 11.5, 1, 3);
+        // Tool shelf — right wall, rotated z=90 (horizontal shelf)
+        var shelf = MB.CreateBox('gShelf', { width: 4, height: 0.15, depth: 1.5 }, this.scene);
+        shelf.position = new V3(cx + 11, 1.2, 4);
         shelf.material = propMat;
         this._garageEnv.push(shelf);
+
+        // Shelf bracket
+        var bracket1 = MB.CreateBox('gBracket1', { width: 0.1, height: 0.8, depth: 0.1 }, this.scene);
+        bracket1.position = new V3(cx + 9.5, 0.8, 4);
+        bracket1.material = propMat;
+        this._garageEnv.push(bracket1);
+        var bracket2 = MB.CreateBox('gBracket2', { width: 0.1, height: 0.8, depth: 0.1 }, this.scene);
+        bracket2.position = new V3(cx + 12.5, 0.8, 4);
+        bracket2.material = propMat;
+        this._garageEnv.push(bracket2);
 
         // Oil barrel — left corner
         var barrel = MB.CreateCylinder('gBarrel', { height: 1.2, diameter: 0.7, tessellation: 8 }, this.scene);
@@ -1553,31 +1563,20 @@
         rimMat.specularColor = new Color3(0.8, 0.8, 0.85);
         rimMat.specularPower = 64;
 
-        [0, 0.45, 0.9].forEach(function(yOff, idx) {
-          // Outer rubber tire
+        // Tires ON the shelf — leaning against wall
+        [-0.8, 0, 0.8].forEach(function(zOff, idx) {
           var tire = MB.CreateTorus('gTire_' + idx, { diameter: 0.85, thickness: 0.28, tessellation: 20 }, this.scene);
-          tire.position = new V3(cx + 10, yOff + 0.15, 5);
+          tire.position = new V3(cx + 10.5 + idx * 0.3, 1.7, 4 + zOff);
           tire.rotation.y = Math.PI / 2;
-          // Slight random tilt for natural look
-          tire.rotation.z = (idx - 1) * 0.08;
+          tire.rotation.x = 0.15 * (idx - 1); // slight lean
           tire.material = rubberMat;
           this._garageEnv.push(tire);
 
-          // Inner rim (smaller torus, metallic)
           var rim = MB.CreateTorus('gRim_' + idx, { diameter: 0.5, thickness: 0.08, tessellation: 16 }, this.scene);
           rim.position = tire.position.clone();
-          rim.rotation.y = Math.PI / 2;
-          rim.rotation.z = tire.rotation.z;
+          rim.rotation = tire.rotation.clone();
           rim.material = rimMat;
           this._garageEnv.push(rim);
-
-          // Hub cap (small disc in center)
-          var hub = MB.CreateCylinder('gHub_' + idx, { height: 0.05, diameter: 0.25, tessellation: 10 }, this.scene);
-          hub.position = tire.position.clone();
-          hub.position.x += 0.01; // slight offset so it's visible
-          hub.rotation.z = Math.PI / 2;
-          hub.material = rimMat;
-          this._garageEnv.push(hub);
         }.bind(this));
 
         // Workbench — left wall
