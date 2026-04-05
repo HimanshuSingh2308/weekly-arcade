@@ -1450,40 +1450,22 @@
         softbox.material = softboxMat;
         this._garageEnv.push(softbox);
 
-        // ── SIMPLE 3-LIGHT SETUP (no harsh spots) ──
+        // ── SOFT-ONLY LIGHTING (no spots, no arcs) ──
 
-        // 1. Ambient hemi — fills entire room evenly
+        // Main ambient — fills room evenly from above
         var hemi = new BABYLON.HemisphericLight('gHemi', new V3(0, 1, 0), this.scene);
-        hemi.intensity = 2.5;
-        hemi.diffuse = new Color3(0.85, 0.85, 0.95);
-        hemi.groundColor = new Color3(0.2, 0.2, 0.25);
+        hemi.intensity = 3.0;
+        hemi.diffuse = new Color3(0.9, 0.9, 1.0);
+        hemi.groundColor = new Color3(0.25, 0.25, 0.3);
         this._garageEnv.push(hemi);
         this._garageHemi = hemi;
 
-        // 2. Soft overhead — one wide spot, very soft falloff
-        var overhead = new BABYLON.SpotLight('gOverhead', new V3(cx, 12, 0), new V3(0, -1, 0), Math.PI / 2, 0.3, this.scene);
-        overhead.diffuse = new Color3(1, 0.95, 0.9);
-        overhead.intensity = 5;
-        overhead.range = 20;
-        this._garageEnv.push(overhead);
-
-        // 3. Sign glow — orange accent from the GARAGE sign
+        // Sign glow — warm orange accent
         var signGlowLight = new BABYLON.PointLight('gSignGlow2', new V3(9, 2, 0.5), this.scene);
         signGlowLight.diffuse = new Color3(1, 0.4, 0.1);
         signGlowLight.intensity = 2;
         signGlowLight.range = 6;
         this._garageEnv.push(signGlowLight);
-
-        // One emissive ceiling panel (softbox visual)
-        var stripMat = new BABYLON.StandardMaterial('gStripMat', this.scene);
-        stripMat.emissiveColor = new Color3(0.9, 0.9, 1);
-        stripMat.diffuseColor = Color3.Black();
-        stripMat.disableLighting = true;
-        stripMat.alpha = 0.3;
-        var ceilingPanel = MB.CreateBox('gCeilingPanel', { width: 16, height: 0.03, depth: 8 }, this.scene);
-        ceilingPanel.position = new V3(cx, 7.4, 0);
-        ceilingPanel.material = stripMat;
-        this._garageEnv.push(ceilingPanel);
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
