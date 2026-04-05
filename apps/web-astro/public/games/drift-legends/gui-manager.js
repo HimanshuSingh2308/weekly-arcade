@@ -1526,7 +1526,7 @@
         // Sign glow
         var signGlow = new BABYLON.PointLight('gSignGlow', new V3(13, 2.9, 0.1), this.scene);
         signGlow.diffuse = new Color3(1, 0.3, 0);
-        signGlow.intensity = 2;
+        signGlow.intensity = 0.2;
         signGlow.range = 5;
         this._garageEnv.push(signGlow);
 
