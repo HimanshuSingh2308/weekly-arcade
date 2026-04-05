@@ -57,9 +57,8 @@
 
     // ─── Screen Management ────────────────────────────────────────
     show(screenName) {
-      if (this.currentScreen && this.screens[this.currentScreen]) {
-        this.screens[this.currentScreen].isVisible = false;
-      }
+      // Hide ALL screens first (prevents duplicate panels from leaking through)
+      Object.values(this.screens).forEach(function(s) { if (s) s.isVisible = false; });
       if (this.screens[screenName]) {
         this.screens[screenName].isVisible = true;
       }
