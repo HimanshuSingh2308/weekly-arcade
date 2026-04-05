@@ -35,8 +35,8 @@
   const CH_COLORS = [COLORS.ch1, COLORS.ch2, COLORS.ch3, COLORS.ch4, COLORS.ch5];
   const FONT = 'bold 24px monospace';
   const FONT_SMALL = '16px monospace';
-  const STAR_FILLED = '*';
-  const STAR_EMPTY = '-';
+  const STAR_FILLED = '\u2b50';
+  const STAR_EMPTY = '\u2606';
 
   class GUIManager {
     constructor(scene) {
@@ -1911,7 +1911,7 @@
       this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' Place';
       this.resultPosition.color = won ? COLORS.gold : COLORS.text;
       // Stars
-      this.resultStars.text = '* '.repeat(data.stars) + '. '.repeat(3 - data.stars);
+      this.resultStars.text = '\u2b50'.repeat(data.stars) + '\u2606'.repeat(3 - data.stars);
       this.resultStars.color = data.stars >= 2 ? COLORS.gold : COLORS.textDim;
       this.resultStars.fontSize = data.stars === 3 ? 32 : 26;
       // Stats — each on separate line
@@ -1927,7 +1927,7 @@
       if (data.goalResults && data.goalResults.length) {
         var goalStr = '';
         data.goalResults.forEach(function(g) {
-          goalStr += (g.passed ? '[OK] ' : '[X] ') + g.label + '\n';
+          goalStr += (g.passed ? '\u2705' : '\u274c') + g.label + '\n';
         });
         if (data.allGoalsPassed && data.unlockText) {
           goalStr += '\n' + data.unlockText;
