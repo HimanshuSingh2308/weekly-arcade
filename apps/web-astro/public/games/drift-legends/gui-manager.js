@@ -1162,7 +1162,7 @@
       // ─── Bottom: Horizontal car cards ─────────────────────────
       var bottomBar = new GUI.Rectangle('carBottomBar');
       bottomBar.width = '100%';
-      bottomBar.height = '130px';
+      bottomBar.height = '150px';
       bottomBar.background = 'rgba(13,13,26,0.8)';
       bottomBar.thickness = 0;
       bottomBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
@@ -1393,6 +1393,17 @@
         ceiling.material = wallMat;
         this._garageEnv.push(ceiling);
 
+        // ── Large softbox light panel (covers entire floor) ──
+        var softbox = MB.CreateBox('gSoftbox', { width: 18, height: 0.05, depth: 12 }, this.scene);
+        softbox.position = new V3(cx, 7.4, 0);
+        var softboxMat = new BABYLON.StandardMaterial('gSoftboxMat', this.scene);
+        softboxMat.emissiveColor = new Color3(0.8, 0.8, 0.9);
+        softboxMat.diffuseColor = Color3.Black();
+        softboxMat.disableLighting = true;
+        softboxMat.alpha = 0.5;
+        softbox.material = softboxMat;
+        this._garageEnv.push(softbox);
+
         // ── Ceiling strip lights (emissive — like area lights) ──
         var stripMat = new BABYLON.StandardMaterial('gStripMat', this.scene);
         stripMat.emissiveColor = new Color3(1, 0.95, 0.9);
@@ -1406,20 +1417,27 @@
           strip.material = stripMat;
           this._garageEnv.push(strip);
 
-          // Spot light pointing down from ceiling
-          var spotLight = new BABYLON.SpotLight('gSpot_' + zOff, new V3(cx, 7.3, zOff), new V3(0, -1, 0), Math.PI / 3, 2, this.scene);
+          // Spot light above ceiling (orb hidden by ceiling)
+          var spotLight = new BABYLON.SpotLight('gSpot_' + zOff, new V3(cx, 10, zOff), new V3(0, -1, 0), Math.PI / 3, 2, this.scene);
           spotLight.diffuse = new Color3(1, 0.95, 0.9);
-          spotLight.intensity = 12;
-          spotLight.range = 12;
+          spotLight.intensity = 10;
+          spotLight.range = 14;
           this._garageEnv.push(spotLight);
         }.bind(this));
 
-        // ── Direct overhead spot on car (hero light) ──
-        var heroSpot = new BABYLON.SpotLight('gHero', new V3(cx, 7, 0), new V3(0, -1, 0), Math.PI / 4, 3, this.scene);
+        // ── Direct overhead spot on car (above ceiling — orb not visible) ──
+        var heroSpot = new BABYLON.SpotLight('gHero', new V3(cx, 12, 0), new V3(0, -1, 0), Math.PI / 5, 2, this.scene);
         heroSpot.diffuse = new Color3(1, 0.95, 0.85);
-        heroSpot.intensity = 15;
-        heroSpot.range = 10;
+        heroSpot.intensity = 20;
+        heroSpot.range = 16;
         this._garageEnv.push(heroSpot);
+
+        // Front light on car (so face is lit, not just top)
+        var frontLight = new BABYLON.PointLight('gFront', new V3(cx, 2, -5), this.scene);
+        frontLight.diffuse = new Color3(0.9, 0.9, 1);
+        frontLight.intensity = 4;
+        frontLight.range = 10;
+        this._garageEnv.push(frontLight);
 
         // ── Accent lights ──
         var key = new BABYLON.PointLight('gKey', new V3(cx + 6, 4, -2), this.scene);
@@ -1446,12 +1464,59 @@
         neonStrip.material = neonMat;
         this._garageEnv.push(neonStrip);
 
-        // Orange glow from neon
+        // Orange glow from neon strip
         var neonLight = new BABYLON.PointLight('gNeonLight', new V3(cx, 4, 7), this.scene);
         neonLight.diffuse = new Color3(1, 0.3, 0);
-        neonLight.intensity = 2;
-        neonLight.range = 6;
+        neonLight.intensity = 3;
+        neonLight.range = 8;
         this._garageEnv.push(neonLight);
+
+        // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
+        var signPlane = MB.CreatePlane('gSign', { width: 6, height: 1.5 }, this.scene);
+        signPlane.position = new V3(cx, 5.5, 7.7);
+        var signMat = new BABYLON.StandardMaterial('gSignMat', this.scene);
+        signMat.emissiveColor = new Color3(1, 0.3, 0);
+        signMat.diffuseColor = Color3.Black();
+        signMat.disableLighting = true;
+        signMat.backFaceCulling = false;
+
+        // Create dynamic texture for the sign text
+        var signTex = new BABYLON.DynamicTexture('gSignTex', { width: 512, height: 128 }, this.scene);
+        signTex.hasAlpha = true;
+        var ctx2d = signTex.getContext();
+        ctx2d.clearRect(0, 0, 512, 128);
+        ctx2d.font = 'bold 80px monospace';
+        ctx2d.fillStyle = '#ff4d00';
+        ctx2d.textAlign = 'center';
+        ctx2d.fillText('GARAGE', 256, 90);
+        signTex.update();
+        signMat.emissiveTexture = signTex;
+        signMat.opacityTexture = signTex;
+        signPlane.material = signMat;
+        this._garageEnv.push(signPlane);
+
+        // Glitch animation — flicker the sign
+        var signFlickerTime = 0;
+        this.scene.registerBeforeRender(function() {
+          if (!signPlane || signPlane.isDisposed()) return;
+          signFlickerTime += 0.016;
+          // Random flicker every few seconds
+          var flicker = Math.sin(signFlickerTime * 47) * Math.sin(signFlickerTime * 113);
+          if (flicker > 0.95) {
+            signMat.emissiveColor = new Color3(0.2, 0.05, 0); // dim
+            signPlane.position.x = cx + (Math.random() - 0.5) * 0.05; // horizontal glitch
+          } else {
+            signMat.emissiveColor = new Color3(1, 0.3, 0); // full brightness
+            signPlane.position.x = cx;
+          }
+        });
+
+        // Sign glow
+        var signGlow = new BABYLON.PointLight('gSignGlow', new V3(cx, 5.5, 7), this.scene);
+        signGlow.diffuse = new Color3(1, 0.3, 0);
+        signGlow.intensity = 2;
+        signGlow.range = 5;
+        this._garageEnv.push(signGlow);
 
         // ── Garage props ──
         var propMat = new BABYLON.StandardMaterial('gPropMat', this.scene);
@@ -1490,11 +1555,11 @@
         benchTop.material = propMat;
         this._garageEnv.push(benchTop);
 
-        // Ambient hemi
+        // Ambient hemi — bright enough to see car details
         var hemi = new BABYLON.HemisphericLight('gHemi', new V3(0, 1, 0), this.scene);
-        hemi.intensity = 1.0;
-        hemi.diffuse = new Color3(0.7, 0.7, 0.8);
-        hemi.groundColor = new Color3(0.12, 0.12, 0.15);
+        hemi.intensity = 1.5;
+        hemi.diffuse = new Color3(0.8, 0.8, 0.9);
+        hemi.groundColor = new Color3(0.15, 0.15, 0.2);
         this._garageEnv.push(hemi);
         this._garageHemi = hemi;
       } catch (_) {}
