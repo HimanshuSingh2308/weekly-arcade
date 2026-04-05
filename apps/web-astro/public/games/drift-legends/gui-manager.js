@@ -1506,22 +1506,7 @@
         this._garageEnv.push(fill);
         this._garageFillLight = fill;
 
-        // ── Neon accent strip on back wall (orange) ──
-        var neonStrip = MB.CreateBox('gNeon', { width: 20, height: 0.15, depth: 0.1 }, this.scene);
-        neonStrip.position = new V3(10.01, 3.5, 0.1); // below sign on right wall
-        var neonMat = new BABYLON.StandardMaterial('gNeonMat', this.scene);
-        neonMat.emissiveColor = new Color3(1, 0.3, 0);
-        neonMat.diffuseColor = Color3.Black();
-        neonMat.disableLighting = true;
-        neonStrip.material = neonMat;
-        this._garageEnv.push(neonStrip);
-
-        // Orange glow from neon strip
-        var neonLight = new BABYLON.PointLight('gNeonLight', new V3(9, 2.5, 0.1), this.scene);
-        neonLight.diffuse = new Color3(1, 0.3, 0);
-        neonLight.intensity = 3;
-        neonLight.range = 8;
-        this._garageEnv.push(neonLight);
+        // (neon strip removed — not needed)
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
