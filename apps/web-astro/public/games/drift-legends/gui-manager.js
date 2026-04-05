@@ -1070,6 +1070,7 @@
       this._createText('TAP A CAR TO SELECT', 12, COLORS.textMuted, centerStack).paddingBottom = '12px';
 
       // Show default car preview on first load
+      this._selectedCarId = 'street-kart';
       try { this._showGarageCarPreview('street-kart'); } catch(_) {}
 
       // Large stat bars for selected car
@@ -1135,7 +1136,23 @@
       cardRow.isVertical = false;
       cardRow.height = '120px';
       cardRow.top = '10px';
+      cardRow.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      cardRow.left = '10px';
+      cardRow.width = '75%';
       bottomBar.addControl(cardRow);
+
+      // SELECT button — right side of bottom bar
+      var selectBtn = this._createButton('SELECT >', '140px', '50px');
+      selectBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      selectBtn.left = '-16px';
+      selectBtn.fontSize = 18;
+      selectBtn.onPointerClickObservable.add(() => {
+        this._fire('click');
+        if (this._selectedCarId) {
+          this._fire('selectCar', { carId: this._selectedCarId });
+        }
+      });
+      bottomBar.addControl(selectBtn);
 
       this.carSelectCards = [];
       var carDefs = [
@@ -1236,10 +1253,10 @@
             cc.card.thickness = cc.carId === car.id ? 3 : 1;
             cc.card.shadowBlur = cc.carId === car.id ? 20 : 8;
           });
-          // 3D car preview — swap to selected car
+          // 3D car preview — swap to selected car (don't advance yet)
           this._showGarageCarPreview(car.id);
           this._showGaragePreview(true);
-          this._fire('selectCar', { carId: car.id });
+          this._selectedCarId = car.id;
         });
 
         cardRow.addControl(card);
