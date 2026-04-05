@@ -1542,13 +1542,42 @@
         barrel.material = barrelMat;
         this._garageEnv.push(barrel);
 
-        // Tire stack — back right
-        [0, 0.4, 0.8].forEach(function(y) {
-          var tire = MB.CreateTorus('gTire', { diameter: 0.8, thickness: 0.25, tessellation: 12 }, this.scene);
-          tire.position = new V3(cx + 10, y + 0.1, 5);
-          tire.rotation.x = Math.PI / 2;
-          tire.material = propMat;
+        // Tire stack — back right, realistic with rim + rubber
+        var rubberMat = new BABYLON.StandardMaterial('gRubberMat', this.scene);
+        rubberMat.diffuseColor = new Color3(0.08, 0.08, 0.08);
+        rubberMat.specularColor = new Color3(0.15, 0.15, 0.15);
+        rubberMat.specularPower = 8;
+
+        var rimMat = new BABYLON.StandardMaterial('gRimMat', this.scene);
+        rimMat.diffuseColor = new Color3(0.6, 0.6, 0.65);
+        rimMat.specularColor = new Color3(0.8, 0.8, 0.85);
+        rimMat.specularPower = 64;
+
+        [0, 0.45, 0.9].forEach(function(yOff, idx) {
+          // Outer rubber tire
+          var tire = MB.CreateTorus('gTire_' + idx, { diameter: 0.85, thickness: 0.28, tessellation: 20 }, this.scene);
+          tire.position = new V3(cx + 10, yOff + 0.15, 5);
+          tire.rotation.y = Math.PI / 2;
+          // Slight random tilt for natural look
+          tire.rotation.z = (idx - 1) * 0.08;
+          tire.material = rubberMat;
           this._garageEnv.push(tire);
+
+          // Inner rim (smaller torus, metallic)
+          var rim = MB.CreateTorus('gRim_' + idx, { diameter: 0.5, thickness: 0.08, tessellation: 16 }, this.scene);
+          rim.position = tire.position.clone();
+          rim.rotation.y = Math.PI / 2;
+          rim.rotation.z = tire.rotation.z;
+          rim.material = rimMat;
+          this._garageEnv.push(rim);
+
+          // Hub cap (small disc in center)
+          var hub = MB.CreateCylinder('gHub_' + idx, { height: 0.05, diameter: 0.25, tessellation: 10 }, this.scene);
+          hub.position = tire.position.clone();
+          hub.position.x += 0.01; // slight offset so it's visible
+          hub.rotation.z = Math.PI / 2;
+          hub.material = rimMat;
+          this._garageEnv.push(hub);
         }.bind(this));
 
         // Workbench — left wall
