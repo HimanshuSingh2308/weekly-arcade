@@ -1328,21 +1328,7 @@
 
         // Build new car at origin
         this._garageCar = CB.buildCar(this.scene, carId);
-        // Override PBR → StandardMaterial for better garage visibility
-        var carColors = { 'street-kart': [0.1, 0.37, 0.7], 'drift-racer': [0.8, 0, 0], 'sand-runner': [0.78, 0.63, 0] };
-        var cc = carColors[carId] || [0.5, 0.5, 0.5];
-        var garageMat = new BABYLON.StandardMaterial('gCarMat', this.scene);
-        garageMat.diffuseColor = new BABYLON.Color3(cc[0], cc[1], cc[2]);
-        garageMat.specularColor = new BABYLON.Color3(0.6, 0.6, 0.6);
-        garageMat.specularPower = 32;
-        // Apply to all child meshes
-        this._garageCar.getChildMeshes().forEach(function(m) {
-          if (m.material && m.material.albedoColor) {
-            // Keep emissive materials (headlights, taillights)
-            if (m.material.emissiveColor && (m.material.emissiveColor.r > 0.3 || m.material.emissiveColor.g > 0.3)) return;
-            m.material = garageMat;
-          }
-        });
+        // Use car's original PBR materials — hemi at 3.0 is bright enough
         this._garageCar.position = new BABYLON.Vector3(3, 0, 0); // offset right so it doesn't overlap left panel
         this._garageCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
         this._garageCar.rotation.y = Math.PI * 0.2;
