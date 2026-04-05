@@ -186,8 +186,12 @@
       // Apply velocity
       this.mesh.position.addInPlace(this.velocity.scale(dt));
 
-      // Keep on ground
-      this.mesh.position.y = 0;
+      // Follow track elevation (bridges)
+      if (this._roadY !== undefined) {
+        this.mesh.position.y += (this._roadY - this.mesh.position.y) * 0.2; // smooth follow
+      } else {
+        this.mesh.position.y = 0;
+      }
 
       // Collision cooldown
       if (this.collisionCooldown > 0) this.collisionCooldown -= dt;

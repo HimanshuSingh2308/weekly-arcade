@@ -116,7 +116,7 @@
       const offsetPos = targetPos.add(right.scale(lineOffset));
 
       // Smooth movement
-      V3.LerpToRef(this.mesh.position, new V3(offsetPos.x, 0, offsetPos.z), 0.15, this.mesh.position);
+      V3.LerpToRef(this.mesh.position, new V3(offsetPos.x, targetPos.y || 0, offsetPos.z), 0.15, this.mesh.position);
 
       // Face direction of travel
       const angle = Math.atan2(tangent.x, tangent.z);
