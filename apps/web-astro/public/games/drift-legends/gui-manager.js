@@ -91,6 +91,13 @@
       // Toggle garage 3D car preview
       if (this._showGaragePreview) {
       if (screenName === 'CAR_SELECT') {
+        // Dispose menu car — it conflicts with garage car
+        if (this._menuCar) { this._menuCar.dispose(false, true); this._menuCar = null; }
+        if (this._menuCarLight) this._menuCarLight.setEnabled(false);
+        if (this._menuCarFill) this._menuCarFill.setEnabled(false);
+        if (this._menuCarRim) this._menuCarRim.setEnabled(false);
+        if (this._menuCarHemi) this._menuCarHemi.setEnabled(false);
+        // Build garage preview
         if (!this._garageCar && this._selectedCarId) {
           this._showGarageCarPreview(this._selectedCarId);
         }
@@ -1064,71 +1071,62 @@
       this._addScreenTitle(panel, 'GARAGE');
 
       // Center — selected car info display
-      // Car info — LEFT side (3D car renders in the right/center area)
-      var centerStack = new GUI.StackPanel('carCenterStack');
-      centerStack.width = '260px';
-      centerStack.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      centerStack.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      centerStack.left = '40px';
-      centerStack.top = '-10px';
-      panel.addControl(centerStack);
+      // Car name — TOP CENTER (above 3D car)
+      this._garageCarEmoji = this._createText('\ud83d\ude97', 28, COLORS.text);
+      this._garageCarEmoji.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this._garageCarEmoji.top = '50px';
+      panel.addControl(this._garageCarEmoji);
 
-      // Car emoji (small, above name)
-      this._garageCarEmoji = this._createText('\ud83d\ude97', 36, COLORS.text, centerStack);
-      this._garageCarEmoji.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this._garageCarEmoji.paddingBottom = '4px';
-
-      // Selected car name
-      this._garageCarName = this._createTitle('Street Kart', 28, COLORS.text, centerStack);
-      this._garageCarName.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this._garageCarName.paddingBottom = '4px';
-
-      // Subtitle
-      var tapHint = this._createText('TAP A CAR TO SELECT', 11, COLORS.textMuted, centerStack);
-      tapHint.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      tapHint.paddingBottom = '12px';
+      this._garageCarName = this._createTitle('Street Kart', 30, COLORS.text);
+      this._garageCarName.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this._garageCarName.top = '80px';
+      this._garageCarName.shadowColor = COLORS.accentGlow;
+      this._garageCarName.shadowBlur = 12;
+      panel.addControl(this._garageCarName);
 
       // Default selected car (3D preview built on first show, not at init)
       this._selectedCarId = 'street-kart';
 
-      // Large stat bars for selected car
+      // Stats bar — HORIZONTAL, above the car cards
+      var statsBar = new GUI.StackPanel('garageStatsBar');
+      statsBar.isVertical = false;
+      statsBar.height = '40px';
+      statsBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      statsBar.top = '-145px';
+      panel.addControl(statsBar);
+
       this._garageStatBars = {};
       var statDefs = [
-        { key: 'speed', label: 'SPEED', color: '#00d4ff' },
-        { key: 'handling', label: 'HANDLING', color: COLORS.accent },
-        { key: 'drift', label: 'DRIFT', color: '#00ff88' },
+        { key: 'speed', label: 'SPD', color: '#00d4ff' },
+        { key: 'handling', label: 'HND', color: COLORS.accent },
+        { key: 'drift', label: 'DFT', color: '#00ff88' },
       ];
       statDefs.forEach((sd) => {
-        var row = new GUI.StackPanel('garageStat_' + sd.key);
-        row.isVertical = false;
-        row.height = '22px';
-        row.paddingBottom = '4px';
-        centerStack.addControl(row);
-
-        var lbl = this._createText(sd.label, 11, COLORS.textDim, row);
-        lbl.width = '80px';
-        lbl.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-
-        var sp = new GUI.Rectangle(); sp.width = '8px'; sp.height = '1px'; sp.thickness = 0; sp.background = 'transparent'; row.addControl(sp);
+        var lbl = this._createText(sd.label, 13, COLORS.textDim, statsBar);
+        lbl.width = '40px';
 
         var barBg = new GUI.Rectangle('gStatBg_' + sd.key);
-        barBg.width = '160px';
-        barBg.height = '10px';
-        barBg.cornerRadius = 5;
+        barBg.width = '120px';
+        barBg.height = '14px';
+        barBg.cornerRadius = 7;
         barBg.background = 'rgba(255,255,255,0.08)';
         barBg.thickness = 0;
-        row.addControl(barBg);
+        barBg.isHitTestVisible = false;
+        statsBar.addControl(barBg);
 
         var barFill = new GUI.Rectangle('gStatFill_' + sd.key);
         barFill.width = '60%';
         barFill.height = '100%';
-        barFill.cornerRadius = 5;
+        barFill.cornerRadius = 7;
         barFill.background = sd.color;
         barFill.thickness = 0;
         barFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
         barBg.addControl(barFill);
 
         this._garageStatBars[sd.key] = barFill;
+
+        // Spacer
+        var sp = new GUI.Rectangle(); sp.width = '20px'; sp.height = '1px'; sp.thickness = 0; sp.background = 'transparent'; statsBar.addControl(sp);
       });
 
       // ─── Bottom: Horizontal car cards ─────────────────────────
@@ -1299,7 +1297,7 @@
         }
 
         // Build new car at origin
-        this._garageCar = CB.buildCar(this.scene, carId, COLORS.accent);
+        this._garageCar = CB.buildCar(this.scene, carId); // use car's default color
         this._garageCar.position = new BABYLON.Vector3(3, 0, 0); // offset right so it doesn't overlap left panel
         this._garageCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
         this._garageCar.rotation.y = Math.PI * 0.2;
