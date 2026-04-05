@@ -1092,7 +1092,55 @@
       spotlight.isHitTestVisible = false;
       panel.addControl(spotlight);
 
+      // Garage atmosphere — subtle tool/wrench icons in corners
+      var garageIcons = [
+        { text: '\ud83d\udd27', x: '-42%', y: '20%' },   // wrench top-left
+        { text: '\ud83d\udd29', x: '42%', y: '25%' },    // nut top-right
+        { text: '\u2699\ufe0f', x: '-38%', y: '55%' },   // gear mid-left
+        { text: '\ud83d\udee2\ufe0f', x: '40%', y: '50%' }, // oil drum mid-right
+        { text: '\ud83d\udd27', x: '-35%', y: '-5%' },   // wrench upper-left
+      ];
+      garageIcons.forEach(function(icon, idx) {
+        var t = new GUI.TextBlock('garageIcon_' + idx, icon.text);
+        t.fontSize = 28;
+        t.color = 'rgba(255,255,255,0.06)';
+        t.left = icon.x;
+        t.top = icon.y;
+        t.isHitTestVisible = false;
+        t.rotation = (idx * 0.4) - 0.8;
+        panel.addControl(t);
+      });
+
       // Center — selected car info display
+      // Garage wall posters (subtle, decorative)
+      var posters = [
+        { x: '-40%', y: '-25%', w: '80px', h: '50px', color: 'rgba(255,77,0,0.08)', text: 'DRIFT\nLEGENDS' },
+        { x: '38%', y: '-20%', w: '70px', h: '45px', color: 'rgba(0,200,255,0.06)', text: 'RACE\nHARD' },
+        { x: '-44%', y: '10%', w: '60px', h: '40px', color: 'rgba(0,255,100,0.05)', text: '#1' },
+      ];
+      posters.forEach(function(p, idx) {
+        var poster = new GUI.Rectangle('poster_' + idx);
+        poster.width = p.w;
+        poster.height = p.h;
+        poster.background = p.color;
+        poster.cornerRadius = 3;
+        poster.thickness = 1;
+        poster.color = 'rgba(255,255,255,0.06)';
+        poster.left = p.x;
+        poster.top = p.y;
+        poster.isHitTestVisible = false;
+        panel.addControl(poster);
+
+        var pText = new GUI.TextBlock('posterText_' + idx, p.text);
+        pText.fontSize = 10;
+        pText.fontFamily = 'monospace';
+        pText.fontWeight = 'bold';
+        pText.color = 'rgba(255,255,255,0.1)';
+        pText.textWrapping = GUI.TextWrapping.WordWrap;
+        pText.isHitTestVisible = false;
+        poster.addControl(pText);
+      });
+
       // Car name — TOP CENTER
       this._garageCarEmoji = null; // no emoji needed — 3D car is the visual
       this._garageCarName = this._createTitle('Street Kart', 32, COLORS.text);
