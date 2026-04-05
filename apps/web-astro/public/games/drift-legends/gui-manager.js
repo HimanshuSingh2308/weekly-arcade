@@ -1068,29 +1068,7 @@
       this._addBackButton(panel, 'STORY_SELECT');
       this._addScreenTitle(panel, 'GARAGE');
 
-      // Garage floor — subtle gradient at bottom half
-      var floor = new GUI.Rectangle('garageFloor');
-      floor.width = '100%';
-      floor.height = '40%';
-      floor.background = 'rgba(20,20,30,0.4)';
-      floor.thickness = 0;
-      floor.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      floor.top = '-130px';
-      floor.isHitTestVisible = false;
-      panel.addControl(floor);
-
-      // Spotlight glow on floor (ellipse)
-      var spotlight = new GUI.Ellipse('garageSpotlight');
-      spotlight.width = '400px';
-      spotlight.height = '80px';
-      spotlight.background = 'rgba(255,255,255,0.04)';
-      spotlight.thickness = 0;
-      spotlight.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      spotlight.top = '60px';
-      spotlight.isHitTestVisible = false;
-      panel.addControl(spotlight);
-
-      // (tool icons removed — too subtle, added noise)
+      // (GUI floor/spotlight removed — 3D scene handles visuals)
 
       // Center — selected car info display
       // (posters removed — looked distracting)
