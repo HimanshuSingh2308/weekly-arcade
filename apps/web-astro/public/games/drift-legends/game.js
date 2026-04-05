@@ -414,7 +414,7 @@
     scene.activeCamera = chaseCamera.camera;
     chaseCamera.setTarget(playerCar);
 
-    // Dispose menu/garage preview cars — they persist and show during racing
+    // Dispose ALL menu/garage preview objects
     if (gui._menuCar) { gui._menuCar.dispose(false, true); gui._menuCar = null; }
     if (gui._garageCar) { gui._garageCar.dispose(false, true); gui._garageCar = null; }
     // Disable menu lights
@@ -422,6 +422,12 @@
     if (gui._menuCarFill) gui._menuCarFill.setEnabled(false);
     if (gui._menuCarRim) gui._menuCarRim.setEnabled(false);
     if (gui._menuCarHemi) gui._menuCarHemi.setEnabled(false);
+    // Disable garage lights
+    if (gui._garageKeyLight) gui._garageKeyLight.setEnabled(false);
+    if (gui._garageFillLight) gui._garageFillLight.setEnabled(false);
+    if (gui._garageHemi) gui._garageHemi.setEnabled(false);
+    // Force chase camera — remove any ArcRotateCamera from scene
+    scene.activeCamera = chaseCamera.camera;
 
     // Particles
     driftSmoke = DL.Particles.createDriftSmoke(scene);
@@ -480,6 +486,7 @@
     if (gui.hud && gui.hud.goalReminder && introGoals && introGoals.length) {
       gui.hud.goalReminder.text = 'GOAL: ' + introGoals.map(function(g) { return g.label; }).join(' | ');
     }
+    scene.activeCamera = chaseCamera.camera; // ensure chase cam before cinematic
     chaseCamera.setTarget(playerCar);
     chaseCamera.startCinematicIntro(allCarMeshes, trackData, 5, function() {
       // Cinematic done → snap camera behind player → start countdown
