@@ -398,18 +398,21 @@
     scene.activeCamera = chaseCamera.camera;
     chaseCamera.setTarget(playerCar);
 
-    // Dispose ALL menu/garage preview objects
+    // Dispose ALL menu/garage objects completely
     if (gui._menuCar) { gui._menuCar.dispose(false, true); gui._menuCar = null; }
     if (gui._garageCar) { gui._garageCar.dispose(false, true); gui._garageCar = null; }
+    // Dispose entire garage environment (walls, floor, lights, props)
+    if (gui._garageEnv) {
+      gui._garageEnv.forEach(function(obj) { try { obj.dispose(); } catch(_) {} });
+      gui._garageEnv = null;
+    }
     // Disable menu lights
-    if (gui._menuCarLight) gui._menuCarLight.setEnabled(false);
-    if (gui._menuCarFill) gui._menuCarFill.setEnabled(false);
-    if (gui._menuCarRim) gui._menuCarRim.setEnabled(false);
-    if (gui._menuCarHemi) gui._menuCarHemi.setEnabled(false);
-    // Disable garage lights
-    if (gui._garageKeyLight) gui._garageKeyLight.setEnabled(false);
-    if (gui._garageFillLight) gui._garageFillLight.setEnabled(false);
-    if (gui._garageHemi) gui._garageHemi.setEnabled(false);
+    if (gui._menuCarLight) { try { gui._menuCarLight.dispose(); } catch(_) {} gui._menuCarLight = null; }
+    if (gui._menuCarFill) { try { gui._menuCarFill.dispose(); } catch(_) {} gui._menuCarFill = null; }
+    if (gui._menuCarRim) { try { gui._menuCarRim.dispose(); } catch(_) {} gui._menuCarRim = null; }
+    if (gui._menuCarHemi) { try { gui._menuCarHemi.dispose(); } catch(_) {} gui._menuCarHemi = null; }
+    gui._garageHemi = null;
+    gui._garageCam = null;
     // Force chase camera — remove any ArcRotateCamera from scene
     scene.activeCamera = chaseCamera.camera;
 

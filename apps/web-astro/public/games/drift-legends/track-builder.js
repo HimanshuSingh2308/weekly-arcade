@@ -611,16 +611,16 @@
 
       // Place props to the sides of the road
       const side = (i % 2 === 0) ? 1 : -1;
-      const offset = trackDef.trackWidth * 1.5 + 5 + Math.random() * 12;
+      const offset = trackDef.trackWidth * 2.0 + 6 + Math.random() * 10;
       const propPos = pos.add(right.scale(side * offset));
 
       // Also add a closer prop on opposite side every 3rd position
-      var nearOffset = trackDef.trackWidth * 1.3 + 4 + Math.random() * 8;
+      var nearOffset = trackDef.trackWidth * 1.5 + 5 + Math.random() * 8;
       var nearPropPos = pos.add(right.scale(-side * nearOffset));
 
-      // Skip if prop would be on the track
-      if (isOnTrack(splinePoints, trackDef.trackWidth + 6, propPos)) continue;
-      if (isOnTrack(splinePoints, trackDef.trackWidth + 6, nearPropPos)) nearPropPos = null;
+      // Skip if prop would be anywhere near the track (wide check)
+      if (isOnTrack(splinePoints, trackDef.trackWidth + 10, propPos)) continue;
+      if (isOnTrack(splinePoints, trackDef.trackWidth + 10, nearPropPos)) nearPropPos = null;
 
       switch (envType) {
         case 'city':
