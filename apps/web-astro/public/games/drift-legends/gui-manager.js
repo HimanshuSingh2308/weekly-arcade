@@ -1092,54 +1092,10 @@
       spotlight.isHitTestVisible = false;
       panel.addControl(spotlight);
 
-      // Garage atmosphere — subtle tool/wrench icons in corners
-      var garageIcons = [
-        { text: '\ud83d\udd27', x: '-42%', y: '20%' },   // wrench top-left
-        { text: '\ud83d\udd29', x: '42%', y: '25%' },    // nut top-right
-        { text: '\u2699\ufe0f', x: '-38%', y: '55%' },   // gear mid-left
-        { text: '\ud83d\udee2\ufe0f', x: '40%', y: '50%' }, // oil drum mid-right
-        { text: '\ud83d\udd27', x: '-35%', y: '-5%' },   // wrench upper-left
-      ];
-      garageIcons.forEach(function(icon, idx) {
-        var t = new GUI.TextBlock('garageIcon_' + idx, icon.text);
-        t.fontSize = 28;
-        t.color = 'rgba(255,255,255,0.06)';
-        t.left = icon.x;
-        t.top = icon.y;
-        t.isHitTestVisible = false;
-        t.rotation = (idx * 0.4) - 0.8;
-        panel.addControl(t);
-      });
+      // (tool icons removed — too subtle, added noise)
 
       // Center — selected car info display
-      // Garage wall posters (subtle, decorative)
-      var posters = [
-        { x: '-40%', y: '-25%', w: '80px', h: '50px', color: 'rgba(255,77,0,0.08)', text: 'DRIFT\nLEGENDS' },
-        { x: '38%', y: '-20%', w: '70px', h: '45px', color: 'rgba(0,200,255,0.06)', text: 'RACE\nHARD' },
-        { x: '-44%', y: '10%', w: '60px', h: '40px', color: 'rgba(0,255,100,0.05)', text: '#1' },
-      ];
-      posters.forEach(function(p, idx) {
-        var poster = new GUI.Rectangle('poster_' + idx);
-        poster.width = p.w;
-        poster.height = p.h;
-        poster.background = p.color;
-        poster.cornerRadius = 3;
-        poster.thickness = 1;
-        poster.color = 'rgba(255,255,255,0.06)';
-        poster.left = p.x;
-        poster.top = p.y;
-        poster.isHitTestVisible = false;
-        panel.addControl(poster);
-
-        var pText = new GUI.TextBlock('posterText_' + idx, p.text);
-        pText.fontSize = 10;
-        pText.fontFamily = 'monospace';
-        pText.fontWeight = 'bold';
-        pText.color = 'rgba(255,255,255,0.1)';
-        pText.textWrapping = GUI.TextWrapping.WordWrap;
-        pText.isHitTestVisible = false;
-        poster.addControl(pText);
-      });
+      // (posters removed — looked distracting)
 
       // Car name — TOP CENTER
       this._garageCarEmoji = null; // no emoji needed — 3D car is the visual
@@ -1386,19 +1342,33 @@
           this._garageCam.fov = 0.9;
         }
         // Recreate lights if disposed
+        // Strong dramatic lighting — car is the hero
         if (!this._garageKeyLight || this._garageKeyLight.isDisposed()) {
-          this._garageKeyLight = new BABYLON.PointLight('garageKey', new BABYLON.Vector3(5, 4, -3), this.scene);
-          this._garageKeyLight.intensity = 2.5;
-          this._garageKeyLight.diffuse = new BABYLON.Color3(1, 0.7, 0.4);
+          this._garageKeyLight = new BABYLON.PointLight('garageKey', new BABYLON.Vector3(6, 5, -4), this.scene);
+          this._garageKeyLight.intensity = 4.0;
+          this._garageKeyLight.diffuse = new BABYLON.Color3(1, 0.8, 0.5);
         }
         if (!this._garageFillLight || this._garageFillLight.isDisposed()) {
-          this._garageFillLight = new BABYLON.PointLight('garageFill', new BABYLON.Vector3(-4, 3, 2), this.scene);
-          this._garageFillLight.intensity = 1.2;
-          this._garageFillLight.diffuse = new BABYLON.Color3(0.4, 0.6, 1.0);
+          this._garageFillLight = new BABYLON.PointLight('garageFill', new BABYLON.Vector3(-5, 3, 3), this.scene);
+          this._garageFillLight.intensity = 2.0;
+          this._garageFillLight.diffuse = new BABYLON.Color3(0.3, 0.5, 1.0);
         }
         if (!this._garageHemi || this._garageHemi.isDisposed()) {
           this._garageHemi = new BABYLON.HemisphericLight('garageHemi', new BABYLON.Vector3(0, 1, 0), this.scene);
-          this._garageHemi.intensity = 1.0;
+          this._garageHemi.intensity = 1.5;
+          this._garageHemi.diffuse = new BABYLON.Color3(0.9, 0.9, 1.0);
+          this._garageHemi.groundColor = new BABYLON.Color3(0.1, 0.1, 0.15);
+        }
+        // 3D ground plane — reflective garage floor
+        if (!this._garageGround || this._garageGround.isDisposed()) {
+          this._garageGround = BABYLON.MeshBuilder.CreateGround('garageFloor3D', { width: 20, height: 20 }, this.scene);
+          this._garageGround.position.y = -0.5;
+          this._garageGround.position.x = 3;
+          var floorMat = new BABYLON.PBRMaterial('garageFloorMat', this.scene);
+          floorMat.albedoColor = new BABYLON.Color3(0.08, 0.08, 0.12);
+          floorMat.metallic = 0.8;
+          floorMat.roughness = 0.3;
+          this._garageGround.material = floorMat;
         }
       } catch (_) {}
     }
@@ -1413,6 +1383,7 @@
       } else if (!visible) {
         if (this._savedCamForGarage) this.scene.activeCamera = this._savedCamForGarage;
         if (this._garageCar) { this._garageCar.dispose(false, true); this._garageCar = null; }
+        if (this._garageGround) { this._garageGround.dispose(); this._garageGround = null; }
         // Restore transparent bg for menu
         this.scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
       }
