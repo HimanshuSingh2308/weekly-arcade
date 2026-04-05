@@ -1046,7 +1046,7 @@
     // ─── Car Select ───────────────────────────────────────────────
     _buildCarSelect() {
       const panel = this._createPanel('CAR_SELECT');
-      panel.background = COLORS.bg; // opaque — hides HTML content underneath
+      panel.background = 'rgba(13,13,26,0.4)'; // semi-transparent — 3D car preview shows through
 
       this._addBackButton(panel, 'STORY_SELECT');
       this._addScreenTitle(panel, 'GARAGE');
