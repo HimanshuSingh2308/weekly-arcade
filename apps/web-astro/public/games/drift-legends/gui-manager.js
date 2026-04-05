@@ -1350,8 +1350,8 @@
         // Create/recreate garage camera + lights (may have been disposed by _returnToMenu)
         if (!this._garageCam || this._garageCam.isDisposed()) {
           this._garageCam = new BABYLON.ArcRotateCamera('garageCam',
-            Math.PI * 0.8, Math.PI * 0.4, 10,
-            new BABYLON.Vector3(3, 0.3, 0), this.scene);
+            Math.PI, Math.PI * 0.4, 10,
+            new BABYLON.Vector3(3, 0.5, 0), this.scene);
           this._garageCam.lowerRadiusLimit = 10;
           this._garageCam.upperRadiusLimit = 10;
           this._garageCam.fov = 0.9;
@@ -1490,7 +1490,7 @@
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
         signPlane.position = new V3(cx, 3.5, 7.5); // lower, visible behind car
-        signPlane.rotation.y = Math.PI; // face toward camera
+        // No rotation needed — default plane faces -Z which is toward camera
         var signMat = new BABYLON.StandardMaterial('gSignMat', this.scene);
         signMat.emissiveColor = new Color3(1, 0.3, 0);
         signMat.diffuseColor = Color3.Black();
