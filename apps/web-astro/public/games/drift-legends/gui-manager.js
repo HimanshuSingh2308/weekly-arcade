@@ -1579,15 +1579,31 @@
           this._garageEnv.push(rim);
         }.bind(this));
 
-        // Workbench — left wall
-        var bench = MB.CreateBox('gBench', { width: 0.3, height: 1, depth: 3 }, this.scene);
-        bench.position = new V3(cx - 11.5, 0, -2);
+        // Workbench — right wall (visible from camera)
+        var bench = MB.CreateBox('gBench', { width: 0.15, height: 1, depth: 3 }, this.scene);
+        bench.position = new V3(cx + 11.5, 0, -3);
         bench.material = propMat;
         this._garageEnv.push(bench);
-        var benchTop = MB.CreateBox('gBenchTop', { width: 1.2, height: 0.1, depth: 3 }, this.scene);
-        benchTop.position = new V3(cx - 11, 0.5, -2);
-        benchTop.material = propMat;
+        var benchTop = MB.CreateBox('gBenchTop', { width: 1.5, height: 0.1, depth: 3 }, this.scene);
+        benchTop.position = new V3(cx + 11, 0.5, -3);
+        var benchMat = new BABYLON.StandardMaterial('gBenchMat', this.scene);
+        benchMat.diffuseColor = new Color3(0.35, 0.25, 0.15);
+        benchTop.material = benchMat;
         this._garageEnv.push(benchTop);
+
+        // Oil barrel — right side, near back wall
+        var barrel = MB.CreateCylinder('gBarrel', { height: 1.2, diameter: 0.7, tessellation: 10 }, this.scene);
+        barrel.position = new V3(cx + 10, 0.1, 6);
+        var barrelMat = new BABYLON.StandardMaterial('gBarrelMat', this.scene);
+        barrelMat.diffuseColor = new Color3(0.35, 0.15, 0.1);
+        barrel.material = barrelMat;
+        this._garageEnv.push(barrel);
+
+        // Second barrel
+        var barrel2 = MB.CreateCylinder('gBarrel2', { height: 1.2, diameter: 0.7, tessellation: 10 }, this.scene);
+        barrel2.position = new V3(cx + 11, 0.1, 6.5);
+        barrel2.material = barrelMat;
+        this._garageEnv.push(barrel2);
 
         // (hemi already created above in 3-light setup)
       } catch (_) {}
