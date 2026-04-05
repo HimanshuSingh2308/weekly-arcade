@@ -1166,7 +1166,7 @@
       bottomBar.background = 'rgba(13,13,26,0.8)';
       bottomBar.thickness = 0;
       bottomBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      bottomBar.top = '-10px'; // lift above device toolbar
+      bottomBar.top = '0px'; // flush at bottom
       panel.addControl(bottomBar);
 
       // Top accent line
