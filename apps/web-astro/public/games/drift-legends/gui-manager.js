@@ -1508,7 +1508,7 @@
 
         // ── Neon accent strip on back wall (orange) ──
         var neonStrip = MB.CreateBox('gNeon', { width: 20, height: 0.15, depth: 0.1 }, this.scene);
-        neonStrip.position = new V3(cx, 4, 7.8);
+        neonStrip.position = new V3(10.01, 3.5, 0.1); // below sign on right wall
         var neonMat = new BABYLON.StandardMaterial('gNeonMat', this.scene);
         neonMat.emissiveColor = new Color3(1, 0.3, 0);
         neonMat.diffuseColor = Color3.Black();
@@ -1517,7 +1517,7 @@
         this._garageEnv.push(neonStrip);
 
         // Orange glow from neon strip
-        var neonLight = new BABYLON.PointLight('gNeonLight', new V3(cx, 4, 7), this.scene);
+        var neonLight = new BABYLON.PointLight('gNeonLight', new V3(9, 2.5, 0.1), this.scene);
         neonLight.diffuse = new Color3(1, 0.3, 0);
         neonLight.intensity = 3;
         neonLight.range = 8;
@@ -1525,8 +1525,10 @@
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
-        signPlane.position = new V3(cx, 3, 7.6); // just in front of back wall
-        signPlane.rotation.y = Math.PI; // face -Z (toward camera at alpha=PI)
+        signPlane.position = new V3(10.01, 2.0, 0.119);
+        signPlane.rotation.x = 38 * Math.PI / 180;
+        signPlane.rotation.y = 90 * Math.PI / 180;
+        signPlane.rotation.z = 0;
         var signMat = new BABYLON.StandardMaterial('gSignMat', this.scene);
         signMat.emissiveColor = new Color3(1, 0.3, 0);
         signMat.diffuseColor = Color3.Black();
@@ -1558,14 +1560,14 @@
           if (glitchTimer > nextGlitch) {
             // Glitch! Flicker for a brief moment
             signMat.emissiveColor = new BABYLON.Color3(0.15, 0.03, 0);
-            signPlane.position.x = cx + (Math.random() - 0.5) * 0.15;
-            signPlane.position.y = 3 + (Math.random() - 0.5) * 0.05;
+            signPlane.position.x = 10.01 + (Math.random() - 0.5) * 0.15;
+            signPlane.position.y = 2.0 + (Math.random() - 0.5) * 0.05;
             // Recover after short delay
             setTimeout(function() {
               if (signPlane && !signPlane.isDisposed()) {
                 signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
-                signPlane.position.x = cx;
-                signPlane.position.y = 3;
+                signPlane.position.x = 10.01;
+                signPlane.position.y = 2.0;
               }
             }, 80 + Math.random() * 120);
             // Double glitch sometimes
@@ -1586,7 +1588,7 @@
         });
 
         // Sign glow
-        var signGlow = new BABYLON.PointLight('gSignGlow', new V3(cx, 3.5, 6.5), this.scene);
+        var signGlow = new BABYLON.PointLight('gSignGlow', new V3(9, 2.0, 0.1), this.scene);
         signGlow.diffuse = new Color3(1, 0.3, 0);
         signGlow.intensity = 2;
         signGlow.range = 5;
