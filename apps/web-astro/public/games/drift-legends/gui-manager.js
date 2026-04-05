@@ -1286,22 +1286,27 @@
         this._garageCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
         this._garageCar.rotation.y = Math.PI * 0.2;
 
-        // Create garage camera if not exists
-        if (!this._garageCam) {
+        // Create/recreate garage camera + lights (may have been disposed by _returnToMenu)
+        if (!this._garageCam || this._garageCam.isDisposed()) {
           this._garageCam = new BABYLON.ArcRotateCamera('garageCam',
             Math.PI * 0.7, Math.PI * 0.35, 8,
             new BABYLON.Vector3(0, 0.5, 0), this.scene);
           this._garageCam.lowerRadiusLimit = 8;
           this._garageCam.upperRadiusLimit = 8;
           this._garageCam.fov = 0.9;
-
-          // Garage lighting
+        }
+        // Recreate lights if disposed
+        if (!this._garageKeyLight || this._garageKeyLight.isDisposed()) {
           this._garageKeyLight = new BABYLON.PointLight('garageKey', new BABYLON.Vector3(5, 4, -3), this.scene);
           this._garageKeyLight.intensity = 2.5;
           this._garageKeyLight.diffuse = new BABYLON.Color3(1, 0.7, 0.4);
+        }
+        if (!this._garageFillLight || this._garageFillLight.isDisposed()) {
           this._garageFillLight = new BABYLON.PointLight('garageFill', new BABYLON.Vector3(-4, 3, 2), this.scene);
           this._garageFillLight.intensity = 1.2;
           this._garageFillLight.diffuse = new BABYLON.Color3(0.4, 0.6, 1.0);
+        }
+        if (!this._garageHemi || this._garageHemi.isDisposed()) {
           this._garageHemi = new BABYLON.HemisphericLight('garageHemi', new BABYLON.Vector3(0, 1, 0), this.scene);
           this._garageHemi.intensity = 1.0;
         }
