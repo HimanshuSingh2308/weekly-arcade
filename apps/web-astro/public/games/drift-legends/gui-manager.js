@@ -1342,61 +1342,99 @@
           this._garageCam.fov = 0.9;
         }
         // Recreate lights if disposed
-        // Studio lighting setup (inspired by BJS clustered lights demo)
-        this._garageLights = this._garageLights || [];
-        // Dispose old lights if they exist
-        this._garageLights.forEach(function(l) { try { l.dispose(); } catch(_) {} });
-        this._garageLights = [];
+        // ═══ GARAGE ENVIRONMENT ═══
+        // Dispose old garage meshes/lights
+        if (this._garageEnv) {
+          this._garageEnv.forEach(function(obj) { try { obj.dispose(); } catch(_) {} });
+        }
+        this._garageEnv = [];
+        var MB = BABYLON.MeshBuilder;
+        var Color3 = BABYLON.Color3;
+        var V3 = BABYLON.Vector3;
+        var cx = 3; // car center x
 
-        // Key light — warm, strong, top-right
-        var key = new BABYLON.PointLight('gKey', new BABYLON.Vector3(7, 6, -3), this.scene);
-        key.diffuse = new BABYLON.Color3(1.0, 0.85, 0.6);
-        key.intensity = 6;
-        key.range = 15;
-        this._garageLights.push(key);
+        // ── Floor — concrete with grid ──
+        var floor = MB.CreateGround('gFloor', { width: 24, height: 16 }, this.scene);
+        floor.position = new V3(cx, -0.5, 0);
+        var floorMat = new BABYLON.StandardMaterial('gFloorMat', this.scene);
+        floorMat.diffuseColor = new Color3(0.15, 0.15, 0.18);
+        floorMat.specularColor = new Color3(0.3, 0.3, 0.35);
+        floor.material = floorMat;
+        this._garageEnv.push(floor);
+
+        // ── Back wall ──
+        var backWall = MB.CreateBox('gBackWall', { width: 24, height: 8, depth: 0.3 }, this.scene);
+        backWall.position = new V3(cx, 3.5, 8);
+        var wallMat = new BABYLON.StandardMaterial('gWallMat', this.scene);
+        wallMat.diffuseColor = new Color3(0.12, 0.12, 0.15);
+        backWall.material = wallMat;
+        this._garageEnv.push(backWall);
+
+        // ── Side walls ──
+        [-12, 12].forEach(function(x) {
+          var sideWall = MB.CreateBox('gSideWall', { width: 0.3, height: 8, depth: 16 }, this.scene);
+          sideWall.position = new V3(cx + x, 3.5, 0);
+          sideWall.material = wallMat;
+          this._garageEnv.push(sideWall);
+        }.bind(this));
+
+        // ── Ceiling ──
+        var ceiling = MB.CreateBox('gCeiling', { width: 24, height: 0.2, depth: 16 }, this.scene);
+        ceiling.position = new V3(cx, 7.5, 0);
+        ceiling.material = wallMat;
+        this._garageEnv.push(ceiling);
+
+        // ── Ceiling strip lights (emissive — like area lights) ──
+        var stripMat = new BABYLON.StandardMaterial('gStripMat', this.scene);
+        stripMat.emissiveColor = new Color3(1, 0.95, 0.9);
+        stripMat.diffuseColor = Color3.Black();
+        stripMat.disableLighting = true;
+
+        [-3, 3].forEach(function(zOff) {
+          var strip = MB.CreateBox('gStrip', { width: 16, height: 0.05, depth: 0.8 }, this.scene);
+          strip.position = new V3(cx, 7.35, zOff);
+          strip.material = stripMat;
+          this._garageEnv.push(strip);
+
+          // Point light under each strip
+          var stripLight = new BABYLON.PointLight('gStripLight_' + zOff, new V3(cx, 7, zOff), this.scene);
+          stripLight.diffuse = new Color3(1, 0.95, 0.9);
+          stripLight.intensity = 8;
+          stripLight.range = 12;
+          this._garageEnv.push(stripLight);
+        }.bind(this));
+
+        // ── Accent lights (colored, like the demo) ──
+        // Warm key from right
+        var key = new BABYLON.PointLight('gKey', new V3(cx + 6, 4, -2), this.scene);
+        key.diffuse = new Color3(1, 0.7, 0.4);
+        key.intensity = 4;
+        key.range = 10;
+        this._garageEnv.push(key);
         this._garageKeyLight = key;
 
-        // Fill light — cool blue, left
-        var fill = new BABYLON.PointLight('gFill', new BABYLON.Vector3(-5, 4, 2), this.scene);
-        fill.diffuse = new BABYLON.Color3(0.4, 0.6, 1.0);
-        fill.intensity = 3;
-        fill.range = 12;
-        this._garageLights.push(fill);
+        // Cool fill from left
+        var fill = new BABYLON.PointLight('gFill', new V3(cx - 6, 3, 1), this.scene);
+        fill.diffuse = new Color3(0.4, 0.5, 1);
+        fill.intensity = 2;
+        fill.range = 10;
+        this._garageEnv.push(fill);
         this._garageFillLight = fill;
 
-        // Rim/back light — orange accent, behind car
-        var rim = new BABYLON.PointLight('gRim', new BABYLON.Vector3(3, 2, 6), this.scene);
-        rim.diffuse = new BABYLON.Color3(1.0, 0.4, 0.1);
-        rim.intensity = 4;
-        rim.range = 10;
-        this._garageLights.push(rim);
+        // Orange accent on back wall
+        var accent = new BABYLON.PointLight('gAccent', new V3(cx, 5, 7), this.scene);
+        accent.diffuse = new Color3(1, 0.3, 0.05);
+        accent.intensity = 3;
+        accent.range = 8;
+        this._garageEnv.push(accent);
 
-        // Ground bounce — subtle warm from below
-        var bounce = new BABYLON.PointLight('gBounce', new BABYLON.Vector3(3, -0.3, 0), this.scene);
-        bounce.diffuse = new BABYLON.Color3(0.8, 0.7, 0.5);
-        bounce.intensity = 1.5;
-        bounce.range = 8;
-        this._garageLights.push(bounce);
-
-        // Ambient hemi — low, just prevents pure black
-        var hemi = new BABYLON.HemisphericLight('gHemi', new BABYLON.Vector3(0, 1, 0), this.scene);
-        hemi.intensity = 0.5;
-        hemi.diffuse = new BABYLON.Color3(0.6, 0.6, 0.8);
-        hemi.groundColor = new BABYLON.Color3(0.05, 0.05, 0.08);
-        this._garageLights.push(hemi);
+        // Ambient hemi
+        var hemi = new BABYLON.HemisphericLight('gHemi', new V3(0, 1, 0), this.scene);
+        hemi.intensity = 0.8;
+        hemi.diffuse = new Color3(0.8, 0.8, 0.9);
+        hemi.groundColor = new Color3(0.1, 0.1, 0.12);
+        this._garageEnv.push(hemi);
         this._garageHemi = hemi;
-
-        // 3D ground plane — dark reflective garage floor
-        if (!this._garageGround || this._garageGround.isDisposed()) {
-          this._garageGround = BABYLON.MeshBuilder.CreateGround('garageFloor3D', { width: 20, height: 20 }, this.scene);
-          this._garageGround.position.y = -0.5;
-          this._garageGround.position.x = 3;
-          var floorMat = new BABYLON.PBRMaterial('garageFloorMat', this.scene);
-          floorMat.albedoColor = new BABYLON.Color3(0.06, 0.06, 0.1);
-          floorMat.metallic = 0.9;
-          floorMat.roughness = 0.2;
-          this._garageGround.material = floorMat;
-        }
       } catch (_) {}
     }
 
@@ -1410,12 +1448,20 @@
       } else if (!visible) {
         if (this._savedCamForGarage) this.scene.activeCamera = this._savedCamForGarage;
         if (this._garageCar) { this._garageCar.dispose(false, true); this._garageCar = null; }
-        if (this._garageGround) { this._garageGround.dispose(); this._garageGround = null; }
+        if (this._garageEnv) {
+          this._garageEnv.forEach(function(obj) { try { obj.dispose(); } catch(_) {} });
+          this._garageEnv = null;
+        }
         // Restore transparent bg for menu
         this.scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
       }
-      if (this._garageLights) {
-        this._garageLights.forEach(function(l) { if (l && !l.isDisposed()) l.setEnabled(!!visible); });
+      if (this._garageEnv) {
+        this._garageEnv.forEach(function(obj) {
+          if (obj && !obj.isDisposed()) {
+            if (obj.setEnabled) obj.setEnabled(!!visible);
+            if (obj.isVisible !== undefined) obj.isVisible = !!visible;
+          }
+        });
       }
     }
 
