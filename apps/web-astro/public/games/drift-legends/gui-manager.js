@@ -1449,13 +1449,13 @@
         // Sign glow — warm orange accent
         var signGlowLight = new BABYLON.PointLight('gSignGlow2', new V3(9, 2, 0.5), this.scene);
         signGlowLight.diffuse = new Color3(1, 0.4, 0.1);
-        signGlowLight.intensity = 2;
+        signGlowLight.intensity = 0.2;
         signGlowLight.range = 6;
         this._garageEnv.push(signGlowLight);
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
-        signPlane.position = new V3(14.8, 2.9, 0.119);
+        signPlane.position = new V3(14.6, 2.9, 0.119);
         signPlane.rotation.x = 38 * Math.PI / 180;
         signPlane.rotation.y = 90 * Math.PI / 180;
         signPlane.rotation.z = 0;
@@ -1490,13 +1490,13 @@
           if (glitchTimer > nextGlitch) {
             // Glitch! Flicker for a brief moment
             signMat.emissiveColor = new BABYLON.Color3(0.15, 0.03, 0);
-            signPlane.position.x = 14.8 + (Math.random() - 0.5) * 0.15;
+            signPlane.position.x = 14.6 + (Math.random() - 0.5) * 0.15;
             signPlane.position.y = 2.9 + (Math.random() - 0.5) * 0.05;
             // Recover after short delay
             setTimeout(function() {
               if (signPlane && !signPlane.isDisposed()) {
                 signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
-                signPlane.position.x = 14.8;
+                signPlane.position.x = 14.6;
                 signPlane.position.y = 2.9;
               }
             }, 80 + Math.random() * 120);
@@ -1566,7 +1566,7 @@
         // Tires ON the shelf — leaning against wall
         [-0.8, 0, 0.8].forEach(function(zOff, idx) {
           var tire = MB.CreateTorus('gTire_' + idx, { diameter: 0.85, thickness: 0.28, tessellation: 20 }, this.scene);
-          tire.position = new V3(cx + 10.5 + idx * 0.3, 1.7, 4 + zOff);
+          tire.position = new V3(cx + 10.5 + idx * 0.3, 1.5 + idx * 0.05, 4 + zOff);
           tire.rotation.y = Math.PI / 2;
           tire.rotation.x = 0.15 * (idx - 1); // slight lean
           tire.material = rubberMat;
