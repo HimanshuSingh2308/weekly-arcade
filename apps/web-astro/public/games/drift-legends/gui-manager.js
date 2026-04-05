@@ -1487,8 +1487,8 @@
         this._garageEnv.push(neonLight);
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
-        var signPlane = MB.CreatePlane('gSign', { width: 6, height: 1.5 }, this.scene);
-        signPlane.position = new V3(cx, 5.5, 7.7);
+        var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
+        signPlane.position = new V3(cx, 3.5, 7.5); // lower, visible behind car
         signPlane.rotation.y = Math.PI; // face toward camera
         var signMat = new BABYLON.StandardMaterial('gSignMat', this.scene);
         signMat.emissiveColor = new Color3(1, 0.3, 0);
@@ -1528,7 +1528,7 @@
         });
 
         // Sign glow
-        var signGlow = new BABYLON.PointLight('gSignGlow', new V3(cx, 5.5, 7), this.scene);
+        var signGlow = new BABYLON.PointLight('gSignGlow', new V3(cx, 3.5, 6.5), this.scene);
         signGlow.diffuse = new Color3(1, 0.3, 0);
         signGlow.intensity = 2;
         signGlow.range = 5;
