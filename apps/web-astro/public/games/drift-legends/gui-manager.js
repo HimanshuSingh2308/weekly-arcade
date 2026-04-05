@@ -1525,8 +1525,8 @@
 
         // ── Neon "GARAGE" sign on back wall (using GUI 3D texture) ──
         var signPlane = MB.CreatePlane('gSign', { width: 5, height: 1.2 }, this.scene);
-        signPlane.position = new V3(cx, 2.5, 7.5);
-        signPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL; // always faces camera
+        signPlane.position = new V3(cx, 3, 7.6); // just in front of back wall
+        signPlane.rotation.y = Math.PI; // face -Z (toward camera at alpha=PI)
         var signMat = new BABYLON.StandardMaterial('gSignMat', this.scene);
         signMat.emissiveColor = new Color3(1, 0.3, 0);
         signMat.diffuseColor = Color3.Black();
@@ -1559,13 +1559,13 @@
             // Glitch! Flicker for a brief moment
             signMat.emissiveColor = new BABYLON.Color3(0.15, 0.03, 0);
             signPlane.position.x = cx + (Math.random() - 0.5) * 0.15;
-            signPlane.position.y = 2.5 + (Math.random() - 0.5) * 0.05;
+            signPlane.position.y = 3 + (Math.random() - 0.5) * 0.05;
             // Recover after short delay
             setTimeout(function() {
               if (signPlane && !signPlane.isDisposed()) {
                 signMat.emissiveColor = new BABYLON.Color3(1, 0.3, 0);
                 signPlane.position.x = cx;
-                signPlane.position.y = 2.5;
+                signPlane.position.y = 3;
               }
             }, 80 + Math.random() * 120);
             // Double glitch sometimes
