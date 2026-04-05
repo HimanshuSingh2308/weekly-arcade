@@ -285,8 +285,7 @@
         state = STATE.PRE_RACE;
       }
     } else {
-      gui.show('MENU');
-      state = STATE.MENU;
+      _returnToMenu();
     }
   });
 
@@ -297,15 +296,7 @@
   });
 
   gui.onAction('resultMenu', () => {
-    _cleanupRace();
-    // Re-enable mesh picking for menu
-    scene.meshes.forEach(function(m) { m.isPickable = true; });
-    // Restore HTML skyline and transparent scene
-    if (skylineBg) skylineBg.style.display = '';
-    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-    gui.show('MENU');
-    state = STATE.MENU;
-    _updateMenuUI();
+    _returnToMenu();
   });
 
   gui.onAction('volumeChange', (val) => {
@@ -340,14 +331,7 @@
   });
 
   gui.onAction('pauseQuit', () => {
-    gui.hidePause();
-    _cleanupRace();
-    scene.meshes.forEach(function(m) { m.isPickable = true; });
-    if (skylineBg) skylineBg.style.display = '';
-    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
-    gui.show('MENU');
-    state = STATE.MENU;
-    _updateMenuUI();
+    _returnToMenu();
   });
 
   // Multiplayer callbacks
@@ -543,6 +527,33 @@
     gui.showTouchControls(false);
     DL.Audio.stopEngine();
     DL.Audio.stopBGM();
+  }
+
+  function _returnToMenu() {
+    _cleanupRace();
+    gui.hideTutorial();
+    gui.hidePause();
+    tutorialStep = -1;
+    // Re-enable mesh picking
+    scene.meshes.forEach(function(m) { m.isPickable = true; });
+    // Dispose ALL remaining non-camera meshes (tire marks, leftover props, etc.)
+    var toDispose = [];
+    scene.meshes.forEach(function(m) {
+      if (m && !m.isDisposed() && m.name !== 'chaseCamera') toDispose.push(m);
+    });
+    toDispose.forEach(function(m) { try { m.dispose(false, true); } catch(_) {} });
+    // Dispose lights except default
+    scene.lights.slice().forEach(function(l) { try { l.dispose(); } catch(_) {} });
+    // Restore HTML skyline + transparent scene
+    if (skylineBg) skylineBg.style.display = '';
+    var mtnBg = document.getElementById('storyMtnBg');
+    if (mtnBg) mtnBg.style.display = 'none';
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+    scene.autoClear = true;
+    // Show menu
+    gui.show('MENU');
+    state = STATE.MENU;
+    _updateMenuUI();
   }
 
   // ─── Tutorial System ──────────────────────────────────────────────
