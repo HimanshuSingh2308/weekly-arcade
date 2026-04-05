@@ -90,7 +90,14 @@
       }
       // Toggle garage 3D car preview
       if (this._showGaragePreview) {
-        this._showGaragePreview(screenName === 'CAR_SELECT');
+      if (screenName === 'CAR_SELECT') {
+        if (!this._garageCar && this._selectedCarId) {
+          this._showGarageCarPreview(this._selectedCarId);
+        }
+        this._showGaragePreview(true);
+      } else {
+        this._showGaragePreview(false);
+      }
       }
       // Re-enable mesh picking when leaving overlay screens
       if (screenName !== 'RACE_RESULT' && screenName !== 'PAUSE') {
@@ -101,6 +108,11 @@
       var skyBg = document.getElementById('skylineBg');
       if (mtnBg) mtnBg.style.display = (screenName === 'STORY_SELECT') ? '' : 'none';
       if (skyBg) skyBg.style.display = (screenName === 'MENU') ? '' : 'none';
+      // Hide all HTML backgrounds on car select (3D scene renders its own bg)
+      if (screenName === 'CAR_SELECT') {
+        if (mtnBg) mtnBg.style.display = 'none';
+        if (skyBg) skyBg.style.display = 'none';
+      }
     }
 
     hide(screenName) {
@@ -1046,7 +1058,7 @@
     // ─── Car Select ───────────────────────────────────────────────
     _buildCarSelect() {
       const panel = this._createPanel('CAR_SELECT');
-      panel.background = 'rgba(13,13,26,0.85)'; // mostly opaque — 3D car shows in center gap
+      panel.background = 'rgba(13,13,26,0.3)'; // semi-transparent — 3D car visible, dark scene bg hides HTML
 
       this._addBackButton(panel, 'STORY_SELECT');
       this._addScreenTitle(panel, 'GARAGE');
@@ -1076,9 +1088,8 @@
       tapHint.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       tapHint.paddingBottom = '12px';
 
-      // Show default car preview on first load
+      // Default selected car (3D preview built on first show, not at init)
       this._selectedCarId = 'street-kart';
-      try { this._showGarageCarPreview('street-kart'); } catch(_) {}
 
       // Large stat bars for selected car
       this._garageStatBars = {};
@@ -1296,10 +1307,10 @@
         // Create/recreate garage camera + lights (may have been disposed by _returnToMenu)
         if (!this._garageCam || this._garageCam.isDisposed()) {
           this._garageCam = new BABYLON.ArcRotateCamera('garageCam',
-            Math.PI * 0.7, Math.PI * 0.35, 8,
-            new BABYLON.Vector3(3, 0.5, 0), this.scene);
-          this._garageCam.lowerRadiusLimit = 8;
-          this._garageCam.upperRadiusLimit = 8;
+            Math.PI * 0.8, Math.PI * 0.4, 10,
+            new BABYLON.Vector3(3, 0.3, 0), this.scene);
+          this._garageCam.lowerRadiusLimit = 10;
+          this._garageCam.upperRadiusLimit = 10;
           this._garageCam.fov = 0.9;
         }
         // Recreate lights if disposed
@@ -1325,10 +1336,13 @@
       if (visible && this._garageCam) {
         this._savedCamForGarage = this.scene.activeCamera;
         this.scene.activeCamera = this._garageCam;
+        // Dark background for garage (matches panel bg)
+        this.scene.clearColor = new BABYLON.Color4(0.05, 0.05, 0.1, 1);
       } else if (!visible) {
         if (this._savedCamForGarage) this.scene.activeCamera = this._savedCamForGarage;
-        // Dispose garage car when leaving
         if (this._garageCar) { this._garageCar.dispose(false, true); this._garageCar = null; }
+        // Restore transparent bg for menu
+        this.scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
       }
       if (this._garageKeyLight) this._garageKeyLight.setEnabled(!!visible);
       if (this._garageFillLight) this._garageFillLight.setEnabled(!!visible);
