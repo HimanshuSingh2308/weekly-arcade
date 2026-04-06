@@ -36,10 +36,11 @@ export class MultiplayerService {
       throw new BadRequestException(`Game ${dto.gameId} does not support multiplayer`);
     }
 
-    // Check concurrent session limit
+    // Check concurrent session limit PER GAME (not global)
     const activeSessions = await this.getActiveSessionsForUser(uid);
-    if (activeSessions.length >= MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS) {
-      throw new ConflictException(`Maximum ${MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS} concurrent sessions allowed`);
+    const gameActiveSessions = activeSessions.filter(s => s.gameId === dto.gameId);
+    if (gameActiveSessions.length >= MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS) {
+      throw new ConflictException(`Maximum ${MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS} concurrent sessions allowed for ${dto.gameId}`);
     }
 
     const sessionId = crypto.randomUUID();
