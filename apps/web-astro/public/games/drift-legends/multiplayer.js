@@ -52,20 +52,11 @@
   async function quickMatch(uid) {
     myUid = uid;
     try {
-      // Clean up any stale sessions before matchmaking (prevents 409 "max sessions" error)
-      try {
-        if (currentSessionId) {
-          await window.multiplayerClient?.leaveSession(currentSessionId);
-          currentSessionId = null;
-        }
-        // Also try to leave any sessions via the API
-        var mySessions = await window.apiClient?.request('/multiplayer/sessions/mine');
-        if (mySessions && Array.isArray(mySessions)) {
-          for (var s = 0; s < mySessions.length; s++) {
-            try { await window.multiplayerClient?.leaveSession(mySessions[s].id); } catch(_) {}
-          }
-        }
-      } catch (_) { /* cleanup is best-effort */ }
+      // Leave current session if any (prevents stale session conflicts)
+      if (currentSessionId) {
+        try { await window.multiplayerClient?.leaveSession(currentSessionId); } catch(_) {}
+        currentSessionId = null;
+      }
 
       window.multiplayerUI?.showMatchmaking('Drift Legends', async () => {
         await window.multiplayerClient?.cancelMatchmaking();
