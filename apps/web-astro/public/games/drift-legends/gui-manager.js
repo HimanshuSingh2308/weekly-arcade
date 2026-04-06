@@ -2996,6 +2996,37 @@
       if (this._cpWarnText) this._cpWarnText.isVisible = false;
     }
 
+    showToast(text, duration) {
+      if (!this._toastBg) {
+        var bg = new GUI.Rectangle('toastBg');
+        bg.width = '500px';
+        bg.height = '50px';
+        bg.cornerRadius = 10;
+        bg.background = 'rgba(20,20,30,0.9)';
+        bg.thickness = 1;
+        bg.color = 'rgba(255,70,70,0.5)';
+        bg.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        bg.top = '80px';
+        bg.isVisible = false;
+        bg.isHitTestVisible = false;
+        bg.zIndex = 100;
+        this.ui.addControl(bg);
+        var t = new GUI.TextBlock('toastText', '');
+        t.fontSize = 16;
+        t.fontFamily = 'monospace';
+        t.fontWeight = 'bold';
+        t.color = '#ff6666';
+        t.isHitTestVisible = false;
+        bg.addControl(t);
+        this._toastBg = bg;
+        this._toastText = t;
+      }
+      this._toastText.text = text || '';
+      this._toastBg.isVisible = true;
+      var self = this;
+      setTimeout(function() { if (self._toastBg) self._toastBg.isVisible = false; }, duration || 4000);
+    }
+
     showTouchControls(visible) {
       var show = !!visible && window.DriftLegends.Input.isMobile();
       if (this.touchControls) this.touchControls.isVisible = show;

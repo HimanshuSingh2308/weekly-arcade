@@ -79,7 +79,15 @@
       window.multiplayerUI?.hideMatchmaking();
       console.error('Matchmaking error:', err);
       // Show error to user
-      window.multiplayerUI?.showError?.(err.message || 'Matchmaking failed. Please try again.');
+      // Show error via Drift Legends GUI toast (multiplayerUI doesn't have showError)
+      var guiToast = window.DriftLegends._gui?.showToast;
+      if (guiToast) {
+        var msg = err.message || 'Unknown error';
+        if (msg.includes('session')) msg = '\u26a0\ufe0f ' + msg;
+        else if (msg.includes('match')) msg = '\ud83d\udd0d ' + msg;
+        else msg = '\u274c ' + msg;
+        window.DriftLegends._gui.showToast(msg);
+      }
     }
   }
 
@@ -97,6 +105,7 @@
       return session;
     } catch (err) {
       console.error('Create room error:', err);
+      window.DriftLegends._gui?.showToast('\u274c Room creation failed: ' + (err.message || 'Unknown error'));
       return null;
     }
   }

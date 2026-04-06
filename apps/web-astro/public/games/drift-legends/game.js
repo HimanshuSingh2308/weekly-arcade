@@ -177,6 +177,7 @@
 
   // ─── Modules ──────────────────────────────────────────────────────
   const gui = new DL.GUIManager(scene);
+  DL._gui = gui; // expose for multiplayer error toasts
   chaseCamera = new DL.ChaseCamera(scene);
   scene.activeCamera = chaseCamera.camera;
 
