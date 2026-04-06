@@ -73,27 +73,22 @@
 
       const result = await window.multiplayerClient?.findMatch(GAME_ID);
       if (result?.matchedSessionId) {
-        try {
-          await joinSession(result.matchedSessionId);
-          window.multiplayerUI?.hideMatchmaking();
-        } catch (joinErr) {
-          // Session was stale — leave it and retry once
-          console.warn('Matched session stale, retrying...', joinErr);
-          try { await window.multiplayerClient?.leaveSession(result.matchedSessionId); } catch(_) {}
-          const retry = await window.multiplayerClient?.findMatch(GAME_ID);
-          if (retry?.matchedSessionId) {
-            await joinSession(retry.matchedSessionId);
-            window.multiplayerUI?.hideMatchmaking();
-          } else {
-            _pollForMatch();
-          }
-        }
+        // findMatch creates session with us as host — just connect the socket
+        window.multiplayerUI?.hideMatchmaking();
+        currentSessionId = result.matchedSessionId;
+        isHost = true;
+        _setupSocketListeners();
+        // Connect to the session WebSocket
+        await window.multiplayerClient?.connect(result.matchedSessionId);
       } else {
+        // No instant match — poll for one
         _pollForMatch();
       }
     } catch (err) {
       window.multiplayerUI?.hideMatchmaking();
       console.error('Matchmaking error:', err);
+      // Show error to user
+      window.multiplayerUI?.showError?.(err.message || 'Matchmaking failed. Please try again.');
     }
   }
 
