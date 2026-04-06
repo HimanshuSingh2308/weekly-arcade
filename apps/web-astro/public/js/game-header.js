@@ -316,5 +316,15 @@
   document.addEventListener('touchstart', unlockIOSAudio, { once: true, passive: true });
   document.addEventListener('click', unlockIOSAudio, { once: true });
 
-  window.gameHeader = { init };
+  function hide() {
+    var el = document.getElementById('gameHeader');
+    if (el) el.style.display = 'none';
+  }
+
+  function show() {
+    var el = document.getElementById('gameHeader');
+    if (el) el.style.display = '';
+  }
+
+  window.gameHeader = { init, hide, show };
 })();

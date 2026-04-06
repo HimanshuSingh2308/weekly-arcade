@@ -58,7 +58,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 41;
+const CACHE_VERSION = 45;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -118,6 +118,22 @@ const ASSETS = [
   '/games/chess-3d/themes.js',
   '/games/chess-3d/skins.js',
   '/games/chess-3d/puzzles.js',
+
+  // Drift Legends
+  '/games/drift-legends/',
+  '/games/drift-legends/index.html',
+  '/games/drift-legends/game.js',
+  '/games/drift-legends/audio.js',
+  '/games/drift-legends/input.js',
+  '/games/drift-legends/particles.js',
+  '/games/drift-legends/physics.js',
+  '/games/drift-legends/camera.js',
+  '/games/drift-legends/car-builder.js',
+  '/games/drift-legends/track-builder.js',
+  '/games/drift-legends/story-mode.js',
+  '/games/drift-legends/ai-racer.js',
+  '/games/drift-legends/gui-manager.js',
+  '/games/drift-legends/multiplayer.js',
 ];
 
 // Install - cache assets (don't skipWaiting automatically, let user decide)

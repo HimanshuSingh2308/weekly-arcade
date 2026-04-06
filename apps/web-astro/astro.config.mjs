@@ -44,5 +44,8 @@ export default defineConfig({
     build: {
       cssMinify: true,
     },
+    server: {
+      host: true, // bind to 0.0.0.0 so local network devices can access
+    },
   },
 });
