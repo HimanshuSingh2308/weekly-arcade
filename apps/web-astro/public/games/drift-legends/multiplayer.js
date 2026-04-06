@@ -68,9 +68,8 @@
         window.multiplayerUI?.hideMatchmaking();
         currentSessionId = result.matchedSessionId;
         isHost = true;
-        _setupSocketListeners();
-        // Connect to the session WebSocket
         await window.multiplayerClient?.connect(result.matchedSessionId);
+        _setupSocketListeners();
       } else {
         // No instant match — poll for one
         _pollForMatch();
@@ -101,8 +100,8 @@
       });
       currentSessionId = session.sessionId;
       isHost = true;
-      _setupSocketListeners();
       await window.multiplayerClient?.connect(session.sessionId);
+      _setupSocketListeners();
       return session;
     } catch (err) {
       console.error('Create room error:', err);
@@ -124,8 +123,8 @@
         // joinByCode API already joined us — just connect WebSocket
         currentSessionId = result.sessionId;
         isHost = false;
-        _setupSocketListeners();
         await window.multiplayerClient?.connect(result.sessionId);
+        _setupSocketListeners();
       }
     } catch (err) {
       console.error('Join by code error:', err);
@@ -327,8 +326,8 @@
           // Just connect the WebSocket — don't call joinSession API again
           currentSessionId = result.matchedSessionId;
           isHost = false;
-          _setupSocketListeners();
           await window.multiplayerClient?.connect(result.matchedSessionId);
+          _setupSocketListeners();
         }
       } catch (_) { /* retry */ }
     }, 2000);
