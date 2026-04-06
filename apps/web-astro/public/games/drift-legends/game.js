@@ -4,9 +4,9 @@
  * Babylon.js Engine/Scene setup, game state machine, game loop, auth integration.
  */
 (function () {
-  // Seal top-level namespace to prevent adding new properties (anti-tamper)
-  // Note: don't deep-freeze — modules have mutable internal state (Input.keys, Physics.velocity, etc.)
+  // Add _gui placeholder before sealing (multiplayer module needs it for error toasts)
   if (window.DriftLegends) {
+    window.DriftLegends._gui = null;
     Object.seal(window.DriftLegends);
   }
   const DL = window.DriftLegends;
