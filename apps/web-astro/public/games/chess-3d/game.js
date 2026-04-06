@@ -2465,6 +2465,7 @@
         window.multiplayerClient.onMatchFound(async (sessionId) => {
           mpStopPolling();
           window.multiplayerUI?.hideMatchmaking();
+          gameMode = 'multiplayer';
           await mpJoinAndPlay(sessionId);
         });
 
@@ -2472,6 +2473,7 @@
           const result = await window.multiplayerClient.findMatch('chess-3d');
           if (result.matchedSessionId) {
             window.multiplayerUI?.hideMatchmaking();
+            gameMode = 'multiplayer';
             await mpJoinAndPlay(result.matchedSessionId);
           } else {
             // Fallback: poll REST in case WS push fails (e.g. WS blocked by firewall)
@@ -3760,6 +3762,7 @@
         if (status?.status === 'matched' && status.sessionId) {
           mpStopPolling();
           window.multiplayerUI?.hideMatchmaking();
+          gameMode = 'multiplayer';
           await mpJoinAndPlay(status.sessionId);
           return;
         }
@@ -3774,6 +3777,7 @@
               if (result.matchedSessionId) {
                 mpStopPolling();
                 window.multiplayerUI?.hideMatchmaking();
+                gameMode = 'multiplayer';
                 await mpJoinAndPlay(result.matchedSessionId);
                 return;
               }
@@ -4508,7 +4512,11 @@
   let _lastTurnWasMine = null;
   function updateTurnIndicator() {
     const isMyTurn = chessEngine.getTurn() === playerColor;
-    $('turnText').textContent = isMyTurn ? 'Your turn' : 'AI thinking...';
+    if (gameMode === 'multiplayer') {
+      $('turnText').textContent = isMyTurn ? 'Your turn' : mpOpponentName + '\'s turn...';
+    } else {
+      $('turnText').textContent = isMyTurn ? 'Your turn' : 'AI thinking...';
+    }
 
     // Sound + visual pulse when turn changes to you
     if (_lastTurnWasMine !== null && isMyTurn !== _lastTurnWasMine) {
