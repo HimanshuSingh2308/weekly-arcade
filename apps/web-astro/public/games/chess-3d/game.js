@@ -2236,9 +2236,12 @@
   let mpIsHost = false;
   let mpLobby = null;
   let mpOpponentName = 'Opponent';
+  let mpOpponentUid = null;
+  let mpRematchSessionId = null; // Session created by opponent for rematch
   let mpTurnStartTime = 0;
   let mpTurnTimerInterval = null;
   let mpGameTimerInterval = null;
+  let _mpQuickMatchTimeout = null;
   const MP_TURN_TIMEOUT = 120; // 2 min per turn (matches game-registry turnTimeoutSec)
 
   // DOM refs
@@ -2457,12 +2460,21 @@
           mpStopPolling();
           await window.multiplayerClient.cancelMatchmaking().catch(() => {});
         });
+
+        // Register WS push callback for instant match notification
+        window.multiplayerClient.onMatchFound(async (sessionId) => {
+          mpStopPolling();
+          window.multiplayerUI?.hideMatchmaking();
+          await mpJoinAndPlay(sessionId);
+        });
+
         try {
           const result = await window.multiplayerClient.findMatch('chess-3d');
           if (result.matchedSessionId) {
             window.multiplayerUI?.hideMatchmaking();
             await mpJoinAndPlay(result.matchedSessionId);
           } else {
+            // Fallback: poll REST in case WS push fails (e.g. WS blocked by firewall)
             mpPollForMatch();
           }
         } catch (err) {
@@ -2593,7 +2605,7 @@
     if (hintBtn) {
       hintBtn.addEventListener('click', () => {
         if (!_pz.puzzleMode || _pz.puzzleSolved) return;
-        const puzzle = DAILY_PUZZLES[puzzleIndex];
+        const puzzle = DAILY_PUZZLES[_pz.puzzleIndex];
         if (!puzzle) return;
         const expectedMove = puzzle.solution[_pz.puzzleMoveIndex];
         if (!expectedMove) return;
@@ -2693,8 +2705,9 @@
       });
     });
 
-    // Game over buttons
+    // Game over buttons (AI mode only — MP overrides via .onclick in mpRegisterListeners)
     $('rematchBtn').addEventListener('click', () => {
+      if (gameMode === 'multiplayer') return; // MP handler takes over via .onclick
       hideOverlay('gameOverOverlay');
       startNewGame();
     });
@@ -3337,6 +3350,12 @@
 
     try {
       const session = await window.multiplayerClient.getSession(sessionId);
+
+      // Reject stale/finished sessions — don't join dead games
+      if (session.status === 'finished' || session.status === 'abandoned') {
+        throw new Error('Session is no longer active');
+      }
+
       mpIsHost = session.hostUid === currentUser?.uid;
 
       $('mpJoiningStatus').textContent = 'Connected! Joining lobby...';
@@ -3355,6 +3374,19 @@
 
       // Signal ready
       window.multiplayerClient.signalReady();
+
+      // For quick-match: if game doesn't start within 30s, opponent likely ghosted
+      if (session.mode === 'quick-match') {
+        _mpQuickMatchTimeout = setTimeout(() => {
+          if (!gameActive && gameMode === 'multiplayer') {
+            console.warn('[Chess3D] Quick match opponent did not connect — returning to lobby');
+            mpCleanup(true);
+            hideOverlay('mpJoiningOverlay');
+            showOverlay('mpLobbyOverlay');
+            mpShowError('Opponent did not connect. Try searching again.');
+          }
+        }, 30000);
+      }
     } catch (err) {
       console.error('[Chess3D] MP join error:', err);
       hideOverlay('mpJoiningOverlay');
@@ -3417,16 +3449,28 @@
       if (!gameActive) {
         gameActive = true;
         gameStartTime = Date.now();
+
+        // Cancel ghost-match timeout — opponent connected and game is starting
+        if (_mpQuickMatchTimeout) {
+          clearTimeout(_mpQuickMatchTimeout);
+          _mpQuickMatchTimeout = null;
+        }
+
+        // Persist session ID immediately for rejoin (iOS may kill page without beforeunload)
+        if (mpSessionId) {
+          localStorage.setItem('chess3d-rejoin-session', mpSessionId);
+        }
         moveCount = (state.moveHistory || []).length;
         $('gameHud').style.display = '';
         $('undoBtn').style.display = 'none'; // No undo in multiplayer
         $('drawOfferBtn').style.display = ''; // Show draw offer in multiplayer
 
-        // Fetch opponent name from session data
+        // Fetch opponent name + UID from session data
         window.multiplayerClient.getSession(mpSessionId).then(session => {
           if (session?.players) {
             for (const [uid, player] of Object.entries(session.players)) {
               if (uid !== currentUser?.uid) {
+                mpOpponentUid = uid;
                 mpOpponentName = player.displayName || 'Opponent';
                 $('topName').textContent = mpOpponentName;
               }
@@ -3535,6 +3579,8 @@
       gameActive = false;
       stopAmbientMusic();
       mpStopTimers();
+      // Game ended normally — clear rejoin session (no longer active)
+      localStorage.removeItem('chess3d-rejoin-session');
       const myResult = results?.[currentUser?.uid];
       if (myResult?.outcome === 'win') { sound.play('checkmate'); }
       else if (myResult?.outcome === 'loss') { sound.play('loss'); }
@@ -3566,11 +3612,72 @@
             teaseEl.style.display = tease ? '' : 'none';
           }
 
+          // Reset rematch button for MP mode
+          $('rematchBtn').disabled = false;
+          $('rematchBtn').textContent = 'Rematch';
+
           showOverlay('gameOverOverlay');
         }
       );
 
       // On rematch/menu, clean up MP
+      $('rematchBtn').onclick = async () => {
+        if (!mpOpponentUid || !currentUser) {
+          // Fallback to AI game if no opponent info
+          hideOverlay('gameOverOverlay');
+          mpCleanup(true);
+          startNewGame();
+          return;
+        }
+
+        const btn = $('rematchBtn');
+        btn.disabled = true;
+        btn.textContent = 'Creating rematch...';
+
+        try {
+          // Clean up old session (full leave) but stay in MP mode
+          const oldSessionId = mpSessionId;
+          mpStopTimers();
+          mpStopPolling();
+          try { window.multiplayerClient?.disconnect(); } catch (e) {}
+          if (oldSessionId) {
+            window.multiplayerClient?.leaveSession(oldSessionId).catch(() => {});
+          }
+
+          // Create a new private session for rematch
+          const session = await window.multiplayerClient.createSession('chess-3d', {
+            mode: 'private',
+            maxPlayers: 2,
+            gameConfig: { colorPreference: 'random' },
+          });
+
+          // Invite the opponent
+          await window.multiplayerClient.inviteFriend(session.sessionId, mpOpponentUid);
+
+          // Join the new session ourselves
+          mpSessionId = session.sessionId;
+          mpIsHost = true;
+          mpRematchSessionId = null;
+          gameMode = 'multiplayer';
+
+          hideOverlay('gameOverOverlay');
+          showOverlay('mpJoiningOverlay');
+          $('mpJoiningStatus').textContent = 'Waiting for ' + mpOpponentName + ' to accept rematch...';
+          $('mpJoiningIcon').textContent = '⏳';
+          $('mpJoiningIcon').style.color = 'var(--c3d-gold)';
+
+          await mpJoinAndPlay(session.sessionId);
+        } catch (err) {
+          console.error('[Chess3D] Rematch error:', err);
+          btn.disabled = false;
+          btn.textContent = 'Rematch';
+          mpShowError('Could not create rematch. Try again.');
+        }
+      };
+
+      // Listen for opponent's rematch invitation
+      _pollForRematchInvitation();
+
       $('menuBtn').onclick = () => {
         gameMode = 'ai'; // Set before cleanup to prevent reconnect overlay
         hideOverlay('gameOverOverlay');
@@ -3649,10 +3756,12 @@
           return;
         }
 
-        if (status?.status === 'expired') {
-          // Entry expired but we still have time — re-queue automatically
+        if (status?.status === 'expired' || !status) {
+          // Entry expired or gone — re-queue automatically
           if (elapsed < MP_POLL_TIMEOUT) {
             try {
+              // Cancel first to clear any lingering entries before re-queuing
+              await window.multiplayerClient.cancelMatchmaking().catch(() => {});
               const result = await window.multiplayerClient.findMatch('chess-3d');
               if (result.matchedSessionId) {
                 mpStopPolling();
@@ -3662,7 +3771,8 @@
               }
               // Re-queued successfully, keep polling
             } catch (e) {
-              // findMatch failed (maybe 409) — keep polling existing entry
+              console.warn('[Chess3D] Re-queue failed:', e.message || e);
+              // Will retry next poll cycle
             }
           } else {
             // Time's up — give up
@@ -3688,11 +3798,72 @@
           mpShowError('No opponents found after 2 minutes. Try again later.');
         }
       } catch (e) { /* ignore polling errors */ }
-    }, 5000);
+    }, 3000); // Poll every 3s (cron matches every 5s)
   }
 
   function mpStopPolling() {
     if (mpPollTimer) { clearInterval(mpPollTimer); mpPollTimer = null; }
+    if (_rematchPollTimer) { clearInterval(_rematchPollTimer); _rematchPollTimer = null; }
+  }
+
+  let _rematchPollTimer = null;
+
+  /** Poll for a rematch invitation from the opponent while on game-over screen */
+  function _pollForRematchInvitation() {
+    if (_rematchPollTimer) clearInterval(_rematchPollTimer);
+
+    _rematchPollTimer = setInterval(async () => {
+      // Stop polling if we left the game-over screen
+      if (!$('gameOverOverlay')?.classList.contains('chess3d-visible')) {
+        clearInterval(_rematchPollTimer);
+        _rematchPollTimer = null;
+        return;
+      }
+      try {
+        const invitations = await window.multiplayerClient?.getInvitations();
+        if (!invitations?.length) return;
+
+        // Find a chess-3d invitation from our opponent
+        const rematchInvite = invitations.find(inv =>
+          inv.fromUid === mpOpponentUid && inv.gameId === 'chess-3d' && inv.status === 'pending'
+        );
+        if (!rematchInvite) return;
+
+        // Opponent created a rematch — auto-accept
+        clearInterval(_rematchPollTimer);
+        _rematchPollTimer = null;
+
+        const btn = $('rematchBtn');
+        btn.textContent = mpOpponentName + ' wants a rematch!';
+
+        // Accept the invitation
+        await window.multiplayerClient.respondToInvitation(rematchInvite.id, 'accept');
+
+        // Clean up old session
+        const oldSessionId = mpSessionId;
+        mpStopTimers();
+        try { window.multiplayerClient?.disconnect(); } catch (e) {}
+        if (oldSessionId) {
+          window.multiplayerClient?.leaveSession(oldSessionId).catch(() => {});
+        }
+
+        // Join the rematch session
+        mpSessionId = rematchInvite.sessionId;
+        mpIsHost = false;
+        gameMode = 'multiplayer';
+
+        hideOverlay('gameOverOverlay');
+        showOverlay('mpJoiningOverlay');
+        $('mpJoiningStatus').textContent = 'Joining rematch...';
+        $('mpJoiningIcon').textContent = '♟️';
+        $('mpJoiningIcon').style.color = 'var(--c3d-emerald)';
+        sound.play('click');
+
+        await mpJoinAndPlay(rematchInvite.sessionId);
+      } catch (e) {
+        console.warn('[Chess3D] Rematch poll error:', e);
+      }
+    }, 2000); // Poll every 2s
   }
 
   function mpFormatTime(seconds) {
@@ -3789,6 +3960,9 @@
     gameActive = false;
     gameMode = 'ai';
     mpSessionId = null;
+    mpRematchSessionId = null;
+    if (fullLeave) mpOpponentUid = null;
+    if (_mpQuickMatchTimeout) { clearTimeout(_mpQuickMatchTimeout); _mpQuickMatchTimeout = null; }
     mpStopPolling();
     mpStopTimers();
     // Disconnect WebSocket — server gives 2 min reconnect window
@@ -3820,13 +3994,25 @@
         // Auto-rejoin immediately — don't wait for user to click
         gameMode = 'multiplayer';
         mpSessionId = savedSid;
+
+        // Restore opponent info from session data
+        if (session.players) {
+          for (const [uid, player] of Object.entries(session.players)) {
+            if (uid !== currentUser?.uid) {
+              mpOpponentUid = uid;
+              mpOpponentName = player.displayName || 'Opponent';
+            }
+          }
+        }
+
         hideOverlay('mainMenuOverlay');
         showOverlay('mpJoiningOverlay');
         $('mpJoiningStatus').textContent = 'Rejoining game...';
         $('mpJoiningIcon').textContent = '♟️';
         try {
           await mpJoinAndPlay(savedSid);
-          localStorage.removeItem('chess3d-rejoin-session');
+          // Don't remove localStorage here — game is active again.
+          // onGameFinished or mpCleanup(true) will clear it when the game ends.
         } catch (e) {
           showOverlay('mainMenuOverlay');
           hideOverlay('mpJoiningOverlay');
@@ -3840,10 +4026,12 @@
     }
   }
 
-  // Clean up multiplayer session if user closes/navigates away
+  // On page close/refresh during active MP game — save session for rejoin
   window.addEventListener('beforeunload', () => {
-    if (gameMode === 'multiplayer') {
-      // Disconnect WebSocket — server detects all players left and abandons session
+    if (gameMode === 'multiplayer' && mpSessionId && gameActive) {
+      // Save session ID so we can rejoin after refresh/navigation
+      localStorage.setItem('chess3d-rejoin-session', mpSessionId);
+      // Disconnect WebSocket — server gives 2 min reconnect window
       try { window.multiplayerClient?.disconnect(); } catch (e) {}
     }
   });
@@ -3912,7 +4100,7 @@
   }
 
   function handlePuzzleMove(fromRow, fromCol, toRow, toCol, promotion) {
-    const puzzle = DAILY_PUZZLES[puzzleIndex];
+    const puzzle = DAILY_PUZZLES[_pz.puzzleIndex];
     if (!puzzle || _pz.puzzleSolved) return;
 
     const expectedMove = puzzle.solution[_pz.puzzleMoveIndex];
@@ -3959,7 +4147,7 @@
         // Check if puzzle is complete
         if (_pz.puzzleMoveIndex >= puzzle.solution.length) {
           _pz.puzzleSolved = true;
-          markPuzzleSolved(puzzleIndex);
+          markPuzzleSolved(_pz.puzzleIndex);
           sound.play('win');
           $('puzzleMoveStatus').textContent = 'Solved! Come back tomorrow for a new puzzle.';
           $('puzzleMoveStatus').className = 'chess3d-puzzle-status solved';
@@ -3999,7 +4187,7 @@
 
                 if (_pz.puzzleMoveIndex >= puzzle.solution.length) {
                   _pz.puzzleSolved = true;
-                  markPuzzleSolved(puzzleIndex);
+                  markPuzzleSolved(_pz.puzzleIndex);
                   sound.play('win');
                   $('puzzleMoveStatus').textContent = 'Solved! Come back tomorrow.';
                   $('puzzleMoveStatus').className = 'chess3d-puzzle-status solved';
@@ -4036,7 +4224,7 @@
         chessEngine.loadFEN(_pz.puzzleFenSnapshot);
         // Re-apply solved moves up to current position
         for (let i = 0; i < _pz.puzzleMoveIndex; i++) {
-          const mv = DAILY_PUZZLES[puzzleIndex].solution[i];
+          const mv = DAILY_PUZZLES[_pz.puzzleIndex].solution[i];
           const fC = mv.charCodeAt(0) - 97, fR = parseInt(mv[1]) - 1;
           const tC = mv.charCodeAt(2) - 97, tR = parseInt(mv[3]) - 1;
           const pr = mv[4] || null;

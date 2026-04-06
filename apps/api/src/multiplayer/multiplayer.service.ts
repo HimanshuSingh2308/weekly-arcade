@@ -291,14 +291,18 @@ export class MultiplayerService {
       }
     }
 
-    // Fire-and-forget: mark stale sessions as abandoned
+    // Await cleanup so callers (e.g. createSession limit check) see accurate counts
     if (staleRefs.length > 0) {
       const batch = this.firebase.batch();
       for (const ref of staleRefs) {
         batch.update(ref, { status: 'abandoned', finishedAt: new Date() });
       }
-      batch.commit().catch(err => this.logger.warn('Stale session cleanup failed:', err.message));
-      this.logger.log(`Lazy cleanup: ${staleRefs.length} stale sessions abandoned`);
+      try {
+        await batch.commit();
+        this.logger.log(`Lazy cleanup: ${staleRefs.length} stale sessions abandoned`);
+      } catch (err) {
+        this.logger.warn('Stale session cleanup failed:', (err as Error).message);
+      }
     }
 
     return sessions;
