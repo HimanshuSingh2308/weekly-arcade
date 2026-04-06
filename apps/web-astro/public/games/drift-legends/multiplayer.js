@@ -102,6 +102,7 @@
       currentSessionId = session.sessionId;
       isHost = true;
       _setupSocketListeners();
+      await window.multiplayerClient?.connect(session.sessionId);
       return session;
     } catch (err) {
       console.error('Create room error:', err);

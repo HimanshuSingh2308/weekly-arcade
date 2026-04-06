@@ -187,7 +187,32 @@
   scene.skipPointerDownPicking = false;
   scene.skipPointerUpPicking = false;
 
-  // Pre-warm multiplayer
+  // Initialize multiplayer with game callbacks
+  DL.Multiplayer.init({
+    onRaceStart: function(gameState) {
+      // Server says both players connected — start the MP race
+      if (state === STATE.MP_MENU || state === STATE.MENU) {
+        isMultiplayerRace = true;
+        selectedTrackId = gameState?.trackId || 'city-circuit';
+        _startLoading();
+      }
+    },
+    onRaceEnd: function(result) {
+      // Opponent finished or disconnected
+      if (state === STATE.RACING) {
+        _finishRace();
+      }
+    },
+    onDisconnect: function() {
+      gui.showToast('\u26a0\ufe0f Opponent disconnected');
+      if (state === STATE.RACING) {
+        // Continue race as single player
+      }
+    },
+    onReconnect: function() {
+      gui.showToast('\u2705 Opponent reconnected');
+    },
+  });
   DL.Multiplayer.warmUp();
 
   // ─── Auth Integration ─────────────────────────────────────────────
@@ -551,8 +576,19 @@
       opponentCar.position = startPos.clone();
       opponentCar.position.x += trackData.trackDef.trackWidth * 0.8;
       opponentCar.rotation.y = startRot;
-      // Start multiplayer position sync
-      DL.Multiplayer.startSync(playerCar);
+      // Start multiplayer position sync (pass function that returns position data)
+      DL.Multiplayer.startSync(function() {
+        if (!playerCar || !playerPhysics) return null;
+        return {
+          x: playerCar.position.x,
+          z: playerCar.position.z,
+          rotY: playerCar.rotation.y,
+          speed: playerPhysics.speed,
+          isDrifting: playerPhysics.isDrifting,
+          checkpointIndex: playerCheckpoint,
+          driftScore: Math.round(playerPhysics.totalDriftScore),
+        };
+      });
     }
 
     // Reset race state
