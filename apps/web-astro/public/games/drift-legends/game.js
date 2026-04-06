@@ -92,8 +92,10 @@
   // Lock to landscape on mobile
   try { screen.orientation?.lock('landscape').catch(function() {}); } catch (_) {}
 
-  // Request fullscreen on mobile — retry on each user interaction until it works
+  // Fullscreen + orientation — different strategies for Android vs iOS
   var _isFullscreen = false;
+  var _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
   function _checkFullscreen() {
     _isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
   }
@@ -103,18 +105,26 @@
   function _requestFullscreen() {
     if (_isFullscreen) return;
     if (!DL.Input.isMobile()) return;
-    var el = document.documentElement;
-    var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-    if (rfs) {
-      rfs.call(el).then(function() {
-        _isFullscreen = true;
-        try { screen.orientation?.lock('landscape').catch(function() {}); } catch (_) {}
-      }).catch(function() {});
+
+    if (_isIOS) {
+      // iOS: No real fullscreen API. Scroll to hide Safari toolbar + maximize viewport.
+      window.scrollTo(0, 1);
+      // Set minimal-ui viewport (hides toolbar on scroll)
+      var vp = document.querySelector('meta[name="viewport"]');
+      if (vp) vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+    } else {
+      // Android/Chrome: Use standard Fullscreen API
+      var el = document.documentElement;
+      var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (rfs) {
+        rfs.call(el).then(function() {
+          _isFullscreen = true;
+          try { screen.orientation?.lock('landscape').catch(function() {}); } catch (_) {}
+        }).catch(function() {});
+      }
     }
   }
-  // Use pointerdown (works for both touch and mouse, fires before touchstart)
   canvas.addEventListener('pointerdown', _requestFullscreen);
-  // Also try on document click as fallback
   document.addEventListener('click', function() {
     if (!_isFullscreen && DL.Input.isMobile()) _requestFullscreen();
   });
