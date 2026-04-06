@@ -59,7 +59,7 @@
           currentSessionId = null;
         }
         // Also try to leave any sessions via the API
-        var mySessions = await window.apiClient?.request('GET', '/multiplayer/sessions/mine');
+        var mySessions = await window.apiClient?.request('/multiplayer/sessions/mine');
         if (mySessions && Array.isArray(mySessions)) {
           for (var s = 0; s < mySessions.length; s++) {
             try { await window.multiplayerClient?.leaveSession(mySessions[s].id); } catch(_) {}
