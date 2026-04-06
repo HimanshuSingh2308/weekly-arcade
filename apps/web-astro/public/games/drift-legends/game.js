@@ -132,6 +132,40 @@
   const scene = new BABYLON.Scene(engine);
   scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent — shows HTML SVG skyline behind
 
+  // Keep screen awake during gameplay
+  var _wakeLock = null;
+  async function _acquireWakeLock() {
+    // Method 1: Screen Wake Lock API (Chrome/Android)
+    if ('wakeLock' in navigator) {
+      try { _wakeLock = await navigator.wakeLock.request('screen'); } catch(_) {}
+    }
+    // Method 2: Silent video trick for iOS (iOS won't sleep while video plays)
+    if (_isIOS && !document.getElementById('dl-wake-video')) {
+      var v = document.createElement('video');
+      v.id = 'dl-wake-video';
+      v.setAttribute('playsinline', '');
+      v.setAttribute('muted', '');
+      v.setAttribute('loop', '');
+      v.style.cssText = 'position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0;pointer-events:none;';
+      // Tiny silent mp4 (base64) — smallest valid video
+      v.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAhtZGF0AAAA1m1vb3YAAABsbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAAAAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAACRdWR0YQAAAIltZXRhAAAAIWhkbHIAAAAAAAAAAG1kaXIAAAAAAAAAAAAAAAAAAAAAYWlscwAAABxhbG9jAAAADAAAAAwAAQABAAEAAABfaXByb3AAAABGaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAADmF2MUNGAAD/AAAAAAAAEGF1eEMAQ0H/AAAAAAAAAA==';
+      document.body.appendChild(v);
+      // Start on first user interaction
+      canvas.addEventListener('touchstart', function() { try { v.play(); } catch(_) {} }, { once: true });
+    }
+  }
+  function _releaseWakeLock() {
+    if (_wakeLock) { try { _wakeLock.release(); } catch(_) {} _wakeLock = null; }
+    var wv = document.getElementById('dl-wake-video');
+    if (wv) { wv.pause(); wv.remove(); }
+  }
+  // Acquire on first interaction, release on visibility hidden
+  canvas.addEventListener('pointerdown', function() { _acquireWakeLock(); }, { once: true });
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) _releaseWakeLock();
+    else _acquireWakeLock();
+  });
+
   // Performance optimizations
   scene.autoClear = true; // needed for transparent background (HTML skyline shows through)
   scene.autoClearDepthAndStencil = true;
