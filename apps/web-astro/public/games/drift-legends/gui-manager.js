@@ -2999,10 +2999,14 @@
     showToast(text, duration) {
       if (!this._toastBg) {
         var bg = new GUI.Rectangle('toastBg');
-        bg.width = '500px';
-        bg.height = '50px';
+        bg.adaptWidthToChildren = true;
+        bg.adaptHeightToChildren = true;
+        bg.paddingLeft = '20px';
+        bg.paddingRight = '20px';
+        bg.paddingTop = '10px';
+        bg.paddingBottom = '10px';
         bg.cornerRadius = 10;
-        bg.background = 'rgba(20,20,30,0.9)';
+        bg.background = 'rgba(20,20,30,0.92)';
         bg.thickness = 1;
         bg.color = 'rgba(255,70,70,0.5)';
         bg.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
@@ -3012,10 +3016,11 @@
         bg.zIndex = 100;
         this.ui.addControl(bg);
         var t = new GUI.TextBlock('toastText', '');
-        t.fontSize = 16;
+        t.fontSize = 15;
         t.fontFamily = 'monospace';
         t.fontWeight = 'bold';
         t.color = '#ff6666';
+        t.resizeToFit = true;
         t.isHitTestVisible = false;
         bg.addControl(t);
         this._toastBg = bg;
