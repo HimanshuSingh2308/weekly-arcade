@@ -120,10 +120,15 @@
     try {
       const result = await window.multiplayerClient?.joinByCode(code);
       if (result?.sessionId) {
-        await joinSession(result.sessionId);
+        // joinByCode API already joined us — just connect WebSocket
+        currentSessionId = result.sessionId;
+        isHost = false;
+        _setupSocketListeners();
+        await window.multiplayerClient?.connect(result.sessionId);
       }
     } catch (err) {
       console.error('Join by code error:', err);
+      window.DriftLegends._gui?.showToast('\u274c Failed to join: ' + (err.message || 'Invalid code'));
     }
   }
 
@@ -317,7 +322,12 @@
         if (result?.matchedSessionId) {
           clearInterval(poll);
           window.multiplayerUI?.hideMatchmaking();
-          await joinSession(result.matchedSessionId);
+          // Both players are already in the session (server auto-joined us)
+          // Just connect the WebSocket — don't call joinSession API again
+          currentSessionId = result.matchedSessionId;
+          isHost = false;
+          _setupSocketListeners();
+          await window.multiplayerClient?.connect(result.matchedSessionId);
         }
       } catch (_) { /* retry */ }
     }, 2000);
