@@ -1,0 +1,116 @@
+<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dlBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0d1a"/>
+      <stop offset="100%" stop-color="#1a1028"/>
+    </linearGradient>
+    <linearGradient id="dlRoad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a2a3a"/>
+      <stop offset="100%" stop-color="#222233"/>
+    </linearGradient>
+    <linearGradient id="dlAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff4d00"/>
+      <stop offset="100%" stop-color="#ff8800"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="250" fill="url(#dlBg)" rx="12"/>
+
+  <!-- Stars -->
+  <circle cx="30" cy="25" r="1" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="120" cy="15" r="0.8" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="280" cy="20" r="1.2" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="370" cy="30" r="0.8" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="200" cy="10" r="1" fill="rgba(255,255,255,0.4)"/>
+
+  <!-- City silhouette -->
+  <rect x="20" y="80" width="25" height="90" fill="#12121e"/>
+  <rect x="42" y="60" width="20" height="110" fill="#151528"/>
+  <rect x="58" y="75" width="30" height="95" fill="#10101e"/>
+  <rect x="310" y="65" width="22" height="105" fill="#12121e"/>
+  <rect x="328" y="55" width="28" height="115" fill="#151528"/>
+  <rect x="352" y="70" width="30" height="100" fill="#10101e"/>
+
+  <!-- Neon strips on buildings -->
+  <rect x="20" y="95" width="25" height="2" fill="#00d4ff" opacity="0.7"/>
+  <rect x="42" y="80" width="20" height="2" fill="#ff4d00" opacity="0.7"/>
+  <rect x="310" y="85" width="22" height="2" fill="#00ff88" opacity="0.6"/>
+  <rect x="352" y="90" width="30" height="2" fill="#ff0066" opacity="0.6"/>
+
+  <!-- Road (perspective) -->
+  <polygon points="130,170 270,170 380,240 20,240" fill="url(#dlRoad)"/>
+
+  <!-- Road edge lines (orange) -->
+  <line x1="130" y1="170" x2="20" y2="240" stroke="#ff4d00" stroke-width="2" opacity="0.6"/>
+  <line x1="270" y1="170" x2="380" y2="240" stroke="#ff4d00" stroke-width="2" opacity="0.6"/>
+
+  <!-- Center dashes -->
+  <rect x="185" y="178" width="3" height="10" fill="#ff8800" opacity="0.5" transform="rotate(-2,186,183)"/>
+  <rect x="178" y="192" width="3.5" height="12" fill="#ff8800" opacity="0.5"/>
+  <rect x="170" y="208" width="4" height="14" fill="#ff8800" opacity="0.5" transform="rotate(2,172,215)"/>
+  <rect x="160" y="226" width="5" height="16" fill="#ff8800" opacity="0.5"/>
+
+  <!-- Car body (low-poly kart, angled for action) -->
+  <g transform="translate(190,195) rotate(-8)">
+    <!-- Shadow -->
+    <ellipse cx="5" cy="28" rx="25" ry="5" fill="rgba(0,0,0,0.4)"/>
+    <!-- Body -->
+    <rect x="-20" y="0" width="40" height="14" rx="3" fill="#1a5fb4"/>
+    <!-- Cabin -->
+    <rect x="-14" y="-8" width="24" height="10" rx="2" fill="#2070cc"/>
+    <!-- Windshield -->
+    <rect x="-12" y="-6" width="10" height="7" rx="1" fill="rgba(100,180,255,0.4)"/>
+    <!-- Spoiler -->
+    <rect x="-18" y="-2" width="3" height="8" rx="1" fill="#1a5fb4"/>
+    <rect x="15" y="-2" width="3" height="8" rx="1" fill="#1a5fb4"/>
+    <rect x="-20" y="-3" width="40" height="2" rx="1" fill="#1a5fb4"/>
+    <!-- Headlights -->
+    <circle cx="20" cy="4" r="2" fill="#ffdd00" opacity="0.9"/>
+    <circle cx="20" cy="11" r="2" fill="#ffdd00" opacity="0.9"/>
+    <!-- Tail lights -->
+    <circle cx="-20" cy="5" r="1.5" fill="#ff2222" opacity="0.9"/>
+    <circle cx="-20" cy="11" r="1.5" fill="#ff2222" opacity="0.9"/>
+    <!-- Wheels -->
+    <ellipse cx="-14" cy="16" rx="4" ry="3" fill="#222"/>
+    <ellipse cx="14" cy="16" rx="4" ry="3" fill="#222"/>
+  </g>
+
+  <!-- Drift smoke trails -->
+  <ellipse cx="160" cy="215" rx="15" ry="4" fill="rgba(200,200,200,0.15)"/>
+  <ellipse cx="148" cy="220" rx="20" ry="5" fill="rgba(200,200,200,0.1)"/>
+  <ellipse cx="140" cy="226" rx="25" ry="6" fill="rgba(200,200,200,0.07)"/>
+
+  <!-- Rival car (smaller, ahead) -->
+  <g transform="translate(230,178) rotate(-5) scale(0.7)">
+    <rect x="-18" y="0" width="36" height="12" rx="3" fill="#cc0000"/>
+    <rect x="-12" y="-6" width="20" height="8" rx="2" fill="#dd2222"/>
+    <circle cx="18" cy="4" r="1.5" fill="#ffdd00" opacity="0.8"/>
+    <circle cx="18" cy="9" r="1.5" fill="#ffdd00" opacity="0.8"/>
+    <ellipse cx="-12" cy="14" rx="3" ry="2.5" fill="#222"/>
+    <ellipse cx="12" cy="14" rx="3" ry="2.5" fill="#222"/>
+  </g>
+
+  <!-- Speed lines -->
+  <line x1="100" y1="200" x2="140" y2="198" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="90" y1="210" x2="135" y2="208" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <line x1="85" y1="222" x2="130" y2="220" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Checkpoint arch -->
+  <ellipse cx="200" cy="170" rx="35" ry="20" fill="none" stroke="#00d4ff" stroke-width="2" opacity="0.4"/>
+
+  <!-- Title -->
+  <text x="200" y="42" text-anchor="middle" fill="url(#dlAccent)" font-family="system-ui" font-weight="900" font-size="22" letter-spacing="4">DRIFT LEGENDS</text>
+  <text x="200" y="58" text-anchor="middle" fill="#a0a0b8" font-family="system-ui" font-weight="600" font-size="8" letter-spacing="1">5 CHAPTERS · 15 TRACKS · MULTIPLAYER</text>
+
+  <!-- Drift meter badge -->
+  <rect x="148" y="62" width="104" height="14" rx="7" fill="#ff4d00" opacity="0.15"/>
+  <rect x="148" y="62" width="104" height="14" rx="7" fill="none" stroke="#ff4d00" stroke-width="0.8" opacity="0.4"/>
+  <text x="200" y="72" text-anchor="middle" fill="#ff4d00" font-family="system-ui" font-weight="700" font-size="7">DRIFT · BOOST · WIN</text>
+
+  <!-- HUD elements -->
+  <rect x="10" y="230" width="60" height="14" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <text x="40" y="240" text-anchor="middle" fill="#ff4d00" font-family="system-ui" font-weight="700" font-size="7">1ST</text>
+  <rect x="330" y="230" width="60" height="14" rx="4" fill="rgba(0,0,0,0.5)"/>
+  <text x="360" y="240" text-anchor="middle" fill="#a0a0b8" font-family="system-ui" font-weight="600" font-size="7">120 KM/H</text>
+</svg>
