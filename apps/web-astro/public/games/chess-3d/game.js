@@ -3360,8 +3360,10 @@
 
       $('mpJoiningStatus').textContent = 'Connected! Joining lobby...';
 
-      await window.multiplayerClient.connect(sessionId);
+      // Register listeners BEFORE connect — prevents race where server sends
+      // game:state before listeners are attached (iOS timing issue)
       mpRegisterListeners();
+      await window.multiplayerClient.connect(sessionId);
 
       // Update joining overlay to show success
       $('mpJoiningIcon').textContent = '✓';
@@ -3406,10 +3408,15 @@
       $('mpJoiningIcon').style.color = '';
       $('mpJoiningStatus').textContent = 'Opponent joined! Starting game...';
 
-      // If we're host, auto-start
+      // If we're host, start the game
       if (mpIsHost) {
         try {
-          await window.multiplayerClient.startGame(mpSessionId);
+          // For quick-match, the API already called startGame — skip REST call
+          // to avoid 400 "Session is not in waiting state" on iOS
+          const session = await window.multiplayerClient.getSession(mpSessionId);
+          if (session?.status === 'waiting') {
+            await window.multiplayerClient.startGame(mpSessionId);
+          }
           // Signal ready via WebSocket so Realtime server runs tryStartGame
           window.multiplayerClient.signalReady();
           // Retry every 2s in case of race condition with Firestore status
@@ -3421,8 +3428,9 @@
           }, 2000);
         } catch (e) {
           console.error('[Chess3D] Start game error:', e);
-          $('mpJoiningStatus').textContent = 'Failed to start game.';
-          sound.play('error');
+          // Don't show error UI — server-side tryStartGame may still succeed
+          // Just signal ready as a fallback
+          window.multiplayerClient.signalReady();
         }
       }
     });
