@@ -18,7 +18,8 @@ export type AchievementCategory =
   | 'stack-tower'
   | 'tiny-tycoon'
   | 'cricket-blitz'
-  | 'chess-3d';
+  | 'chess-3d'
+  | 'drift-legends';
 
 export interface AchievementRequirement {
   type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special' | 'first_boundary' | 'first_six' | 'sixes' | 'checkmate' | 'elo';
