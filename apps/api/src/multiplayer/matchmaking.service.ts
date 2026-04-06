@@ -1,7 +1,6 @@
 import {
   Injectable,
   Logger,
-  ConflictException,
 } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
 import { MatchmakingEntry } from '@weekly-arcade/shared';
@@ -22,7 +21,8 @@ export class MatchmakingService {
    * Add a player to the matchmaking queue.
    */
   async findMatch(uid: string, displayName: string, avatarUrl: string | null, gameId: string): Promise<{ queueEntryId: string; matchedSessionId?: string }> {
-    // Check if already in queue — but expire stale entries first
+    // Force-expire any existing entries for this user (stale or active)
+    // This prevents the race where a client re-queues while an old entry lingers
     const existing = await this.firebase
       .collection('matchmakingQueue')
       .where('uid', '==', uid)
@@ -30,28 +30,13 @@ export class MatchmakingService {
       .limit(5)
       .get();
 
-    const now = Date.now();
-    const maxAgeMs = MULTIPLAYER_DEFAULTS.MATCHMAKING_EXPIRE_SEC * 1000;
-    let hasActiveEntry = false;
-
-    for (const doc of existing.docs) {
-      const data = doc.data() as MatchmakingEntry;
-      const joinedAt = data.joinedAt instanceof Date
-        ? data.joinedAt.getTime()
-        : (data.joinedAt as any)?._seconds
-          ? (data.joinedAt as any)._seconds * 1000
-          : new Date(data.joinedAt as any).getTime();
-
-      if (now - joinedAt > maxAgeMs) {
-        // Stale — expire it
-        doc.ref.update({ status: 'expired' }).catch(() => {});
-      } else {
-        hasActiveEntry = true;
+    if (!existing.empty) {
+      const batch = this.firebase.batch();
+      for (const doc of existing.docs) {
+        batch.update(doc.ref, { status: 'expired' });
       }
-    }
-
-    if (hasActiveEntry) {
-      throw new ConflictException('Already in matchmaking queue');
+      await batch.commit();
+      this.logger.debug(`Expired ${existing.size} stale queue entries for ${uid}`);
     }
 
     // Get player's rating
@@ -101,20 +86,49 @@ export class MatchmakingService {
    * Get matchmaking status for a player.
    */
   async getStatus(uid: string): Promise<{ status: string; sessionId?: string } | null> {
+    // Only return waiting or recently matched entries — ignore old expired/matched entries
     const snapshot = await this.firebase
       .collection('matchmakingQueue')
       .where('uid', '==', uid)
       .orderBy('joinedAt', 'desc')
-      .limit(1)
+      .limit(5)
       .get();
 
     if (snapshot.empty) return null;
 
-    const entry = snapshot.docs[0].data() as MatchmakingEntry;
-    return {
-      status: entry.status,
-      sessionId: entry.matchedSessionId ?? undefined,
-    };
+    // Find the most recent relevant entry (waiting or matched with a valid session)
+    for (const doc of snapshot.docs) {
+      const entry = doc.data() as MatchmakingEntry;
+
+      if (entry.status === 'waiting') {
+        return { status: 'waiting' };
+      }
+
+      if (entry.status === 'matched' && entry.matchedSessionId) {
+        // Verify the matched session is still active (not abandoned/finished)
+        try {
+          const sessionDoc = await this.firebase.doc(`sessions/${entry.matchedSessionId}`).get();
+          if (sessionDoc.exists) {
+            const session = sessionDoc.data();
+            if (session?.status === 'waiting' || session?.status === 'starting' || session?.status === 'playing') {
+              return { status: 'matched', sessionId: entry.matchedSessionId };
+            }
+          }
+        } catch {
+          // Session not found — treat as expired
+        }
+        // Session is stale — expire this entry and keep looking
+        doc.ref.update({ status: 'expired' }).catch(() => {});
+        continue;
+      }
+
+      // Expired entry — return expired so client can re-queue
+      if (entry.status === 'expired') {
+        return { status: 'expired' };
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -245,7 +259,29 @@ export class MatchmakingService {
     await batch.commit();
 
     this.logger.log(`Match found: ${uid} vs ${matchData.uid} → session ${session.sessionId}`);
+
+    // Push instant notification to realtime server (fire-and-forget)
+    this._notifyRealtimeMatch(uid, matchData.uid, session.sessionId);
+
     return session.sessionId;
+  }
+
+  /**
+   * Notify the realtime server of a match so it can push to WebSocket clients instantly.
+   */
+  private _notifyRealtimeMatch(uid1: string, uid2: string, sessionId: string): void {
+    const realtimeUrl = process.env.REALTIME_SERVICE_URL || 'http://localhost:3001';
+    const internalKey = process.env.INTERNAL_API_KEY;
+    if (!internalKey) return;
+
+    fetch(`${realtimeUrl}/internal/matchmaking/notify-match`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-key': internalKey,
+      },
+      body: JSON.stringify({ uid1, uid2, sessionId }),
+    }).catch(err => this.logger.warn(`Realtime match notify failed: ${err.message}`));
   }
 
   // ─── ELO Rating ───────────────────────────────────────────────────

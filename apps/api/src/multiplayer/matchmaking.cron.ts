@@ -70,20 +70,39 @@ export class MatchmakingCron {
         this.logger.debug(`Matchmaking scan: ${updates} entries updated`);
       }
 
-      // After widening windows, try to match waiting players
-      const waitingEntries = snapshot.docs
+      // Re-query after widening so tryMatchPlayer sees updated windows
+      const freshSnapshot = updates > 0
+        ? await this.firebase
+            .collection('matchmakingQueue')
+            .where('status', '==', 'waiting')
+            .limit(100)
+            .get()
+        : snapshot;
+
+      const waitingEntries = freshSnapshot.docs
         .filter(doc => (doc.data() as MatchmakingEntry).status === 'waiting')
         .map(doc => ({ id: doc.id, ...(doc.data() as MatchmakingEntry) }));
 
+      // Track UIDs already matched this cycle to avoid double-processing
+      const matchedUids = new Set<string>();
+
       for (const entry of waitingEntries) {
+        if (matchedUids.has(entry.uid)) continue;
         try {
           const result = await this.matchmakingService.tryMatchPlayer(
             entry.id, entry.uid, entry.gameId, entry.skillRating,
-            'Player', null, // displayName/avatar not needed for session creation from cron
+            'Player', null,
           );
           if (result) {
             this.logger.log(`Cron matched ${entry.uid} → session ${result}`);
-            break; // One match per scan cycle to avoid race conditions
+            // Mark both players so we don't try to re-match them this cycle
+            matchedUids.add(entry.uid);
+            // The opponent UID is in the session — skip them if encountered later
+            const sessionDoc = await this.firebase.doc(`sessions/${result}`).get();
+            if (sessionDoc.exists) {
+              const players = sessionDoc.data()?.players || {};
+              for (const uid of Object.keys(players)) matchedUids.add(uid);
+            }
           }
         } catch (e) {
           // tryMatchPlayer may fail if entry was already matched — ignore

@@ -33,6 +33,8 @@
     'session:host-changed': [],
     'reconnected': [],
     'error': [],
+    'matchmaking:matched': [],
+    'matchmaking:queue-count': [],
   };
 
   // Client-side prediction state
@@ -85,25 +87,29 @@
         } else {
           // This is a reconnect — notify listeners
           console.log('[MP] Reconnected');
-          // Refresh auth token on reconnect (may have expired during iOS background)
-          const freshToken = window.apiClient?.token;
-          if (freshToken && socket.auth) {
-            socket.auth.token = freshToken;
+          // Ensure socket.auth has the latest token for future reconnects
+          const currentToken = window.apiClient?.token;
+          if (currentToken && socket.auth) {
+            socket.auth.token = currentToken;
           }
           _emit('reconnected', {});
         }
       });
 
-      socket.on('connect_error', (err) => {
+      socket.on('connect_error', async (err) => {
         console.error('[MP] Connection error:', err.message);
         reconnectAttempts++;
 
-        // On auth error, try refreshing token
-        if (err.message?.includes('auth') || err.message?.includes('token') || err.message?.includes('unauthorized')) {
-          const freshToken = window.apiClient?.token;
-          if (freshToken && socket.auth) {
-            socket.auth.token = freshToken;
-            console.log('[MP] Refreshed auth token for reconnect');
+        // On auth error, force-refresh the token via authManager (not just read the cached value)
+        if (err.message?.includes('auth') || err.message?.includes('token') || err.message?.includes('unauthorized') || err.message?.includes('Authentication')) {
+          try {
+            const freshToken = await window.authManager?.refreshToken();
+            if (freshToken && socket.auth) {
+              socket.auth.token = freshToken;
+              console.log('[MP] Force-refreshed auth token for reconnect');
+            }
+          } catch (e) {
+            console.warn('[MP] Token refresh failed:', e.message);
           }
         }
 
@@ -112,13 +118,21 @@
         }
       });
 
-      socket.on('disconnect', (reason) => {
+      socket.on('disconnect', async (reason) => {
         console.log('[MP] Disconnected:', reason);
         _emit('error', { code: 'DISCONNECTED', message: reason });
 
         // If server disconnected us (not client-initiated), force reconnect
         if (reason === 'io server disconnect' || reason === 'transport close') {
-          console.log('[MP] Server-side disconnect — attempting reconnect');
+          console.log('[MP] Server-side disconnect — refreshing token before reconnect');
+          try {
+            const freshToken = await window.authManager?.refreshToken();
+            if (freshToken && socket.auth) {
+              socket.auth.token = freshToken;
+            }
+          } catch (e) {
+            // Best effort — reconnect will retry token refresh on connect_error
+          }
           socket.connect();
         }
       });
@@ -149,7 +163,7 @@
     // Remove previous listener if any
     if (_visibilityHandler) document.removeEventListener('visibilitychange', _visibilityHandler);
 
-    _visibilityHandler = () => {
+    _visibilityHandler = async () => {
       if (document.visibilityState === 'visible' && socket) {
         console.log('[MP] Tab resumed — checking connection');
 
@@ -158,10 +172,15 @@
           _visibilityReconnectPending = true;
           _emit('error', { code: 'DISCONNECTED', message: 'Tab resumed' });
 
-          // Refresh token before reconnecting (may have expired)
-          const freshToken = window.apiClient?.token;
-          if (freshToken && socket.auth) {
-            socket.auth.token = freshToken;
+          // Force-refresh token before reconnecting (likely expired after iOS background)
+          try {
+            const freshToken = await window.authManager?.refreshToken();
+            if (freshToken && socket.auth) {
+              socket.auth.token = freshToken;
+              console.log('[MP] Token force-refreshed after tab resume');
+            }
+          } catch (e) {
+            console.warn('[MP] Token refresh on resume failed:', e.message);
           }
 
           socket.connect();
@@ -187,11 +206,15 @@
     document.addEventListener('visibilitychange', _visibilityHandler);
 
     // iOS also fires 'pageshow' on back-forward cache restore
-    window.addEventListener('pageshow', (e) => {
+    window.addEventListener('pageshow', async (e) => {
       if (e.persisted && socket && !socket.connected) {
         console.log('[MP] Page restored from bfcache — reconnecting');
-        const freshToken = window.apiClient?.token;
-        if (freshToken && socket.auth) socket.auth.token = freshToken;
+        try {
+          const freshToken = await window.authManager?.refreshToken();
+          if (freshToken && socket.auth) socket.auth.token = freshToken;
+        } catch (err) {
+          console.warn('[MP] Token refresh on bfcache restore failed:', err.message);
+        }
         socket.connect();
       }
     });
@@ -334,16 +357,88 @@
     return window.apiClient?.request('/multiplayer/sessions/active');
   }
 
-  // ─── Matchmaking (via REST) ───────────────────────────────────────
+  // ─── Matchmaking (REST + WebSocket push) ─────────────────────────
+
+  let _matchmakingSocket = null;
+  let _matchmakingCallback = null;
 
   async function findMatch(gameId) {
-    return window.apiClient?.request('/multiplayer/matchmaking/find', {
+    // 1. Create Firestore queue entry via REST (may return instant match)
+    const result = await window.apiClient?.request('/multiplayer/matchmaking/find', {
       method: 'POST',
       body: JSON.stringify({ gameId }),
     });
+
+    // 2. If instant match, no need for WS
+    if (result?.matchedSessionId) return result;
+
+    // 3. Connect to matchmaking WS namespace for push notification
+    _connectMatchmakingWs(gameId);
+
+    return result;
+  }
+
+  function _connectMatchmakingWs(gameId) {
+    if (_matchmakingSocket) return; // Already connected
+
+    const token = window.apiClient?.token;
+    if (!token) return;
+
+    try {
+      _matchmakingSocket = io(`${REALTIME_URL}/matchmaking`, {
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 10,
+        timeout: 10000,
+      });
+
+      _matchmakingSocket.on('connect', () => {
+        console.log('[MP] Matchmaking WS connected');
+        _matchmakingSocket.emit('matchmaking:search', { gameId });
+      });
+
+      _matchmakingSocket.on('matchmaking:matched', (data) => {
+        console.log('[MP] Match found via WS push:', data.sessionId);
+        if (_matchmakingCallback) {
+          _matchmakingCallback(data.sessionId);
+        }
+        _emit('matchmaking:matched', data);
+        _disconnectMatchmakingWs();
+      });
+
+      _matchmakingSocket.on('matchmaking:queue-count', (data) => {
+        _emit('matchmaking:queue-count', data);
+      });
+
+      _matchmakingSocket.on('disconnect', () => {
+        console.log('[MP] Matchmaking WS disconnected');
+      });
+    } catch (e) {
+      console.warn('[MP] Matchmaking WS connect failed:', e.message);
+    }
+  }
+
+  function _disconnectMatchmakingWs() {
+    if (_matchmakingSocket) {
+      _matchmakingSocket.disconnect();
+      _matchmakingSocket = null;
+    }
+    _matchmakingCallback = null;
+  }
+
+  /** Register a callback for when a match is found via WS push */
+  function onMatchFound(callback) {
+    _matchmakingCallback = callback;
   }
 
   async function cancelMatchmaking() {
+    // Disconnect WS
+    if (_matchmakingSocket?.connected) {
+      _matchmakingSocket.emit('matchmaking:cancel');
+    }
+    _disconnectMatchmakingWs();
+    // Cancel Firestore entry via REST
     return window.apiClient?.request('/multiplayer/matchmaking/cancel', { method: 'DELETE' });
   }
 
@@ -499,10 +594,11 @@
     getSession,
     getActiveSessions,
 
-    // Matchmaking (REST)
+    // Matchmaking (REST + WebSocket push)
     findMatch,
     cancelMatchmaking,
     getMatchmakingStatus,
+    onMatchFound,
 
     // Invitations (REST)
     inviteFriend,

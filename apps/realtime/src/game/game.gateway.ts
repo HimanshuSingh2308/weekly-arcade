@@ -74,6 +74,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
 
       const session = sessionDoc.data() as Session;
+
+      // Reject connections to finished/abandoned sessions
+      if (session.status === 'finished' || session.status === 'abandoned') {
+        client.emit('error', { code: 'SESSION_ENDED', message: 'This game has already ended' });
+        client.disconnect();
+        return;
+      }
+
       const player = session.players?.[uid];
 
       // Allow participants and spectators
