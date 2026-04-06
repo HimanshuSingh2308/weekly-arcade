@@ -73,10 +73,22 @@
 
       const result = await window.multiplayerClient?.findMatch(GAME_ID);
       if (result?.matchedSessionId) {
-        window.multiplayerUI?.hideMatchmaking();
-        await joinSession(result.matchedSessionId);
+        try {
+          await joinSession(result.matchedSessionId);
+          window.multiplayerUI?.hideMatchmaking();
+        } catch (joinErr) {
+          // Session was stale — leave it and retry once
+          console.warn('Matched session stale, retrying...', joinErr);
+          try { await window.multiplayerClient?.leaveSession(result.matchedSessionId); } catch(_) {}
+          const retry = await window.multiplayerClient?.findMatch(GAME_ID);
+          if (retry?.matchedSessionId) {
+            await joinSession(retry.matchedSessionId);
+            window.multiplayerUI?.hideMatchmaking();
+          } else {
+            _pollForMatch();
+          }
+        }
       } else {
-        // Poll for match
         _pollForMatch();
       }
     } catch (err) {
@@ -104,13 +116,9 @@
   }
 
   async function joinSession(sessionId) {
-    try {
-      currentSessionId = sessionId;
-      await window.multiplayerClient?.joinSession(sessionId);
-      _setupSocketListeners();
-    } catch (err) {
-      console.error('Join session error:', err);
-    }
+    currentSessionId = sessionId;
+    await window.multiplayerClient?.joinSession(sessionId);
+    _setupSocketListeners();
   }
 
   async function joinByCode(code) {
