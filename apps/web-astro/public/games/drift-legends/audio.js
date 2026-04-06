@@ -8,6 +8,7 @@
   let masterGain = null;
   let engineOsc = null;
   let engineGain = null;
+  var _engineSub = null, _engineSubGain = null;
   let muted = localStorage.getItem('dl-muted') === 'true';
   let volume = 0.4;
   let engineRunning = false;
@@ -78,12 +79,22 @@
     if (engineRunning) return;
     try {
       var c = ensureContext();
+      // Sub-bass — deep rumble (sine wave, felt more than heard)
+      _engineSub = c.createOscillator();
+      _engineSubGain = c.createGain();
+      _engineSub.type = 'sine';
+      _engineSub.frequency.value = 40;
+      _engineSubGain.gain.value = 0.06 * volume;
+      _engineSub.connect(_engineSubGain);
+      _engineSubGain.connect(masterGain);
+      _engineSub.start();
+
       // Fundamental — low sawtooth
       engineOsc = c.createOscillator();
       engineGain = c.createGain();
       engineOsc.type = 'sawtooth';
       engineOsc.frequency.value = 75;
-      engineGain.gain.value = 0.06 * volume;
+      engineGain.gain.value = 0.05 * volume;
       engineOsc.connect(engineGain);
       engineGain.connect(masterGain);
       engineOsc.start();
@@ -93,7 +104,7 @@
       engineGain2 = c.createGain();
       engineOsc2.type = 'square';
       engineOsc2.frequency.value = 150;
-      engineGain2.gain.value = 0.02 * volume;
+      engineGain2.gain.value = 0.025 * volume;
       engineOsc2.connect(engineGain2);
       engineGain2.connect(masterGain);
       engineOsc2.start();
@@ -106,20 +117,25 @@
     if (!engineRunning) return;
     try { if (engineOsc) engineOsc.stop(); } catch (_) {}
     try { if (engineOsc2) engineOsc2.stop(); } catch (_) {}
+    try { if (_engineSub) _engineSub.stop(); } catch (_) {}
     engineOsc = null; engineGain = null;
     engineOsc2 = null; engineGain2 = null;
+    _engineSub = null; _engineSubGain = null;
     engineRunning = false;
   }
 
   function updateEngineSound(speed, maxSpeed) {
     if (!engineRunning || !engineOsc) return;
     var ratio = Math.min(speed / maxSpeed, 1);
-    // Fundamental pitch: 75-280Hz based on speed
+    // Sub-bass: 40-100Hz (deep rumble, louder at idle)
+    if (_engineSub) _engineSub.frequency.value = 40 + ratio * 60;
+    if (_engineSubGain) _engineSubGain.gain.value = (0.06 - ratio * 0.02) * volume;
+    // Fundamental pitch: 75-280Hz
     engineOsc.frequency.value = 75 + ratio * 205;
-    if (engineGain) engineGain.gain.value = (0.04 + ratio * 0.06) * volume;
-    // Harmonic follows at 2x frequency
+    if (engineGain) engineGain.gain.value = (0.04 + ratio * 0.04) * volume;
+    // Harmonic at 2x frequency
     if (engineOsc2) engineOsc2.frequency.value = 150 + ratio * 350;
-    if (engineGain2) engineGain2.gain.value = (0.01 + ratio * 0.03) * volume;
+    if (engineGain2) engineGain2.gain.value = (0.01 + ratio * 0.02) * volume;
   }
 
   const Audio = {
@@ -264,7 +280,7 @@
         var distortion = c.createWaveShaper();
         var guitarFilter = c.createBiquadFilter();
         guitarOsc.type = 'sawtooth';
-        guitarGain.gain.value = 0.025 * volume;
+        guitarGain.gain.value = 0.04 * volume;
         // Distortion curve
         var curve = new Float32Array(256);
         for (var i = 0; i < 256; i++) { var x = (i / 128) - 1; curve[i] = (Math.PI + 200) * x / (Math.PI + 200 * Math.abs(x)); }
@@ -332,8 +348,8 @@
     },
 
     resumeBGM() {
-      try { if (this._bgmGain && !muted) this._bgmGain.gain.value = 0.04 * volume; } catch (_) {}
-      try { if (this._bgmHatGain && !muted) this._bgmHatGain.gain.value = 0.015 * volume; } catch (_) {}
+      try { if (this._bgmGain && !muted) this._bgmGain.gain.value = 0.07 * volume; } catch (_) {}
+      try { if (this._bgmHatGain && !muted) this._bgmHatGain.gain.value = 0.025 * volume; } catch (_) {}
     },
 
     stopBGM() {

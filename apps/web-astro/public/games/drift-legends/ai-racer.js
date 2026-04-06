@@ -209,7 +209,7 @@
     const rival = chapter.rival;
     const carMesh = window.DriftLegends.CarBuilder.buildRivalCar(scene, rival.name.toLowerCase(), rival.carId);
     const ai = new AIRacer(carMesh, rival.personality, chapter);
-    ai.targetSpeed = 8;
+    ai.targetSpeed = 14;
     return ai;
   }
 
@@ -218,7 +218,7 @@
     for (let i = 0; i < count; i++) {
       const carMesh = window.DriftLegends.CarBuilder.buildAICar(scene, i);
       const ai = new AIRacer(carMesh, 'filler', chapter);
-      ai.targetSpeed = 5 + Math.random() * 2;
+      ai.targetSpeed = 9 + Math.random() * 4;
       racers.push(ai);
     }
     return racers;

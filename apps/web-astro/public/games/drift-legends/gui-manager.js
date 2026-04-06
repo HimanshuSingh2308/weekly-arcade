@@ -42,6 +42,9 @@
     constructor(scene) {
       this.scene = scene;
       this.ui = GUI.AdvancedDynamicTexture.CreateFullscreenUI('driftLegendsUI', true, scene);
+      // Scale GUI proportionally — all pixel values are relative to 1280px width
+      // On smaller screens everything shrinks, on larger screens everything grows
+      this.ui.idealWidth = 1920;
       this.screens = {};
       this.currentScreen = null;
       this.callbacks = {};
@@ -66,13 +69,13 @@
       // Hide touch controls for menu/overlay screens — they block clicks
       if (this.touchControls) {
         var racingScreens = ['RACE_HUD', 'COUNTDOWN', 'CINEMATIC_INTRO'];
-        this.touchControls.isVisible = racingScreens.indexOf(screenName) >= 0 && window.DriftLegends.Input.isMobile();
+        var showTouch = racingScreens.indexOf(screenName) >= 0 && window.DriftLegends.Input.isMobile();
+        this.touchControls.isVisible = showTouch;
+        if (this._pedalLayer) this._pedalLayer.isVisible = showTouch;
       }
       // Hide result buttons when leaving result screen
       if (screenName !== 'RACE_RESULT') {
-        if (this._resultNextBtn) this._resultNextBtn.isVisible = false;
-        if (this._resultRetryBtn) this._resultRetryBtn.isVisible = false;
-        if (this._resultMenuBtn) this._resultMenuBtn.isVisible = false;
+        if (this._resultBtnRow) this._resultBtnRow.isVisible = false;
       }
       // Auto-unlock chapters when entering story select
       if (screenName === 'STORY_SELECT') {
@@ -87,17 +90,17 @@
           });
         } catch (_) { }
       }
-      // Toggle garage 3D car preview
-      if (this._showGaragePreview) {
+      // Toggle garage 3D car preview — only for menu screens, never during gameplay
+      var isMenuScreen = ['MENU', 'STORY_SELECT', 'CAR_SELECT', 'PRE_RACE', 'SETTINGS', 'MP_MENU'].indexOf(screenName) >= 0;
+      if (this._showGaragePreview && isMenuScreen) {
         if (screenName === 'CAR_SELECT') {
-          // Dispose menu car — it conflicts with garage car
           if (this._menuCar) { this._menuCar.dispose(false, true); this._menuCar = null; }
           if (this._menuCarLight) this._menuCarLight.setEnabled(false);
           if (this._menuCarFill) this._menuCarFill.setEnabled(false);
           if (this._menuCarRim) this._menuCarRim.setEnabled(false);
           if (this._menuCarHemi) this._menuCarHemi.setEnabled(false);
-          // Build garage preview
-          if (!this._garageCar && this._selectedCarId) {
+          if ((!this._garageCar || this._garageCar.isDisposed()) && this._selectedCarId) {
+            this._garageCar = null;
             this._showGarageCarPreview(this._selectedCarId);
           }
           this._showGaragePreview(true);
@@ -181,6 +184,96 @@
       this._buildDisconnect();
       this._buildMobileTouchControls();
       this._buildTutorialOverlay();
+
+      // ── RAW POINTER TAP HANDLER for menu screens ──
+      // Fixes Babylon.js GUI onPointerClickObservable breaking on touch devices
+      var guiSelf = this;
+      var _tapStartTime = 0;
+      var _tapStartX = 0, _tapStartY = 0;
+      var menuCanvas = this.scene.getEngine().getRenderingCanvas();
+
+      menuCanvas.addEventListener('pointerdown', function(e) {
+        _tapStartTime = Date.now();
+        _tapStartX = e.clientX;
+        _tapStartY = e.clientY;
+      });
+
+      menuCanvas.addEventListener('pointerup', function(e) {
+        // Only process quick taps (not drags)
+        var dt = Date.now() - _tapStartTime;
+        var dx = Math.abs(e.clientX - _tapStartX);
+        var dy = Math.abs(e.clientY - _tapStartY);
+        if (dt > 500 || dx > 20 || dy > 20) return;
+
+        var w = menuCanvas.clientWidth, h = menuCanvas.clientHeight;
+        var x = e.clientX, y = e.clientY;
+
+        // STORY SELECT — hit-test chapter rings by their screen positions
+        if (guiSelf.currentScreen === 'STORY_SELECT' && guiSelf.chapterCards) {
+          guiSelf.chapterCards.forEach(function(cc, idx) {
+            if (!cc.container) return;
+            // Get container's screen position from its GUI properties
+            var cLeft = cc.container._currentMeasure?.left || 0;
+            var cTop = cc.container._currentMeasure?.top || 0;
+            var cW = cc.container._currentMeasure?.width || 0;
+            var cH = cc.container._currentMeasure?.height || 0;
+            if (x >= cLeft && x <= cLeft + cW && y >= cTop && y <= cTop + cH) {
+              guiSelf._fire('click');
+              guiSelf._fire('selectChapter', { chapterIndex: idx });
+            }
+          });
+        }
+
+        // CAR SELECT — hit-test car cards
+        if (guiSelf.currentScreen === 'CAR_SELECT' && guiSelf.carSelectCards) {
+          guiSelf.carSelectCards.forEach(function(cc) {
+            if (!cc.card) return;
+            var cLeft = cc.card._currentMeasure?.left || 0;
+            var cTop = cc.card._currentMeasure?.top || 0;
+            var cW = cc.card._currentMeasure?.width || 0;
+            var cH = cc.card._currentMeasure?.height || 0;
+            if (x >= cLeft && x <= cLeft + cW && y >= cTop && y <= cTop + cH) {
+              // Simulate the card click
+              cc.card.onPointerClickObservable.notifyObservers({});
+            }
+          });
+        }
+
+        // BUTTONS — hit-test all visible buttons (back, select, race, etc.)
+        function hitTestButton(btn) {
+          if (!btn || !btn.isVisible) return false;
+          var m = btn._currentMeasure;
+          if (!m) return false;
+          return x >= m.left && x <= m.left + m.width && y >= m.top && y <= m.top + m.height;
+        }
+        // Find all buttons in the current visible panel
+        var panel = guiSelf.screens[guiSelf.currentScreen];
+        if (panel && panel.children) {
+          panel.children.forEach(function(child) {
+            if (child.name && child.name.startsWith('btn_') && hitTestButton(child)) {
+              child.onPointerClickObservable.notifyObservers({});
+            }
+          });
+        }
+        // Result buttons are in _resultBtnRow on ui root, not inside the panel
+        if (guiSelf.currentScreen === 'RACE_RESULT' && guiSelf._resultBtnRow && guiSelf._resultBtnRow.isVisible) {
+          [guiSelf._resultNextBtn, guiSelf._resultRetryBtn, guiSelf._resultMenuBtn].forEach(function(btn) {
+            if (hitTestButton(btn)) {
+              btn.onPointerClickObservable.notifyObservers({});
+            }
+          });
+        }
+        // Pause buttons are also inside a card on ui root
+        if (guiSelf.currentScreen === 'PAUSE') {
+          guiSelf.ui._rootContainer.children.forEach(function(child) {
+            if (child.children) child.children.forEach(function(inner) {
+              if (inner.name && inner.name.startsWith('btn_') && hitTestButton(inner)) {
+                inner.onPointerClickObservable.notifyObservers({});
+              }
+            });
+          });
+        }
+      });
     }
 
     _createPanel(name, transparent) {
@@ -192,31 +285,6 @@
       panel.isVisible = false;
       this.ui.addControl(panel);
       this.screens[name] = panel;
-
-      // Add vignette overlay for non-transparent menu panels (game-like depth)
-      if (!transparent) {
-        // Top accent line
-        var topLine = new GUI.Rectangle(name + '_topLine');
-        topLine.width = '100%';
-        topLine.height = '2px';
-        topLine.background = 'rgba(255,77,0,0.3)';
-        topLine.thickness = 0;
-        topLine.isHitTestVisible = false;
-        topLine.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-        topLine.top = '0px';
-        panel.addControl(topLine);
-        // Bottom accent line
-        var botLine = new GUI.Rectangle(name + '_botLine');
-        botLine.width = '100%';
-        botLine.height = '1px';
-        botLine.background = 'rgba(255,77,0,0.15)';
-        botLine.thickness = 0;
-        botLine.isHitTestVisible = false;
-        botLine.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-        botLine.top = '-10px';
-        panel.addControl(botLine);
-      }
-
       return panel;
     }
 
@@ -605,31 +673,7 @@
       // Menu background is semi-transparent — HTML SVG skyline shows through
       panel.background = 'rgba(13,13,26,0.35)';
 
-      // Speed-line particle effect (diagonal lines shooting across)
-      this._menuSpeedLines = [];
-      for (let i = 0; i < 16; i++) {
-        const line = new GUI.Rectangle('speed_line_' + i);
-        line.width = (80 + Math.random() * 200) + 'px';
-        line.height = '1.5px';
-        line.background = 'rgba(255,77,0,' + (0.06 + Math.random() * 0.12) + ')';
-        line.thickness = 0;
-        line.rotation = -0.35;
-        line.left = (-600 + Math.random() * 1200) + 'px';
-        line.top = (-400 + Math.random() * 800) + 'px';
-        panel.addControl(line);
-        this._menuSpeedLines.push({ el: line, speed: 1.5 + Math.random() * 3, startLeft: parseFloat(line.left) });
-      }
-
-      // Animate speed lines
-      this.scene.registerBeforeRender(() => {
-        if (!this.screens['MENU'] || !this.screens['MENU'].isVisible) return;
-        this._menuSpeedLines.forEach(sl => {
-          var currentLeft = parseFloat(sl.el.left) || 0;
-          currentLeft += sl.speed;
-          if (currentLeft > 700) currentLeft = -700;
-          sl.el.left = currentLeft + 'px';
-        });
-      });
+      // (speed lines removed — diagonal GUI rectangles overlapped with SVG cityscape)
 
       // 3D car preview (rotating slowly behind menu)
       this._buildMenuCarPreview();
@@ -758,7 +802,8 @@
         this.scene.registerBeforeRender(() => {
           if (this.screens['MENU'] && this.screens['MENU'].isVisible) {
             // Rebuild menu car if it was disposed (e.g. after racing)
-            if (!this._menuCar) {
+            if (!this._menuCar || this._menuCar.isDisposed()) {
+              this._menuCar = null;
               try {
                 var CB = window.DriftLegends.CarBuilder;
                 if (CB && CB.buildCar) {
@@ -766,8 +811,39 @@
                   this._menuCar.position = new BABYLON.Vector3(0, 0, 0);
                   this._menuCar.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
                   this._menuCar.rotation.y = Math.PI * 0.2;
+                  // Disable emissive on headlights/taillights — they leave trails on transparent canvas
+                  this._menuCar.getChildMeshes().forEach(function(m) {
+                    if (m.material && m.material.emissiveColor) {
+                      var ec = m.material.emissiveColor;
+                      if (ec.r > 0.3 || ec.g > 0.3 || ec.b > 0.3) {
+                        m.material = m.material.clone(m.material.name + '_noEmit');
+                        m.material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+                      }
+                    }
+                  });
                 }
               } catch (_) { }
+            }
+            // Rebuild menu lights if they were disposed (e.g. _returnToMenu disposes all lights)
+            if (!this._menuCarHemi || this._menuCarHemi.isDisposed()) {
+              this._menuCarHemi = new BABYLON.HemisphericLight('menuCarHemi', new BABYLON.Vector3(0, 1, 0), this.scene);
+              this._menuCarHemi.intensity = 1.5;
+              this._menuCarHemi.diffuse = new BABYLON.Color3(1, 0.95, 0.9);
+            }
+            if (!this._menuCarLight || this._menuCarLight.isDisposed()) {
+              this._menuCarLight = new BABYLON.PointLight('menuCarLight', new BABYLON.Vector3(5, 4, -3), this.scene);
+              this._menuCarLight.intensity = 3.0;
+              this._menuCarLight.diffuse = new BABYLON.Color3(1, 0.7, 0.4);
+            }
+            if (!this._menuCarFill || this._menuCarFill.isDisposed()) {
+              this._menuCarFill = new BABYLON.PointLight('menuCarFill', new BABYLON.Vector3(-4, 3, 2), this.scene);
+              this._menuCarFill.intensity = 1.5;
+              this._menuCarFill.diffuse = new BABYLON.Color3(0.4, 0.6, 1.0);
+            }
+            if (!this._menuCarRim || this._menuCarRim.isDisposed()) {
+              this._menuCarRim = new BABYLON.PointLight('menuCarRim', new BABYLON.Vector3(0, 1, 5), this.scene);
+              this._menuCarRim.intensity = 1.0;
+              this._menuCarRim.diffuse = new BABYLON.Color3(1, 0.3, 0);
             }
             if (!this._menuCar) return;
             this._menuCar.rotation.y += 0.004;
@@ -779,10 +855,10 @@
             }
             // Slowly orbit
             if (this._menuArcCam) this._menuArcCam.alpha += 0.002;
-            if (this._menuCarLight) this._menuCarLight.setEnabled(true);
-            if (this._menuCarFill) this._menuCarFill.setEnabled(true);
-            if (this._menuCarRim) this._menuCarRim.setEnabled(true);
-            if (this._menuCarHemi) this._menuCarHemi.setEnabled(true);
+            this._menuCarLight.setEnabled(true);
+            this._menuCarFill.setEnabled(true);
+            this._menuCarRim.setEnabled(true);
+            this._menuCarHemi.setEnabled(true);
           } else if (this._menuCar) {
             this._menuCar.isVisible = false;
             // Restore the chase camera
@@ -797,11 +873,48 @@
         });
       } catch (_) { /* car builder may not be ready */ }
 
-      // Garage car rotation
+      // Garage car rotation — auto spin + touch/mouse drag to rotate
+      this._garageDragX = 0;   // accumulated drag delta
+      this._garageAutoSpin = true;
+      this._garageDragTimer = 0;
+      var garageCanvas = this.scene.getEngine().getRenderingCanvas();
+      var dragStartX = 0;
+      var dragging = false;
+      var self = this;
+      garageCanvas.addEventListener('pointerdown', function(e) {
+        if (!self.screens['CAR_SELECT'] || !self.screens['CAR_SELECT'].isVisible) return;
+        dragStartX = e.clientX;
+        dragging = true;
+        self._garageAutoSpin = false;
+        self._garageDragTimer = 0;
+      });
+      garageCanvas.addEventListener('pointermove', function(e) {
+        if (!dragging) return;
+        var dx = e.clientX - dragStartX;
+        dragStartX = e.clientX;
+        self._garageDragX += dx * 0.01;
+      });
+      garageCanvas.addEventListener('pointerup', function() {
+        dragging = false;
+        self._garageDragTimer = 0;
+      });
+      garageCanvas.addEventListener('pointercancel', function() { dragging = false; });
+
       this.scene.registerBeforeRender(() => {
         if (this._garageCar && this.screens['CAR_SELECT'] && this.screens['CAR_SELECT'].isVisible) {
-          this._garageCar.rotation.y += 0.005;
-          // Don't orbit camera — only rotate car
+          // Apply drag rotation
+          if (this._garageDragX !== 0) {
+            this._garageCar.rotation.y += this._garageDragX;
+            this._garageDragX = 0;
+          }
+          // Resume auto-spin after 2s of no touch
+          if (!this._garageAutoSpin) {
+            this._garageDragTimer += this.scene.getEngine().getDeltaTime() / 1000;
+            if (this._garageDragTimer > 2) this._garageAutoSpin = true;
+          }
+          if (this._garageAutoSpin) {
+            this._garageCar.rotation.y += 0.005;
+          }
         }
       });
     }
@@ -844,16 +957,19 @@
       // Mountain SVG background is toggled by show() method
 
       // ─── Winding Mountain Road ─────────────────────────────────
-      // Chapter positions — zigzag from bottom-left to top-right
-      // Positions mapped to SVG road curve path:
-      // SVG road: M 50,700 → C 450,550 → C 800,400 → C 1150,450 → C 1550,250
-      // GUI left: -40% to +35%, top: % of canvas height
+      // Chapter positions — placed exactly on the SVG cubic Bezier road path
+      // SVG path: M 50,700 C 200,600 300,500 450,550 C 600,600 650,450 800,400 C 950,350 1000,500 1150,450 C 1300,400 1350,300 1550,250
+      // SVG viewBox: 0 0 1600 800 → GUI percentage from center: x = (svgX/1600 - 0.5)*100, y = (svgY/800 - 0.5)*100
+      // Positions derived from SVG Bezier: M 50,700 C...450,550 C...800,400 C...1150,450 C...1550,250
+      // SVG viewBox 1600x800 → GUI: x=(svgX/1600-0.5)*100%, y=(svgY/800-0.5)*100%
+      // Nudged down ~3-4% so circles sit centered on road (ring has -20px top offset inside container)
+      // Positions pulled in from edges to prevent clipping (max ±38% to leave room for ring + labels)
       var chPositions = [
-        { x: -35, y: 38 },    // Ch1: road start, bottom-left (City)
-        { x: -12, y: 15 },    // Ch2: first curve apex (Desert)
-        { x: 8, y: 25 },    // Ch3: mid road dip (Ice)
-        { x: 22, y: 5 },     // Ch4: third curve (Jungle)
-        { x: 38, y: -18 },   // Ch5: road end, top-right (Sky)
+        { x: -38, y: '38%' },     // Ch1: City — bottom-left
+        { x: -18, y: '20%' },     // Ch2: Desert — first curve
+        { x: 0,   y: '2%' },      // Ch3: Ice — mid road
+        { x: 18,  y: '8%' },      // Ch4: Jungle — third curve
+        { x: 38,  y: '-14%' },    // Ch5: Sky — top-right
       ];
 
       // Road is drawn by the SVG background — no GUI dashes needed
@@ -867,7 +983,7 @@
       this._storyCarMarker.color = COLORS.accent;
       this._storyCarMarker.background = 'transparent';
       this._storyCarMarker.shadowColor = COLORS.accent;
-      this._storyCarMarker.shadowBlur = 25;
+      this._storyCarMarker.shadowBlur = 8;
       panel.addControl(this._storyCarMarker);
 
       // Dynamic sizing + pulse animation
@@ -905,11 +1021,11 @@
                 cc.card._numText.top = Math.round(ringSize * 0.22) + 'px';
               }
               if (cc.card._themeText) cc.card._themeText.top = -Math.round(ringSize * 0.12) + 'px';
-              // Reposition labels based on ring size
-              var halfR = Math.round(ringSize / 2);
-              if (cc.nameText) cc.nameText.top = (cc.baseY + halfR + 8) + 'px';
-              if (cc.starsText) cc.starsText.top = (cc.baseY + halfR + 26) + 'px';
-              if (cc.envTag) cc.envTag.top = (cc.baseY - halfR - 18) + 'px';
+              // Resize container to fit ring + labels
+              if (cc.container) {
+                cc.container.widthInPixels = Math.max(160, ringSize + 40);
+                cc.container.heightInPixels = ringSize + 70;
+              }
             }
           });
         }
@@ -926,23 +1042,35 @@
         var chColor = CH_COLORS[i];
         var pos = chPositions[i];
 
-        // Outer ring — sized relative to viewport height (bigger on bigger screens)
+        // Container — positioned on the spline road, holds ring + labels
+        var container = new GUI.Rectangle('chContainer_' + i);
+        container.width = '160px';
+        container.height = '180px';
+        container.thickness = 0;
+        container.background = 'transparent';
+        container.left = pos.x + '%';
+        container.top = pos.y;
+        container.isHitTestVisible = false;
+        panel.addControl(container);
+
+        // Outer ring — centered in container
         var ring = new GUI.Ellipse('chRing_' + i);
-        ring.widthInPixels = 0; // set dynamically below
+        ring.widthInPixels = 0; // set dynamically
         ring.heightInPixels = 0;
         ring.thickness = 3;
         ring.color = chColor;
         ring.background = 'rgba(13,13,26,0.85)';
         ring.shadowColor = chColor;
-        ring.shadowBlur = 20;
-        ring.left = pos.x + '%';
-        ring.top = pos.y + 'px';
-        panel.addControl(ring);
+        ring.shadowBlur = 4;
+        ring.top = '-20px'; // shifted up within container to make room for labels below
+        ring.isHitTestVisible = true;
+        container.addControl(ring);
 
         // Theme emoji inside circle
         var themeText = new GUI.TextBlock('chTheme_' + i, chThemes[i]);
         themeText.fontSize = 0; // set dynamically
         themeText.top = '-10px';
+        themeText.isHitTestVisible = false;
         ring.addControl(themeText);
 
         // Chapter number below emoji
@@ -952,41 +1080,14 @@
         numText.fontWeight = 'bold';
         numText.color = chColor;
         numText.top = '18px';
+        numText.isHitTestVisible = false;
         ring.addControl(numText);
 
         // Store refs for dynamic sizing
         ring._themeText = themeText;
         ring._numText = numText;
 
-        // Name label below circle (positioned dynamically)
-        var nameText = new GUI.TextBlock('chName_' + i, '');
-        nameText.fontSize = 15;
-        nameText.fontFamily = 'monospace';
-        nameText.fontWeight = 'bold';
-        nameText.color = COLORS.text;
-        nameText.shadowColor = 'rgba(0,0,0,0.9)';
-        nameText.shadowBlur = 8;
-        nameText.left = pos.x + '%';
-        nameText.top = '0px'; // set dynamically
-        nameText.resizeToFit = true;
-        nameText.height = '20px';
-        panel.addControl(nameText);
-
-        // Stars below name (positioned dynamically)
-        var starsText = new GUI.TextBlock('chStars_' + i, '');
-        starsText.fontSize = 14;
-        starsText.fontFamily = 'monospace';
-        starsText.fontWeight = 'bold';
-        starsText.color = COLORS.gold;
-        starsText.shadowColor = 'rgba(0,0,0,0.9)';
-        starsText.shadowBlur = 6;
-        starsText.left = pos.x + '%';
-        starsText.top = '0px'; // set dynamically
-        starsText.resizeToFit = true;
-        starsText.height = '18px';
-        panel.addControl(starsText);
-
-        // Environment tag above circle (positioned dynamically)
+        // Environment tag above ring
         var envTag = new GUI.TextBlock('chEnv_' + i, chEnvNames[i]);
         envTag.fontSize = 12;
         envTag.fontFamily = 'monospace';
@@ -994,18 +1095,49 @@
         envTag.color = chColor;
         envTag.shadowColor = 'rgba(0,0,0,0.9)';
         envTag.shadowBlur = 6;
-        envTag.left = pos.x + '%';
-        envTag.top = '0px'; // set dynamically
+        envTag.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        envTag.top = '0px';
         envTag.resizeToFit = true;
         envTag.height = '16px';
-        panel.addControl(envTag);
+        envTag.isHitTestVisible = false;
+        container.addControl(envTag);
+
+        // Name label below ring
+        var nameText = new GUI.TextBlock('chName_' + i, '');
+        nameText.fontSize = 15;
+        nameText.fontFamily = 'monospace';
+        nameText.fontWeight = 'bold';
+        nameText.color = COLORS.text;
+        nameText.shadowColor = 'rgba(0,0,0,0.9)';
+        nameText.shadowBlur = 8;
+        nameText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        nameText.top = '-22px';
+        nameText.resizeToFit = true;
+        nameText.height = '20px';
+        nameText.isHitTestVisible = false;
+        container.addControl(nameText);
+
+        // Stars below name
+        var starsText = new GUI.TextBlock('chStars_' + i, '');
+        starsText.fontSize = 14;
+        starsText.fontFamily = 'monospace';
+        starsText.fontWeight = 'bold';
+        starsText.color = COLORS.gold;
+        starsText.shadowColor = 'rgba(0,0,0,0.9)';
+        starsText.shadowBlur = 6;
+        starsText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        starsText.top = '-4px';
+        starsText.resizeToFit = true;
+        starsText.height = '18px';
+        starsText.isHitTestVisible = false;
+        container.addControl(starsText);
 
         // Click handler on the ring
         ring.onPointerEnterObservable.add((function (rng, clr) {
-          return function () { rng.shadowBlur = 28; rng.scaleX = 1.1; rng.scaleY = 1.1; rng.thickness = 4; };
+          return function () { rng.shadowBlur = 6; rng.scaleX = 1.03; rng.scaleY = 1.03; rng.thickness = 4; };
         })(ring, chColor));
         ring.onPointerOutObservable.add((function (rng) {
-          return function () { rng.shadowBlur = 16; rng.scaleX = 1; rng.scaleY = 1; rng.thickness = 3; };
+          return function () { rng.shadowBlur = 4; rng.scaleX = 1; rng.scaleY = 1; rng.thickness = 3; };
         })(ring));
 
         ring.onPointerClickObservable.add((function (idx) {
@@ -1015,7 +1147,7 @@
           }.bind(this);
         }).call(this, i));
 
-        this.chapterCards.push({ card: ring, nameText: nameText, starsText: starsText, envTag: envTag, baseY: pos.y, accentBar: null });
+        this.chapterCards.push({ card: ring, nameText: nameText, starsText: starsText, envTag: envTag, container: container, baseY: pos.y, accentBar: null });
       }
     }
 
@@ -1037,6 +1169,7 @@
         }
         cc.card.alpha = unlocked ? 1 : 0.3;
         cc.card.isEnabled = unlocked;
+        cc.card.shadowBlur = unlocked ? 4 : 0;
       });
       // Light up road segments for completed chapters
       if (this._storyRoadSegs) {
@@ -1056,7 +1189,7 @@
         var pos = this._storyChPositions[highestUnlocked];
         if (pos) {
           this._storyCarMarker.left = pos.x + '%';
-          this._storyCarMarker.top = pos.y + 'px'; // same position as chapter — pulses around it
+          this._storyCarMarker.top = pos.y; // same position as chapter — pulses around it
         }
       }
     }
@@ -1294,7 +1427,7 @@
     _showGarageCarPreview(carId) {
       try {
         var CB = window.DriftLegends.CarBuilder;
-        if (!CB || !CB.buildCar) return;
+        if (!CB || !CB.buildCar) { console.warn('[Garage] CarBuilder not ready'); return; }
 
         // Remove previous preview car
         if (this._garageCar) {
@@ -1588,12 +1721,12 @@
         this._garageEnv.push(barrel2);
 
         // (hemi already created above in 3-light setup)
-      } catch (_) { }
+      } catch (e) { console.error('[Garage] Error building garage:', e); }
     }
 
     _showGaragePreview(visible) {
-      if (this._garageCar) this._garageCar.isVisible = !!visible;
-      if (visible && this._garageCam) {
+      if (this._garageCar && !this._garageCar.isDisposed()) this._garageCar.isVisible = !!visible;
+      if (visible && this._garageCam && !this._garageCam.isDisposed()) {
         this._savedCamForGarage = this.scene.activeCamera;
         this.scene.activeCamera = this._garageCam;
         // Dark background for garage
@@ -1964,18 +2097,21 @@
       this.hud.driftFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       driftContainer.addControl(this.hud.driftFill);
 
-      // Drift score — above the bottom bar, left-aligned
+      // Drift score — top-left, below the position box
       this.hud.driftScore = new GUI.TextBlock('hudDriftScore', '');
       this.hud.driftScore.color = COLORS.accent;
       this.hud.driftScore.fontSize = 14;
       this.hud.driftScore.fontFamily = 'monospace';
       this.hud.driftScore.fontWeight = 'bold';
-      this.hud.driftScore.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.hud.driftScore.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this.hud.driftScore.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this.hud.driftScore.left = '16px';
-      this.hud.driftScore.top = '-56px';
+      this.hud.driftScore.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.hud.driftScore.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.hud.driftScore.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.hud.driftScore.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this.hud.driftScore.left = '-16px';
+      this.hud.driftScore.top = '92px';
       this.hud.driftScore.width = '160px';
+      this.hud.driftScore.height = '24px';
+      this.hud.driftScore.resizeToFit = true;
       this.hud.driftScore.isVisible = false;
       this.hud.driftScore.isHitTestVisible = false;
       panel.addControl(this.hud.driftScore);
@@ -1988,30 +2124,27 @@
       this.hud.lap.fontWeight = 'bold';
       bottomBar.addControl(this.hud.lap);
 
-      // Right: Speed
+      // Right: Speed + KM/H
       this.hud.speed = new GUI.TextBlock('hudSpeed', '0');
       this.hud.speed.color = COLORS.text;
       this.hud.speed.fontSize = 26;
       this.hud.speed.fontFamily = 'monospace';
       this.hud.speed.fontWeight = 'bold';
       this.hud.speed.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-      this.hud.speed.left = '-50px';
-      this.hud.speed.width = '80px';
-      bottomBar.addControl(this.hud.speed);
       this.hud.speed.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-      this.hud.speed.left = '-60px';
+      this.hud.speed.left = '-55px';
       this.hud.speed.width = '100px';
       bottomBar.addControl(this.hud.speed);
 
-      // KM/H label (smaller, next to speed)
       var speedUnit = new GUI.TextBlock('speedUnit', 'KM/H');
       speedUnit.color = COLORS.textDim;
-      speedUnit.fontSize = 11;
+      speedUnit.fontSize = 10;
       speedUnit.fontFamily = 'monospace';
       speedUnit.fontWeight = 'bold';
+      speedUnit.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
       speedUnit.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-      speedUnit.left = '-20px';
-      speedUnit.top = '4px';
+      speedUnit.left = '-16px';
+      speedUnit.top = '6px';
       speedUnit.width = '40px';
       bottomBar.addControl(speedUnit);
 
@@ -2045,6 +2178,7 @@
       this.hud.goalReminder.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
       this.hud.goalReminder.top = '10px';
       this.hud.goalReminder.isHitTestVisible = false;
+      this.hud.goalReminder.isVisible = false;
       panel.addControl(this.hud.goalReminder);
 
       // Race time (top-right, subtle)
@@ -2142,95 +2276,123 @@
       var col = new GUI.StackPanel('resCol');
       col.width = '90%';
       col.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      col.top = '-20px';
+      col.top = '-30px';
       col.isHitTestVisible = false;
       panel.addControl(col);
 
       // Title
-      this.resultTitle = this._createTitle('', 36, COLORS.gold, col);
-      this.resultTitle.shadowColor = 'rgba(255,215,0,0.5)';
-      this.resultTitle.shadowBlur = 20;
-      this.resultTitle.paddingBottom = '4px';
+      this.resultTitle = this._createTitle('', 42, COLORS.gold, col);
+      this.resultTitle.shadowColor = 'rgba(255,215,0,0.6)';
+      this.resultTitle.shadowBlur = 15;
+      this.resultTitle.paddingBottom = '2px';
 
       // Stars
-      this.resultStars = this._createText('', 26, COLORS.gold, col);
-      this.resultStars.paddingBottom = '8px';
+      this.resultStars = this._createText('', 32, COLORS.gold, col);
+      this.resultStars.paddingBottom = '4px';
 
       // Position
-      this.resultPosition = this._createText('', 20, COLORS.text, col);
-      this.resultPosition.paddingBottom = '6px';
+      this.resultPosition = this._createText('', 24, COLORS.text, col);
+      this.resultPosition.paddingBottom = '4px';
 
-      // Stats — vertical, each on own line
-      this.resultScore = this._createText('', 13, COLORS.textDim, col);
+      // Stats — single line
+      this.resultScore = this._createText('', 15, COLORS.textDim, col);
       this.resultScore.paddingBottom = '2px';
-      this.resultCoins = this._createText('', 15, COLORS.gold, col);
+      this.resultCoins = this._createText('', 18, COLORS.gold, col);
       this.resultCoins.paddingBottom = '2px';
-      this.resultTime = this._createText('', 13, COLORS.textDim, col);
-      this.resultTime.paddingBottom = '6px';
+      this.resultTime = this._createText('', 15, COLORS.textDim, col);
+      this.resultTime.paddingBottom = '4px';
 
       // Divider
       var div = new GUI.Rectangle('resDiv');
       div.width = '80px'; div.height = '2px';
       div.background = COLORS.accent; div.thickness = 0;
       div.isHitTestVisible = false;
-      div.paddingBottom = '8px';
+      div.paddingBottom = '4px';
       col.addControl(div);
 
-      // Goals — full width, each on its own line
+      // Goals — compact
       this.resultUnlock = new GUI.TextBlock('resUnlock', '');
-      this.resultUnlock.fontSize = 14;
+      this.resultUnlock.fontSize = 15;
       this.resultUnlock.fontFamily = 'monospace';
       this.resultUnlock.fontWeight = 'bold';
       this.resultUnlock.color = COLORS.green;
       this.resultUnlock.textWrapping = GUI.TextWrapping.WordWrap;
       this.resultUnlock.width = '90%';
-      this.resultUnlock.height = '80px';
+      this.resultUnlock.height = '60px';
       this.resultUnlock.isHitTestVisible = false;
       col.addControl(this.resultUnlock);
 
-      // Buttons on UI root — guaranteed clickable
-      this._resultNextBtn = this._createButton('NEXT RACE', '160px', '48px');
-      this._resultNextBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this._resultNextBtn.top = '-20px';
-      this._resultNextBtn.left = '-140px';
-      this._resultNextBtn.isVisible = false;
-      this._resultNextBtn.zIndex = 60;
+      // Buttons — same layout as main menu (horizontal StackPanel, fixed widths, spacers)
+      var btnRow = new GUI.StackPanel('resBtnRow');
+      btnRow.isVertical = false;
+      btnRow.height = '70px';
+      btnRow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      btnRow.top = '-30px';
+      btnRow.isVisible = false;
+      btnRow.zIndex = 60;
+      this.ui.addControl(btnRow);
+      this._resultBtnRow = btnRow;
+
+      this._resultNextBtn = this._createButton('NEXT RACE \u25B6', '220px', '54px');
       this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
-      this.ui.addControl(this._resultNextBtn);
+      btnRow.addControl(this._resultNextBtn);
 
-      this._resultRetryBtn = this._createSecondaryButton('RETRY', '130px', '48px');
-      this._resultRetryBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this._resultRetryBtn.top = '-20px';
-      this._resultRetryBtn.left = '10px';
-      this._resultRetryBtn.isVisible = false;
-      this._resultRetryBtn.zIndex = 60;
+      var sp1 = new GUI.Rectangle('rsp1'); sp1.width = '16px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow.addControl(sp1);
+
+      this._resultRetryBtn = this._createSecondaryButton('\u21bb RETRY', '180px', '54px');
       this._resultRetryBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultRetry'); });
-      this.ui.addControl(this._resultRetryBtn);
+      btnRow.addControl(this._resultRetryBtn);
 
-      this._resultMenuBtn = this._createSecondaryButton('MENU', '110px', '48px');
-      this._resultMenuBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this._resultMenuBtn.top = '-20px';
-      this._resultMenuBtn.left = '160px';
-      this._resultMenuBtn.isVisible = false;
-      this._resultMenuBtn.zIndex = 60;
+      var sp2 = new GUI.Rectangle('rsp2'); sp2.width = '16px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnRow.addControl(sp2);
+
+      this._resultMenuBtn = this._createSecondaryButton('MENU', '160px', '54px');
       this._resultMenuBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultMenu'); });
-      this.ui.addControl(this._resultMenuBtn);
+      btnRow.addControl(this._resultMenuBtn);
     }
 
     showRaceResult(data) {
       const won = data.position === 1;
-      this.resultTitle.text = won ? '\ud83c\udfc6 VICTORY!' : 'RACE COMPLETE';
-      this.resultTitle.color = won ? COLORS.gold : COLORS.text;
-      this.resultTitle.shadowColor = won ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.2)';
-      this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' Place';
+      var pos2 = data.position <= 2;
+
+      // ── STORY COMPLETE — special celebration ──
+      if (data.storyComplete) {
+        this.resultTitle.text = 'DRIFT LEGEND!';
+        this.resultTitle.fontSize = 46;
+        this.resultTitle.color = COLORS.gold;
+        this.resultTitle.shadowColor = 'rgba(255,215,0,0.8)';
+        this.resultTitle.shadowBlur = 20;
+        this.resultStars.text = '\u2b50 \u2b50 \u2b50';
+        this.resultStars.fontSize = 36;
+        this.resultStars.color = COLORS.gold;
+        this.resultPosition.text = 'STORY MODE COMPLETE';
+        this.resultPosition.fontSize = 22;
+        this.resultPosition.color = COLORS.accent;
+        this.resultScore.text = 'Races Won: ' + (data.totalRaces || 15) + '/15    Stars: ' + (data.totalStars || 0) + '/45';
+        this.resultCoins.text = 'Total Coins: ' + (data.totalCoins || 0);
+        this.resultTime.text = '';
+        this.resultUnlock.text = "You've conquered every rival, mastered every track,\nand earned the title of Drift Legend.\nThe road is yours.";
+        this.resultUnlock.color = COLORS.text;
+        this.resultUnlock.fontSize = 14;
+        if (this._resultNextBtn) this._resultNextBtn.isVisible = false;
+        if (this._resultBtnRow) this._resultBtnRow.isVisible = true;
+        this.show('RACE_RESULT');
+        return;
+      }
+
+      this.resultTitle.text = won ? 'VICTORY!' : (pos2 ? 'WELL DONE!' : 'RACE OVER');
+      this.resultTitle.fontSize = won ? 46 : 38;
+      this.resultTitle.color = won ? COLORS.gold : (pos2 ? COLORS.accent : COLORS.text);
+      this.resultTitle.shadowColor = won ? 'rgba(255,215,0,0.6)' : 'rgba(255,77,0,0.3)';
+      this.resultPosition.text = data.position + this._ordSuffix(data.position) + ' PLACE';
+      this.resultPosition.fontSize = 24;
       this.resultPosition.color = won ? COLORS.gold : COLORS.text;
-      // Stars
+      // Stars — bigger on 3-star
       this.resultStars.text = '\u2b50'.repeat(data.stars) + '\u2606'.repeat(3 - data.stars);
       this.resultStars.color = data.stars >= 2 ? COLORS.gold : COLORS.textDim;
-      this.resultStars.fontSize = data.stars === 3 ? 32 : 26;
-      // Stats — each on separate line
-      this.resultScore.text = 'Score: ' + data.raceScore + (data.driftScore ? '   Drift: ' + data.driftScore : '');
-      this.resultCoins.text = '+' + data.coins + ' coins';
+      this.resultStars.fontSize = data.stars === 3 ? 36 : 32;
+      // Stats
+      this.resultScore.text = 'SCORE  ' + data.raceScore + (data.driftScore ? '    DRIFT  ' + data.driftScore : '');
+      this.resultCoins.text = '+' + data.coins + ' COINS';
       if (data.totalTimeMs) {
         var sec = (data.totalTimeMs / 1000).toFixed(1);
         this.resultTime.text = 'Time: ' + sec + 's';
@@ -2259,22 +2421,9 @@
       } else {
         this.resultUnlock.text = '';
       }
-      // Show buttons (they're on ui root, not inside panel)
-      if (this._resultRetryBtn) this._resultRetryBtn.isVisible = true;
-      if (this._resultMenuBtn) this._resultMenuBtn.isVisible = true;
-      if (this._resultNextBtn) {
-        this._resultNextBtn.isVisible = !!(data.allGoalsPassed);
-      }
-      // Reposition based on which buttons are visible
-      if (this._resultRetryBtn && this._resultMenuBtn) {
-        if (data.allGoalsPassed) {
-          this._resultRetryBtn.left = '10px';
-          this._resultMenuBtn.left = '150px';
-        } else {
-          this._resultRetryBtn.left = '-70px';
-          this._resultMenuBtn.left = '70px';
-        }
-      }
+      // Show/hide NEXT button based on goals, show the row
+      if (this._resultNextBtn) this._resultNextBtn.isVisible = !!(data.allGoalsPassed);
+      if (this._resultBtnRow) this._resultBtnRow.isVisible = true;
 
       this.show('RACE_RESULT');
     }
@@ -2369,37 +2518,53 @@
     _buildLoading() {
       const panel = this._createPanel('LOADING');
 
-      // Semi-transparent — HTML SVG shows through
-      panel.background = 'rgba(13,13,26,0.7)';
+      // Fully opaque — hide any leftover meshes/tracks behind loading
+      panel.background = '#0d0d1a';
 
-      // Track name — large, top area
+      // ── Center group: track name + status + progress bar ──
+      var centerGroup = new GUI.Rectangle('loadCenter');
+      centerGroup.width = '100%';
+      centerGroup.height = '140px';
+      centerGroup.thickness = 0;
+      centerGroup.background = 'transparent';
+      centerGroup.top = '-30px';
+      panel.addControl(centerGroup);
+
+      // Track name — large
       this.loadingTrackName = new GUI.TextBlock('loadTrack', '');
-      this.loadingTrackName.fontSize = 36;
+      this.loadingTrackName.fontSize = 42;
       this.loadingTrackName.fontFamily = 'monospace';
       this.loadingTrackName.fontWeight = 'bold';
       this.loadingTrackName.color = COLORS.text;
       this.loadingTrackName.shadowColor = COLORS.accentGlow;
-      this.loadingTrackName.shadowBlur = 16;
-      this.loadingTrackName.top = '-60px';
-      panel.addControl(this.loadingTrackName);
+      this.loadingTrackName.shadowBlur = 20;
+      this.loadingTrackName.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.loadingTrackName.top = '0px';
+      this.loadingTrackName.resizeToFit = true;
+      this.loadingTrackName.height = '50px';
+      centerGroup.addControl(this.loadingTrackName);
 
       // Loading status text
       this.loadingText = new GUI.TextBlock('loadStatus', 'Building track...');
       this.loadingText.fontSize = 14;
       this.loadingText.fontFamily = 'monospace';
       this.loadingText.color = COLORS.textDim;
-      this.loadingText.top = '-20px';
-      panel.addControl(this.loadingText);
+      this.loadingText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this.loadingText.top = '60px';
+      this.loadingText.resizeToFit = true;
+      this.loadingText.height = '20px';
+      centerGroup.addControl(this.loadingText);
 
-      // Loading bar (animated)
+      // Loading bar
       var loadBarBg = new GUI.Rectangle('loadBarBg');
       loadBarBg.width = '300px';
       loadBarBg.height = '4px';
       loadBarBg.cornerRadius = 2;
       loadBarBg.background = 'rgba(255,255,255,0.1)';
       loadBarBg.thickness = 0;
-      loadBarBg.top = '10px';
-      panel.addControl(loadBarBg);
+      loadBarBg.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      loadBarBg.top = '90px';
+      centerGroup.addControl(loadBarBg);
 
       this._loadBarFill = new GUI.Rectangle('loadBarFill');
       this._loadBarFill.width = '0%';
@@ -2410,16 +2575,15 @@
       this._loadBarFill.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       loadBarBg.addControl(this._loadBarFill);
 
-      // Tip/quote at bottom — rotates through tips
-      this._loadingTip = new GUI.TextBlock('loadTip', '');
-      this._loadingTip.fontSize = 13;
-      this._loadingTip.fontFamily = 'monospace';
-      this._loadingTip.color = COLORS.textMuted;
-      this._loadingTip.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      this._loadingTip.top = '-40px';
-      this._loadingTip.width = '600px';
-      this._loadingTip.textWrapping = GUI.TextWrapping.WordWrap;
-      panel.addControl(this._loadingTip);
+      // ── Bottom group: TIP label + tip text ──
+      var tipGroup = new GUI.Rectangle('loadTipGroup');
+      tipGroup.width = '100%';
+      tipGroup.height = '80px';
+      tipGroup.thickness = 0;
+      tipGroup.background = 'transparent';
+      tipGroup.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      tipGroup.top = '-20px';
+      panel.addControl(tipGroup);
 
       // "TIP" label
       var tipLabel = new GUI.TextBlock('tipLabel', 'TIP');
@@ -2427,9 +2591,23 @@
       tipLabel.fontFamily = 'monospace';
       tipLabel.fontWeight = 'bold';
       tipLabel.color = COLORS.accent;
-      tipLabel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      tipLabel.top = '-60px';
-      panel.addControl(tipLabel);
+      tipLabel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      tipLabel.top = '0px';
+      tipLabel.resizeToFit = true;
+      tipLabel.height = '16px';
+      tipGroup.addControl(tipLabel);
+
+      // Tip text
+      this._loadingTip = new GUI.TextBlock('loadTip', '');
+      this._loadingTip.fontSize = 13;
+      this._loadingTip.fontFamily = 'monospace';
+      this._loadingTip.color = COLORS.textMuted;
+      this._loadingTip.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this._loadingTip.top = '20px';
+      this._loadingTip.width = '500px';
+      this._loadingTip.textWrapping = GUI.TextWrapping.WordWrap;
+      this._loadingTip.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      tipGroup.addControl(this._loadingTip);
 
       // Animate loading bar and rotate tips
       this._loadProgress = 0;
@@ -2647,197 +2825,181 @@
 
       const Input = () => window.DriftLegends.Input;
 
-      // ── Visual indicators (subtle, Asphalt-style) ──
+      // ══════════════════════════════════════════════════════════════
+      // MOBILE CONTROLS — Joystick (left) + Gas/Brake pedals (right) + Drift button
+      // All input via raw pointer events on canvas (bypasses Babylon GUI touch bugs)
+      // GUI elements are visual-only (isHitTestVisible = false)
+      // ══════════════════════════════════════════════════════════════
 
-      // Left steer arrow indicator
-      const leftIndicator = new GUI.TextBlock('steer_left_ind', '\u25C0');
-      leftIndicator.fontSize = 40;
-      leftIndicator.color = 'rgba(255,255,255,0.12)';
-      leftIndicator.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      leftIndicator.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      leftIndicator.left = '16px';
-      container.addControl(leftIndicator);
-      this._steerLeftInd = leftIndicator;
+      var pedalLayer = new GUI.Rectangle('pedalLayer');
+      pedalLayer.width = '100%';
+      pedalLayer.height = '100%';
+      pedalLayer.thickness = 0;
+      pedalLayer.background = 'transparent';
+      pedalLayer.isVisible = false;
+      pedalLayer.isHitTestVisible = false;
+      pedalLayer.zIndex = 6;
+      this.ui.addControl(pedalLayer);
+      this._pedalLayer = pedalLayer;
 
-      // Right steer arrow indicator
-      const rightIndicator = new GUI.TextBlock('steer_right_ind', '\u25B6');
-      rightIndicator.fontSize = 40;
-      rightIndicator.color = 'rgba(255,255,255,0.12)';
-      rightIndicator.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-      rightIndicator.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-      rightIndicator.left = '-16px';
-      container.addControl(rightIndicator);
-      this._steerRightInd = rightIndicator;
+      // ── LEFT: STEERING JOYSTICK (2x size, bottom-left) ──
+      var joyBase = new GUI.Ellipse('joyBase');
+      joyBase.width = '200px'; joyBase.height = '200px';
+      joyBase.thickness = 3; joyBase.color = 'rgba(255,255,255,0.2)';
+      joyBase.background = 'rgba(20,20,20,0.25)';
+      joyBase.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      joyBase.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      joyBase.left = '15px'; joyBase.top = '-60px'; joyBase.isHitTestVisible = false;
+      pedalLayer.addControl(joyBase);
+      var joyThumb = new GUI.Ellipse('joyThumb');
+      joyThumb.width = '80px'; joyThumb.height = '80px'; joyThumb.thickness = 0;
+      joyThumb.background = 'rgba(255,255,255,0.35)'; joyThumb.shadowColor = 'rgba(255,255,255,0.2)';
+      joyThumb.shadowBlur = 12; joyThumb.isHitTestVisible = false;
+      joyBase.addControl(joyThumb);
+      this._joyBase = joyBase; this._joyThumb = joyThumb;
 
-      // Brake indicator (bottom center)
-      const brakeInd = new GUI.TextBlock('brake_ind', 'BRAKE');
-      brakeInd.fontSize = 14;
-      brakeInd.fontFamily = 'monospace';
-      brakeInd.color = 'rgba(255,80,80,0.0)';
-      brakeInd.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      brakeInd.top = '-60px';
-      container.addControl(brakeInd);
-      this._brakeInd = brakeInd;
+      // ── RIGHT: GAS/BRAKE JOYSTICK (2x size, bottom-right) ──
+      var rJoyBase = new GUI.Ellipse('rJoyBase');
+      rJoyBase.width = '200px'; rJoyBase.height = '200px';
+      rJoyBase.thickness = 3; rJoyBase.color = 'rgba(255,255,255,0.2)';
+      rJoyBase.background = 'rgba(20,20,20,0.25)';
+      rJoyBase.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      rJoyBase.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      rJoyBase.left = '-15px'; rJoyBase.top = '-60px'; rJoyBase.isHitTestVisible = false;
+      pedalLayer.addControl(rJoyBase);
+      // Gas/Brake labels (bigger)
+      var gasArrow = new GUI.TextBlock('gasArr', '\u25B2 GAS'); gasArrow.fontSize = 16; gasArrow.fontFamily = 'monospace'; gasArrow.color = 'rgba(0,200,80,0.5)';
+      gasArrow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP; gasArrow.top = '12px'; gasArrow.isHitTestVisible = false;
+      rJoyBase.addControl(gasArrow);
+      var brakeArrow = new GUI.TextBlock('brkArr', 'BRK \u25BC'); brakeArrow.fontSize = 16; brakeArrow.fontFamily = 'monospace'; brakeArrow.color = 'rgba(255,80,80,0.5)';
+      brakeArrow.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM; brakeArrow.top = '-12px'; brakeArrow.isHitTestVisible = false;
+      rJoyBase.addControl(brakeArrow);
+      // Thumb (bigger)
+      var rJoyThumb = new GUI.Ellipse('rJoyThumb');
+      rJoyThumb.width = '80px'; rJoyThumb.height = '80px'; rJoyThumb.thickness = 0;
+      rJoyThumb.background = 'rgba(255,255,255,0.35)'; rJoyThumb.shadowColor = 'rgba(255,255,255,0.2)';
+      rJoyThumb.shadowBlur = 12; rJoyThumb.isHitTestVisible = false;
+      rJoyBase.addControl(rJoyThumb);
+      this._rJoyBase = rJoyBase; this._rJoyThumb = rJoyThumb;
+      this._gasArrow = gasArrow; this._brakeArrow = brakeArrow;
 
-      // Drift indicator (top center, shows when drifting)
-      const driftInd = new GUI.TextBlock('drift_active_ind', 'DRIFTING');
-      driftInd.fontSize = 16;
-      driftInd.fontFamily = 'monospace';
-      driftInd.fontWeight = 'bold';
-      driftInd.color = 'rgba(0,170,255,0.0)';
-      driftInd.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      driftInd.top = '80px';
-      container.addControl(driftInd);
+      // Drift is now automatic — no button needed, just a visual indicator
+      var driftInd = new GUI.TextBlock('drift_ind', 'DRIFTING'); driftInd.fontSize = 16; driftInd.fontFamily = 'monospace'; driftInd.fontWeight = 'bold'; driftInd.color = 'rgba(0,170,255,0.0)'; driftInd.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP; driftInd.top = '80px'; driftInd.isHitTestVisible = false; container.addControl(driftInd);
       this._driftInd = driftInd;
 
-      // ── Gesture zone hint at first touch ──
-      const hintText = new GUI.TextBlock('gesture_hint', 'Swipe to steer \u2022 Hold to accelerate \u2022 Two fingers to drift');
-      hintText.fontSize = 12;
-      hintText.fontFamily = 'monospace';
-      hintText.color = 'rgba(255,255,255,0.4)';
-      hintText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      hintText.top = '-20px';
-      container.addControl(hintText);
-      this._gestureHint = hintText;
-      // Auto-hide hint after 5 seconds
-      setTimeout(function () { if (hintText) hintText.isVisible = false; }, 5000);
 
-      // ── Touch gesture tracking via canvas pointer events ──
-      const canvas = document.getElementById('renderCanvas');
-      if (!canvas) return;
+      // ══════════════════════════════════════════════════════════
+      // RAW POINTER EVENTS — Left joystick (steer) + Right joystick (gas/brake)
+      // Drift is automatic based on lateral car angle
+      // ══════════════════════════════════════════════════════════
+      var self = this;
+      var activePointers = {};
+      var lJoyCenterX = 0, rJoyCenterY = 0;
+      var JOY_RADIUS = 50;
+      var ctrlCanvas = this.scene.getEngine().getRenderingCanvas();
 
-      const touches = {};    // Track active touches by identifier
-      let swipeStartX = 0;
-      let swipeStartY = 0;
-      const SWIPE_THRESHOLD = 20; // px to count as a swipe
-      const STEER_SENSITIVITY = 0.015; // steer per px of horizontal drag
-      let gestureActive = false;
-
-      canvas.addEventListener('touchstart', (e) => {
-        if (!this.touchControls.isVisible) return;
-        e.preventDefault();
-
-        // Hide hint after first interaction
-        if (this._gestureHint.alpha > 0) {
-          this._gestureHint.alpha = 0;
+      ctrlCanvas.addEventListener('pointerdown', function(e) {
+        if (!self._pedalLayer || !self._pedalLayer.isVisible) return;
+        var w = ctrlCanvas.clientWidth;
+        var relX = e.clientX / w;
+        try { ctrlCanvas.setPointerCapture(e.pointerId); } catch(_) {}
+        if (relX < 0.45) {
+          lJoyCenterX = e.clientX;
+          activePointers[e.pointerId] = { zone: 'steer' };
+        } else if (relX > 0.55) {
+          rJoyCenterY = e.clientY;
+          activePointers[e.pointerId] = { zone: 'throttle' };
         }
+      });
 
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          const t = e.changedTouches[i];
-          touches[t.identifier] = {
-            startX: t.clientX,
-            startY: t.clientY,
-            currentX: t.clientX,
-            currentY: t.clientY,
-            startTime: Date.now(),
-          };
+      ctrlCanvas.addEventListener('pointermove', function(e) {
+        var info = activePointers[e.pointerId];
+        if (!info) return;
+        var inp = Input();
+        if (info.zone === 'steer') {
+          var dx = e.clientX - lJoyCenterX;
+          var norm = Math.max(-1, Math.min(1, dx / JOY_RADIUS));
+          inp.setTouch('analogSteer', norm);
+          var px = Math.max(-55, Math.min(55, norm * 55));
+          self._joyThumb.left = px + 'px';
+          self._joyThumb.background = Math.abs(norm) > 0.1 ? 'rgba(255,150,50,0.5)' : 'rgba(255,255,255,0.35)';
+          self._joyBase.color = Math.abs(norm) > 0.1 ? 'rgba(255,150,50,0.4)' : 'rgba(255,255,255,0.2)';
+        } else if (info.zone === 'throttle') {
+          var dy = rJoyCenterY - e.clientY;
+          var normV = Math.max(-1, Math.min(1, dy / JOY_RADIUS));
+          if (normV > 0.15) { inp.setTouch('accelerate', true); inp.setTouch('brake', false); }
+          else if (normV < -0.15) { inp.setTouch('brake', true); inp.setTouch('accelerate', false); }
+          else { inp.setTouch('accelerate', false); inp.setTouch('brake', false); }
+          var py = Math.max(-55, Math.min(55, -normV * 55));
+          self._rJoyThumb.top = py + 'px';
+          if (normV > 0.15) {
+            self._rJoyThumb.background = 'rgba(0,200,80,0.5)'; self._rJoyBase.color = 'rgba(0,200,80,0.4)';
+            self._gasArrow.color = 'rgba(0,255,100,0.8)'; self._brakeArrow.color = 'rgba(255,80,80,0.3)';
+          } else if (normV < -0.15) {
+            self._rJoyThumb.background = 'rgba(255,80,80,0.5)'; self._rJoyBase.color = 'rgba(255,80,80,0.4)';
+            self._gasArrow.color = 'rgba(0,200,80,0.3)'; self._brakeArrow.color = 'rgba(255,100,100,0.8)';
+          } else {
+            self._rJoyThumb.background = 'rgba(255,255,255,0.35)'; self._rJoyBase.color = 'rgba(255,255,255,0.2)';
+            self._gasArrow.color = 'rgba(0,200,80,0.5)'; self._brakeArrow.color = 'rgba(255,80,80,0.5)';
+          }
         }
+      });
 
-        const touchCount = Object.keys(touches).length;
-
-        // Two-finger = drift (Asphalt style)
-        if (touchCount >= 2) {
-          Input().setTouch('drift', true);
-          this._driftInd.color = 'rgba(0,170,255,0.7)';
+      function releasePtr(e) {
+        var info = activePointers[e.pointerId];
+        if (!info) return;
+        var inp = Input();
+        if (info.zone === 'steer') {
+          inp.setTouch('analogSteer', 0);
+          self._joyThumb.left = '0px'; self._joyThumb.background = 'rgba(255,255,255,0.35)'; self._joyBase.color = 'rgba(255,255,255,0.2)';
+        } else {
+          inp.setTouch('accelerate', false); inp.setTouch('brake', false);
+          self._rJoyThumb.top = '0px'; self._rJoyThumb.background = 'rgba(255,255,255,0.35)'; self._rJoyBase.color = 'rgba(255,255,255,0.2)';
+          self._gasArrow.color = 'rgba(0,200,80,0.5)'; self._brakeArrow.color = 'rgba(255,80,80,0.5)';
         }
+        delete activePointers[e.pointerId];
+        try { ctrlCanvas.releasePointerCapture(e.pointerId); } catch(_) {}
+      }
+      ctrlCanvas.addEventListener('pointerup', releasePtr);
+      ctrlCanvas.addEventListener('pointercancel', releasePtr);
 
-        // Single touch = auto-accelerate
-        if (touchCount >= 1) {
-          Input().setTouch('accelerate', true);
-        }
+      // Prevent browser gestures
+      ctrlCanvas.addEventListener('touchstart', function(e) {
+        if (self.touchControls && self.touchControls.isVisible) e.preventDefault();
       }, { passive: false });
 
-      canvas.addEventListener('touchmove', (e) => {
-        if (!this.touchControls.isVisible) return;
-        e.preventDefault();
 
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          const t = e.changedTouches[i];
-          if (touches[t.identifier]) {
-            touches[t.identifier].currentX = t.clientX;
-            touches[t.identifier].currentY = t.clientY;
-          }
-        }
+    }
 
-        // Use the first touch for steering
-        const firstId = Object.keys(touches)[0];
-        if (firstId !== undefined && touches[firstId]) {
-          const dx = touches[firstId].currentX - touches[firstId].startX;
-          const dy = touches[firstId].currentY - touches[firstId].startY;
+    showCheckpointWarning(text) {
+      if (!this._cpWarnText) {
+        var warn = new GUI.TextBlock('cpWarn', '');
+        warn.fontSize = 36;
+        warn.fontFamily = 'monospace';
+        warn.fontWeight = 'bold';
+        warn.color = '#ff3333';
+        warn.shadowColor = 'rgba(255,0,0,0.5)';
+        warn.shadowBlur = 20;
+        warn.textWrapping = GUI.TextWrapping.WordWrap;
+        warn.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        warn.width = '400px';
+        warn.isHitTestVisible = false;
+        warn.isVisible = false;
+        this.ui.addControl(warn);
+        this._cpWarnText = warn;
+      }
+      this._cpWarnText.text = text || '';
+      this._cpWarnText.isVisible = true;
+    }
 
-          // Horizontal swipe = steer
-          if (Math.abs(dx) > SWIPE_THRESHOLD) {
-            const steerAmount = dx * STEER_SENSITIVITY;
-            if (steerAmount < -0.1) {
-              Input().setTouch('steerLeft', true);
-              Input().setTouch('steerRight', false);
-              this._steerLeftInd.color = 'rgba(255,77,0,0.5)';
-              this._steerRightInd.color = 'rgba(255,255,255,0.12)';
-            } else if (steerAmount > 0.1) {
-              Input().setTouch('steerRight', true);
-              Input().setTouch('steerLeft', false);
-              this._steerRightInd.color = 'rgba(255,77,0,0.5)';
-              this._steerLeftInd.color = 'rgba(255,255,255,0.12)';
-            }
-            // Update start for continuous drag steering (relative, not absolute)
-            touches[firstId].startX = touches[firstId].currentX - (dx * 0.3);
-          } else {
-            Input().setTouch('steerLeft', false);
-            Input().setTouch('steerRight', false);
-            this._steerLeftInd.color = 'rgba(255,255,255,0.12)';
-            this._steerRightInd.color = 'rgba(255,255,255,0.12)';
-          }
-
-          // Vertical swipe down = brake
-          if (dy > SWIPE_THRESHOLD * 2) {
-            Input().setTouch('brake', true);
-            Input().setTouch('accelerate', false);
-            this._brakeInd.color = 'rgba(255,80,80,0.7)';
-          } else {
-            Input().setTouch('brake', false);
-            if (Object.keys(touches).length >= 1) {
-              Input().setTouch('accelerate', true);
-            }
-            this._brakeInd.color = 'rgba(255,80,80,0.0)';
-          }
-        }
-      }, { passive: false });
-
-      const endTouch = (e) => {
-        if (!this.touchControls.isVisible) return;
-
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          delete touches[e.changedTouches[i].identifier];
-        }
-
-        const touchCount = Object.keys(touches).length;
-
-        // Release drift when fewer than 2 fingers
-        if (touchCount < 2) {
-          Input().setTouch('drift', false);
-          this._driftInd.color = 'rgba(0,170,255,0.0)';
-        }
-
-        // Release everything when no touches
-        if (touchCount === 0) {
-          Input().setTouch('accelerate', false);
-          Input().setTouch('brake', false);
-          Input().setTouch('steerLeft', false);
-          Input().setTouch('steerRight', false);
-          Input().setTouch('drift', false);
-          this._steerLeftInd.color = 'rgba(255,255,255,0.12)';
-          this._steerRightInd.color = 'rgba(255,255,255,0.12)';
-          this._brakeInd.color = 'rgba(255,80,80,0.0)';
-          this._driftInd.color = 'rgba(0,170,255,0.0)';
-        }
-      };
-
-      canvas.addEventListener('touchend', endTouch, { passive: false });
-      canvas.addEventListener('touchcancel', endTouch, { passive: false });
+    hideCheckpointWarning() {
+      if (this._cpWarnText) this._cpWarnText.isVisible = false;
     }
 
     showTouchControls(visible) {
-      if (this.touchControls) this.touchControls.isVisible = !!visible;
+      var show = !!visible && window.DriftLegends.Input.isMobile();
+      if (this.touchControls) this.touchControls.isVisible = show;
+      if (this._pedalLayer) this._pedalLayer.isVisible = show;
     }
 
     // ─── Utility ──────────────────────────────────────────────────

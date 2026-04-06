@@ -20,10 +20,10 @@
       minimumLapTimeMs: 45000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 15,
-      // Simple oval — wide and forgiving
+      // Simple oval — wide and forgiving, straight start/finish
       controlPoints: [
         { x: 0, z: 0 }, { x: 40, z: 5 }, { x: 70, z: 30 }, { x: 65, z: 65 },
-        { x: 35, z: 80 }, { x: 5, z: 70 }, { x: -10, z: 40 },
+        { x: 35, z: 80 }, { x: 5, z: 70 }, { x: -10, z: 40 }, { x: -20, z: 5 },
       ],
       nitroZones: [0.35, 0.7],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -34,10 +34,10 @@
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 13,
-      // Figure-8 crossover — bridge at center crossing
+      // Wide elongated loop — no crossover, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 40, z: 20 }, { x: 10, z: 50, y: 4 }, { x: 50, z: 70 },
-        { x: 80, z: 50 }, { x: 50, z: 30 }, { x: 70, z: 0 }, { x: 30, z: -10 },
+        { x: 0, z: 0 }, { x: 40, z: 10 }, { x: 80, z: 30 }, { x: 90, z: 60 },
+        { x: 70, z: 85 }, { x: 30, z: 80 }, { x: -10, z: 55 }, { x: -15, z: 25 }, { x: -20, z: 2 },
       ],
       nitroZones: [0.2, 0.5, 0.8],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -48,11 +48,11 @@
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
-      // Long straight + tight hairpin — tests braking
+      // Long straight + tight hairpin — tests braking, straight start/finish
       controlPoints: [
         { x: 0, z: 0 }, { x: 60, z: 5 }, { x: 90, z: 10 }, { x: 95, z: 35 },
         { x: 80, z: 45 }, { x: 30, z: 50 }, { x: 10, z: 65 }, { x: 5, z: 85 },
-        { x: -15, z: 70 }, { x: -20, z: 35 },
+        { x: -15, z: 70 }, { x: -25, z: 35 }, { x: -25, z: 5 },
       ],
       nitroZones: [0.15, 0.6],
       checkpoints: [0.1, 0.25, 0.4, 0.6, 0.8, 0.9],
@@ -66,10 +66,10 @@
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 14,
-      // Big sweeping loop — fast, wide turns
+      // Big sweeping loop — fast, wide turns, straight start/finish
       controlPoints: [
         { x: 0, z: 0 }, { x: 50, z: 0 }, { x: 90, z: 20 }, { x: 100, z: 60 },
-        { x: 80, z: 90 }, { x: 40, z: 95 }, { x: 0, z: 80 }, { x: -15, z: 45 },
+        { x: 80, z: 90 }, { x: 40, z: 95 }, { x: 0, z: 80 }, { x: -15, z: 45 }, { x: -25, z: 5 },
       ],
       nitroZones: [0.15, 0.55],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -80,11 +80,11 @@
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
-      // Zigzag canyon — bridge over return section
+      // Wide zigzag — no crossover, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 30, z: 25 }, { x: 10, z: 45 }, { x: 40, z: 65 },
-        { x: 15, z: 85 }, { x: 45, z: 100 }, { x: 70, z: 80, y: 3 }, { x: 55, z: 55, y: 3 },
-        { x: 75, z: 30 }, { x: 50, z: 10 },
+        { x: 0, z: 0 }, { x: 35, z: 20 }, { x: 5, z: 45 }, { x: 40, z: 70 },
+        { x: 10, z: 95 }, { x: 50, z: 110 }, { x: 80, z: 85 }, { x: 65, z: 50 },
+        { x: 85, z: 20 }, { x: 55, z: -5 }, { x: 25, z: -10 }, { x: -15, z: -5 },
       ],
       nitroZones: [0.3, 0.65],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -95,10 +95,10 @@
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
-      // Diamond shape — 4 long straights, 4 sharp corners
+      // Diamond shape — 4 long straights, 4 sharp corners, straight start/finish
       controlPoints: [
         { x: 0, z: 0 }, { x: 50, z: -10 }, { x: 90, z: 40 }, { x: 50, z: 90 },
-        { x: 0, z: 80 }, { x: -30, z: 40 },
+        { x: 0, z: 80 }, { x: -30, z: 40 }, { x: -25, z: 5 },
       ],
       nitroZones: [0.1, 0.4, 0.7],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -112,10 +112,10 @@
       minimumLapTimeMs: 55000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 13,
-      // Winding mountain road — bridge over return path
+      // Wide S-curves — no crossover, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 25, z: 30 }, { x: 50, z: 15, y: 3 }, { x: 75, z: 40 },
-        { x: 60, z: 70 }, { x: 30, z: 60 }, { x: 10, z: 80 }, { x: -10, z: 50 },
+        { x: 0, z: 0 }, { x: 35, z: 15 }, { x: 65, z: 5 }, { x: 85, z: 35 },
+        { x: 70, z: 65 }, { x: 35, z: 75 }, { x: 5, z: 90 }, { x: -15, z: 55 }, { x: -20, z: 20 }, { x: -20, z: 3 },
       ],
       nitroZones: [0.4],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -126,11 +126,11 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 10,
-      // Narrow chicane — bridge over return section
+      // Wide chicane — spread points, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 15, z: 20 }, { x: 35, z: 10 }, { x: 45, z: 30, y: 3 },
-        { x: 30, z: 45, y: 3 }, { x: 50, z: 60 }, { x: 35, z: 80 }, { x: 15, z: 65 },
-        { x: -5, z: 45 }, { x: 10, z: 25 },
+        { x: 0, z: 0 }, { x: 25, z: 20 }, { x: 50, z: 5 }, { x: 70, z: 25 },
+        { x: 55, z: 50 }, { x: 75, z: 70 }, { x: 50, z: 90 }, { x: 20, z: 75 },
+        { x: -10, z: 50 }, { x: -20, z: 25 }, { x: -18, z: 5 }, { x: -12, z: -5 },
       ],
       nitroZones: [0.35, 0.7],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -141,12 +141,12 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 10,
-      // Spiral — inner loop elevated as bridge over outer
+      // Large kidney shape — no crossover, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 40, z: 0 }, { x: 60, z: 30 }, { x: 40, z: 55 },
-        { x: 15, z: 45, y: 4 }, { x: 25, z: 25, y: 4 }, { x: 10, z: 10, y: 2 },
-        { x: -15, z: 30 }, { x: -10, z: 60 }, { x: 20, z: 75 },
-        { x: 50, z: 70 }, { x: 55, z: 50 }, { x: 30, z: -10 },
+        { x: 0, z: 0 }, { x: 45, z: -10 }, { x: 80, z: 15 }, { x: 75, z: 50 },
+        { x: 45, z: 65 }, { x: 20, z: 50 }, { x: -5, z: 70 },
+        { x: -20, z: 95 }, { x: 15, z: 100 }, { x: 55, z: 85 },
+        { x: 70, z: 95 }, { x: 40, z: 105 }, { x: -10, z: 40 }, { x: -25, z: 5 },
       ],
       nitroZones: [0.2, 0.5, 0.8],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -160,11 +160,11 @@
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
-      // Organic winding — bridge over return path
+      // Flowing S — wide curves, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 20, z: 20 }, { x: 40, z: 5, y: 3 }, { x: 55, z: 25 },
-        { x: 45, z: 50 }, { x: 60, z: 70 }, { x: 35, z: 85 },
-        { x: 10, z: 70 }, { x: -5, z: 45 }, { x: 15, z: 25 },
+        { x: 0, z: 0 }, { x: 30, z: 15 }, { x: 55, z: -5 }, { x: 75, z: 20 },
+        { x: 60, z: 50 }, { x: 80, z: 75 }, { x: 50, z: 95 },
+        { x: 15, z: 80 }, { x: -10, z: 55 }, { x: -15, z: 25 }, { x: -18, z: 5 }, { x: -15, z: -3 },
       ],
       nitroZones: [0.4, 0.75],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -175,11 +175,11 @@
       minimumLapTimeMs: 60000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
-      // Hairpin switchbacks — bridges at crossover points
+      // Wide switchbacks — straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 35, z: 10 }, { x: 15, z: 30, y: 3 }, { x: 45, z: 40 },
-        { x: 20, z: 60, y: 3 }, { x: 50, z: 70 }, { x: 30, z: 90 },
-        { x: 5, z: 80 }, { x: -15, z: 55 }, { x: -5, z: 25 },
+        { x: 0, z: 0 }, { x: 45, z: 10 }, { x: 10, z: 35 }, { x: 55, z: 50 },
+        { x: 15, z: 75 }, { x: 60, z: 90 }, { x: 30, z: 110 },
+        { x: -5, z: 95 }, { x: -20, z: 65 }, { x: -20, z: 30 }, { x: -20, z: 5 },
       ],
       nitroZones: [0.3, 0.65],
       checkpoints: [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -190,12 +190,12 @@
       minimumLapTimeMs: 63000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 9,
-      // Snake with bridges — elevated at crossover points
+      // Wide snake — spread points, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 10, z: 15 }, { x: 25, z: 5, y: 3 }, { x: 35, z: 20 },
-        { x: 25, z: 35, y: 3 }, { x: 40, z: 50 }, { x: 30, z: 65, y: 3 },
-        { x: 15, z: 55 }, { x: 5, z: 70 }, { x: -10, z: 55 },
-        { x: -5, z: 35 }, { x: -15, z: 20 },
+        { x: 0, z: 0 }, { x: 20, z: 15 }, { x: 40, z: -5 }, { x: 55, z: 15 },
+        { x: 35, z: 40 }, { x: 60, z: 60 }, { x: 40, z: 80 },
+        { x: 15, z: 65 }, { x: -10, z: 85 }, { x: -25, z: 60 },
+        { x: -15, z: 35 }, { x: -20, z: 10 }, { x: -15, z: -3 },
       ],
       nitroZones: [0.2, 0.5, 0.8],
       checkpoints: [0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.9],
@@ -209,11 +209,11 @@
       minimumLapTimeMs: 53000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 14,
-      // Fast flowing — long curves connected by straights
+      // Fast flowing — long curves, straight start/finish
       controlPoints: [
         { x: 0, z: 0 }, { x: 50, z: -5 }, { x: 85, z: 15 }, { x: 95, z: 50 },
         { x: 70, z: 75 }, { x: 30, z: 85 }, { x: -5, z: 65 },
-        { x: -15, z: 30 },
+        { x: -15, z: 30 }, { x: -20, z: 5 },
       ],
       nitroZones: [0.15, 0.55],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -224,11 +224,11 @@
       minimumLapTimeMs: 50000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 12,
-      // Technical F1-style — bridge at tight chicane section
+      // Technical F1-style — wide flowing circuit, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 60, z: 0 }, { x: 80, z: 15 }, { x: 70, z: 30, y: 3 },
-        { x: 85, z: 45 }, { x: 75, z: 65 }, { x: 50, z: 55 },
-        { x: 30, z: 70 }, { x: 10, z: 60 }, { x: -10, z: 35 },
+        { x: 0, z: 0 }, { x: 50, z: -10 }, { x: 90, z: 0 }, { x: 100, z: 30 },
+        { x: 85, z: 60 }, { x: 60, z: 75 }, { x: 30, z: 80 },
+        { x: 0, z: 65 }, { x: -15, z: 40 }, { x: -20, z: 10 },
       ],
       nitroZones: [0.1, 0.5],
       checkpoints: [0.1, 0.3, 0.5, 0.7, 0.9],
@@ -239,12 +239,12 @@
       minimumLapTimeMs: 55000,
       starThresholds: { one: 30, two: 100, three: 180 },
       trackWidth: 11,
-      // Ultimate test — bridges at crossover points
+      // Ultimate test — large sweeping circuit, straight start/finish
       controlPoints: [
-        { x: 0, z: 0 }, { x: 50, z: -5 }, { x: 80, z: 10 }, { x: 85, z: 35 },
-        { x: 65, z: 40, y: 4 }, { x: 75, z: 60 }, { x: 55, z: 80 },
-        { x: 25, z: 90 }, { x: 5, z: 75, y: 4 }, { x: 15, z: 55 },
-        { x: -5, z: 40 }, { x: 10, z: 20 }, { x: -10, z: 10 },
+        { x: 0, z: 0 }, { x: 40, z: -15 }, { x: 80, z: -10 }, { x: 110, z: 15 },
+        { x: 105, z: 50 }, { x: 80, z: 70 }, { x: 50, z: 85 },
+        { x: 15, z: 95 }, { x: -15, z: 75 }, { x: -20, z: 45 },
+        { x: -15, z: 15 },
       ],
       nitroZones: [0.1, 0.35, 0.65, 0.85],
       checkpoints: [0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.9],
@@ -506,29 +506,37 @@
     ground.position.y = -0.05;
     result.meshes.push(ground);
 
-    // Calculate checkpoint positions + add vertical arch visuals
-    var cpMat = getCachedMat(scene, 'checkpoint_ring', function() {
-      var m = new BABYLON.StandardMaterial('cpMat', scene);
-      m.emissiveColor = new Color3(0, 0.6, 1);
-      m.diffuseColor = new Color3(0, 0.6, 1);
-      m.alpha = 0.2;
-      m.freeze();
+    // Calculate checkpoint positions + add glowing arch visuals
+    var cpMatDefault = getCachedMat(scene, 'checkpoint_glow', function() {
+      var m = new BABYLON.StandardMaterial('cpMatGlow', scene);
+      m.emissiveColor = new Color3(0, 0.8, 1);
+      m.diffuseColor = new Color3(0, 0.5, 1);
+      m.alpha = 0.6;
+      return m; // don't freeze — alpha changes on hit
+    });
+    var cpMatHit = getCachedMat(scene, 'checkpoint_hit', function() {
+      var m = new BABYLON.StandardMaterial('cpMatHit', scene);
+      m.emissiveColor = new Color3(0, 1, 0.5);
+      m.diffuseColor = new Color3(0, 1, 0.5);
+      m.alpha = 0.9;
       return m;
     });
     result._cpMeshes = [];
+    result._cpMatDefault = cpMatDefault;
+    result._cpMatHit = cpMatHit;
     trackDef.checkpoints.forEach(t => {
       var pos = getSplinePoint(result.splinePoints, t);
       var tangent = getSplineTangent(result.splinePoints, t);
       result.checkpointPositions.push({ t, position: pos });
 
-      // Subtle arch — thinner, smaller
-      var arch = MB.CreateTorus('cp', { diameter: trackDef.trackWidth * 0.7, thickness: 0.15, tessellation: 14 }, scene);
-      arch.position = pos.add(new V3(0, trackDef.trackWidth * 0.35, 0));
+      // Thick glowing arch — clearly visible
+      var arch = MB.CreateTorus('cp', { diameter: trackDef.trackWidth * 0.8, thickness: 0.5, tessellation: 20 }, scene);
+      arch.position = pos.add(new V3(0, trackDef.trackWidth * 0.4, 0));
       var roadAngle = Math.atan2(tangent.x, tangent.z);
       arch.rotation.y = roadAngle;
       arch.rotation.x = Math.PI / 2;
-      arch.material = cpMat;
-      arch.freezeWorldMatrix();
+      arch.material = cpMatDefault;
+      arch.visibility = 1;
       result.meshes.push(arch);
       result._cpMeshes.push(arch);
     });
@@ -618,7 +626,7 @@
   // ─── Material Cache (shared across all props to minimize draw calls) ───
   var _matCache = {};
   function getCachedMat(scene, key, createFn) {
-    if (_matCache[key]) return _matCache[key];
+    if (_matCache[key] && !_matCache[key].isDisposed) return _matCache[key];
     var mat = createFn();
     _matCache[key] = mat;
     return mat;
@@ -634,18 +642,18 @@
       const tangent = getSplineTangent(splinePoints, t);
       const right = V3.Cross(tangent, V3.Up()).normalize();
 
-      // Place props to the sides of the road
+      // Place props close to road edges (just outside the track boundary)
       const side = (i % 2 === 0) ? 1 : -1;
-      const offset = trackDef.trackWidth * 2.0 + 6 + Math.random() * 10;
+      const offset = trackDef.trackWidth * 0.7 + 2 + Math.random() * 5;
       const propPos = pos.add(right.scale(side * offset));
 
-      // Also add a closer prop on opposite side every 3rd position
-      var nearOffset = trackDef.trackWidth * 1.5 + 5 + Math.random() * 8;
+      // Street lamps on opposite side, even closer to road
+      var nearOffset = trackDef.trackWidth * 0.6 + 1 + Math.random() * 3;
       var nearPropPos = pos.add(right.scale(-side * nearOffset));
 
-      // Skip if prop would be anywhere near the track (wide check)
-      if (isOnTrack(splinePoints, trackDef.trackWidth + 10, propPos)) continue;
-      if (isOnTrack(splinePoints, trackDef.trackWidth + 10, nearPropPos)) nearPropPos = null;
+      // Skip if prop would overlap the track surface
+      if (isOnTrack(splinePoints, trackDef.trackWidth * 0.6, propPos)) continue;
+      if (isOnTrack(splinePoints, trackDef.trackWidth * 0.6, nearPropPos)) nearPropPos = null;
 
       switch (envType) {
         case 'city':
@@ -760,20 +768,15 @@
       m.freeze();
       return m;
     });
-    var pole = MB.CreateCylinder('pole', { height: 5, diameter: 0.15, tessellation: 6 }, scene);
-    pole.position = pos.add(new V3(0, 2.5, 0));
+    // Taller pole for better visibility
+    var pole = MB.CreateCylinder('pole', { height: 6, diameter: 0.15, tessellation: 6 }, scene);
+    pole.position = pos.add(new V3(0, 3, 0));
     pole.material = poleMat;
     pole.freezeWorldMatrix();
 
-    // Arm extending over road
-    var arm = MB.CreateBox('arm', { width: 2, height: 0.08, depth: 0.08 }, scene);
-    arm.position = pos.add(new V3(1, 4.9, 0));
-    arm.material = poleMat;
-    arm.freezeWorldMatrix();
-
-    // Lamp globe — warm yellow glow
-    var lamp = MB.CreateSphere('lamp', { diameter: 0.5, segments: 6 }, scene);
-    lamp.position = pos.add(new V3(2, 4.7, 0));
+    // Lamp globe at top — warm yellow glow
+    var lamp = MB.CreateSphere('lamp', { diameter: 0.6, segments: 6 }, scene);
+    lamp.position = pos.add(new V3(0, 6.2, 0));
     lamp.material = getCachedMat(scene, 'city_lampglow', function() {
       var m = new BABYLON.StandardMaterial('lampMat', scene);
       m.emissiveColor = new Color3(1, 0.85, 0.5);

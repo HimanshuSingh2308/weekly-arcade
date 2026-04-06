@@ -26,8 +26,8 @@
       driftFillRate: 0.7 + stats.drift * 0.07,
       normalFriction: 0.975,                                // slightly less drag = faster feel
       driftFriction: 0.988,
-      boostMultiplier: 1.6,
-      boostDuration: 2.5,
+      boostMultiplier: 1.15,
+      boostDuration: 1.5,
     };
   }
 
@@ -124,47 +124,63 @@
       const steerInput = inputs.steer || 0;
       const speedFactor = Math.min(this.speed / (cfg.topSpeed * 0.3), 1);
 
-      // Grace period — don't end drift for 0.3s after releasing Space
+      // Auto-drift: hysteresis — need higher angle to START drift than to CONTINUE it
+      // This prevents drift from triggering on straights and stops the feedback loop
+      var lateralAngle = this.speed > 12 ? Math.abs(this._getLateralAngle()) : 0;
+      var startThreshold = 40; // degrees needed to START a new drift
+      var keepThreshold = 25;  // degrees needed to KEEP an existing drift going
+      var threshold = this.isDrifting ? keepThreshold : startThreshold;
+      var autoSliding = lateralAngle > threshold && this.speed > cfg.topSpeed * 0.40;
+
+      // Manual handbrake drift (Space key / drift button)
       if (inputs.drift && this.speed > cfg.topSpeed * 0.15) {
-        this._driftHoldTimer = 0.3; // reset grace timer while holding drift
+        this._driftHoldTimer = 0.3;
       }
       if (this._driftHoldTimer === undefined) this._driftHoldTimer = 0;
       if (this._driftHoldTimer > 0) this._driftHoldTimer -= dt;
+      var manualDrift = this._driftHoldTimer > 0 && this.speed > cfg.topSpeed * 0.1;
 
-      var wantsDrift = this._driftHoldTimer > 0 && this.speed > cfg.topSpeed * 0.1;
+      // Drift is active if either auto-sliding OR manual handbrake
+      var wantsDrift = autoSliding || manualDrift;
 
+      // Grace period — keep drift active for 0.3s after slide ends (prevents flickering)
       if (wantsDrift) {
-        // Handbrake drift mode — slows car + enables slide
+        this._driftGrace = 0.3;
+      }
+      if (this._driftGrace === undefined) this._driftGrace = 0;
+      if (this._driftGrace > 0) this._driftGrace -= dt;
+      var inDrift = wantsDrift || this._driftGrace > 0;
+
+      if (inDrift) {
         if (!this.isDrifting) {
           this.isDrifting = true;
           this.driftAngle = 0;
         }
-        // Handbrake effect: slow down while held (but not to zero)
+        // Handbrake effect: slow down while held (only for manual drift)
         if (inputs.drift) {
-          var brakeFactor = Math.max(0.4, 1 - 0.8 * dt); // lose speed rapidly
+          var brakeFactor = Math.max(0.4, 1 - 0.8 * dt);
           this.velocity.scaleInPlace(brakeFactor);
         }
         this.angularVelocity = steerInput * cfg.driftTurnRate * speedFactor;
         this._applyDriftPhysics(dt, steerInput);
 
         // Fill drift meter based on real lateral angle
-        this.driftAngle = Math.min(45, Math.abs(this._getLateralAngle()));
+        this.driftAngle = Math.min(45, lateralAngle);
         var angleFactor = Math.max(0.3, this.driftAngle / 20);
         var fillRate = angleFactor * cfg.driftFillRate * 1.5;
         this.driftMeter = Math.min(1, this.driftMeter + fillRate * dt);
 
-        // Drift duration tracking → combo multiplier
+        // Drift duration → combo multiplier
         this.driftTime += dt;
-        // Combo: 1x at 0s, 2x at 1s, 3x at 2s, max 5x at 4s
         this.driftCombo = Math.min(5, 1 + Math.floor(this.driftTime));
 
-        // Drift score: 5x base * angle * combo
+        // Drift score
         this.driftScore += (25 + this.driftAngle * 2.5) * this.driftCombo * dt;
       } else {
         // Normal steering
         this.angularVelocity = steerInput * cfg.turnRate * speedFactor;
 
-        // Release drift -- check for boost
+        // Release drift — check for boost
         if (this.isDrifting) {
           this._releaseDrift();
           this.isDrifting = false;
@@ -241,11 +257,11 @@
       } else if (this.driftMeter < 0.66) {
         this.boostLevel = 1;
         this.isBoosting = true;
-        this.boostTimer = 0.8;
+        this.boostTimer = 0.5;
       } else {
         this.boostLevel = 2;
         this.isBoosting = true;
-        this.boostTimer = 2.0;
+        this.boostTimer = 1.0;
       }
       this.driftMeter = 0;
       this.driftAngle = 0;

@@ -40,7 +40,7 @@
   var _wheelMat = null, _chromeMat = null;
 
   function createWheelMat(scene) {
-    if (_wheelMat) return _wheelMat;
+    if (_wheelMat && !_wheelMat.isDisposed) return _wheelMat;
     _wheelMat = new BABYLON.PBRMaterial('wheelMat', scene);
     _wheelMat.albedoColor = new Color3(0.1, 0.1, 0.1);
     _wheelMat.metallic = 0.2;
@@ -50,7 +50,7 @@
   }
 
   function createChromeMat(scene) {
-    if (_chromeMat) return _chromeMat;
+    if (_chromeMat && !_chromeMat.isDisposed) return _chromeMat;
     _chromeMat = new BABYLON.PBRMaterial('chromeMat', scene);
     _chromeMat.albedoColor = new Color3(0.8, 0.8, 0.85);
     _chromeMat.metallic = 0.95;

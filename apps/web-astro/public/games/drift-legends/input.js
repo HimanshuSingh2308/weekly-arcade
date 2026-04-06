@@ -28,14 +28,17 @@
     steerLeft: false,
     steerRight: false,
     drift: false,
+    analogSteer: 0, // -1 to 1, from joystick
   };
 
   let isMobile = false;
 
   function detectMobile() {
-    isMobile = ('ontouchstart' in window) ||
-      (navigator.maxTouchPoints > 0) ||
-      (window.innerWidth < 768);
+    // Check for actual mobile devices, not just touch-capable desktops
+    var hasMobileUA = /Android|iPhone|iPad|iPod|Mobile|webOS/i.test(navigator.userAgent);
+    var isSmallScreen = window.innerWidth < 1024 && window.innerHeight < 768;
+    var hasCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    isMobile = hasMobileUA || (isSmallScreen && hasCoarsePointer);
     return isMobile;
   }
   detectMobile();
@@ -80,18 +83,25 @@
     state.steerRight = keys['ArrowRight'] || keys['KeyD'] || touch.steerRight;
     state.drift = keys['Space'] || keys['ShiftLeft'] || keys['ShiftRight'] || touch.drift;
 
-    // Analog steering ramp
-    if (state.steerLeft) {
-      steerRampLeft = Math.min(1, steerRampLeft + STEER_RAMP_SPEED * dt);
+    // Analog steering — use joystick value if available, otherwise ramp from digital buttons
+    if (Math.abs(touch.analogSteer) > 0.05) {
+      // Smooth joystick input (lerp toward target for less snappy feel)
+      var target = touch.analogSteer;
+      state.steer += (target - state.steer) * Math.min(1, STEER_RAMP_SPEED * dt);
     } else {
-      steerRampLeft = Math.max(0, steerRampLeft - STEER_DECAY_SPEED * dt);
+      // Digital button ramp (keyboard / d-pad)
+      if (state.steerLeft) {
+        steerRampLeft = Math.min(1, steerRampLeft + STEER_RAMP_SPEED * dt);
+      } else {
+        steerRampLeft = Math.max(0, steerRampLeft - STEER_DECAY_SPEED * dt);
+      }
+      if (state.steerRight) {
+        steerRampRight = Math.min(1, steerRampRight + STEER_RAMP_SPEED * dt);
+      } else {
+        steerRampRight = Math.max(0, steerRampRight - STEER_DECAY_SPEED * dt);
+      }
+      state.steer = steerRampRight - steerRampLeft;
     }
-    if (state.steerRight) {
-      steerRampRight = Math.min(1, steerRampRight + STEER_RAMP_SPEED * dt);
-    } else {
-      steerRampRight = Math.max(0, steerRampRight - STEER_DECAY_SPEED * dt);
-    }
-    state.steer = steerRampRight - steerRampLeft;
   }
 
   function consumePause() {
@@ -105,7 +115,11 @@
   }
 
   function setTouch(key, val) {
-    touch[key] = !!val;
+    if (key === 'analogSteer') {
+      touch.analogSteer = typeof val === 'number' ? val : 0;
+    } else {
+      touch[key] = !!val;
+    }
   }
 
   const Input = {

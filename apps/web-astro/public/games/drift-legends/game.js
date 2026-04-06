@@ -65,9 +65,15 @@
   let lapStartTime = 0;
   let lapTimes = [];
   let raceFinished = false;
+  let playerSplineT = 0; // last known spline position (0-1), for windowed search
+  var _lastSplineT = 0;  // previous frame's splineT, for lap crossing detection
   let wasDrifting = false;
   let wasBoosting = false;
   var _offRoadSoundCd = 0;
+  // Checkpoint miss tracking
+  var _cpMissTimer = 0;       // time since checkpoint miss detected
+  var _cpMissWarning = false;  // warning shown
+  var _cpResetActive = false;  // reset in progress
   let countdownTimer = 0;
   let countdownNumber = 3;
 
@@ -86,6 +92,33 @@
   // Lock to landscape on mobile
   try { screen.orientation?.lock('landscape').catch(function() {}); } catch (_) {}
 
+  // Request fullscreen on mobile — retry on each user interaction until it works
+  var _isFullscreen = false;
+  function _checkFullscreen() {
+    _isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  document.addEventListener('fullscreenchange', _checkFullscreen);
+  document.addEventListener('webkitfullscreenchange', _checkFullscreen);
+
+  function _requestFullscreen() {
+    if (_isFullscreen) return;
+    if (!DL.Input.isMobile()) return;
+    var el = document.documentElement;
+    var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (rfs) {
+      rfs.call(el).then(function() {
+        _isFullscreen = true;
+        try { screen.orientation?.lock('landscape').catch(function() {}); } catch (_) {}
+      }).catch(function() {});
+    }
+  }
+  // Use pointerdown (works for both touch and mouse, fires before touchstart)
+  canvas.addEventListener('pointerdown', _requestFullscreen);
+  // Also try on document click as fallback
+  document.addEventListener('click', function() {
+    if (!_isFullscreen && DL.Input.isMobile()) _requestFullscreen();
+  });
+
   const scene = new BABYLON.Scene(engine);
   scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // transparent — shows HTML SVG skyline behind
 
@@ -96,17 +129,7 @@
   scene.skipPointerMovePicking = false; // MUST be false for GUI buttons to work
 
   const isLowEnd = navigator.hardwareConcurrency <= 2;
-  if (!isLowEnd) {
-    try {
-      const pipeline = new BABYLON.DefaultRenderingPipeline('pipeline', true, scene);
-      pipeline.fxaaEnabled = true;
-    } catch (_) { /* FXAA not critical */ }
-    // Glow layer — makes neon strips, headlights, taillights bloom
-    try {
-      const gl = new BABYLON.GlowLayer('glow', scene, { blurKernelSize: 32 });
-      gl.intensity = 0.4;
-    } catch (_) { /* Glow not critical */ }
-  }
+  // FXAA + Glow removed — caused diagonal line artifacts on transparent canvas overlay
 
   // ─── Modules ──────────────────────────────────────────────────────
   const gui = new DL.GUIManager(scene);
@@ -257,6 +280,12 @@
       _startLoading();
       return;
     }
+    // Full cleanup — dispose race meshes + all remaining scene objects
+    _cleanupRace();
+    _disposeSceneMeshes();
+    // Restore transparent background for HTML backgrounds
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
+    scene.autoClear = true;
     // Advance to next race or chapter
     if (selectedChapter) {
       selectedRaceIndex++;
@@ -356,6 +385,9 @@
 
   // ─── Race Loading & Setup ─────────────────────────────────────────
   function _startLoading() {
+    // Hide header during gameplay for more screen real estate
+    document.body.classList.add('dl-playing');
+    try { window.gameHeader?.hide(); } catch(_) {}
     // Re-enable mesh picking (may have been disabled by result/pause overlay)
     scene.meshes.forEach(function(m) { m.isPickable = true; });
     const track = DL.TrackBuilder.TRACKS[selectedTrackId];
@@ -366,8 +398,39 @@
     setTimeout(() => _buildRace(), 50);
   }
 
+  function _disposeSceneMeshes() {
+    // Dispose all scene meshes EXCEPT GUI internal layers
+    var toDispose = scene.meshes.filter(function(m) {
+      if (!m || m.isDisposed()) return false;
+      // Skip Babylon.js GUI internal meshes
+      var n = m.name || '';
+      if (n.indexOf('ADT') !== -1 || n.indexOf('GUI') !== -1 || n.indexOf('gui') !== -1) return false;
+      return true;
+    });
+    toDispose.forEach(function(m) { try { m.dispose(false, false); } catch(_) {} });
+    // Dispose all lights
+    scene.lights.slice().forEach(function(l) { try { l.dispose(); } catch(_) {} });
+    // Reset fog
+    scene.fogMode = BABYLON.Scene.FOGMODE_NONE;
+    // Null out gui mesh references so they get rebuilt
+    gui._menuCar = null;
+    gui._garageCar = null;
+    if (gui._garageEnv) { gui._garageEnv = null; }
+    // Dispose leftover cameras (garage/menu) — keep only the chase camera
+    scene.cameras.slice().forEach(function(cam) {
+      if (cam !== chaseCamera.camera) {
+        try { cam.dispose(); } catch(_) {}
+      }
+    });
+    scene.activeCamera = chaseCamera.camera;
+  }
+
   function _buildRace() {
     _cleanupRace();
+    _disposeSceneMeshes();
+
+    // Ensure chase camera is active (garage/menu cameras may have been disposed)
+    scene.activeCamera = chaseCamera.camera;
 
     // Hide HTML skyline, make scene opaque for 3D racing
     if (skylineBg) skylineBg.style.display = 'none';
@@ -450,7 +513,12 @@
     // Reset race state
     raceTime = 0;
     playerLap = 1;
+    playerSplineT = 0;
+    _lastSplineT = 0;
     playerCheckpoint = 0;
+    _cpMissTimer = 0;
+    _cpMissWarning = false;
+    _cpResetActive = false;
     playerCheckpointSeq = [];
     cleanLapsCount = 0;
     lapStartTime = 0;
@@ -459,6 +527,40 @@
     wasDrifting = false;
     wasBoosting = false;
     playerPhysics.totalDriftScore = 0;
+
+    // Final cleanup — dispose any leftover garage/menu objects that registerBeforeRender might have rebuilt
+    scene.meshes.filter(function(m) {
+      if (!m || m.isDisposed()) return false;
+      // Keep only: player car, AI cars, track meshes, particles, GUI
+      if (m === playerCar) return false;
+      if (m === opponentCar) return false;
+      if (aiRacers.some(function(ai) { return ai.mesh === m; })) return false;
+      if (trackData && trackData.meshes && trackData.meshes.indexOf(m) >= 0) return false;
+      if (m === driftSmoke || m === boostFlame || m === sparksPS || m === exhaustSmoke) return false;
+      var n = m.name || '';
+      if (n.indexOf('ADT') !== -1 || n.indexOf('GUI') !== -1 || n.indexOf('gui') !== -1) return false;
+      if (n.indexOf('cp') === 0 || n.indexOf('cheq') === 0 || n.indexOf('nitro') === 0) return false;
+      if (n.indexOf('arrow') !== -1 || n.indexOf('curb') !== -1 || n.indexOf('ground') !== -1) return false;
+      if (n.indexOf('tireMark') !== -1) return false;
+      // Check if it's a child of playerCar, opponentCar, or AI cars
+      var parent = m.parent;
+      while (parent) {
+        if (parent === playerCar || parent === opponentCar) return false;
+        for (var aidx = 0; aidx < aiRacers.length; aidx++) {
+          if (parent === aiRacers[aidx].mesh) return false;
+        }
+        parent = parent.parent;
+      }
+      return true; // dispose this stray mesh
+    }).forEach(function(m) { try { m.dispose(false, false); } catch(_) {} });
+    // Kill any non-chase cameras
+    scene.cameras.slice().forEach(function(cam) {
+      if (cam !== chaseCamera.camera) try { cam.dispose(); } catch(_) {}
+    });
+    scene.activeCamera = chaseCamera.camera;
+    gui._garageCar = null;
+    gui._garageCam = null;
+    gui._savedCamForGarage = null;
 
     // Gather all car meshes for cinematic intro
     var allCarMeshes = [playerCar];
@@ -472,6 +574,8 @@
     // Set HUD goal reminder
     if (gui.hud && gui.hud.goalReminder && introGoals && introGoals.length) {
       gui.hud.goalReminder.text = 'GOAL: ' + introGoals.map(function(g) { return g.label; }).join(' | ');
+      gui.hud.goalReminder.isVisible = true;
+      setTimeout(function() { if (gui.hud.goalReminder) gui.hud.goalReminder.isVisible = false; }, 5000);
     }
     scene.activeCamera = chaseCamera.camera; // ensure chase cam before cinematic
     chaseCamera.setTarget(playerCar);
@@ -480,17 +584,23 @@
       gui.hideTrackIntro();
       scene.activeCamera = chaseCamera.camera;
       chaseCamera.setTarget(playerCar);
-      // Force camera position behind car immediately
-      chaseCamera.camera.position = playerCar.position.add(
-        new BABYLON.Vector3(-Math.sin(playerCar.rotation.y) * 8, 3.5, -Math.cos(playerCar.rotation.y) * 8)
-      );
-      chaseCamera.camera.setTarget(playerCar.position.add(new BABYLON.Vector3(0, 1, 0)));
+      // Snap camera behind player — use simple rotation.y (just set it fresh)
+      var startTangent = DL.TrackBuilder.getSplineTangent(trackData.splinePoints, 0);
+      var carRotY = Math.atan2(startTangent.x, startTangent.z);
+      playerCar.rotation.y = carRotY;
+      playerCar.computeWorldMatrix(true); // force matrix update
+      // Force player car back to start position (may have drifted if another object interfered)
+      playerCar.position.copyFrom(trackData.startPosition);
+      playerCar.position.y = 0;
+      var camX = playerCar.position.x - Math.sin(carRotY) * 10;
+      var camZ = playerCar.position.z - Math.cos(carRotY) * 10;
+      chaseCamera.camera.position = new BABYLON.Vector3(camX, 4, camZ);
+      chaseCamera.camera.setTarget(new BABYLON.Vector3(playerCar.position.x, 1, playerCar.position.z));
       countdownTimer = 0;
       countdownNumber = 3;
       gui.showCountdown(3);
       DL.Audio.play('countdown');
       DL.Audio.startEngine();
-      DL.Audio.startBGM(trackData.trackDef.environment);
       gui.showTouchControls(DL.Input.isMobile());
       state = STATE.COUNTDOWN;
     });
@@ -501,6 +611,9 @@
     scene.blockMaterialDirtyMechanism = true;
 
     state = STATE.CINEMATIC_INTRO;
+
+    // Start BGM during cinematic (sets the mood before countdown)
+    DL.Audio.startBGM(trackData.trackDef.environment);
 
     // Activate tutorial on first race if not completed
     if (!progress || !progress.tutorialComplete) {
@@ -535,20 +648,14 @@
   }
 
   function _returnToMenu() {
+    // Show header again
+    document.body.classList.remove('dl-playing');
+    try { window.gameHeader?.show(); } catch(_) {}
     _cleanupRace();
     gui.hideTutorial();
     gui.hidePause();
     tutorialStep = -1;
-    // Re-enable mesh picking
-    scene.meshes.forEach(function(m) { m.isPickable = true; });
-    // Dispose ALL remaining non-camera meshes (tire marks, leftover props, etc.)
-    var toDispose = [];
-    scene.meshes.forEach(function(m) {
-      if (m && !m.isDisposed() && m.name !== 'chaseCamera') toDispose.push(m);
-    });
-    toDispose.forEach(function(m) { try { m.dispose(false, true); } catch(_) {} });
-    // Dispose lights except default
-    scene.lights.slice().forEach(function(l) { try { l.dispose(); } catch(_) {} });
+    _disposeSceneMeshes();
     // Restore HTML skyline + transparent scene
     if (skylineBg) skylineBg.style.display = '';
     var mtnBg = document.getElementById('storyMtnBg');
@@ -648,23 +755,28 @@
 
     switch (state) {
       case STATE.CINEMATIC_INTRO:
-        chaseCamera.updateCinematic(dt);
-        // AI cars still animate during intro
-        aiRacers.forEach(function(ai) {
-          DL.CarBuilder.updateWheels(ai.mesh, 5, dt);
-        });
-        DL.CarBuilder.updateWheels(playerCar, 0, dt);
+        try {
+          chaseCamera.updateCinematic(dt);
+          aiRacers.forEach(function(ai) { DL.CarBuilder.updateWheels(ai.mesh, 5, dt); });
+          DL.CarBuilder.updateWheels(playerCar, 0, dt);
+        } catch (e) { console.error('[Cinematic loop]', e); }
         break;
 
       case STATE.COUNTDOWN:
         _updateCountdown(dt);
-        // Fast camera snap during countdown (smoothing is too slow from cinematic position)
-        if (playerCar && chaseCamera.camera) {
-          var m = playerCar.getWorldMatrix();
-          var back = new BABYLON.Vector3(-m.m[8], -m.m[9], -m.m[10]).normalize();
-          var idealPos = playerCar.position.add(back.scale(8)).add(new BABYLON.Vector3(0, 3.5, 0));
-          BABYLON.Vector3.LerpToRef(chaseCamera.camera.position, idealPos, 0.3, chaseCamera.camera.position);
-          chaseCamera.camera.setTarget(playerCar.position.add(new BABYLON.Vector3(0, 1, 0)));
+        // Hard-lock car at start + camera behind during countdown
+        if (playerCar && chaseCamera.camera && trackData) {
+          // Force car to stay at start position during countdown
+          playerCar.position.x = trackData.startPosition.x;
+          playerCar.position.y = 0;
+          playerCar.position.z = trackData.startPosition.z;
+          var cdRotY = playerCar.rotation.y;
+          chaseCamera.camera.position = new BABYLON.Vector3(
+            playerCar.position.x - Math.sin(cdRotY) * 10,
+            4,
+            playerCar.position.z - Math.cos(cdRotY) * 10
+          );
+          chaseCamera.camera.setTarget(new BABYLON.Vector3(playerCar.position.x, 1, playerCar.position.z));
         }
         break;
 
@@ -793,6 +905,8 @@
         }
       });
 
+      // Update spline position BEFORE checkpoint detection (lap crossing depends on it)
+      _updatePlayerSplineT();
       // Checkpoint detection
       _updateCheckpoints();
     }
@@ -802,12 +916,13 @@
 
     // Particle effects (suppressed if user prefers reduced motion)
     if (!prefersReducedMotion) {
-      if (driftSmoke) driftSmoke.emitRate = playerPhysics.isDrifting ? 40 : 0;
-      if (boostFlame) boostFlame.emitRate = playerPhysics.isBoosting ? 60 : 0;
-      // Exhaust puffs when accelerating
-      if (exhaustSmoke) exhaustSmoke.emitRate = (input.accelerate && playerPhysics.speed > 5) ? 8 : 0;
-      // Tire marks on road when drifting
-      if (playerPhysics.isDrifting && playerPhysics.speed > 10) {
+      if (driftSmoke) driftSmoke.emitRate = playerPhysics.isDrifting ? 60 : (lateralForMarks > 15 ? 20 : 0);
+      if (boostFlame) boostFlame.emitRate = playerPhysics.isBoosting ? 80 : 0;
+      // Exhaust puffs — always when moving, more when accelerating
+      if (exhaustSmoke) exhaustSmoke.emitRate = playerPhysics.speed > 3 ? (input.accelerate ? 15 : 5) : 0;
+      // Tire marks — during drift OR hard cornering (lateral angle > 15°) OR braking at speed
+      var lateralForMarks = playerPhysics.speed > 5 ? Math.abs(playerPhysics._getLateralAngle()) : 0;
+      if ((playerPhysics.isDrifting || lateralForMarks > 15 || (input.brake && playerPhysics.speed > 15)) && playerPhysics.speed > 8) {
         DL.Particles.placeTireMark(playerCar.position, playerCar.rotation.y);
       }
     }
@@ -854,14 +969,8 @@
       }
     }
 
-    // Calculate race position
-    // Calculate accurate position on track using closest spline point
-    var closestT = 0;
-    if (trackData && trackData.splinePoints) {
-      var closest = DL.TrackBuilder.getClosestPointOnTrack(trackData.splinePoints, playerCar.position);
-      closestT = closest.t;
-    }
-    const playerT = (playerLap - 1) + closestT;
+    // Race position uses already-computed playerSplineT
+    const playerT = (playerLap - 1) + playerSplineT;
     const positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
     const playerPos = positions.findIndex(p => p.id === 'player') + 1;
 
@@ -881,38 +990,143 @@
     });
   }
 
+  function _updatePlayerSplineT() {
+    if (!trackData || !trackData.splinePoints) return;
+    var sp = trackData.splinePoints;
+    var searchWindow = 0.25;
+    var bestDist = Infinity;
+    var step = 1 / sp.length;
+    var closestT = playerSplineT;
+    var minI = Math.max(0, Math.floor((playerSplineT - searchWindow) * sp.length));
+    var maxI = Math.min(sp.length - 1, Math.ceil((playerSplineT + searchWindow) * sp.length));
+    // Wrap search near start/finish
+    if (playerSplineT < searchWindow) maxI = Math.min(sp.length - 1, maxI + Math.ceil(searchWindow * sp.length));
+    if (playerSplineT > 1 - searchWindow) minI = Math.max(0, minI - Math.ceil(searchWindow * sp.length));
+    for (var si = minI; si <= maxI; si++) {
+      var idx = ((si % sp.length) + sp.length) % sp.length;
+      var d = BABYLON.Vector3.DistanceSquared(playerCar.position, sp[idx]);
+      if (d < bestDist) { bestDist = d; closestT = idx * step; }
+    }
+    if (playerSplineT > 0.85 && closestT < 0.15) closestT += 1;
+    if (playerSplineT < 0.15 && closestT > 0.85) closestT -= 1;
+    playerSplineT = ((closestT % 1) + 1) % 1; // ensure 0-1
+  }
+
   function _updateCheckpoints() {
     if (!trackData) return;
     const checkpoints = trackData.checkpointPositions;
 
-    for (let i = playerCheckpoint; i < checkpoints.length; i++) {
-      const cp = checkpoints[i];
-      const dist = V3.Distance(playerCar.position, cp.position);
+    // Only check the NEXT expected checkpoint (sequential — no skipping)
+    var nextCpIdx = playerCheckpoint;
+    var cpHit = false;
+
+    if (nextCpIdx < checkpoints.length) {
+      var cp = checkpoints[nextCpIdx];
+      var dist = V3.Distance(playerCar.position, cp.position);
+
       if (dist < trackData.trackDef.trackWidth * 1.5) {
-        playerCheckpoint = i + 1;
-        playerCheckpointSeq.push(i);
-        // Visual + audio feedback
+        // ── CHECKPOINT HIT ──
+        playerCheckpoint = nextCpIdx + 1;
+        playerCheckpointSeq.push(nextCpIdx);
+        cpHit = true;
+        _cpMissTimer = 0;
+        _cpMissWarning = false;
+        _cpResetActive = false;
+        gui.hideCheckpointWarning();
         DL.Audio.play('checkpoint');
         if (!prefersReducedMotion) chaseCamera.shake(0.08);
-        // Flash the checkpoint arch (briefly brighten then fade)
-        if (trackData._cpMeshes && trackData._cpMeshes[i]) {
-          var cpMesh = trackData._cpMeshes[i];
-          cpMesh.visibility = 0.8;
-          setTimeout(function() { if (cpMesh && !cpMesh.isDisposed()) cpMesh.visibility = 0; }, 300);
+
+        // Visual: disappear instantly, reappear after 2s
+        if (trackData._cpMeshes && trackData._cpMeshes[nextCpIdx]) {
+          var cpMesh = trackData._cpMeshes[nextCpIdx];
+          cpMesh.visibility = 0;
+          var defMat = trackData._cpMatDefault;
+          setTimeout(function() {
+            if (cpMesh && !cpMesh.isDisposed()) {
+              cpMesh.visibility = 1;
+              if (defMat) cpMesh.material = defMat;
+            }
+          }, 2000);
         }
-        break;
+      } else {
+        // ── CHECK FOR MISS: player's splineT is well past the checkpoint's t AND far away ──
+        var cpT = trackData.trackDef.checkpoints[nextCpIdx];
+        var pastCheckpoint = false;
+        // Must be >15% past checkpoint on spline AND >3x track width away from checkpoint position
+        if (Math.abs(cpT - playerSplineT) < 0.5) {
+          var distToCp = V3.Distance(playerCar.position, cp.position);
+          pastCheckpoint = playerSplineT > cpT + 0.15 && distToCp > trackData.trackDef.trackWidth * 3;
+        }
+
+        if (pastCheckpoint && !_cpMissWarning) {
+          // ── CHECKPOINT MISSED — immediate feedback ──
+          _cpMissWarning = true;
+          _cpMissTimer = 0;
+          gui.showCheckpointWarning('CHECKPOINT MISSED!');
+          DL.Audio.play('collision'); // warning tone
+        }
+
+        if (_cpMissWarning) {
+          var dt2 = scene.getEngine().getDeltaTime() / 1000;
+          _cpMissTimer += dt2;
+
+          if (_cpMissTimer >= 2 && !_cpResetActive) {
+            // Show countdown
+            var remaining = Math.max(1, Math.ceil(5 - _cpMissTimer));
+            gui.showCheckpointWarning('CHECKPOINT MISSED!\nReset in ' + remaining + '...');
+          }
+
+          if (_cpMissTimer >= 5 && !_cpResetActive) {
+            // ── RESET: spawn BEFORE the missed checkpoint so player can cross it ──
+            _cpResetActive = true;
+            gui.showCheckpointWarning('Resetting...');
+            setTimeout(function() {
+              if (!playerCar || !trackData) return;
+              var missedT = trackData.trackDef.checkpoints[nextCpIdx];
+              // Spawn slightly before the checkpoint (3% back on the spline)
+              var resetT = Math.max(0, missedT - 0.03);
+              var resetPos = DL.TrackBuilder.getSplinePoint(trackData.splinePoints, resetT);
+              resetPos.y = 0.5;
+              playerCar.position.copyFrom(resetPos);
+              var tangent = DL.TrackBuilder.getSplineTangent(trackData.splinePoints, resetT);
+              playerCar.rotation.y = Math.atan2(tangent.x, tangent.z);
+              playerPhysics.velocity = BABYLON.Vector3.Zero();
+              playerPhysics.speed = 0;
+              playerSplineT = resetT;
+              _lastSplineT = resetT; // prevent false lap detection from splineT jump
+              // Snap camera to new position immediately
+              if (chaseCamera && chaseCamera.camera) {
+                var ry2 = playerCar.rotation.y;
+                chaseCamera.camera.position.x = playerCar.position.x - Math.sin(ry2) * 8;
+                chaseCamera.camera.position.y = playerCar.position.y + 3.5;
+                chaseCamera.camera.position.z = playerCar.position.z - Math.cos(ry2) * 8;
+                chaseCamera.camera.setTarget(playerCar.position.add(new BABYLON.Vector3(0, 1, 0)));
+              }
+              _cpMissTimer = 0;
+              _cpMissWarning = false;
+              _cpResetActive = false;
+              gui.hideCheckpointWarning();
+            }, 1000);
+          }
+        }
       }
     }
 
-    // Check lap completion (passed all checkpoints, near start, minimum lap time)
+    // Check lap completion — all checkpoints passed + near start + minimum time
     if (playerCheckpoint >= checkpoints.length) {
-      const distToStart = V3.Distance(playerCar.position, trackData.startPosition);
-      const lapElapsed = raceTime - lapStartTime;
-      // Minimum 20 seconds per lap to prevent exploit
-      if (distToStart < trackData.trackDef.trackWidth * 2.5 && lapElapsed > 15) {
-        _completeLap();
+      var lapElapsed = raceTime - lapStartTime;
+      if (lapElapsed > 15) {
+        // Method 1: spline wrap-around (splineT went from >0.85 to <0.15)
+        var crossedFinish = (playerSplineT < 0.15 && _lastSplineT > 0.85);
+        // Method 2: distance to start position (fallback)
+        var distToStart = V3.Distance(playerCar.position, trackData.startPosition);
+        var nearStart = distToStart < trackData.trackDef.trackWidth * 2.5;
+        if (crossedFinish || nearStart) {
+          _completeLap();
+        }
       }
     }
+    _lastSplineT = playerSplineT;
   }
 
   // Screen reader announcements
@@ -1035,6 +1249,9 @@
       chaseCamera.setResultView(playerCar.position);
       // Disable 3D mesh picking so GUI buttons receive clicks
       scene.meshes.forEach(function(m) { m.isPickable = false; });
+      // Calculate total stats for story complete screen
+      var totalStars = 0, totalRaces = 0;
+      Object.values(progress.raceResults || {}).forEach(function(r) { totalStars += (r.bestStars || 0); if (r.completed) totalRaces++; });
       gui.showRaceResult({
         position: playerPosition,
         stars,
@@ -1045,6 +1262,10 @@
         unlockText,
         goalResults: goalResults,
         allGoalsPassed: allGoalsPassed,
+        storyComplete: !!(progress.storyComplete && selectedChapter && selectedChapter.id === 5 && won),
+        totalStars: totalStars,
+        totalRaces: totalRaces,
+        totalCoins: progress.coins || 0,
       });
       state = STATE.RESULT;
     }, 1500);
@@ -1136,8 +1357,20 @@
 
   // Pause on tab blur
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && state === STATE.RACING) {
-      // Auto-pause handled by Babylon engine automatically
+    if (document.hidden) {
+      // Suspend all audio when tab/app goes to background or phone sleeps
+      DL.Audio.stopEngine();
+      DL.Audio.pauseBGM();
+      if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
+        state = STATE.PAUSED;
+        scene.meshes.forEach(function(m) { m.isPickable = false; });
+        gui.showPause();
+      }
+    } else {
+      // Resume BGM when returning (engine resumes when unpausing)
+      if (state !== STATE.PAUSED) {
+        DL.Audio.resumeBGM();
+      }
     }
   });
 
