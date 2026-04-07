@@ -113,4 +113,9 @@ export class GameRoomManager {
   getRoomCount(): number {
     return this.rooms.size;
   }
+
+  /** Get all active session IDs */
+  getSessionIds(): string[] {
+    return Array.from(this.rooms.keys());
+  }
 }

@@ -43,6 +43,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   private timeoutCounts = new Map<string, number>();
   private readonly MAX_CONSECUTIVE_TIMEOUTS = 3;
 
+  // Throttled activity tracking: sessionId → last Firestore write timestamp
+  private lastActivityWrite = new Map<string, number>();
+  private readonly ACTIVITY_WRITE_INTERVAL_MS = 30_000; // Write at most once per 30s per session
+
+  // Periodic heartbeat interval
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private readonly HEARTBEAT_INTERVAL_MS = 30_000;
+
   @WebSocketServer()
   server: Server;
 
@@ -56,6 +64,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Attach auth middleware to the namespace
     server.use(createWsAuthMiddleware(this.firebase));
     this.logger.log('Game gateway initialized with auth middleware');
+
+    // Periodic heartbeat: update lastHeartbeat for all connected players
+    this.heartbeatInterval = setInterval(() => this._heartbeatAll(), this.HEARTBEAT_INTERVAL_MS);
   }
 
   // ─── Connection lifecycle ───────────────────────────────────────────
@@ -183,6 +194,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
             finishedAt: new Date(),
           });
           this.stateManager.evictSession(sessionId);
+            this.lastActivityWrite.delete(sessionId);
         } catch {
           // Already cleaned up
         }
@@ -240,6 +252,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       // Player made a real move — reset their timeout counter
       this.timeoutCounts.delete(`${sessionId}:${uid}`);
+
+      // Update session activity + player heartbeat (throttled)
+      this._updateSessionActivity(sessionId, uid);
 
       const turnUid = gameResult ? null : this.stateManager.getNextTurn(sessionId);
 
@@ -474,6 +489,60 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  // ─── Activity tracking ──────────────────────────────────────────
+
+  /**
+   * Throttled update of session lastActivityAt and player lastHeartbeat.
+   * Writes to Firestore at most once per ACTIVITY_WRITE_INTERVAL_MS per session.
+   */
+  private _updateSessionActivity(sessionId: string, uid: string): void {
+    const now = Date.now();
+    const lastWrite = this.lastActivityWrite.get(sessionId) || 0;
+
+    if (now - lastWrite < this.ACTIVITY_WRITE_INTERVAL_MS) return; // Throttled
+
+    this.lastActivityWrite.set(sessionId, now);
+    const updateTime = new Date();
+
+    this.firebase.doc(`sessions/${sessionId}`).update({
+      lastActivityAt: updateTime,
+      [`players.${uid}.lastHeartbeat`]: updateTime,
+    }).catch(err =>
+      this.logger.warn(`Activity update failed for ${sessionId}: ${err.message}`),
+    );
+  }
+
+  /**
+   * Periodic heartbeat: update lastHeartbeat for all connected players across all sessions.
+   * Prevents the cleanup cron from abandoning active games.
+   */
+  private async _heartbeatAll(): Promise<void> {
+    const roomCount = this.roomManager.getRoomCount();
+    if (roomCount === 0) return;
+
+    const now = new Date();
+
+    // Get all active sessions from the state manager
+    for (const sessionId of this._getActiveSessionIds()) {
+      const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
+      if (connectedPlayers.length === 0) continue;
+
+      const updates: Record<string, unknown> = { lastActivityAt: now };
+      for (const uid of connectedPlayers) {
+        updates[`players.${uid}.lastHeartbeat`] = now;
+      }
+
+      this.firebase.doc(`sessions/${sessionId}`).update(updates).catch(err =>
+        this.logger.warn(`Heartbeat failed for ${sessionId}: ${err.message}`),
+      );
+    }
+  }
+
+  /** Get all session IDs that have connected players */
+  private _getActiveSessionIds(): string[] {
+    return this.roomManager.getSessionIds();
+  }
+
   private async handleGameFinished(
     sessionId: string,
     gameResult: { players: Record<string, { score: number; rank: number; outcome: 'win' | 'loss' | 'draw' }>; reason: string },
@@ -515,6 +584,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Evict session from memory after a short delay
     setTimeout(() => {
       this.stateManager.evictSession(sessionId).catch(() => {});
+      this.lastActivityWrite.delete(sessionId);
     }, 10_000);
 
     this.logger.log(`Game finished: session=${sessionId} reason=${gameResult.reason}`);
