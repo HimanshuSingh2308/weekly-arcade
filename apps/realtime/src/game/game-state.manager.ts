@@ -22,7 +22,6 @@ const PERSIST_INTERVAL_MS = 500;
 const PERSIST_MOVE_THRESHOLD = 5;
 const EVICTION_GRACE_MS = 5 * 60 * 1000; // 5 minutes
 const MIN_MOVE_INTERVAL_TURN_MS = 200; // Turn-based games (chess)
-const MIN_MOVE_INTERVAL_REALTIME_MS = 50; // Real-time games (racing) — 20Hz max
 
 @Injectable()
 export class GameStateManager {
@@ -125,13 +124,16 @@ export class GameStateManager {
     if (!session) throw new Error(`Session not loaded: ${sessionId}`);
 
     // Level 2 anti-cheat: timing validation
-    // Real-time games (getNextTurn returns null) allow faster moves
+    // Real-time games skip timing check — position updates are high-frequency
+    // and rate-limited client-side (67ms). Server-side timing breaks due to
+    // network batching where multiple messages arrive in the same ms.
     const isRealtime = session.logic.getNextTurn(session.state) === null;
-    const minInterval = isRealtime ? MIN_MOVE_INTERVAL_REALTIME_MS : MIN_MOVE_INTERVAL_TURN_MS;
-    const now = Date.now();
-    const lastMove = session.lastMoveTime.get(uid);
-    if (lastMove && (now - lastMove) < minInterval) {
-      throw new Error(`Move too fast: minimum ${minInterval}ms between moves`);
+    if (!isRealtime) {
+      const now = Date.now();
+      const lastMove = session.lastMoveTime.get(uid);
+      if (lastMove && (now - lastMove) < MIN_MOVE_INTERVAL_TURN_MS) {
+        throw new Error(`Move too fast: minimum ${MIN_MOVE_INTERVAL_TURN_MS}ms between moves`);
+      }
     }
 
     // Validate and apply via game logic (~1ms, in-memory)
