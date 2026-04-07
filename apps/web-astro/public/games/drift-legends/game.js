@@ -198,21 +198,25 @@
       gui.hideMPJoining();
       gui.hideMPWaitingRoom();
 
-      // Fetch opponent name from session
+      // Fetch opponent display name from session via API
       var oppName = 'Opponent';
+      gui.showMPHud(oppName); // Show immediately with fallback
       try {
-        var gs = DL.Multiplayer._gameState;
-        if (gs?.players) {
-          for (var i = 0; i < gs.players.length; i++) {
-            if (gs.players[i] !== currentUser?.uid) {
-              oppName = gs.players[i].slice(0, 8); // Use short UID as fallback
-              break;
+        var sid = DL.Multiplayer.getSessionId();
+        if (sid && window.multiplayerClient) {
+          window.multiplayerClient.getSession(sid).then(function(session) {
+            if (session?.players) {
+              for (var uid in session.players) {
+                if (uid !== currentUser?.uid) {
+                  oppName = session.players[uid].displayName || 'Opponent';
+                  gui.showMPHud(oppName);
+                  break;
+                }
+              }
             }
-          }
+          }).catch(function() {});
         }
       } catch (_) {}
-      // Show MP-specific HUD (opponent info, forfeit button, no pause)
-      gui.showMPHud(oppName);
 
       _startLoading();
     },
@@ -223,7 +227,8 @@
       if (gs?.laps && currentUser?.uid) {
         for (var uid in gs.laps) {
           if (uid !== currentUser.uid) {
-            gui.updateMPOpponentLap((gs.laps[uid] || 0) + 1, totalLaps);
+            var oppLap = Math.min((gs.laps[uid] || 0) + 1, totalLaps);
+            gui.updateMPOpponentLap(oppLap, totalLaps);
             break;
           }
         }
