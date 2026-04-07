@@ -9,6 +9,7 @@ interface PlayerPosition {
   rotY: number;
   speed: number;
   driftScore: number;
+  isDrifting: boolean;
   checkpointIndex: number;
   lapCheckpointSeq: number[];
 }
@@ -80,6 +81,7 @@ export class DriftLegendsLogic implements MultiplayerGameLogic, OnModuleInit {
         rotY: 0,
         speed: 0,
         driftScore: 0,
+        isDrifting: false,
         checkpointIndex: 0,
         lapCheckpointSeq: [],
       };
@@ -191,6 +193,7 @@ export class DriftLegendsLogic implements MultiplayerGameLogic, OnModuleInit {
         rotY: moveData.rotY as number,
         speed: moveData.speed as number,
         driftScore: (moveData.driftScore as number) || 0,
+        isDrifting: !!(moveData.isDrifting),
         checkpointIndex:
           checkpointIndex !== undefined ? checkpointIndex : currentCheckpoint,
         lapCheckpointSeq: s.positions[uid]?.lapCheckpointSeq || [],

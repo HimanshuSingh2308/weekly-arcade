@@ -146,12 +146,23 @@
       // First game:state with players array = game initialized → start race
       if (!raceStartFired && data.state?.players && onRaceStart) {
         raceStartFired = true;
+        // Detect opponent UID from players list
+        if (data.state.players && !opponentUid) {
+          for (const uid of data.state.players) {
+            if (uid !== myUid) { opponentUid = uid; break; }
+          }
+        }
         onRaceStart(data.state);
       }
 
-      // Handle opponent position from state updates
-      if (data.state?.lastMove && data.state.lastMove.uid !== myUid) {
-        _handleOpponentMove(data.state.lastMove);
+      // Read opponent position from state.positions[opponentUid]
+      if (opponentUid && data.state?.positions?.[opponentUid]) {
+        const pos = data.state.positions[opponentUid];
+        _handleOpponentMove({
+          moveType: 'position-update',
+          uid: opponentUid,
+          moveData: pos,
+        });
       }
     });
 
@@ -194,17 +205,6 @@
       if (onReconnect) onReconnect();
     });
 
-    // Listen for raw position-update moves via the generic event handler
-    client.on('game:state', (data) => {
-      const state = data.state;
-      if (!state?.moves) return;
-
-      // Process any new position updates from the opponent
-      const lastMove = state.moves?.[state.moves.length - 1];
-      if (lastMove && lastMove.uid !== myUid && lastMove.moveType === 'position-update') {
-        _handleOpponentMove(lastMove);
-      }
-    });
   }
 
   function _handleOpponentMove(move) {
