@@ -232,20 +232,35 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
       const matchedUids = new Set<string>();
       const entries = freshDocs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
 
+      this.logger.log(`Matching: ${entries.length} entries — ${entries.map(e => `${e.uid?.slice(0,8)}(${e.gameId},r=${e.skillRating},w=[${e.ratingWindowMin},${e.ratingWindowMax}],s=${e.status})`).join(', ')}`);
+
       for (const entry of entries) {
         if (matchedUids.has(entry.uid)) continue;
 
         // Find a compatible opponent
         const opponent = entries.find(other => {
           if (other.uid === entry.uid || matchedUids.has(other.uid)) return false;
-          if (other.gameId !== entry.gameId) return false;
+          if (other.gameId !== entry.gameId) {
+            this.logger.debug(`  skip ${other.uid?.slice(0,8)}: gameId ${other.gameId} != ${entry.gameId}`);
+            return false;
+          }
           // Mutual window check
-          if (other.ratingWindowMin > entry.skillRating || other.ratingWindowMax < entry.skillRating) return false;
-          if (entry.ratingWindowMin > other.skillRating || entry.ratingWindowMax < other.skillRating) return false;
+          if (other.ratingWindowMin > entry.skillRating || other.ratingWindowMax < entry.skillRating) {
+            this.logger.debug(`  skip ${other.uid?.slice(0,8)}: their window [${other.ratingWindowMin},${other.ratingWindowMax}] excludes rating ${entry.skillRating}`);
+            return false;
+          }
+          if (entry.ratingWindowMin > other.skillRating || entry.ratingWindowMax < other.skillRating) {
+            this.logger.debug(`  skip ${other.uid?.slice(0,8)}: our window [${entry.ratingWindowMin},${entry.ratingWindowMax}] excludes rating ${other.skillRating}`);
+            return false;
+          }
           return true;
         });
 
-        if (!opponent) continue;
+        if (!opponent) {
+          this.logger.log(`No match found for ${entry.uid?.slice(0,8)} (${entry.gameId})`);
+          continue;
+        }
+        this.logger.log(`Match found: ${entry.uid?.slice(0,8)} ↔ ${opponent.uid?.slice(0,8)} — claiming...`);
 
         // Atomically claim both entries with 'claiming' — prevents double-matching
         // Only transitions to 'matched' after session creation succeeds
