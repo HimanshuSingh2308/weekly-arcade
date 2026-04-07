@@ -242,7 +242,13 @@
     // Wire up button callbacks
     if (opts.onSound) {
       const soundEl = document.getElementById(soundBtnId);
-      if (soundEl) soundEl.addEventListener('click', opts.onSound);
+      if (soundEl) soundEl.addEventListener('click', () => {
+        const result = opts.onSound();
+        // Auto-update icon: onSound returns true if unmuted, false if muted
+        const isMuted = result === false || result === undefined;
+        soundEl.textContent = isMuted ? '\ud83d\udd07' : '\ud83d\udd0a';
+        soundEl.classList.toggle('muted', isMuted);
+      });
     }
     if (opts.onHint) {
       const hintEl = document.getElementById(hintBtnId);

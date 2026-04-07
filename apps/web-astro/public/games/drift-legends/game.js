@@ -240,7 +240,7 @@
       buttons: ['sound', 'leaderboard', 'auth'],
       onSound: () => {
         const muted = DL.Audio.toggle();
-        return !muted;
+        return !muted; // game-header auto-updates icon based on return value
       },
       onSignIn: async (user) => {
         currentUser = user;
