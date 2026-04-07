@@ -166,8 +166,9 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
    * Only fires when players are actively searching.
    */
   @Interval(5000)
-  private async _scanMatchmaking() {
+  async scanMatchmaking() {
     if (this.waitingSockets.size === 0) return;
+    this.logger.debug(`Matchmaking scan: ${this.waitingSockets.size} players searching`);
 
     try {
       const snapshot = await this.firebase
@@ -176,8 +177,12 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
         .limit(100)
         .get();
 
-      if (snapshot.empty) return;
+      if (snapshot.empty) {
+        this.logger.debug('Matchmaking scan: no waiting entries in queue');
+        return;
+      }
 
+      this.logger.log(`Matchmaking scan: ${snapshot.size} waiting entries found`);
       const now = Date.now();
       const batch = this.firebase.batch();
       let updates = 0;
