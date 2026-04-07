@@ -92,6 +92,7 @@ export class MatchmakingCron {
           const result = await this.matchmakingService.tryMatchPlayer(
             entry.id, entry.uid, entry.gameId, entry.skillRating,
             'Player', null,
+            entry.ratingWindowMin, entry.ratingWindowMax,
           );
           if (result) {
             this.logger.log(`Cron matched ${entry.uid} → session ${result}`);

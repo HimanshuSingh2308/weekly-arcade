@@ -133,6 +133,7 @@ export class MatchmakingService {
 
   /**
    * Try to find a match for a player. Called on queue entry and by the scan cron.
+   * Checks mutual compatibility: both players' windows must include each other's rating.
    */
   async tryMatchPlayer(
     entryId: string,
@@ -141,8 +142,14 @@ export class MatchmakingService {
     rating: number,
     displayName?: string,
     avatarUrl?: string | null,
+    callerWindowMin?: number,
+    callerWindowMax?: number,
   ): Promise<string | null> {
-    // Find compatible opponents
+    // Use caller's widened window if provided, otherwise derive from rating
+    const myWindowMin = callerWindowMin ?? (rating - MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW);
+    const myWindowMax = callerWindowMax ?? (rating + MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW);
+
+    // Find candidates whose window includes our rating
     const candidates = await this.firebase
       .collection('matchmakingQueue')
       .where('gameId', '==', gameId)
@@ -151,7 +158,7 @@ export class MatchmakingService {
       .limit(10)
       .get();
 
-    // Filter: not self, rating window includes us, not stale
+    // Filter: not self, mutual window overlap, not stale
     const now = Date.now();
     const maxAgeMs = MULTIPLAYER_DEFAULTS.MATCHMAKING_EXPIRE_SEC * 1000;
     const staleRefs: FirebaseFirestore.DocumentReference[] = [];
@@ -174,8 +181,13 @@ export class MatchmakingService {
           return false;
         }
 
-        // Rating window check
-        return data.ratingWindowMax >= rating;
+        // Mutual window check:
+        // 1. Candidate's window includes our rating (query already ensures min <= rating)
+        if (data.ratingWindowMax < rating) return false;
+        // 2. Our window includes candidate's rating
+        if (data.skillRating < myWindowMin || data.skillRating > myWindowMax) return false;
+
+        return true;
       })
       .sort((a, b) => {
         const aData = a.data() as MatchmakingEntry;
