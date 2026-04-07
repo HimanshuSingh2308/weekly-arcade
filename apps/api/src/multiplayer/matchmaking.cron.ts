@@ -33,6 +33,7 @@ export class MatchmakingCron {
         .limit(100)
         .get();
 
+      this.logger.log(`Matchmaking scan: ${snapshot.size} waiting entries`);
       if (snapshot.empty) return;
 
       const now = Date.now();
@@ -172,6 +173,49 @@ export class MatchmakingCron {
       if (cleaned > 0) {
         await batch.commit();
         this.logger.log(`Session cleanup: ${cleaned} sessions/entries cleaned`);
+      }
+
+      // Delete expired/abandoned sessions older than 1 hour
+      let deleted = 0;
+      const oneHourAgo = new Date(now - 60 * 60 * 1000);
+      for (const status of ['abandoned', 'finished'] as const) {
+        const oldSessions = await this.firebase
+          .collection('sessions')
+          .where('status', '==', status)
+          .where('finishedAt', '<', oneHourAgo)
+          .limit(50)
+          .get();
+
+        if (!oldSessions.empty) {
+          const delBatch = this.firebase.batch();
+          for (const doc of oldSessions.docs) {
+            delBatch.delete(doc.ref);
+          }
+          await delBatch.commit();
+          deleted += oldSessions.size;
+        }
+      }
+
+      // Delete expired matchmaking queue entries older than 10 min
+      const tenMinAgo = new Date(now - 10 * 60 * 1000);
+      const oldEntries = await this.firebase
+        .collection('matchmakingQueue')
+        .where('status', 'in', ['expired', 'matched'])
+        .where('joinedAt', '<', tenMinAgo)
+        .limit(100)
+        .get();
+
+      if (!oldEntries.empty) {
+        const delBatch = this.firebase.batch();
+        for (const doc of oldEntries.docs) {
+          delBatch.delete(doc.ref);
+        }
+        await delBatch.commit();
+        deleted += oldEntries.size;
+      }
+
+      if (deleted > 0) {
+        this.logger.log(`Cleanup: deleted ${deleted} old sessions/queue entries`);
       }
     } catch (error) {
       this.logger.error(`Session cleanup failed: ${(error as Error).message}`);
