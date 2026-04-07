@@ -100,8 +100,8 @@ export class MatchmakingService {
     for (const doc of snapshot.docs) {
       const entry = doc.data() as MatchmakingEntry;
 
-      if (entry.status === 'waiting') {
-        return { status: 'waiting' };
+      if (entry.status === 'waiting' || entry.status === 'claiming') {
+        return { status: 'waiting' }; // 'claiming' = match in progress, treat as waiting
       }
 
       if (entry.status === 'matched' && entry.matchedSessionId) {
@@ -209,63 +209,70 @@ export class MatchmakingService {
 
     const matchData = match.data() as MatchmakingEntry;
 
-    // Atomically claim the match — prevent race conditions where two players
-    // both try to match with the same queue entry simultaneously
+    // Atomically claim the opponent entry to prevent double-matching.
+    // Use 'claiming' status — only transitions to 'matched' after session creation succeeds.
     try {
       await this.firebase.runTransaction(async (txn) => {
         const freshDoc = await txn.get(match.ref);
         if (!freshDoc.exists || freshDoc.data()?.status !== 'waiting') {
           throw new Error('Match entry already claimed');
         }
-        // Mark as matched inside the transaction to prevent double-matching
-        txn.update(match.ref, { status: 'matched' });
+        txn.update(match.ref, { status: 'claiming' });
       });
     } catch (e) {
       this.logger.warn(`Match race condition: ${matchData.uid} already claimed`);
-      return null; // Someone else matched with them first
+      return null;
     }
 
-    // Resolve display name if not provided (e.g., called from cron)
-    if (!displayName) {
-      const userDoc = await this.firebase.doc(`users/${uid}`).get();
-      displayName = userDoc.data()?.displayName || 'Player';
-      avatarUrl = userDoc.data()?.avatarUrl || null;
-    }
-
-    // Create session with the searching player (uid) as host
-    const session = await this.multiplayerService.createSession(uid, displayName!, avatarUrl ?? null, {
-      gameId,
-      mode: 'quick-match',
-      maxPlayers: 2,
-      minPlayers: 2,
-    });
-
-    // Auto-join the matched opponent into the session
-    let matchDisplayName = 'Player';
-    let matchAvatarUrl: string | null = null;
+    // Create session — if this fails, release the claimed entry back to 'waiting'
+    let session;
     try {
-      const matchUserDoc = await this.firebase.doc(`users/${matchData.uid}`).get();
-      matchDisplayName = matchUserDoc.data()?.displayName || 'Player';
-      matchAvatarUrl = matchUserDoc.data()?.avatarUrl || null;
-    } catch (e) { /* fallback to defaults */ }
+      // Resolve display name if not provided (e.g., called from cron)
+      if (!displayName) {
+        const userDoc = await this.firebase.doc(`users/${uid}`).get();
+        displayName = userDoc.data()?.displayName || 'Player';
+        avatarUrl = userDoc.data()?.avatarUrl || null;
+      }
 
-    await this.multiplayerService.joinSession(session.sessionId, matchData.uid, matchDisplayName, matchAvatarUrl);
+      session = await this.multiplayerService.createSession(uid, displayName!, avatarUrl ?? null, {
+        gameId,
+        mode: 'quick-match',
+        maxPlayers: 2,
+        minPlayers: 2,
+      });
 
-    // Auto-start for quick match (both players are already in)
-    try {
-      await this.multiplayerService.startGame(session.sessionId, uid);
+      // Auto-join the matched opponent
+      let matchDisplayName = 'Player';
+      let matchAvatarUrl: string | null = null;
+      try {
+        const matchUserDoc = await this.firebase.doc(`users/${matchData.uid}`).get();
+        matchDisplayName = matchUserDoc.data()?.displayName || 'Player';
+        matchAvatarUrl = matchUserDoc.data()?.avatarUrl || null;
+      } catch { /* fallback */ }
+
+      await this.multiplayerService.joinSession(session.sessionId, matchData.uid, matchDisplayName, matchAvatarUrl);
+
+      // Auto-start for quick match
+      try {
+        await this.multiplayerService.startGame(session.sessionId, uid);
+      } catch {
+        // startGame may fail if minPlayers not met yet — that's OK
+      }
     } catch (e) {
-      // startGame may fail if minPlayers not met yet — that's OK
+      // Session creation failed — release the opponent back to 'waiting'
+      this.logger.error(`Session creation failed after claiming ${matchData.uid}: ${(e as Error).message}`);
+      await match.ref.update({ status: 'waiting' }).catch(() => {});
+      return null;
     }
 
-    // Update both queue entries with the session ID
+    // Success — atomically mark BOTH entries as 'matched' with the session ID
     const batch = this.firebase.batch();
     batch.update(this.firebase.doc(`matchmakingQueue/${entryId}`), {
       status: 'matched',
       matchedSessionId: session.sessionId,
     });
-    // Opponent was marked 'matched' in the transaction — now add the sessionId
     batch.update(match.ref, {
+      status: 'matched',
       matchedSessionId: session.sessionId,
     });
     await batch.commit();

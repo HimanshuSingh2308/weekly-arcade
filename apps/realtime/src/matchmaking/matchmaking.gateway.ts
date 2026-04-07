@@ -241,55 +241,67 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 
         if (!opponent) continue;
 
-        // Atomically claim both entries
+        // Atomically claim both entries with 'claiming' — prevents double-matching
+        // Only transitions to 'matched' after session creation succeeds
         try {
           await this.firebase.runTransaction(async (txn) => {
             const freshA = await txn.get(entry.ref);
             const freshB = await txn.get(opponent.ref);
             if (!freshA.exists || freshA.data()?.status !== 'waiting') throw new Error('A claimed');
             if (!freshB.exists || freshB.data()?.status !== 'waiting') throw new Error('B claimed');
-            txn.update(entry.ref, { status: 'matched' });
-            txn.update(opponent.ref, { status: 'matched' });
+            txn.update(entry.ref, { status: 'claiming' });
+            txn.update(opponent.ref, { status: 'claiming' });
           });
         } catch {
           continue; // Race condition — someone else matched them
         }
 
-        // Create session directly in Firestore
-        const sessionId = crypto.randomUUID();
-        const sessionNow = new Date();
-        await this.firebase.doc(`sessions/${sessionId}`).set({
-          sessionId,
-          gameId: entry.gameId,
-          hostUid: entry.uid,
-          status: 'starting',
-          mode: 'quick-match',
-          joinCode: null,
-          players: {
-            [entry.uid]: { displayName: 'Player', avatarUrl: null, joinedAt: sessionNow, status: 'connected', lastHeartbeat: sessionNow, isHost: true },
-            [opponent.uid]: { displayName: 'Player', avatarUrl: null, joinedAt: sessionNow, status: 'connected', lastHeartbeat: sessionNow, isHost: false },
-          },
-          playerCount: 2,
-          maxPlayers: 2,
-          minPlayers: 2,
-          currentTurnUid: null,
-          turnNumber: 0,
-          turnDeadline: null,
-          gameConfig: {},
-          createdAt: sessionNow,
-          startedAt: sessionNow,
-          finishedAt: null,
-          lastActivityAt: sessionNow,
-          results: null,
-          spectatorCount: 0,
-          spectatorAllowed: false,
-          flags: { ipConflict: false, suspiciousPlayers: [], reviewRequired: false },
-        });
+        // Create session — if this fails, release both entries back to 'waiting'
+        let sessionId: string;
+        try {
+          sessionId = crypto.randomUUID();
+          const sessionNow = new Date();
+          await this.firebase.doc(`sessions/${sessionId}`).set({
+            sessionId,
+            gameId: entry.gameId,
+            hostUid: entry.uid,
+            status: 'starting',
+            mode: 'quick-match',
+            joinCode: null,
+            players: {
+              [entry.uid]: { displayName: 'Player', avatarUrl: null, joinedAt: sessionNow, status: 'connected', lastHeartbeat: sessionNow, isHost: true },
+              [opponent.uid]: { displayName: 'Player', avatarUrl: null, joinedAt: sessionNow, status: 'connected', lastHeartbeat: sessionNow, isHost: false },
+            },
+            playerCount: 2,
+            maxPlayers: 2,
+            minPlayers: 2,
+            currentTurnUid: null,
+            turnNumber: 0,
+            turnDeadline: null,
+            gameConfig: {},
+            createdAt: sessionNow,
+            startedAt: sessionNow,
+            finishedAt: null,
+            lastActivityAt: sessionNow,
+            results: null,
+            spectatorCount: 0,
+            spectatorAllowed: false,
+            flags: { ipConflict: false, suspiciousPlayers: [], reviewRequired: false },
+          });
+        } catch (e) {
+          // Session creation failed — release both back to 'waiting'
+          this.logger.error(`Session creation failed: ${(e as Error).message}`);
+          const rollback = this.firebase.batch();
+          rollback.update(entry.ref, { status: 'waiting' });
+          rollback.update(opponent.ref, { status: 'waiting' });
+          await rollback.commit().catch(() => {});
+          continue;
+        }
 
-        // Update queue entries with session ID
+        // Success — mark both as 'matched' with sessionId in one atomic batch
         const updateBatch = this.firebase.batch();
-        updateBatch.update(entry.ref, { matchedSessionId: sessionId });
-        updateBatch.update(opponent.ref, { matchedSessionId: sessionId });
+        updateBatch.update(entry.ref, { status: 'matched', matchedSessionId: sessionId });
+        updateBatch.update(opponent.ref, { status: 'matched', matchedSessionId: sessionId });
         await updateBatch.commit();
 
         matchedUids.add(entry.uid);

@@ -149,9 +149,29 @@ export class MatchmakingCron {
         }
       }
 
+      // Also clean up stuck 'claiming' queue entries (older than 30s)
+      const claimingEntries = await this.firebase
+        .collection('matchmakingQueue')
+        .where('status', '==', 'claiming')
+        .limit(20)
+        .get();
+
+      for (const doc of claimingEntries.docs) {
+        const entry = doc.data();
+        const joinedAt = entry.joinedAt instanceof Date
+          ? entry.joinedAt.getTime()
+          : entry.joinedAt?._seconds
+            ? entry.joinedAt._seconds * 1000
+            : new Date(entry.joinedAt).getTime();
+        if (now - joinedAt > 30_000) {
+          batch.update(doc.ref, { status: 'waiting' }); // Release back to queue
+          cleaned++;
+        }
+      }
+
       if (cleaned > 0) {
         await batch.commit();
-        this.logger.log(`Session cleanup: ${cleaned} abandoned sessions`);
+        this.logger.log(`Session cleanup: ${cleaned} sessions/entries cleaned`);
       }
     } catch (error) {
       this.logger.error(`Session cleanup failed: ${(error as Error).message}`);
