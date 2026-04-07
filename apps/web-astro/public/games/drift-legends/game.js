@@ -612,7 +612,10 @@
       return;
     }
 
-    totalLaps = trackData.trackDef.laps || 3;
+    // MP: use server's totalLaps (set in onRaceStart). SP: use track's laps.
+    if (!isMultiplayerRace) {
+      totalLaps = trackData.trackDef.laps || 3;
+    }
 
     // Build player car
     playerCar = DL.CarBuilder.buildCar(scene, selectedCarId);

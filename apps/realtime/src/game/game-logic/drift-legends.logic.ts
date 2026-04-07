@@ -33,22 +33,23 @@ const TOTAL_LAPS_MP = 2;
 const CHECKPOINT_COUNT = 5;
 
 // Minimum lap times per track (ms) for anti-cheat
+// Set low to avoid false positives — skilled players with boost can be very fast
 const MIN_LAP_TIMES: Record<string, number> = {
-  'city-circuit': 45000,
-  'neon-alley': 50000,
-  'blaze-showdown': 50000,
-  'mesa-loop': 50000,
-  'canyon-rush': 53000,
-  'sandstorm-duel': 53000,
-  'frozen-peaks': 55000,
-  'glacier-gorge': 60000,
-  'ice-crown': 60000,
-  'jungle-run': 53000,
-  'ruin-dash': 60000,
-  'vipers-lair': 63000,
-  'cloud-circuit': 53000,
-  'grand-prix-qualify': 43000,
-  'apex-final': 43000,
+  'city-circuit': 15000,
+  'neon-alley': 18000,
+  'blaze-showdown': 18000,
+  'mesa-loop': 18000,
+  'canyon-rush': 20000,
+  'sandstorm-duel': 20000,
+  'frozen-peaks': 22000,
+  'glacier-gorge': 25000,
+  'ice-crown': 25000,
+  'jungle-run': 20000,
+  'ruin-dash': 25000,
+  'vipers-lair': 28000,
+  'cloud-circuit': 20000,
+  'grand-prix-qualify': 15000,
+  'apex-final': 15000,
 };
 
 @Injectable()
@@ -101,7 +102,7 @@ export class DriftLegendsLogic implements MultiplayerGameLogic, OnModuleInit {
       finished,
       finishedAt,
       finalRanks: null,
-      totalLaps: TOTAL_LAPS_MP,
+      totalLaps: (config.laps as number) || TOTAL_LAPS_MP,
       checkpointCount: CHECKPOINT_COUNT,
     };
 
