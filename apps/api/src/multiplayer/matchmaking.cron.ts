@@ -1,10 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { FirebaseService } from '../firebase/firebase.service';
 import { MatchmakingEntry, Session } from '@weekly-arcade/shared';
 import { MatchmakingService } from './matchmaking.service';
 import { MULTIPLAYER_DEFAULTS } from './config/multiplayer-defaults';
 
+/**
+ * Matchmaking background tasks. No longer uses @Cron decorators —
+ * Cloud Run scales to zero and kills in-process crons.
+ *
+ * - scanMatchmakingQueue: called by realtime server (always warm from WS)
+ * - cleanupSessions: triggered by Cloud Scheduler → POST /internal/cron/cleanup-sessions
+ * - antiCheatScan: triggered by Cloud Scheduler → POST /internal/cron/anti-cheat
+ */
 @Injectable()
 export class MatchmakingCron {
   private readonly logger = new Logger(MatchmakingCron.name);
@@ -15,10 +22,9 @@ export class MatchmakingCron {
   ) {}
 
   /**
-   * Widen matchmaking windows and expire stale entries.
-   * Runs every 5 seconds.
+   * Widen matchmaking windows, expire stale entries, and try to match players.
+   * Called by the realtime server's cron (stays warm from WebSocket connections).
    */
-  @Cron('*/5 * * * * *')
   async scanMatchmakingQueue(): Promise<void> {
     try {
       const snapshot = await this.firebase
@@ -116,9 +122,8 @@ export class MatchmakingCron {
 
   /**
    * Clean up abandoned sessions (no heartbeat for 5 min in waiting, 2 min in playing).
-   * Runs every minute.
+   * Triggered by Cloud Scheduler every minute via POST /internal/cron/cleanup-sessions.
    */
-  @Cron('0 * * * * *')
   async cleanupSessions(): Promise<void> {
     try {
       const now = Date.now();
@@ -155,9 +160,8 @@ export class MatchmakingCron {
 
   /**
    * Anti-cheat scan: detect win-trading, abnormal streaks, rating manipulation.
-   * Runs every 6 hours.
+   * Triggered by Cloud Scheduler every 6 hours via POST /internal/cron/anti-cheat.
    */
-  @Cron('0 0 */6 * * *')
   async antiCheatScan(): Promise<void> {
     try {
       this.logger.log('Anti-cheat scan started');

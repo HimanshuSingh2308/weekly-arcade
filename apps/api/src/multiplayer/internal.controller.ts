@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
 import { MatchmakingService } from './matchmaking.service';
+import { MatchmakingCron } from './matchmaking.cron';
 import { MatchResult, MatchPlayerResult } from '@weekly-arcade/shared';
 import { Public } from '../auth/decorators/public.decorator';
 import { MULTIPLAYER_DEFAULTS } from './config/multiplayer-defaults';
@@ -30,6 +31,7 @@ export class InternalController {
   constructor(
     private readonly firebase: FirebaseService,
     private readonly matchmakingService: MatchmakingService,
+    private readonly matchmakingCron: MatchmakingCron,
   ) {}
 
   @Post('game-results')
@@ -149,5 +151,40 @@ export class InternalController {
 
     this.logger.log(`Game results processed: ${uids.length} players, ratings updated, scores submitted`);
     return { success: true, playerResults };
+  }
+
+  // ─── Cloud Scheduler cron triggers ──────────────────────────────
+
+  @Post('cron/cleanup-sessions')
+  @Public()
+  async triggerCleanupSessions(@Headers('x-internal-key') apiKey: string) {
+    const expectedKey = process.env.INTERNAL_API_KEY;
+    if (!expectedKey || apiKey !== expectedKey) {
+      throw new UnauthorizedException('Invalid internal API key');
+    }
+    await this.matchmakingCron.cleanupSessions();
+    return { success: true };
+  }
+
+  @Post('cron/anti-cheat')
+  @Public()
+  async triggerAntiCheat(@Headers('x-internal-key') apiKey: string) {
+    const expectedKey = process.env.INTERNAL_API_KEY;
+    if (!expectedKey || apiKey !== expectedKey) {
+      throw new UnauthorizedException('Invalid internal API key');
+    }
+    await this.matchmakingCron.antiCheatScan();
+    return { success: true };
+  }
+
+  @Post('cron/matchmaking-scan')
+  @Public()
+  async triggerMatchmakingScan(@Headers('x-internal-key') apiKey: string) {
+    const expectedKey = process.env.INTERNAL_API_KEY;
+    if (!expectedKey || apiKey !== expectedKey) {
+      throw new UnauthorizedException('Invalid internal API key');
+    }
+    await this.matchmakingCron.scanMatchmakingQueue();
+    return { success: true };
   }
 }
