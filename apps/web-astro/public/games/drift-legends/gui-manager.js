@@ -2479,9 +2479,12 @@
       const joinBtn = this._createSecondaryButton('JOIN CODE', '180px', '54px', btnRow);
       joinBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpJoinCode'); });
 
-      // Status text
+      // Status text (errors, room codes, etc.)
       this.mpStatusText = this._createText('', 16, COLORS.textDim, panel);
       this.mpStatusText.top = '50px';
+      this.mpStatusText.paddingLeft = '24px';
+      this.mpStatusText.paddingRight = '24px';
+      this.mpStatusText.textWrapping = true;
 
       this._addBackButton(panel, 'MENU');
     }
