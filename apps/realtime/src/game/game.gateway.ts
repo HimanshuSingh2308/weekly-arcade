@@ -272,6 +272,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         this.startTurnTimer(sessionId, turnUid, 120);
       }
     } catch (error) {
+      this.logger.warn(`Move rejected for ${uid} in ${sessionId}: ${payload.moveType} — ${(error as Error).message}`);
       client.emit('game:move-rejected', { reason: (error as Error).message });
     }
   }
