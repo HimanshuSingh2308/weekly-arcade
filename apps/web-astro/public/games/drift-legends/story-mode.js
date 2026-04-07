@@ -288,8 +288,8 @@
     try {
       if (!window.apiClient) return null;
       const state = await window.apiClient.getGameState('drift-legends');
-      // Full progress is stored in metadata (API wraps it in standard fields)
-      if (state && state.metadata) return state.metadata;
+      // Full progress is stored in additionalData
+      if (state && state.additionalData) return state.additionalData;
       return state || null;
     } catch (_) { return null; }
   }
@@ -311,7 +311,7 @@
         bestStreak: 0,
         gamesPlayed: totalRaces,
         gamesWon: totalWins,
-        metadata: progress,
+        additionalData: progress,
       });
     } catch (_) { /* ignore cloud save errors */ }
   }
