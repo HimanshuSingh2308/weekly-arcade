@@ -189,28 +189,35 @@
 
   // Initialize multiplayer with game callbacks
   DL.Multiplayer.init({
-    onRaceStart: function(gameState) {
+    onRaceStart: function(mpState) {
       // Server says both players connected — start the MP race
-      if (state === STATE.MP_MENU || state === STATE.MENU) {
-        isMultiplayerRace = true;
-        selectedTrackId = gameState?.trackId || 'city-circuit';
-        _startLoading();
-      }
+      isMultiplayerRace = true;
+      selectedTrackId = mpState?.trackId || 'city-circuit';
+      totalLaps = mpState?.totalLaps || 2;
+      window.multiplayerUI?.hideMatchmaking();
+      _startLoading();
     },
-    onRaceEnd: function(result) {
-      // Opponent finished or disconnected
-      if (state === STATE.RACING) {
-        _finishRace();
+    onOpponentUpdate: function(pos) {
+      // Handled in render loop via DL.Multiplayer.getOpponentPosition()
+    },
+    onRaceEnd: function(results) {
+      if (!raceFinished && state === STATE.RACING) {
+        raceFinished = true;
+        var myResult = results?.[currentUser?.uid];
+        gui.showResult?.({
+          position: myResult?.rank || 2,
+          time: raceTime,
+          driftScore: driftScoreTotal,
+          message: myResult?.outcome === 'win' ? 'You Win!' : 'You Lose',
+        });
+        state = STATE.RESULT;
       }
     },
     onDisconnect: function() {
-      gui.showToast('\u26a0\ufe0f Opponent disconnected');
-      if (state === STATE.RACING) {
-        // Continue race as single player
-      }
+      gui.showToast?.('Opponent disconnected');
     },
     onReconnect: function() {
-      gui.showToast('\u2705 Opponent reconnected');
+      gui.showToast?.('Reconnected!');
     },
   });
   DL.Multiplayer.warmUp();

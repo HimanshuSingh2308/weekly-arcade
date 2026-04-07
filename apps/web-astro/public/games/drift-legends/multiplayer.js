@@ -133,10 +133,14 @@
     if (!client) return;
 
     // Game state updates (includes initial state + move results)
+    let raceStartFired = false;
+
     client.onGameState((data) => {
       gameState = data.state;
-      // Check if both players are in and game is starting
-      if (data.state?.status === 'racing' && onRaceStart) {
+
+      // First game:state with players array = game initialized → start race
+      if (!raceStartFired && data.state?.players && onRaceStart) {
+        raceStartFired = true;
         onRaceStart(data.state);
       }
 
