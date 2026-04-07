@@ -2192,6 +2192,81 @@
       panel.addControl(pauseBtn);
       this._pauseBtn = pauseBtn;
 
+      // ─── MP HUD: Opponent info (top-left, below pause) ──────────
+      var mpInfoBox = new GUI.Rectangle('mpInfoBox');
+      mpInfoBox.width = '200px';
+      mpInfoBox.height = '50px';
+      mpInfoBox.cornerRadius = 8;
+      mpInfoBox.background = 'rgba(13,13,26,0.7)';
+      mpInfoBox.thickness = 1;
+      mpInfoBox.color = 'rgba(0,212,255,0.3)';
+      mpInfoBox.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      mpInfoBox.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      mpInfoBox.left = '16px';
+      mpInfoBox.top = '62px';
+      mpInfoBox.isVisible = false;
+      panel.addControl(mpInfoBox);
+
+      this.hud.mpOpponentName = new GUI.TextBlock('mpOppName', 'Opponent');
+      this.hud.mpOpponentName.fontSize = 13;
+      this.hud.mpOpponentName.fontFamily = 'monospace';
+      this.hud.mpOpponentName.fontWeight = 'bold';
+      this.hud.mpOpponentName.color = '#00d4ff';
+      this.hud.mpOpponentName.top = '-10px';
+      this.hud.mpOpponentName.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      mpInfoBox.addControl(this.hud.mpOpponentName);
+
+      this.hud.mpOpponentLap = new GUI.TextBlock('mpOppLap', 'LAP 1');
+      this.hud.mpOpponentLap.fontSize = 11;
+      this.hud.mpOpponentLap.fontFamily = 'monospace';
+      this.hud.mpOpponentLap.color = 'rgba(200,200,220,0.7)';
+      this.hud.mpOpponentLap.top = '10px';
+      this.hud.mpOpponentLap.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      mpInfoBox.addControl(this.hud.mpOpponentLap);
+
+      this.hud.mpInfoBox = mpInfoBox;
+
+      // Forfeit button (replaces pause in MP) — top-left
+      var forfeitBtn = GUI.Button.CreateSimpleButton('forfeitBtn', 'QUIT');
+      forfeitBtn.width = '56px';
+      forfeitBtn.height = '32px';
+      forfeitBtn.color = '#ff6666';
+      forfeitBtn.background = 'rgba(13,13,26,0.7)';
+      forfeitBtn.cornerRadius = 6;
+      forfeitBtn.thickness = 1;
+      forfeitBtn.fontSize = 11;
+      forfeitBtn.fontFamily = 'monospace';
+      forfeitBtn.fontWeight = 'bold';
+      forfeitBtn.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      forfeitBtn.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      forfeitBtn.left = '16px';
+      forfeitBtn.top = '120px';
+      forfeitBtn.isVisible = false;
+      forfeitBtn.onPointerClickObservable.add(() => { this._fire('mpForfeit'); });
+      panel.addControl(forfeitBtn);
+      this.hud.mpForfeitBtn = forfeitBtn;
+
+      // Disconnect overlay (center)
+      this.hud.mpDisconnect = new GUI.Rectangle('mpDisconnect');
+      this.hud.mpDisconnect.width = '300px';
+      this.hud.mpDisconnect.height = '80px';
+      this.hud.mpDisconnect.cornerRadius = 12;
+      this.hud.mpDisconnect.background = 'rgba(20,20,30,0.92)';
+      this.hud.mpDisconnect.thickness = 2;
+      this.hud.mpDisconnect.color = 'rgba(255,70,70,0.5)';
+      this.hud.mpDisconnect.isVisible = false;
+      this.hud.mpDisconnect.zIndex = 80;
+      panel.addControl(this.hud.mpDisconnect);
+
+      var dcText = new GUI.TextBlock('dcText', 'Connection Lost\nReconnecting...');
+      dcText.fontSize = 14;
+      dcText.fontFamily = 'monospace';
+      dcText.fontWeight = 'bold';
+      dcText.color = '#ff6666';
+      dcText.textWrapping = true;
+      dcText.lineSpacing = '4px';
+      this.hud.mpDisconnect.addControl(dcText);
+
       // Race goal reminder (top-center, small)
       this.hud.goalReminder = new GUI.TextBlock('hudGoal', '');
       this.hud.goalReminder.fontSize = 12;
@@ -3142,6 +3217,166 @@
         clearInterval(this._mpWaitDotsTimer);
         this._mpWaitDotsTimer = null;
       }
+    }
+
+    // ─── MP HUD Controls ──────────────────────────────────────────
+    showMPHud(opponentName) {
+      if (this.hud.mpInfoBox) {
+        this.hud.mpInfoBox.isVisible = true;
+        this.hud.mpOpponentName.text = opponentName || 'Opponent';
+        this.hud.mpOpponentLap.text = 'LAP 1';
+      }
+      if (this.hud.mpForfeitBtn) this.hud.mpForfeitBtn.isVisible = true;
+      if (this._pauseBtn) this._pauseBtn.isVisible = false;
+    }
+
+    hideMPHud() {
+      if (this.hud.mpInfoBox) this.hud.mpInfoBox.isVisible = false;
+      if (this.hud.mpForfeitBtn) this.hud.mpForfeitBtn.isVisible = false;
+    }
+
+    updateMPOpponentLap(lap, totalLaps) {
+      if (this.hud.mpOpponentLap) {
+        this.hud.mpOpponentLap.text = 'LAP ' + lap + '/' + totalLaps;
+      }
+    }
+
+    showMPDisconnect() {
+      if (this.hud.mpDisconnect) this.hud.mpDisconnect.isVisible = true;
+    }
+
+    hideMPDisconnect() {
+      if (this.hud.mpDisconnect) this.hud.mpDisconnect.isVisible = false;
+    }
+
+    // ─── MP Waiting Room (join code display) ──────────────────────
+    showMPWaitingRoom(joinCode) {
+      if (!this._mpRoomPanel) {
+        var panel = new GUI.Rectangle('mpRoomPanel');
+        panel.width = 1;
+        panel.height = 1;
+        panel.background = 'rgba(8,8,20,0.8)';
+        panel.thickness = 0;
+        panel.zIndex = 85;
+        panel.isVisible = false;
+        this.ui.addControl(panel);
+
+        var card = new GUI.Rectangle('mpRoomCard');
+        card.width = '400px';
+        card.height = '280px';
+        card.background = 'rgba(15,15,30,0.95)';
+        card.cornerRadius = 16;
+        card.thickness = 2;
+        card.color = 'rgba(0,212,255,0.4)';
+        panel.addControl(card);
+
+        var title = new GUI.TextBlock('mpRoomTitle', 'WAITING FOR OPPONENT');
+        title.fontSize = 20;
+        title.fontFamily = 'monospace';
+        title.fontWeight = 'bold';
+        title.color = '#00d4ff';
+        title.top = '-90px';
+        card.addControl(title);
+
+        var codeLabel = new GUI.TextBlock('codeLabel', 'Share this code:');
+        codeLabel.fontSize = 14;
+        codeLabel.fontFamily = 'monospace';
+        codeLabel.color = 'rgba(200,200,220,0.7)';
+        codeLabel.top = '-40px';
+        card.addControl(codeLabel);
+
+        var codeText = new GUI.TextBlock('codeText', '------');
+        codeText.fontSize = 36;
+        codeText.fontFamily = 'monospace';
+        codeText.fontWeight = 'bold';
+        codeText.color = '#e8e0f0';
+        codeText.top = '10px';
+        card.addControl(codeText);
+        this._mpRoomCode = codeText;
+
+        var dotsText = new GUI.TextBlock('roomDots', '...');
+        dotsText.fontSize = 18;
+        dotsText.fontFamily = 'monospace';
+        dotsText.color = 'rgba(200,200,220,0.5)';
+        dotsText.top = '60px';
+        card.addControl(dotsText);
+
+        var dotCount = 0;
+        this._mpRoomDotsTimer = setInterval(function() {
+          dotCount = (dotCount + 1) % 4;
+          dotsText.text = '.'.repeat(dotCount || 1);
+        }, 500);
+
+        var cancelBtn = this._createSecondaryButton('CANCEL', '140px', '40px');
+        cancelBtn.top = '100px';
+        cancelBtn.onPointerClickObservable.add(() => { this._fire('mpCancelWaiting'); });
+        card.addControl(cancelBtn);
+
+        this._mpRoomPanel = panel;
+      }
+
+      this._mpRoomCode.text = joinCode || '------';
+      this._mpRoomPanel.isVisible = true;
+    }
+
+    hideMPWaitingRoom() {
+      if (this._mpRoomPanel) this._mpRoomPanel.isVisible = false;
+      if (this._mpRoomDotsTimer) {
+        clearInterval(this._mpRoomDotsTimer);
+        this._mpRoomDotsTimer = null;
+      }
+    }
+
+    // ─── MP Joining Progress ──────────────────────────────────────
+    showMPJoining(statusText) {
+      if (!this._mpJoinPanel) {
+        var panel = new GUI.Rectangle('mpJoinPanel');
+        panel.width = 1;
+        panel.height = 1;
+        panel.background = 'rgba(8,8,20,0.8)';
+        panel.thickness = 0;
+        panel.zIndex = 85;
+        panel.isVisible = false;
+        this.ui.addControl(panel);
+
+        var card = new GUI.Rectangle('mpJoinCard');
+        card.width = '350px';
+        card.height = '150px';
+        card.background = 'rgba(15,15,30,0.95)';
+        card.cornerRadius = 16;
+        card.thickness = 2;
+        card.color = 'rgba(0,212,255,0.4)';
+        panel.addControl(card);
+
+        var icon = new GUI.TextBlock('mpJoinIcon', '⏳');
+        icon.fontSize = 32;
+        icon.top = '-25px';
+        card.addControl(icon);
+        this._mpJoinIcon = icon;
+
+        var text = new GUI.TextBlock('mpJoinText', 'Connecting...');
+        text.fontSize = 16;
+        text.fontFamily = 'monospace';
+        text.color = '#e8e0f0';
+        text.top = '25px';
+        card.addControl(text);
+        this._mpJoinText = text;
+
+        this._mpJoinPanel = panel;
+      }
+
+      this._mpJoinText.text = statusText || 'Connecting...';
+      this._mpJoinIcon.text = '⏳';
+      this._mpJoinPanel.isVisible = true;
+    }
+
+    updateMPJoining(statusText, icon) {
+      if (this._mpJoinText) this._mpJoinText.text = statusText || '';
+      if (this._mpJoinIcon && icon) this._mpJoinIcon.text = icon;
+    }
+
+    hideMPJoining() {
+      if (this._mpJoinPanel) this._mpJoinPanel.isVisible = false;
     }
 
     showTouchControls(visible) {

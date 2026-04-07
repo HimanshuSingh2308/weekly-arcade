@@ -195,11 +195,39 @@
       selectedTrackId = mpState?.trackId || 'city-circuit';
       totalLaps = mpState?.totalLaps || 2;
       window.multiplayerUI?.hideMatchmaking();
-      if (gui._pauseBtn) gui._pauseBtn.isVisible = false; // No pause in MP
+      gui.hideMPJoining();
+      gui.hideMPWaitingRoom();
+
+      // Fetch opponent name from session
+      var oppName = 'Opponent';
+      try {
+        var gs = DL.Multiplayer._gameState;
+        if (gs?.players) {
+          for (var i = 0; i < gs.players.length; i++) {
+            if (gs.players[i] !== currentUser?.uid) {
+              oppName = gs.players[i].slice(0, 8); // Use short UID as fallback
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+      // Show MP-specific HUD (opponent info, forfeit button, no pause)
+      gui.showMPHud(oppName);
+
       _startLoading();
     },
     onOpponentUpdate: function(pos) {
       // Handled in render loop via DL.Multiplayer.getOpponentPosition()
+      // Update opponent lap in HUD from game state
+      var gs = DL.Multiplayer._gameState;
+      if (gs?.laps && currentUser?.uid) {
+        for (var uid in gs.laps) {
+          if (uid !== currentUser.uid) {
+            gui.updateMPOpponentLap((gs.laps[uid] || 0) + 1, totalLaps);
+            break;
+          }
+        }
+      }
     },
     onRaceEnd: function(results) {
       if (state !== STATE.RACING && state !== STATE.RACE_FINISH) return;
@@ -209,6 +237,8 @@
       DL.Audio.stopBGM();
       DL.Multiplayer.stopSync();
       gui.hideMPWaiting();
+      gui.hideMPHud();
+      gui.hideMPDisconnect();
 
       var myResult = results?.[currentUser?.uid];
       var won = myResult?.outcome === 'win';
@@ -246,9 +276,10 @@
       }, 1500);
     },
     onDisconnect: function() {
-      gui.showToast?.('Opponent disconnected');
+      gui.showMPDisconnect();
     },
     onReconnect: function() {
+      gui.hideMPDisconnect();
       gui.showToast?.('Reconnected!');
     },
   });
@@ -535,18 +566,31 @@
 
   gui.onAction('mpCreatePrivate', async () => {
     if (!currentUser) { try { window.authNudge?.show(); } catch (_) {} return; }
-    // Use selected track or default to city-circuit for MP
     const mpTrack = selectedTrackId || 'city-circuit';
     const session = await DL.Multiplayer.createPrivateRoom(currentUser.uid, mpTrack);
     if (session) {
-      gui.mpStatusText.text = 'Room code: ' + (session.joinCode || 'N/A');
+      gui.showMPWaitingRoom(session.joinCode || 'N/A');
     }
   });
 
+  gui.onAction('mpCancelWaiting', () => {
+    gui.hideMPWaitingRoom();
+    DL.Multiplayer.leaveSession();
+  });
+
   gui.onAction('mpJoinCode', () => {
-    // For now, check deep link
-    const code = DL.Multiplayer.checkDeepLink();
-    if (code) DL.Multiplayer.joinByCode(code, currentUser?.uid);
+    var code = prompt('Enter join code:');
+    if (!code || !code.trim()) return;
+    if (!currentUser) { try { window.authNudge?.show(); } catch (_) {} return; }
+    gui.showMPJoining('Joining room...');
+    DL.Multiplayer.joinByCode(code.trim(), currentUser.uid);
+  });
+
+  gui.onAction('mpForfeit', () => {
+    if (!isMultiplayerRace) return;
+    if (!confirm('Quit this race? You will lose.')) return;
+    _mpCleanup();
+    _returnToMenu();
   });
 
   // ─── Race Loading & Setup ─────────────────────────────────────────
@@ -805,6 +849,11 @@
   }
 
   function _mpCleanup() {
+    gui.hideMPHud();
+    gui.hideMPDisconnect();
+    gui.hideMPWaiting();
+    gui.hideMPWaitingRoom();
+    gui.hideMPJoining();
     if (isMultiplayerRace) {
       DL.Multiplayer.stopSync();
       DL.Multiplayer.leaveSession();
