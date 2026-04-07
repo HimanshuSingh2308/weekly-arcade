@@ -3282,8 +3282,8 @@
         this.ui.addControl(panel);
 
         var card = new GUI.Rectangle('mpRoomCard');
-        card.width = '400px';
-        card.height = '280px';
+        card.width = '420px';
+        card.height = '320px';
         card.background = 'rgba(15,15,30,0.95)';
         card.cornerRadius = 16;
         card.thickness = 2;
@@ -3295,14 +3295,14 @@
         title.fontFamily = 'monospace';
         title.fontWeight = 'bold';
         title.color = '#00d4ff';
-        title.top = '-90px';
+        title.top = '-115px';
         card.addControl(title);
 
         var codeLabel = new GUI.TextBlock('codeLabel', 'Share this code:');
         codeLabel.fontSize = 14;
         codeLabel.fontFamily = 'monospace';
         codeLabel.color = 'rgba(200,200,220,0.7)';
-        codeLabel.top = '-40px';
+        codeLabel.top = '-70px';
         card.addControl(codeLabel);
 
         var codeText = new GUI.TextBlock('codeText', '------');
@@ -3310,15 +3310,34 @@
         codeText.fontFamily = 'monospace';
         codeText.fontWeight = 'bold';
         codeText.color = '#e8e0f0';
-        codeText.top = '10px';
+        codeText.top = '-20px';
         card.addControl(codeText);
         this._mpRoomCode = codeText;
+
+        // Share button
+        var self = this;
+        var shareBtn = this._createButton('SHARE LINK', '180px', '42px');
+        shareBtn.top = '35px';
+        shareBtn.onPointerClickObservable.add(function() {
+          var code = self._mpRoomCode?.text || '';
+          var url = window.location.origin + '/games/drift-legends/?join=' + code;
+          if (navigator.share) {
+            navigator.share({ title: 'Drift Legends — Race me!', text: 'Join my race! Code: ' + code, url: url }).catch(function() {});
+          } else {
+            navigator.clipboard.writeText(url).then(function() {
+              self.showToast('Link copied!', 2000);
+            }).catch(function() {
+              prompt('Copy this link:', url);
+            });
+          }
+        });
+        card.addControl(shareBtn);
 
         var dotsText = new GUI.TextBlock('roomDots', '...');
         dotsText.fontSize = 18;
         dotsText.fontFamily = 'monospace';
         dotsText.color = 'rgba(200,200,220,0.5)';
-        dotsText.top = '60px';
+        dotsText.top = '80px';
         card.addControl(dotsText);
 
         var dotCount = 0;
@@ -3328,7 +3347,7 @@
         }, 500);
 
         var cancelBtn = this._createSecondaryButton('CANCEL', '140px', '40px');
-        cancelBtn.top = '100px';
+        cancelBtn.top = '120px';
         cancelBtn.onPointerClickObservable.add(() => { this._fire('mpCancelWaiting'); });
         card.addControl(cancelBtn);
 
