@@ -105,12 +105,28 @@ export class MatchmakingService {
       }
 
       if (entry.status === 'matched' && entry.matchedSessionId) {
-        // Verify the matched session is still active (not abandoned/finished)
+        // Only consider recent matches (last 5 min) — old matches are stale
+        const joinedAt = entry.joinedAt instanceof Date
+          ? entry.joinedAt.getTime()
+          : (entry.joinedAt as any)?._seconds
+            ? (entry.joinedAt as any)._seconds * 1000
+            : new Date(entry.joinedAt as any).getTime();
+        const ageMs = Date.now() - joinedAt;
+        if (ageMs > 5 * 60 * 1000) {
+          // Old match from a previous search — expire it
+          doc.ref.update({ status: 'expired' }).catch(() => {});
+          continue;
+        }
+
+        // Verify the matched session is still active and not an in-progress old game
         try {
           const sessionDoc = await this.firebase.doc(`sessions/${entry.matchedSessionId}`).get();
           if (sessionDoc.exists) {
             const session = sessionDoc.data();
-            if (session?.status === 'waiting' || session?.status === 'starting' || session?.status === 'playing') {
+            const sessionAge = Date.now() - new Date(session?.createdAt as any).getTime();
+            // Session must be active AND recently created (not an old game still playing)
+            if ((session?.status === 'waiting' || session?.status === 'starting' || session?.status === 'playing')
+                && sessionAge < 5 * 60 * 1000) {
               return { status: 'matched', sessionId: entry.matchedSessionId };
             }
           }
