@@ -195,6 +195,7 @@
       selectedTrackId = mpState?.trackId || 'city-circuit';
       totalLaps = mpState?.totalLaps || 2;
       window.multiplayerUI?.hideMatchmaking();
+      if (gui._pauseBtn) gui._pauseBtn.isVisible = false; // No pause in MP
       _startLoading();
     },
     onOpponentUpdate: function(pos) {
@@ -495,36 +496,21 @@
 
   // Pause button (HUD touch button)
   gui.onAction('pauseClick', () => {
+    if (isMultiplayerRace) return; // No pause in multiplayer
     if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
       state = STATE.PAUSED;
       DL.Audio.stopEngine();
-      if (isMultiplayerRace) DL.Multiplayer.stopSync(); // Stop sending stale positions
       scene.meshes.forEach(function(m) { m.isPickable = false; });
       gui.showPause();
     }
   });
 
-  // Pause menu callbacks
+  // Pause menu callbacks (single-player only — MP disables pause)
   function _resumeFromPause() {
     gui.hidePause();
     scene.meshes.forEach(function(m) { m.isPickable = true; });
     DL.Audio.startEngine();
     DL.Audio.resumeBGM();
-    // Resume MP position sync
-    if (isMultiplayerRace && playerCar && playerPhysics) {
-      DL.Multiplayer.startSync(function() {
-        if (!playerCar || !playerPhysics) return null;
-        return {
-          x: playerCar.position.x,
-          z: playerCar.position.z,
-          rotY: playerCar.rotation.y,
-          speed: playerPhysics.speed,
-          isDrifting: playerPhysics.isDrifting,
-          checkpointIndex: playerCheckpoint,
-          driftScore: Math.round(playerPhysics.totalDriftScore),
-        };
-      });
-    }
     state = STATE.RACING;
   }
 
@@ -838,6 +824,7 @@
     _cleanupRace();
     gui.hideTutorial();
     gui.hidePause();
+    if (gui._pauseBtn) gui._pauseBtn.isVisible = true; // Restore for next SP race
     tutorialStep = -1;
     _disposeSceneMeshes();
     // Restore HTML skyline + transparent scene
@@ -916,8 +903,8 @@
       DL.Audio.toggle();
     }
 
-    // ESC/P = pause (only during racing states)
-    if (DL.Input.consumePause()) {
+    // ESC/P = pause (only during racing states, disabled in MP)
+    if (DL.Input.consumePause() && !isMultiplayerRace) {
       if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
         state = STATE.PAUSED;
         DL.Audio.stopEngine();

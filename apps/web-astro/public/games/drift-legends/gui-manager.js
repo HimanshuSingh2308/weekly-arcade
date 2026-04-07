@@ -2190,6 +2190,7 @@
         this._fire('pauseClick');
       });
       panel.addControl(pauseBtn);
+      this._pauseBtn = pauseBtn;
 
       // Race goal reminder (top-center, small)
       this.hud.goalReminder = new GUI.TextBlock('hudGoal', '');
