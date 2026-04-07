@@ -185,52 +185,10 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 
       this.logger.log(`Matchmaking scan: ${snapshot.size} waiting entries found`);
       const now = Date.now();
-      const batch = this.firebase.batch();
-      let updates = 0;
 
-      for (const doc of snapshot.docs) {
-        const entry = doc.data();
-        const joinedAt = entry.joinedAt instanceof Date
-          ? entry.joinedAt.getTime()
-          : entry.joinedAt?._seconds
-            ? entry.joinedAt._seconds * 1000
-            : new Date(entry.joinedAt).getTime();
-        const waitSec = (now - joinedAt) / 1000;
-
-        // Expire stale entries
-        if (waitSec >= MatchmakingGateway.MATCHMAKING_EXPIRE_SEC) {
-          batch.update(doc.ref, { status: 'expired' });
-          updates++;
-          continue;
-        }
-
-        // Widen rating window
-        const widenSteps = Math.floor(waitSec / MatchmakingGateway.WIDEN_INTERVAL_SEC);
-        const newMin = Math.max(
-          MatchmakingGateway.RATING_FLOOR,
-          entry.skillRating - MatchmakingGateway.INITIAL_RATING_WINDOW - (widenSteps * MatchmakingGateway.RATING_WINDOW_STEP),
-        );
-        const newMax = Math.min(
-          entry.skillRating + MatchmakingGateway.RATING_WINDOW_MAX,
-          entry.skillRating + MatchmakingGateway.INITIAL_RATING_WINDOW + (widenSteps * MatchmakingGateway.RATING_WINDOW_STEP),
-        );
-
-        if (newMin !== entry.ratingWindowMin || newMax !== entry.ratingWindowMax) {
-          batch.update(doc.ref, { ratingWindowMin: newMin, ratingWindowMax: newMax });
-          updates++;
-        }
-      }
-
-      if (updates > 0) await batch.commit();
-
-      // Re-query for fresh data after widening
-      const freshDocs = updates > 0
-        ? (await this.firebase.collection('matchmakingQueue').where('status', '==', 'waiting').limit(100).get()).docs
-        : snapshot.docs;
-
-      // Try to match pairs
+      // ── Step 1: Try to match with CURRENT windows first ──
       const matchedUids = new Set<string>();
-      const entries = freshDocs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
+      const entries = snapshot.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
 
       this.logger.log(`Matching: ${entries.length} entries — ${entries.map(e => `${e.uid?.slice(0,8)}(${e.gameId},r=${e.skillRating},w=[${e.ratingWindowMin},${e.ratingWindowMax}],s=${e.status})`).join(', ')}`);
 
@@ -332,6 +290,49 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
         this.notifyMatch(entry.uid, opponent.uid, sessionId);
 
         this.logger.log(`Matched ${entry.uid} vs ${opponent.uid} → session ${sessionId}`);
+      }
+
+      // ── Step 2: Expire stale + widen windows for UNMATCHED entries ──
+      const batch = this.firebase.batch();
+      let updates = 0;
+
+      for (const entry of entries) {
+        if (matchedUids.has(entry.uid)) continue; // Already matched — skip
+
+        const joinedAt = entry.joinedAt instanceof Date
+          ? entry.joinedAt.getTime()
+          : entry.joinedAt?._seconds
+            ? entry.joinedAt._seconds * 1000
+            : new Date(entry.joinedAt).getTime();
+        const waitSec = (now - joinedAt) / 1000;
+
+        // Expire stale entries
+        if (waitSec >= MatchmakingGateway.MATCHMAKING_EXPIRE_SEC) {
+          batch.update(entry.ref, { status: 'expired' });
+          updates++;
+          continue;
+        }
+
+        // Widen rating window for next scan cycle
+        const widenSteps = Math.floor(waitSec / MatchmakingGateway.WIDEN_INTERVAL_SEC);
+        const newMin = Math.max(
+          MatchmakingGateway.RATING_FLOOR,
+          entry.skillRating - MatchmakingGateway.INITIAL_RATING_WINDOW - (widenSteps * MatchmakingGateway.RATING_WINDOW_STEP),
+        );
+        const newMax = Math.min(
+          entry.skillRating + MatchmakingGateway.RATING_WINDOW_MAX,
+          entry.skillRating + MatchmakingGateway.INITIAL_RATING_WINDOW + (widenSteps * MatchmakingGateway.RATING_WINDOW_STEP),
+        );
+
+        if (newMin !== entry.ratingWindowMin || newMax !== entry.ratingWindowMax) {
+          batch.update(entry.ref, { ratingWindowMin: newMin, ratingWindowMax: newMax });
+          updates++;
+        }
+      }
+
+      if (updates > 0) {
+        await batch.commit();
+        this.logger.debug(`Post-match: ${updates} entries expired/widened`);
       }
     } catch (error) {
       this.logger.error(`Matchmaking scan failed: ${(error as Error).message}`);

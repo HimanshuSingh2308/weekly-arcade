@@ -37,60 +37,11 @@ export class MatchmakingCron {
       if (snapshot.empty) return;
 
       const now = Date.now();
-      const batch = this.firebase.batch();
-      let updates = 0;
 
-      for (const doc of snapshot.docs) {
-        const entry = doc.data() as MatchmakingEntry;
-        const waitTime = now - new Date(entry.joinedAt).getTime();
-        const waitSec = waitTime / 1000;
-
-        // Expire after timeout
-        if (waitSec >= MULTIPLAYER_DEFAULTS.MATCHMAKING_EXPIRE_SEC) {
-          batch.update(doc.ref, { status: 'expired' });
-          updates++;
-          continue;
-        }
-
-        // Widen rating window
-        const widenSteps = Math.floor(waitSec / MULTIPLAYER_DEFAULTS.MATCHMAKING_WIDEN_INTERVAL_SEC);
-        const newWindowMin = entry.skillRating - MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW -
-          (widenSteps * MULTIPLAYER_DEFAULTS.RATING_WINDOW_STEP);
-        const newWindowMax = entry.skillRating + MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW +
-          (widenSteps * MULTIPLAYER_DEFAULTS.RATING_WINDOW_STEP);
-
-        // Clamp window
-        const clampedMin = Math.max(MULTIPLAYER_DEFAULTS.RATING_FLOOR, newWindowMin);
-        const clampedMax = Math.min(entry.skillRating + MULTIPLAYER_DEFAULTS.RATING_WINDOW_MAX, newWindowMax);
-
-        if (clampedMin !== entry.ratingWindowMin || clampedMax !== entry.ratingWindowMax) {
-          batch.update(doc.ref, {
-            ratingWindowMin: clampedMin,
-            ratingWindowMax: clampedMax,
-          });
-          updates++;
-        }
-      }
-
-      if (updates > 0) {
-        await batch.commit();
-        this.logger.debug(`Matchmaking scan: ${updates} entries updated`);
-      }
-
-      // Re-query after widening so tryMatchPlayer sees updated windows
-      const freshSnapshot = updates > 0
-        ? await this.firebase
-            .collection('matchmakingQueue')
-            .where('status', '==', 'waiting')
-            .limit(100)
-            .get()
-        : snapshot;
-
-      const waitingEntries = freshSnapshot.docs
-        .filter(doc => (doc.data() as MatchmakingEntry).status === 'waiting')
+      // ── Step 1: Try to match with CURRENT windows first ──
+      const waitingEntries = snapshot.docs
         .map(doc => ({ id: doc.id, ...(doc.data() as MatchmakingEntry) }));
 
-      // Track UIDs already matched this cycle to avoid double-processing
       const matchedUids = new Set<string>();
 
       for (const entry of waitingEntries) {
@@ -103,9 +54,7 @@ export class MatchmakingCron {
           );
           if (result) {
             this.logger.log(`Cron matched ${entry.uid} → session ${result}`);
-            // Mark both players so we don't try to re-match them this cycle
             matchedUids.add(entry.uid);
-            // The opponent UID is in the session — skip them if encountered later
             const sessionDoc = await this.firebase.doc(`sessions/${result}`).get();
             if (sessionDoc.exists) {
               const players = sessionDoc.data()?.players || {};
@@ -113,8 +62,43 @@ export class MatchmakingCron {
             }
           }
         } catch (e) {
-          // tryMatchPlayer may fail if entry was already matched — ignore
+          this.logger.warn(`tryMatchPlayer failed for ${entry.uid}: ${(e as Error).message}`);
         }
+      }
+
+      // ── Step 2: Expire stale + widen windows for UNMATCHED entries ──
+      const batch = this.firebase.batch();
+      let updates = 0;
+
+      for (const doc of snapshot.docs) {
+        const entry = doc.data() as MatchmakingEntry;
+        if (matchedUids.has(entry.uid)) continue; // Already matched
+
+        const waitTime = now - new Date(entry.joinedAt).getTime();
+        const waitSec = waitTime / 1000;
+
+        if (waitSec >= MULTIPLAYER_DEFAULTS.MATCHMAKING_EXPIRE_SEC) {
+          batch.update(doc.ref, { status: 'expired' });
+          updates++;
+          continue;
+        }
+
+        // Widen for next cycle
+        const widenSteps = Math.floor(waitSec / MULTIPLAYER_DEFAULTS.MATCHMAKING_WIDEN_INTERVAL_SEC);
+        const clampedMin = Math.max(MULTIPLAYER_DEFAULTS.RATING_FLOOR,
+          entry.skillRating - MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW - (widenSteps * MULTIPLAYER_DEFAULTS.RATING_WINDOW_STEP));
+        const clampedMax = Math.min(entry.skillRating + MULTIPLAYER_DEFAULTS.RATING_WINDOW_MAX,
+          entry.skillRating + MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW + (widenSteps * MULTIPLAYER_DEFAULTS.RATING_WINDOW_STEP));
+
+        if (clampedMin !== entry.ratingWindowMin || clampedMax !== entry.ratingWindowMax) {
+          batch.update(doc.ref, { ratingWindowMin: clampedMin, ratingWindowMax: clampedMax });
+          updates++;
+        }
+      }
+
+      if (updates > 0) {
+        await batch.commit();
+        this.logger.debug(`Post-match: ${updates} entries expired/widened`);
       }
     } catch (error) {
       this.logger.error(`Matchmaking scan failed: ${(error as Error).message}`);
