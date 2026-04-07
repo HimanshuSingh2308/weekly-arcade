@@ -324,7 +324,11 @@
     if (status === 'locked') return;
     if (status === 'available') {
       const bought = DL.StoryMode.unlockCar(progress, data.carId);
-      if (!bought) return;
+      if (!bought) {
+        var cost = data.carId === 'drift-racer' ? 200 : 300;
+        gui.showToast('\ud83d\udcb0 Not enough coins! Need ' + cost + ', have ' + (progress.coins || 0));
+        return;
+      }
       DL.Audio.play('unlock');
       _saveProgress();
       gui.updateCarSelectCards(progress);

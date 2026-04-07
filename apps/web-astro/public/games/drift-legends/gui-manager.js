@@ -1218,6 +1218,22 @@
       // Default selected car (3D preview built on first show, not at init)
       this._selectedCarId = 'street-kart';
 
+      // Coin balance — top left of garage
+      this._garageCoinText = new GUI.TextBlock('garageCoins', '');
+      this._garageCoinText.fontSize = 18;
+      this._garageCoinText.fontFamily = 'monospace';
+      this._garageCoinText.fontWeight = 'bold';
+      this._garageCoinText.color = COLORS.gold;
+      this._garageCoinText.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._garageCoinText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this._garageCoinText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._garageCoinText.left = '20px';
+      this._garageCoinText.top = '45px';
+      this._garageCoinText.resizeToFit = true;
+      this._garageCoinText.height = '24px';
+      this._garageCoinText.isHitTestVisible = false;
+      panel.addControl(this._garageCoinText);
+
       // Stats bar — HORIZONTAL, above the car cards
       var statsBar = new GUI.StackPanel('garageStatsBar');
       statsBar.isVertical = false;
@@ -1753,6 +1769,10 @@
 
     updateCarSelectCards(progress) {
       const SM = window.DriftLegends.StoryMode;
+      // Update coin balance
+      if (this._garageCoinText) {
+        this._garageCoinText.text = '\ud83d\udcb0 ' + (progress.coins || 0) + ' coins';
+      }
       this.carSelectCards.forEach(cc => {
         const status = SM.isCarUnlockable(progress, cc.carId);
         if (status === 'owned') {
