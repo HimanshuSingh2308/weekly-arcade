@@ -212,35 +212,22 @@ export class DriftLegendsLogic implements MultiplayerGameLogic, OnModuleInit {
     const lapNumber = moveData.lapNumber as number;
     const checkpointSequence = moveData.checkpointSequence as number[];
 
-    // Validate checkpoint sequence (all checkpoints must be present)
-    if (
-      !checkpointSequence ||
-      checkpointSequence.length < s.checkpointCount
-    ) {
-      throw new Error('Invalid checkpoint sequence: missed checkpoints');
+    // Warn on checkpoint issues but don't reject (client may have timing quirks)
+    if (!checkpointSequence || checkpointSequence.length < s.checkpointCount) {
+      this.logger.warn(`Lap complete for ${uid}: only ${checkpointSequence?.length || 0}/${s.checkpointCount} checkpoints`);
     }
 
-    // Validate checkpoint values are non-decreasing and in range
-    for (let i = 0; i < checkpointSequence.length; i++) {
-      if (checkpointSequence[i] < 0 || checkpointSequence[i] >= s.checkpointCount) {
-        throw new Error('Invalid checkpoint value out of range');
-      }
-      if (i > 0 && checkpointSequence[i] < checkpointSequence[i - 1]) {
-        throw new Error('Invalid checkpoint sequence: out of order');
-      }
+    // Accept any lap number >= current — client may send out of order if previous was rejected
+    const expectedLap = (s.laps[uid] || 0) + 1;
+    if (lapNumber < expectedLap) {
+      this.logger.warn(`Duplicate lap ${lapNumber} for ${uid}, already at ${s.laps[uid]}`);
+      return s as unknown as Record<string, unknown>; // Ignore duplicate, don't throw
     }
 
-    // Validate lap number matches server-tracked lap count
-    if (lapNumber !== (s.laps[uid] || 0) + 1) {
-      throw new Error(`Invalid lap number: expected ${(s.laps[uid] || 0) + 1}, got ${lapNumber}`);
-    }
-
-    // Validate minimum lap time
+    // Validate minimum lap time (hard reject — anti-cheat)
     const minLapTime = MIN_LAP_TIMES[s.trackId] || 40000;
     if (lapTimeMs < minLapTime * 0.95) {
-      throw new Error(
-        `Lap time ${lapTimeMs}ms is below minimum ${minLapTime * 0.95}ms`,
-      );
+      throw new Error(`Lap time ${lapTimeMs}ms below minimum ${minLapTime * 0.95}ms`);
     }
 
     s.laps[uid] = (s.laps[uid] || 0) + 1;
@@ -262,13 +249,12 @@ export class DriftLegendsLogic implements MultiplayerGameLogic, OnModuleInit {
   ): Record<string, unknown> {
     const totalTimeMs = moveData.totalTimeMs as number;
 
-    // Validate total time against server clock — reject if > 5s delta
+    // Validate total time against server clock — warn but accept (client tracks
+    // raceTime from countdown end, server startedAt includes loading + countdown)
     const serverElapsed = Date.now() - s.startedAt;
-    if (Math.abs(totalTimeMs - serverElapsed) > 5000) {
-      this.logger.warn(
-        `Rejected finish time for ${uid}: client=${totalTimeMs}ms server=${serverElapsed}ms`,
-      );
-      throw new Error('Race finish time does not match server clock');
+    if (Math.abs(totalTimeMs - serverElapsed) > 60000) {
+      this.logger.warn(`Suspicious finish time for ${uid}: client=${totalTimeMs}ms server=${serverElapsed}ms (>60s delta)`);
+      throw new Error('Race finish time too far from server clock');
     }
 
     // Validate laps — allow if within 1 lap (race-finish may arrive before final lap-complete)
