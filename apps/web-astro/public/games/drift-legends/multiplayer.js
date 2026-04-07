@@ -67,8 +67,10 @@
         window.multiplayerUI?.hideMatchmaking();
         currentSessionId = sessionId;
         isHost = false;
-        await window.multiplayerClient?.connect(sessionId);
+        // Register listeners BEFORE connect (chess-3d pattern — prevents race)
         _setupSocketListeners();
+        await window.multiplayerClient?.connect(sessionId);
+        window.multiplayerClient?.signalReady();
       });
 
       const result = await window.multiplayerClient?.findMatch(GAME_ID);
@@ -76,8 +78,9 @@
         window.multiplayerUI?.hideMatchmaking();
         currentSessionId = result.matchedSessionId;
         isHost = true;
-        await window.multiplayerClient?.connect(result.matchedSessionId);
         _setupSocketListeners();
+        await window.multiplayerClient?.connect(result.matchedSessionId);
+        window.multiplayerClient?.signalReady();
       } else {
         // No instant match — poll as fallback
         _pollForMatch();
@@ -93,18 +96,19 @@
     }
   }
 
-  async function createPrivateRoom(uid) {
+  async function createPrivateRoom(uid, trackId) {
     myUid = uid;
     try {
       const session = await window.multiplayerClient?.createSession(GAME_ID, {
         mode: 'private',
         maxPlayers: 2,
-        gameConfig: { laps: 2 },
+        gameConfig: { laps: 2, trackId: trackId || 'city-circuit' },
       });
       currentSessionId = session.sessionId;
       isHost = true;
-      await window.multiplayerClient?.connect(session.sessionId);
       _setupSocketListeners();
+      await window.multiplayerClient?.connect(session.sessionId);
+      window.multiplayerClient?.signalReady();
       return session;
     } catch (err) {
       console.error('Create room error:', err);
@@ -119,8 +123,9 @@
       if (result?.sessionId) {
         currentSessionId = result.sessionId;
         isHost = false;
-        await window.multiplayerClient?.connect(result.sessionId);
         _setupSocketListeners();
+        await window.multiplayerClient?.connect(result.sessionId);
+        window.multiplayerClient?.signalReady();
       }
     } catch (err) {
       console.error('Join by code error:', err);
@@ -150,11 +155,25 @@
       }
     });
 
-    // Opponent joined
-    client.onPlayerJoined((player) => {
+    // Opponent joined — if we're host, start the game
+    client.onPlayerJoined(async (player) => {
       if (player.uid !== myUid) {
         opponentUid = player.uid;
         console.log('[DL-MP] Opponent joined:', player.displayName || player.uid);
+      }
+
+      if (isHost) {
+        try {
+          // Check if game already started (quick-match auto-starts)
+          const session = await window.multiplayerClient?.getSession(currentSessionId);
+          if (session?.status === 'waiting') {
+            await window.multiplayerClient?.startGame(currentSessionId);
+          }
+          window.multiplayerClient?.signalReady();
+        } catch (e) {
+          // Already started (quick-match) — just signal ready
+          window.multiplayerClient?.signalReady();
+        }
       }
     });
 
@@ -360,8 +379,9 @@
           window.multiplayerUI?.hideMatchmaking();
           currentSessionId = status.sessionId;
           isHost = false;
-          await window.multiplayerClient?.connect(status.sessionId);
           _setupSocketListeners();
+          await window.multiplayerClient?.connect(status.sessionId);
+          window.multiplayerClient?.signalReady();
         }
       } catch (_) { /* retry */ }
     }, 3000);

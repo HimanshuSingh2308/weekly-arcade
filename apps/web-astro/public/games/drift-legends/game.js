@@ -502,7 +502,9 @@
 
   gui.onAction('mpCreatePrivate', async () => {
     if (!currentUser) { try { window.authNudge?.show(); } catch (_) {} return; }
-    const session = await DL.Multiplayer.createPrivateRoom(currentUser.uid);
+    // Use selected track or default to city-circuit for MP
+    const mpTrack = selectedTrackId || 'city-circuit';
+    const session = await DL.Multiplayer.createPrivateRoom(currentUser.uid, mpTrack);
     if (session) {
       gui.mpStatusText.text = 'Room code: ' + (session.joinCode || 'N/A');
     }
@@ -766,10 +768,27 @@
     DL.Audio.stopBGM();
   }
 
+  function _mpCleanup() {
+    if (isMultiplayerRace) {
+      DL.Multiplayer.stopSync();
+      DL.Multiplayer.leaveSession();
+      isMultiplayerRace = false;
+      opponentCar = null;
+    }
+  }
+
+  // Save session for rejoin on page close
+  window.addEventListener('beforeunload', function() {
+    if (isMultiplayerRace && DL.Multiplayer.isInSession()) {
+      try { window.multiplayerClient?.disconnect(); } catch(_) {}
+    }
+  });
+
   function _returnToMenu() {
     // Show header again
     document.body.classList.remove('dl-playing');
     try { window.gameHeader?.show(); } catch(_) {}
+    _mpCleanup();
     _cleanupRace();
     gui.hideTutorial();
     gui.hidePause();
@@ -1389,8 +1408,9 @@
       state = STATE.RESULT;
     }, 1500);
 
-    // Multiplayer: send finish
+    // Multiplayer: send finish + stop position sync
     if (isMultiplayerRace) {
+      DL.Multiplayer.stopSync();
       DL.Multiplayer.sendRaceFinish(totalTimeMs, driftScoreTotal);
     }
   }
