@@ -167,8 +167,9 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
    */
   @Interval(5000)
   async scanMatchmaking() {
-    if (this.waitingSockets.size === 0) return;
-    this.logger.debug(`Matchmaking scan: ${this.waitingSockets.size} players searching`);
+    // Always scan Firestore — don't gate on waitingSockets.
+    // WS connections may not exist (Cloud Run restart, client didn't connect to /matchmaking).
+    // Firestore entries are the source of truth.
 
     try {
       const snapshot = await this.firebase
