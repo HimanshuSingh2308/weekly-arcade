@@ -289,8 +289,8 @@
    */
   function mergeServerInventory(progress, serverInv) {
     if (!serverInv) return progress;
-    // Use server coin balance as authoritative when available
-    progress.coins = serverInv.coins;
+    // Use the higher of local vs server coins (server may lag behind local earnings)
+    progress.coins = Math.max(progress.coins || 0, serverInv.coins || 0);
     // Merge owned cars
     serverInv.ownedCarIds.forEach(function(carId) {
       if (progress.unlockedCars.indexOf(carId) === -1) {
