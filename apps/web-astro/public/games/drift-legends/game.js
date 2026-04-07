@@ -609,31 +609,8 @@
     wasBoosting = false;
     playerPhysics.totalDriftScore = 0;
 
-    // Final cleanup — dispose any leftover garage/menu objects that registerBeforeRender might have rebuilt
-    scene.meshes.filter(function(m) {
-      if (!m || m.isDisposed()) return false;
-      // Keep only: player car, AI cars, track meshes, particles, GUI
-      if (m === playerCar) return false;
-      if (m === opponentCar) return false;
-      if (aiRacers.some(function(ai) { return ai.mesh === m; })) return false;
-      if (trackData && trackData.meshes && trackData.meshes.indexOf(m) >= 0) return false;
-      if (m === driftSmoke || m === boostFlame || m === sparksPS || m === exhaustSmoke) return false;
-      var n = m.name || '';
-      if (n.indexOf('ADT') !== -1 || n.indexOf('GUI') !== -1 || n.indexOf('gui') !== -1) return false;
-      if (n.indexOf('cp') === 0 || n.indexOf('cheq') === 0 || n.indexOf('nitro') === 0) return false;
-      if (n.indexOf('arrow') !== -1 || n.indexOf('curb') !== -1 || n.indexOf('ground') !== -1) return false;
-      if (n.indexOf('tireMark') !== -1) return false;
-      // Check if it's a child of playerCar, opponentCar, or AI cars
-      var parent = m.parent;
-      while (parent) {
-        if (parent === playerCar || parent === opponentCar) return false;
-        for (var aidx = 0; aidx < aiRacers.length; aidx++) {
-          if (parent === aiRacers[aidx].mesh) return false;
-        }
-        parent = parent.parent;
-      }
-      return true; // dispose this stray mesh
-    }).forEach(function(m) { try { m.dispose(false, false); } catch(_) {} });
+    // Dispose only known stray objects (garage car/cam) — don't sweep all meshes
+    // (environment props like buildings, lamps etc. are NOT in trackData.meshes)
     // Kill any non-chase cameras
     scene.cameras.slice().forEach(function(cam) {
       if (cam !== chaseCamera.camera) try { cam.dispose(); } catch(_) {}
