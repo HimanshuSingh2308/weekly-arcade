@@ -3057,6 +3057,93 @@
       setTimeout(function() { if (self._toastBg) self._toastBg.isVisible = false; }, duration || 4000);
     }
 
+    // ─── Multiplayer Waiting Overlay ────────────────────────────────
+    showMPWaiting(title, subtitle, message) {
+      if (!this._mpWaitPanel) {
+        var panel = new GUI.Rectangle('mpWaitPanel');
+        panel.width = 1;
+        panel.height = 1;
+        panel.background = 'rgba(8,8,20,0.75)';
+        panel.thickness = 0;
+        panel.zIndex = 90;
+        panel.isVisible = false;
+        this.ui.addControl(panel);
+
+        var card = new GUI.Rectangle('mpWaitCard');
+        card.width = '420px';
+        card.height = '220px';
+        card.background = 'rgba(15,15,30,0.95)';
+        card.cornerRadius = 16;
+        card.thickness = 2;
+        card.color = 'rgba(0,212,255,0.4)';
+        card.shadowColor = 'rgba(0,212,255,0.2)';
+        card.shadowBlur = 20;
+        panel.addControl(card);
+
+        var titleText = new GUI.TextBlock('mpWaitTitle', '');
+        titleText.fontSize = 28;
+        titleText.fontFamily = 'monospace';
+        titleText.fontWeight = 'bold';
+        titleText.color = '#00d4ff';
+        titleText.top = '-60px';
+        titleText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        card.addControl(titleText);
+
+        var subText = new GUI.TextBlock('mpWaitSub', '');
+        subText.fontSize = 18;
+        subText.fontFamily = 'monospace';
+        subText.color = '#e8e0f0';
+        subText.top = '-15px';
+        subText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        card.addControl(subText);
+
+        var msgText = new GUI.TextBlock('mpWaitMsg', '');
+        msgText.fontSize = 14;
+        msgText.fontFamily = 'monospace';
+        msgText.color = 'rgba(200,200,220,0.7)';
+        msgText.top = '30px';
+        msgText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        card.addControl(msgText);
+
+        // Animated dots
+        var dotsText = new GUI.TextBlock('mpWaitDots', '...');
+        dotsText.fontSize = 24;
+        dotsText.fontFamily = 'monospace';
+        dotsText.color = '#00d4ff';
+        dotsText.top = '65px';
+        dotsText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        card.addControl(dotsText);
+
+        this._mpWaitPanel = panel;
+        this._mpWaitTitle = titleText;
+        this._mpWaitSub = subText;
+        this._mpWaitMsg = msgText;
+        this._mpWaitDots = dotsText;
+
+        // Animate dots
+        var dotCount = 0;
+        this._mpWaitDotsTimer = setInterval(function() {
+          dotCount = (dotCount + 1) % 4;
+          dotsText.text = '.'.repeat(dotCount || 1);
+        }, 500);
+      }
+
+      this._mpWaitTitle.text = title || '';
+      this._mpWaitSub.text = subtitle || '';
+      this._mpWaitMsg.text = message || '';
+      this._mpWaitPanel.isVisible = true;
+    }
+
+    hideMPWaiting() {
+      if (this._mpWaitPanel) {
+        this._mpWaitPanel.isVisible = false;
+      }
+      if (this._mpWaitDotsTimer) {
+        clearInterval(this._mpWaitDotsTimer);
+        this._mpWaitDotsTimer = null;
+      }
+    }
+
     showTouchControls(visible) {
       var show = !!visible && window.DriftLegends.Input.isMobile();
       if (this.touchControls) this.touchControls.isVisible = show;

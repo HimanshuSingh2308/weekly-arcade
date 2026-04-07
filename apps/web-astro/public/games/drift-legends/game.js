@@ -208,6 +208,7 @@
       DL.Audio.stopEngine();
       DL.Audio.stopBGM();
       DL.Multiplayer.stopSync();
+      gui.hideMPWaiting();
 
       var myResult = results?.[currentUser?.uid];
       var won = myResult?.outcome === 'win';
@@ -827,6 +828,7 @@
     _cleanupRace();
     gui.hideTutorial();
     gui.hidePause();
+    gui.hideMPWaiting();
     if (gui._pauseBtn) gui._pauseBtn.isVisible = true; // Restore for next SP race
     tutorialStep = -1;
     _disposeSceneMeshes();
@@ -1340,6 +1342,14 @@
     if (el) { el.textContent = ''; requestAnimationFrame(function() { el.textContent = msg; }); }
   }
 
+  function _formatTime(ms) {
+    var totalSec = Math.floor(ms / 1000);
+    var min = Math.floor(totalSec / 60);
+    var sec = totalSec % 60;
+    var frac = Math.floor((ms % 1000) / 10);
+    return (min > 0 ? min + ':' : '') + (sec < 10 && min > 0 ? '0' : '') + sec + '.' + (frac < 10 ? '0' : '') + frac;
+  }
+
   function _completeLap() {
     const lapTimeMs = (raceTime - lapStartTime) * 1000;
     _announce('Lap ' + (playerLap + 1) + ' of ' + totalLaps);
@@ -1371,12 +1381,27 @@
     gui.hideTutorial();
     tutorialStep = -1;
 
-    // Multiplayer: send finish to server and wait for authoritative result
+    // Multiplayer: send finish to server, show waiting view, wait for result
     if (isMultiplayerRace) {
       const totalTimeMs = lapTimes.reduce((a, b) => a + b, 0);
       const driftScoreTotal = playerPhysics.totalDriftScore;
       DL.Multiplayer.stopSync();
       DL.Multiplayer.sendRaceFinish(totalTimeMs, driftScoreTotal);
+
+      // Aerial camera looking down at the city
+      if (playerCar && trackData) {
+        var centerPos = trackData.startPosition || playerCar.position;
+        chaseCamera.camera.position = new V3(centerPos.x, 40, centerPos.z - 20);
+        chaseCamera.camera.setTarget(new V3(centerPos.x, 0, centerPos.z));
+      }
+
+      // Show waiting overlay
+      gui.showMPWaiting(
+        'Race Complete!',
+        'Your time: ' + _formatTime(totalTimeMs),
+        'Waiting for opponent to finish...'
+      );
+      DL.Audio.play('lap');
       _announce('Waiting for opponent to finish...');
       // onRaceEnd callback (from Multiplayer.init) will show the actual result
       return;
