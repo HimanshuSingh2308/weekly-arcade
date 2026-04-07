@@ -3316,19 +3316,31 @@
 
         // Share button
         var self = this;
-        var shareBtn = this._createButton('SHARE LINK', '180px', '42px');
+        var shareBtn = this._createButton('COPY LINK', '180px', '42px');
         shareBtn.top = '35px';
         shareBtn.onPointerClickObservable.add(function() {
           var code = self._mpRoomCode?.text || '';
           var url = window.location.origin + '/games/drift-legends/?join=' + code;
-          if (navigator.share) {
-            navigator.share({ title: 'Drift Legends — Race me!', text: 'Join my race! Code: ' + code, url: url }).catch(function() {});
+          // Try clipboard, then share, then prompt fallback
+          var copied = false;
+          try {
+            // Create a temporary input to copy (works without user gesture issues)
+            var input = document.createElement('input');
+            input.value = url;
+            input.style.position = 'fixed';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            input.select();
+            copied = document.execCommand('copy');
+            document.body.removeChild(input);
+          } catch (_) {}
+
+          if (copied) {
+            self.showToast('Link copied!', 2500);
+          } else if (navigator.share) {
+            navigator.share({ title: 'Drift Legends', text: 'Join my race! Code: ' + code, url: url }).catch(function() {});
           } else {
-            navigator.clipboard.writeText(url).then(function() {
-              self.showToast('Link copied!', 2000);
-            }).catch(function() {
-              prompt('Copy this link:', url);
-            });
+            prompt('Copy this link:', url);
           }
         });
         card.addControl(shareBtn);
