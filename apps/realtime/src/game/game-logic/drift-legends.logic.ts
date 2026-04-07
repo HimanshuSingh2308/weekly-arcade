@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { MultiplayerGameLogic, GameResult } from '@weekly-arcade/shared';
+import { GameLogicRegistry } from '../game-logic.registry';
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface PlayerPosition {
@@ -50,9 +51,16 @@ const MIN_LAP_TIMES: Record<string, number> = {
 };
 
 @Injectable()
-export class DriftLegendsLogic implements MultiplayerGameLogic {
+export class DriftLegendsLogic implements MultiplayerGameLogic, OnModuleInit {
   private readonly logger = new Logger(DriftLegendsLogic.name);
   readonly gameId = 'drift-legends';
+
+  constructor(private readonly registry: GameLogicRegistry) {}
+
+  onModuleInit() {
+    this.registry.register(this);
+    this.logger.log('Drift Legends game logic registered');
+  }
 
   createInitialState(
     players: string[],
