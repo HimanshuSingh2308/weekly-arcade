@@ -127,9 +127,9 @@ export class GameStateManager {
     // Real-time games skip timing check — position updates are high-frequency
     // and rate-limited client-side (67ms). Server-side timing breaks due to
     // network batching where multiple messages arrive in the same ms.
+    const now = Date.now();
     const isRealtime = session.logic.getNextTurn(session.state) === null;
     if (!isRealtime) {
-      const now = Date.now();
       const lastMove = session.lastMoveTime.get(uid);
       if (lastMove && (now - lastMove) < MIN_MOVE_INTERVAL_TURN_MS) {
         throw new Error(`Move too fast: minimum ${MIN_MOVE_INTERVAL_TURN_MS}ms between moves`);

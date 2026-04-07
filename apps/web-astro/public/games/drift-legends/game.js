@@ -1131,13 +1131,21 @@
     });
 
     // Multiplayer opponent rendering
-    if (isMultiplayerRace) {
+    if (isMultiplayerRace && opponentCar) {
       const oppPos = DL.Multiplayer.getOpponentPosition();
-      if (oppPos && opponentCar) {
+      if (oppPos) {
         opponentCar.position.x = oppPos.x;
         opponentCar.position.z = oppPos.z;
         opponentCar.position.y = 0;
         opponentCar.rotation.y = oppPos.rotY;
+      }
+      // Debug: log opponent position every 2s
+      if (!window._dlOppDebugTimer) window._dlOppDebugTimer = 0;
+      window._dlOppDebugTimer += dt;
+      if (window._dlOppDebugTimer > 2) {
+        window._dlOppDebugTimer = 0;
+        console.log('[DL-MP] Opponent pos:', oppPos ? `x=${oppPos.x.toFixed(1)} z=${oppPos.z.toFixed(1)}` : 'NULL',
+          'opponentCar:', opponentCar?.position?.x?.toFixed(1), opponentCar?.position?.z?.toFixed(1));
       }
     }
 
