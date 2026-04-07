@@ -104,7 +104,7 @@ jobs:
             --timeout=60s \
             --min-instances=0 \
             --max-instances=10 \
-            --set-env-vars="NODE_ENV=production,FIREBASE_PROJECT_ID=loyal-curve-425715-h6,FCM_VAPID_KEY=${{ secrets.FCM_VAPID_KEY }},NOTIFICATIONS_API_KEY=${{ secrets.NOTIFICATIONS_API_KEY }},ADMIN_UIDS=${{ secrets.ADMIN_UIDS }}"
+            --set-env-vars="NODE_ENV=production,FIREBASE_PROJECT_ID=loyal-curve-425715-h6,FCM_VAPID_KEY=${{ secrets.FCM_VAPID_KEY }},NOTIFICATIONS_API_KEY=${{ secrets.NOTIFICATIONS_API_KEY }},ADMIN_UIDS=${{ secrets.ADMIN_UIDS }},INTERNAL_API_KEY=${{ secrets.INTERNAL_API_KEY }},REALTIME_SERVICE_URL=https://weekly-arcade-realtime-l5zsdalm2a-uc.a.run.app"
 
       - name: Output Service URL
         run: |
