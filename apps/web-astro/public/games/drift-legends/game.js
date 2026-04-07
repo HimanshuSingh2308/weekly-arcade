@@ -608,6 +608,15 @@
     _returnToMenu();
   });
 
+  gui.onAction('mpRematch', () => {
+    _mpCleanup();
+    _returnToMenu();
+    // Auto-trigger quick match again
+    if (currentUser) {
+      DL.Multiplayer.quickMatch(currentUser.uid);
+    }
+  });
+
   // ─── Race Loading & Setup ─────────────────────────────────────────
   function _startLoading() {
     // Hide header during gameplay for more screen real estate

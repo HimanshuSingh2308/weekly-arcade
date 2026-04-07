@@ -2518,8 +2518,28 @@
       } else {
         this.resultUnlock.text = '';
       }
-      // Show/hide NEXT button based on goals, show the row
-      if (this._resultNextBtn) this._resultNextBtn.isVisible = !!(data.allGoalsPassed);
+      // MP: show REMATCH + MENU only. SP: show NEXT/RETRY/MENU
+      if (data.isMultiplayer) {
+        if (this._resultNextBtn) {
+          this._resultNextBtn.children[0].text = 'REMATCH';
+          this._resultNextBtn.isVisible = true;
+          // Rewire to rematch action
+          this._resultNextBtn.onPointerClickObservable.clear();
+          this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpRematch'); });
+        }
+        if (this._resultRetryBtn) this._resultRetryBtn.isVisible = false;
+        if (this._resultMenuBtn) this._resultMenuBtn.isVisible = true;
+      } else {
+        // Restore SP button text + handler
+        if (this._resultNextBtn) {
+          this._resultNextBtn.children[0].text = 'NEXT RACE \u25B6';
+          this._resultNextBtn.isVisible = !!(data.allGoalsPassed);
+          this._resultNextBtn.onPointerClickObservable.clear();
+          this._resultNextBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('resultNext'); });
+        }
+        if (this._resultRetryBtn) this._resultRetryBtn.isVisible = true;
+        if (this._resultMenuBtn) this._resultMenuBtn.isVisible = true;
+      }
       if (this._resultBtnRow) this._resultBtnRow.isVisible = true;
 
       this.show('RACE_RESULT');
