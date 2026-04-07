@@ -1107,10 +1107,29 @@
       }
     }
 
-    // Race position uses already-computed playerSplineT
+    // Race position
     const playerT = (playerLap - 1) + playerSplineT;
-    const positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
-    const playerPos = positions.findIndex(p => p.id === 'player') + 1;
+    var playerPos = 1;
+    if (isMultiplayerRace) {
+      // Compare against opponent's progress from server state
+      var oppState = DL.Multiplayer.getOpponentPosition();
+      var gs = window.DriftLegends?.Multiplayer?.isInSession() ? (window.DriftLegends.Multiplayer._gameState || null) : null;
+      // Read opponent lap from game state if available
+      var oppLap = 1;
+      var oppCheckpoint = 0;
+      if (gs && gs.laps) {
+        var oppUid = Object.keys(gs.laps).find(function(u) { return u !== currentUser?.uid; });
+        if (oppUid) {
+          oppLap = (gs.laps[oppUid] || 0) + 1;
+          oppCheckpoint = gs.positions?.[oppUid]?.checkpointIndex || 0;
+        }
+      }
+      var oppT = (oppLap - 1) + (oppCheckpoint / (trackData?.trackDef?.checkpoints || 5));
+      playerPos = playerT >= oppT ? 1 : 2;
+    } else {
+      var positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
+      playerPos = positions.findIndex(function(p) { return p.id === 'player'; }) + 1;
+    }
 
     // Update HUD
     gui.updateHUD({

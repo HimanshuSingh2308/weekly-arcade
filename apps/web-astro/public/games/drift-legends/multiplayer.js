@@ -430,6 +430,7 @@
     getSessionId: () => currentSessionId,
     isInSession: () => !!currentSessionId,
     isHostPlayer: () => isHost,
+    get _gameState() { return gameState; },
   };
 
   window.DriftLegends = window.DriftLegends || {};
