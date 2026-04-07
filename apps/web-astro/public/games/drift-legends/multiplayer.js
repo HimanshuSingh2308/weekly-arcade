@@ -15,7 +15,6 @@
   let isHost = false;
   let opponentUid = null;
   let gameState = null;
-  let lobby = null;
 
   // Opponent interpolation state
   let opponentLastPos = null;
@@ -52,7 +51,7 @@
   async function quickMatch(uid) {
     myUid = uid;
     try {
-      // Leave current session if any (prevents stale session conflicts)
+      // Leave current session if any
       if (currentSessionId) {
         try { await window.multiplayerClient?.leaveSession(currentSessionId); } catch(_) {}
         currentSessionId = null;
@@ -62,30 +61,34 @@
         await window.multiplayerClient?.cancelMatchmaking();
       });
 
+      // Register WS push callback for instant match notification
+      window.multiplayerClient?.onMatchFound(async (sessionId) => {
+        _stopPolling();
+        window.multiplayerUI?.hideMatchmaking();
+        currentSessionId = sessionId;
+        isHost = false;
+        await window.multiplayerClient?.connect(sessionId);
+        _setupSocketListeners();
+      });
+
       const result = await window.multiplayerClient?.findMatch(GAME_ID);
       if (result?.matchedSessionId) {
-        // findMatch creates session with us as host — just connect the socket
         window.multiplayerUI?.hideMatchmaking();
         currentSessionId = result.matchedSessionId;
         isHost = true;
         await window.multiplayerClient?.connect(result.matchedSessionId);
         _setupSocketListeners();
       } else {
-        // No instant match — poll for one
+        // No instant match — poll as fallback
         _pollForMatch();
       }
     } catch (err) {
       window.multiplayerUI?.hideMatchmaking();
       console.error('Matchmaking error:', err);
-      // Show error to user
-      // Show error via Drift Legends GUI toast (multiplayerUI doesn't have showError)
       var guiToast = window.DriftLegends._gui?.showToast;
       if (guiToast) {
         var msg = err.message || 'Unknown error';
-        if (msg.includes('session')) msg = '\u26a0\ufe0f ' + msg;
-        else if (msg.includes('match')) msg = '\ud83d\udd0d ' + msg;
-        else msg = '\u274c ' + msg;
-        window.DriftLegends._gui.showToast(msg);
+        window.DriftLegends._gui.showToast('\u274c ' + msg);
       }
     }
   }
@@ -110,17 +113,10 @@
     }
   }
 
-  async function joinSession(sessionId) {
-    currentSessionId = sessionId;
-    await window.multiplayerClient?.joinSession(sessionId);
-    _setupSocketListeners();
-  }
-
   async function joinByCode(code) {
     try {
       const result = await window.multiplayerClient?.joinByCode(code);
       if (result?.sessionId) {
-        // joinByCode API already joined us — just connect WebSocket
         currentSessionId = result.sessionId;
         isHost = false;
         await window.multiplayerClient?.connect(result.sessionId);
@@ -136,57 +132,88 @@
     const client = window.multiplayerClient;
     if (!client) return;
 
-    client.onStateUpdate((state) => {
-      gameState = state;
+    // Game state updates (includes initial state + move results)
+    client.onGameState((data) => {
+      gameState = data.state;
       // Check if both players are in and game is starting
-      if (state.status === 'racing' && onRaceStart) {
-        onRaceStart(state);
+      if (data.state?.status === 'racing' && onRaceStart) {
+        onRaceStart(data.state);
+      }
+
+      // Handle opponent position from state updates
+      if (data.state?.lastMove && data.state.lastMove.uid !== myUid) {
+        _handleOpponentMove(data.state.lastMove);
       }
     });
 
-    client.onMoveReceived((move) => {
-      if (move.uid === myUid) return;
-      opponentUid = move.uid;
+    // Opponent joined
+    client.onPlayerJoined((player) => {
+      if (player.uid !== myUid) {
+        opponentUid = player.uid;
+        console.log('[DL-MP] Opponent joined:', player.displayName || player.uid);
+      }
+    });
 
-      if (move.moveType === 'position-update') {
-        opponentLastPos = opponentTargetPos ? { ...opponentTargetPos } : null;
-        opponentTargetPos = {
+    // Game finished
+    client.onGameFinished(({ results }) => {
+      if (onRaceEnd) onRaceEnd(results);
+    });
+
+    // Disconnection
+    client.onError(({ code }) => {
+      if (code === 'DISCONNECTED' && onDisconnect) {
+        onDisconnect();
+      }
+    });
+
+    // Reconnection
+    client.onReconnected(() => {
+      if (onReconnect) onReconnect();
+    });
+
+    // Listen for raw position-update moves via the generic event handler
+    client.on('game:state', (data) => {
+      const state = data.state;
+      if (!state?.moves) return;
+
+      // Process any new position updates from the opponent
+      const lastMove = state.moves?.[state.moves.length - 1];
+      if (lastMove && lastMove.uid !== myUid && lastMove.moveType === 'position-update') {
+        _handleOpponentMove(lastMove);
+      }
+    });
+  }
+
+  function _handleOpponentMove(move) {
+    if (!move?.moveData) return;
+    opponentUid = move.uid || opponentUid;
+
+    if (move.moveType === 'position-update' || move.moveData.x !== undefined) {
+      opponentLastPos = opponentTargetPos ? { ...opponentTargetPos } : null;
+      opponentTargetPos = {
+        x: move.moveData.x,
+        z: move.moveData.z,
+        rotY: move.moveData.rotY,
+      };
+      opponentSpeed = move.moveData.speed || 0;
+      opponentRotY = move.moveData.rotY || 0;
+      opponentIsDrifting = !!move.moveData.isDrifting;
+      opponentLastUpdate = performance.now();
+
+      if (onOpponentUpdate) {
+        onOpponentUpdate({
           x: move.moveData.x,
           z: move.moveData.z,
           rotY: move.moveData.rotY,
-        };
-        opponentSpeed = move.moveData.speed || 0;
-        opponentRotY = move.moveData.rotY || 0;
-        opponentIsDrifting = !!move.moveData.isDrifting;
-        opponentLastUpdate = performance.now();
-
-        if (onOpponentUpdate) {
-          onOpponentUpdate({
-            x: move.moveData.x,
-            z: move.moveData.z,
-            rotY: move.moveData.rotY,
-            speed: opponentSpeed,
-            isDrifting: opponentIsDrifting,
-          });
-        }
+          speed: opponentSpeed,
+          isDrifting: opponentIsDrifting,
+        });
       }
+    }
 
-      if (move.moveType === 'race-finish') {
-        if (onRaceEnd) onRaceEnd(move.moveData);
-      }
-    });
-
-    client.onGameOver((result) => {
-      if (onRaceEnd) onRaceEnd(result);
-    });
-
-    client.onDisconnect(() => {
-      if (onDisconnect) onDisconnect();
-    });
-
-    client.onReconnect(() => {
-      if (onReconnect) onReconnect();
-    });
+    if (move.moveType === 'race-finish') {
+      if (onRaceEnd) onRaceEnd(move.moveData);
+    }
   }
 
   /** Start sending position updates */
@@ -197,7 +224,7 @@
       const posData = getPositionFn();
       if (!posData) return;
       try {
-        window.multiplayerClient.submitMove(currentSessionId, 'position-update', {
+        window.multiplayerClient.submitMove('position-update', {
           x: posData.x,
           z: posData.z,
           rotY: posData.rotY,
@@ -265,7 +292,7 @@
   async function sendLapComplete(lapTimeMs, lapNumber, checkpointSequence) {
     if (!currentSessionId || !window.multiplayerClient) return;
     try {
-      await window.multiplayerClient.submitMove(currentSessionId, 'lap-complete', {
+      window.multiplayerClient.submitMove('lap-complete', {
         lapTimeMs,
         lapNumber,
         checkpointSequence,
@@ -276,7 +303,7 @@
   async function sendRaceFinish(totalTimeMs, finalDriftScore) {
     if (!currentSessionId || !window.multiplayerClient) return;
     try {
-      await window.multiplayerClient.submitMove(currentSessionId, 'race-finish', {
+      window.multiplayerClient.submitMove('race-finish', {
         totalTimeMs,
         finalDriftScore,
       });
@@ -287,6 +314,7 @@
     if (!currentSessionId || !window.multiplayerClient) return;
     try {
       await window.multiplayerClient.startGame(currentSessionId);
+      window.multiplayerClient.signalReady();
     } catch (err) {
       console.error('Start game error:', err);
     }
@@ -294,6 +322,7 @@
 
   function leaveSession() {
     stopSync();
+    _stopPolling();
     if (currentSessionId && window.multiplayerClient) {
       try {
         window.multiplayerClient.leaveSession(currentSessionId);
@@ -307,37 +336,44 @@
     opponentLastPos = null;
   }
 
-  async function _pollForMatch() {
-    // Simple polling pattern for matchmaking
+  let _pollTimer = null;
+
+  function _pollForMatch() {
+    _stopPolling();
     let attempts = 0;
-    const poll = setInterval(async () => {
+    _pollTimer = setInterval(async () => {
       attempts++;
-      if (attempts > 30) {
-        clearInterval(poll);
+      if (attempts > 40) { // 40 * 3s = 2 min
+        _stopPolling();
         window.multiplayerUI?.hideMatchmaking();
+        window.DriftLegends._gui?.showToast('No opponents found. Try again later.');
         return;
       }
       try {
-        const result = await window.multiplayerClient?.checkMatchStatus();
-        if (result?.matchedSessionId) {
-          clearInterval(poll);
+        const status = await window.multiplayerClient?.getMatchmakingStatus();
+        if (status?.status === 'matched' && status.sessionId) {
+          _stopPolling();
           window.multiplayerUI?.hideMatchmaking();
-          // Both players are already in the session (server auto-joined us)
-          // Just connect the WebSocket — don't call joinSession API again
-          currentSessionId = result.matchedSessionId;
+          currentSessionId = status.sessionId;
           isHost = false;
-          await window.multiplayerClient?.connect(result.matchedSessionId);
+          await window.multiplayerClient?.connect(status.sessionId);
           _setupSocketListeners();
         }
       } catch (_) { /* retry */ }
-    }, 2000);
+    }, 3000);
+  }
+
+  function _stopPolling() {
+    if (_pollTimer) {
+      clearInterval(_pollTimer);
+      _pollTimer = null;
+    }
   }
 
   // Check for deep link join
   function checkDeepLink() {
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('join');
-    return code || null;
+    return params.get('join') || null;
   }
 
   const Multiplayer = {
@@ -345,7 +381,6 @@
     warmUp,
     quickMatch,
     createPrivateRoom,
-    joinSession,
     joinByCode,
     startSync,
     stopSync,
