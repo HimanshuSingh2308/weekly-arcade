@@ -1145,21 +1145,24 @@
     const playerT = (playerLap - 1) + playerSplineT;
     var playerPos = 1;
     if (isMultiplayerRace) {
-      // Compare against opponent's progress from server state
-      var oppState = DL.Multiplayer.getOpponentPosition();
-      var gs = window.DriftLegends?.Multiplayer?.isInSession() ? (window.DriftLegends.Multiplayer._gameState || null) : null;
-      // Read opponent lap from game state if available
-      var oppLap = 1;
-      var oppCheckpoint = 0;
-      if (gs && gs.laps) {
-        var oppUid = Object.keys(gs.laps).find(function(u) { return u !== currentUser?.uid; });
-        if (oppUid) {
-          oppLap = (gs.laps[oppUid] || 0) + 1;
-          oppCheckpoint = gs.positions?.[oppUid]?.checkpointIndex || 0;
+      // Compare using same granularity: lap + splineT for both players
+      // Local player uses smooth splineT, opponent uses splineT computed from position
+      var gs = window.DriftLegends?.Multiplayer?._gameState || null;
+      var oppLap = 0;
+      var oppSplineT = 0;
+      if (gs && gs.laps && gs.positions && trackData?.splinePoints) {
+        var oppUid = null;
+        for (var k in gs.laps) { if (k !== currentUser?.uid) { oppUid = k; break; } }
+        if (oppUid && gs.positions[oppUid]) {
+          oppLap = (gs.laps[oppUid] || 0);
+          // Compute opponent's splineT from their world position
+          var oppWorldPos = new V3(gs.positions[oppUid].x, 0, gs.positions[oppUid].z);
+          var oppClosest = DL.TrackBuilder.getClosestPointOnTrack(trackData.splinePoints, oppWorldPos);
+          oppSplineT = oppClosest ? oppClosest.t : 0;
         }
       }
-      var oppT = (oppLap - 1) + (oppCheckpoint / (trackData?.trackDef?.checkpoints || 5));
-      playerPos = playerT >= oppT ? 1 : 2;
+      var oppProgress = oppLap + oppSplineT;
+      playerPos = playerT >= oppProgress ? 1 : 2;
     } else {
       var positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
       playerPos = positions.findIndex(function(p) { return p.id === 'player'; }) + 1;
