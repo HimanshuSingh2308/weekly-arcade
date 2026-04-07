@@ -7,6 +7,7 @@ import { MatchmakingEntry } from '@weekly-arcade/shared';
 import { MultiplayerService } from './multiplayer.service';
 import { MULTIPLAYER_DEFAULTS } from './config/multiplayer-defaults';
 import * as crypto from 'crypto';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class MatchmakingService {
@@ -39,9 +40,8 @@ export class MatchmakingService {
       this.logger.debug(`Expired ${existing.size} stale queue entries for ${uid}`);
     }
 
-    // Get player's rating
-    const userDoc = await this.firebase.doc(`users/${uid}`).get();
-    const rating = userDoc.data()?.multiplayerRating ?? MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
+    // Get player's per-game rating (falls back to global, then default)
+    const rating = await this.getPlayerRating(uid, gameId);
 
     const entryId = crypto.randomUUID();
     const entry: MatchmakingEntry = {
@@ -284,7 +284,111 @@ export class MatchmakingService {
     }).catch(err => this.logger.warn(`Realtime match notify failed: ${err.message}`));
   }
 
-  // ─── ELO Rating ───────────────────────────────────────────────────
+  // ─── Rating System ───────────────────────────────────────────────
+
+  /**
+   * Get a player's rating for a specific game.
+   * Reads from per-game mpRatings subcollection, falls back to global, then default.
+   */
+  async getPlayerRating(uid: string, gameId: string): Promise<number> {
+    // 1. Per-game rating (most accurate)
+    const gameRatingDoc = await this.firebase.doc(`users/${uid}/mpRatings/${gameId}`).get();
+    if (gameRatingDoc.exists) {
+      return gameRatingDoc.data()?.rating ?? MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
+    }
+
+    // 2. Global multiplayer rating (legacy or cross-game baseline)
+    const userDoc = await this.firebase.doc(`users/${uid}`).get();
+    if (userDoc.exists && userDoc.data()?.multiplayerRating != null) {
+      return userDoc.data()!.multiplayerRating;
+    }
+
+    // 3. Default
+    return MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
+  }
+
+  /**
+   * Update a player's per-game rating and stats after a match.
+   * Also recalculates the global rating as a weighted average across all games.
+   */
+  async updatePlayerRating(
+    uid: string,
+    gameId: string,
+    newRating: number,
+    outcome: 'win' | 'loss' | 'draw',
+  ): Promise<void> {
+    const gameRatingRef = this.firebase.doc(`users/${uid}/mpRatings/${gameId}`);
+    const gameRatingDoc = await gameRatingRef.get();
+
+    if (gameRatingDoc.exists) {
+      const statsField = outcome === 'win' ? 'won' : outcome === 'loss' ? 'lost' : 'drawn';
+      await gameRatingRef.update({
+        rating: newRating,
+        played: admin.firestore.FieldValue.increment(1),
+        [statsField]: admin.firestore.FieldValue.increment(1),
+        updatedAt: new Date(),
+      });
+    } else {
+      await gameRatingRef.set({
+        gameId,
+        rating: newRating,
+        played: 1,
+        won: outcome === 'win' ? 1 : 0,
+        lost: outcome === 'loss' ? 1 : 0,
+        drawn: outcome === 'draw' ? 1 : 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
+    // Recalculate global rating as weighted average across all games
+    await this._updateGlobalRating(uid);
+  }
+
+  /**
+   * Recalculate the global multiplayer rating as a weighted average
+   * of all per-game ratings (weighted by games played).
+   */
+  private async _updateGlobalRating(uid: string): Promise<void> {
+    const snapshot = await this.firebase
+      .collection(`users/${uid}/mpRatings`)
+      .get();
+
+    if (snapshot.empty) return;
+
+    let totalWeight = 0;
+    let weightedSum = 0;
+    let totalPlayed = 0;
+    let totalWon = 0;
+    let totalLost = 0;
+    let totalDrawn = 0;
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const played = data.played || 0;
+      const rating = data.rating || MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
+
+      // Weight by games played — more games = more influence on global rating
+      totalWeight += played;
+      weightedSum += rating * played;
+      totalPlayed += played;
+      totalWon += data.won || 0;
+      totalLost += data.lost || 0;
+      totalDrawn += data.drawn || 0;
+    }
+
+    const globalRating = totalWeight > 0
+      ? Math.round(weightedSum / totalWeight)
+      : MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
+
+    await this.firebase.doc(`users/${uid}`).update({
+      multiplayerRating: globalRating,
+      'multiplayerStats.played': totalPlayed,
+      'multiplayerStats.won': totalWon,
+      'multiplayerStats.lost': totalLost,
+      'multiplayerStats.drawn': totalDrawn,
+    });
+  }
 
   /**
    * Calculate new ELO ratings after a match.

@@ -48,18 +48,11 @@ export class InternalController {
 
     // Calculate ELO changes for each player pair
     const uids = Object.keys(results);
-    const playerResults: Record<string, MatchPlayerResult> = {};
 
-    // Fetch current ratings
-    const userDocs = await this.firebase.getAll(
-      ...uids.map(uid => this.firebase.doc(`users/${uid}`) as FirebaseFirestore.DocumentReference),
-    );
-
+    // Fetch per-game ratings for all players
     const ratings: Record<string, number> = {};
-    for (const doc of userDocs) {
-      if (doc.exists) {
-        ratings[doc.id] = doc.data()?.multiplayerRating ?? MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
-      }
+    for (const uid of uids) {
+      ratings[uid] = await this.matchmakingService.getPlayerRating(uid, gameId);
     }
 
     // Calculate new ratings (pairwise for N-player)
@@ -95,15 +88,15 @@ export class InternalController {
       ratingChanges[uid] = Math.round(ratingChanges[uid] / pairCount);
     }
 
-    // Build match result and update users
-    const batch = this.firebase.batch();
+    // Build match result and update per-game + global ratings
+    const playerResults: Record<string, MatchPlayerResult> = {};
 
     for (const uid of uids) {
       const ratingBefore = ratings[uid] ?? MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
       const ratingAfter = Math.max(MULTIPLAYER_DEFAULTS.RATING_FLOOR, ratingBefore + ratingChanges[uid]);
 
       playerResults[uid] = {
-        displayName: '', // Could fetch from user doc
+        displayName: '',
         score: results[uid].score,
         rank: results[uid].rank,
         outcome: results[uid].outcome,
@@ -112,16 +105,10 @@ export class InternalController {
         ratingChange: ratingAfter - ratingBefore,
       };
 
-      // Update user rating and stats
-      const statsField = results[uid].outcome === 'win' ? 'multiplayerStats.won'
-        : results[uid].outcome === 'loss' ? 'multiplayerStats.lost'
-        : 'multiplayerStats.drawn';
-
-      batch.update(this.firebase.doc(`users/${uid}`) as FirebaseFirestore.DocumentReference, {
-        multiplayerRating: ratingAfter,
-        'multiplayerStats.played': FirebaseFirestore.FieldValue.increment(1),
-        [statsField]: FirebaseFirestore.FieldValue.increment(1),
-      });
+      // Update per-game rating + recalculate global (async, awaited)
+      await this.matchmakingService.updatePlayerRating(
+        uid, gameId, ratingAfter, results[uid].outcome,
+      );
     }
 
     // Store match result
@@ -134,8 +121,7 @@ export class InternalController {
       finishedAt: new Date(),
     };
 
-    batch.set(this.firebase.doc(`matchResults/${sessionId}`) as FirebaseFirestore.DocumentReference, matchResult);
-    await batch.commit();
+    await this.firebase.doc(`matchResults/${sessionId}`).set(matchResult);
 
     // Submit leaderboard scores server-side for each player
     // This prevents client-side score manipulation in multiplayer
