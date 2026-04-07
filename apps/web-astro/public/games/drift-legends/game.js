@@ -201,17 +201,47 @@
       // Handled in render loop via DL.Multiplayer.getOpponentPosition()
     },
     onRaceEnd: function(results) {
-      if (!raceFinished && state === STATE.RACING) {
-        raceFinished = true;
-        var myResult = results?.[currentUser?.uid];
-        gui.showResult?.({
-          position: myResult?.rank || 2,
-          time: raceTime,
-          driftScore: driftScoreTotal,
-          message: myResult?.outcome === 'win' ? 'You Win!' : 'You Lose',
+      if (state !== STATE.RACING && state !== STATE.RACE_FINISH) return;
+      raceFinished = true;
+      state = STATE.RACE_FINISH;
+      DL.Audio.stopEngine();
+      DL.Audio.stopBGM();
+      DL.Multiplayer.stopSync();
+
+      var myResult = results?.[currentUser?.uid];
+      var won = myResult?.outcome === 'win';
+      var playerPosition = myResult?.rank || (won ? 1 : 2);
+      var totalTimeMs = lapTimes.reduce(function(a, b) { return a + b; }, 0);
+      var driftScoreTotal = playerPhysics ? playerPhysics.totalDriftScore : 0;
+
+      DL.Audio.play(won ? 'win' : 'lose');
+      _announce(won ? 'Victory!' : 'Race finished. Position: ' + playerPosition);
+
+      if (won && playerCar) {
+        DL.Particles.createConfetti(scene, playerCar.position.add(new V3(0, 3, 0)));
+      }
+
+      setTimeout(function() {
+        if (playerCar) chaseCamera.setResultView(playerCar.position);
+        scene.meshes.forEach(function(m) { m.isPickable = false; });
+        gui.showRaceResult({
+          position: playerPosition,
+          stars: won ? 3 : 1,
+          raceScore: 0,
+          driftScore: Math.round(driftScoreTotal),
+          coins: 0,
+          totalTimeMs: totalTimeMs,
+          unlockText: '',
+          goalResults: [],
+          allGoalsPassed: false,
+          storyComplete: false,
+          totalStars: 0,
+          totalCoins: 0,
+          isMultiplayer: true,
+          mpOutcome: myResult?.outcome || 'loss',
         });
         state = STATE.RESULT;
-      }
+      }, 1500);
     },
     onDisconnect: function() {
       gui.showToast?.('Opponent disconnected');
@@ -1323,7 +1353,18 @@
     gui.hideTutorial();
     tutorialStep = -1;
 
-    // Calculate results
+    // Multiplayer: send finish to server and wait for authoritative result
+    if (isMultiplayerRace) {
+      const totalTimeMs = lapTimes.reduce((a, b) => a + b, 0);
+      const driftScoreTotal = playerPhysics.totalDriftScore;
+      DL.Multiplayer.stopSync();
+      DL.Multiplayer.sendRaceFinish(totalTimeMs, driftScoreTotal);
+      _announce('Waiting for opponent to finish...');
+      // onRaceEnd callback (from Multiplayer.init) will show the actual result
+      return;
+    }
+
+    // Single player / story mode result
     const playerT = totalLaps + 1;
     const positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
     const playerPosition = positions.findIndex(p => p.id === 'player') + 1;
@@ -1427,11 +1468,7 @@
       state = STATE.RESULT;
     }, 1500);
 
-    // Multiplayer: send finish + stop position sync
-    if (isMultiplayerRace) {
-      DL.Multiplayer.stopSync();
-      DL.Multiplayer.sendRaceFinish(totalTimeMs, driftScoreTotal);
-    }
+    // Note: MP finish is handled in the early return above
   }
 
   async function _submitScore(totalTimeMs, driftScore, stars) {
