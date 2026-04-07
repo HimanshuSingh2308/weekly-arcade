@@ -334,8 +334,8 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   // Drift Legends: 3D kart racing (score = race time in ms; lower = better)
   'drift-legends': {
     maxScore: 600000,        // Max 10 minutes per race
-    maxScorePerSecond: 100,
-    minTimeMs: 40000,        // Minimum ~40 seconds for fastest 3-lap track
+    maxScorePerSecond: 15000, // score = timeMs, so rate ≈ 1000/s always (not point-based)
+    minTimeMs: 30000,        // Minimum ~30 seconds for fastest 3-lap track
     allowedMetadataKeys: ['trackId', 'driftScore', 'chapter', 'stars'],
     customValidation: (dto) => {
 
