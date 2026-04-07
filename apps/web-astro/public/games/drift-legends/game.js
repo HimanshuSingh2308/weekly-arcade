@@ -223,7 +223,7 @@
       clearInterval(authCheck);
       window.authManager.onAuthStateChanged(user => {
         currentUser = user;
-        if (user) _loadProgress();
+        // Don't call _loadProgress here — onSignIn in header handles it
       });
     } else if (authAttempts > 100) {
       // Stop polling after 10 seconds — auth not available
@@ -253,22 +253,30 @@
   } catch (_) { /* header not available */ }
 
   // ─── Progress Management ──────────────────────────────────────────
+  var _progressLoading = false;
   async function _loadProgress() {
-    const local = DL.StoryMode.loadLocalProgress();
-    let cloud = null;
-    if (currentUser) {
-      cloud = await DL.StoryMode.loadCloudProgress();
-    }
-    progress = DL.StoryMode.mergeProgress(local, cloud);
-    // Merge server inventory (coins + owned cars) when signed in
-    if (currentUser) {
-      var serverInv = await DL.StoryMode.loadServerInventory();
-      if (serverInv) {
-        DL.StoryMode.mergeServerInventory(progress, serverInv);
+    if (_progressLoading) return; // prevent duplicate calls
+    _progressLoading = true;
+    try {
+      const local = DL.StoryMode.loadLocalProgress();
+      let cloud = null;
+      if (currentUser) {
+        // Load cloud progress and server inventory in parallel (2 calls instead of sequential)
+        var [cloudResult, serverInv] = await Promise.all([
+          DL.StoryMode.loadCloudProgress().catch(function() { return null; }),
+          DL.StoryMode.loadServerInventory().catch(function() { return null; }),
+        ]);
+        cloud = cloudResult;
+        progress = DL.StoryMode.mergeProgress(local, cloud);
+        if (serverInv) DL.StoryMode.mergeServerInventory(progress, serverInv);
+      } else {
+        progress = local;
       }
-    }
     DL.StoryMode.saveLocalProgress(progress);
     _updateMenuUI();
+    } finally {
+      _progressLoading = false;
+    }
   }
 
   var _saveCloudTimer = null;

@@ -1224,10 +1224,10 @@
       this._garageCoinText.fontFamily = 'monospace';
       this._garageCoinText.fontWeight = 'bold';
       this._garageCoinText.color = COLORS.gold;
-      this._garageCoinText.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._garageCoinText.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
       this._garageCoinText.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      this._garageCoinText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      this._garageCoinText.left = '20px';
+      this._garageCoinText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      this._garageCoinText.left = '-20px';
       this._garageCoinText.top = '45px';
       this._garageCoinText.resizeToFit = true;
       this._garageCoinText.height = '24px';
