@@ -36,11 +36,44 @@ export class MultiplayerService {
       throw new BadRequestException(`Game ${dto.gameId} does not support multiplayer`);
     }
 
-    // Check concurrent session limit PER GAME (not global)
-    const activeSessions = await this.getActiveSessionsForUser(uid);
-    const gameActiveSessions = activeSessions.filter(s => s.gameId === dto.gameId);
-    if (gameActiveSessions.length >= MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS) {
-      throw new ConflictException(`Maximum ${MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS} concurrent sessions allowed for ${dto.gameId}`);
+    // Check concurrent session limit — aggressively clean stale sessions first
+    let activeSessions = await this.getActiveSessionsForUser(uid);
+    if (activeSessions.length >= MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS) {
+      // Force-abandon sessions where this user is disconnected or the only player
+      const now = Date.now();
+      const batch = this.firebase.batch();
+      let cleaned = 0;
+
+      for (const session of activeSessions) {
+        const player = session.players[uid];
+        const isDisconnected = player?.status === 'disconnected';
+        const playerCount = Object.values(session.players).filter(
+          (p: any) => p.status !== 'left',
+        ).length;
+        const isAlone = playerCount <= 1;
+        const isWaitingTooLong = session.status === 'waiting' &&
+          (now - new Date(session.lastActivityAt as unknown as string).getTime()) > 60_000; // 1 min
+
+        if (isDisconnected || isAlone || isWaitingTooLong) {
+          batch.update(
+            this.firebase.doc(`sessions/${session.sessionId}`),
+            { status: 'abandoned', finishedAt: new Date() },
+          );
+          cleaned++;
+        }
+      }
+
+      if (cleaned > 0) {
+        await batch.commit();
+        this.logger.log(`Force-cleaned ${cleaned} stale sessions for ${uid}`);
+        activeSessions = await this.getActiveSessionsForUser(uid);
+      }
+
+      if (activeSessions.length >= MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS) {
+        throw new ConflictException(
+          `Maximum ${MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS} concurrent sessions allowed for ${dto.gameId}`,
+        );
+      }
     }
 
     const sessionId = crypto.randomUUID();
