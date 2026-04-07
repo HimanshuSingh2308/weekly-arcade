@@ -271,9 +271,15 @@ export class DriftLegendsLogic implements MultiplayerGameLogic, OnModuleInit {
       throw new Error('Race finish time does not match server clock');
     }
 
-    // Validate all laps were completed
-    if ((s.laps[uid] || 0) < s.totalLaps) {
-      throw new Error(`Not all laps completed: ${s.laps[uid]}/${s.totalLaps}`);
+    // Validate laps — allow if within 1 lap (race-finish may arrive before final lap-complete)
+    const completedLaps = s.laps[uid] || 0;
+    if (completedLaps < s.totalLaps - 1) {
+      throw new Error(`Not enough laps completed: ${completedLaps}/${s.totalLaps}`);
+    }
+    // Auto-credit final lap if race-finish arrived before lap-complete
+    if (completedLaps < s.totalLaps) {
+      this.logger.log(`Auto-credited final lap for ${uid} (${completedLaps}/${s.totalLaps})`);
+      s.laps[uid] = s.totalLaps;
     }
 
     s.finished[uid] = true;

@@ -498,6 +498,7 @@
     if (state === STATE.RACING || state === STATE.COUNTDOWN || state === STATE.CINEMATIC_INTRO) {
       state = STATE.PAUSED;
       DL.Audio.stopEngine();
+      if (isMultiplayerRace) DL.Multiplayer.stopSync(); // Stop sending stale positions
       scene.meshes.forEach(function(m) { m.isPickable = false; });
       gui.showPause();
     }
@@ -509,6 +510,21 @@
     scene.meshes.forEach(function(m) { m.isPickable = true; });
     DL.Audio.startEngine();
     DL.Audio.resumeBGM();
+    // Resume MP position sync
+    if (isMultiplayerRace && playerCar && playerPhysics) {
+      DL.Multiplayer.startSync(function() {
+        if (!playerCar || !playerPhysics) return null;
+        return {
+          x: playerCar.position.x,
+          z: playerCar.position.z,
+          rotY: playerCar.rotation.y,
+          speed: playerPhysics.speed,
+          isDrifting: playerPhysics.isDrifting,
+          checkpointIndex: playerCheckpoint,
+          driftScore: Math.round(playerPhysics.totalDriftScore),
+        };
+      });
+    }
     state = STATE.RACING;
   }
 
@@ -1057,6 +1073,7 @@
           playerPhysics.velocity.addInPlace(oppPushDir.scale(6));
           playerPhysics.speed = playerPhysics.velocity.length();
           playerPhysics.collisionCooldown = 0.5;
+          playerPhysics.wallHitThisLap = true; // Mark dirty lap on opponent collision
           if (!prefersReducedMotion) chaseCamera.shake(0.15);
           DL.Audio.play('collision');
           DL.Particles.burstSparks(sparksPS, playerCar.position, 10);
