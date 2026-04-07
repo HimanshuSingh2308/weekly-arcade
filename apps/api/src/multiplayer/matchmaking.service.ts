@@ -149,6 +149,8 @@ export class MatchmakingService {
     const myWindowMin = callerWindowMin ?? (rating - MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW);
     const myWindowMax = callerWindowMax ?? (rating + MULTIPLAYER_DEFAULTS.INITIAL_RATING_WINDOW);
 
+    this.logger.log(`tryMatchPlayer: uid=${uid} game=${gameId} rating=${rating} window=[${myWindowMin},${myWindowMax}]`);
+
     // Find candidates whose window includes our rating
     const candidates = await this.firebase
       .collection('matchmakingQueue')
@@ -157,6 +159,8 @@ export class MatchmakingService {
       .where('ratingWindowMin', '<=', rating)
       .limit(10)
       .get();
+
+    this.logger.log(`tryMatchPlayer: ${candidates.size} candidates from Firestore query`);
 
     // Filter: not self, mutual window overlap, not stale
     const now = Date.now();
@@ -168,7 +172,10 @@ export class MatchmakingService {
         const data = doc.data() as MatchmakingEntry;
 
         // Skip self
-        if (data.uid === uid) return false;
+        if (data.uid === uid) {
+          this.logger.debug(`tryMatchPlayer: skip self ${data.uid}`);
+          return false;
+        }
 
         // Skip stale entries (older than expire timeout)
         const joinedAt = data.joinedAt instanceof Date
@@ -177,16 +184,24 @@ export class MatchmakingService {
             ? (data.joinedAt as any)._seconds * 1000
             : new Date(data.joinedAt as any).getTime();
         if (now - joinedAt > maxAgeMs) {
+          this.logger.log(`tryMatchPlayer: skip stale ${data.uid} (age=${Math.round((now - joinedAt) / 1000)}s)`);
           staleRefs.push(doc.ref);
           return false;
         }
 
         // Mutual window check:
         // 1. Candidate's window includes our rating (query already ensures min <= rating)
-        if (data.ratingWindowMax < rating) return false;
+        if (data.ratingWindowMax < rating) {
+          this.logger.log(`tryMatchPlayer: skip ${data.uid} — their max ${data.ratingWindowMax} < our rating ${rating}`);
+          return false;
+        }
         // 2. Our window includes candidate's rating
-        if (data.skillRating < myWindowMin || data.skillRating > myWindowMax) return false;
+        if (data.skillRating < myWindowMin || data.skillRating > myWindowMax) {
+          this.logger.log(`tryMatchPlayer: skip ${data.uid} — their rating ${data.skillRating} outside our window [${myWindowMin},${myWindowMax}]`);
+          return false;
+        }
 
+        this.logger.log(`tryMatchPlayer: candidate ${data.uid} compatible (rating=${data.skillRating} window=[${data.ratingWindowMin},${data.ratingWindowMax}])`);
         return true;
       })
       .sort((a, b) => {
@@ -205,9 +220,13 @@ export class MatchmakingService {
       this.logger.log(`Cleaned ${staleRefs.length} stale matchmaking entries`);
     }
 
-    if (!match) return null;
+    if (!match) {
+      this.logger.log(`tryMatchPlayer: no compatible match found for ${uid}`);
+      return null;
+    }
 
     const matchData = match.data() as MatchmakingEntry;
+    this.logger.log(`tryMatchPlayer: matched! ${uid} ↔ ${matchData.uid} — claiming...`);
 
     // Atomically claim the opponent entry to prevent double-matching.
     // Use 'claiming' status — only transitions to 'matched' after session creation succeeds.

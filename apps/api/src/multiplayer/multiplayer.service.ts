@@ -38,6 +38,8 @@ export class MultiplayerService {
 
     // Check concurrent session limit — aggressively clean stale sessions first
     let activeSessions = await this.getActiveSessionsForUser(uid);
+    this.logger.log(`createSession: ${uid} has ${activeSessions.length} active sessions (limit=${MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS})`);
+
     if (activeSessions.length >= MULTIPLAYER_DEFAULTS.MAX_CONCURRENT_SESSIONS) {
       // Force-abandon sessions where this user is disconnected or the only player
       const now = Date.now();
@@ -51,8 +53,10 @@ export class MultiplayerService {
           (p: any) => p.status !== 'left',
         ).length;
         const isAlone = playerCount <= 1;
-        const isWaitingTooLong = session.status === 'waiting' &&
-          (now - new Date(session.lastActivityAt as unknown as string).getTime()) > 60_000; // 1 min
+        const idleMs = now - new Date(session.lastActivityAt as unknown as string).getTime();
+        const isWaitingTooLong = session.status === 'waiting' && idleMs > 60_000;
+
+        this.logger.log(`  session ${session.sessionId}: status=${session.status} playerStatus=${player?.status} playerCount=${playerCount} idle=${Math.round(idleMs / 1000)}s → ${isDisconnected ? 'DISCONNECTED' : isAlone ? 'ALONE' : isWaitingTooLong ? 'STALE' : 'KEEP'}`);
 
         if (isDisconnected || isAlone || isWaitingTooLong) {
           batch.update(
