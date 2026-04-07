@@ -264,10 +264,15 @@
     _updateMenuUI();
   }
 
+  var _saveCloudTimer = null;
   async function _saveProgress() {
     DL.StoryMode.saveLocalProgress(progress);
-    if (currentUser) {
-      await DL.StoryMode.saveCloudProgress(progress);
+    // Debounce cloud save — max once per 5 seconds to avoid 429 rate limit
+    if (currentUser && !_saveCloudTimer) {
+      _saveCloudTimer = setTimeout(async function() {
+        _saveCloudTimer = null;
+        try { await DL.StoryMode.saveCloudProgress(progress); } catch(_) {}
+      }, 5000);
     }
   }
 
@@ -1337,11 +1342,10 @@
   async function _submitScore(totalTimeMs, driftScore, stars) {
     try {
       await window.apiClient.submitScore('drift-legends', {
-        score: -totalTimeMs,
-        timeMs: totalTimeMs,
+        score: Math.round(totalTimeMs),
+        timeMs: Math.round(totalTimeMs),
         metadata: {
           trackId: selectedTrackId,
-          position: 1,
           driftScore: Math.round(driftScore),
           chapter: selectedChapter?.id || 0,
           stars,

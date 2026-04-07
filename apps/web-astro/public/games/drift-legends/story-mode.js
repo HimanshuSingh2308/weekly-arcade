@@ -288,6 +288,8 @@
     try {
       if (!window.apiClient) return null;
       const state = await window.apiClient.getGameState('drift-legends');
+      // Full progress is stored in metadata (API wraps it in standard fields)
+      if (state && state.metadata) return state.metadata;
       return state || null;
     } catch (_) { return null; }
   }
@@ -295,8 +297,23 @@
   async function saveCloudProgress(progress) {
     try {
       if (!window.apiClient) return;
-      await window.apiClient.saveGameState('drift-legends', progress);
-    } catch (_) { /* ignore */ }
+      // Map to standard API game state format (API rejects unknown top-level fields)
+      var totalRaces = 0, totalWins = 0;
+      Object.values(progress.raceResults || {}).forEach(function(r) {
+        totalRaces += (r.attempts || 0);
+        if (r.completed) totalWins++;
+      });
+      var maxChapter = 1;
+      (progress.chaptersUnlocked || []).forEach(function(c) { if (c > maxChapter) maxChapter = c; });
+      await window.apiClient.saveGameState('drift-legends', {
+        currentLevel: maxChapter,
+        currentStreak: 0,
+        bestStreak: 0,
+        gamesPlayed: totalRaces,
+        gamesWon: totalWins,
+        metadata: progress,
+      });
+    } catch (_) { /* ignore cloud save errors */ }
   }
 
   function mergeProgress(local, cloud) {
