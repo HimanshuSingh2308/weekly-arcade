@@ -1405,10 +1405,38 @@
     }
   }
 
+  var _unlockedAchievements = {}; // track which we've already shown
   function _checkAchievements(position, stars, driftScore, cleanLaps) {
     if (!currentUser || !window.apiClient) return;
+    // Achievement names for display
+    var ACHIEVEMENT_NAMES = {
+      'dl-first-finish': '\ud83c\udfce\ufe0f Rubber on Road',
+      'dl-first-win': '\ud83c\udfc6 Winner\'s Circle',
+      'dl-chapter1-complete': '\ud83c\udf03 City Slicker',
+      'dl-chapter3-complete': '\u2744\ufe0f Ice Cold',
+      'dl-story-complete': '\ud83d\udc51 Drift Legend',
+      'dl-all-three-stars': '\u2b50 Perfectionist',
+      'dl-first-superboost': '\ud83d\udd25 Blue Flame',
+      'dl-drift-master': '\ud83d\udca8 Slide King',
+      'dl-clean-sweep': '\u2728 Smooth Operator',
+      'dl-all-cars': '\ud83c\udfea Full Garage',
+      'dl-night-racer': '\ud83c\udf19 Night Shift',
+      'dl-all-tracks-cleared': '\ud83c\udf0d World Tour',
+      'dl-rival-beaten-first': '\u2694\ufe0f Rival Slayer',
+    };
     const unlock = (id) => {
-      try { window.apiClient.unlockAchievement(id, 'drift-legends', {}); } catch (_) {}
+      if (_unlockedAchievements[id]) return; // already shown this session
+      _unlockedAchievements[id] = true;
+      try {
+        window.apiClient.unlockAchievement(id, 'drift-legends', {}).then(function(result) {
+          // Only show toast if it was newly unlocked (not already earned)
+          if (result && !result.alreadyUnlocked) {
+            var name = ACHIEVEMENT_NAMES[id] || id;
+            gui.showToast('\ud83c\udfc5 Achievement Unlocked: ' + name, 5000);
+            DL.Audio.play('unlock');
+          }
+        }).catch(function() {});
+      } catch (_) {}
     };
 
     // First finish
