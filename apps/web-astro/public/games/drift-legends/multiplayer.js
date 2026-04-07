@@ -117,7 +117,8 @@
     }
   }
 
-  async function joinByCode(code) {
+  async function joinByCode(code, uid) {
+    myUid = uid || myUid;
     try {
       const result = await window.multiplayerClient?.joinByCode(code);
       if (result?.sessionId) {
@@ -152,6 +153,7 @@
             if (uid !== myUid) { opponentUid = uid; break; }
           }
         }
+        console.log('[DL-MP] Race start — myUid:', myUid, 'opponentUid:', opponentUid, 'players:', data.state.players);
         onRaceStart(data.state);
       }
 
@@ -163,6 +165,17 @@
           uid: opponentUid,
           moveData: pos,
         });
+      } else if (!opponentUid) {
+        // Try to detect opponent from positions keys
+        if (data.state?.positions) {
+          for (const uid of Object.keys(data.state.positions)) {
+            if (uid !== myUid) {
+              opponentUid = uid;
+              console.log('[DL-MP] Late opponent detection from positions:', opponentUid);
+              break;
+            }
+          }
+        }
       }
     });
 

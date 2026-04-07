@@ -513,7 +513,7 @@
   gui.onAction('mpJoinCode', () => {
     // For now, check deep link
     const code = DL.Multiplayer.checkDeepLink();
-    if (code) DL.Multiplayer.joinByCode(code);
+    if (code) DL.Multiplayer.joinByCode(code, currentUser?.uid);
   });
 
   // ─── Race Loading & Setup ─────────────────────────────────────────
@@ -1567,7 +1567,7 @@
     const waitAuth = setInterval(() => {
       if (currentUser) {
         clearInterval(waitAuth);
-        DL.Multiplayer.joinByCode(joinCode);
+        DL.Multiplayer.joinByCode(joinCode, currentUser?.uid);
       }
     }, 500);
   }
