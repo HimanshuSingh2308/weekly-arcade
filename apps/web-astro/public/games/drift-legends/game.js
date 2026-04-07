@@ -251,7 +251,9 @@
       var playerPosition = myResult?.rank || (won ? 1 : 2);
       var totalTimeMs = lapTimes.reduce(function(a, b) { return a + b; }, 0);
       var driftScore = _mpFinishDriftScore || (playerPhysics ? Math.round(playerPhysics.totalDriftScore) : 0);
+      var mpStars = won ? 3 : (playerPosition <= 2 ? 2 : 1);
       var raceScore = DL.StoryMode.calculateRaceScore(playerPosition, driftScore, cleanLapsCount, totalLaps);
+      var coins = DL.StoryMode.calculateCoins(mpStars);
 
       DL.Audio.play(won ? 'win' : 'lose');
       _announce(won ? 'Victory!' : 'Race finished. Position: ' + playerPosition);
@@ -265,10 +267,10 @@
         scene.meshes.forEach(function(m) { m.isPickable = false; });
         gui.showRaceResult({
           position: playerPosition,
-          stars: won ? 3 : (playerPosition <= 2 ? 2 : 1),
+          stars: mpStars,
           raceScore: raceScore,
           driftScore: driftScore,
-          coins: 0,
+          coins: coins,
           totalTimeMs: totalTimeMs,
           unlockText: won ? 'Multiplayer Victory!' : '',
           goalResults: [],
@@ -280,6 +282,12 @@
           mpOutcome: myResult?.outcome || 'loss',
         });
         state = STATE.RESULT;
+
+        // Award coins to progress
+        if (coins > 0 && progress) {
+          progress.coins = (progress.coins || 0) + coins;
+          _saveProgress();
+        }
       }, 1500);
     },
     onDisconnect: function() {
