@@ -65,6 +65,7 @@
   let lapStartTime = 0;
   let lapTimes = [];
   let raceFinished = false;
+  let _mpFinishDriftScore = 0; // Saved at finish for MP result screen
   let playerSplineT = 0; // last known spline position (0-1), for windowed search
   var _lastSplineT = 0;  // previous frame's splineT, for lap crossing detection
   let wasDrifting = false;
@@ -249,7 +250,8 @@
       var won = myResult?.outcome === 'win';
       var playerPosition = myResult?.rank || (won ? 1 : 2);
       var totalTimeMs = lapTimes.reduce(function(a, b) { return a + b; }, 0);
-      var driftScoreTotal = playerPhysics ? playerPhysics.totalDriftScore : 0;
+      var driftScore = _mpFinishDriftScore || (playerPhysics ? Math.round(playerPhysics.totalDriftScore) : 0);
+      var raceScore = DL.StoryMode.calculateRaceScore(playerPosition, driftScore, cleanLapsCount, totalLaps);
 
       DL.Audio.play(won ? 'win' : 'lose');
       _announce(won ? 'Victory!' : 'Race finished. Position: ' + playerPosition);
@@ -263,14 +265,14 @@
         scene.meshes.forEach(function(m) { m.isPickable = false; });
         gui.showRaceResult({
           position: playerPosition,
-          stars: won ? 3 : 1,
-          raceScore: 0,
-          driftScore: Math.round(driftScoreTotal),
+          stars: won ? 3 : (playerPosition <= 2 ? 2 : 1),
+          raceScore: raceScore,
+          driftScore: driftScore,
           coins: 0,
           totalTimeMs: totalTimeMs,
-          unlockText: '',
+          unlockText: won ? 'Multiplayer Victory!' : '',
           goalResults: [],
-          allGoalsPassed: false,
+          allGoalsPassed: won,
           storyComplete: false,
           totalStars: 0,
           totalCoins: 0,
@@ -1438,7 +1440,8 @@
     // Multiplayer: send finish to server, show waiting view, wait for result
     if (isMultiplayerRace) {
       const totalTimeMs = lapTimes.reduce((a, b) => a + b, 0);
-      const driftScoreTotal = playerPhysics.totalDriftScore;
+      const driftScoreTotal = playerPhysics ? playerPhysics.totalDriftScore : 0;
+      _mpFinishDriftScore = Math.round(driftScoreTotal);
       DL.Multiplayer.stopSync();
       DL.Multiplayer.sendRaceFinish(totalTimeMs, driftScoreTotal);
 
