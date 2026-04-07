@@ -14,6 +14,7 @@ import {
   CoinTransactionType,
   ItemType,
   VOIDBREAK_ALL_ITEMS,
+  DRIFT_LEGENDS_ALL_ITEMS,
 } from '@weekly-arcade/shared';
 import { PurchaseItemDto, EquipItemDto, AddCoinsDto } from './dto';
 import { v4 as uuidv4 } from 'uuid';
@@ -46,6 +47,10 @@ export class CustomizationsService {
   private initializeCatalog() {
     // Load Voidbreak items from constants
     for (const item of VOIDBREAK_ALL_ITEMS) {
+      this.itemCatalog.set(item.id, item);
+    }
+    // Load Drift Legends items from constants
+    for (const item of DRIFT_LEGENDS_ALL_ITEMS) {
       this.itemCatalog.set(item.id, item);
     }
     this.logger.log(`Loaded ${this.itemCatalog.size} items into catalog`);
@@ -466,7 +471,7 @@ export class CustomizationsService {
     const batch = this.firebaseService.batch();
     let count = 0;
 
-    for (const item of VOIDBREAK_ALL_ITEMS) {
+    for (const item of [...VOIDBREAK_ALL_ITEMS, ...DRIFT_LEGENDS_ALL_ITEMS]) {
       const docRef = this.firebaseService.doc(`${this.itemsCollection}/${item.id}`);
       batch.set(docRef, {
         ...item,

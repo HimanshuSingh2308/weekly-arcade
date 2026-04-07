@@ -260,6 +260,13 @@
       cloud = await DL.StoryMode.loadCloudProgress();
     }
     progress = DL.StoryMode.mergeProgress(local, cloud);
+    // Merge server inventory (coins + owned cars) when signed in
+    if (currentUser) {
+      var serverInv = await DL.StoryMode.loadServerInventory();
+      if (serverInv) {
+        DL.StoryMode.mergeServerInventory(progress, serverInv);
+      }
+    }
     DL.StoryMode.saveLocalProgress(progress);
     _updateMenuUI();
   }
@@ -319,19 +326,49 @@
     state = STATE.CAR_SELECT;
   });
 
-  gui.onAction('selectCar', (data) => {
+  gui.onAction('selectCar', async (data) => {
     const status = DL.StoryMode.isCarUnlockable(progress, data.carId);
     if (status === 'locked') return;
     if (status === 'available') {
-      const bought = DL.StoryMode.unlockCar(progress, data.carId);
-      if (!bought) {
-        var cost = data.carId === 'drift-racer' ? 200 : 300;
-        gui.showToast('\ud83d\udcb0 Not enough coins! Need ' + cost + ', have ' + (progress.coins || 0));
-        return;
+      var cost = data.carId === 'drift-racer' ? 200 : 300;
+      // Try server purchase first if signed in
+      if (currentUser && window.apiClient && window.apiClient.token) {
+        gui.showToast('Purchasing...');
+        var serverResult = await DL.StoryMode.purchaseCarFromServer(data.carId);
+        if (serverResult && serverResult.success) {
+          // Server purchase succeeded — update local progress to match
+          progress.coins = serverResult.newBalance;
+          if (progress.unlockedCars.indexOf(data.carId) === -1) {
+            progress.unlockedCars.push(data.carId);
+          }
+          DL.Audio.play('unlock');
+          gui.showToast('Unlocked ' + data.carId + '! (-' + serverResult.coinsSpent + ' coins)');
+          _saveProgress();
+          gui.updateCarSelectCards(progress, serverResult.newBalance);
+        } else {
+          // Server purchase failed — try local fallback
+          var bought = DL.StoryMode.unlockCar(progress, data.carId);
+          if (!bought) {
+            gui.showToast('Not enough coins! Need ' + cost + ', have ' + (progress.coins || 0));
+            return;
+          }
+          DL.Audio.play('unlock');
+          gui.showToast('Unlocked ' + data.carId + '! (offline, -' + cost + ' coins)');
+          _saveProgress();
+          gui.updateCarSelectCards(progress);
+        }
+      } else {
+        // Not signed in — local only
+        var bought = DL.StoryMode.unlockCar(progress, data.carId);
+        if (!bought) {
+          gui.showToast('Not enough coins! Need ' + cost + ', have ' + (progress.coins || 0));
+          return;
+        }
+        DL.Audio.play('unlock');
+        gui.showToast('Unlocked ' + data.carId + '! (-' + cost + ' coins)');
+        _saveProgress();
+        gui.updateCarSelectCards(progress);
       }
-      DL.Audio.play('unlock');
-      _saveProgress();
-      gui.updateCarSelectCards(progress);
     }
     selectedCarId = data.carId;
     isMultiplayerRace = false;

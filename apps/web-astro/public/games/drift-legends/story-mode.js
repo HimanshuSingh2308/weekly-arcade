@@ -231,6 +231,75 @@
     return true;
   }
 
+  // Map local car IDs to backend catalog item IDs
+  var CAR_ITEM_IDS = {
+    'street-kart': 'dl-car-street-kart',
+    'drift-racer': 'dl-car-drift-racer',
+    'sand-runner': 'dl-car-sand-runner',
+  };
+
+  // Reverse map: backend item ID -> local car ID
+  var ITEM_CAR_IDS = {};
+  Object.keys(CAR_ITEM_IDS).forEach(function(k) { ITEM_CAR_IDS[CAR_ITEM_IDS[k]] = k; });
+
+  /**
+   * Load server inventory (coins + owned car IDs).
+   * Returns null if user is not signed in or API is unavailable.
+   */
+  async function loadServerInventory() {
+    try {
+      if (!window.apiClient || !window.apiClient.token) return null;
+      var inv = await window.apiClient.getInventory();
+      if (!inv) return null;
+      var ownedCarIds = (inv.ownedItemIds || [])
+        .filter(function(id) { return id.startsWith('dl-car-'); })
+        .map(function(id) { return ITEM_CAR_IDS[id]; })
+        .filter(Boolean);
+      // Always include the free default car
+      if (ownedCarIds.indexOf('street-kart') === -1) ownedCarIds.push('street-kart');
+      return { coins: inv.coins || 0, ownedCarIds: ownedCarIds };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /**
+   * Purchase a car via the backend API.
+   * Returns { success, newBalance } or null on failure.
+   */
+  async function purchaseCarFromServer(carId) {
+    try {
+      if (!window.apiClient || !window.apiClient.token) return null;
+      var itemId = CAR_ITEM_IDS[carId];
+      if (!itemId) return null;
+      var result = await window.apiClient.purchaseItem(itemId);
+      if (result && result.success) {
+        return { success: true, newBalance: result.newBalance, coinsSpent: result.coinsSpent };
+      }
+      return null;
+    } catch (e) {
+      console.warn('[StoryMode] Server purchase failed:', e.message);
+      return null;
+    }
+  }
+
+  /**
+   * Merge server inventory into local progress.
+   * Adds any server-owned cars not yet in local progress.
+   */
+  function mergeServerInventory(progress, serverInv) {
+    if (!serverInv) return progress;
+    // Use server coin balance as authoritative when available
+    progress.coins = serverInv.coins;
+    // Merge owned cars
+    serverInv.ownedCarIds.forEach(function(carId) {
+      if (progress.unlockedCars.indexOf(carId) === -1) {
+        progress.unlockedCars.push(carId);
+      }
+    });
+    return progress;
+  }
+
   function getCompletionPercent(progress) {
     let completed = 0;
     let total = 0;
@@ -375,5 +444,9 @@
     loadCloudProgress,
     saveCloudProgress,
     mergeProgress,
+    CAR_ITEM_IDS,
+    loadServerInventory,
+    purchaseCarFromServer,
+    mergeServerInventory,
   };
 })();

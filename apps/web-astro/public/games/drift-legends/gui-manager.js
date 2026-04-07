@@ -1767,11 +1767,12 @@
       }
     }
 
-    updateCarSelectCards(progress) {
+    updateCarSelectCards(progress, serverCoins) {
       const SM = window.DriftLegends.StoryMode;
-      // Update coin balance
+      // Update coin balance — prefer server balance when available
+      var displayCoins = (serverCoins !== undefined && serverCoins !== null) ? serverCoins : (progress.coins || 0);
       if (this._garageCoinText) {
-        this._garageCoinText.text = '\ud83d\udcb0 ' + (progress.coins || 0) + ' coins';
+        this._garageCoinText.text = '\ud83d\udcb0 ' + displayCoins + ' coins';
       }
       this.carSelectCards.forEach(cc => {
         const status = SM.isCarUnlockable(progress, cc.carId);
