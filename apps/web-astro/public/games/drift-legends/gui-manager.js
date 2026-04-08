@@ -252,15 +252,19 @@
           if (!m) return false;
           return x >= m.left && x <= m.left + m.width && y >= m.top && y <= m.top + m.height;
         }
-        // Find all buttons in the current visible panel
+        // Find all buttons in the current visible panel (recursive — buttons may be inside cards)
         var panel = guiSelf.screens[guiSelf.currentScreen];
-        if (panel && panel.children) {
-          panel.children.forEach(function(child) {
+        function findAndClickButtons(container) {
+          if (!container || !container.children) return;
+          container.children.forEach(function(child) {
             if (child.name && child.name.startsWith('btn_') && hitTestButton(child)) {
               child.onPointerClickObservable.notifyObservers({});
             }
+            // Recurse into child containers (cards, stacks, etc.)
+            if (child.children) findAndClickButtons(child);
           });
         }
+        findAndClickButtons(panel);
         // Result buttons are in _resultBtnRow on ui root, not inside the panel
         if (guiSelf.currentScreen === 'RACE_RESULT' && guiSelf._resultBtnRow && guiSelf._resultBtnRow.isVisible) {
           [guiSelf._resultNextBtn, guiSelf._resultRetryBtn, guiSelf._resultMenuBtn].forEach(function(btn) {
