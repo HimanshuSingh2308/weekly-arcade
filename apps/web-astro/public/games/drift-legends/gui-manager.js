@@ -257,11 +257,12 @@
         function findAndClickButtons(container) {
           if (!container || !container.children) return;
           container.children.forEach(function(child) {
-            if (child.name && child.name.startsWith('btn_') && hitTestButton(child)) {
+            if (child.name && child.name.startsWith('btn_') && !child.name.endsWith('_button') && hitTestButton(child)) {
               child.onPointerClickObservable.notifyObservers({});
             }
-            // Recurse into child containers (cards, stacks, etc.)
-            if (child.children) findAndClickButtons(child);
+            // Recurse into child containers (cards, stacks, etc.) but NOT into buttons
+            // (buttons have a TextBlock child named 'btn_X_button' that shouldn't be hit-tested separately)
+            if (child.children && child.typeName !== 'Button') findAndClickButtons(child);
           });
         }
         findAndClickButtons(panel);
@@ -277,6 +278,10 @@
         [guiSelf._mpRoomPanel, guiSelf._mpWaitPanel, guiSelf._mpJoinPanel].forEach(function(p) {
           if (p && p.isVisible) findAndClickButtons(p);
         });
+        // Explicit check for MP share button (backup — ensures it's always reachable)
+        if (guiSelf._mpShareBtn && guiSelf._mpRoomPanel && guiSelf._mpRoomPanel.isVisible && hitTestButton(guiSelf._mpShareBtn)) {
+          guiSelf._mpShareBtn.onPointerClickObservable.notifyObservers({});
+        }
         // Pause buttons are also inside a card on ui root
         if (guiSelf.currentScreen === 'PAUSE') {
           guiSelf.ui._rootContainer.children.forEach(function(child) {
@@ -3337,6 +3342,7 @@
         var self = this;
         var shareBtn = this._createButton('COPY LINK', '180px', '42px');
         shareBtn.top = '35px';
+        this._mpShareBtn = shareBtn; // Store ref for raw tap handler
         shareBtn.onPointerClickObservable.add(function() {
           var code = self._mpRoomCode?.text || '';
           var url = window.location.origin + '/games/drift-legends/?join=' + code;
