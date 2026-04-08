@@ -3547,6 +3547,27 @@
       } else {
         // No move detected (initial state or complex change) — full rebuild
         placePiecesFromBoard(chessEngine, scene, babylonSetup.shadowGen);
+
+        // On rejoin: derive last move from move history to show highlight
+        if (state.moveHistory && state.moveHistory.length > 0) {
+          try {
+            var replayEngine = new ChessEngine();
+            var lastFrom = null, lastTo = null;
+            for (var mi = 0; mi < state.moveHistory.length; mi++) {
+              var moves = replayEngine.getLegalMoves();
+              var san = state.moveHistory[mi];
+              var matched = moves.find(function(m) { return replayEngine._toSAN(m) === san.replace(/[+#]/, ''); });
+              if (matched) {
+                lastFrom = matched.from;
+                lastTo = matched.to;
+                replayEngine.makeMove(matched);
+              }
+            }
+            if (lastFrom && lastTo) {
+              showLastMove(lastFrom[0], lastFrom[1], lastTo[0], lastTo[1]);
+            }
+          } catch (_) { /* ignore replay errors */ }
+        }
       }
 
       // Update captured pieces display + move history
