@@ -3292,6 +3292,7 @@
         panel.background = 'rgba(8,8,20,0.8)';
         panel.thickness = 0;
         panel.zIndex = 85;
+        panel.isPointerBlocker = true; // Block taps from reaching screens behind
         panel.isVisible = false;
         this.ui.addControl(panel);
 
@@ -3302,6 +3303,7 @@
         card.cornerRadius = 16;
         card.thickness = 2;
         card.color = 'rgba(0,212,255,0.4)';
+        card.isHitTestVisible = false; // Let clicks pass through to buttons inside
         panel.addControl(card);
 
         var title = new GUI.TextBlock('mpRoomTitle', 'WAITING FOR OPPONENT');
@@ -3310,6 +3312,7 @@
         title.fontWeight = 'bold';
         title.color = '#00d4ff';
         title.top = '-115px';
+        title.isHitTestVisible = false;
         card.addControl(title);
 
         var codeLabel = new GUI.TextBlock('codeLabel', 'Share this code:');
@@ -3317,6 +3320,7 @@
         codeLabel.fontFamily = 'monospace';
         codeLabel.color = 'rgba(200,200,220,0.7)';
         codeLabel.top = '-70px';
+        codeLabel.isHitTestVisible = false;
         card.addControl(codeLabel);
 
         var codeText = new GUI.TextBlock('codeText', '------');
@@ -3325,6 +3329,7 @@
         codeText.fontWeight = 'bold';
         codeText.color = '#e8e0f0';
         codeText.top = '-20px';
+        codeText.isHitTestVisible = false;
         card.addControl(codeText);
         this._mpRoomCode = codeText;
 
@@ -3364,6 +3369,7 @@
         dotsText.fontFamily = 'monospace';
         dotsText.color = 'rgba(200,200,220,0.5)';
         dotsText.top = '80px';
+        dotsText.isHitTestVisible = false;
         card.addControl(dotsText);
 
         var dotCount = 0;
