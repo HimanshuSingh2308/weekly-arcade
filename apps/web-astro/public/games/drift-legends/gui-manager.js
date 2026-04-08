@@ -194,6 +194,7 @@
 
       menuCanvas.addEventListener('pointerdown', function(e) {
         _tapStartTime = Date.now();
+        // Store raw clientX/Y — drag check uses raw coords (no DPR needed for delta)
         _tapStartX = e.clientX;
         _tapStartY = e.clientY;
       });
@@ -205,8 +206,13 @@
         var dy = Math.abs(e.clientY - _tapStartY);
         if (dt > 500 || dx > 20 || dy > 20) return;
 
+        // Convert CSS viewport coords to canvas render coords (fixes iOS high-DPR)
+        var rect = menuCanvas.getBoundingClientRect();
+        var scaleX = menuCanvas.width / rect.width;
+        var scaleY = menuCanvas.height / rect.height;
         var w = menuCanvas.clientWidth, h = menuCanvas.clientHeight;
-        var x = e.clientX, y = e.clientY;
+        var x = (e.clientX - rect.left) * scaleX;
+        var y = (e.clientY - rect.top) * scaleY;
 
         // STORY SELECT — hit-test chapter rings by their screen positions
         if (guiSelf.currentScreen === 'STORY_SELECT' && guiSelf.chapterCards) {

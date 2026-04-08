@@ -58,6 +58,7 @@
       }
 
       window.multiplayerUI?.showMatchmaking('Drift Legends', async () => {
+        _stopPolling();
         await window.multiplayerClient?.cancelMatchmaking();
       });
 

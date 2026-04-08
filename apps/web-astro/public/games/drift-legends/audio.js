@@ -27,8 +27,20 @@
     return ctx;
   }
 
-  // Prime audio context on first user interaction (required for iOS)
-  document.addEventListener('pointerdown', function() { ensureContext(); }, { once: true });
+  // Prime audio context on user interaction (required for iOS Safari)
+  // iOS requires AudioContext.resume() inside touchend/click, not just pointerdown.
+  // Use multiple event types and keep retrying until context is running.
+  function _primeAudio() {
+    var c = ensureContext();
+    if (c && c.state === 'running') {
+      document.removeEventListener('touchend', _primeAudio);
+      document.removeEventListener('click', _primeAudio);
+      document.removeEventListener('pointerdown', _primeAudio);
+    }
+  }
+  document.addEventListener('touchend', _primeAudio, { passive: true });
+  document.addEventListener('click', _primeAudio);
+  document.addEventListener('pointerdown', _primeAudio);
 
   function playTone(freq, duration, type, vol, detune) {
     try {

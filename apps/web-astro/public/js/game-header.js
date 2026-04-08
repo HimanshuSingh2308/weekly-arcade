@@ -244,8 +244,17 @@
       const soundEl = document.getElementById(soundBtnId);
       if (soundEl) soundEl.addEventListener('click', () => {
         const result = opts.onSound();
-        // Auto-update icon: onSound returns true if unmuted, false if muted
-        const isMuted = result === false || result === undefined;
+        // Auto-update icon: onSound may return true (unmuted) / false (muted)
+        // If undefined (most games), toggle based on current icon state
+        let isMuted;
+        if (result === true) {
+          isMuted = false;
+        } else if (result === false) {
+          isMuted = true;
+        } else {
+          // No return value — toggle based on current icon
+          isMuted = !soundEl.classList.contains('muted');
+        }
         soundEl.textContent = isMuted ? '\ud83d\udd07' : '\ud83d\udd0a';
         soundEl.classList.toggle('muted', isMuted);
       });

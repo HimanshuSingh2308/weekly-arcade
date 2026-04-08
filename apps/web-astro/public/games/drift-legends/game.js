@@ -108,11 +108,16 @@
     if (!DL.Input.isMobile()) return;
 
     if (_isIOS) {
-      // iOS: No real fullscreen API. Scroll to hide Safari toolbar + maximize viewport.
-      window.scrollTo(0, 1);
-      // Set minimal-ui viewport (hides toolbar on scroll)
+      // iOS: No Fullscreen API in Safari. In PWA standalone mode, already fullscreen.
+      // In Safari: scroll to hide toolbar + set viewport-fit=cover for edge-to-edge.
       var vp = document.querySelector('meta[name="viewport"]');
       if (vp) vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+      window.scrollTo(0, 1);
+      // Re-scroll after a tick (Safari sometimes resets scroll position)
+      setTimeout(function() { window.scrollTo(0, 1); }, 100);
+      // Mark as "fullscreen" if in PWA standalone mode
+      if (window.navigator.standalone) _isFullscreen = true;
+      return;
     } else {
       // Android/Chrome: Use standard Fullscreen API
       var el = document.documentElement;
@@ -622,6 +627,8 @@
     // Hide header during gameplay for more screen real estate
     document.body.classList.add('dl-playing');
     try { window.gameHeader?.hide(); } catch(_) {}
+    // Prime AudioContext NOW while still in user gesture (iOS requires this)
+    DL.Audio.ensureContext();
     // Re-enable mesh picking (may have been disabled by result/pause overlay)
     scene.meshes.forEach(function(m) { m.isPickable = true; });
     const track = DL.TrackBuilder.TRACKS[selectedTrackId];
@@ -878,9 +885,11 @@
     gui.hideMPWaiting();
     gui.hideMPWaitingRoom();
     gui.hideMPJoining();
+    // Always stop polling + leave session (even if not in active MP race —
+    // user may have cancelled matchmaking before a race started)
+    DL.Multiplayer.stopSync();
+    DL.Multiplayer.leaveSession();
     if (isMultiplayerRace) {
-      DL.Multiplayer.stopSync();
-      DL.Multiplayer.leaveSession();
       isMultiplayerRace = false;
       opponentCar = null;
     }

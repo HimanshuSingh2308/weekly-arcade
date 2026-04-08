@@ -18,7 +18,7 @@
 
   let steerRampLeft = 0;
   let steerRampRight = 0;
-  const STEER_RAMP_SPEED = 5.0;  // ramp to full in ~200ms at 60fps
+  const STEER_RAMP_SPEED = 2.5;  // ramp to full in ~400ms at 60fps (smoother mobile joystick)
   const STEER_DECAY_SPEED = 8.0;
 
   // Touch state (set from GUI controls via setTouch)
@@ -86,7 +86,8 @@
     // Analog steering — use joystick value if available, otherwise ramp from digital buttons
     if (Math.abs(touch.analogSteer) > 0.05) {
       // Smooth joystick input (lerp toward target for less snappy feel)
-      var target = touch.analogSteer;
+      // Scale joystick input by 0.5 to reduce sensitivity on mobile
+      var target = touch.analogSteer * 0.5;
       state.steer += (target - state.steer) * Math.min(1, STEER_RAMP_SPEED * dt);
     } else {
       // Digital button ramp (keyboard / d-pad)
