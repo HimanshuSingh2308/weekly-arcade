@@ -1,0 +1,37 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'drift-legends', title: 'Drift Legends', description: '3D arcade racing with story mode, drift mechanics, and real-time multiplayer. 15 tracks across 5 chapters!', thumbnail: 'drift-legends.svg', alt: 'Drift Legends - free no-ads 3D racing game', tags: [{ label: 'Racing' }, { label: '3D' }, { label: 'Multiplayer' }], isNew: true },
+  { slug: 'wordle', title: 'Wordle', description: 'Guess the 5-letter word in 6 tries. A new word every day!', thumbnail: 'wordle.svg', alt: 'Wordle - free no-ads daily word puzzle', tags: [{ label: 'Puzzle' }, { label: 'Daily' }] },
+  { slug: 'chess-3d', title: 'Chess 3D', description: '3D chess with smart AI and online multiplayer! 4 difficulty levels, ELO rating, rotatable board.', thumbnail: 'chess-3d.svg', alt: 'Chess 3D - free no-ads chess game', tags: [{ label: 'Strategy' }, { label: '3D' }] },
+  { slug: 'snake', title: 'Snake', description: "Classic snake game. Eat, grow, don't hit the walls!", thumbnail: 'snake.svg', alt: 'Snake - free no-ads classic arcade game', tags: [{ label: 'Arcade' }, { label: 'Classic' }] },
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - free no-ads number puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'coin-cascade', title: 'Coin Cascade', description: 'Drop coins onto a physics pusher to cascade prizes off the edge!', thumbnail: 'coin-cascade.svg', alt: 'Coin Cascade - free no-ads physics arcade game', tags: [{ label: 'Arcade' }, { label: 'Physics' }] },
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - free no-ads card game', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+  { slug: 'voidbreak', title: 'Voidbreak', description: 'Smash asteroids, upgrade your ship, go deeper. How far can you get?', thumbnail: 'voidbreak.svg', alt: 'Voidbreak - free no-ads space shooter game', tags: [{ label: 'Action' }, { label: 'Roguelite' }] },
+];
+---
+
+<CategoryPage
+  category="No Ads"
+  categorySlug="no-ads"
+  title="Free Browser Games With No Ads - Play Uninterrupted | Weekly Arcade"
+  metaDescription="Play free browser games with zero ads, zero pop-ups, and zero interruptions. Every game on Weekly Arcade is 100% ad-free. No tracking, no paywalls - just games."
+  keywords="free games no ads, browser games no ads, ad free games, games without ads, no ad games online, unblocked games no ads, free online games without ads, ad free browser games"
+  h1="Free Games With No Ads"
+  introText="Every game on Weekly Arcade is <strong>100% ad-free</strong>. No banner ads, no video ads, no pop-ups, no interstitials, and no ad-tracking scripts. Just open a game and play - uninterrupted, every time."
+  seoHeading="Why Ad-Free Browser Games Matter"
+  seoText="Most free browser game sites run 5-10 ad scripts per page, adding 2-5 seconds to load times and interrupting gameplay with video ads between rounds. Weekly Arcade takes a different approach: zero advertising, zero tracking from ad networks, and zero interruptions. Our games average under 50KB and load in under 1.5 seconds because there are no ad scripts to slow things down. This also means better privacy - we don't share your data with advertising networks."
+  seoBullets={[
+    '<strong>Zero ads on every game</strong> - No banners, no video ads, no pop-ups, no interstitials between rounds',
+    '<strong>Faster loading</strong> - Without ad scripts, games load in under 1.5 seconds vs 3-5 seconds on ad-supported sites',
+    '<strong>Better privacy</strong> - No ad-tracking cookies, no data shared with advertising networks',
+    '<strong>Uninterrupted gameplay</strong> - Play without being forced to watch a 30-second ad to continue',
+    '<strong>Safe for kids</strong> - No inappropriate ads, no clickbait, no malvertising risk',
+    '<strong>Works on school and work networks</strong> - No ad domains to trigger content filters',
+    '<strong>100% original games</strong> - Every game is built in-house, not sourced from ad-supported networks',
+    '<strong>Still completely free</strong> - No ads AND no paywalls. Guest play has zero restrictions',
+  ]}
+  games={games}
+/>

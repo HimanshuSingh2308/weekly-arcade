@@ -14,8 +14,8 @@ const gameCount = Object.keys(gameModules).length;
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 
     <!-- SEO -->
-    <meta name="description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. Puzzle, arcade, strategy, and 3D games added weekly. Play free on any device.`}>
-    <meta name="keywords" content="free browser games, online games, no download games, free games, browser games 2026, arcade games, puzzle games, play online free">
+    <meta name="description" content={`Play ${gameCount}+ free browser games — no downloads, no ads, no signup. 100% original puzzle, arcade, strategy, and 3D games added weekly.`}>
+    <meta name="keywords" content="free browser games, online games, no download games, free games, browser games 2026, arcade games, puzzle games, play online free, browser games no ads, free games no ads, browser games with leaderboards, original browser games">
     <link rel="canonical" href="https://weeklyarcade.games/">
 
     <!-- Open Graph -->
@@ -84,6 +84,62 @@ const gameCount = Object.keys(gameModules).length;
             "@type": "Answer",
             "text": "Yes. All Weekly Arcade games are designed mobile-first with touch controls, responsive layouts from 320px to 2560px screens, and optimized performance targeting 60fps. Touch targets meet Apple's 44x44px minimum and all games support the prefers-reduced-motion accessibility standard."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "Are there ads in the games?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Weekly Arcade is 100% ad-free. Unlike most browser game sites that rely on advertising, we have zero ads, zero pop-ups, and zero tracking scripts from ad networks. This also means faster load times and no interruptions during gameplay."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are the games original or copied from other sites?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": `Every game on Weekly Arcade is 100% original, designed and built in-house. We don't host third-party games or re-skin existing titles. Each game is crafted from scratch in a 7-day development cycle with ${gameCount}+ games shipped so far.`
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I play games offline?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Weekly Arcade is a Progressive Web App (PWA). After your first visit, games are cached on your device via Service Worker. Install Weekly Arcade to your home screen for offline play on planes, subways, or anywhere without internet."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are the games safe for kids?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. All Weekly Arcade games are family-friendly with no violent content, no chat features, no ads, and no in-app purchases. No personal information is collected from guest players. Games work on school Chromebooks and iPads."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the best games on Weekly Arcade?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The most popular games include Drift Legends (3D racing), Wordle (daily word puzzle), Chess 3D (strategy), Snake (classic arcade), and 2048 (number puzzle). All games are ranked and reviewed in the Best Browser Games 2026 guide."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you have multiplayer games?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Drift Legends features real-time multiplayer racing via WebSocket, and Chess 3D supports online play against friends with ELO rating. All games include global leaderboards with daily, weekly, and monthly rankings."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What browser do I need?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Any modern browser works: Chrome, Safari, Firefox, or Edge on desktop, tablet, or mobile. Games use HTML5 Canvas and standard web APIs, so no special plugins are needed. For 3D games like Drift Legends, WebGL support is required (included in all modern browsers)."
+          }
         }
       ]
     })} />
@@ -130,7 +186,7 @@ const gameCount = Object.keys(gameModules).length;
     <div class="hero-inner">
       <div class="hero-content">
         <h1>New <span class="highlight">Free Browser Games</span> Every Week</h1>
-        <p class="hero-desc">Play {gameCount}+ games instantly in your browser — no downloads, no signup. New games added weekly.</p>
+        <p class="hero-desc">Play {gameCount}+ games instantly in your browser - no downloads, no signup, no ads. 100% original games added weekly.</p>
         <div class="hero-featured">
           <div class="hero-badge">NEW THIS WEEK</div>
           <h2 class="hero-game-name">Drift Legends</h2>
@@ -193,9 +249,8 @@ const gameCount = Object.keys(gameModules).length;
       <button class="filter-chip" data-filter="simulation">Simulation</button>
       <button class="filter-chip" data-filter="casual">Casual</button>
       <button class="filter-chip" data-filter="3d">3D</button>
-      <a href="/games/sports/" class="filter-chip filter-link">Sports</a>
-      <a href="/games/multiplayer/" class="filter-chip filter-link">Multiplayer</a>
-      <a href="/games/quick/" class="filter-chip filter-link">Quick Games</a>
+      <button class="filter-chip" data-filter="sports">Sports</button>
+      <button class="filter-chip" data-filter="multiplayer">Multiplayer</button>
     </div>
   </div>
 
@@ -454,6 +509,55 @@ const gameCount = Object.keys(gameModules).length;
           <span class="faq-arrow">▼</span>
         </button>
         <div class="faq-answer"><div class="faq-answer-inner">Yes. All Weekly Arcade games are designed mobile-first with touch controls, responsive layouts from 320px to 2560px screens, and optimized performance targeting 60fps. Touch targets meet Apple's 44&times;44px minimum and all games support the <code>prefers-reduced-motion</code> accessibility standard.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Are there ads in the games?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">No. Weekly Arcade is 100% ad-free. Unlike most browser game sites that rely on advertising, we have zero ads, zero pop-ups, and zero tracking scripts from ad networks. This also means faster load times and no interruptions during gameplay.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Are the games original or copied from other sites?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Every game on Weekly Arcade is 100% original, designed and built in-house. We don't host third-party games or re-skin existing titles. Each game is crafted from scratch in a 7-day development cycle. <a href="/how-we-build-games/">Read about our game development process</a>.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Can I play games offline?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. Weekly Arcade is a Progressive Web App (PWA). After your first visit, games are cached on your device via Service Worker. Install Weekly Arcade to your home screen for offline play on planes, subways, or anywhere without internet. <a href="/games/offline/">Browse offline-ready games</a>.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Are the games safe for kids?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. All Weekly Arcade games are family-friendly with no violent content, no chat features, no ads, and no in-app purchases. No personal information is collected from guest players. Games work on school Chromebooks and iPads. <a href="/games/family/">Browse family-friendly games</a>.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          What are the best games on Weekly Arcade?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Our most popular games include Drift Legends (3D racing), Wordle (daily word puzzle), Chess 3D (strategy), Snake (classic arcade), and 2048 (number puzzle). See our full <a href="/best-browser-games-2026/">Best Browser Games 2026</a> ranking for detailed reviews.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          Do you have multiplayer games?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. Drift Legends features real-time multiplayer racing via WebSocket, and Chess 3D supports online play against friends with ELO rating. All games include global leaderboards for competitive play. <a href="/games/multiplayer/">Browse multiplayer games</a>.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+          What browser do I need?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Any modern browser works: Chrome, Safari, Firefox, or Edge on desktop, tablet, or mobile. Games use HTML5 Canvas and standard web APIs, so no special plugins are needed. For 3D games like Drift Legends, WebGL support is required (included in all modern browsers).</div></div>
       </div>
     </div>
   </section>
@@ -1143,18 +1247,6 @@ const gameCount = Object.keys(gameModules).length;
       background: linear-gradient(135deg, var(--accent), #c73e54);
       border-color: transparent;
       box-shadow: 0 2px 12px rgba(233, 69, 96, 0.3);
-    }
-
-    a.filter-link {
-      text-decoration: none;
-      border-color: rgba(124, 58, 237, 0.25);
-      color: var(--purple);
-    }
-
-    a.filter-link:hover {
-      border-color: var(--purple);
-      background: rgba(124, 58, 237, 0.1);
-      color: var(--text-primary);
     }
 
     /* ─── Games Grid ─── */
