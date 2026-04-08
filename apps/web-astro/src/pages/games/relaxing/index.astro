@@ -1,0 +1,35 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - free relaxing number puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - free relaxing card game', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+  { slug: 'memory-match', title: 'Memory Match', description: 'Flip cards and find matching pairs. Test your memory!', thumbnail: 'memory-match.svg', alt: 'Memory Match - free relaxing card matching game', tags: [{ label: 'Casual' }, { label: 'Memory' }] },
+  { slug: 'coin-cascade', title: 'Coin Cascade', description: 'Drop coins onto a physics pusher to cascade prizes off the edge!', thumbnail: 'coin-cascade.svg', alt: 'Coin Cascade - free relaxing physics game', tags: [{ label: 'Arcade' }, { label: 'Physics' }] },
+  { slug: 'tiny-tycoon', title: 'Tiny Tycoon', description: 'Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!', thumbnail: 'tiny-tycoon.svg', alt: 'Tiny Tycoon - free relaxing simulation game', tags: [{ label: 'Simulation' }, { label: 'Idle' }] },
+  { slug: 'wordle', title: 'Wordle', description: 'Guess the 5-letter word in 6 tries. A new word every day!', thumbnail: 'wordle.svg', alt: 'Wordle - free relaxing daily word puzzle', tags: [{ label: 'Puzzle' }, { label: 'Daily' }] },
+];
+---
+
+<CategoryPage
+  category="Relaxing"
+  categorySlug="relaxing"
+  title="Free Relaxing Browser Games - Unwind and Destress | Weekly Arcade"
+  metaDescription="Play free relaxing browser games to unwind. Solitaire, puzzles, coin pushers, and simulation games with calming gameplay. No ads, no pressure, no downloads."
+  keywords="relaxing games, calming games online, stress relief games, relaxing browser games, chill games free, games to relax, peaceful games online, zen games browser"
+  h1="Free Relaxing Games"
+  introText="Unwind with <strong>free relaxing browser games</strong> designed for calm, low-pressure play. Satisfying physics, gentle puzzles, and cozy simulations - no time pressure, no ads, no stress."
+  seoHeading="Relaxing Games to Unwind"
+  seoText="The Entertainment Software Association reports that 65% of gamers play games to relax and unwind. These games feature calming mechanics: satisfying physics (Coin Cascade), meditative number patterns (2048), gentle card play (Solitaire Roguelite), and cozy shop management (Tiny Tycoon). No game in this collection has aggressive timers or high-pressure mechanics. All games support the prefers-reduced-motion CSS setting for players who prefer minimal animation."
+  seoBullets={[
+    '<strong>Meditative puzzles</strong> - Slide tiles at your own pace in <a href="/games/2048/">2048</a> with no timer',
+    '<strong>Classic card games</strong> - Play calming <a href="/games/solitaire-roguelite/">Solitaire Roguelite</a> with strategic depth',
+    '<strong>Satisfying physics</strong> - Watch coins cascade in <a href="/games/coin-cascade/">Coin Cascade</a> with relaxing sound effects',
+    '<strong>Memory training</strong> - Gentle pattern matching in <a href="/games/memory-match/">Memory Match</a>',
+    '<strong>Cozy simulation</strong> - Run a peaceful boba tea shop in <a href="/games/tiny-tycoon/">Tiny Tycoon</a>',
+    '<strong>Daily ritual</strong> - One <a href="/games/wordle/">Wordle</a> puzzle per day for a calm morning routine',
+    '<strong>No ads or interruptions</strong> - Zero pop-ups, zero video ads breaking your zen',
+    '<strong>Works offline</strong> - Play on a plane or in a quiet spot with no internet needed',
+  ]}
+  games={games}
+/>

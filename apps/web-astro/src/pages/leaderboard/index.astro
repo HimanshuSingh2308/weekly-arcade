@@ -22,6 +22,14 @@ import SiteHeader from '../../components/SiteHeader.astro';
     <meta name="twitter:title" content="Global Leaderboards — Compete Worldwide | Weekly Arcade">
     <meta name="twitter:description" content="Compete on global leaderboards across 15+ free browser games. Daily, weekly, and monthly rankings.">
     <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+    <script type="application/ld+json">{
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weeklyarcade.games/" },
+        { "@type": "ListItem", "position": 2, "name": "Leaderboards", "item": "https://weeklyarcade.games/leaderboard/" }
+      ]
+    }</script>
   </Fragment>
 
   <SiteHeader activePage="leaderboards" />

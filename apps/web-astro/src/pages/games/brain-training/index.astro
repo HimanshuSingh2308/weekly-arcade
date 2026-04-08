@@ -1,0 +1,35 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'wordle', title: 'Wordle', description: 'Guess the 5-letter word in 6 tries. A new word every day!', thumbnail: 'wordle.svg', alt: 'Wordle - free brain training word puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Daily' }] },
+  { slug: 'chess-3d', title: 'Chess 3D', description: '3D chess with smart AI! 4 difficulty levels, ELO rating, rotatable board.', thumbnail: 'chess-3d.svg', alt: 'Chess 3D - free brain training strategy game', tags: [{ label: 'Strategy' }, { label: '3D' }] },
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - free brain training number puzzle', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'memory-match', title: 'Memory Match', description: 'Flip cards and find matching pairs. Test your memory!', thumbnail: 'memory-match.svg', alt: 'Memory Match - free brain training memory game', tags: [{ label: 'Casual' }, { label: 'Memory' }] },
+  { slug: 'fieldstone', title: 'Fieldstone', description: 'Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!', thumbnail: 'fieldstone.svg', alt: 'Fieldstone - free brain training strategy puzzle', tags: [{ label: 'Strategy' }, { label: 'Puzzle' }] },
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - free brain training card game', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+];
+---
+
+<CategoryPage
+  category="Brain Training"
+  categorySlug="brain-training"
+  title="Free Brain Training Games Online - Sharpen Your Mind | Weekly Arcade"
+  metaDescription="Play free brain training games online - word puzzles, chess, memory matching, and spatial reasoning. Sharpen your mind in 5-minute sessions. No downloads, no ads."
+  keywords="brain training games, free brain games, brain games online, brain training games free, mind games, cognitive training games, train your brain, brain puzzles online"
+  h1="Free Brain Training Games"
+  introText="Sharpen your mind with <strong>free brain training games</strong> that challenge memory, logic, spatial reasoning, and vocabulary. Each game targets different cognitive skills in sessions under 10 minutes - no downloads, no ads."
+  seoHeading="Train Your Brain With Free Online Games"
+  seoText="Research published in the journal Nature found that certain types of game-based cognitive training can improve attention, working memory, and problem-solving skills. Weekly Arcade's brain training collection targets different cognitive domains: vocabulary and pattern recognition (Wordle), strategic planning and spatial reasoning (Chess 3D, 2048), working memory (Memory Match), and multi-tasking under pressure (Fieldstone). All games run in your browser with no downloads needed."
+  seoBullets={[
+    '<strong>Vocabulary and language</strong> - Build word skills with daily <a href="/games/wordle/">Wordle</a> puzzles in 2-3 minutes',
+    '<strong>Strategic thinking</strong> - Develop planning skills across 4 AI levels in <a href="/games/chess-3d/">Chess 3D</a>',
+    '<strong>Spatial reasoning</strong> - Train number logic and spatial planning with <a href="/games/2048/">2048</a>',
+    '<strong>Working memory</strong> - Strengthen recall and pattern matching in <a href="/games/memory-match/">Memory Match</a>',
+    '<strong>Multi-tasking</strong> - Balance puzzle-solving with strategy in <a href="/games/fieldstone/">Fieldstone</a>',
+    '<strong>Problem solving</strong> - Plan card sequences and use Jokers strategically in <a href="/games/solitaire-roguelite/">Solitaire Roguelite</a>',
+    '<strong>Daily practice</strong> - Wordle offers a new challenge every day for consistent training',
+    '<strong>Progress tracking</strong> - Leaderboards and achievements track your improvement over time',
+  ]}
+  games={games}
+/>
