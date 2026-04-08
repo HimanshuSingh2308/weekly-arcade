@@ -447,8 +447,8 @@ const AuthNudge = (() => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
   }
 
-  function show() {
-    if (!shouldShow()) return;
+  function show(force) {
+    if (!force && !shouldShow()) return;
     inject();
     shown++;
     document.getElementById('authNudgeOverlay')?.classList.add('visible');

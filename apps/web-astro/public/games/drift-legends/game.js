@@ -397,7 +397,7 @@
 
   gui.onAction('multiplayer', () => {
     if (!currentUser) {
-      try { window.authNudge?.show(); } catch (_) {}
+      try { window.authNudge?.show(true); } catch (_) {}
       return;
     }
     gui.show('MP_MENU');
@@ -580,12 +580,12 @@
 
   // Multiplayer callbacks
   gui.onAction('mpQuickMatch', () => {
-    if (!currentUser) { try { window.authNudge?.show(); } catch (_) {} return; }
+    if (!currentUser) { try { window.authNudge?.show(true); } catch (_) {} return; }
     DL.Multiplayer.quickMatch(currentUser.uid);
   });
 
   gui.onAction('mpCreatePrivate', async () => {
-    if (!currentUser) { try { window.authNudge?.show(); } catch (_) {} return; }
+    if (!currentUser) { try { window.authNudge?.show(true); } catch (_) {} return; }
     const mpTrack = selectedTrackId || 'city-circuit';
     const session = await DL.Multiplayer.createPrivateRoom(currentUser.uid, mpTrack);
     if (session) {
@@ -601,7 +601,7 @@
   gui.onAction('mpJoinCode', () => {
     var code = prompt('Enter join code:');
     if (!code || !code.trim()) return;
-    if (!currentUser) { try { window.authNudge?.show(); } catch (_) {} return; }
+    if (!currentUser) { try { window.authNudge?.show(true); } catch (_) {} return; }
     gui.showMPJoining('Joining room...');
     DL.Multiplayer.joinByCode(code.trim(), currentUser.uid);
   });
@@ -1259,7 +1259,7 @@
       var oppProgress = oppLap + oppSplineT;
       playerPos = playerT >= oppProgress ? 1 : 2;
     } else {
-      var positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
+      var positions = DL.AIRacer.getRacePositions(playerT, aiRacers, playerLap, playerSplineT);
       playerPos = positions.findIndex(function(p) { return p.id === 'player'; }) + 1;
     }
 
@@ -1490,9 +1490,9 @@
       return;
     }
 
-    // Single player / story mode result
+    // Single player / story mode result — player finished, so use totalLaps as lap count
     const playerT = totalLaps + 1;
-    const positions = DL.AIRacer.getRacePositions(playerT, aiRacers);
+    const positions = DL.AIRacer.getRacePositions(playerT, aiRacers, totalLaps, 1.0);
     const playerPosition = positions.findIndex(p => p.id === 'player') + 1;
     const won = playerPosition === 1;
 

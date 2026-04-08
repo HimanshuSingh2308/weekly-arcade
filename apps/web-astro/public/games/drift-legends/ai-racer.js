@@ -209,7 +209,7 @@
     const rival = chapter.rival;
     const carMesh = window.DriftLegends.CarBuilder.buildRivalCar(scene, rival.name.toLowerCase(), rival.carId);
     const ai = new AIRacer(carMesh, rival.personality, chapter);
-    ai.targetSpeed = 14;
+    ai.targetSpeed = 28;
     return ai;
   }
 
@@ -218,7 +218,7 @@
     for (let i = 0; i < count; i++) {
       const carMesh = window.DriftLegends.CarBuilder.buildAICar(scene, i);
       const ai = new AIRacer(carMesh, 'filler', chapter);
-      ai.targetSpeed = 9 + Math.random() * 4;
+      ai.targetSpeed = 18 + Math.random() * 8;
       racers.push(ai);
     }
     return racers;
@@ -243,13 +243,29 @@
   }
 
   /** Get sorted race positions (all racers including player) */
-  function getRacePositions(playerT, racers) {
-    // playerT = player's splineT + lap
-    const entries = [{ id: 'player', t: playerT }];
+  function getRacePositions(playerT, racers, playerLap, playerSplineT) {
+    // Use lap as primary sort, splineT as tiebreaker — prevents wrong positions
+    // when player is ahead by 1+ laps but has a lower splineT than AI
+    const entries = [{
+      id: 'player',
+      lap: playerLap !== undefined ? playerLap : Math.floor(playerT),
+      splineT: playerSplineT !== undefined ? playerSplineT : (playerT % 1),
+      t: playerT,
+    }];
     racers.forEach((r, i) => {
-      entries.push({ id: 'ai_' + i, t: r.getSplineT(), racer: r });
+      entries.push({
+        id: 'ai_' + i,
+        lap: r.lap,
+        splineT: r.splineT,
+        t: r.getSplineT(),
+        racer: r,
+      });
     });
-    entries.sort((a, b) => b.t - a.t);
+    // Sort by lap first (descending), then splineT (descending) as tiebreaker
+    entries.sort((a, b) => {
+      if (a.lap !== b.lap) return b.lap - a.lap;
+      return b.splineT - a.splineT;
+    });
     return entries;
   }
 
