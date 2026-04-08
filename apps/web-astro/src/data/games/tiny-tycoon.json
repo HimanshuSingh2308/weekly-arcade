@@ -12,5 +12,14 @@
   "ratingValue": "4.8",
   "ratingCount": "600",
   "category": "idle",
-  "rendering": "dom"
+  "rendering": "dom",
+  "tips": [
+    "Upgrade your serving speed first — faster service means more customers served per 60-second day",
+    "Don't skip the coin multiplier upgrades — they compound your earnings dramatically",
+    "Prioritize upgrades that increase customers per day over cosmetic shop changes",
+    "Watch for rush hour events — serve quickly during rushes for bonus coins",
+    "Reinvest all coins into upgrades early; save cosmetic purchases for later"
+  ],
+  "similarTo": ["Lemonade Stand", "Coffee Corp", "Idle Miner Tycoon", "Papa's Freezeria"],
+  "howToPlay": "Tap to serve customers in your boba tea shop. Each day lasts 60 seconds. Earn coins from sales, then spend them on upgrades between days. Upgrade serving speed, menu items, and shop capacity to maximize daily revenue."
 }

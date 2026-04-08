@@ -1,0 +1,121 @@
+---
+/**
+ * GameSEOContent — renders tips, how-to-play, and "similar to" content
+ * below the game for long-tail SEO. Only renders if game data includes these fields.
+ */
+interface Props {
+  gameName: string;
+  gameId: string;
+  tips?: string[];
+  howToPlay?: string;
+  similarTo?: string[];
+}
+
+const { gameName, gameId, tips, howToPlay, similarTo } = Astro.props;
+
+// Don't render anything if no SEO content is available
+const hasContent = tips?.length || howToPlay || similarTo?.length;
+
+// Build HowTo schema for featured snippets
+const howToSchema = (howToPlay && tips?.length) ? JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: `How to Play ${gameName}`,
+  description: howToPlay,
+  totalTime: 'PT2M',
+  step: tips.map((tip, i) => ({
+    '@type': 'HowToStep',
+    position: i + 1,
+    text: tip,
+  })),
+}) : null;
+---
+
+{howToSchema && (
+  <script type="application/ld+json" set:html={howToSchema} />
+)}
+
+{hasContent && (
+  <section class="game-seo-content">
+    {howToPlay && (
+      <div class="seo-block">
+        <h2>How to Play {gameName}</h2>
+        <p>{howToPlay}</p>
+      </div>
+    )}
+
+    {tips?.length && (
+      <div class="seo-block">
+        <h2>{gameName} Tips and Strategy</h2>
+        <ol class="tips-list">
+          {tips.map((tip) => <li>{tip}</li>)}
+        </ol>
+      </div>
+    )}
+
+    {similarTo?.length && (
+      <div class="seo-block">
+        <h2>Games Like {gameName}</h2>
+        <p>If you enjoy {gameName}, you might also like: {similarTo.join(', ')}. {gameName} is available free on Weekly Arcade with no downloads required &mdash; <a href="/games/">browse all games</a>.</p>
+      </div>
+    )}
+  </section>
+)}
+
+<style>
+  .game-seo-content {
+    background: var(--bg-secondary, #12121f);
+    border-top: 1px solid var(--border, rgba(255,255,255,0.06));
+    padding: 1.5rem 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .seo-block {
+    margin-bottom: 1.5rem;
+  }
+
+  .seo-block:last-child {
+    margin-bottom: 0;
+  }
+
+  .seo-block h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary, #f0f0f5);
+    margin-bottom: 0.5rem;
+  }
+
+  .seo-block p {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #8888a8);
+    line-height: 1.65;
+  }
+
+  .seo-block a {
+    color: var(--accent, #e94560);
+    text-decoration: none;
+  }
+
+  .seo-block a:hover {
+    text-decoration: underline;
+  }
+
+  .tips-list {
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+
+  .tips-list li {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #8888a8);
+    line-height: 1.6;
+    margin-bottom: 0.4rem;
+  }
+
+  @media (max-width: 768px) {
+    .game-seo-content {
+      padding: 1.25rem 1rem;
+    }
+  }
+</style>

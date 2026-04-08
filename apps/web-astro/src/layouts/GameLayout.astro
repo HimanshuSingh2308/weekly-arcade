@@ -13,6 +13,7 @@ import SEOHead from '../components/SEOHead.astro';
 import GameHeader from '../components/GameHeader.astro';
 import GameCloudFallback from '../components/GameCloudFallback.astro';
 import MoreGames from '../components/MoreGames.astro';
+import GameSEOContent from '../components/GameSEOContent.astro';
 
 interface Props {
   /** Page <title> */
@@ -38,6 +39,12 @@ interface Props {
   /** Schema.org rating */
   ratingValue?: string;
   ratingCount?: string;
+  /** SEO: gameplay tips */
+  tips?: string[];
+  /** SEO: how to play description */
+  howToPlay?: string;
+  /** SEO: similar games for "games like X" queries */
+  similarTo?: string[];
 }
 
 const {
@@ -53,6 +60,9 @@ const {
   accentColor,
   ratingValue,
   ratingCount,
+  tips,
+  howToPlay,
+  similarTo,
 } = Astro.props;
 ---
 
@@ -77,6 +87,8 @@ const {
 
   <!-- Game-specific body content -->
   <slot />
+
+  <GameSEOContent gameName={gameName} gameId={gameId} tips={tips} howToPlay={howToPlay} similarTo={similarTo} />
 
   <MoreGames exclude={gameId} />
 

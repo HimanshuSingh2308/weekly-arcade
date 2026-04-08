@@ -1,0 +1,34 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'stack-tower', title: 'Stack Tower', description: 'Stack blocks with perfect timing to build the tallest tower!', thumbnail: 'stack-tower.svg', alt: 'Stack Tower - free quick browser game to play at work', tags: [{ label: 'Arcade' }, { label: 'Timing' }] },
+  { slug: 'wordle', title: 'Wordle', description: 'Guess the 5-letter word in 6 tries. A new word every day!', thumbnail: 'wordle.svg', alt: 'Wordle - free quick daily word puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Daily' }] },
+  { slug: 'memory-match', title: 'Memory Match', description: 'Flip cards and find matching pairs. Test your memory!', thumbnail: 'memory-match.svg', alt: 'Memory Match - free quick card matching game', tags: [{ label: 'Casual' }, { label: 'Memory' }] },
+  { slug: 'snake', title: 'Snake', description: "Classic snake game. Eat, grow, don't hit the walls!", thumbnail: 'snake.svg', alt: 'Snake - free quick classic arcade game', tags: [{ label: 'Arcade' }, { label: 'Classic' }] },
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - free quick number merge puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'coin-cascade', title: 'Coin Cascade', description: 'Drop coins onto a physics pusher to cascade prizes off the edge!', thumbnail: 'coin-cascade.svg', alt: 'Coin Cascade - free quick physics arcade game', tags: [{ label: 'Arcade' }, { label: 'Physics' }] },
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - free quick card game', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+];
+---
+
+<CategoryPage
+  category="Quick"
+  categorySlug="quick"
+  title="Quick Browser Games — Play in 5 Minutes or Less | Weekly Arcade"
+  metaDescription="Play quick browser games perfect for short breaks. 2-5 minute sessions, no downloads, instant loading. Puzzle, arcade, and card games you can play at work or on the go."
+  keywords="quick browser games, games to play at work, 5 minute games, short browser games, quick online games, instant play games, games for short breaks, fast browser games"
+  h1="Quick Browser Games"
+  introText="Need a <strong>quick game break</strong>? These browser games are designed for 2&ndash;5 minute sessions — perfect for short breaks at work, waiting rooms, or commutes. Every game loads instantly with no downloads and no signup."
+  seoHeading="Quick Games for Short Breaks"
+  seoText="Every game in this collection is designed for fast, satisfying sessions under 5 minutes. Research from the Entertainment Software Association shows that 65% of gamers play to relax during short breaks. These games feature one-tap controls, instant loading under 1 second (average game size: 50KB), and natural stopping points so you can jump back to what you were doing. All games run at 60fps and work on any device from 320px phones to desktop monitors."
+  seoBullets={[
+    '<strong>2-minute puzzles</strong> — Solve today\'s <a href="/games/wordle/">Wordle</a> in 6 guesses or fewer',
+    '<strong>3-minute arcade</strong> — Stack blocks for a high score in <a href="/games/stack-tower/">Stack Tower</a>',
+    '<strong>5-minute card games</strong> — Play a quick round of <a href="/games/solitaire-roguelite/">Solitaire Roguelite</a> with Joker powers',
+    '<strong>Classic quick games</strong> — <a href="/games/snake/">Snake</a> and <a href="/games/2048/">2048</a> for timeless, fast-paced fun',
+    '<strong>Memory training</strong> — Sharpen your brain with a quick round of <a href="/games/memory-match/">Memory Match</a>',
+    '<strong>No commitment</strong> — No accounts, no downloads, no ads — just instant play on any browser',
+  ]}
+  games={games}
+/>

@@ -12,5 +12,14 @@
   "ratingValue": "4.7",
   "ratingCount": "850",
   "category": "arcade",
-  "rendering": "canvas"
+  "rendering": "canvas",
+  "tips": [
+    "Stay near the center of the board early on — hugging walls limits your escape routes",
+    "Plan 2-3 moves ahead instead of reacting to each food item",
+    "When your snake gets long, create a spiral pattern to maximize available space",
+    "Avoid doubling back on yourself — always keep a clear path to your tail",
+    "Speed increases as you grow, so practice quick directional changes early"
+  ],
+  "similarTo": ["Slither.io", "Nokia Snake", "Pac-Man", "Tron Light Cycles"],
+  "howToPlay": "Use arrow keys or swipe to steer the snake toward food. Each food item makes the snake grow longer. Avoid hitting the walls or your own tail. The game ends when you collide with a wall or yourself."
 }

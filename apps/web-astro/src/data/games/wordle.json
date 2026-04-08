@@ -10,5 +10,14 @@
   "accentColor": "#538d4e",
   "genres": ["Puzzle", "Word Game"],
   "ratingValue": "4.8",
-  "ratingCount": "1000"
+  "ratingCount": "1000",
+  "tips": [
+    "Start with a word that has common vowels like RAISE or ADIEU to eliminate letters quickly",
+    "Never reuse gray letters — the keyboard highlights which letters are eliminated",
+    "If you get a yellow letter, try it in a different position on your next guess",
+    "Save hard consonants (X, Z, Q) for later guesses when you have more information",
+    "On higher levels (6-7 letters), focus on common word patterns and suffixes like -TION or -MENT"
+  ],
+  "similarTo": ["Quordle", "Nerdle", "Spelling Bee", "Crossword Puzzles"],
+  "howToPlay": "Type a word matching the required letter count and press Enter. Green means correct letter in correct position. Yellow means correct letter in wrong position. Gray means the letter is not in the word. You have 6 attempts to guess the word."
 }

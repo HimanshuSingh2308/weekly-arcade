@@ -10,5 +10,14 @@
   "accentColor": "#FF6B6B",
   "genres": ["Arcade", "Timing", "Casual"],
   "ratingValue": "4.8",
-  "ratingCount": "120"
+  "ratingCount": "120",
+  "tips": [
+    "Tap when the moving block is directly above the stack — even a pixel off trims the block",
+    "Focus on the edges of the block, not the center, to judge alignment",
+    "Rhythm matters — blocks speed up as you stack higher, so find a consistent tapping tempo",
+    "A perfect stack (no overhang) keeps the block full-size and earns bonus points",
+    "Stay calm at higher levels — rushing causes the most mistakes"
+  ],
+  "similarTo": ["Stack", "Tower Bloxx", "Jenga", "Sky Tower"],
+  "howToPlay": "Tap or click to place a sliding block on top of the stack. Blocks must align with the one below — any overhanging portion is trimmed off. Stack as many perfectly aligned blocks as possible to build the tallest tower."
 }

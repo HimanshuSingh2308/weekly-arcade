@@ -10,5 +10,14 @@
   "accentColor": "#2d5a27",
   "genres": ["Arcade"],
   "ratingValue": "4.8",
-  "ratingCount": "500"
+  "ratingCount": "500",
+  "tips": [
+    "Complete full rows early to build up resources before enemies arrive",
+    "Place defensive terrain near the edges where enemies approach",
+    "Don't leave gaps in rows — incomplete rows waste valuable board space",
+    "Balance resource harvesting with army building as waves get harder",
+    "Preview the next piece and plan placement two moves ahead"
+  ],
+  "similarTo": ["Tetris", "Kingdom Rush", "Grindstone", "Puzzle Quest"],
+  "howToPlay": "Place terrain tiles on the board like Tetris. Complete full rows to harvest resources. Use resources to build armies and defenses. Enemies attack in waves — survive by balancing puzzle-solving with kingdom defense."
 }

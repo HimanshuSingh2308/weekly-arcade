@@ -12,5 +12,14 @@
   "ratingValue": "4.8",
   "ratingCount": "620",
   "category": "arcade",
-  "rendering": "canvas"
+  "rendering": "canvas",
+  "tips": [
+    "Time your bat swing to the ball's bounce point — early swings go to leg side, late swings to off side",
+    "During powerplay overs, play aggressive shots to maximize run rate while fielding restrictions are active",
+    "Choose to bat first on higher difficulty — defending totals is harder against smarter AI bowling",
+    "Watch the bowler's hand for swing direction cues before committing to your shot",
+    "Save your super over strategy for close matches — aggressive batting works best in super overs"
+  ],
+  "similarTo": ["Stick Cricket", "Real Cricket", "World Cricket Championship", "Cricket League"],
+  "howToPlay": "Win the toss and choose to bat or bowl. When batting, time your tap to swing the bat and score runs. When bowling, aim your delivery and choose pace or spin. Complete 5 overs per innings. The team with more runs wins. Super over decides ties."
 }

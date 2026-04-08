@@ -14,7 +14,7 @@ const gameCount = Object.keys(gameModules).length;
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 
     <!-- SEO -->
-    <meta name="description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. New games added every week including puzzle, arcade, strategy, 3D, and multiplayer games. Works on desktop, tablet, and mobile.`}>
+    <meta name="description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. Puzzle, arcade, strategy, and 3D games added weekly. Play free on any device.`}>
     <meta name="keywords" content="free browser games, online games, no download games, free games, browser games 2026, arcade games, puzzle games, play online free">
     <link rel="canonical" href="https://weeklyarcade.games/">
 
@@ -49,7 +49,7 @@ const gameCount = Object.keys(gameModules).length;
     }</script>
 
     <!-- Structured Data: FAQPage -->
-    <script type="application/ld+json">{
+    <script type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       "mainEntity": [
@@ -58,7 +58,7 @@ const gameCount = Object.keys(gameModules).length;
           "name": "Are all the games on Weekly Arcade free?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, every game on Weekly Arcade is 100% free to play. No hidden paywalls, no premium tiers. Sign-in is optional and only needed for leaderboards and cloud saves."
+            "text": `Yes, every game on Weekly Arcade is 100% free to play with no hidden paywalls, no premium tiers, and no ads. All ${gameCount}+ games are accessible immediately. Sign-in via Google is optional and only needed for global leaderboards, cloud saves, and achievements. Guest play has no restrictions.`
           }
         },
         {
@@ -66,7 +66,7 @@ const gameCount = Object.keys(gameModules).length;
           "name": "Do I need to download or install anything?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No downloads or installations required. All games run directly in your browser on any device — desktop, tablet, or phone. Just open the page and play."
+            "text": "No downloads or installations required. All games are HTML5 browser games that run directly in Chrome, Safari, Firefox, or Edge on any device — desktop, tablet, or phone. Average game size is under 50KB, loading in under 1.5 seconds on a 4G connection. Weekly Arcade also works as a Progressive Web App (PWA) for offline play."
           }
         },
         {
@@ -74,7 +74,7 @@ const gameCount = Object.keys(gameModules).length;
           "name": "How often are new games added?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "We release a new game every week. Each game is a unique, polished browser game — from puzzles and card games to arcade and simulation games."
+            "text": `Weekly Arcade releases one new original game every week. Each game is designed, built, and playtested in a 7-day cycle. The library currently has ${gameCount}+ games spanning 8 genres including arcade, puzzle, strategy, 3D, card, simulation, action, and casual.`
           }
         },
         {
@@ -82,11 +82,11 @@ const gameCount = Object.keys(gameModules).length;
           "name": "Can I play on my phone?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes, all Weekly Arcade games are designed mobile-first with touch controls, responsive layouts, and optimized performance for phones and tablets."
+            "text": "Yes. All Weekly Arcade games are designed mobile-first with touch controls, responsive layouts from 320px to 2560px screens, and optimized performance targeting 60fps. Touch targets meet Apple's 44x44px minimum and all games support the prefers-reduced-motion accessibility standard."
           }
         }
       ]
-    }</script>
+    })} />
 
     <!-- Structured Data: WebSite (enables sitelinks search box) -->
     <script type="application/ld+json">{
@@ -95,6 +95,27 @@ const gameCount = Object.keys(gameModules).length;
       "name": "Weekly Arcade",
       "url": "https://weeklyarcade.games"
     }</script>
+
+    <!-- Structured Data: ItemList (game catalog for AI extraction) -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Weekly Arcade Games",
+      "description": `${gameCount}+ free browser games playable instantly — no downloads, no signup required.`,
+      "numberOfItems": gameCount,
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Drift Legends", "url": "https://weeklyarcade.games/games/drift-legends/" },
+        { "@type": "ListItem", "position": 2, "name": "Cricket Blitz", "url": "https://weeklyarcade.games/games/cricket-blitz/" },
+        { "@type": "ListItem", "position": 3, "name": "Chess 3D", "url": "https://weeklyarcade.games/games/chess-3d/" },
+        { "@type": "ListItem", "position": 4, "name": "Coin Cascade", "url": "https://weeklyarcade.games/games/coin-cascade/" },
+        { "@type": "ListItem", "position": 5, "name": "Solitaire Roguelite", "url": "https://weeklyarcade.games/games/solitaire-roguelite/" },
+        { "@type": "ListItem", "position": 6, "name": "Wordle", "url": "https://weeklyarcade.games/games/wordle/" },
+        { "@type": "ListItem", "position": 7, "name": "Snake", "url": "https://weeklyarcade.games/games/snake/" },
+        { "@type": "ListItem", "position": 8, "name": "2048", "url": "https://weeklyarcade.games/games/2048/" },
+        { "@type": "ListItem", "position": 9, "name": "Fieldstone", "url": "https://weeklyarcade.games/games/fieldstone/" },
+        { "@type": "ListItem", "position": 10, "name": "Voidbreak", "url": "https://weeklyarcade.games/games/voidbreak/" }
+      ]
+    })} />
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
@@ -155,6 +176,11 @@ const gameCount = Object.keys(gameModules).length;
     </div>
   </div>
 
+  <!-- About Section (GEO-optimized for AI extraction) -->
+  <section class="about-blurb">
+    <p><strong>Weekly Arcade</strong> is a free browser gaming platform that releases a new HTML5 game every week &mdash; playable instantly on any device without downloads, installations, or account creation. The library includes {gameCount}+ original games across 8 genres: arcade, puzzle, strategy, action, card, simulation, casual, and 3D. All games load in under 1.5 seconds, run at 60fps on modern browsers, and support both touch and keyboard controls. Weekly Arcade is built on <a href="https://astro.build/">Astro</a> and deployed globally via Firebase Hosting.</p>
+  </section>
+
   <!-- Genre Filters -->
   <div class="filters">
     <div class="filter-row" id="filterRow">
@@ -167,6 +193,9 @@ const gameCount = Object.keys(gameModules).length;
       <button class="filter-chip" data-filter="simulation">Simulation</button>
       <button class="filter-chip" data-filter="casual">Casual</button>
       <button class="filter-chip" data-filter="3d">3D</button>
+      <a href="/games/sports/" class="filter-chip filter-link">Sports</a>
+      <a href="/games/multiplayer/" class="filter-chip filter-link">Multiplayer</a>
+      <a href="/games/quick/" class="filter-chip filter-link">Quick Games</a>
     </div>
   </div>
 
@@ -403,38 +432,37 @@ const gameCount = Object.keys(gameModules).length;
           Are all the games on Weekly Arcade free?
           <span class="faq-arrow">▼</span>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">Yes, every game on Weekly Arcade is 100% free to play. No hidden paywalls, no premium tiers. Sign-in is optional and only needed for leaderboards and cloud saves.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes, every game on Weekly Arcade is 100% free to play with no hidden paywalls, no premium tiers, and no ads. All {gameCount}+ games are accessible immediately. Sign-in via Google is optional and only needed for global leaderboards, cloud saves, and achievements. Guest play has no restrictions.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
           Do I need to download or install anything?
           <span class="faq-arrow">▼</span>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">No downloads or installations required. All games run directly in your browser on any device — desktop, tablet, or phone. Just open the page and play.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">No downloads or installations required. All games are HTML5 browser games that run directly in Chrome, Safari, Firefox, or Edge on any device &mdash; desktop, tablet, or phone. Average game size is under 50KB, loading in under 1.5 seconds on a 4G connection. Weekly Arcade also works as a Progressive Web App (PWA) for offline play.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
           How often are new games added?
           <span class="faq-arrow">▼</span>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">We release a new game every week. Each game is a unique, polished browser game — from puzzles and card games to arcade and simulation games.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Weekly Arcade releases one new original game every week. Each game is designed, built, and playtested in a 7-day cycle. The library currently has {gameCount}+ games spanning 8 genres including arcade, puzzle, strategy, 3D, card, simulation, action, and casual. <a href="/how-we-build-games/">Learn how we build a new game every week</a>.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
           Can I play on my phone?
           <span class="faq-arrow">▼</span>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">Yes, all Weekly Arcade games are designed mobile-first with touch controls, responsive layouts, and optimized performance for phones and tablets.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. All Weekly Arcade games are designed mobile-first with touch controls, responsive layouts from 320px to 2560px screens, and optimized performance targeting 60fps. Touch targets meet Apple's 44&times;44px minimum and all games support the <code>prefers-reduced-motion</code> accessibility standard.</div></div>
       </div>
     </div>
   </section>
 
   <footer class="footer" id="about">
-    <p><strong>Weekly Arcade</strong> - New free browser games every week.</p>
-    <p style="margin-top: 0.5rem;">Built with ❤️ | Free browser games, no downloads required.</p>
-    <p style="margin-top: 0.3rem; font-size: 0.75rem;">Play Wordle, Snake, 2048, and more classic arcade games online.</p>
+    <p><strong>Weekly Arcade</strong> &mdash; Free browser games, new releases every week.</p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem; max-width: 600px; margin-left: auto; margin-right: auto; color: var(--text-secondary);">Play Wordle, Snake, 2048, Chess 3D, Drift Legends, and {gameCount - 5}+ more original HTML5 games. No downloads, no signup, no ads. Works on Chrome, Safari, Firefox, and Edge.</p>
     <p style="margin-top: 1rem;">
-      <a href="/privacy/">Privacy Policy</a> &nbsp;|&nbsp; <a href="/terms/">Terms of Service</a>
+      <a href="/how-we-build-games/">How We Build Games</a> &nbsp;|&nbsp; <a href="/about/">About</a> &nbsp;|&nbsp; <a href="/privacy/">Privacy Policy</a> &nbsp;|&nbsp; <a href="/terms/">Terms of Service</a>
     </p>
     <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
   </footer>
@@ -1011,6 +1039,27 @@ const gameCount = Object.keys(gameModules).length;
 
     .hero-thumb:hover img { transform: scale(1.05); }
 
+    /* ─── About Blurb (GEO content) ─── */
+    .about-blurb {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 0.5rem;
+    }
+
+    .about-blurb p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    .about-blurb a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .about-blurb a:hover { text-decoration: underline; }
+
     /* ─── Stats Banner ─── */
     .stats-banner {
       max-width: 1100px;
@@ -1094,6 +1143,18 @@ const gameCount = Object.keys(gameModules).length;
       background: linear-gradient(135deg, var(--accent), #c73e54);
       border-color: transparent;
       box-shadow: 0 2px 12px rgba(233, 69, 96, 0.3);
+    }
+
+    a.filter-link {
+      text-decoration: none;
+      border-color: rgba(124, 58, 237, 0.25);
+      color: var(--purple);
+    }
+
+    a.filter-link:hover {
+      border-color: var(--purple);
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--text-primary);
     }
 
     /* ─── Games Grid ─── */

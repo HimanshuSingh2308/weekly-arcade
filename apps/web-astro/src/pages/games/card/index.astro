@@ -1,0 +1,29 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - free card game with Joker powers', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+  { slug: 'memory-match', title: 'Memory Match', description: 'Flip cards and find matching pairs. Test your memory!', thumbnail: 'memory-match.svg', alt: 'Memory Match - free card matching puzzle game', tags: [{ label: 'Casual' }, { label: 'Memory' }] },
+];
+---
+
+<CategoryPage
+  category="Card"
+  categorySlug="card"
+  title="Free Card Games Online — Play Solitaire & More | Weekly Arcade"
+  metaDescription="Play free card games online in your browser — no downloads required. Solitaire with roguelite mechanics, memory matching, and more. New card games added regularly."
+  keywords="free card games, online card games, free solitaire, solitaire online, card games no download, browser card games, free card games online"
+  h1="Free Card Games"
+  introText="Play <strong>free card games</strong> instantly in your browser. From classic Klondike Solitaire with a roguelite twist to memory card matching — all with no downloads, no signup, and no ads."
+  seoHeading="Play Free Card Games Online"
+  seoText="Card games are among the most popular browser games worldwide, with solitaire alone played by over 35 million people daily. Weekly Arcade's card games add modern twists to classic formats — roguelite mechanics, power-ups, and global leaderboards — while keeping the instant-play simplicity that makes card games perfect for browser play."
+  seoBullets={[
+    '<strong>Roguelite Solitaire</strong> — Classic Klondike with rule-breaking Joker cards in <a href="/games/solitaire-roguelite/">Solitaire Roguelite</a>',
+    '<strong>Memory card matching</strong> — Test and sharpen your recall with <a href="/games/memory-match/">Memory Match</a>',
+    '<strong>No account needed</strong> — Play instantly as a guest, or sign in for leaderboards and cloud saves',
+    '<strong>Mobile-optimized</strong> — Touch-friendly card interactions designed for phones and tablets',
+    '<strong>Daily challenges</strong> — Compete on daily leaderboards for the highest card game scores',
+    '<strong>Works offline</strong> — Card games are cached via PWA for play without internet',
+  ]}
+  games={games}
+/>

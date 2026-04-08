@@ -1,0 +1,37 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'wordle', title: 'Wordle', description: 'Guess the 5-letter word in 6 tries. A new word every day!', thumbnail: 'wordle.svg', alt: 'Wordle - play offline word puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Daily' }] },
+  { slug: 'snake', title: 'Snake', description: "Classic snake game. Eat, grow, don't hit the walls!", thumbnail: 'snake.svg', alt: 'Snake - play offline classic arcade game', tags: [{ label: 'Arcade' }, { label: 'Classic' }] },
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - play offline number puzzle game', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'memory-match', title: 'Memory Match', description: 'Flip cards and find matching pairs. Test your memory!', thumbnail: 'memory-match.svg', alt: 'Memory Match - play offline card matching game', tags: [{ label: 'Casual' }, { label: 'Memory' }] },
+  { slug: 'stack-tower', title: 'Stack Tower', description: 'Stack blocks with perfect timing to build the tallest tower!', thumbnail: 'stack-tower.svg', alt: 'Stack Tower - play offline stacking game', tags: [{ label: 'Arcade' }, { label: 'Timing' }] },
+  { slug: 'coin-cascade', title: 'Coin Cascade', description: 'Drop coins onto a physics pusher to cascade prizes off the edge!', thumbnail: 'coin-cascade.svg', alt: 'Coin Cascade - play offline physics arcade game', tags: [{ label: 'Arcade' }, { label: 'Physics' }] },
+  { slug: 'solitaire-roguelite', title: 'Solitaire Roguelite', description: 'Classic Solitaire with rule-breaking Joker cards. How high can you score?', thumbnail: 'solitaire-roguelite.svg', alt: 'Solitaire Roguelite - play offline card game', tags: [{ label: 'Card' }, { label: 'Roguelite' }] },
+  { slug: 'fieldstone', title: 'Fieldstone', description: 'Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!', thumbnail: 'fieldstone.svg', alt: 'Fieldstone - play offline strategy puzzle game', tags: [{ label: 'Strategy' }, { label: 'Puzzle' }] },
+];
+---
+
+<CategoryPage
+  category="Offline"
+  categorySlug="offline"
+  title="Offline Browser Games — Play Without Internet (PWA) | Weekly Arcade"
+  metaDescription="Play browser games offline — no internet needed after first visit. Install Weekly Arcade as a PWA for instant access. Puzzle, arcade, and card games work on planes, subways, and anywhere."
+  keywords="offline browser games, games without internet, PWA games, play games offline, no internet games, offline web games, progressive web app games, games for airplane mode"
+  h1="Offline Browser Games"
+  introText="Play <strong>browser games offline</strong> &mdash; no internet connection needed after your first visit. Weekly Arcade is a <strong>Progressive Web App (PWA)</strong> that caches games locally so you can play on planes, subways, or anywhere without wifi."
+  seoHeading="How Offline Browser Games Work"
+  seoText="Weekly Arcade uses a Service Worker to cache game files locally on your device after the first visit. Once cached, games load instantly without an internet connection. This technology — called a Progressive Web App (PWA) — is supported by Chrome, Safari, Firefox, and Edge on both desktop and mobile. According to web.dev, PWAs combine the reach of the web with the experience of native apps, including offline support, home screen installation, and push notifications."
+  seoBullets={[
+    '<strong>Install to home screen</strong> — Add Weekly Arcade to your phone or desktop for app-like access without an app store',
+    '<strong>Automatic caching</strong> — Games are cached via Service Worker after first visit (average game size: under 50KB)',
+    '<strong>Works everywhere</strong> — Play on airplanes, subways, camping, or anywhere without wifi or data',
+    '<strong>Instant loading</strong> — Cached games load in under 0.5 seconds — faster than online',
+    '<strong>Sync when online</strong> — Scores and progress sync to the cloud automatically when you reconnect',
+    '<strong>All browsers supported</strong> — PWA works on Chrome, Safari, Firefox, and Edge on desktop, iOS, and Android',
+    '<strong>No app store needed</strong> — Skip the App Store or Play Store — install directly from your browser',
+    '<strong>Auto-updates</strong> — New games and updates are downloaded automatically when you go online',
+  ]}
+  games={games}
+/>

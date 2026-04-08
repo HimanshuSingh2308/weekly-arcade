@@ -1,0 +1,37 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'memory-match', title: 'Memory Match', description: 'Flip cards and find matching pairs. Test your memory!', thumbnail: 'memory-match.svg', alt: 'Memory Match - free family-friendly card matching game', tags: [{ label: 'Casual' }, { label: 'Memory' }] },
+  { slug: 'wordle', title: 'Wordle', description: 'Guess the 5-letter word in 6 tries. A new word every day!', thumbnail: 'wordle.svg', alt: 'Wordle - free family-friendly daily word puzzle', tags: [{ label: 'Puzzle' }, { label: 'Daily' }] },
+  { slug: 'snake', title: 'Snake', description: "Classic snake game. Eat, grow, don't hit the walls!", thumbnail: 'snake.svg', alt: 'Snake - free classic game for kids and families', tags: [{ label: 'Arcade' }, { label: 'Classic' }] },
+  { slug: '2048', title: '2048', description: 'Slide tiles and merge numbers to reach 2048.', thumbnail: '2048.svg', alt: '2048 - free number puzzle game for all ages', tags: [{ label: 'Puzzle' }, { label: 'Strategy' }] },
+  { slug: 'stack-tower', title: 'Stack Tower', description: 'Stack blocks with perfect timing to build the tallest tower!', thumbnail: 'stack-tower.svg', alt: 'Stack Tower - free stacking game for kids', tags: [{ label: 'Arcade' }, { label: 'Timing' }] },
+  { slug: 'coin-cascade', title: 'Coin Cascade', description: 'Drop coins onto a physics pusher to cascade prizes off the edge!', thumbnail: 'coin-cascade.svg', alt: 'Coin Cascade - free family-friendly physics arcade game', tags: [{ label: 'Arcade' }, { label: 'Physics' }] },
+  { slug: 'chess-3d', title: 'Chess 3D', description: '3D chess with smart AI! 4 difficulty levels, ELO rating, rotatable board.', thumbnail: 'chess-3d.svg', alt: 'Chess 3D - free educational chess game for kids and adults', tags: [{ label: 'Strategy' }, { label: '3D' }] },
+  { slug: 'tiny-tycoon', title: 'Tiny Tycoon', description: 'Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!', thumbnail: 'tiny-tycoon.svg', alt: 'Tiny Tycoon - free business simulation game for kids', tags: [{ label: 'Simulation' }, { label: 'Idle' }] },
+];
+---
+
+<CategoryPage
+  category="Family"
+  categorySlug="family"
+  title="Free Family & Kids Browser Games — Safe, Fun, No Downloads | Weekly Arcade"
+  metaDescription="Free browser games safe for kids and families. No ads, no violence, no downloads. Puzzles, memory games, chess, and classic arcade — playable instantly on any device."
+  keywords="browser games for kids, family games online, free kids games no download, safe games for children, educational browser games, family friendly browser games, games for all ages"
+  h1="Free Family & Kids Games"
+  introText="Safe, fun <strong>browser games for kids and families</strong> &mdash; no ads, no violence, no downloads, and no account required. Every game is designed for all ages with simple controls, colorful visuals, and family-friendly content."
+  seoHeading="Safe Browser Games for Kids and Families"
+  seoText="All games in this collection are appropriate for players of all ages. There is no violent content, no advertising, no chat features, and no in-app purchases. According to the American Academy of Pediatrics, age-appropriate games that involve problem-solving can support cognitive development. These games feature simple one-tap controls, WCAG 2.1 AA color contrast, and reduced-motion support for accessibility."
+  seoBullets={[
+    '<strong>Memory and brain training</strong> — Sharpen recall with <a href="/games/memory-match/">Memory Match</a> card-flipping puzzles',
+    '<strong>Word learning</strong> — Build vocabulary with daily <a href="/games/wordle/">Wordle</a> word challenges',
+    '<strong>Math and logic</strong> — Practice number skills with <a href="/games/2048/">2048</a> tile merging',
+    '<strong>Chess for beginners</strong> — Learn chess with 4 difficulty levels in <a href="/games/chess-3d/">Chess 3D</a>',
+    '<strong>Classic arcade fun</strong> — Timeless <a href="/games/snake/">Snake</a> and <a href="/games/stack-tower/">Stack Tower</a> for all ages',
+    '<strong>Business basics</strong> — Run a shop and learn money management in <a href="/games/tiny-tycoon/">Tiny Tycoon</a>',
+    '<strong>No account needed</strong> — Kids can play instantly without creating accounts or sharing personal information',
+    '<strong>Works on school devices</strong> — Runs in any browser including Chromebooks and iPads',
+  ]}
+  games={games}
+/>

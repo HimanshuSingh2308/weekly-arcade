@@ -1,0 +1,30 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'voidbreak', title: 'Voidbreak', description: 'Smash asteroids, upgrade your ship, go deeper. How far can you get?', thumbnail: 'voidbreak.svg', alt: 'Voidbreak - free space shooter action game', tags: [{ label: 'Action' }, { label: 'Roguelite' }] },
+  { slug: 'chaos-kitchen', title: 'Chaos Kitchen', description: 'Run a chaotic kitchen! Fulfill orders and survive chaos events!', thumbnail: 'chaos-kitchen.svg', alt: 'Chaos Kitchen - free action cooking game', tags: [{ label: 'Action' }, { label: 'Time Management' }] },
+  { slug: 'cricket-blitz', title: 'Cricket Blitz', description: '3D IPL-style cricket! Bat, bowl, win the match. Toss, powerplay, super over!', thumbnail: 'cricket-blitz.svg', alt: 'Cricket Blitz - free 3D action sports game', tags: [{ label: 'Sports' }, { label: '3D' }], isNew: true },
+];
+---
+
+<CategoryPage
+  category="Action"
+  categorySlug="action"
+  title="Free Action Games Online — Shooters & Fast-Paced Fun | Weekly Arcade"
+  metaDescription="Play free action games online — no downloads required. Space shooters, fast-paced cooking, and 3D sports with roguelite upgrades. Adrenaline-pumping browser games."
+  keywords="free action games, online action games, free shooter games, action games no download, browser action games, fast paced games online, free action games browser"
+  h1="Free Action Games"
+  introText="Play <strong>free action games</strong> that get your heart pumping. Space shooters with roguelite upgrades, chaotic kitchen survival, and competitive 3D sports &mdash; fast-paced gameplay, instant loading, no downloads."
+  seoHeading="Play Free Action Games Online"
+  seoText="Action games demand quick reflexes and fast decision-making. Weekly Arcade's action collection features roguelite upgrade systems, escalating difficulty curves, and global leaderboards so every session pushes you to improve. All games run at 60fps with responsive touch and keyboard controls."
+  seoBullets={[
+    '<strong>Space roguelite</strong> — Smash asteroids and upgrade your ship in <a href="/games/voidbreak/">Voidbreak</a> with different builds each run',
+    '<strong>Kitchen chaos</strong> — Race against the clock and survive random events in <a href="/games/chaos-kitchen/">Chaos Kitchen</a>',
+    '<strong>3D sports action</strong> — Play IPL-style cricket with batting, bowling, and super overs in <a href="/games/cricket-blitz/">Cricket Blitz</a>',
+    '<strong>Roguelite progression</strong> — Every run offers different upgrade choices for high replayability',
+    '<strong>60fps performance</strong> — Smooth gameplay on desktop and mobile browsers',
+    '<strong>Global competition</strong> — Daily and weekly leaderboards to prove your skills',
+  ]}
+  games={games}
+/>

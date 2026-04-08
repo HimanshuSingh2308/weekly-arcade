@@ -10,5 +10,14 @@
   "accentColor": "#0a0a2e",
   "genres": ["Action", "Arcade", "Roguelite"],
   "ratingValue": "4.8",
-  "ratingCount": "500"
+  "ratingCount": "500",
+  "tips": [
+    "Prioritize movement upgrades early — dodging matters more than damage in the first few waves",
+    "Small asteroids are faster but give less XP — focus on medium-sized ones for efficient clearing",
+    "Save your special ability for dense asteroid clusters rather than single targets",
+    "Keep moving in wide circles to avoid getting cornered by asteroid spawns",
+    "Shield upgrades are underrated — they give you breathing room for risky plays"
+  ],
+  "similarTo": ["Asteroids", "Geometry Wars", "Hades", "Vampire Survivors"],
+  "howToPlay": "Steer your ship with arrow keys or touch controls to dodge and shoot asteroids. Collect upgrade tokens to improve weapons, speed, or shields. Each wave gets harder. Survive as long as possible and go deeper into the void."
 }

@@ -10,5 +10,14 @@
   "accentColor": "#FFD700",
   "genres": ["Arcade", "Physics", "Casual"],
   "ratingValue": "4.8",
-  "ratingCount": "500"
+  "ratingCount": "500",
+  "tips": [
+    "Drop coins near the center of the pusher for the best cascade potential",
+    "Wait for the pusher to pull back before dropping — timing the cycle maximizes push distance",
+    "Target clusters of coins near the edge for chain reaction cascades",
+    "Special coins are worth more — prioritize dropping near them to push them off",
+    "Short, rapid drops are less effective than well-timed single drops"
+  ],
+  "similarTo": ["Coin Dozer", "Coin Master", "Tipping Point", "Penny Falls"],
+  "howToPlay": "Tap or click to drop a coin onto the moving pusher platform. The pusher slides back and forth, pushing coins toward the edge. When coins fall off the edge, you score points. Chain reactions and special coins multiply your score."
 }

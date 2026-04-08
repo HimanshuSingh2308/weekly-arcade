@@ -12,5 +12,14 @@
   "ratingValue": "4.8",
   "ratingCount": "620",
   "category": "strategy",
-  "rendering": "webgl"
+  "rendering": "webgl",
+  "tips": [
+    "Control the center of the board (e4, d4, e5, d5) in the opening — central pieces are more powerful",
+    "Develop your knights and bishops before moving the queen out too early",
+    "Castle early to protect your king and connect your rooks",
+    "On Easy AI, practice basic tactics like forks and pins before moving to harder levels",
+    "Use the rotatable 3D board to check for threats from angles you might miss in a flat view"
+  ],
+  "similarTo": ["Chess.com", "Lichess", "Chess Titans", "Battle Chess"],
+  "howToPlay": "Click a piece to select it, then click a highlighted square to move. The game follows standard chess rules. Choose from 4 AI difficulty levels or play against a friend online. Your ELO rating adjusts after each game."
 }

@@ -10,5 +10,14 @@
   "accentColor": "#1a5c2a",
   "genres": ["Card", "Puzzle", "Roguelite"],
   "ratingValue": "4.8",
-  "ratingCount": "500"
+  "ratingCount": "500",
+  "tips": [
+    "Save Joker cards for moments when you're completely stuck — they're your most powerful resource",
+    "Always uncover face-down cards first before making moves with face-up cards",
+    "Build tableau columns in alternating colors and descending order to maximize options",
+    "Empty columns are extremely valuable — fill them strategically with Kings",
+    "Plan multiple moves ahead instead of immediately playing the first available card"
+  ],
+  "similarTo": ["Microsoft Solitaire", "Spider Solitaire", "FreeCell", "Klondike"],
+  "howToPlay": "Play Klondike Solitaire by moving cards between columns in descending order with alternating colors. Move Aces to foundation piles and build up to King. Joker cards can break normal rules — use them strategically for maximum score."
 }

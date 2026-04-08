@@ -10,5 +10,14 @@
   "accentColor": "#e94560",
   "genres": ["3D", "Platformer", "Collect-a-thon"],
   "ratingValue": "4.7",
-  "ratingCount": "400"
+  "ratingCount": "400",
+  "tips": [
+    "Use the Latch ability to swing between platforms — momentum carries you further",
+    "Collect Sparks in clusters rather than going for isolated ones first",
+    "Look for hidden areas behind and below visible platforms",
+    "Master the swing release timing — letting go at the peak of a swing gives maximum distance",
+    "Explore every corner of each level before moving on — some Sparks are well hidden"
+  ],
+  "similarTo": ["Super Mario 64", "A Hat in Time", "Marble It Up", "Human Fall Flat"],
+  "howToPlay": "Move your character through 3D levels using keyboard or touch controls. Use the Latch ability to grab onto surfaces and swing across gaps. Collect all 50 Sparks scattered across the level to complete the game."
 }

@@ -10,5 +10,14 @@
   "accentColor": "#e94560",
   "genres": ["Casual", "Memory", "Brain Training"],
   "ratingValue": "4.5",
-  "ratingCount": "500"
+  "ratingCount": "500",
+  "tips": [
+    "Flip cards in a systematic pattern — start from corners and work inward",
+    "When you flip a card, mentally note its position even if it doesn't match",
+    "Focus on remembering 2-3 card locations at a time rather than the entire board",
+    "Match the cards you're most confident about first to reduce the board quickly",
+    "Use power-ups strategically when the board gets overwhelming, not immediately"
+  ],
+  "similarTo": ["Simon", "Mahjong", "Concentration", "Brain Age"],
+  "howToPlay": "Flip two cards per turn to reveal their faces. If the cards match, they stay face-up and you score points. If they don't match, they flip back over. Memorize card positions and match all pairs to complete the board."
 }

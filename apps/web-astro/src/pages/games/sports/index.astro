@@ -1,0 +1,29 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'cricket-blitz', title: 'Cricket Blitz', description: '3D IPL-style cricket! Bat, bowl, win the match. Toss, powerplay, super over!', thumbnail: 'cricket-blitz.svg', alt: 'Cricket Blitz - free 3D cricket browser game with IPL-style gameplay', tags: [{ label: 'Sports' }, { label: '3D' }, { label: 'Arcade' }], isNew: true },
+  { slug: 'drift-legends', title: 'Drift Legends', description: '3D arcade racing with story mode, drift mechanics, and real-time multiplayer. 15 tracks across 5 chapters!', thumbnail: 'drift-legends.svg', alt: 'Drift Legends - free 3D racing browser game with multiplayer', tags: [{ label: 'Racing' }, { label: '3D' }, { label: 'Multiplayer' }] },
+];
+---
+
+<CategoryPage
+  category="Sports"
+  categorySlug="sports"
+  title="Free Sports & Racing Browser Games — Play Online | Weekly Arcade"
+  metaDescription="Play free sports and racing browser games online — no downloads required. 3D cricket, arcade racing with drift mechanics, and multiplayer competition. New sports games added regularly."
+  keywords="free sports browser games, online sports games, free racing games, cricket game online, racing game browser, free sports games no download, 3D sports games online"
+  h1="Free Sports & Racing Games"
+  introText="Play <strong>free sports and racing browser games</strong> with full 3D graphics, competitive multiplayer, and global leaderboards. From IPL-style cricket to arcade drift racing &mdash; all running instantly in your browser with no downloads."
+  seoHeading="Play Free Sports Games Online"
+  seoText="Weekly Arcade's sports collection delivers console-quality 3D experiences directly in your browser. Built with Babylon.js for smooth 60fps rendering, these games feature real physics, competitive multiplayer, and global leaderboards. According to Statista, sports is one of the top 3 most popular gaming genres worldwide, and browser-based sports games remove the biggest barrier to entry: downloads and installations."
+  seoBullets={[
+    '<strong>3D cricket</strong> — Full IPL-style match experience in <a href="/games/cricket-blitz/">Cricket Blitz</a> with batting, bowling, toss, powerplay, and super over mechanics',
+    '<strong>Arcade racing</strong> — Drift through 15 tracks across 5 story chapters in <a href="/games/drift-legends/">Drift Legends</a> with real-time multiplayer',
+    '<strong>Real 3D graphics</strong> — Powered by Babylon.js for smooth rendering on desktop and mobile browsers',
+    '<strong>Multiplayer competition</strong> — Race against real opponents and climb global leaderboards',
+    '<strong>Mobile-optimized</strong> — Touch controls designed for phones and tablets with 44x44px minimum targets',
+    '<strong>No downloads</strong> — Every game loads in under 1.5 seconds on a 4G connection',
+  ]}
+  games={games}
+/>

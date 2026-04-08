@@ -29,6 +29,9 @@ export default defineConfig({
         } else if (item.url.includes('/privacy/') || item.url.includes('/terms/')) {
           item.priority = 0.3;
           item.changefreq = 'yearly';
+        } else if (item.url.includes('/how-we-build-games/') || item.url.includes('/best-browser-games-2026/')) {
+          item.priority = 0.8;
+          item.changefreq = 'monthly';
         } else if (item.url.includes('/profile/')) {
           item.priority = 0.5;
           item.changefreq = 'monthly';

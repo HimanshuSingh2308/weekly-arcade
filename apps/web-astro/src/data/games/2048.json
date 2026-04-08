@@ -12,5 +12,14 @@
   "ratingValue": "4.9",
   "ratingCount": "1200",
   "category": "puzzle",
-  "rendering": "dom"
+  "rendering": "dom",
+  "tips": [
+    "Pick one corner (top-left works well) and keep your highest tile there permanently",
+    "Never swipe in the direction that moves your highest tile away from its corner",
+    "Build a descending chain along one edge — e.g., 512-256-128-64 in a row",
+    "Avoid placing large tiles in the center of the board where they block merges",
+    "When stuck, swipe in your non-preferred direction as few times as possible"
+  ],
+  "similarTo": ["Threes!", "2048 Cupcakes", "1024", "Merge games"],
+  "howToPlay": "Swipe or use arrow keys to slide all tiles in one direction. When two tiles with the same number collide, they merge into one tile with double the value. Create a tile with the number 2048 to win. Your score increases with every merge."
 }

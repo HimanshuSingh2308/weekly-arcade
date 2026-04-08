@@ -10,5 +10,14 @@
   "accentColor": "#ff6b35",
   "genres": ["Action", "Time Management", "Cooking"],
   "ratingValue": "4.6",
-  "ratingCount": "650"
+  "ratingCount": "650",
+  "tips": [
+    "Read the full order before starting — multi-step orders are easy to mess up if you rush",
+    "Handle chaos events immediately — ignoring them causes cascading failures",
+    "Batch similar orders together to save time on ingredient prep",
+    "Keep your counter clear by serving completed orders immediately",
+    "Upgrade your kitchen tools between rounds to handle harder orders"
+  ],
+  "similarTo": ["Overcooked", "Cooking Mama", "Diner Dash", "Cook Serve Delicious"],
+  "howToPlay": "Read customer orders and prepare dishes by selecting the right ingredients in the correct sequence. Serve orders before the timer runs out. Survive random chaos events like fires, spills, and equipment failures. Complete all orders to advance to harder levels."
 }

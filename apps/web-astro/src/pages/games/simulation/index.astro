@@ -1,0 +1,30 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'tiny-tycoon', title: 'Tiny Tycoon', description: 'Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!', thumbnail: 'tiny-tycoon.svg', alt: 'Tiny Tycoon - free boba tea shop business simulation game', tags: [{ label: 'Simulation' }, { label: 'Idle' }] },
+  { slug: 'chaos-kitchen', title: 'Chaos Kitchen', description: 'Run a chaotic kitchen! Fulfill orders and survive chaos events!', thumbnail: 'chaos-kitchen.svg', alt: 'Chaos Kitchen - free cooking restaurant simulation game', tags: [{ label: 'Action' }, { label: 'Time Management' }] },
+  { slug: 'fieldstone', title: 'Fieldstone', description: 'Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!', thumbnail: 'fieldstone.svg', alt: 'Fieldstone - free kingdom builder simulation game', tags: [{ label: 'Strategy' }, { label: 'Puzzle' }] },
+];
+---
+
+<CategoryPage
+  category="Simulation"
+  categorySlug="simulation"
+  title="Free Simulation Games Online — Business & Tycoon | Weekly Arcade"
+  metaDescription="Play free simulation games online — no downloads required. Run a boba tea shop, manage a chaotic kitchen, or build a kingdom. Business sims and tycoon games in your browser."
+  keywords="free simulation games, online simulation games, tycoon games online, business simulation games, free tycoon games, idle games browser, management games no download"
+  h1="Free Simulation Games"
+  introText="Play <strong>free simulation games</strong> in your browser. Run businesses, manage kitchens, and build kingdoms &mdash; all with progression systems, upgrades, and leaderboards. No downloads, no signup."
+  seoHeading="Play Free Simulation & Tycoon Games Online"
+  seoText="Simulation and tycoon games offer deep progression loops in short sessions. Weekly Arcade's sims are designed for 3-10 minute play sessions with meaningful upgrade choices and satisfying resource management. Each game features a unique economy system with upgrades that change how you play."
+  seoBullets={[
+    '<strong>Business tycoon</strong> — Run a boba tea shop with 60-second days in <a href="/games/tiny-tycoon/">Tiny Tycoon</a>',
+    '<strong>Kitchen management</strong> — Survive chaos events while fulfilling orders in <a href="/games/chaos-kitchen/">Chaos Kitchen</a>',
+    '<strong>Kingdom builder</strong> — Tetris meets strategy in <a href="/games/fieldstone/">Fieldstone</a> with resource harvesting and defense',
+    '<strong>Upgrade systems</strong> — Every game features meaningful progression with unlockable upgrades',
+    '<strong>Short sessions</strong> — 3-10 minute sessions perfect for quick breaks',
+    '<strong>Leaderboards</strong> — Compete globally on daily and weekly rankings',
+  ]}
+  games={games}
+/>

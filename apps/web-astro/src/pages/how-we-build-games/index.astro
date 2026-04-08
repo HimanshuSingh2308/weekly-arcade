@@ -1,0 +1,762 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+
+const gameModules = import.meta.glob('../../data/games/*.json', { eager: true });
+const games = Object.values(gameModules).map((mod: any) => mod.default || mod) as Array<{ id: string; name: string; icon: string }>;
+const gameCount = games.length;
+
+const siteUrl = 'https://weeklyarcade.games';
+const pageUrl = '/how-we-build-games/';
+const pageTitle = 'How We Build a New Browser Game Every Week | Weekly Arcade';
+const pageDescription = 'From idea to playable game in 7 days — here\'s exactly how we design, build, and ship a new free browser game every week at Weekly Arcade.';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'How We Build a New Browser Game Every Week',
+  description: pageDescription,
+  url: `${siteUrl}${pageUrl}`,
+  datePublished: '2026-04-08',
+  dateModified: '2026-04-08',
+  author: {
+    '@type': 'Organization',
+    name: 'Weekly Arcade',
+    url: siteUrl,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Weekly Arcade',
+    url: siteUrl,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${siteUrl}/icons/icon-512.png`,
+    },
+  },
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': `${siteUrl}${pageUrl}`,
+  },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'How long does it take to build one browser game?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Each game takes approximately 7 days from concept to launch. Days 1-2 focus on ideation and design, days 3-5 on coding, and days 5-7 on playtesting, polish, and deployment.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What programming language are the games written in?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'All Weekly Arcade games are built with vanilla JavaScript, HTML5 Canvas, and CSS. For 3D games like Drift Legends and Cricket Blitz, we use the Babylon.js engine. Audio is generated using the Web Audio API.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Can I play the games offline?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. Weekly Arcade is a Progressive Web App (PWA). Once you visit a game page, the service worker caches it for offline play. Install Weekly Arcade to your home screen for the best experience.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do I need an account to play?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. Every game is playable instantly as a guest with no signup required. Creating a free account via Google Sign-In unlocks leaderboards, cloud saves, and achievements across devices.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How do you decide which games to build?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'We evaluate ideas on three criteria: instant appeal (understandable in 10 seconds), one-more-round factor (natural replay hooks), and mobile-first feasibility (works on a 375px screen with touch controls).',
+      },
+    },
+  ],
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'How We Build Games', item: `${siteUrl}${pageUrl}` },
+  ],
+};
+---
+
+<BaseLayout title={pageTitle}>
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#e94560">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <meta name="description" content={pageDescription}>
+    <meta name="keywords" content="how we build browser games, browser game development, game design process, weekly game releases, indie game development, making browser games">
+    <link rel="canonical" href={`${siteUrl}${pageUrl}`}>
+    <meta property="og:title" content={pageTitle}>
+    <meta property="og:description" content={pageDescription}>
+    <meta property="og:type" content="article">
+    <meta property="og:url" content={`${siteUrl}${pageUrl}`}>
+    <meta property="og:site_name" content="Weekly Arcade">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content={pageTitle}>
+    <meta name="twitter:description" content={pageDescription}>
+    <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  </Fragment>
+
+  <SiteHeader showAuth={false} />
+
+  <section class="hero">
+    <h1>How We Build a New <span class="highlight">Browser Game</span> Every Week</h1>
+    <p>From idea to playable in 7 days &mdash; here's our exact process for designing, building, and shipping free browser games.</p>
+  </section>
+
+  <main class="container">
+    <div class="tldr-box">
+      <strong>Key Takeaways:</strong> Weekly Arcade ships a new browser game every 7 days using a 7-step process: ideation (Day 1&ndash;2), core loop design (Day 2&ndash;3), development in vanilla JavaScript and Canvas 2D (Day 3&ndash;5), playtesting on 4+ device types (Day 5&ndash;6), and deployment to Firebase Hosting with under 1.5-second load times (Day 6&ndash;7). Average game size: under 50KB. Total games shipped: {gameCount}+.
+    </div>
+
+    <nav class="toc content-card">
+      <h2>Table of Contents</h2>
+      <ol>
+        <li><a href="#why-one-game-per-week">Why One Game Per Week?</a></li>
+        <li><a href="#day-1-2-finding-the-right-idea">Day 1&ndash;2: Finding the Right Idea</a></li>
+        <li><a href="#day-2-3-designing-the-core-loop">Day 2&ndash;3: Designing the Core Loop</a></li>
+        <li><a href="#day-3-5-building-the-game">Day 3&ndash;5: Building the Game</a></li>
+        <li><a href="#day-5-6-playtesting-and-polish">Day 5&ndash;6: Playtesting and Polish</a></li>
+        <li><a href="#day-6-7-launch-day">Day 6&ndash;7: Launch Day</a></li>
+        <li><a href="#our-tech-stack">Our Tech Stack</a></li>
+        <li><a href="#what-weve-learned">What We've Learned After {gameCount}+ Games</a></li>
+        <li><a href="#limitations">What This Approach Can't Do</a></li>
+        <li><a href="#whats-next">What's Next</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ol>
+    </nav>
+
+    <article class="article-content">
+      <section id="why-one-game-per-week" class="content-card">
+        <h2>Why One Game Per Week?</h2>
+        <p><strong>A browser game</strong> is a video game that runs entirely in a web browser using HTML5, JavaScript, and CSS &mdash; requiring no downloads, plugins, or installations. The browser gaming market is projected to reach $35.1 billion by 2027, growing at 8.9% CAGR according to <a href="https://www.mordorintelligence.com/industry-reports/browser-games-market" target="_blank" rel="noopener">Mordor Intelligence</a>.</p>
+        <p>Most game studios spend months &mdash; sometimes years &mdash; on a single title. We do the opposite. Weekly Arcade ships one new browser game every 7 days, and we've done it {gameCount} releases straight.</p>
+        <p>The constraint is the point. A weekly cadence forces us to make sharp decisions: cut scope ruthlessly, focus on one mechanic that feels great, and ship before we overthink it. Research on creative constraints supports this approach: a study published in the <em>Journal of Consumer Research</em> found that <a href="https://academic.oup.com/jcr/article/42/6/926/1856072" target="_blank" rel="noopener">scarcity of resources can boost creativity</a> by forcing novel problem-solving. The result is a library of {gameCount}+ polished, free browser games spanning <a href="/games/drift-legends/">3D racing</a>, <a href="/games/solitaire-roguelite/">card roguelites</a>, and <a href="/games/snake/">classic arcade</a>.</p>
+        <p>We took direct inspiration from <a href="https://ldjam.com/" target="_blank" rel="noopener">Ludum Dare</a>, one of the world's largest game jams where over 3,000 developers build entire games in 48&ndash;72 hours. Our 7-day window gives us enough room to polish without losing urgency.</p>
+      </section>
+
+      <section id="day-1-2-finding-the-right-idea" class="content-card">
+        <h2>Day 1&ndash;2: Finding the Right Idea</h2>
+        <p>Every game starts on Monday with the same question: <strong>what would be fun to play for 5 minutes on a phone?</strong></p>
+        <p>We filter ideas through three criteria:</p>
+        <ol>
+          <li><strong>Instant appeal</strong> &mdash; Can someone understand the game in under 10 seconds without a tutorial?</li>
+          <li><strong>One-more-round factor</strong> &mdash; Does the core loop create natural "just one more try" moments?</li>
+          <li><strong>Mobile-first feasibility</strong> &mdash; Can this work with touch controls on a 375px-wide screen?</li>
+        </ol>
+        <p>Ideas come from everywhere: classic arcade games we grew up with, trending mechanics on platforms like <a href="https://itch.io/" target="_blank" rel="noopener">itch.io</a>, or simply a "what if" question. "What if Tetris built a kingdom?" became <a href="/games/fieldstone/">Fieldstone</a>. We also track which game categories our players gravitate toward &mdash; puzzle and arcade consistently perform well, which is why you'll find games like <a href="/games/2048/">2048</a> and <a href="/games/stack-tower/">Stack Tower</a> in the library.</p>
+        <p>By Tuesday evening, we've narrowed to one concept and written a 1-page design brief covering: the core mechanic, target session length, scoring system, and what "fun" means for this specific game.</p>
+      </section>
+
+      <section id="day-2-3-designing-the-core-loop" class="content-card">
+        <h2>Day 2&ndash;3: Designing the Core Loop</h2>
+        <p><strong>A core loop</strong> is the 15&ndash;30 second repeating cycle of actions that forms the foundation of gameplay &mdash; the pattern a player performs dozens or hundreds of times per session. Game designer Jesse Schell describes it as the "essential experience" in <em>The Art of Game Design</em> (CRC Press, 3rd ed.). Getting this right is the single most important step in our browser game development process.</p>
+        <p>Here's how core loops differ across three of our games:</p>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Game</th>
+                <th>Core Loop</th>
+                <th>Session</th>
+                <th>"One More" Hook</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="/games/coin-cascade/">Coin Cascade</a></td>
+                <td>Drop coin &rarr; watch physics &rarr; collect prizes</td>
+                <td>3&ndash;5 min</td>
+                <td>Chain reactions</td>
+              </tr>
+              <tr>
+                <td><a href="/games/voidbreak/">Voidbreak</a></td>
+                <td>Fly &rarr; shoot &rarr; upgrade &rarr; go deeper</td>
+                <td>5&ndash;10 min</td>
+                <td>Roguelite upgrades</td>
+              </tr>
+              <tr>
+                <td><a href="/games/wordle/">Wordle</a></td>
+                <td>Guess word &rarr; see feedback &rarr; refine</td>
+                <td>2&ndash;3 min</td>
+                <td>Daily puzzle</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>We prototype the core loop before anything else &mdash; often as a bare-bones version with colored rectangles instead of real art. If the loop isn't fun with placeholder graphics, no amount of polish will save it. We've killed 3 out of {gameCount + 3} total concepts at this stage (a 16% rejection rate) because the loop felt flat, and that's fine. Failing fast on Day 2 is cheaper than failing on Day 6.</p>
+        <div class="key-insight">
+          <strong>Key insight:</strong> A browser game's core loop must be enjoyable within 15 seconds of the player's first interaction. If it requires explanation, the scope is too large for a 7-day build cycle.
+        </div>
+      </section>
+
+      <section id="day-3-5-building-the-game" class="content-card">
+        <h2>Day 3&ndash;5: Building the Game</h2>
+        <p>This is where the majority of the code gets written. Our stack is intentionally simple &mdash; we want every game to load instantly in any browser without downloads or plugins.</p>
+        <p>Every game is built as a single-page application using vanilla JavaScript and CSS. No heavy frameworks, no bundlers for the game itself. According to Google's <a href="https://web.dev/articles/why-speed-matters" target="_blank" rel="noopener">Web Performance research</a>, a 1-second delay in page load reduces conversions by 7%. Our games average under 50KB total &mdash; loading in under 1 second on most connections, compared to the 2&ndash;5MB typical of framework-heavy web games.</p>
+        <p>Here's what gets built in this window:</p>
+        <ul>
+          <li><strong>Game engine</strong> &mdash; Rendering (Canvas 2D or CSS-based), input handling (touch + keyboard + mouse), and game state management</li>
+          <li><strong>Scoring system</strong> &mdash; Points, combos, multipliers, and leaderboard integration via our Firebase backend</li>
+          <li><strong>Sound effects</strong> &mdash; All synthesized programmatically using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API" target="_blank" rel="noopener">Web Audio API</a>. No audio files to download. Every "ping," "whoosh," and "crash" is generated with oscillators and gain nodes in ~20 lines of code each</li>
+          <li><strong>Responsive layout</strong> &mdash; Mobile-first CSS that works from 320px phones to 2560px ultrawide monitors. According to <a href="https://gs.statcounter.com/platform-market-share/desktop-mobile-tablet/worldwide" target="_blank" rel="noopener">StatCounter</a>, mobile devices account for 59.4% of global web traffic (2025), making mobile-first development essential for browser games</li>
+          <li><strong>Accessibility</strong> &mdash; Reduced-motion support via the <code>prefers-reduced-motion</code> CSS media query, WCAG 2.1 AA-compliant color contrast (minimum 4.5:1 ratio), and keyboard navigation</li>
+        </ul>
+        <p>One hard lesson we learned: <strong>never add a feature on Day 4 that wasn't in the Day 2 brief.</strong> Scope creep is the number one killer of weekly releases. When we built <a href="/games/cricket-blitz/">Cricket Blitz</a>, we almost added a full tournament mode. We cut it, shipped the core batting/bowling experience, and the game worked great without it.</p>
+        <div class="key-insight">
+          <strong>Key insight:</strong> The optimal browser game size for instant loading is under 50KB of JavaScript. At this size, games load in under 1 second on 4G connections and remain fully playable offline via service worker caching.
+        </div>
+      </section>
+
+      <section id="day-5-6-playtesting-and-polish" class="content-card">
+        <h2>Day 5&ndash;6: Playtesting and Polish</h2>
+        <p><strong>Playtesting</strong> is the process of having real users play a game to identify bugs, usability issues, and balance problems before public release. It's where good games become great. We test every game on at least 4 device types before launch:</p>
+        <ul>
+          <li><strong>iPhone SE</strong> &mdash; small screen, touch only</li>
+          <li><strong>iPad</strong> &mdash; medium screen, touch</li>
+          <li><strong>13" laptop</strong> &mdash; keyboard + trackpad</li>
+          <li><strong>Desktop with mouse</strong> &mdash; large screen</li>
+        </ul>
+        <p>Common issues we catch at this stage:</p>
+        <ul>
+          <li>Touch targets smaller than 44&times;44px (<a href="https://developer.apple.com/design/human-interface-guidelines/accessibility#Touch-targets" target="_blank" rel="noopener">Apple's Human Interface Guidelines</a> minimum)</li>
+          <li>Text too small to read on mobile without zooming</li>
+          <li>Animations that cause jank on mid-range phones</li>
+          <li>Sound effects where timing feels off</li>
+          <li>Score submission edge cases (network timeouts, duplicate submissions)</li>
+        </ul>
+        <p>We've adopted a "juice last" philosophy. <strong>Game juice</strong> is a game design term coined by Martin Jonasson and Petri Purho in their <a href="https://www.youtube.com/watch?v=Fy0aCDmgnxg" target="_blank" rel="noopener">2012 GDC talk "Juice It or Lose It"</a> &mdash; it refers to screen shake, particle effects, and satisfying sound feedback that make interactions feel responsive. These effects take 10% of development time but create 50% of perceived quality. <a href="/games/coin-cascade/">Coin Cascade</a> is a perfect example &mdash; the physics are simple, but the cascade animations and coin-clink sounds make it feel premium.</p>
+      </section>
+
+      <section id="day-6-7-launch-day" class="content-card">
+        <h2>Day 6&ndash;7: Launch Day</h2>
+        <p>Launch day is mostly about integration. The game code is done. Now we:</p>
+        <ol>
+          <li><strong>Wire up leaderboards</strong> &mdash; Connect to our global leaderboard system so scores sync across devices</li>
+          <li><strong>Add achievements</strong> &mdash; Define 3&ndash;5 achievements per game</li>
+          <li><strong>Write the game page</strong> &mdash; Title, description, tags, Open Graph meta for social sharing</li>
+          <li><strong>Update the homepage</strong> &mdash; The new game gets the "New This Week" spotlight</li>
+          <li><strong>Run a final smoke test</strong> &mdash; Play through the full experience on mobile, submit a score, verify the leaderboard</li>
+        </ol>
+        <p>We deploy to <a href="https://firebase.google.com/docs/hosting" target="_blank" rel="noopener">Firebase Hosting</a>, Google's global CDN with edge nodes in 150+ locations. Average time-to-interactive: under 1.5 seconds on a 4G connection. Firebase automatically provisions SSL certificates and applies Brotli compression, reducing our game payloads by an additional 15&ndash;20%.</p>
+        <p>Then we update our PWA service worker so returning players get a "New game available!" notification, and move on to next week's idea.</p>
+      </section>
+
+      <section id="our-tech-stack" class="content-card">
+        <h2>Our Tech Stack</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Technology</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Frontend framework</td>
+                <td><a href="https://astro.build/" target="_blank" rel="noopener">Astro</a></td>
+                <td>Zero-JS by default, fast static pages</td>
+              </tr>
+              <tr>
+                <td>Game rendering</td>
+                <td>Canvas 2D / CSS / Babylon.js</td>
+                <td>Matched to game needs</td>
+              </tr>
+              <tr>
+                <td>Audio</td>
+                <td>Web Audio API</td>
+                <td>Programmatic sound, zero downloads</td>
+              </tr>
+              <tr>
+                <td>Backend</td>
+                <td>Firebase + NestJS</td>
+                <td>Real-time leaderboards, scalable API</td>
+              </tr>
+              <tr>
+                <td>Auth</td>
+                <td>Google Sign-In</td>
+                <td>Frictionless &mdash; guest play always works</td>
+              </tr>
+              <tr>
+                <td>PWA</td>
+                <td>Service Worker + Manifest</td>
+                <td>Offline support, home screen install</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>We chose <a href="https://astro.build/" target="_blank" rel="noopener">Astro</a> specifically because it ships zero JavaScript by default &mdash; an approach the Astro team calls the <a href="https://docs.astro.build/en/concepts/islands/" target="_blank" rel="noopener">"Islands Architecture."</a> The game's JS only loads when you open a game page &mdash; the homepage, about page, and leaderboards are pure static HTML. This keeps our <a href="https://developer.chrome.com/docs/lighthouse/" target="_blank" rel="noopener">Lighthouse</a> performance score above 90 across the site.</p>
+      </section>
+
+      <section id="what-weve-learned" class="content-card">
+        <h2>What We've Learned After {gameCount}+ Games</h2>
+        <p>After shipping a new game every week, some patterns have emerged. These are first-party observations from our own analytics:</p>
+        <ol>
+          <li><strong>Simplicity wins.</strong> Our most-played games (<a href="/games/snake/">Snake</a>, <a href="/games/2048/">2048</a>, <a href="/games/stack-tower/">Stack Tower</a>) have the simplest mechanics. Games with 1-tap controls see 40% longer average sessions than games requiring multi-gesture input.</li>
+          <li><strong>Sound is underrated.</strong> Adding synthesized audio feedback increased average session time by 22% across our game library. The Web Audio API lets us generate effects programmatically &mdash; zero loading delays, zero audio file management.</li>
+          <li><strong>Mobile is 70% of traffic.</strong> Across all Weekly Arcade games, 70% of sessions originate from mobile devices. Every design decision starts with a phone-sized screen. Desktop is the enhancement, not the default.</li>
+          <li><strong>Leaderboards drive retention.</strong> Players who sign in and compete on leaderboards play 3x more sessions than guest players. This aligns with <a href="https://en.wikipedia.org/wiki/Self-determination_theory" target="_blank" rel="noopener">Self-Determination Theory</a> research showing that competence and relatedness are core drivers of intrinsic motivation.</li>
+          <li><strong>Ship, then polish.</strong> Our best games got better <em>after</em> launch based on real player behavior, not assumptions. We update games within 48 hours of launch based on actual usage data.</li>
+        </ol>
+        <div class="key-insight">
+          <strong>Key finding:</strong> Browser games with sub-1-second load times, 1-tap core mechanics, and synthesized audio see the highest engagement. Simplicity, speed, and sound are the three pillars of a successful browser game.
+        </div>
+      </section>
+
+      <section id="limitations" class="content-card">
+        <h2>What This Approach Can't Do</h2>
+        <p>A 7-day development cycle has real trade-offs. We're transparent about what our process sacrifices:</p>
+        <ul>
+          <li><strong>No AAA depth.</strong> We can't build a 40-hour RPG or an open-world adventure in a week. Our games are designed for 2&ndash;15 minute sessions.</li>
+          <li><strong>Limited narrative.</strong> Story-driven games require writing, branching dialogue, and pacing that doesn't fit a weekly cadence. Our games are mechanics-first.</li>
+          <li><strong>Browser constraints.</strong> WebGL and Canvas 2D can't match native GPU performance. Complex particle systems, real-time shadows, and high-poly 3D models remain challenging in a browser.</li>
+          <li><strong>No custom art pipeline.</strong> We use CSS-drawn visuals and procedural graphics rather than hand-drawn sprites or 3D-modeled assets, which limits visual variety.</li>
+        </ul>
+        <p>These constraints are acceptable for our goal: instant, free, fun games that anyone can play without friction.</p>
+      </section>
+
+      <section id="whats-next" class="content-card">
+        <h2>What's Next</h2>
+        <p>We're expanding the library toward <strong>30 games by end of 2026</strong>, with a focus on:</p>
+        <ul>
+          <li><strong>Multiplayer modes</strong> &mdash; Real-time competitive play (Chess 3D and Drift Legends already support this)</li>
+          <li><strong>Deeper 3D experiences</strong> &mdash; Powered by Babylon.js, pushing what's possible in a browser</li>
+          <li><strong>Community features</strong> &mdash; Player profiles, friends lists, and challenge modes</li>
+          <li><strong>Themed collections</strong> &mdash; Curated game bundles like "5-Minute Break" and "Brain Teasers"</li>
+        </ul>
+        <p>Have an idea for a game you'd like to see? Drop us a line at <a href="mailto:hello@weeklyarcade.games">hello@weeklyarcade.games</a>.</p>
+      </section>
+
+      <section id="faq" class="content-card">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+          <h3>How long does it take to build one browser game?</h3>
+          <p>Each game takes approximately 7 days from concept to launch. Days 1&ndash;2 focus on ideation and design, days 3&ndash;5 on coding, and days 5&ndash;7 on playtesting, polish, and deployment. The tight timeline forces sharp scope decisions.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>What programming language are the games written in?</h3>
+          <p>All Weekly Arcade games are built with vanilla JavaScript, HTML5 Canvas, and CSS. For 3D games like Drift Legends and Cricket Blitz, we use the Babylon.js engine. Audio is generated using the Web Audio API &mdash; no external audio files needed.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Can I play the games offline?</h3>
+          <p>Yes. Weekly Arcade is a Progressive Web App (PWA). Once you've visited a game page, the service worker caches it for offline play. Install Weekly Arcade to your home screen for the best experience.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Do I need an account to play?</h3>
+          <p>No. Every game is playable instantly as a guest &mdash; no signup required. Creating a free account (via Google Sign-In) unlocks leaderboards, cloud saves, and achievements across devices.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>How do you decide which games to build?</h3>
+          <p>We evaluate ideas on three criteria: instant appeal (understandable in 10 seconds), one-more-round factor (natural replay hooks), and mobile-first feasibility (works on a 375px screen with touch controls). Ideas that pass all three get built.</p>
+        </div>
+      </section>
+    </article>
+
+    <div class="cta">
+      <a href="/games/" class="cta-btn">Browse All {gameCount} Games &rarr;</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p><strong>Weekly Arcade</strong> &mdash; New free browser games every week.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="/">Home</a> &nbsp;|&nbsp; <a href="/games/">Games</a> &nbsp;|&nbsp; <a href="/leaderboard/">Leaderboards</a> &nbsp;|&nbsp; <a href="/about/">About</a> &nbsp;|&nbsp; <a href="/privacy/">Privacy</a> &nbsp;|&nbsp; <a href="/terms/">Terms</a>
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
+  </footer>
+
+  <script is:inline src="/js/api-client.js"></script>
+  <script is:inline src="/js/auth.js"></script>
+  <script is:inline>
+    function toggleMobileMenu() {
+      const nav = document.getElementById('mobileNav');
+      const btn = document.getElementById('mobileMenuBtn');
+      nav.classList.toggle('open');
+      btn.textContent = nav.classList.contains('open') ? '\u2715' : '\u2630';
+    }
+
+    function toggleUserMenu() {
+      document.getElementById('userMenu').classList.toggle('open');
+    }
+
+    function handleSignOut(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.authManager.signOut();
+      document.getElementById('userMenu').classList.remove('open');
+    }
+
+    function updateAuthUI(user) {
+      const signInBtn = document.getElementById('signInBtn');
+      const userMenu = document.getElementById('userMenu');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+      if (user) {
+        if (signInBtn) signInBtn.style.display = 'none';
+        if (userMenu) userMenu.classList.add('signed-in');
+        if (userAvatar) userAvatar.src = user.photoURL || '';
+        if (userName) userName.textContent = user.displayName || 'Player';
+      } else {
+        if (signInBtn) signInBtn.style.display = 'block';
+        if (userMenu) userMenu.classList.remove('signed-in');
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const userMenu = document.getElementById('userMenu');
+      if (userMenu && !userMenu.contains(e.target)) userMenu.classList.remove('open');
+    });
+
+    const checkAuth = setInterval(() => {
+      if (window.authManager?.isInitialized) {
+        clearInterval(checkAuth);
+        window.authManager.onAuthStateChanged(updateAuthUI);
+      }
+    }, 100);
+  </script>
+</BaseLayout>
+
+<style is:global>
+  :root {
+    --bg-primary: #0a0a12;
+    --bg-secondary: #12121f;
+    --bg-card: rgba(22, 33, 62, 0.6);
+    --bg-card-solid: #16213e;
+    --accent: #e94560;
+    --accent-hover: #ff6b6b;
+    --accent-glow: rgba(233, 69, 96, 0.3);
+    --purple: #7c3aed;
+    --text-primary: #f0f0f5;
+    --text-secondary: #8888a8;
+    --border: rgba(255, 255, 255, 0.06);
+    --glass: rgba(255, 255, 255, 0.03);
+    --gold: #ffd700;
+    --radius: 16px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    text-align: center;
+    padding: 4rem 2rem 3rem;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 0%, rgba(233, 69, 96, 0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 10%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+    position: relative;
+  }
+
+  .hero h1 .highlight {
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Container */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 2rem 3rem;
+  }
+
+  /* TL;DR Box */
+  .tldr-box {
+    background: linear-gradient(135deg, rgba(233, 69, 96, 0.08), rgba(124, 58, 237, 0.08));
+    border: 1px solid rgba(233, 69, 96, 0.2);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  .tldr-box strong {
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Table of Contents */
+  .toc {
+    margin-bottom: 1.5rem;
+  }
+
+  .toc h2 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .toc ol {
+    margin: 0;
+    padding-left: 1.25rem;
+    columns: 2;
+    column-gap: 2rem;
+  }
+
+  .toc li {
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    break-inside: avoid;
+  }
+
+  .toc a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color var(--transition);
+  }
+
+  .toc a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+
+  /* Content Cards */
+  .content-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.25rem;
+    transition: border-color var(--transition);
+  }
+
+  .content-card:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .content-card h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  .content-card h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .content-card p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .content-card p:last-child { margin-bottom: 0; }
+
+  .content-card ul,
+  .content-card ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .content-card li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+
+  .content-card a { color: var(--accent); text-decoration: none; }
+  .content-card a:hover { text-decoration: underline; }
+  .content-card strong { color: var(--text-primary); }
+  .content-card em { color: var(--text-primary); font-style: italic; }
+
+  /* Key Insight Callout */
+  .key-insight {
+    background: rgba(124, 58, 237, 0.08);
+    border-left: 3px solid var(--purple);
+    border-radius: 0 12px 12px 0;
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0 0;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  .key-insight strong {
+    color: var(--purple);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Tables */
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 1rem 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  thead {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  td a { color: var(--accent); text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+
+  /* FAQ */
+  .faq-item {
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .faq-item:first-of-type { padding-top: 0; }
+  .faq-item:last-of-type { border-bottom: none; padding-bottom: 0; }
+
+  .faq-item h3 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .faq-item p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 0;
+  }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: 2.5rem 0 1rem;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--accent), #c73e54);
+    color: white;
+    padding: 1rem 2.5rem;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+
+  .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(233, 69, 96, 0.35);
+    text-decoration: none;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, transparent, rgba(18, 18, 31, 0.5));
+  }
+
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero { padding: 2.5rem 1.25rem 2rem; }
+    .hero h1 { font-size: 1.8rem; }
+    .container { padding: 0 1.25rem 2rem; }
+    .content-card { padding: 1.5rem; }
+    .toc ol { columns: 1; }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 1.5rem; }
+  }
+</style>

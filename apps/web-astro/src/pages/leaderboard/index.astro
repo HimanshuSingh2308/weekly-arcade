@@ -3,13 +3,25 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
 ---
 
-<BaseLayout title="Leaderboards | Weekly Arcade">
+<BaseLayout title="Global Leaderboards — Compete Worldwide | Weekly Arcade">
   <Fragment slot="head">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#e94560">
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <meta name="description" content="Compete on global leaderboards across 15+ free browser games. Daily, weekly, and monthly rankings. Sign in to track your scores and climb the charts.">
+    <link rel="canonical" href="https://weeklyarcade.games/leaderboard/">
+    <meta property="og:title" content="Global Leaderboards — Compete Worldwide | Weekly Arcade">
+    <meta property="og:description" content="Compete on global leaderboards across 15+ free browser games. Daily, weekly, and monthly rankings.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://weeklyarcade.games/leaderboard/">
+    <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+    <meta property="og:site_name" content="Weekly Arcade">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Global Leaderboards — Compete Worldwide | Weekly Arcade">
+    <meta name="twitter:description" content="Compete on global leaderboards across 15+ free browser games. Daily, weekly, and monthly rankings.">
+    <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
   </Fragment>
 
   <SiteHeader activePage="leaderboards" />

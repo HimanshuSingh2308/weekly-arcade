@@ -8,13 +8,49 @@ const games = Object.values(gameModules).map((mod: any) => mod.default || mod) a
 const gameCount = games.length;
 ---
 
-<BaseLayout title="About | Weekly Arcade">
+<BaseLayout title="About Weekly Arcade — Free Browser Games Platform">
   <Fragment slot="head">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#e94560">
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <meta name="description" content={`Weekly Arcade is a free browser gaming platform with ${gameCount}+ original HTML5 games. No downloads, no ads. New games every week across puzzle, arcade, strategy, and 3D.`}>
+    <link rel="canonical" href="https://weeklyarcade.games/about/">
+    <meta property="og:title" content="About Weekly Arcade — Free Browser Games Platform">
+    <meta property="og:description" content={`${gameCount}+ free browser games, new releases every week. Learn about our mission, games, and features.`}>
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://weeklyarcade.games/about/">
+    <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+    <meta property="og:site_name" content="Weekly Arcade">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="About Weekly Arcade — Free Browser Games Platform">
+    <meta name="twitter:description" content={`${gameCount}+ free browser games, new releases every week. Learn about our mission, games, and features.`}>
+    <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Weekly Arcade',
+      url: 'https://weeklyarcade.games',
+      logo: 'https://weeklyarcade.games/icons/icon-512.png',
+      description: `Free browser gaming platform with ${gameCount}+ original HTML5 games. New games released every week — no downloads, no ads, no signup required.`,
+      foundingDate: '2026',
+      email: 'hello@weeklyarcade.games',
+      sameAs: [],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        email: 'hello@weeklyarcade.games',
+        contactType: 'customer support',
+      },
+    })} />
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://weeklyarcade.games/' },
+        { '@type': 'ListItem', position: 2, name: 'About', item: 'https://weeklyarcade.games/about/' },
+      ],
+    })} />
   </Fragment>
 
   <SiteHeader showAuth={false} activePage="about" />
@@ -46,8 +82,45 @@ const gameCount = games.length;
 
     <div class="content-card">
       <h2><span class="icon">🎯</span> Our Mission</h2>
-      <p>Weekly Arcade is dedicated to bringing you high-quality browser games that you can play instantly &mdash; no downloads, no installations, no hassle.</p>
-      <p>We believe gaming should be accessible to everyone. All our games are free to play, with optional cosmetics and customizations for those who want to personalize their experience.</p>
+      <p><strong>Weekly Arcade</strong> is a free browser gaming platform that releases a new original HTML5 game every week. Every game is playable instantly on any device &mdash; no downloads, no installations, no accounts, and no ads.</p>
+      <p>We believe gaming should be accessible to everyone. The browser gaming market is projected to reach $35.1 billion by 2027 (<a href="https://www.mordorintelligence.com/industry-reports/browser-games-market" target="_blank" rel="noopener">Mordor Intelligence</a>), and we're building for that future: instant-play games that work on any device with a web browser. <a href="/how-we-build-games/">Learn how we build a new game every week</a>.</p>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">📊</span> By the Numbers</h2>
+      <div class="numbers-grid">
+        <div class="number-item"><div class="number-value">{gameCount}+</div><div class="number-label">Original games</div></div>
+        <div class="number-item"><div class="number-value">8</div><div class="number-label">Game genres</div></div>
+        <div class="number-item"><div class="number-value">7</div><div class="number-label">Days per game build</div></div>
+        <div class="number-item"><div class="number-value">&lt;50KB</div><div class="number-label">Avg game size</div></div>
+        <div class="number-item"><div class="number-value">&lt;1.5s</div><div class="number-label">Load time on 4G</div></div>
+        <div class="number-item"><div class="number-value">60fps</div><div class="number-label">Target frame rate</div></div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">⚙️</span> How It Works</h2>
+      <p>Every game on Weekly Arcade follows the same principles:</p>
+      <ol>
+        <li><strong>Instant play</strong> &mdash; Games load in under 1.5 seconds. No loading screens, no splash pages.</li>
+        <li><strong>Mobile-first</strong> &mdash; Touch controls, responsive layouts from 320px to 2560px, and 44x44px minimum touch targets following <a href="https://developer.apple.com/design/human-interface-guidelines/accessibility" target="_blank" rel="noopener">Apple's Human Interface Guidelines</a>.</li>
+        <li><strong>Accessible</strong> &mdash; WCAG 2.1 AA color contrast, <code>prefers-reduced-motion</code> support, and keyboard navigation.</li>
+        <li><strong>Offline-capable</strong> &mdash; Every game works offline via <a href="https://web.dev/articles/service-workers-cache-storage" target="_blank" rel="noopener">Service Worker caching</a>. Install as a PWA for app-like access.</li>
+        <li><strong>No account required</strong> &mdash; Guest play has zero restrictions. Optional Google Sign-In unlocks leaderboards, cloud saves, and achievements.</li>
+      </ol>
+    </div>
+
+    <div class="content-card">
+      <h2><span class="icon">🛠️</span> Our Tech Stack</h2>
+      <p>Weekly Arcade is built on modern web standards for maximum performance and reach:</p>
+      <ul>
+        <li><strong><a href="https://astro.build/" target="_blank" rel="noopener">Astro 6</a></strong> &mdash; Zero-JS static pages with Islands Architecture</li>
+        <li><strong>Vanilla JavaScript + Canvas 2D</strong> &mdash; Lightweight game engines, no heavy frameworks</li>
+        <li><strong><a href="https://www.babylonjs.com/" target="_blank" rel="noopener">Babylon.js</a></strong> &mdash; WebGL 3D rendering for games like Drift Legends and Chess 3D</li>
+        <li><strong><a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API" target="_blank" rel="noopener">Web Audio API</a></strong> &mdash; Programmatic sound synthesis, zero audio file downloads</li>
+        <li><strong>Firebase</strong> &mdash; Authentication, Firestore database, and global CDN hosting</li>
+      </ul>
+      <p>Read the full technical breakdown: <a href="/how-we-build-games/">How We Build a New Browser Game Every Week</a>.</p>
     </div>
 
     <div class="content-card">
@@ -95,7 +168,7 @@ const gameCount = games.length;
   <footer class="footer">
     <p><strong>Weekly Arcade</strong> &mdash; New free browser games every week.</p>
     <p style="margin-top: 0.5rem;">
-      <a href="/">Games</a> &nbsp;|&nbsp; <a href="/leaderboard/">Leaderboards</a> &nbsp;|&nbsp; <a href="/privacy/">Privacy</a> &nbsp;|&nbsp; <a href="/terms/">Terms</a>
+      <a href="/">Home</a> &nbsp;|&nbsp; <a href="/games/">Games</a> &nbsp;|&nbsp; <a href="/best-browser-games-2026/">Best Games 2026</a> &nbsp;|&nbsp; <a href="/how-we-build-games/">How We Build</a> &nbsp;|&nbsp; <a href="/leaderboard/">Leaderboards</a> &nbsp;|&nbsp; <a href="/privacy/">Privacy</a> &nbsp;|&nbsp; <a href="/terms/">Terms</a>
     </p>
     <p style="margin-top: 0.5rem; font-size: 0.75rem;">&copy; 2026 Weekly Arcade. All rights reserved.</p>
   </footer>
@@ -341,6 +414,49 @@ const gameCount = games.length;
     .content-card a { color: var(--accent); text-decoration: none; }
     .content-card a:hover { text-decoration: underline; }
     .content-card strong { color: var(--text-primary); }
+    .content-card code {
+      background: rgba(255,255,255,0.06);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--accent);
+    }
+    .content-card ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Numbers Grid ─── */
+    .numbers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .number-item {
+      text-align: center;
+      padding: 1rem 0.5rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .number-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold, #ffd700), #ffaa00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .number-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
 
     /* ─── Stats Banner ─── */
     .stats-banner {
@@ -506,6 +622,7 @@ const gameCount = games.length;
       .hero h1 { font-size: 1.5rem; }
       .features-grid { grid-template-columns: repeat(2, 1fr); }
       .games-grid { grid-template-columns: repeat(3, 1fr); }
+      .numbers-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
 </style>

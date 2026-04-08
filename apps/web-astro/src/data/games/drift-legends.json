@@ -12,5 +12,14 @@
   "ratingValue": "4.8",
   "ratingCount": "500",
   "category": "racing",
-  "rendering": "webgl"
+  "rendering": "webgl",
+  "tips": [
+    "Brake before corners, not during — entering a turn at the right speed is key to maintaining a good drift",
+    "Tap the drift button just before turning to initiate a controlled slide for bonus drift points",
+    "Upgrade your car's handling stat first — it makes every track easier",
+    "Learn the racing line for each track — outer-inner-outer approach works on most corners",
+    "In multiplayer, draft behind opponents on straights for a speed boost before overtaking on corners"
+  ],
+  "similarTo": ["Asphalt 9", "Need for Speed", "Mario Kart", "Trackmania"],
+  "howToPlay": "Steer with arrow keys, WASD, or tilt controls on mobile. Use the brake to slow before turns and the drift button to slide through corners. Complete story mode chapters to unlock new tracks and cars. Challenge other players in real-time multiplayer races."
 }
