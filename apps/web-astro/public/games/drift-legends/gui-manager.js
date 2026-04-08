@@ -273,6 +273,10 @@
             }
           });
         }
+        // MP overlay panels (on ui root, not registered screens)
+        [guiSelf._mpRoomPanel, guiSelf._mpWaitPanel, guiSelf._mpJoinPanel].forEach(function(p) {
+          if (p && p.isVisible) findAndClickButtons(p);
+        });
         // Pause buttons are also inside a card on ui root
         if (guiSelf.currentScreen === 'PAUSE') {
           guiSelf.ui._rootContainer.children.forEach(function(child) {
