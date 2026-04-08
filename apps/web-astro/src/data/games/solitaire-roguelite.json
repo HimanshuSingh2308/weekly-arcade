@@ -19,5 +19,20 @@
     "Plan multiple moves ahead instead of immediately playing the first available card"
   ],
   "similarTo": ["Microsoft Solitaire", "Spider Solitaire", "FreeCell", "Klondike"],
-  "howToPlay": "Play Klondike Solitaire by moving cards between columns in descending order with alternating colors. Move Aces to foundation piles and build up to King. Joker cards can break normal rules — use them strategically for maximum score."
+  "howToPlay": "Play Klondike Solitaire by moving cards between columns in descending order with alternating colors. Move Aces to foundation piles and build up to King. Joker cards can break normal rules — use them strategically for maximum score.",
+  "aboutGame": "Solitaire Roguelite combines classic Klondike Solitaire with roguelite mechanics. Play the card game you know, but with rule-breaking Joker cards that add strategic depth and replay value. Each run presents different Joker opportunities, making every session unique. Features score multipliers, daily leaderboards, and cloud saves across devices.",
+  "faq": [
+    {
+      "q": "Is Solitaire Roguelite free?",
+      "a": "Yes. Play free on Weekly Arcade with no ads, no downloads, and no account required. Sign in optionally for leaderboards and cloud saves."
+    },
+    {
+      "q": "What makes Solitaire Roguelite different from regular Solitaire?",
+      "a": "Joker cards that break normal rules - they can match any card, clear columns, or multiply your score. The roguelite element means each run offers different Joker opportunities."
+    },
+    {
+      "q": "Can I save my Solitaire progress?",
+      "a": "Yes. Sign in with Google to save your progress to the cloud and continue playing across devices. Guest play works too but progress is local to your browser."
+    }
+  ]
 }

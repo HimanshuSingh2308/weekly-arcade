@@ -21,5 +21,20 @@
     "Reinvest all coins into upgrades early; save cosmetic purchases for later"
   ],
   "similarTo": ["Lemonade Stand", "Coffee Corp", "Idle Miner Tycoon", "Papa's Freezeria"],
-  "howToPlay": "Tap to serve customers in your boba tea shop. Each day lasts 60 seconds. Earn coins from sales, then spend them on upgrades between days. Upgrade serving speed, menu items, and shop capacity to maximize daily revenue."
+  "howToPlay": "Tap to serve customers in your boba tea shop. Each day lasts 60 seconds. Earn coins from sales, then spend them on upgrades between days. Upgrade serving speed, menu items, and shop capacity to maximize daily revenue.",
+  "aboutGame": "Tiny Tycoon is a cozy business simulation game where you run a boba tea shop in 60-second days. Serve customers by tapping orders, earn coins, and spend them on upgrades between days. The game features a satisfying progression loop with shop upgrades, menu expansion, and capacity increases. Designed for quick, rewarding sessions.",
+  "faq": [
+    {
+      "q": "Is Tiny Tycoon free?",
+      "a": "Yes. Tiny Tycoon is 100% free on Weekly Arcade - no ads, no in-app purchases, no downloads required."
+    },
+    {
+      "q": "How long is a day in Tiny Tycoon?",
+      "a": "Each in-game day lasts exactly 60 seconds. Serve as many customers as possible to maximize your daily revenue, then spend coins on upgrades between days."
+    },
+    {
+      "q": "What can you upgrade in Tiny Tycoon?",
+      "a": "Upgrade your serving speed, menu variety, shop capacity, and customer attraction. Each upgrade changes how you play and increases your earning potential."
+    }
+  ]
 }

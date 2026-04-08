@@ -19,5 +19,20 @@
     "Use power-ups strategically when the board gets overwhelming, not immediately"
   ],
   "similarTo": ["Simon", "Mahjong", "Concentration", "Brain Age"],
-  "howToPlay": "Flip two cards per turn to reveal their faces. If the cards match, they stay face-up and you score points. If they don't match, they flip back over. Memorize card positions and match all pairs to complete the board."
+  "howToPlay": "Flip two cards per turn to reveal their faces. If the cards match, they stay face-up and you score points. If they don't match, they flip back over. Memorize card positions and match all pairs to complete the board.",
+  "aboutGame": "Memory Match is a classic card-flipping puzzle game that tests and trains your short-term memory. Flip two cards per turn to find matching pairs. Features multiple difficulty levels, power-ups for when you're stuck, and daily challenges. A great brain training exercise suitable for all ages, playable in 2-5 minute sessions.",
+  "faq": [
+    {
+      "q": "Is Memory Match free?",
+      "a": "Yes. Memory Match is 100% free on Weekly Arcade with no ads, no downloads, and no account required."
+    },
+    {
+      "q": "Is Memory Match good for brain training?",
+      "a": "Yes. Memory matching games exercise working memory and pattern recognition. Regular play can help improve short-term recall and concentration across all age groups."
+    },
+    {
+      "q": "Can kids play Memory Match?",
+      "a": "Absolutely. Memory Match is family-friendly with no violence, no ads, and no chat features. It works on school Chromebooks and iPads and requires no account creation."
+    }
+  ]
 }

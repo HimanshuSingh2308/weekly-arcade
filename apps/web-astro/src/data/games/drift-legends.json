@@ -21,5 +21,20 @@
     "In multiplayer, draft behind opponents on straights for a speed boost before overtaking on corners"
   ],
   "similarTo": ["Asphalt 9", "Need for Speed", "Mario Kart", "Trackmania"],
-  "howToPlay": "Steer with arrow keys, WASD, or tilt controls on mobile. Use the brake to slow before turns and the drift button to slide through corners. Complete story mode chapters to unlock new tracks and cars. Challenge other players in real-time multiplayer races."
+  "howToPlay": "Steer with arrow keys, WASD, or tilt controls on mobile. Use the brake to slow before turns and the drift button to slide through corners. Complete story mode chapters to unlock new tracks and cars. Challenge other players in real-time multiplayer races.",
+  "aboutGame": "Drift Legends is a full-featured 3D arcade racing game with a 5-chapter story mode, real-time multiplayer, and 15 tracks. Built with Babylon.js WebGL, it features realistic drift mechanics, car upgrades, and persistent progression. Race through neon city streets, mountain passes, and sky-high circuits. The deepest browser game on Weekly Arcade.",
+  "faq": [
+    {
+      "q": "Is Drift Legends free?",
+      "a": "Yes. Drift Legends is 100% free on Weekly Arcade with no ads, no in-app purchases, and no downloads. All 15 tracks and story mode chapters are free."
+    },
+    {
+      "q": "Does Drift Legends have multiplayer?",
+      "a": "Yes. Drift Legends supports real-time online multiplayer racing via WebSocket connections. Create a room and share the code with friends to race together."
+    },
+    {
+      "q": "How many tracks are in Drift Legends?",
+      "a": "15 tracks spread across 5 story chapters. Tracks range from neon city streets to mountain passes to sky-high circuits, each with unique drifting challenges."
+    }
+  ]
 }

@@ -19,5 +19,20 @@
     "Short, rapid drops are less effective than well-timed single drops"
   ],
   "similarTo": ["Coin Dozer", "Coin Master", "Tipping Point", "Penny Falls"],
-  "howToPlay": "Tap or click to drop a coin onto the moving pusher platform. The pusher slides back and forth, pushing coins toward the edge. When coins fall off the edge, you score points. Chain reactions and special coins multiply your score."
+  "howToPlay": "Tap or click to drop a coin onto the moving pusher platform. The pusher slides back and forth, pushing coins toward the edge. When coins fall off the edge, you score points. Chain reactions and special coins multiply your score.",
+  "aboutGame": "Coin Cascade is a physics-based arcade game where you drop coins onto a moving pusher platform and watch chain reactions cascade prizes off the edge. Featuring realistic physics simulation, satisfying coin-clink sound effects, and special bonus coins, it delivers the excitement of a real coin pusher machine in your browser. Average session: 3-5 minutes.",
+  "faq": [
+    {
+      "q": "Is Coin Cascade free to play?",
+      "a": "Yes. Coin Cascade is 100% free on Weekly Arcade with no ads, no in-app purchases, and no downloads required."
+    },
+    {
+      "q": "How does Coin Cascade work?",
+      "a": "Tap to drop a coin onto the moving pusher. The pusher slides back and forth, pushing coins toward the edge. Coins that fall off score points. Chain reactions and special coins multiply your score."
+    },
+    {
+      "q": "Can I play Coin Cascade offline?",
+      "a": "Yes. After your first visit, Coin Cascade is cached as a PWA and works offline. Install Weekly Arcade to your home screen for the best offline experience."
+    }
+  ]
 }

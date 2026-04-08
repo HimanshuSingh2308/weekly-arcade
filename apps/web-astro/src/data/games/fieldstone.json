@@ -19,5 +19,20 @@
     "Preview the next piece and plan placement two moves ahead"
   ],
   "similarTo": ["Tetris", "Kingdom Rush", "Grindstone", "Puzzle Quest"],
-  "howToPlay": "Place terrain tiles on the board like Tetris. Complete full rows to harvest resources. Use resources to build armies and defenses. Enemies attack in waves — survive by balancing puzzle-solving with kingdom defense."
+  "howToPlay": "Place terrain tiles on the board like Tetris. Complete full rows to harvest resources. Use resources to build armies and defenses. Enemies attack in waves — survive by balancing puzzle-solving with kingdom defense.",
+  "aboutGame": "Fieldstone is an original genre-mashup that combines Tetris-style block placement with kingdom builder strategy. Place terrain pieces on the board, complete rows to harvest resources, build armies, and defend your realm against enemy waves. The unique blend of puzzle and strategy creates gameplay unlike anything else in the browser gaming space.",
+  "faq": [
+    {
+      "q": "Is Fieldstone free to play?",
+      "a": "Yes. Fieldstone is completely free on Weekly Arcade with no ads, no downloads, and no account required."
+    },
+    {
+      "q": "What kind of game is Fieldstone?",
+      "a": "Fieldstone combines Tetris-style block placement with kingdom building strategy. Place terrain tiles, harvest completed rows for resources, and use those resources to build armies and defenses against enemy waves."
+    },
+    {
+      "q": "Is Fieldstone like Tetris?",
+      "a": "The block-placement mechanic is inspired by Tetris, but Fieldstone adds resource harvesting, army building, and tower defense elements. It's a unique genre mashup you won't find elsewhere."
+    }
+  ]
 }

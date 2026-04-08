@@ -19,5 +19,20 @@
     "Shield upgrades are underrated — they give you breathing room for risky plays"
   ],
   "similarTo": ["Asteroids", "Geometry Wars", "Hades", "Vampire Survivors"],
-  "howToPlay": "Steer your ship with arrow keys or touch controls to dodge and shoot asteroids. Collect upgrade tokens to improve weapons, speed, or shields. Each wave gets harder. Survive as long as possible and go deeper into the void."
+  "howToPlay": "Steer your ship with arrow keys or touch controls to dodge and shoot asteroids. Collect upgrade tokens to improve weapons, speed, or shields. Each wave gets harder. Survive as long as possible and go deeper into the void.",
+  "aboutGame": "Voidbreak is a modern space shooter with roguelite upgrade mechanics. Pilot your ship through asteroid fields, collect power-ups, and choose from randomized upgrades after each wave. No two runs are the same thanks to the branching upgrade system. Built with Canvas 2D rendering for smooth 60fps gameplay and synthesized audio effects.",
+  "faq": [
+    {
+      "q": "Is Voidbreak free?",
+      "a": "Yes. Voidbreak is 100% free on Weekly Arcade with no ads and no downloads. Play instantly in any modern browser."
+    },
+    {
+      "q": "What type of game is Voidbreak?",
+      "a": "Voidbreak is a space shooter roguelite. You destroy asteroids, collect upgrades, and try to survive as long as possible. Each run offers different upgrade choices for unique builds."
+    },
+    {
+      "q": "Does Voidbreak have different difficulty levels?",
+      "a": "Difficulty scales automatically. Each wave introduces more and faster asteroids. Your upgrade choices determine your build - focus on weapons, speed, or defense based on your play style."
+    }
+  ]
 }

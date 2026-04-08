@@ -1,22 +1,29 @@
 ---
 /**
- * GameSEOContent — renders tips, how-to-play, and "similar to" content
- * below the game for long-tail SEO. Only renders if game data includes these fields.
+ * GameSEOContent — renders about, tips, how-to-play, FAQ, and "similar to" content
+ * below the game for SEO depth. Emits HowTo + FAQPage JSON-LD schemas.
+ * Only renders sections where data is provided.
  */
+interface FaqItem {
+  q: string;
+  a: string;
+}
+
 interface Props {
   gameName: string;
   gameId: string;
   tips?: string[];
   howToPlay?: string;
   similarTo?: string[];
+  aboutGame?: string;
+  faq?: FaqItem[];
 }
 
-const { gameName, gameId, tips, howToPlay, similarTo } = Astro.props;
+const { gameName, gameId, tips, howToPlay, similarTo, aboutGame, faq } = Astro.props;
 
-// Don't render anything if no SEO content is available
-const hasContent = tips?.length || howToPlay || similarTo?.length;
+const hasContent = tips?.length || howToPlay || similarTo?.length || aboutGame || faq?.length;
 
-// Build HowTo schema for featured snippets
+// HowTo schema for featured snippets
 const howToSchema = (howToPlay && tips?.length) ? JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'HowTo',
@@ -29,14 +36,39 @@ const howToSchema = (howToPlay && tips?.length) ? JSON.stringify({
     text: tip,
   })),
 }) : null;
+
+// FAQPage schema for FAQ featured snippets
+const faqSchema = faq?.length ? JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.a,
+    },
+  })),
+}) : null;
 ---
 
 {howToSchema && (
   <script type="application/ld+json" set:html={howToSchema} />
 )}
 
+{faqSchema && (
+  <script type="application/ld+json" set:html={faqSchema} />
+)}
+
 {hasContent && (
   <section class="game-seo-content">
+    {aboutGame && (
+      <div class="seo-block">
+        <h2>About {gameName}</h2>
+        <p>{aboutGame}</p>
+      </div>
+    )}
+
     {howToPlay && (
       <div class="seo-block">
         <h2>How to Play {gameName}</h2>
@@ -53,10 +85,22 @@ const howToSchema = (howToPlay && tips?.length) ? JSON.stringify({
       </div>
     )}
 
+    {faq?.length && (
+      <div class="seo-block">
+        <h2>{gameName} FAQ</h2>
+        {faq.map((item) => (
+          <div class="faq-item">
+            <h3>{item.q}</h3>
+            <p>{item.a}</p>
+          </div>
+        ))}
+      </div>
+    )}
+
     {similarTo?.length && (
       <div class="seo-block">
         <h2>Games Like {gameName}</h2>
-        <p>If you enjoy {gameName}, you might also like: {similarTo.join(', ')}. {gameName} is available free on Weekly Arcade with no downloads required &mdash; <a href="/games/">browse all games</a>.</p>
+        <p>If you enjoy {gameName}, you might also like: {similarTo.join(', ')}. {gameName} is available free on Weekly Arcade with no downloads required - <a href="/games/">browse all games</a>.</p>
       </div>
     )}
   </section>
@@ -86,10 +130,22 @@ const howToSchema = (howToPlay && tips?.length) ? JSON.stringify({
     margin-bottom: 0.5rem;
   }
 
+  .seo-block h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary, #f0f0f5);
+    margin-bottom: 0.3rem;
+  }
+
   .seo-block p {
     font-size: 0.85rem;
     color: var(--text-secondary, #8888a8);
     line-height: 1.65;
+    margin-bottom: 0.75rem;
+  }
+
+  .seo-block p:last-child {
+    margin-bottom: 0;
   }
 
   .seo-block a {
@@ -111,6 +167,16 @@ const howToSchema = (howToPlay && tips?.length) ? JSON.stringify({
     color: var(--text-secondary, #8888a8);
     line-height: 1.6;
     margin-bottom: 0.4rem;
+  }
+
+  .faq-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+  }
+
+  .faq-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 
   @media (max-width: 768px) {

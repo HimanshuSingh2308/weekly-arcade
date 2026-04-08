@@ -19,5 +19,20 @@
     "Stay calm at higher levels — rushing causes the most mistakes"
   ],
   "similarTo": ["Stack", "Tower Bloxx", "Jenga", "Sky Tower"],
-  "howToPlay": "Tap or click to place a sliding block on top of the stack. Blocks must align with the one below — any overhanging portion is trimmed off. Stack as many perfectly aligned blocks as possible to build the tallest tower."
+  "howToPlay": "Tap or click to place a sliding block on top of the stack. Blocks must align with the one below — any overhanging portion is trimmed off. Stack as many perfectly aligned blocks as possible to build the tallest tower.",
+  "aboutGame": "Stack Tower is a one-tap arcade game where you time your taps to stack sliding blocks on top of each other. Each block that overhangs is trimmed, making the tower narrower as you build. Perfect alignment earns bonus points. The game tests timing and focus in quick 2-3 minute sessions with escalating speed.",
+  "faq": [
+    {
+      "q": "Is Stack Tower free?",
+      "a": "Yes. Stack Tower is completely free on Weekly Arcade - no ads, no downloads, no signup required."
+    },
+    {
+      "q": "How do you get a perfect stack?",
+      "a": "Tap when the moving block is exactly aligned with the block below. A perfect stack keeps the block full-size and earns bonus points. Watch the block edges, not the center."
+    },
+    {
+      "q": "What happens as you stack higher?",
+      "a": "Blocks move faster and the margin for error shrinks. Any overhang is trimmed off, making the tower narrower. The challenge increases naturally as your tower grows."
+    }
+  ]
 }

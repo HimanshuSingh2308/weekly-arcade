@@ -21,5 +21,20 @@
     "Use the rotatable 3D board to check for threats from angles you might miss in a flat view"
   ],
   "similarTo": ["Chess.com", "Lichess", "Chess Titans", "Battle Chess"],
-  "howToPlay": "Click a piece to select it, then click a highlighted square to move. The game follows standard chess rules. Choose from 4 AI difficulty levels or play against a friend online. Your ELO rating adjusts after each game."
+  "howToPlay": "Click a piece to select it, then click a highlighted square to move. The game follows standard chess rules. Choose from 4 AI difficulty levels or play against a friend online. Your ELO rating adjusts after each game.",
+  "aboutGame": "Chess 3D is a free online chess game with a fully rendered 3D board, 4 AI difficulty levels, ELO rating tracking, and real-time online multiplayer. The rotatable 3D perspective adds depth that flat chess boards can't match. Suitable for beginners learning the basics through Easy mode and experienced players seeking competitive play with ELO tracking.",
+  "faq": [
+    {
+      "q": "Can I play chess free online?",
+      "a": "Yes. Chess 3D on Weekly Arcade is completely free with no ads. Play against AI at 4 difficulty levels or challenge friends in online multiplayer - no download needed."
+    },
+    {
+      "q": "Does Chess 3D have multiplayer?",
+      "a": "Yes. Chess 3D supports real-time online multiplayer. Challenge a friend by sharing a game link, or compete against AI opponents with ELO rating tracking."
+    },
+    {
+      "q": "What difficulty levels does Chess 3D have?",
+      "a": "Four levels: Easy (for beginners), Medium, Hard, and Expert. Your ELO rating adjusts after each game, matching you with appropriately challenging opponents."
+    }
+  ]
 }

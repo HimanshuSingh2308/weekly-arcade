@@ -21,5 +21,20 @@
     "Speed increases as you grow, so practice quick directional changes early"
   ],
   "similarTo": ["Slither.io", "Nokia Snake", "Pac-Man", "Tron Light Cycles"],
-  "howToPlay": "Use arrow keys or swipe to steer the snake toward food. Each food item makes the snake grow longer. Avoid hitting the walls or your own tail. The game ends when you collide with a wall or yourself."
+  "howToPlay": "Use arrow keys or swipe to steer the snake toward food. Each food item makes the snake grow longer. Avoid hitting the walls or your own tail. The game ends when you collide with a wall or yourself.",
+  "aboutGame": "Snake is the classic arcade game where you guide a growing snake to eat food while avoiding walls and your own tail. Originally popularized on Nokia phones in 1998, this browser version features modern polish with smooth animations, progressive speed increases, and global leaderboards. Simple to learn, endlessly replayable, and playable in 2-5 minute sessions.",
+  "faq": [
+    {
+      "q": "Is Snake free online?",
+      "a": "Yes. Play Snake free in your browser on Weekly Arcade - no downloads, no ads, no account needed. Works on any device."
+    },
+    {
+      "q": "How do you control Snake on mobile?",
+      "a": "Swipe in any direction to steer the snake. On desktop, use arrow keys or WASD. The controls are responsive with no input lag."
+    },
+    {
+      "q": "What is the highest score in Snake?",
+      "a": "Scores depend on how many food items you collect before hitting a wall or your tail. Compete on Weekly Arcade's global leaderboards to see how you rank against other players."
+    }
+  ]
 }

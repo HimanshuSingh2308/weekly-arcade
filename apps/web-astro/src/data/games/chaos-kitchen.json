@@ -19,5 +19,20 @@
     "Upgrade your kitchen tools between rounds to handle harder orders"
   ],
   "similarTo": ["Overcooked", "Cooking Mama", "Diner Dash", "Cook Serve Delicious"],
-  "howToPlay": "Read customer orders and prepare dishes by selecting the right ingredients in the correct sequence. Serve orders before the timer runs out. Survive random chaos events like fires, spills, and equipment failures. Complete all orders to advance to harder levels."
+  "howToPlay": "Read customer orders and prepare dishes by selecting the right ingredients in the correct sequence. Serve orders before the timer runs out. Survive random chaos events like fires, spills, and equipment failures. Complete all orders to advance to harder levels.",
+  "aboutGame": "Chaos Kitchen is a fast-paced cooking game where you manage a busy restaurant kitchen under pressure. Read orders, prepare dishes with the right ingredients, and serve before time runs out. Random chaos events - fires, spills, and equipment failures - keep you on your toes. Inspired by games like Overcooked, adapted for instant browser play.",
+  "faq": [
+    {
+      "q": "Is Chaos Kitchen free?",
+      "a": "Yes. Chaos Kitchen is completely free on Weekly Arcade - no ads, no downloads, no account needed. Just open and play."
+    },
+    {
+      "q": "What are chaos events in Chaos Kitchen?",
+      "a": "Random events that disrupt your kitchen - fires that need extinguishing, spills that slow you down, and equipment breakdowns. They add unpredictability and challenge to each level."
+    },
+    {
+      "q": "Is Chaos Kitchen like Overcooked?",
+      "a": "Chaos Kitchen is inspired by Overcooked's hectic kitchen gameplay but designed for solo play in a browser. It captures the same frantic cooking energy in quick sessions."
+    }
+  ]
 }

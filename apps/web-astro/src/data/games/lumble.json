@@ -19,5 +19,20 @@
     "Explore every corner of each level before moving on — some Sparks are well hidden"
   ],
   "similarTo": ["Super Mario 64", "A Hat in Time", "Marble It Up", "Human Fall Flat"],
-  "howToPlay": "Move your character through 3D levels using keyboard or touch controls. Use the Latch ability to grab onto surfaces and swing across gaps. Collect all 50 Sparks scattered across the level to complete the game."
+  "howToPlay": "Move your character through 3D levels using keyboard or touch controls. Use the Latch ability to grab onto surfaces and swing across gaps. Collect all 50 Sparks scattered across the level to complete the game.",
+  "aboutGame": "Lumble is a 3D collect-a-thon platformer built entirely in the browser using WebGL. Use your Latch ability to grab surfaces and swing across gaps while collecting 50 Sparks scattered across colorful 3D environments. The game proves that full 3D platforming experiences are possible without downloading an app.",
+  "faq": [
+    {
+      "q": "Is Lumble free?",
+      "a": "Yes. Lumble is completely free on Weekly Arcade - no ads, no downloads, no account required. Plays in any modern browser with WebGL support."
+    },
+    {
+      "q": "What is the Latch ability in Lumble?",
+      "a": "The Latch lets you grab onto surfaces and swing through the air. Release at the right moment for maximum distance. It's the core mechanic for traversing the 3D levels."
+    },
+    {
+      "q": "Does Lumble need a powerful device?",
+      "a": "Lumble uses WebGL for 3D rendering and runs on most modern devices including phones. Performance is best on devices from 2020 or newer, but it works on older hardware at reduced detail."
+    }
+  ]
 }

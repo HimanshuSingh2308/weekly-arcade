@@ -19,5 +19,20 @@
     "On higher levels (6-7 letters), focus on common word patterns and suffixes like -TION or -MENT"
   ],
   "similarTo": ["Quordle", "Nerdle", "Spelling Bee", "Crossword Puzzles"],
-  "howToPlay": "Type a word matching the required letter count and press Enter. Green means correct letter in correct position. Yellow means correct letter in wrong position. Gray means the letter is not in the word. You have 6 attempts to guess the word."
+  "howToPlay": "Type a word matching the required letter count and press Enter. Green means correct letter in correct position. Yellow means correct letter in wrong position. Gray means the letter is not in the word. You have 6 attempts to guess the word.",
+  "aboutGame": "Wordle is a free daily word puzzle game where you guess a hidden word in 6 attempts. Each guess reveals which letters are correct (green), misplaced (yellow), or absent (gray). Weekly Arcade's version features progressive difficulty from 3 to 7 letters, streak tracking, and global leaderboards. A new word is generated every day, making it the perfect daily brain exercise.",
+  "faq": [
+    {
+      "q": "Is Wordle free to play?",
+      "a": "Yes. Wordle on Weekly Arcade is 100% free with no ads, no downloads, and no account required. You can play as a guest instantly."
+    },
+    {
+      "q": "How many Wordle puzzles are there per day?",
+      "a": "One new word is generated each day. You can also replay at different word lengths (3-7 letters) for additional challenge and to build your streak."
+    },
+    {
+      "q": "Does Wordle work on phones?",
+      "a": "Yes. Wordle is fully responsive with touch-friendly controls and works on any phone, tablet, or desktop browser without downloading an app."
+    }
+  ]
 }

@@ -21,5 +21,20 @@
     "Save your super over strategy for close matches — aggressive batting works best in super overs"
   ],
   "similarTo": ["Stick Cricket", "Real Cricket", "World Cricket Championship", "Cricket League"],
-  "howToPlay": "Win the toss and choose to bat or bowl. When batting, time your tap to swing the bat and score runs. When bowling, aim your delivery and choose pace or spin. Complete 5 overs per innings. The team with more runs wins. Super over decides ties."
+  "howToPlay": "Win the toss and choose to bat or bowl. When batting, time your tap to swing the bat and score runs. When bowling, aim your delivery and choose pace or spin. Complete 5 overs per innings. The team with more runs wins. Super over decides ties.",
+  "aboutGame": "Cricket Blitz is a 3D IPL-style cricket game with full match mechanics including batting, bowling, toss, powerplay, and super over. Built with Canvas 2D rendering, it delivers an authentic cricket experience in your browser. Features touch-optimized controls for mobile play and AI opponents that adapt to your batting style.",
+  "faq": [
+    {
+      "q": "Is Cricket Blitz free?",
+      "a": "Yes. Cricket Blitz is 100% free on Weekly Arcade - no ads, no in-app purchases, no downloads. Play full cricket matches instantly in your browser."
+    },
+    {
+      "q": "Does Cricket Blitz have real IPL teams?",
+      "a": "Cricket Blitz features IPL-style gameplay with batting, bowling, powerplay, and super over mechanics, but uses original team names rather than licensed IPL franchises."
+    },
+    {
+      "q": "Can I bowl in Cricket Blitz?",
+      "a": "Yes. After the toss, you can choose to bat or bowl first. When bowling, select from 6 delivery types (straight, inswing, outswing, bouncer, yorker, slower) and aim your delivery."
+    }
+  ]
 }

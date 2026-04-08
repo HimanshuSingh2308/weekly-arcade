@@ -21,5 +21,20 @@
     "When stuck, swipe in your non-preferred direction as few times as possible"
   ],
   "similarTo": ["Threes!", "2048 Cupcakes", "1024", "Merge games"],
-  "howToPlay": "Swipe or use arrow keys to slide all tiles in one direction. When two tiles with the same number collide, they merge into one tile with double the value. Create a tile with the number 2048 to win. Your score increases with every merge."
+  "howToPlay": "Swipe or use arrow keys to slide all tiles in one direction. When two tiles with the same number collide, they merge into one tile with double the value. Create a tile with the number 2048 to win. Your score increases with every merge.",
+  "aboutGame": "2048 is a single-player sliding tile puzzle where you merge matching numbers to create higher values. Created by Gabriele Cirulli in 2014, it became one of the most popular browser games ever made. This version features smooth swipe controls, undo functionality, and competitive leaderboards. The game exercises spatial reasoning and strategic planning in sessions of 3-10 minutes.",
+  "faq": [
+    {
+      "q": "Is 2048 free to play online?",
+      "a": "Yes. Play 2048 free on Weekly Arcade with no downloads, no ads, and no account required. Works on any browser."
+    },
+    {
+      "q": "What is the goal of 2048?",
+      "a": "Slide numbered tiles on a 4x4 grid. When two tiles with the same number collide, they merge into one tile with double the value. The goal is to create a tile with the number 2048."
+    },
+    {
+      "q": "Can I play 2048 on my phone?",
+      "a": "Yes. 2048 on Weekly Arcade supports swipe controls on any mobile device with responsive design optimized for touchscreens."
+    }
+  ]
 }

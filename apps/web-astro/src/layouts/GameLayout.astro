@@ -45,6 +45,10 @@ interface Props {
   howToPlay?: string;
   /** SEO: similar games for "games like X" queries */
   similarTo?: string[];
+  /** SEO: extended game description for content depth */
+  aboutGame?: string;
+  /** SEO: per-game FAQ items */
+  faq?: { q: string; a: string }[];
 }
 
 const {
@@ -63,6 +67,8 @@ const {
   tips,
   howToPlay,
   similarTo,
+  aboutGame,
+  faq,
 } = Astro.props;
 ---
 
@@ -85,10 +91,12 @@ const {
 
   <GameHeader title={gameName} icon={icon} />
 
-  <!-- Game-specific body content -->
-  <slot />
+  <!-- Game-specific body content (nosnippet prevents Google indexing HUD/UI text) -->
+  <div data-nosnippet>
+    <slot />
+  </div>
 
-  <GameSEOContent gameName={gameName} gameId={gameId} tips={tips} howToPlay={howToPlay} similarTo={similarTo} />
+  <GameSEOContent gameName={gameName} gameId={gameId} tips={tips} howToPlay={howToPlay} similarTo={similarTo} aboutGame={aboutGame} faq={faq} />
 
   <MoreGames exclude={gameId} />
 
