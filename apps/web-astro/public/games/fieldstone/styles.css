@@ -982,34 +982,13 @@
       color: var(--gold);
     }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      :root {
-        --cell-size: clamp(16px, min(2.5vw, 2.5vh), 24px);
-      }
-
-      .game-container {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .left-panel, .right-panel {
-        flex-direction: row;
-        width: 100%;
-        max-width: 500px;
-      }
-
-      .left-panel { order: 1; }
-      .board-container { order: 2; }
-      .right-panel { order: 3; }
-    }
-
     /* Mobile UI - hidden on desktop */
     .mobile-ui {
       display: none;
     }
 
-    @media (max-width: 600px) {
+    /* Tablet + Mobile: hide panels, show compact mobile UI */
+    @media (max-width: 900px) {
       /* Mobile-optimized cell size: fits both width AND height */
       /* Width: (100vw - 24px) / 10.5 columns */
       /* Height: (available height) / 22 rows (20 board + ~2 for HUD) */
