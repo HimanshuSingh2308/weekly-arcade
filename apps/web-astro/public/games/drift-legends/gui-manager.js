@@ -2633,12 +2633,12 @@
       btnRow2.paddingBottom = '10px';
       col.addControl(btnRow2);
 
-      const privateBtn = this._createSecondaryButton('CREATE ROOM', '162px', '44px', btnRow2);
+      const privateBtn = this._createSecondaryButton('CREATE ROOM', '148px', '44px', btnRow2);
       privateBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpCreatePrivate'); });
 
-      var sp1 = new GUI.Rectangle(); sp1.width = '12px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow2.addControl(sp1);
+      var sp1 = new GUI.Rectangle(); sp1.width = '10px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow2.addControl(sp1);
 
-      const joinBtn = this._createSecondaryButton('JOIN CODE', '162px', '44px', btnRow2);
+      const joinBtn = this._createSecondaryButton('JOIN CODE', '148px', '44px', btnRow2);
       joinBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpJoinCode'); });
 
       // ── Status text ──
