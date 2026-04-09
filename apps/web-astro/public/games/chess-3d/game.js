@@ -4086,7 +4086,7 @@
   }
 
   async function _checkRejoinableSession() {
-    if (!currentUser || !window.multiplayerClient) return;
+    if (!currentUser || !window.multiplayerClient || !window.apiClient?.token) return;
 
     const savedSid = localStorage.getItem('chess3d-rejoin-session');
     if (!savedSid) return;
@@ -4095,7 +4095,7 @@
     try {
       const session = await window.multiplayerClient.getSession(savedSid);
       if (session && (session.status === 'playing' || session.status === 'starting')) {
-        // Auto-rejoin immediately — don't wait for user to click
+        // Session confirmed active — now safe to set multiplayer mode
         gameMode = 'multiplayer';
         mpSessionId = savedSid;
 
@@ -4118,11 +4118,15 @@
           // Don't remove localStorage here — game is active again.
           // onGameFinished or mpCleanup(true) will clear it when the game ends.
         } catch (e) {
+          console.warn('[Chess3D] Rejoin failed:', e.message || e);
+          gameMode = 'ai'; // Reset to AI mode
+          mpSessionId = null;
           showOverlay('mainMenuOverlay');
           hideOverlay('mpJoiningOverlay');
           localStorage.removeItem('chess3d-rejoin-session');
         }
       } else {
+        // Session ended or invalid — clean up
         localStorage.removeItem('chess3d-rejoin-session');
       }
     } catch (e) {
