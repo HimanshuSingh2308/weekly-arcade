@@ -216,14 +216,33 @@
     }
   }
 
+  // Debounced cloud save — prevents 429 from rapid saves (idle/tycoon games)
+  var _saveTimers = {};
+  var _savePending = {};
+  var _SAVE_DEBOUNCE_MS = 5000; // Max 1 save per 5 seconds per game
+
   async function saveState(gameId, state) {
     if (!currentUser || !window.apiClient) return null;
-    try {
-      return await window.apiClient.saveGameState(gameId, state);
-    } catch (error) {
-      console.error(`[${gameId}] Cloud state save failed:`, error);
-      return null;
-    }
+
+    // Store latest state — only the most recent matters
+    _savePending[gameId] = state;
+
+    // If a save is already scheduled, skip (it'll use the latest pending state)
+    if (_saveTimers[gameId]) return null;
+
+    _saveTimers[gameId] = setTimeout(async () => {
+      _saveTimers[gameId] = null;
+      var pendingState = _savePending[gameId];
+      if (!pendingState) return;
+      _savePending[gameId] = null;
+      try {
+        await window.apiClient.saveGameState(gameId, pendingState);
+      } catch (error) {
+        console.error(`[${gameId}] Cloud state save failed:`, error);
+      }
+    }, _SAVE_DEBOUNCE_MS);
+
+    return null;
   }
 
   // ─── Guest Score Queue ───
