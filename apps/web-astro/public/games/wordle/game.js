@@ -2083,14 +2083,11 @@
     }
 
     function updateHintButton() {
-      const hintBtn = document.getElementById('ghHintBtn');
-      const hintCount = document.getElementById('hintCount');
       const remaining = getMaxHints() - hintsUsed;
-      hintCount.textContent = remaining;
-
-      if (remaining <= 0) {
-        hintBtn.disabled = true;
-      }
+      var hintCount = document.getElementById('ghHintCount') || document.getElementById('hintCount');
+      if (hintCount) hintCount.textContent = remaining;
+      var hintBtn = document.getElementById('ghHintBtn');
+      if (hintBtn && remaining <= 0) hintBtn.disabled = true;
     }
 
     // Help modal functions
