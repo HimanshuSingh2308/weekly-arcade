@@ -1550,7 +1550,7 @@
     function checkGameEnd(guess) {
       if (_ws.equals(guess)) {
         gameOver = true;
-        document.getElementById('hintBtn').disabled = true;
+        var _hb = document.getElementById('ghHintBtn'); if (_hb) _hb.disabled = true;
         stats.played++;
         stats.won++;
         stats.streak++;
@@ -1571,7 +1571,7 @@
         }, 500);
       } else if (currentRow === 5) {
         gameOver = true;
-        document.getElementById('hintBtn').disabled = true;
+        var _hb = document.getElementById('ghHintBtn'); if (_hb) _hb.disabled = true;
         stats.played++;
         stats.streak = 0;
         saveStats();
@@ -2008,7 +2008,7 @@
       const hintsContainer = document.getElementById('hintsContainer');
       hintsContainer.innerHTML = '';
       hintsContainer.classList.remove('show');
-      document.getElementById('hintBtn').disabled = false;
+      var _hb = document.getElementById('ghHintBtn'); if (_hb) _hb.disabled = false;
       document.getElementById('hintCount').textContent = getMaxHints();
 
       // Reset keyboard
@@ -2083,7 +2083,7 @@
     }
 
     function updateHintButton() {
-      const hintBtn = document.getElementById('hintBtn');
+      const hintBtn = document.getElementById('ghHintBtn');
       const hintCount = document.getElementById('hintCount');
       const remaining = getMaxHints() - hintsUsed;
       hintCount.textContent = remaining;
