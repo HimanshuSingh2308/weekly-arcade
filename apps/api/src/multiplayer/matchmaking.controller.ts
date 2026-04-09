@@ -44,10 +44,10 @@ export class MatchmakingController {
     const gameRatingDoc = await this.matchmakingService.getPlayerRatingStats(req.user.uid, gameId);
     return {
       rating,
-      wins: gameRatingDoc?.wins || 0,
-      losses: gameRatingDoc?.losses || 0,
-      draws: gameRatingDoc?.draws || 0,
-      gamesPlayed: gameRatingDoc?.gamesPlayed || 0,
+      wins: gameRatingDoc?.won || gameRatingDoc?.wins || 0,
+      losses: gameRatingDoc?.lost || gameRatingDoc?.losses || 0,
+      draws: gameRatingDoc?.drawn || gameRatingDoc?.draws || 0,
+      gamesPlayed: gameRatingDoc?.played || gameRatingDoc?.gamesPlayed || 0,
     };
   }
 
