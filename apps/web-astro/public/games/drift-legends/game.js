@@ -608,7 +608,6 @@
 
   gui.onAction('mpForfeit', () => {
     if (!isMultiplayerRace) return;
-    if (!confirm('Quit this race? You will lose.')) return;
     _mpCleanup();
     _returnToMenu();
   });

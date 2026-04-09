@@ -2246,7 +2246,7 @@
       this.hud.mpInfoBox = mpInfoBox;
 
       // Forfeit button (replaces pause in MP) — top-left
-      var forfeitBtn = GUI.Button.CreateSimpleButton('forfeitBtn', 'QUIT');
+      var forfeitBtn = GUI.Button.CreateSimpleButton('btn_QUIT', 'QUIT');
       forfeitBtn.width = '56px';
       forfeitBtn.height = '32px';
       forfeitBtn.color = '#ff6666';
