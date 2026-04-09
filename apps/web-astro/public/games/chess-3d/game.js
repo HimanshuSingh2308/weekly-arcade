@@ -2444,6 +2444,7 @@
         gameMode = 'multiplayer';
         hideOverlay('mainMenuOverlay');
         showOverlay('mpLobbyOverlay');
+        _loadChessRating();
       });
     }
 
@@ -3986,6 +3987,23 @@
     const isMyTurn = chessEngine.getTurn() === playerColor;
     mpStartTurnTimer(isMyTurn);
     mpStartGameClock();
+  }
+
+  async function _loadChessRating() {
+    try {
+      var data = await window.multiplayerClient?.getRating('chess-3d');
+      if (data) {
+        var el = document.getElementById('mpRatingValue');
+        var st = document.getElementById('mpRatingStats');
+        if (el) el.textContent = String(data.rating || 1000);
+        if (st) st.innerHTML = 'W ' + (data.wins || 0) + ' &middot; L ' + (data.losses || 0) + ' &middot; D ' + (data.draws || 0) + '<br>Games: ' + (data.gamesPlayed || 0);
+      }
+    } catch (_) {
+      var el = document.getElementById('mpRatingValue');
+      var st = document.getElementById('mpRatingStats');
+      if (el) el.textContent = '1000';
+      if (st) st.textContent = 'No matches yet';
+    }
   }
 
   function mpCleanup(fullLeave) {

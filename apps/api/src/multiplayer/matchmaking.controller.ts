@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Req,
+  Param,
   HttpCode,
 } from '@nestjs/common';
 import { MatchmakingService } from './matchmaking.service';
@@ -30,5 +31,18 @@ export class MatchmakingController {
   @Get('status')
   async getStatus(@Req() req: any) {
     return this.matchmakingService.getStatus(req.user.uid);
+  }
+
+  @Get('rating/:gameId')
+  async getRating(@Req() req: any, @Param('gameId') gameId: string) {
+    const rating = await this.matchmakingService.getPlayerRating(req.user.uid, gameId);
+    const gameRatingDoc = await this.matchmakingService.getPlayerRatingStats(req.user.uid, gameId);
+    return {
+      rating,
+      wins: gameRatingDoc?.wins || 0,
+      losses: gameRatingDoc?.losses || 0,
+      draws: gameRatingDoc?.draws || 0,
+      gamesPlayed: gameRatingDoc?.gamesPlayed || 0,
+    };
   }
 }

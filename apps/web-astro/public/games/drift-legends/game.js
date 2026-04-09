@@ -448,7 +448,22 @@
     }
     gui.show('MP_MENU');
     state = STATE.MP_MENU;
+    // Fetch and display rating
+    _loadMPRating();
   });
+
+  async function _loadMPRating() {
+    try {
+      var data = await window.multiplayerClient?.getRating('drift-legends');
+      if (data && gui._mpRatingText) {
+        gui._mpRatingText.text = String(data.rating || 1000);
+        gui._mpStatsText.text = 'W ' + (data.wins || 0) + '  L ' + (data.losses || 0) + '  GP ' + (data.gamesPlayed || 0);
+      }
+    } catch (_) {
+      if (gui._mpRatingText) gui._mpRatingText.text = '1000';
+      if (gui._mpStatsText) gui._mpStatsText.text = 'No matches yet';
+    }
+  }
 
   gui.onAction('settings', () => {
     gui.show('SETTINGS');

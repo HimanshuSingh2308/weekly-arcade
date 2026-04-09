@@ -268,7 +268,15 @@ import gameData from '../../data/games/chess-3d.json';
   <div class="chess3d-overlay" id="mpLobbyOverlay" role="dialog" aria-modal="true" aria-label="Multiplayer lobby">
     <div class="chess3d-modal chess3d-menu-modal">
       <h2 style="margin:0 0 8px;">Play vs Friend</h2>
-      <p style="color:var(--c3d-text-dim);margin:0 0 20px;">Challenge a friend or find an opponent</p>
+      <p style="color:var(--c3d-text-dim);margin:0 0 12px;">Challenge a friend or find an opponent</p>
+      <div id="mpRatingDisplay" style="display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 16px;background:rgba(255,255,255,0.04);border-radius:10px;margin-bottom:16px;">
+        <div style="text-align:center;">
+          <div style="font-size:0.7rem;color:var(--c3d-text-dim);text-transform:uppercase;letter-spacing:1px;">Rating</div>
+          <div id="mpRatingValue" style="font-size:1.5rem;font-weight:700;color:var(--c3d-gold,#c9a84c);">---</div>
+        </div>
+        <div style="width:1px;height:30px;background:rgba(255,255,255,0.1);"></div>
+        <div id="mpRatingStats" style="font-size:0.75rem;color:var(--c3d-text-dim);line-height:1.5;">Loading...</div>
+      </div>
       <div id="mpErrorMsg" style="display:none;background:rgba(212,80,74,0.15);border:1px solid var(--c3d-red);color:var(--c3d-red);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.85rem;"></div>
       <button class="chess3d-btn chess3d-btn-play" id="mpQuickMatchBtn">Quick Match</button>
       <button class="chess3d-btn" id="mpCreatePrivateBtn" style="margin-top:10px;">Create Private Game</button>

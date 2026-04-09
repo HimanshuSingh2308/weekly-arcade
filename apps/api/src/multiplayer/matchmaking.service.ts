@@ -344,6 +344,11 @@ export class MatchmakingService {
    * Get a player's rating for a specific game.
    * Reads from per-game mpRatings subcollection, falls back to global, then default.
    */
+  async getPlayerRatingStats(uid: string, gameId: string): Promise<any | null> {
+    const doc = await this.firebase.doc(`users/${uid}/mpRatings/${gameId}`).get();
+    return doc.exists ? doc.data() : null;
+  }
+
   async getPlayerRating(uid: string, gameId: string): Promise<number> {
     // 1. Per-game rating (most accurate)
     const gameRatingDoc = await this.firebase.doc(`users/${uid}/mpRatings/${gameId}`).get();

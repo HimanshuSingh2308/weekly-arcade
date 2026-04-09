@@ -2575,6 +2575,43 @@
       // Header
       this._addScreenTitle(panel, 'MULTIPLAYER');
 
+      // Rating display
+      var ratingRow = new GUI.StackPanel('mpRatingRow');
+      ratingRow.isVertical = false;
+      ratingRow.height = '50px';
+      ratingRow.top = '-40px';
+      ratingRow.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      panel.addControl(ratingRow);
+
+      var ratingLabel = new GUI.TextBlock('mpRatingLabel', 'RATING');
+      ratingLabel.fontSize = 12;
+      ratingLabel.fontFamily = 'monospace';
+      ratingLabel.color = COLORS.textDim;
+      ratingLabel.width = '60px';
+      ratingLabel.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      ratingLabel.isHitTestVisible = false;
+      ratingRow.addControl(ratingLabel);
+
+      this._mpRatingText = new GUI.TextBlock('mpRatingVal', '---');
+      this._mpRatingText.fontSize = 28;
+      this._mpRatingText.fontFamily = 'monospace';
+      this._mpRatingText.fontWeight = 'bold';
+      this._mpRatingText.color = COLORS.gold;
+      this._mpRatingText.width = '80px';
+      this._mpRatingText.isHitTestVisible = false;
+      ratingRow.addControl(this._mpRatingText);
+
+      var sp0 = new GUI.Rectangle(); sp0.width = '24px'; sp0.height = '1px'; sp0.thickness = 0; sp0.background = 'transparent'; ratingRow.addControl(sp0);
+
+      this._mpStatsText = new GUI.TextBlock('mpStatsVal', '');
+      this._mpStatsText.fontSize = 12;
+      this._mpStatsText.fontFamily = 'monospace';
+      this._mpStatsText.color = COLORS.textDim;
+      this._mpStatsText.width = '160px';
+      this._mpStatsText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._mpStatsText.isHitTestVisible = false;
+      ratingRow.addControl(this._mpStatsText);
+
       // Buttons — horizontal row, center
       var btnRow = new GUI.StackPanel('mpBtnRow');
       btnRow.isVertical = false;

@@ -446,6 +446,10 @@
     return window.apiClient?.request('/multiplayer/matchmaking/status');
   }
 
+  async function getRating(gameId) {
+    return window.apiClient?.request('/multiplayer/matchmaking/rating/' + gameId);
+  }
+
   // ─── Invitations (via REST) ───────────────────────────────────────
 
   async function inviteFriend(sessionId, friendUid) {
@@ -599,6 +603,7 @@
     cancelMatchmaking,
     getMatchmakingStatus,
     onMatchFound,
+    getRating,
 
     // Invitations (REST)
     inviteFriend,
