@@ -93,8 +93,8 @@ import gameData from '../../data/games/drift-legends.json';
         bottom: 0;
         z-index: 1;
       }
-      /* Hide "More Games" — fullscreen 3D canvas bleeds through with transparent bg */
-      .more-games { display: none !important; }
+      /* Hide "More Games" + SEO content — fullscreen 3D canvas bleeds through with transparent bg */
+      .more-games, .game-seo-content { display: none !important; }
       /* Hide header during gameplay (toggled via JS) */
       body.dl-playing #gameHeader { display: none !important; }
       body.dl-playing .dl-wrap { top: 0 !important; }
