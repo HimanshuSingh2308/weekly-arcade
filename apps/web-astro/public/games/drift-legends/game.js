@@ -194,38 +194,52 @@
   scene.skipPointerUpPicking = false;
 
   // Initialize multiplayer with game callbacks
+  var _isBotRace = false;
+  var _botOpponentName = '';
+
   DL.Multiplayer.init({
     onRaceStart: function(mpState) {
-      // Server says both players connected — start the MP race
-      isMultiplayerRace = true;
+      // Check if this is a bot match (no real opponent found)
+      _isBotRace = !!(mpState?._botMatch);
+      _botOpponentName = mpState?._botName || 'Opponent';
+
+      isMultiplayerRace = !_isBotRace; // Bot races use SP AI, not MP sync
       selectedTrackId = mpState?.trackId || 'city-circuit';
       totalLaps = mpState?.totalLaps || 2;
-      // Save session for rejoin immediately (iOS may kill page without beforeunload)
-      var sid = DL.Multiplayer.getSessionId();
-      if (sid) localStorage.setItem(REJOIN_KEY, sid);
+
+      if (!_isBotRace) {
+        // Real MP — save session for rejoin
+        var sid = DL.Multiplayer.getSessionId();
+        if (sid) localStorage.setItem(REJOIN_KEY, sid);
+      }
+
       window.multiplayerUI?.hideMatchmaking();
       gui.hideMPJoining();
       gui.hideMPWaitingRoom();
 
-      // Fetch opponent display name from session via API
-      var oppName = 'Opponent';
-      gui.showMPHud(oppName); // Show immediately with fallback
-      try {
-        var sid = DL.Multiplayer.getSessionId();
-        if (sid && window.multiplayerClient) {
-          window.multiplayerClient.getSession(sid).then(function(session) {
-            if (session?.players) {
-              for (var uid in session.players) {
-                if (uid !== currentUser?.uid) {
-                  oppName = session.players[uid].displayName || 'Opponent';
-                  gui.showMPHud(oppName);
-                  break;
+      // Show opponent name in MP HUD
+      if (_isBotRace) {
+        gui.showMPHud(_botOpponentName);
+      } else {
+        var oppName = 'Opponent';
+        gui.showMPHud(oppName);
+        try {
+          var sid = DL.Multiplayer.getSessionId();
+          if (sid && window.multiplayerClient) {
+            window.multiplayerClient.getSession(sid).then(function(session) {
+              if (session?.players) {
+                for (var uid in session.players) {
+                  if (uid !== currentUser?.uid) {
+                    oppName = session.players[uid].displayName || 'Opponent';
+                    gui.showMPHud(oppName);
+                    break;
+                  }
                 }
               }
-            }
-          }).catch(function() {});
-        }
-      } catch (_) {}
+            }).catch(function() {});
+          }
+        } catch (_) {}
+      }
 
       _startLoading();
     },
@@ -1623,7 +1637,7 @@
     tutorialStep = -1;
 
     // Multiplayer: send finish to server, show waiting view, wait for result
-    if (isMultiplayerRace) {
+    if (isMultiplayerRace && !_isBotRace) {
       const totalTimeMs = lapTimes.reduce((a, b) => a + b, 0);
       const driftScoreTotal = playerPhysics ? playerPhysics.totalDriftScore : 0;
       _mpFinishDriftScore = Math.round(driftScoreTotal);
@@ -1732,25 +1746,48 @@
       chaseCamera.setResultView(playerCar.position);
       // Disable 3D mesh picking so GUI buttons receive clicks
       scene.meshes.forEach(function(m) { m.isPickable = false; });
-      // Calculate total stats for story complete screen
-      var totalStars = 0, totalRaces = 0;
-      Object.values(progress.raceResults || {}).forEach(function(r) { totalStars += (r.bestStars || 0); if (r.completed) totalRaces++; });
-      gui.showRaceResult({
-        position: playerPosition,
-        stars,
-        raceScore,
-        driftScore: Math.round(driftScoreTotal),
-        coins,
-        totalTimeMs,
-        unlockText,
-        goalResults: goalResults,
-        allGoalsPassed: allGoalsPassed,
-        storyComplete: !!(progress.storyComplete && selectedChapter && selectedChapter.id === 5 && won),
-        totalStars: totalStars,
-        totalRaces: totalRaces,
-        totalCoins: progress.coins || 0,
-      });
-      state = STATE.RESULT;
+
+      if (_isBotRace) {
+        // Bot match — show MP-style result (REMATCH / MENU)
+        gui.hideMPHud();
+        gui.showRaceResult({
+          position: playerPosition,
+          stars: won ? 3 : (playerPosition <= 2 ? 2 : 1),
+          raceScore,
+          driftScore: Math.round(driftScoreTotal),
+          coins,
+          totalTimeMs,
+          unlockText: won ? 'Victory vs ' + _botOpponentName + '!' : 'Defeated by ' + _botOpponentName,
+          goalResults: [],
+          allGoalsPassed: won,
+          storyComplete: false,
+          totalStars: 0,
+          totalCoins: 0,
+          isMultiplayer: true, // Shows REMATCH + MENU buttons
+        });
+        _isBotRace = false;
+        state = STATE.RESULT;
+      } else {
+        // Normal SP/story result
+        var totalStars = 0, totalRaces = 0;
+        Object.values(progress.raceResults || {}).forEach(function(r) { totalStars += (r.bestStars || 0); if (r.completed) totalRaces++; });
+        gui.showRaceResult({
+          position: playerPosition,
+          stars,
+          raceScore,
+          driftScore: Math.round(driftScoreTotal),
+          coins,
+          totalTimeMs,
+          unlockText,
+          goalResults: goalResults,
+          allGoalsPassed: allGoalsPassed,
+          storyComplete: !!(progress.storyComplete && selectedChapter && selectedChapter.id === 5 && won),
+          totalStars: totalStars,
+          totalRaces: totalRaces,
+          totalCoins: progress.coins || 0,
+        });
+        state = STATE.RESULT;
+      }
     }, 1500);
 
     // Note: MP finish is handled in the early return above

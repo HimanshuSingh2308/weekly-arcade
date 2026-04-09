@@ -26,6 +26,16 @@
 
   // Position sync timer
   let syncInterval = null;
+  let isBotMatch = false;
+
+  // Bot names — realistic player names
+  const BOT_NAMES = [
+    'Aarav R.', 'Priya M.', 'Rohan K.', 'Ananya S.', 'Vikram P.',
+    'Neha G.', 'Arjun D.', 'Ishita T.', 'Karan B.', 'Meera L.',
+    'Dev S.', 'Riya N.', 'Aditya V.', 'Simran C.', 'Rahul J.',
+    'Pooja W.', 'Siddharth A.', 'Kavya H.', 'Manish R.', 'Divya P.',
+    'Alex T.', 'Sam W.', 'Jordan K.', 'Riley M.', 'Casey B.',
+  ];
 
   // Callbacks
   let onOpponentUpdate = null;
@@ -360,6 +370,7 @@
   function leaveSession() {
     stopSync();
     _stopPolling();
+    isBotMatch = false;
     if (currentSessionId && window.multiplayerClient) {
       try {
         window.multiplayerClient.leaveSession(currentSessionId);
@@ -380,10 +391,11 @@
     let attempts = 0;
     _pollTimer = setInterval(async () => {
       attempts++;
-      if (attempts > 40) { // 40 * 3s = 2 min
+      if (attempts > 10) { // 10 * 3s = 30s — then fill with bot
         _stopPolling();
+        try { await window.multiplayerClient?.cancelMatchmaking(); } catch(_) {}
         window.multiplayerUI?.hideMatchmaking();
-        window.DriftLegends._gui?.showToast('No opponents found. Try again later.');
+        _startBotMatch();
         return;
       }
       try {
@@ -399,6 +411,23 @@
         }
       } catch (_) { /* retry */ }
     }, 3000);
+  }
+
+  function _startBotMatch() {
+    isBotMatch = true;
+    var botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+    window.DriftLegends._gui?.showToast('Matched with ' + botName + '!', 2000);
+
+    // Trigger the race start callback with a bot opponent
+    // Uses the same onRaceStart path as real MP — game doesn't know it's a bot
+    if (onRaceStart) {
+      onRaceStart({
+        trackId: 'city-circuit',
+        totalLaps: 2,
+        _botMatch: true,
+        _botName: botName,
+      });
+    }
   }
 
   function _stopPolling() {
@@ -432,6 +461,7 @@
     isInSession: () => !!currentSessionId,
     isHostPlayer: () => isHost,
     get _gameState() { return gameState; },
+    isBotMatch: () => isBotMatch,
     // Rejoin helpers
     _setSession: function(sid, uid) {
       currentSessionId = sid;
