@@ -1746,13 +1746,15 @@
   // Check deep link for multiplayer
   const joinCode = DL.Multiplayer.checkDeepLink();
   if (joinCode) {
+    // Show joining UI immediately
+    gui.showMPJoining('Signing in...');
     var _joinAttempts = 0;
     const waitAuth = setInterval(() => {
       _joinAttempts++;
       // Wait for BOTH user auth AND api token to be ready
       if (currentUser && window.apiClient?.token) {
         clearInterval(waitAuth);
-        gui.showToast('Joining room...', 2000);
+        gui.showMPJoining('Joining room ' + joinCode + '...');
         // Small delay to ensure token is fully propagated
         setTimeout(() => {
           DL.Multiplayer.joinByCode(joinCode, currentUser.uid);
@@ -1760,6 +1762,7 @@
       } else if (_joinAttempts > 30) {
         // 15s timeout — show auth nudge if not signed in
         clearInterval(waitAuth);
+        gui.hideMPJoining();
         if (!currentUser) {
           window.authNudge?.show(true);
         } else {
