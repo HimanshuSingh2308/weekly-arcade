@@ -2329,7 +2329,9 @@
         // Sync each new achievement to cloud
         if (achievements && achievements.length > 0) {
           achievements.forEach(ach => {
-            window.gameCloud.unlockAchievement(ach.id, 'wordle');
+            // ach is a string ID (e.g. 'first_word'), not an object
+            var achId = typeof ach === 'string' ? ach : ach.id;
+            if (achId) window.gameCloud.unlockAchievement(achId, 'wordle');
           });
         }
 
