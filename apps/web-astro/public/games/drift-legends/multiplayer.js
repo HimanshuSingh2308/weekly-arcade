@@ -88,12 +88,10 @@
       }
     } catch (err) {
       window.multiplayerUI?.hideMatchmaking();
+      window.DriftLegends._gui?.hideMPJoining();
       console.error('Matchmaking error:', err);
-      var guiToast = window.DriftLegends._gui?.showToast;
-      if (guiToast) {
-        var msg = err.message || 'Unknown error';
-        window.DriftLegends._gui.showToast('\u274c ' + msg);
-      }
+      var msg = err.message || 'Unknown error';
+      window.DriftLegends._gui?.showToast('\u274c ' + msg);
     }
   }
 
@@ -113,6 +111,7 @@
       return session;
     } catch (err) {
       console.error('Create room error:', err);
+      window.DriftLegends._gui?.hideMPJoining();
       window.DriftLegends._gui?.showToast('\u274c Room creation failed: ' + (err.message || 'Unknown error'));
       return null;
     }
@@ -131,6 +130,7 @@
       }
     } catch (err) {
       console.error('Join by code error:', err);
+      window.DriftLegends._gui?.hideMPJoining();
       window.DriftLegends._gui?.showToast('\u274c Failed to join: ' + (err.message || 'Invalid code'));
     }
   }
