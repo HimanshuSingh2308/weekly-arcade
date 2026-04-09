@@ -479,7 +479,7 @@
     }
     // Load match history
     try {
-      var history = await window.multiplayerClient?.getMatchHistory('drift-legends', 5);
+      var history = await window.multiplayerClient?.getMatchHistory('drift-legends', 10);
       if (history && history.length > 0 && gui._mpHistoryText) {
         var lines = history.map(function(m) {
           var icon = m.outcome === 'win' ? 'W' : (m.outcome === 'loss' ? 'L' : 'D');

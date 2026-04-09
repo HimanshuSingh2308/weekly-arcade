@@ -2665,17 +2665,27 @@
       histLabel.paddingBottom = '4px';
       col.addControl(histLabel);
 
+      var histScroll = new GUI.ScrollViewer('mpHistScroll');
+      histScroll.width = '100%';
+      histScroll.height = '80px';
+      histScroll.thickness = 0;
+      histScroll.barSize = 4;
+      histScroll.barColor = COLORS.accent;
+      histScroll.barBackground = 'rgba(255,255,255,0.05)';
+      col.addControl(histScroll);
+
       this._mpHistoryText = new GUI.TextBlock('mpHistoryText', '');
       this._mpHistoryText.fontSize = 11;
       this._mpHistoryText.fontFamily = 'monospace';
       this._mpHistoryText.color = COLORS.textDim;
       this._mpHistoryText.textWrapping = true;
-      this._mpHistoryText.width = '100%';
-      this._mpHistoryText.height = '80px';
+      this._mpHistoryText.resizeToFit = true;
       this._mpHistoryText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
       this._mpHistoryText.lineSpacing = '4px';
       this._mpHistoryText.isHitTestVisible = false;
-      col.addControl(this._mpHistoryText);
+      this._mpHistoryText.paddingLeft = '4px';
+      this._mpHistoryText.paddingRight = '4px';
+      histScroll.addControl(this._mpHistoryText);
 
       this._addBackButton(panel, 'MENU');
     }
