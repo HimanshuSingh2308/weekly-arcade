@@ -281,6 +281,10 @@ import gameData from '../../data/games/chess-3d.json';
       <button class="chess3d-btn chess3d-btn-play" id="mpQuickMatchBtn">Quick Match</button>
       <button class="chess3d-btn" id="mpCreatePrivateBtn" style="margin-top:10px;">Create Private Game</button>
       <button class="chess3d-btn" id="mpJoinCodeBtn" style="margin-top:10px;">Join by Code</button>
+      <div id="mpMatchHistory" style="margin-top:16px;max-height:120px;overflow-y:auto;width:100%;">
+        <div style="font-size:0.7rem;color:var(--c3d-text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Recent Matches</div>
+        <div id="mpHistoryList" style="font-size:0.75rem;color:var(--c3d-text-dim);line-height:1.6;"></div>
+      </div>
       <button class="chess3d-btn chess3d-btn-secondary" id="mpBackBtn" style="margin-top:16px;">Back</button>
     </div>
   </div>

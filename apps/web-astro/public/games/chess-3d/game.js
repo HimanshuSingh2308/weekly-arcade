@@ -4004,6 +4004,21 @@
       if (el) el.textContent = '1000';
       if (st) st.textContent = 'No matches yet';
     }
+    // Load match history
+    try {
+      var history = await window.multiplayerClient?.getMatchHistory('chess-3d', 5);
+      var list = document.getElementById('mpHistoryList');
+      if (history && history.length > 0 && list) {
+        list.innerHTML = history.map(function(m) {
+          var icon = m.outcome === 'win' ? '<span style="color:#4caf50">W</span>' : (m.outcome === 'loss' ? '<span style="color:#e94560">L</span>' : '<span style="color:#888">D</span>');
+          var delta = m.ratingChange > 0 ? '<span style="color:#4caf50">+' + m.ratingChange + '</span>' : '<span style="color:#e94560">' + (m.ratingChange || 0) + '</span>';
+          var date = m.finishedAt ? new Date(m.finishedAt).toLocaleDateString() : '';
+          return '<div style="display:flex;justify-content:space-between;padding:2px 0;">' + icon + ' vs ' + (m.opponentName || 'Player') + '<span>' + delta + '</span><span style="color:#555">' + date + '</span></div>';
+        }).join('');
+      } else if (list) {
+        list.textContent = 'No matches played yet';
+      }
+    } catch (_) {}
   }
 
   function mpCleanup(fullLeave) {

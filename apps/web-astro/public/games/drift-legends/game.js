@@ -463,6 +463,23 @@
       if (gui._mpRatingText) gui._mpRatingText.text = '1000';
       if (gui._mpStatsText) gui._mpStatsText.text = 'No matches yet';
     }
+    // Load match history
+    try {
+      var history = await window.multiplayerClient?.getMatchHistory('drift-legends', 5);
+      if (history && history.length > 0 && gui._mpHistoryText) {
+        var lines = history.map(function(m) {
+          var icon = m.outcome === 'win' ? 'W' : (m.outcome === 'loss' ? 'L' : 'D');
+          var delta = m.ratingChange > 0 ? '+' + m.ratingChange : String(m.ratingChange || 0);
+          var date = m.finishedAt ? new Date(m.finishedAt).toLocaleDateString() : '';
+          return icon + '  vs ' + m.opponentName + '  ' + delta + '  ' + date;
+        });
+        gui._mpHistoryText.text = lines.join('\n');
+      } else if (gui._mpHistoryText) {
+        gui._mpHistoryText.text = 'No matches played yet';
+      }
+    } catch (_) {
+      if (gui._mpHistoryText) gui._mpHistoryText.text = '';
+    }
   }
 
   gui.onAction('settings', () => {

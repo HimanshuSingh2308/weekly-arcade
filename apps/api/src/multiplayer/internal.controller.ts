@@ -93,12 +93,23 @@ export class InternalController {
     // Build match result and update per-game + global ratings
     const playerResults: Record<string, MatchPlayerResult> = {};
 
+    // Fetch display names from user docs
+    const displayNames: Record<string, string> = {};
+    for (const uid of uids) {
+      try {
+        const userDoc = await this.firebase.doc(`users/${uid}`).get();
+        displayNames[uid] = userDoc.data()?.displayName || 'Player';
+      } catch (_) {
+        displayNames[uid] = 'Player';
+      }
+    }
+
     for (const uid of uids) {
       const ratingBefore = ratings[uid] ?? MULTIPLAYER_DEFAULTS.DEFAULT_RATING;
       const ratingAfter = Math.max(MULTIPLAYER_DEFAULTS.RATING_FLOOR, ratingBefore + ratingChanges[uid]);
 
       playerResults[uid] = {
-        displayName: '',
+        displayName: displayNames[uid],
         score: results[uid].score,
         rank: results[uid].rank,
         outcome: results[uid].outcome,
@@ -113,12 +124,13 @@ export class InternalController {
       );
     }
 
-    // Store match result
-    const matchResult: MatchResult = {
+    // Store match result (playerUids array enables efficient queries by user)
+    const matchResult = {
       gameId,
       sessionId,
       players: playerResults,
-      durationSec: 0, // TODO: calculate from session timestamps
+      playerUids: uids,
+      durationSec: 0,
       totalTurns: 0,
       finishedAt: new Date(),
     };

@@ -2638,6 +2638,23 @@
       this.mpStatusText.paddingRight = '24px';
       this.mpStatusText.textWrapping = true;
 
+      // Match history section
+      var histLabel = this._createText('RECENT MATCHES', 12, COLORS.textDim, panel);
+      histLabel.top = '85px';
+      histLabel.isHitTestVisible = false;
+
+      this._mpHistoryText = new GUI.TextBlock('mpHistoryText', '');
+      this._mpHistoryText.fontSize = 11;
+      this._mpHistoryText.fontFamily = 'monospace';
+      this._mpHistoryText.color = COLORS.textDim;
+      this._mpHistoryText.top = '140px';
+      this._mpHistoryText.textWrapping = true;
+      this._mpHistoryText.width = '90%';
+      this._mpHistoryText.height = '120px';
+      this._mpHistoryText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this._mpHistoryText.isHitTestVisible = false;
+      panel.addControl(this._mpHistoryText);
+
       this._addBackButton(panel, 'MENU');
     }
 

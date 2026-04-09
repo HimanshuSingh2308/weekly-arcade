@@ -450,6 +450,10 @@
     return window.apiClient?.request('/multiplayer/matchmaking/rating/' + gameId);
   }
 
+  async function getMatchHistory(gameId, limit) {
+    return window.apiClient?.request('/multiplayer/matchmaking/history/' + gameId + '?limit=' + (limit || 20));
+  }
+
   // ─── Invitations (via REST) ───────────────────────────────────────
 
   async function inviteFriend(sessionId, friendUid) {
@@ -604,6 +608,7 @@
     getMatchmakingStatus,
     onMatchFound,
     getRating,
+    getMatchHistory,
 
     // Invitations (REST)
     inviteFriend,
