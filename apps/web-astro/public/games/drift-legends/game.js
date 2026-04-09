@@ -480,21 +480,67 @@
     // Load match history
     try {
       var history = await window.multiplayerClient?.getMatchHistory('drift-legends', 10);
-      if (history && history.length > 0 && gui._mpHistoryText) {
-        function pad(s, len) { s = String(s); while (s.length < len) s += ' '; return s.slice(0, len); }
-        function padL(s, len) { s = String(s); while (s.length < len) s = ' ' + s; return s.slice(-len); }
-        var lines = history.map(function(m) {
-          var icon = pad(m.outcome === 'win' ? 'W' : (m.outcome === 'loss' ? 'L' : 'D'), 2);
-          var name = pad(m.opponentName || 'Player', 14);
-          var delta = m.ratingChange > 0 ? '+' + m.ratingChange : String(m.ratingChange || 0);
-          delta = padL(delta, 4);
+      var stack = gui._mpHistoryStack;
+      if (history && history.length > 0 && stack) {
+        // Clear previous rows
+        stack.children.slice().forEach(function(c) { c.dispose(); });
+        var GUI_NS = BABYLON.GUI;
+        history.forEach(function(m) {
+          var isWin = m.outcome === 'win';
+          var rowColor = isWin ? '#4caf50' : '#e94560';
+          var row = new GUI_NS.StackPanel();
+          row.isVertical = false;
+          row.height = '18px';
+          row.width = '100%';
+          row.isHitTestVisible = false;
+
+          // W/L badge
+          var badge = new GUI_NS.TextBlock();
+          badge.text = isWin ? 'W' : (m.outcome === 'draw' ? 'D' : 'L');
+          badge.color = isWin ? '#4caf50' : (m.outcome === 'draw' ? '#888' : '#e94560');
+          badge.fontSize = 11; badge.fontFamily = 'monospace'; badge.fontWeight = 'bold';
+          badge.width = '18px'; badge.isHitTestVisible = false;
+          row.addControl(badge);
+
+          // Opponent name
+          var name = new GUI_NS.TextBlock();
+          name.text = (m.opponentName || 'Player').slice(0, 14);
+          name.color = '#c0c0d0';
+          name.fontSize = 11; name.fontFamily = 'monospace';
+          name.width = '120px'; name.textHorizontalAlignment = GUI_NS.Control.HORIZONTAL_ALIGNMENT_LEFT;
+          name.isHitTestVisible = false;
+          row.addControl(name);
+
+          // Rating delta
+          var delta = new GUI_NS.TextBlock();
+          var dv = m.ratingChange || 0;
+          delta.text = dv > 0 ? '+' + dv : String(dv);
+          delta.color = dv > 0 ? '#4caf50' : '#e94560';
+          delta.fontSize = 11; delta.fontFamily = 'monospace'; delta.fontWeight = 'bold';
+          delta.width = '42px'; delta.textHorizontalAlignment = GUI_NS.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+          delta.isHitTestVisible = false;
+          row.addControl(delta);
+
+          // Date
+          var dt = new GUI_NS.TextBlock();
           var d = m.finishedAt ? new Date(m.finishedAt) : null;
-          var date = d ? padL(d.getDate(), 2) + '/' + padL(d.getMonth() + 1, 2) : '    ';
-          return icon + name + delta + '  ' + date;
+          dt.text = d ? d.getDate() + '/' + (d.getMonth() + 1) : '';
+          dt.color = '#666';
+          dt.fontSize = 10; dt.fontFamily = 'monospace';
+          dt.width = '40px'; dt.textHorizontalAlignment = GUI_NS.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+          dt.isHitTestVisible = false;
+          row.addControl(dt);
+
+          stack.addControl(row);
         });
-        gui._mpHistoryText.text = lines.join('\n');
-      } else if (gui._mpHistoryText) {
-        gui._mpHistoryText.text = 'No matches played yet';
+      } else if (stack) {
+        stack.children.slice().forEach(function(c) { c.dispose(); });
+        var emptyText = new BABYLON.GUI.TextBlock();
+        emptyText.text = 'No matches played yet';
+        emptyText.color = COLORS.textDim;
+        emptyText.fontSize = 11; emptyText.fontFamily = 'monospace';
+        emptyText.height = '18px'; emptyText.isHitTestVisible = false;
+        stack.addControl(emptyText);
       }
     } catch (_) {
       if (gui._mpHistoryText) gui._mpHistoryText.text = '';
