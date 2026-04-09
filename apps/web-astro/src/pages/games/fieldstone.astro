@@ -135,22 +135,27 @@ import gameData from '../../data/games/fieldstone.json';
     </div>
   </div>
 
-  <!-- Mobile UI -->
+  <!-- Mobile UI — compact kingdom HUD -->
   <div class="mobile-ui">
-    <div class="mobile-stats">
+    <div class="mobile-top-row">
       <div class="mobile-stat">
         <span class="mobile-score" id="mobileScore">0</span>
         <span class="mobile-label">Score</span>
       </div>
+      <div class="mobile-resources">
+        <div class="mobile-res">🪵<span id="mobileLumber">0</span></div>
+        <div class="mobile-res">🌾<span id="mobileFood">0</span></div>
+        <div class="mobile-res">🪨<span id="mobileStone">0</span></div>
+        <div class="mobile-res">💰<span id="mobileGold">0</span></div>
+      </div>
       <div class="mobile-stat">
-        <span class="mobile-wave">Wave <span id="mobileWave">1</span>/10</span>
+        <span class="mobile-wave">W<span id="mobileWave">1</span></span>
+        <span class="mobile-label">Wave</span>
       </div>
     </div>
-    <div class="mobile-resources">
-      <div class="mobile-res">🪵<span id="mobileLumber">0</span></div>
-      <div class="mobile-res">🌾<span id="mobileFood">0</span></div>
-      <div class="mobile-res">🪨<span id="mobileStone">0</span></div>
-      <div class="mobile-res">💰<span id="mobileGold">0</span></div>
+    <div class="mobile-bottom-row">
+      <div class="mobile-cards" id="mobileCards"></div>
+      <div class="mobile-enemy" id="mobileEnemy"></div>
     </div>
   </div>
 

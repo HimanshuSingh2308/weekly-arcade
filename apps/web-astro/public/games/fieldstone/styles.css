@@ -277,8 +277,17 @@
 
     /* Harvested rows - permanent kingdom land (subtle indicator) */
     .cell.harvested {
-      box-shadow: inset 0 0 3px rgba(255, 215, 0, 0.2);
-      border: 1px solid rgba(255, 215, 0, 0.15);
+      box-shadow: inset 0 0 6px rgba(255, 215, 0, 0.35);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      opacity: 0.75;
+    }
+
+    .cell.harvested::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,215,0,0.08) 0%, rgba(255,215,0,0.02) 100%);
+      pointer-events: none;
     }
 
     /* Next Piece Preview */
@@ -1006,8 +1015,12 @@
       /* Height: (available height) / 22 rows (20 board + ~2 for HUD) */
       /* Available height = 100dvh - 50px header - 70px mobile UI */
       :root {
-        /* Account for: header 50px + mobile-ui ~55px + cards strip ~50px + padding */
-        --cell-size: clamp(12px, min(calc((100vw - 24px) / 10.5), calc((100dvh - 200px) / 22)), 28px);
+        /* Account for: header 50px + mobile-ui ~65px + padding */
+        --cell-size: clamp(13px, min(calc((100vw - 24px) / 10.5), calc((100dvh - 140px) / 22)), 28px);
+      }
+
+      .left-panel, .right-panel {
+        display: none;
       }
 
       .controls-hint {
@@ -1018,126 +1031,99 @@
       .mobile-ui {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        padding: 6px 10px;
+        gap: 3px;
+        padding: 5px 8px;
         background: var(--bg-secondary);
         border-bottom: 1px solid var(--border);
       }
 
-      .mobile-stats {
+      .mobile-top-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 6px;
       }
 
       .mobile-stat {
         display: flex;
         flex-direction: column;
         align-items: center;
+        min-width: 36px;
       }
 
       .mobile-score {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 700;
         color: var(--accent);
       }
 
       .mobile-label {
-        font-size: 0.55rem;
+        font-size: 0.5rem;
         color: var(--text-secondary);
         text-transform: uppercase;
       }
 
       .mobile-wave {
-        font-size: 0.85rem;
-        font-weight: 600;
+        font-size: 0.9rem;
+        font-weight: 700;
         color: var(--text-primary);
       }
 
       .mobile-resources {
         display: flex;
-        justify-content: space-around;
-        gap: 6px;
+        gap: 4px;
+        flex: 1;
+        justify-content: center;
       }
 
       .mobile-res {
         display: flex;
         align-items: center;
-        gap: 3px;
-        font-size: 0.8rem;
+        gap: 2px;
+        font-size: 0.75rem;
         font-weight: 600;
         background: var(--bg-card);
-        padding: 3px 8px;
-        border-radius: 10px;
+        padding: 2px 6px;
+        border-radius: 8px;
       }
 
-      /* Reorganize panels for mobile — cards + enemies below board */
-      .game-container {
-        flex-direction: column;
+      .mobile-bottom-row {
+        display: flex;
+        justify-content: space-between;
         align-items: center;
-        height: calc(100dvh - 50px);
-        padding: 4px;
-        padding-bottom: env(safe-area-inset-bottom);
-        gap: 4px;
+        gap: 6px;
+        min-height: 24px;
       }
 
-      .left-panel {
-        width: 100%;
-        flex-direction: row;
-        gap: 6px;
-        order: 3;
+      .mobile-cards {
+        display: flex;
+        gap: 4px;
+        flex: 1;
         overflow-x: auto;
-        overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
       }
 
-      /* Hide resource/wave panels — shown in mobile-ui bar instead */
-      .left-panel .resources-grid,
-      .left-panel .wave-info {
-        display: none;
+      .mobile-cards .mobile-card {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        white-space: nowrap;
+        color: var(--text-primary);
       }
 
-      /* Cards section — compact horizontal strip */
-      .left-panel .cards-section {
-        min-width: fit-content;
-        padding: 4px 8px;
+      .mobile-enemy {
+        font-size: 0.65rem;
+        color: var(--accent, #e94560);
+        font-weight: 600;
+        white-space: nowrap;
       }
 
-      .left-panel .cards-section .panel-title {
-        font-size: 0.6rem;
-        margin-bottom: 2px;
-      }
-
-      .left-panel .jokers-section {
-        min-width: fit-content;
-        padding: 4px 8px;
-      }
-
-      .right-panel {
-        width: 100%;
-        flex-direction: row;
-        gap: 6px;
-        order: 4;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .right-panel .score-section {
-        display: none; /* Score shown in mobile-ui bar */
-      }
-
-      .right-panel .enemy-section {
-        min-width: fit-content;
-        padding: 4px 8px;
-      }
-
-      .right-panel .enemy-section .panel-title {
-        font-size: 0.6rem;
-        margin-bottom: 2px;
-      }
-
-      .board-container {
-        order: 2;
+      /* Adjust game container for mobile — full height */
+      .game-container {
+        height: calc(100dvh - 50px);
+        padding-bottom: env(safe-area-inset-bottom);
       }
 
       /* Gesture hint overlay (shown once on first mobile play) */

@@ -1376,6 +1376,21 @@
         </div>
       `;
 
+      // Mobile cards strip
+      var mobileCards = document.getElementById('mobileCards');
+      if (mobileCards) {
+        mobileCards.innerHTML = gameState.cards.map(function(cardId) {
+          var card = ALL_CARDS.find(function(c) { return c.id === cardId; });
+          return card ? '<span class="mobile-card">' + card.icon + ' ' + card.name + '</span>' : '';
+        }).join('');
+      }
+
+      // Mobile enemy
+      var mobileEnemy = document.getElementById('mobileEnemy');
+      if (mobileEnemy) {
+        mobileEnemy.textContent = typeIcons + ' ~' + enemyPower;
+      }
+
       renderBoard();
     }
 
