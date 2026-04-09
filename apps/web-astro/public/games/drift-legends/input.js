@@ -18,8 +18,11 @@
 
   let steerRampLeft = 0;
   let steerRampRight = 0;
-  const STEER_RAMP_SPEED = 2.5;  // ramp to full in ~400ms at 60fps (smoother mobile joystick)
+  const STEER_RAMP_SPEED = 3.25; // ramp to full in ~300ms at 60fps
   const STEER_DECAY_SPEED = 8.0;
+
+  // Steering sensitivity (0.3 = low, 0.65 = default, 1.0 = max)
+  var _steerSensitivity = parseFloat(localStorage.getItem('dl-steer-sensitivity')) || 0.65;
 
   // Touch state (set from GUI controls via setTouch)
   const touch = {
@@ -86,8 +89,8 @@
     // Analog steering — use joystick value if available, otherwise ramp from digital buttons
     if (Math.abs(touch.analogSteer) > 0.05) {
       // Smooth joystick input (lerp toward target for less snappy feel)
-      // Scale joystick input by 0.5 to reduce sensitivity on mobile
-      var target = touch.analogSteer * 0.5;
+      // Scale joystick input by sensitivity setting
+      var target = touch.analogSteer * _steerSensitivity;
       state.steer += (target - state.steer) * Math.min(1, STEER_RAMP_SPEED * dt);
     } else {
       // Digital button ramp (keyboard / d-pad)
@@ -132,6 +135,11 @@
     setTouch,
     isMobile() { return isMobile; },
     detectMobile,
+    getSteerSensitivity() { return _steerSensitivity; },
+    setSteerSensitivity(val) {
+      _steerSensitivity = Math.max(0.3, Math.min(1.0, val));
+      localStorage.setItem('dl-steer-sensitivity', _steerSensitivity.toFixed(2));
+    },
   };
 
   window.DriftLegends = window.DriftLegends || {};

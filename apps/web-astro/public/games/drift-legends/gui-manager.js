@@ -2615,11 +2615,12 @@
       // Settings card — centered, contained
       var settingsCard = new GUI.Rectangle('settingsCard');
       settingsCard.width = '500px';
-      settingsCard.height = '200px';
+      settingsCard.height = '300px';
       settingsCard.cornerRadius = 12;
       settingsCard.background = 'rgba(20,20,40,0.8)';
       settingsCard.thickness = 1;
       settingsCard.color = 'rgba(255,255,255,0.1)';
+      settingsCard.isHitTestVisible = false;
       panel.addControl(settingsCard);
 
       var stack = new GUI.StackPanel();
@@ -2640,6 +2641,29 @@
       slider.onValueChangedObservable.add(val => this._fire('volumeChange', val));
       stack.addControl(slider);
       this.volumeSlider = slider;
+
+      // Steering sensitivity
+      var DLInput = window.DriftLegends?.Input;
+      var steerLabel = this._createText('STEERING SENSITIVITY', 14, COLORS.textDim, stack);
+      steerLabel.paddingBottom = '4px';
+      var steerVal = this._createText(Math.round((DLInput?.getSteerSensitivity() || 0.65) * 100) + '%', 13, COLORS.accent, stack);
+      steerVal.paddingBottom = '2px';
+      steerVal.height = '18px';
+      var steerSlider = new GUI.Slider('steerSlider');
+      steerSlider.minimum = 0.3;
+      steerSlider.maximum = 1.0;
+      steerSlider.value = DLInput?.getSteerSensitivity() || 0.65;
+      steerSlider.width = '380px';
+      steerSlider.height = '44px';
+      steerSlider.color = COLORS.accent;
+      steerSlider.background = 'rgba(255,255,255,0.1)';
+      steerSlider.thumbWidth = 24;
+      steerSlider.paddingBottom = '16px';
+      steerSlider.onValueChangedObservable.add(function(val) {
+        if (DLInput) DLInput.setSteerSensitivity(val);
+        steerVal.text = Math.round(val * 100) + '%';
+      });
+      stack.addControl(steerSlider);
 
       // Controls reference — horizontal layout
       var controlsRow = new GUI.StackPanel();
