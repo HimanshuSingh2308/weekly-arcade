@@ -2575,85 +2575,107 @@
       // Header
       this._addScreenTitle(panel, 'MULTIPLAYER');
 
-      // Rating display
-      var ratingRow = new GUI.StackPanel('mpRatingRow');
-      ratingRow.isVertical = false;
-      ratingRow.height = '50px';
-      ratingRow.top = '-40px';
-      ratingRow.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-      panel.addControl(ratingRow);
+      // ── Central card container ──
+      var card = new GUI.Rectangle('mpCard');
+      card.width = '380px';
+      card.height = '340px';
+      card.cornerRadius = 14;
+      card.background = 'rgba(20,20,40,0.7)';
+      card.thickness = 1;
+      card.color = 'rgba(255,255,255,0.06)';
+      card.isHitTestVisible = false;
+      card.top = '10px';
+      panel.addControl(card);
 
-      var ratingLabel = new GUI.TextBlock('mpRatingLabel', 'RATING');
-      ratingLabel.fontSize = 12;
-      ratingLabel.fontFamily = 'monospace';
-      ratingLabel.color = COLORS.textDim;
-      ratingLabel.width = '60px';
-      ratingLabel.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
-      ratingLabel.isHitTestVisible = false;
-      ratingRow.addControl(ratingLabel);
+      var col = new GUI.StackPanel('mpCol');
+      col.width = '340px';
+      card.addControl(col);
 
+      // ── Rating row ──
+      var ratingCard = new GUI.Rectangle('mpRatingCard');
+      ratingCard.width = '100%';
+      ratingCard.height = '70px';
+      ratingCard.cornerRadius = 10;
+      ratingCard.background = 'rgba(255,255,255,0.03)';
+      ratingCard.thickness = 0;
+      ratingCard.isHitTestVisible = false;
+      ratingCard.paddingBottom = '12px';
+      col.addControl(ratingCard);
+
+      // Rating number — large centered
       this._mpRatingText = new GUI.TextBlock('mpRatingVal', '---');
-      this._mpRatingText.fontSize = 28;
+      this._mpRatingText.fontSize = 36;
       this._mpRatingText.fontFamily = 'monospace';
       this._mpRatingText.fontWeight = 'bold';
       this._mpRatingText.color = COLORS.gold;
-      this._mpRatingText.width = '80px';
+      this._mpRatingText.top = '-8px';
       this._mpRatingText.isHitTestVisible = false;
-      ratingRow.addControl(this._mpRatingText);
+      ratingCard.addControl(this._mpRatingText);
 
-      var sp0 = new GUI.Rectangle(); sp0.width = '24px'; sp0.height = '1px'; sp0.thickness = 0; sp0.background = 'transparent'; ratingRow.addControl(sp0);
-
+      // Stats line below rating
       this._mpStatsText = new GUI.TextBlock('mpStatsVal', '');
-      this._mpStatsText.fontSize = 12;
+      this._mpStatsText.fontSize = 11;
       this._mpStatsText.fontFamily = 'monospace';
       this._mpStatsText.color = COLORS.textDim;
-      this._mpStatsText.width = '160px';
-      this._mpStatsText.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      this._mpStatsText.top = '18px';
       this._mpStatsText.isHitTestVisible = false;
-      ratingRow.addControl(this._mpStatsText);
+      ratingCard.addControl(this._mpStatsText);
 
-      // Buttons — horizontal row, center
-      var btnRow = new GUI.StackPanel('mpBtnRow');
-      btnRow.isVertical = false;
-      btnRow.height = '60px';
-      panel.addControl(btnRow);
-
-      const quickBtn = this._createButton('QUICK MATCH', '220px', '54px', btnRow);
+      // ── Buttons — vertical stack for cleaner mobile layout ──
+      const quickBtn = this._createButton('QUICK MATCH', '100%', '48px');
+      quickBtn.paddingBottom = '8px';
       quickBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpQuickMatch'); });
+      col.addControl(quickBtn);
 
-      var sp1 = new GUI.Rectangle(); sp1.width = '16px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow.addControl(sp1);
+      var btnRow2 = new GUI.StackPanel('mpBtnRow2');
+      btnRow2.isVertical = false;
+      btnRow2.height = '48px';
+      btnRow2.paddingBottom = '10px';
+      col.addControl(btnRow2);
 
-      const privateBtn = this._createSecondaryButton('CREATE ROOM', '200px', '54px', btnRow);
+      const privateBtn = this._createSecondaryButton('CREATE ROOM', '162px', '44px', btnRow2);
       privateBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpCreatePrivate'); });
 
-      var sp2 = new GUI.Rectangle(); sp2.width = '16px'; sp2.height = '1px'; sp2.thickness = 0; sp2.background = 'transparent'; btnRow.addControl(sp2);
+      var sp1 = new GUI.Rectangle(); sp1.width = '12px'; sp1.height = '1px'; sp1.thickness = 0; sp1.background = 'transparent'; btnRow2.addControl(sp1);
 
-      const joinBtn = this._createSecondaryButton('JOIN CODE', '180px', '54px', btnRow);
+      const joinBtn = this._createSecondaryButton('JOIN CODE', '162px', '44px', btnRow2);
       joinBtn.onPointerClickObservable.add(() => { this._fire('click'); this._fire('mpJoinCode'); });
 
-      // Status text (errors, room codes, etc.)
-      this.mpStatusText = this._createText('', 16, COLORS.textDim, panel);
-      this.mpStatusText.top = '50px';
-      this.mpStatusText.paddingLeft = '24px';
-      this.mpStatusText.paddingRight = '24px';
+      // ── Status text ──
+      this.mpStatusText = this._createText('', 13, COLORS.textDim, col);
+      this.mpStatusText.height = '20px';
       this.mpStatusText.textWrapping = true;
 
-      // Match history section
-      var histLabel = this._createText('RECENT MATCHES', 12, COLORS.textDim, panel);
-      histLabel.top = '85px';
+      // ── Match history ──
+      var divider = new GUI.Rectangle('mpDiv');
+      divider.width = '80%';
+      divider.height = '1px';
+      divider.background = 'rgba(255,255,255,0.06)';
+      divider.thickness = 0;
+      divider.isHitTestVisible = false;
+      divider.paddingBottom = '8px';
+      col.addControl(divider);
+
+      var histLabel = new GUI.TextBlock('mpHistLabel', 'RECENT MATCHES');
+      histLabel.fontSize = 10;
+      histLabel.fontFamily = 'monospace';
+      histLabel.color = COLORS.textDim;
+      histLabel.height = '16px';
       histLabel.isHitTestVisible = false;
+      histLabel.paddingBottom = '4px';
+      col.addControl(histLabel);
 
       this._mpHistoryText = new GUI.TextBlock('mpHistoryText', '');
       this._mpHistoryText.fontSize = 11;
       this._mpHistoryText.fontFamily = 'monospace';
       this._mpHistoryText.color = COLORS.textDim;
-      this._mpHistoryText.top = '140px';
       this._mpHistoryText.textWrapping = true;
-      this._mpHistoryText.width = '90%';
-      this._mpHistoryText.height = '120px';
+      this._mpHistoryText.width = '100%';
+      this._mpHistoryText.height = '80px';
       this._mpHistoryText.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      this._mpHistoryText.lineSpacing = '4px';
       this._mpHistoryText.isHitTestVisible = false;
-      panel.addControl(this._mpHistoryText);
+      col.addControl(this._mpHistoryText);
 
       this._addBackButton(panel, 'MENU');
     }
