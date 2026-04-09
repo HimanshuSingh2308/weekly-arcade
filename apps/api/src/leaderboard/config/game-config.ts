@@ -162,7 +162,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   'chaos-kitchen': {
     maxScore: 50000,
     maxScorePerSecond: 200, // Fast serving possible
-    minTimeMs: 60000, // 1 minute minimum
+    minTimeMs: 5000, // 5 seconds — scores submitted per plate delivery
     maxLevel: 20,
     allowedMetadataKeys: ['ordersCompleted', 'chaosSurvived', 'multiplier', 'isLevelUp'],
     customValidation: (dto) => {
