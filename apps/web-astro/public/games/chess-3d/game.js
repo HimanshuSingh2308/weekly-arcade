@@ -4042,9 +4042,16 @@
       if (history && history.length > 0 && list) {
         list.innerHTML = history.map(function(m) {
           var icon = m.outcome === 'win' ? '<span style="color:#4caf50">W</span>' : (m.outcome === 'loss' ? '<span style="color:#e94560">L</span>' : '<span style="color:#888">D</span>');
-          var delta = m.ratingChange > 0 ? '<span style="color:#4caf50">+' + m.ratingChange + '</span>' : '<span style="color:#e94560">' + (m.ratingChange || 0) + '</span>';
-          var date = m.finishedAt ? new Date(m.finishedAt).toLocaleDateString() : '';
-          return '<div style="display:flex;justify-content:space-between;padding:2px 0;">' + icon + ' vs ' + (m.opponentName || 'Player') + '<span>' + delta + '</span><span style="color:#555">' + date + '</span></div>';
+          var delta = m.ratingChange > 0 ? '+' + m.ratingChange : String(m.ratingChange || 0);
+          var deltaColor = m.ratingChange > 0 ? '#4caf50' : '#e94560';
+          var d = m.finishedAt ? new Date(m.finishedAt) : null;
+          var date = d ? d.getDate() + '/' + (d.getMonth() + 1) : '';
+          return '<div style="display:grid;grid-template-columns:20px 1fr 45px 40px;gap:4px;padding:3px 0;align-items:center;">'
+            + icon
+            + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (m.opponentName || 'Player') + '</span>'
+            + '<span style="color:' + deltaColor + ';text-align:right;font-weight:600;">' + delta + '</span>'
+            + '<span style="color:#555;text-align:right;">' + date + '</span>'
+            + '</div>';
         }).join('');
       } else if (list) {
         list.textContent = 'No matches played yet';

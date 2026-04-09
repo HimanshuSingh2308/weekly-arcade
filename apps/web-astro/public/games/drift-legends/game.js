@@ -483,11 +483,16 @@
     try {
       var history = await window.multiplayerClient?.getMatchHistory('drift-legends', 10);
       if (history && history.length > 0 && gui._mpHistoryText) {
+        function pad(s, len) { s = String(s); while (s.length < len) s += ' '; return s.slice(0, len); }
+        function padL(s, len) { s = String(s); while (s.length < len) s = ' ' + s; return s.slice(-len); }
         var lines = history.map(function(m) {
-          var icon = m.outcome === 'win' ? 'W' : (m.outcome === 'loss' ? 'L' : 'D');
+          var icon = pad(m.outcome === 'win' ? 'W' : (m.outcome === 'loss' ? 'L' : 'D'), 2);
+          var name = pad(m.opponentName || 'Player', 14);
           var delta = m.ratingChange > 0 ? '+' + m.ratingChange : String(m.ratingChange || 0);
-          var date = m.finishedAt ? new Date(m.finishedAt).toLocaleDateString() : '';
-          return icon + '  vs ' + m.opponentName + '  ' + delta + '  ' + date;
+          delta = padL(delta, 4);
+          var d = m.finishedAt ? new Date(m.finishedAt) : null;
+          var date = d ? padL(d.getDate(), 2) + '/' + padL(d.getMonth() + 1, 2) : '    ';
+          return icon + name + delta + '  ' + date;
         });
         gui._mpHistoryText.text = lines.join('\n');
       } else if (gui._mpHistoryText) {
