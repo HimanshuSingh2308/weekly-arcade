@@ -469,11 +469,13 @@
   async function _loadMPRating() {
     try {
       var data = await window.multiplayerClient?.getRating('drift-legends');
+      console.log('[DL-MP] Rating response:', JSON.stringify(data));
       if (data && gui._mpRatingText) {
         gui._mpRatingText.text = String(data.rating || 1000);
         gui._mpStatsText.text = 'W ' + (data.wins || 0) + '  L ' + (data.losses || 0) + '  GP ' + (data.gamesPlayed || 0);
       }
-    } catch (_) {
+    } catch (err) {
+      console.error('[DL-MP] Rating error:', err);
       if (gui._mpRatingText) gui._mpRatingText.text = '1000';
       if (gui._mpStatsText) gui._mpStatsText.text = 'No matches yet';
     }
