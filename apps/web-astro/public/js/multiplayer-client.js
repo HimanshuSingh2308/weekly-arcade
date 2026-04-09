@@ -476,10 +476,6 @@
 
   // ─── History & Stats (via REST) ───────────────────────────────────
 
-  async function getMatchHistory() {
-    return window.apiClient?.request('/multiplayer/history');
-  }
-
   async function getMultiplayerStats() {
     return window.apiClient?.request('/multiplayer/stats');
   }
@@ -616,7 +612,6 @@
     respondToInvitation,
 
     // History
-    getMatchHistory,
     getMultiplayerStats,
   };
 
