@@ -982,9 +982,18 @@
       color: var(--gold);
     }
 
-    /* Mobile UI - hidden on desktop */
+    /* Mobile UI - visible by default, hidden on wide screens */
     .mobile-ui {
-      display: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 5px 8px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    @media (min-width: 901px) {
+      .mobile-ui { display: none; }
     }
 
     /* Tablet + Mobile: hide panels, show compact mobile UI */
@@ -1006,15 +1015,7 @@
         display: none;
       }
 
-      /* Show mobile UI — compact kingdom HUD */
-      .mobile-ui {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        padding: 5px 8px;
-        background: var(--bg-secondary);
-        border-bottom: 1px solid var(--border);
-      }
+      /* mobile-ui styles already set in base — just ensure visible */
 
       .mobile-top-row {
         display: flex;
