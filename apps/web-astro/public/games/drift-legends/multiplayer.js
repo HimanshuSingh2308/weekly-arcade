@@ -432,6 +432,12 @@
     isInSession: () => !!currentSessionId,
     isHostPlayer: () => isHost,
     get _gameState() { return gameState; },
+    // Rejoin helpers
+    _setSession: function(sid, uid) {
+      currentSessionId = sid;
+      myUid = uid;
+    },
+    _setupListeners: _setupSocketListeners,
   };
 
   window.DriftLegends = window.DriftLegends || {};

@@ -200,6 +200,9 @@
       isMultiplayerRace = true;
       selectedTrackId = mpState?.trackId || 'city-circuit';
       totalLaps = mpState?.totalLaps || 2;
+      // Save session for rejoin immediately (iOS may kill page without beforeunload)
+      var sid = DL.Multiplayer.getSessionId();
+      if (sid) localStorage.setItem(REJOIN_KEY, sid);
       window.multiplayerUI?.hideMatchmaking();
       gui.hideMPJoining();
       gui.hideMPWaitingRoom();
@@ -241,7 +244,37 @@
       }
     },
     onRaceEnd: function(results) {
-      if (state !== STATE.RACING && state !== STATE.RACE_FINISH) return;
+      // Race ended — clear rejoin session
+      localStorage.removeItem(REJOIN_KEY);
+
+      // If we're not racing (e.g. rejoined after race ended), show result directly
+      if (state !== STATE.RACING && state !== STATE.RACE_FINISH) {
+        // Came from rejoin — show game over screen
+        gui.hideMPJoining();
+        var myResult = results?.[currentUser?.uid];
+        var won = myResult?.outcome === 'win';
+        var pos = myResult?.rank || (won ? 1 : 2);
+        gui.showRaceResult({
+          position: pos,
+          stars: won ? 3 : 1,
+          raceScore: 0,
+          driftScore: 0,
+          coins: 0,
+          totalTimeMs: 0,
+          unlockText: won ? 'Multiplayer Victory!' : 'Race finished while you were away.',
+          goalResults: [],
+          allGoalsPassed: won,
+          storyComplete: false,
+          totalStars: 0,
+          totalCoins: 0,
+          isMultiplayer: true,
+          mpOutcome: myResult?.outcome || 'loss',
+        });
+        state = STATE.RESULT;
+        isMultiplayerRace = false;
+        return;
+      }
+
       raceFinished = true;
       state = STATE.RACE_FINISH;
       DL.Audio.stopEngine();
@@ -307,16 +340,29 @@
 
   // ─── Auth Integration ─────────────────────────────────────────────
   let authAttempts = 0;
+  var _rejoinChecked = false;
   const authCheck = setInterval(() => {
     authAttempts++;
     if (window.authManager?.isInitialized) {
       clearInterval(authCheck);
       window.authManager.onAuthStateChanged(user => {
         currentUser = user;
-        // Don't call _loadProgress here — onSignIn in header handles it
+        // Check for rejoinable MP session once auth + token are ready
+        if (user && !_rejoinChecked) {
+          var _rejoinPoll = setInterval(function() {
+            if (window.apiClient?.token) {
+              clearInterval(_rejoinPoll);
+              if (!_rejoinChecked) {
+                _rejoinChecked = true;
+                _checkRejoinableSession();
+              }
+            }
+          }, 200);
+          // Stop after 5s
+          setTimeout(function() { clearInterval(_rejoinPoll); }, 5000);
+        }
       });
     } else if (authAttempts > 100) {
-      // Stop polling after 10 seconds — auth not available
       clearInterval(authCheck);
     }
   }, 100);
@@ -608,12 +654,12 @@
 
   gui.onAction('mpForfeit', () => {
     if (!isMultiplayerRace) return;
-    _mpCleanup();
+    _mpCleanup(true);
     _returnToMenu();
   });
 
   gui.onAction('mpRematch', () => {
-    _mpCleanup();
+    _mpCleanup(true);
     _returnToMenu();
     // Auto-trigger quick match again
     if (currentUser) {
@@ -878,34 +924,116 @@
     DL.Audio.stopBGM();
   }
 
-  function _mpCleanup() {
+  var REJOIN_KEY = 'dl-rejoin-session';
+
+  function _mpCleanup(fullLeave) {
+    var sid = DL.Multiplayer.getSessionId();
     gui.hideMPHud();
     gui.hideMPDisconnect();
     gui.hideMPWaiting();
     gui.hideMPWaitingRoom();
     gui.hideMPJoining();
-    // Always stop polling + leave session (even if not in active MP race —
-    // user may have cancelled matchmaking before a race started)
+    // Always stop polling + sync
     DL.Multiplayer.stopSync();
-    DL.Multiplayer.leaveSession();
+    if (fullLeave) {
+      // User explicitly left — fully leave session + clear rejoin
+      DL.Multiplayer.leaveSession();
+      localStorage.removeItem(REJOIN_KEY);
+    } else {
+      // Navigating to menu during race — save session for rejoin
+      try { window.multiplayerClient?.disconnect(); } catch(_) {}
+      if (sid && isMultiplayerRace) {
+        localStorage.setItem(REJOIN_KEY, sid);
+      }
+    }
     if (isMultiplayerRace) {
       isMultiplayerRace = false;
       opponentCar = null;
     }
   }
 
-  // Save session for rejoin on page close
+  // Save session for rejoin on page close/refresh
   window.addEventListener('beforeunload', function() {
     if (isMultiplayerRace && DL.Multiplayer.isInSession()) {
+      localStorage.setItem(REJOIN_KEY, DL.Multiplayer.getSessionId());
       try { window.multiplayerClient?.disconnect(); } catch(_) {}
     }
   });
+
+  // ─── Auto-Rejoin Check ───────────────────────────────────────────
+  async function _checkRejoinableSession() {
+    if (!currentUser || !window.multiplayerClient || !window.apiClient?.token) return;
+    var savedSid = localStorage.getItem(REJOIN_KEY);
+    if (!savedSid) return;
+
+    try {
+      var session = await window.multiplayerClient.getSession(savedSid);
+      if (session && (session.status === 'playing' || session.status === 'starting')) {
+        // Session still active — auto-rejoin
+        gui.showMPJoining('Rejoining race...');
+        isMultiplayerRace = true;
+        selectedTrackId = session.gameConfig?.trackId || 'city-circuit';
+        totalLaps = session.gameConfig?.laps || 2;
+
+        // Restore opponent info
+        if (session.players) {
+          for (var uid in session.players) {
+            if (uid !== currentUser.uid) {
+              gui.showMPHud(session.players[uid].displayName || 'Opponent');
+              break;
+            }
+          }
+        }
+
+        // Reconnect
+        DL.Multiplayer._setSession(savedSid, currentUser.uid);
+        try { window.multiplayerClient?.disconnect(); } catch(_) {}
+        DL.Multiplayer._setupListeners();
+        await window.multiplayerClient.connect(savedSid);
+        window.multiplayerClient.signalReady();
+        gui.hideMPJoining();
+        // Race will start via onRaceStart callback from server state
+      } else if (session && session.status === 'finished') {
+        // Race already ended — show result screen
+        localStorage.removeItem(REJOIN_KEY);
+        gui.showMPJoining('Race ended...');
+        var myResult = session.results?.[currentUser.uid];
+        var won = myResult?.outcome === 'win';
+        setTimeout(function() {
+          gui.hideMPJoining();
+          gui.showRaceResult({
+            position: myResult?.rank || (won ? 1 : 2),
+            stars: won ? 3 : 1,
+            raceScore: 0,
+            driftScore: 0,
+            coins: 0,
+            totalTimeMs: 0,
+            unlockText: won ? 'Multiplayer Victory!' : 'Race finished while you were away.',
+            goalResults: [],
+            allGoalsPassed: won,
+            storyComplete: false,
+            totalStars: 0,
+            totalCoins: 0,
+            isMultiplayer: true,
+            mpOutcome: myResult?.outcome || 'loss',
+          });
+          state = STATE.RESULT;
+        }, 500);
+      } else {
+        localStorage.removeItem(REJOIN_KEY);
+      }
+    } catch (e) {
+      console.error('[DL] Rejoin failed:', e);
+      localStorage.removeItem(REJOIN_KEY);
+      gui.hideMPJoining();
+    }
+  }
 
   function _returnToMenu() {
     // Show header again
     document.body.classList.remove('dl-playing');
     try { window.gameHeader?.show(); } catch(_) {}
-    _mpCleanup();
+    _mpCleanup(true);
     _cleanupRace();
     gui.hideTutorial();
     gui.hidePause();
