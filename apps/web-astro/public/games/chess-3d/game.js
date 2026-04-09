@@ -4091,15 +4091,14 @@
     const savedSid = localStorage.getItem('chess3d-rejoin-session');
     if (!savedSid) return;
 
-    // TTL: clear stale sessions older than 5 minutes (server gives 2 min reconnect)
-    // No timestamp = legacy stale data — also clear
+    // TTL: clear sessions with no timestamp (legacy stale data) or older than 20 min
     var savedAt = parseInt(localStorage.getItem('chess3d-rejoin-ts') || '0', 10);
-    if (!savedAt || Date.now() - savedAt > 5 * 60 * 1000) {
+    if (!savedAt || Date.now() - savedAt > 20 * 60 * 1000) {
       localStorage.removeItem('chess3d-rejoin-session'); localStorage.removeItem('chess3d-rejoin-ts');
       return;
     }
 
-    // Verify session is still active
+    // Verify session is still in playing/starting status on the server
     try {
       const session = await window.multiplayerClient.getSession(savedSid);
       if (session && (session.status === 'playing' || session.status === 'starting')) {
