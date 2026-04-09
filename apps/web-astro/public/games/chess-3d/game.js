@@ -3478,7 +3478,7 @@
 
         // Persist session ID immediately for rejoin (iOS may kill page without beforeunload)
         if (mpSessionId) {
-          localStorage.setItem('chess3d-rejoin-session', mpSessionId);
+          localStorage.setItem('chess3d-rejoin-ts', String(Date.now())); localStorage.setItem('chess3d-rejoin-session', mpSessionId);
         }
         moveCount = (state.moveHistory || []).length;
         $('gameHud').style.display = '';
@@ -3621,7 +3621,7 @@
       stopAmbientMusic();
       mpStopTimers();
       // Game ended normally — clear rejoin session (no longer active)
-      localStorage.removeItem('chess3d-rejoin-session');
+      localStorage.removeItem('chess3d-rejoin-session'); localStorage.removeItem('chess3d-rejoin-ts');
       const myResult = results?.[currentUser?.uid];
       if (myResult?.outcome === 'win') { sound.play('checkmate'); }
       else if (myResult?.outcome === 'loss') { sound.play('loss'); }
@@ -4077,9 +4077,9 @@
     }
     // Save session ID for rejoin (unless fully leaving)
     if (!fullLeave && sid) {
-      localStorage.setItem('chess3d-rejoin-session', sid);
+      localStorage.setItem('chess3d-rejoin-ts', String(Date.now())); localStorage.setItem('chess3d-rejoin-session', sid);
     } else {
-      localStorage.removeItem('chess3d-rejoin-session');
+      localStorage.removeItem('chess3d-rejoin-session'); localStorage.removeItem('chess3d-rejoin-ts');
     }
     $('gameHud').style.display = 'none';
     $('undoBtn').style.display = '';
@@ -4090,6 +4090,14 @@
 
     const savedSid = localStorage.getItem('chess3d-rejoin-session');
     if (!savedSid) return;
+
+    // TTL: clear stale sessions older than 5 minutes (server gives 2 min reconnect)
+    // No timestamp = legacy stale data — also clear
+    var savedAt = parseInt(localStorage.getItem('chess3d-rejoin-ts') || '0', 10);
+    if (!savedAt || Date.now() - savedAt > 5 * 60 * 1000) {
+      localStorage.removeItem('chess3d-rejoin-session'); localStorage.removeItem('chess3d-rejoin-ts');
+      return;
+    }
 
     // Verify session is still active
     try {
@@ -4123,14 +4131,14 @@
           mpSessionId = null;
           showOverlay('mainMenuOverlay');
           hideOverlay('mpJoiningOverlay');
-          localStorage.removeItem('chess3d-rejoin-session');
+          localStorage.removeItem('chess3d-rejoin-session'); localStorage.removeItem('chess3d-rejoin-ts');
         }
       } else {
         // Session ended or invalid — clean up
-        localStorage.removeItem('chess3d-rejoin-session');
+        localStorage.removeItem('chess3d-rejoin-session'); localStorage.removeItem('chess3d-rejoin-ts');
       }
     } catch (e) {
-      localStorage.removeItem('chess3d-rejoin-session');
+      localStorage.removeItem('chess3d-rejoin-session'); localStorage.removeItem('chess3d-rejoin-ts');
     }
   }
 
@@ -4138,7 +4146,7 @@
   window.addEventListener('beforeunload', () => {
     if (gameMode === 'multiplayer' && mpSessionId && gameActive) {
       // Save session ID so we can rejoin after refresh/navigation
-      localStorage.setItem('chess3d-rejoin-session', mpSessionId);
+      localStorage.setItem('chess3d-rejoin-ts', String(Date.now())); localStorage.setItem('chess3d-rejoin-session', mpSessionId);
       // Disconnect WebSocket — server gives 2 min reconnect window
       try { window.multiplayerClient?.disconnect(); } catch (e) {}
     }
