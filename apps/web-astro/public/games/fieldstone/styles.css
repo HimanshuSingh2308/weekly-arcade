@@ -1006,23 +1006,20 @@
       /* Height: (available height) / 22 rows (20 board + ~2 for HUD) */
       /* Available height = 100dvh - 50px header - 70px mobile UI */
       :root {
-        --cell-size: clamp(14px, min(calc((100vw - 24px) / 10.5), calc((100dvh - 130px) / 22)), 32px);
-      }
-
-      .left-panel, .right-panel {
-        display: none;
+        /* Account for: header 50px + mobile-ui ~55px + cards strip ~50px + padding */
+        --cell-size: clamp(12px, min(calc((100vw - 24px) / 10.5), calc((100dvh - 200px) / 22)), 28px);
       }
 
       .controls-hint {
         display: none;
       }
 
-      /* Show mobile UI */
+      /* Show mobile UI — compact kingdom HUD */
       .mobile-ui {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        padding: 8px 12px;
+        gap: 4px;
+        padding: 6px 10px;
         background: var(--bg-secondary);
         border-bottom: 1px solid var(--border);
       }
@@ -1040,19 +1037,19 @@
       }
 
       .mobile-score {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
         color: var(--accent);
       }
 
       .mobile-label {
-        font-size: 0.6rem;
+        font-size: 0.55rem;
         color: var(--text-secondary);
         text-transform: uppercase;
       }
 
       .mobile-wave {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: var(--text-primary);
       }
@@ -1060,24 +1057,87 @@
       .mobile-resources {
         display: flex;
         justify-content: space-around;
-        gap: 8px;
+        gap: 6px;
       }
 
       .mobile-res {
         display: flex;
         align-items: center;
-        gap: 4px;
-        font-size: 0.85rem;
+        gap: 3px;
+        font-size: 0.8rem;
         font-weight: 600;
         background: var(--bg-card);
-        padding: 4px 10px;
-        border-radius: 12px;
+        padding: 3px 8px;
+        border-radius: 10px;
       }
 
-      /* Adjust game container for mobile — full height, no controls footer */
+      /* Reorganize panels for mobile — cards + enemies below board */
       .game-container {
+        flex-direction: column;
+        align-items: center;
         height: calc(100dvh - 50px);
+        padding: 4px;
         padding-bottom: env(safe-area-inset-bottom);
+        gap: 4px;
+      }
+
+      .left-panel {
+        width: 100%;
+        flex-direction: row;
+        gap: 6px;
+        order: 3;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Hide resource/wave panels — shown in mobile-ui bar instead */
+      .left-panel .resources-grid,
+      .left-panel .wave-info {
+        display: none;
+      }
+
+      /* Cards section — compact horizontal strip */
+      .left-panel .cards-section {
+        min-width: fit-content;
+        padding: 4px 8px;
+      }
+
+      .left-panel .cards-section .panel-title {
+        font-size: 0.6rem;
+        margin-bottom: 2px;
+      }
+
+      .left-panel .jokers-section {
+        min-width: fit-content;
+        padding: 4px 8px;
+      }
+
+      .right-panel {
+        width: 100%;
+        flex-direction: row;
+        gap: 6px;
+        order: 4;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .right-panel .score-section {
+        display: none; /* Score shown in mobile-ui bar */
+      }
+
+      .right-panel .enemy-section {
+        min-width: fit-content;
+        padding: 4px 8px;
+      }
+
+      .right-panel .enemy-section .panel-title {
+        font-size: 0.6rem;
+        margin-bottom: 2px;
+      }
+
+      .board-container {
+        order: 2;
       }
 
       /* Gesture hint overlay (shown once on first mobile play) */
