@@ -391,7 +391,7 @@
     let attempts = 0;
     _pollTimer = setInterval(async () => {
       attempts++;
-      if (attempts > 10) { // 10 * 3s = 30s — then fill with bot
+      if (attempts > 40) { // 40 * 3s = 2 min — then fill with bot
         _stopPolling();
         try { await window.multiplayerClient?.cancelMatchmaking(); } catch(_) {}
         window.multiplayerUI?.hideMatchmaking();

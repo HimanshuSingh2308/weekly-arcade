@@ -2230,6 +2230,15 @@
   let promotionResolve = null;
   let babylonSetup = null;
 
+  // Bot names for empty matchmaking
+  const BOT_NAMES = [
+    'Aarav R.', 'Priya M.', 'Rohan K.', 'Ananya S.', 'Vikram P.',
+    'Neha G.', 'Arjun D.', 'Ishita T.', 'Karan B.', 'Meera L.',
+    'Dev S.', 'Riya N.', 'Aditya V.', 'Simran C.', 'Rahul J.',
+    'Alex T.', 'Sam W.', 'Jordan K.', 'Riley M.', 'Casey B.',
+  ];
+  let _isBotMatch = false;
+
   // Multiplayer state
   let gameMode = 'ai'; // 'ai' or 'multiplayer'
   let mpSessionId = null;
@@ -3809,11 +3818,11 @@
               // Will retry next poll cycle
             }
           } else {
-            // Time's up — give up
+            // Time's up — fill with bot
             mpStopPolling();
+            await window.multiplayerClient.cancelMatchmaking().catch(() => {});
             window.multiplayerUI?.hideMatchmaking();
-            showOverlay('mpLobbyOverlay');
-            mpShowError('No opponents found after 2 minutes. Try again later.');
+            _startBotChessMatch();
             return;
           }
         }
@@ -3823,13 +3832,12 @@
           window.multiplayerUI.updateMatchmakingTime(Math.floor(elapsed / 1000));
         }
 
-        // Timeout — give up after 2 min
+        // Timeout — fill with bot after 2 min
         if (elapsed >= MP_POLL_TIMEOUT) {
           mpStopPolling();
           await window.multiplayerClient.cancelMatchmaking().catch(() => {});
           window.multiplayerUI?.hideMatchmaking();
-          showOverlay('mpLobbyOverlay');
-          mpShowError('No opponents found after 2 minutes. Try again later.');
+          _startBotChessMatch();
         }
       } catch (e) { /* ignore polling errors */ }
     }, 3000); // Poll every 3s (cron matches every 5s)
@@ -3987,6 +3995,29 @@
     const isMyTurn = chessEngine.getTurn() === playerColor;
     mpStartTurnTimer(isMyTurn);
     mpStartGameClock();
+  }
+
+  function _startBotChessMatch() {
+    _isBotMatch = true;
+    var botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+
+    // Start an AI game but styled as MP
+    gameMode = 'ai';
+    aiDifficulty = 'hard'; // Bot plays at hard level
+    playerColor = Math.random() < 0.5 ? WHITE : BLACK;
+
+    hideOverlay('mpLobbyOverlay');
+    startNewGame();
+
+    // Override the top name to show bot name instead of "AI (Hard)"
+    $('topName').textContent = botName;
+    $('topElo').textContent = '';
+
+    // Hide undo (not allowed in "MP")
+    $('undoBtn').style.display = 'none';
+
+    sound.play('click');
+    srAnnounce('Matched with ' + botName + '!');
   }
 
   async function _loadChessRating() {
