@@ -331,12 +331,14 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     allowedMetadataKeys: ['battingScore', 'battingWickets', 'battingFours', 'battingSixes', 'bowlingAIScore', 'bowlingAIWickets', 'team', 'result', 'matchMode'],
   },
 
-  // Chroma Sort: Daily color sorting puzzle
+  // Chroma Sort: Daily color sorting puzzle + Endless mode
+  // minTimeMs=0 because endless levels can be solved in <30s.
+  // Daily mode time validation is handled inside customValidation.
   'chroma-sort': {
     maxScore: 11000,
     maxScorePerSecond: 500,
-    minTimeMs: 30000,
-    maxLevel: 3,
+    minTimeMs: 0,
+    maxLevel: 9999,
     allowedMetadataKeys: [
       'mode', 'dailyDate', 'difficulty', 'colorCount', 'tubeCount',
       'hintsUsed', 'undosUsed', 'extraTubesUsed', 'perfectSolve', 'shareEmoji',
@@ -344,6 +346,10 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     ],
     customValidation: (dto) => {
       if (dto.metadata?.mode === 'daily') {
+        // Daily mode requires timeMs and minimum 30 seconds
+        if (!dto.timeMs || dto.timeMs < 30000) {
+          return { valid: false, reason: 'Daily mode requires at least 30 seconds' };
+        }
         // Minimum move count floor per difficulty (structural minimum from puzzle design)
         const minMovesMap: Record<string, number> = { easy: 8, medium: 15, hard: 20 };
         const difficulty = dto.metadata.difficulty as string;

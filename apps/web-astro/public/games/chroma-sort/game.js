@@ -1137,7 +1137,6 @@
         window.apiClient.submitScore(GAME_ID, {
           score: state.endlessLevel,
           level: state.endlessLevel,
-          timeMs: Math.round(state.elapsed),
           metadata: {
             mode: 'endless',
             totalStars: state.totalStars,
@@ -1215,14 +1214,22 @@
   function saveCloudState() {
     try {
       if (currentUser && window.apiClient) {
+        // Map game state to API's SaveGameStateDto shape
         window.apiClient.saveGameState(GAME_ID, {
-          endlessLevel: state.endlessLevel,
-          totalStars: state.totalStars,
-          streak: state.streak,
-          longestStreak: state.longestStreak,
-          dailyCompleted: state.dailyCompleted,
-          extraTubesAvailable: state.extraTubesAvailable,
-          noHintStreak: state.noHintStreak,
+          currentLevel: Math.max(1, state.endlessLevel),
+          currentStreak: Math.max(0, state.streak),
+          bestStreak: Math.max(0, state.longestStreak),
+          gamesPlayed: Math.max(0, Object.keys(state.dailyCompleted).length),
+          gamesWon: Math.max(0, Object.keys(state.dailyCompleted).length),
+          additionalData: {
+            endlessLevel: state.endlessLevel,
+            totalStars: state.totalStars,
+            streak: state.streak,
+            longestStreak: state.longestStreak,
+            dailyCompleted: state.dailyCompleted,
+            extraTubesAvailable: state.extraTubesAvailable,
+            noHintStreak: state.noHintStreak,
+          },
         });
       }
     } catch (e) { /* ignore */ }
@@ -1231,8 +1238,10 @@
   function loadCloudState() {
     try {
       if (currentUser && window.apiClient) {
-        window.apiClient.getGameState(GAME_ID).then(function (cloud) {
-          if (!cloud) return;
+        window.apiClient.getGameState(GAME_ID).then(function (raw) {
+          if (!raw) return;
+          // Game-specific data is inside additionalData
+          var cloud = (raw.additionalData || raw);
           // Merge: prefer higher values
           if (cloud.endlessLevel > state.endlessLevel) {
             state.endlessLevel = cloud.endlessLevel;
