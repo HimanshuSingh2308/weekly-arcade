@@ -1444,6 +1444,10 @@
   function animateScore(from, to, duration) {
     var el = document.getElementById('cs-win-score-num');
     if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = to.toLocaleString();
+      return;
+    }
     var start = performance.now();
 
     function step(now) {
@@ -1498,6 +1502,7 @@
   // ============================================
 
   function spawnConfetti() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var container = document.createElement('div');
     container.className = 'cs-confetti-container';
     document.body.appendChild(container);

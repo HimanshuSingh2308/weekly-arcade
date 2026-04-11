@@ -404,9 +404,9 @@
   transform: translate(-50%, -50%);
   font-size: 16px;
   font-weight: 900;
-  color: rgba(255,255,255,0.85);
+  color: rgba(0,0,0,0.85);
   pointer-events: none;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 2px rgba(255,255,255,0.3);
 }
 
 .color-blind-mode .cs-cb-marker {
@@ -758,4 +758,17 @@
     --cs-ball-size: 44px;
     --cs-tube-gap: 6px;
   }
+}
+
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
 }
