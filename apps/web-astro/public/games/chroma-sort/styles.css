@@ -754,8 +754,8 @@
 
 @media (max-width: 380px) {
   :root {
-    --cs-tube-width: 48px;
-    --cs-ball-size: 38px;
-    --cs-tube-gap: 8px;
+    --cs-tube-width: 46px;
+    --cs-ball-size: 44px;
+    --cs-tube-gap: 6px;
   }
 }

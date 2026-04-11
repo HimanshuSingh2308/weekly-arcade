@@ -24,7 +24,7 @@
     { name: 'rose',      hex: '#EC4899', emoji: '\uD83E\uDEF7', marker: '\u2736' },
     { name: 'slate',     hex: '#64748B', emoji: '\u26AB',        marker: '\u2666' },
     { name: 'teal',      hex: '#14B8A6', emoji: '\uD83E\uDEF5', marker: '\u2663' },
-    { name: 'crimson',   hex: '#DC2626', emoji: '\uD83D\uDD34', marker: '\u2660' },
+    { name: 'crimson',   hex: '#DC2626', emoji: '\uD83D\uDFE5', marker: '\u2660' },
   ];
 
   const DIFFICULTY = {
@@ -710,7 +710,8 @@
 
   function bindTubeClicks() {
     app.querySelectorAll('.cs-tube').forEach(function (el) {
-      el.addEventListener('click', function () {
+      el.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
         audio.init();
         var idx = parseInt(el.getAttribute('data-tube'), 10);
         handleTubeClick(idx);
@@ -1007,8 +1008,9 @@
       longestStreak: state.longestStreak,
     });
 
-    // Submit score
+    // Submit score and sync cloud state
     submitDailyScore(score);
+    saveCloudState();
 
     // Check achievements
     checkAchievements(score);
@@ -1072,7 +1074,8 @@
     var hintPenalty = state.hintsUsed * 150;
     var extraPenalty = state.extraTubeUsed ? 1500 : 0;
 
-    var raw = (BASE - movePenalty + timeBonus - hintPenalty - extraPenalty) * undoMod;
+    var capped = Math.min(BASE - movePenalty + timeBonus - hintPenalty - extraPenalty, 10000);
+    var raw = capped * undoMod;
     return Math.max(100, Math.round(raw));
   }
 
@@ -1088,8 +1091,8 @@
     var shareEmoji = buildShareEmoji();
 
     try {
-      if (window.gameCloud) {
-        window.gameCloud.submitScore(GAME_ID, {
+      if (currentUser && window.apiClient) {
+        window.apiClient.submitScore(GAME_ID, {
           score: score,
           timeMs: Math.round(state.elapsed),
           level: levelTier,
@@ -1115,8 +1118,8 @@
 
   function saveCloudState() {
     try {
-      if (window.gameCloud) {
-        window.gameCloud.saveState(GAME_ID, {
+      if (currentUser && window.apiClient) {
+        window.apiClient.saveGameState(GAME_ID, {
           endlessLevel: state.endlessLevel,
           totalStars: state.totalStars,
           streak: state.streak,
@@ -1131,8 +1134,8 @@
 
   function loadCloudState() {
     try {
-      if (window.gameCloud) {
-        window.gameCloud.loadState(GAME_ID).then(function (cloud) {
+      if (currentUser && window.apiClient) {
+        window.apiClient.getGameState(GAME_ID).then(function (cloud) {
           if (!cloud) return;
           // Merge: prefer higher values
           if (cloud.endlessLevel > state.endlessLevel) {
@@ -1190,8 +1193,8 @@
   function checkAchievements(score) {
     var unlock = function (id) {
       try {
-        if (window.gameCloud) {
-          window.gameCloud.unlockAchievement(id, GAME_ID);
+        if (currentUser && window.apiClient) {
+          window.apiClient.unlockAchievement(id, GAME_ID);
         }
       } catch (e) { /* ignore */ }
     };
@@ -1228,8 +1231,8 @@
   function checkEndlessAchievements() {
     var unlock = function (id) {
       try {
-        if (window.gameCloud) {
-          window.gameCloud.unlockAchievement(id, GAME_ID);
+        if (currentUser && window.apiClient) {
+          window.apiClient.unlockAchievement(id, GAME_ID);
         }
       } catch (e) { /* ignore */ }
     };
@@ -1311,8 +1314,8 @@
         // Share achievement
         if (state.shareCount >= 5) {
           try {
-            if (window.gameCloud) {
-              window.gameCloud.unlockAchievement('cs-share-5', GAME_ID);
+            if (currentUser && window.apiClient) {
+              window.apiClient.unlockAchievement('cs-share-5', GAME_ID);
             }
           } catch (e) { /* ignore */ }
         }
@@ -1529,11 +1532,7 @@
           if (user) {
             loadCloudState();
             // Sync guest scores
-            try {
-              if (window.gameCloud) {
-                window.gameCloud.syncGuestScores(GAME_ID);
-              }
-            } catch (e) { /* ignore */ }
+            // Cloud state loaded on sign-in
           }
         });
       }
@@ -1565,11 +1564,7 @@
           onSignIn: function (user) {
             currentUser = user;
             loadCloudState();
-            try {
-              if (window.gameCloud) {
-                window.gameCloud.syncGuestScores(GAME_ID);
-              }
-            } catch (e) { /* ignore */ }
+            // Cloud state loaded on sign-in
           },
           onSignOut: function () {
             currentUser = null;
