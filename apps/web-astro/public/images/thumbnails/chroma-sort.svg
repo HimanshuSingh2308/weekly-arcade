@@ -1,0 +1,48 @@
+<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgCS" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F0E17"/>
+      <stop offset="100%" style="stop-color:#1A1830"/>
+    </linearGradient>
+    <linearGradient id="tubeG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.12)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.04)"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="400" height="250" fill="url(#bgCS)" rx="12"/>
+  <!-- Decorative glow -->
+  <circle cx="200" cy="125" r="100" fill="#6C3DE8" opacity="0.08"/>
+  <!-- Tube 1 (sorted - violet) -->
+  <rect x="60" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <circle cx="80" cy="170" r="14" fill="#8B5CF6"/>
+  <circle cx="80" cy="140" r="14" fill="#8B5CF6"/>
+  <circle cx="80" cy="110" r="14" fill="#8B5CF6"/>
+  <circle cx="80" cy="80" r="14" fill="#8B5CF6"/>
+  <!-- Tube 2 (mixed) -->
+  <rect x="120" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <circle cx="140" cy="170" r="14" fill="#3B82F6"/>
+  <circle cx="140" cy="140" r="14" fill="#10B981"/>
+  <circle cx="140" cy="110" r="14" fill="#F59E0B"/>
+  <circle cx="140" cy="80" r="14" fill="#3B82F6"/>
+  <!-- Tube 3 (mixed) - selected glow -->
+  <rect x="180" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="#8B5CF6" stroke-width="2"/>
+  <circle cx="200" cy="170" r="14" fill="#F59E0B"/>
+  <circle cx="200" cy="140" r="14" fill="#EF4444"/>
+  <circle cx="200" cy="110" r="14" fill="#10B981"/>
+  <!-- Ball being moved (floating above tube 3) -->
+  <circle cx="200" cy="55" r="14" fill="#3B82F6" opacity="0.9"/>
+  <circle cx="200" cy="55" r="17" fill="none" stroke="#8B5CF6" stroke-width="1.5" opacity="0.6"/>
+  <!-- Tube 4 (mixed) -->
+  <rect x="240" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <circle cx="260" cy="170" r="14" fill="#EF4444"/>
+  <circle cx="260" cy="140" r="14" fill="#F59E0B"/>
+  <circle cx="260" cy="110" r="14" fill="#EF4444"/>
+  <circle cx="260" cy="80" r="14" fill="#10B981"/>
+  <!-- Tube 5 (empty) -->
+  <rect x="300" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <!-- Title -->
+  <text x="200" y="232" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="16" font-weight="700" fill="#E8E6F0">Chroma Sort</text>
+  <!-- Emoji -->
+  <text x="200" y="30" text-anchor="middle" font-size="20">🎨</text>
+</svg>

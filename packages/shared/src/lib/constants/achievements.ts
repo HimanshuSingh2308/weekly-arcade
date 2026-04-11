@@ -649,6 +649,20 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   'dl-all-tracks-cleared': { id: 'dl-all-tracks-cleared', name: 'World Tour',       description: 'Race on all 5 unique track environments',           icon: '🌍', xpReward: 200, category: 'drift-legends', requirement: { type: 'special', gameId: 'drift-legends' } },
   'dl-rival-beaten-first': { id: 'dl-rival-beaten-first', name: 'Rival Slayer',     description: 'Beat a chapter rival on the first attempt',         icon: '⚔️', xpReward: 200, category: 'drift-legends', requirement: { type: 'special', gameId: 'drift-legends' } },
   'dl-night-racer':       { id: 'dl-night-racer',       name: 'Night Shift',        description: 'Race between 10 PM and 6 AM local time',            icon: '🌙', xpReward: 75,  category: 'drift-legends', requirement: { type: 'special', gameId: 'drift-legends' } },
+
+  // Chroma Sort achievements
+  'cs-first-solve':      { id: 'cs-first-solve',      name: 'First Sort',         description: 'Complete your first Chroma Sort puzzle',              icon: '🎨', xpReward: 50,  category: 'chroma-sort', requirement: { type: 'first_game', gameId: 'chroma-sort' } },
+  'cs-daily-easy':       { id: 'cs-daily-easy',        name: 'Easy Does It',       description: 'Complete a Daily Easy puzzle',                        icon: '🟢', xpReward: 50,  category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-daily-medium':     { id: 'cs-daily-medium',      name: 'Medium Rare',        description: 'Complete a Daily Medium puzzle',                      icon: '🟡', xpReward: 75,  category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-daily-hard':       { id: 'cs-daily-hard',        name: 'Hard Earned',        description: 'Complete a Daily Hard puzzle',                        icon: '🔴', xpReward: 100, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-daily-all':        { id: 'cs-daily-all',         name: 'Daily Master',       description: 'Complete all 3 daily difficulties in one day',         icon: '👑', xpReward: 200, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-perfect-solve':    { id: 'cs-perfect-solve',     name: 'Perfect Sort',       description: 'Solve a puzzle without hints, undos, or extra tubes',  icon: '💎', xpReward: 150, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-daily-streak-7':   { id: 'cs-daily-streak-7',    name: 'Sorting Habit',      description: 'Maintain a 7-day daily streak',                       icon: '🔥', xpReward: 200, category: 'chroma-sort', requirement: { type: 'streak', value: 7, gameId: 'chroma-sort' } },
+  'cs-daily-streak-30':  { id: 'cs-daily-streak-30',   name: 'Sorting Devotion',   description: 'Maintain a 30-day daily streak',                      icon: '⚡', xpReward: 500, category: 'chroma-sort', requirement: { type: 'streak', value: 30, gameId: 'chroma-sort' } },
+  'cs-endless-25':       { id: 'cs-endless-25',        name: 'Quarter Century',    description: 'Reach Endless level 25',                              icon: '🏔️', xpReward: 150, category: 'chroma-sort', requirement: { type: 'level', value: 25, gameId: 'chroma-sort' } },
+  'cs-endless-50':       { id: 'cs-endless-50',        name: 'Halfway There',      description: 'Reach Endless level 50',                              icon: '🗻', xpReward: 300, category: 'chroma-sort', requirement: { type: 'level', value: 50, gameId: 'chroma-sort' } },
+  'cs-endless-100':      { id: 'cs-endless-100',       name: 'Centurion Sorter',   description: 'Reach Endless level 100',                             icon: '🏆', xpReward: 500, category: 'chroma-sort', requirement: { type: 'level', value: 100, gameId: 'chroma-sort' } },
+  'cs-share-5':          { id: 'cs-share-5',           name: 'Social Sorter',      description: 'Share your daily result 5 times',                     icon: '📤', xpReward: 100, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
 };
 
 export const ACHIEVEMENT_LIST = Object.values(ACHIEVEMENTS);

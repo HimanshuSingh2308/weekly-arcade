@@ -160,16 +160,16 @@ const gameCount = Object.keys(gameModules).length;
       "description": `${gameCount}+ free browser games playable instantly — no downloads, no signup required.`,
       "numberOfItems": gameCount,
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Drift Legends", "url": "https://weeklyarcade.games/games/drift-legends/" },
-        { "@type": "ListItem", "position": 2, "name": "Cricket Blitz", "url": "https://weeklyarcade.games/games/cricket-blitz/" },
-        { "@type": "ListItem", "position": 3, "name": "Chess 3D", "url": "https://weeklyarcade.games/games/chess-3d/" },
-        { "@type": "ListItem", "position": 4, "name": "Coin Cascade", "url": "https://weeklyarcade.games/games/coin-cascade/" },
-        { "@type": "ListItem", "position": 5, "name": "Solitaire Roguelite", "url": "https://weeklyarcade.games/games/solitaire-roguelite/" },
-        { "@type": "ListItem", "position": 6, "name": "Wordle", "url": "https://weeklyarcade.games/games/wordle/" },
-        { "@type": "ListItem", "position": 7, "name": "Snake", "url": "https://weeklyarcade.games/games/snake/" },
-        { "@type": "ListItem", "position": 8, "name": "2048", "url": "https://weeklyarcade.games/games/2048/" },
-        { "@type": "ListItem", "position": 9, "name": "Fieldstone", "url": "https://weeklyarcade.games/games/fieldstone/" },
-        { "@type": "ListItem", "position": 10, "name": "Voidbreak", "url": "https://weeklyarcade.games/games/voidbreak/" }
+        { "@type": "ListItem", "position": 1, "name": "Chroma Sort", "url": "https://weeklyarcade.games/games/chroma-sort/" },
+        { "@type": "ListItem", "position": 2, "name": "Drift Legends", "url": "https://weeklyarcade.games/games/drift-legends/" },
+        { "@type": "ListItem", "position": 3, "name": "Cricket Blitz", "url": "https://weeklyarcade.games/games/cricket-blitz/" },
+        { "@type": "ListItem", "position": 4, "name": "Chess 3D", "url": "https://weeklyarcade.games/games/chess-3d/" },
+        { "@type": "ListItem", "position": 5, "name": "Coin Cascade", "url": "https://weeklyarcade.games/games/coin-cascade/" },
+        { "@type": "ListItem", "position": 6, "name": "Solitaire Roguelite", "url": "https://weeklyarcade.games/games/solitaire-roguelite/" },
+        { "@type": "ListItem", "position": 7, "name": "Wordle", "url": "https://weeklyarcade.games/games/wordle/" },
+        { "@type": "ListItem", "position": 8, "name": "Snake", "url": "https://weeklyarcade.games/games/snake/" },
+        { "@type": "ListItem", "position": 9, "name": "2048", "url": "https://weeklyarcade.games/games/2048/" },
+        { "@type": "ListItem", "position": 10, "name": "Fieldstone", "url": "https://weeklyarcade.games/games/fieldstone/" }
       ]
     })} />
 
@@ -192,20 +192,20 @@ const gameCount = Object.keys(gameModules).length;
         <p class="hero-desc">Play {gameCount}+ games instantly in your browser - no downloads, no signup, no ads. 100% original games added weekly.</p>
         <div class="hero-featured">
           <div class="hero-badge">NEW THIS WEEK</div>
-          <h2 class="hero-game-name">Drift Legends</h2>
-          <p class="hero-game-desc">3D arcade racing game with story mode, drift mechanics, and multiplayer. Master 15 tracks across 5 chapters — from neon city streets to sky-high circuits.</p>
+          <h2 class="hero-game-name">Chroma Sort</h2>
+          <p class="hero-game-desc">Sort colored balls into matching tubes in this satisfying, ad-free puzzle game. Play the daily challenge, climb the leaderboard, or take on 100+ endless levels.</p>
           <div class="hero-tags">
-            <span class="hero-tag">Racing</span>
-            <span class="hero-tag">3D</span>
-            <span class="hero-tag">Multiplayer</span>
+            <span class="hero-tag">Puzzle</span>
+            <span class="hero-tag">Daily</span>
+            <span class="hero-tag">Casual</span>
           </div>
         </div>
-        <a href="/games/drift-legends/" class="hero-cta">
-          Play Drift Legends <span class="hero-cta-arrow">→</span>
+        <a href="/games/chroma-sort/" class="hero-cta">
+          Play Chroma Sort <span class="hero-cta-arrow">→</span>
         </a>
       </div>
-      <a href="/games/drift-legends/" class="hero-thumb">
-        <img src="/images/thumbnails/drift-legends.svg" alt="Drift Legends - 3D arcade racing game with drift mechanics and multiplayer">
+      <a href="/games/chroma-sort/" class="hero-thumb">
+        <img src="/images/thumbnails/chroma-sort.svg" alt="Chroma Sort - daily color sorting puzzle game, ad-free">
       </a>
     </div>
   </section>
@@ -264,10 +264,22 @@ const gameCount = Object.keys(gameModules).length;
     </div>
 
     <div class="games-grid" id="gamesGrid">
+      <!-- Week 6: Chroma Sort (Apr 11) -->
+      <a href="/games/chroma-sort/" class="game-card" data-genres="puzzle,logic,daily,casual,sorting">
+        <div class="game-thumb">
+          <span class="thumb-badge">NEW</span>
+          <img src="/images/thumbnails/chroma-sort.svg" alt="Chroma Sort - daily color sorting puzzle game" loading="lazy">
+        </div>
+        <div class="game-info">
+          <div class="game-title">Chroma Sort</div>
+          <div class="game-desc">Sort colored balls into matching tubes in this satisfying, ad-free puzzle game. Daily challenge, leaderboard, and 100+ endless levels!</div>
+          <div class="game-tags"><span class="tag">Puzzle</span><span class="tag">Daily</span></div>
+        </div>
+      </a>
+
       <!-- Week 5: Drift Legends (Apr 4) -->
       <a href="/games/drift-legends/" class="game-card" data-genres="action,arcade,3d,multiplayer">
         <div class="game-thumb">
-          <span class="thumb-badge">NEW</span>
           <img src="/images/thumbnails/drift-legends.svg" alt="Drift Legends - 3D arcade racing game with drift mechanics" loading="lazy">
         </div>
         <div class="game-info">
