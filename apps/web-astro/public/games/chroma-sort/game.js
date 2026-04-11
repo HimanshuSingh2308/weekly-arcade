@@ -97,8 +97,9 @@
       }
       tubes.push(tube);
     }
-    // Add empty tubes
-    for (var e = 0; e < emptyCount; e++) {
+    // Add empty tubes (use tubeCount - colorCount to match config, fallback to emptyCount)
+    var actualEmpty = tubeCount > colorCount ? tubeCount - colorCount : emptyCount;
+    for (var e = 0; e < actualEmpty; e++) {
       tubes.push([]);
     }
 
@@ -398,6 +399,7 @@
   // ============================================
 
   function renderHome() {
+    hideTutorialOverlay();
     state.screen = 'home';
     state.selectedTube = null;
     clearInterval(timerInterval);
@@ -524,7 +526,7 @@
     var seed = level * 1000 + 42;
     // Every 10th level is a breather (one tier lower)
     var effectiveTier = tier;
-    if (level > 10 && level % 10 === 0) {
+    if (level >= 10 && level % 10 === 0) {
       effectiveTier = getEndlessTier(Math.max(1, level - 15));
     }
     var rng = mulberry32(seed);
@@ -997,7 +999,7 @@
 
     if (yData && (yData.easy || yData.medium || yData.hard)) {
       state.streak++;
-    } else if (state.streak === 0) {
+    } else {
       state.streak = 1;
     }
     state.longestStreak = Math.max(state.longestStreak, state.streak);
@@ -1051,6 +1053,23 @@
 
     // Check achievements
     checkEndlessAchievements();
+
+    // Submit endless level to leaderboard
+    try {
+      if (currentUser && window.apiClient) {
+        window.apiClient.submitScore(GAME_ID, {
+          score: state.endlessLevel,
+          level: state.endlessLevel,
+          timeMs: Math.round(state.elapsed),
+          metadata: {
+            mode: 'endless',
+            totalStars: state.totalStars,
+          },
+        });
+      }
+    } catch (e) {
+      console.warn('Endless score submission failed:', e);
+    }
 
     // Cloud save
     saveCloudState();
@@ -1584,13 +1603,9 @@
     initAuth();
     initHeader();
 
-    // Check if tutorial is needed: jump to endless level 1 tutorial
-    if (!state.tutorialComplete) {
-      // Start with tutorial (Endless Level 1)
-      startEndless(1);
-    } else {
-      renderHome();
-    }
+    // Always start at home screen per PRD flow
+    // Tutorial triggers when user taps Endless Mode for the first time
+    renderHome();
   }
 
   // Wait for DOM
