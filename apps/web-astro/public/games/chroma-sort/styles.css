@@ -40,7 +40,9 @@
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 0 12px 24px;
+  padding: 0 12px calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(12px + env(safe-area-inset-left, 0px));
+  padding-right: calc(12px + env(safe-area-inset-right, 0px));
   min-height: calc(100dvh - 60px);
   display: flex;
   flex-direction: column;
@@ -48,6 +50,7 @@
   color: var(--cs-text);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  touch-action: manipulation;
 }
 
 /* ---- Home Screen ---- */
@@ -316,6 +319,8 @@
   transition: transform var(--cs-transition), box-shadow var(--cs-transition), border-color var(--cs-transition);
   outline: none;
   gap: 2px;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
 
 .cs-tube::before {
@@ -332,6 +337,11 @@
 
 .cs-tube:hover {
   border-color: rgba(255,255,255,0.25);
+}
+
+.cs-tube:active {
+  transform: scale(0.96);
+  opacity: 0.85;
 }
 
 .cs-tube:focus-visible {
