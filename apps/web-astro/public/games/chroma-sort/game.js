@@ -640,10 +640,9 @@
     html += '<span class="cs-endless-arrow">\u25B6</span>';
     html += '</button>';
 
-    // Settings Row
+    // Settings (sound is in header — only show color blind here)
     html += '<div class="cs-settings-row">';
-    html += '<button class="cs-settings-btn' + (state.colorBlindMode ? ' active' : '') + '" data-action="toggle-cb">\u2B55 Color Blind</button>';
-    html += '<button class="cs-settings-btn' + (audio.enabled ? ' active' : '') + '" data-action="toggle-sound">\uD83D\uDD0A Sound</button>';
+    html += '<button class="cs-settings-btn' + (state.colorBlindMode ? ' active' : '') + '" data-action="toggle-cb">\u2B55 Color Blind Mode</button>';
     html += '</div>';
 
     html += '</div>';
