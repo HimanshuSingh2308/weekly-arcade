@@ -212,63 +212,131 @@
 
   var audio = {
     ctx: null,
+    masterGain: null,
     enabled: true,
+    volume: 0.3,
 
     init: function () {
       if (this.ctx) return;
       try {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.connect(this.ctx.destination);
+        this.masterGain.gain.value = this.volume;
+        // iOS requires explicit resume after user gesture
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
       } catch (e) { /* no audio support */ }
     },
 
-    playTone: function (freq, duration, type, gain) {
-      if (!this.ctx || !this.enabled) return;
+    setVolume: function (v) {
+      this.volume = Math.max(0, Math.min(1, v));
+      if (this.masterGain) {
+        this.masterGain.gain.value = this.enabled ? this.volume : 0;
+      }
+    },
+
+    // Play a tone at a specific time offset using AudioContext scheduling
+    // (no setTimeout — precise timing, works in background tabs)
+    playTone: function (freq, duration, type, gain, startOffset) {
+      if (!this.ctx || !this.enabled || !this.masterGain) return;
       type = type || 'sine';
       gain = gain !== undefined ? gain : 0.3;
+      startOffset = startOffset || 0;
       try {
+        var now = this.ctx.currentTime + startOffset;
         var osc = this.ctx.createOscillator();
         var g = this.ctx.createGain();
         osc.connect(g);
-        g.connect(this.ctx.destination);
+        g.connect(this.masterGain);
         osc.type = type;
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        g.gain.setValueAtTime(0, this.ctx.currentTime);
-        g.gain.linearRampToValueAtTime(gain, this.ctx.currentTime + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-        osc.start(this.ctx.currentTime);
-        osc.stop(this.ctx.currentTime + duration + 0.05);
+        osc.frequency.setValueAtTime(freq, now);
+        // ADSR: quick attack (5ms), sustain, exponential release
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(gain * 1.2, now + 0.005); // attack peak
+        g.gain.linearRampToValueAtTime(gain, now + 0.015);        // settle to sustain
+        g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.start(now);
+        osc.stop(now + duration + 0.05);
       } catch (e) { /* ignore */ }
     },
 
-    pickup: function () { this.playTone(880, 0.08, 'sine', 0.3); },
-    place: function () {
-      this.playTone(660, 0.06, 'sine', 0.35);
-      setTimeout(function () { audio.playTone(440, 0.08, 'sine', 0.25); }, 30);
+    // Play a frequency ramp (single tone that slides)
+    playRamp: function (freqStart, freqEnd, duration, type, gain, startOffset) {
+      if (!this.ctx || !this.enabled || !this.masterGain) return;
+      type = type || 'sine';
+      gain = gain !== undefined ? gain : 0.3;
+      startOffset = startOffset || 0;
+      try {
+        var now = this.ctx.currentTime + startOffset;
+        var osc = this.ctx.createOscillator();
+        var g = this.ctx.createGain();
+        osc.connect(g);
+        g.connect(this.masterGain);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freqStart, now);
+        osc.frequency.linearRampToValueAtTime(freqEnd, now + duration * 0.7);
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(gain, now + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.start(now);
+        osc.stop(now + duration + 0.05);
+      } catch (e) { /* ignore */ }
     },
-    invalid: function () { this.playTone(200, 0.12, 'square', 0.15); },
+
+    // --- Sound Events ---
+
+    pickup: function () {
+      this.playTone(880, 0.08, 'sine', 0.25);
+    },
+
+    place: function () {
+      // Two-tone thud: 660Hz → 440Hz with ADSR peak for satisfying feel
+      this.playTone(660, 0.07, 'sine', 0.3, 0);
+      this.playTone(440, 0.09, 'sine', 0.2, 0.03);
+    },
+
+    invalid: function () {
+      this.playTone(200, 0.12, 'square', 0.12);
+    },
+
     stackTransfer: function (count) {
+      // Descending cascade — one tone per ball, AudioContext-scheduled
       var freqs = [660, 550, 440, 370];
-      for (var i = 0; i < Math.min(count, 4); i++) {
-        (function (idx) {
-          setTimeout(function () { audio.playTone(freqs[idx], 0.06, 'sine', 0.3); }, idx * 40);
-        })(i);
+      var n = Math.min(count, 4);
+      for (var i = 0; i < n; i++) {
+        this.playTone(freqs[i], 0.07, 'sine', 0.25, i * 0.04);
       }
     },
+
     tubeComplete: function () {
-      [523, 659, 784].forEach(function (f, i) {
-        setTimeout(function () { audio.playTone(f, 0.3, 'sine', 0.35); }, i * 50);
-      });
+      // C-E-G arpeggio — celebratory
+      var notes = [523, 659, 784];
+      for (var i = 0; i < notes.length; i++) {
+        this.playTone(notes[i], 0.3, 'sine', 0.3, i * 0.05);
+      }
     },
+
     win: function () {
-      [523, 659, 784, 1047].forEach(function (f, i) {
-        setTimeout(function () { audio.playTone(f, 0.5, 'sine', 0.4); }, i * 120);
-      });
+      // C-E-G-C fanfare — longer, louder, with rising gain
+      var notes = [523, 659, 784, 1047];
+      for (var i = 0; i < notes.length; i++) {
+        this.playTone(notes[i], 0.5, 'sine', 0.25 + i * 0.05, i * 0.12);
+      }
     },
+
     undo: function () {
-      this.playTone(440, 0.06, 'sine', 0.25);
-      setTimeout(function () { audio.playTone(330, 0.08, 'sine', 0.2); }, 40);
+      // Falling two-tone — reverse of place
+      this.playTone(440, 0.06, 'sine', 0.2, 0);
+      this.playTone(330, 0.08, 'sine', 0.15, 0.04);
     },
-    hint: function () { this.playTone(1047, 0.2, 'sine', 0.2); },
+
+    hint: function () {
+      // Two-note chime — more distinctive than single tone
+      this.playTone(1047, 0.15, 'sine', 0.15, 0);
+      this.playTone(1319, 0.2, 'sine', 0.12, 0.08);
+    },
   };
 
   // ============================================
