@@ -1,0 +1,46 @@
+{
+  "id": "chroma-sort",
+  "name": "Chroma Sort",
+  "icon": "\ud83c\udfa8",
+  "title": "Chroma Sort | Weekly Arcade - Free Daily Color Sorting Puzzle",
+  "description": "Sort colored balls into matching tubes in this satisfying, ad-free puzzle game. Play the daily challenge, climb the leaderboard, or take on 100+ endless levels.",
+  "keywords": "chroma sort, color sort puzzle, ball sort game, daily puzzle, sorting game no ads, free puzzle game, browser puzzle, color sorting game",
+  "url": "/games/chroma-sort/",
+  "themeColor": "#6C3DE8",
+  "accentColor": "#6C3DE8",
+  "genres": ["Puzzle", "Logic", "Daily Challenge"],
+  "ratingValue": "4.8",
+  "ratingCount": "500",
+  "tips": [
+    "Always try to keep at least one empty tube free - it gives you room to maneuver",
+    "Look for tubes where the bottom ball matches other balls above it - prioritize clearing those",
+    "Stack-transfer moves multiple same-color balls at once - use this to speed up your solve",
+    "Work from the bottom up: focus on getting bottom balls into their final tubes first",
+    "Use Undo freely - it is unlimited and there is no penalty for exploring different move paths"
+  ],
+  "similarTo": ["Water Sort Puzzle", "Ball Sort Puzzle", "Wordle", "2048", "Sudoku"],
+  "howToPlay": "Tap a tube to pick up the top ball, then tap another tube to place it. A ball can only be placed on a matching color or an empty tube. Sort all balls so each tube contains only one color to win. Use Undo (free and unlimited) and Hints (3 per day) to help you solve tricky puzzles.",
+  "aboutGame": "Chroma Sort is a free daily color sorting puzzle game. Each day brings three new puzzles at Easy, Medium, and Hard difficulty. Sort colored balls into matching tubes using strategic thinking and planning. The game features satisfying ASMR-style audio feedback, a Wordle-style shareable result card, global leaderboards, and an Endless Mode with 100+ procedurally generated levels. No ads, no downloads, no paywalls - just pure puzzle satisfaction.",
+  "faq": [
+    {
+      "q": "Is Chroma Sort free to play?",
+      "a": "Yes. Chroma Sort is 100% free with no ads, no in-app purchases, and no downloads. Play instantly in your browser on any device."
+    },
+    {
+      "q": "How does the Daily Challenge work?",
+      "a": "Every day, three new puzzles are generated at Easy (4 colors), Medium (6 colors), and Hard (8 colors) difficulty. All players worldwide get the same puzzles. Complete them, share your results, and compete on the global leaderboard."
+    },
+    {
+      "q": "Is Undo really free and unlimited?",
+      "a": "Yes. Unlike many mobile sort puzzle games, Chroma Sort gives you completely free and unlimited undo. There are no ads to watch and no coins to spend. Undo as many times as you need."
+    },
+    {
+      "q": "What is Endless Mode?",
+      "a": "Endless Mode offers 100+ procedurally generated levels that progressively increase in difficulty from 3 colors up to 10. Earn 1-3 stars per level and see how far you can go."
+    },
+    {
+      "q": "Does Chroma Sort work on mobile?",
+      "a": "Yes. Chroma Sort is designed mobile-first with large touch targets and responsive layout. It works on any phone, tablet, or desktop browser."
+    }
+  ]
+}

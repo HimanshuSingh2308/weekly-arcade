@@ -331,6 +331,28 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     allowedMetadataKeys: ['battingScore', 'battingWickets', 'battingFours', 'battingSixes', 'bowlingAIScore', 'bowlingAIWickets', 'team', 'result', 'matchMode'],
   },
 
+  // Chroma Sort: Daily color sorting puzzle
+  'chroma-sort': {
+    maxScore: 11000,
+    maxScorePerSecond: 50,
+    minTimeMs: 30000,
+    maxLevel: 3,
+    allowedMetadataKeys: [
+      'mode', 'dailyDate', 'difficulty', 'colorCount', 'tubeCount',
+      'hintsUsed', 'undosUsed', 'extraTubesUsed', 'perfectSolve', 'shareEmoji',
+      'totalMoves', 'avgStars',
+    ],
+    customValidation: (dto) => {
+      if (dto.metadata?.mode === 'daily' && dto.score > 10400) {
+        return { valid: false, reason: 'Daily score exceeds theoretical maximum' };
+      }
+      if (dto.metadata?.mode === 'endless' && dto.score > 9999) {
+        return { valid: false, reason: 'Endless level count implausible' };
+      }
+      return { valid: true };
+    },
+  },
+
   // Drift Legends: 3D kart racing (score = race time in ms; lower = better)
   'drift-legends': {
     maxScore: 600000,        // Max 10 minutes per race
