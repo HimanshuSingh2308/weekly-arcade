@@ -232,9 +232,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding-top: 8px;
   animation: csFadeIn 200ms ease-out;
+  /* Constrain puzzle to viewport so top bar is never cropped */
+  max-height: calc(100dvh - 70px); /* 60px header + 10px breathing room */
+  overflow: visible;
 }
 
 /* Top Bar */
@@ -244,6 +247,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 4px 0;
+  flex-shrink: 0; /* never crop the top bar */
 }
 
 .cs-top-left {
@@ -297,9 +301,12 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-content: center;
   gap: var(--cs-tube-gap);
-  padding: 16px 0;
+  padding: 8px 0;
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 0; /* allow flex shrinking */
 }
 
 /* Single Tube */
@@ -310,7 +317,8 @@
   flex-direction: column-reverse;
   align-items: center;
   padding: 6px 4px;
-  min-height: calc(var(--cs-ball-size) * 4 + 30px);
+  min-height: calc(var(--cs-ball-size) * 4 + 20px);
+  max-height: calc(var(--cs-ball-size) * 4 + 30px);
   background: var(--cs-tube-bg);
   border: 1.5px solid var(--cs-tube-border);
   border-radius: 0 0 28px 28px;
@@ -442,6 +450,7 @@
   width: 100%;
   max-width: 360px;
   padding: 4px 0;
+  flex-shrink: 0; /* don't shrink the controls */
 }
 
 .cs-action-btn {
