@@ -478,7 +478,7 @@
     var dateDisplay = formatDate(today);
 
     var html = '<div class="cs-home">';
-    html += '<div class="cs-home-title">\uD83C\uDFA8 Chroma Sort</div>';
+    html += '<div class="cs-home-title">\uD83C\uDF61 Chroma Sort</div>';
     html += '<div class="cs-home-subtitle">Sort the chaos. Own the day.</div>';
 
     // Daily Challenge Card
@@ -1634,16 +1634,17 @@
   // AUTH INTEGRATION
   // ============================================
 
+  var cloudStateLoaded = false;
+
   function initAuth() {
     var checkInterval = setInterval(function () {
       if (window.authManager && window.authManager.isInitialized) {
         clearInterval(checkInterval);
         window.authManager.onAuthStateChanged(function (user) {
           currentUser = user;
-          if (user) {
+          if (user && !cloudStateLoaded) {
+            cloudStateLoaded = true;
             loadCloudState();
-            // Sync guest scores
-            // Cloud state loaded on sign-in
           }
         });
       }
@@ -1663,7 +1664,7 @@
         clearInterval(checkInterval);
         window.gameHeader.init({
           title: 'Chroma Sort',
-          icon: '\uD83C\uDFA8',
+          icon: '\uD83C\uDF61',
           gameId: GAME_ID,
           buttons: ['sound', 'leaderboard', 'auth'],
           onSound: function () {
@@ -1674,7 +1675,7 @@
           },
           onSignIn: function (user) {
             currentUser = user;
-            loadCloudState();
+            if (!cloudStateLoaded) { cloudStateLoaded = true; loadCloudState(); }
             // Cloud state loaded on sign-in
           },
           onSignOut: function () {
