@@ -651,7 +651,7 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   'dl-night-racer':       { id: 'dl-night-racer',       name: 'Night Shift',        description: 'Race between 10 PM and 6 AM local time',            icon: '🌙', xpReward: 75,  category: 'drift-legends', requirement: { type: 'special', gameId: 'drift-legends' } },
 
   // Chroma Sort achievements
-  'cs-first-solve':      { id: 'cs-first-solve',      name: 'First Sort',         description: 'Complete your first Chroma Sort puzzle',              icon: '🎨', xpReward: 50,  category: 'chroma-sort', requirement: { type: 'first_game', gameId: 'chroma-sort' } },
+  'cs-first-solve':      { id: 'cs-first-solve',      name: 'First Sort',         description: 'Complete your first Chroma Sort puzzle',              icon: '🍡', xpReward: 50,  category: 'chroma-sort', requirement: { type: 'first_game', gameId: 'chroma-sort' } },
   'cs-daily-easy':       { id: 'cs-daily-easy',        name: 'Easy Does It',       description: 'Complete a Daily Easy puzzle',                        icon: '🟢', xpReward: 50,  category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
   'cs-daily-medium':     { id: 'cs-daily-medium',      name: 'Medium Rare',        description: 'Complete a Daily Medium puzzle',                      icon: '🟡', xpReward: 75,  category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
   'cs-daily-hard':       { id: 'cs-daily-hard',        name: 'Hard Earned',        description: 'Complete a Daily Hard puzzle',                        icon: '🔴', xpReward: 100, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },

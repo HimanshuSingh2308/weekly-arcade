@@ -1,48 +1,160 @@
 <svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgCS" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0F0E17"/>
-      <stop offset="100%" style="stop-color:#1A1830"/>
+    <linearGradient id="csBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F0E17"/>
+      <stop offset="100%" stop-color="#1A1830"/>
     </linearGradient>
-    <linearGradient id="tubeG" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:rgba(255,255,255,0.12)"/>
-      <stop offset="100%" style="stop-color:rgba(255,255,255,0.04)"/>
+    <linearGradient id="csTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#F7B731"/>
     </linearGradient>
+    <linearGradient id="csTube" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.14)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+    <filter id="csGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="csBallGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="csViolet" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </radialGradient>
+    <radialGradient id="csBlue" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </radialGradient>
+    <radialGradient id="csGreen" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </radialGradient>
+    <radialGradient id="csAmber" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+    <radialGradient id="csRed" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </radialGradient>
+    <radialGradient id="csOrange" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </radialGradient>
   </defs>
+
   <!-- Background -->
-  <rect width="400" height="250" fill="url(#bgCS)" rx="12"/>
-  <!-- Decorative glow -->
-  <circle cx="200" cy="125" r="100" fill="#6C3DE8" opacity="0.08"/>
-  <!-- Tube 1 (sorted - violet) -->
-  <rect x="60" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
-  <circle cx="80" cy="170" r="14" fill="#8B5CF6"/>
-  <circle cx="80" cy="140" r="14" fill="#8B5CF6"/>
-  <circle cx="80" cy="110" r="14" fill="#8B5CF6"/>
-  <circle cx="80" cy="80" r="14" fill="#8B5CF6"/>
-  <!-- Tube 2 (mixed) -->
-  <rect x="120" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
-  <circle cx="140" cy="170" r="14" fill="#3B82F6"/>
-  <circle cx="140" cy="140" r="14" fill="#10B981"/>
-  <circle cx="140" cy="110" r="14" fill="#F59E0B"/>
-  <circle cx="140" cy="80" r="14" fill="#3B82F6"/>
-  <!-- Tube 3 (mixed) - selected glow -->
-  <rect x="180" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="#8B5CF6" stroke-width="2"/>
-  <circle cx="200" cy="170" r="14" fill="#F59E0B"/>
-  <circle cx="200" cy="140" r="14" fill="#EF4444"/>
-  <circle cx="200" cy="110" r="14" fill="#10B981"/>
-  <!-- Ball being moved (floating above tube 3) -->
-  <circle cx="200" cy="55" r="14" fill="#3B82F6" opacity="0.9"/>
-  <circle cx="200" cy="55" r="17" fill="none" stroke="#8B5CF6" stroke-width="1.5" opacity="0.6"/>
-  <!-- Tube 4 (mixed) -->
-  <rect x="240" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
-  <circle cx="260" cy="170" r="14" fill="#EF4444"/>
-  <circle cx="260" cy="140" r="14" fill="#F59E0B"/>
-  <circle cx="260" cy="110" r="14" fill="#EF4444"/>
-  <circle cx="260" cy="80" r="14" fill="#10B981"/>
-  <!-- Tube 5 (empty) -->
-  <rect x="300" y="70" width="40" height="130" rx="0" ry="20" fill="url(#tubeG)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+  <rect width="400" height="250" fill="url(#csBg)" rx="12"/>
+
+  <!-- Ambient glow behind tubes -->
+  <ellipse cx="200" cy="140" rx="140" ry="80" fill="#6C3DE8" opacity="0.06"/>
+  <ellipse cx="200" cy="140" rx="80" ry="50" fill="#8B5CF6" opacity="0.05"/>
+
+  <!-- Sparkle particles -->
+  <circle cx="55" cy="45" r="1.2" fill="#8B5CF6" opacity="0.6"/>
+  <circle cx="135" cy="35" r="0.8" fill="#F7B731" opacity="0.5"/>
+  <circle cx="270" cy="40" r="1" fill="#10B981" opacity="0.5"/>
+  <circle cx="340" cy="55" r="1.3" fill="#3B82F6" opacity="0.6"/>
+  <circle cx="90" cy="85" r="0.7" fill="#EF4444" opacity="0.4"/>
+  <circle cx="310" cy="80" r="0.9" fill="#F97316" opacity="0.4"/>
+
+  <!-- === TUBE 1: Sorted violet (complete, glowing) === -->
+  <g>
+    <rect x="42" y="78" width="42" height="132" rx="0" ry="21" fill="url(#csTube)" stroke="#8B5CF6" stroke-width="1.5" opacity="0.9"/>
+    <!-- Glass highlight -->
+    <rect x="46" y="82" width="4" height="120" rx="2" fill="rgba(255,255,255,0.06)"/>
+    <!-- Complete glow -->
+    <rect x="42" y="78" width="42" height="132" rx="0" ry="21" fill="none" stroke="#8B5CF6" stroke-width="2" opacity="0.4" filter="url(#csGlow)"/>
+    <!-- Balls -->
+    <circle cx="63" cy="190" r="15" fill="url(#csViolet)" filter="url(#csBallGlow)"/>
+    <circle cx="63" cy="158" r="15" fill="url(#csViolet)"/>
+    <circle cx="63" cy="126" r="15" fill="url(#csViolet)"/>
+    <circle cx="63" cy="94" r="15" fill="url(#csViolet)"/>
+    <!-- Check mark -->
+    <path d="M55,84 L60,90 L72,78" stroke="#22c55e" stroke-width="2.5" fill="none" opacity="0.8"/>
+  </g>
+
+  <!-- === TUBE 2: Mixed === -->
+  <g>
+    <rect x="100" y="78" width="42" height="132" rx="0" ry="21" fill="url(#csTube)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+    <rect x="104" y="82" width="4" height="120" rx="2" fill="rgba(255,255,255,0.06)"/>
+    <circle cx="121" cy="190" r="15" fill="url(#csBlue)"/>
+    <circle cx="121" cy="158" r="15" fill="url(#csGreen)"/>
+    <circle cx="121" cy="126" r="15" fill="url(#csAmber)"/>
+    <circle cx="121" cy="94" r="15" fill="url(#csBlue)"/>
+  </g>
+
+  <!-- === TUBE 3: Selected (lifted ball, glow ring) === -->
+  <g>
+    <rect x="158" y="78" width="42" height="132" rx="0" ry="21" fill="url(#csTube)" stroke="#8B5CF6" stroke-width="2.5"/>
+    <rect x="162" y="82" width="4" height="120" rx="2" fill="rgba(255,255,255,0.06)"/>
+    <!-- Selection glow -->
+    <rect x="158" y="78" width="42" height="132" rx="0" ry="21" fill="none" stroke="#8B5CF6" stroke-width="3" opacity="0.3" filter="url(#csGlow)"/>
+    <!-- Remaining balls -->
+    <circle cx="179" cy="190" r="15" fill="url(#csAmber)"/>
+    <circle cx="179" cy="158" r="15" fill="url(#csRed)"/>
+    <circle cx="179" cy="126" r="15" fill="url(#csGreen)"/>
+    <!-- Lifted ball floating above with glow -->
+    <circle cx="179" cy="58" r="15" fill="url(#csOrange)" filter="url(#csBallGlow)"/>
+    <circle cx="179" cy="58" r="19" fill="none" stroke="#8B5CF6" stroke-width="1.5" opacity="0.5"/>
+    <!-- Motion trail -->
+    <circle cx="179" cy="68" r="10" fill="#F97316" opacity="0.15"/>
+    <circle cx="179" cy="76" r="6" fill="#F97316" opacity="0.08"/>
+  </g>
+
+  <!-- === TUBE 4: Mixed === -->
+  <g>
+    <rect x="216" y="78" width="42" height="132" rx="0" ry="21" fill="url(#csTube)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+    <rect x="220" y="82" width="4" height="120" rx="2" fill="rgba(255,255,255,0.06)"/>
+    <circle cx="237" cy="190" r="15" fill="url(#csRed)"/>
+    <circle cx="237" cy="158" r="15" fill="url(#csOrange)"/>
+    <circle cx="237" cy="126" r="15" fill="url(#csRed)"/>
+    <circle cx="237" cy="94" r="15" fill="url(#csGreen)"/>
+  </g>
+
+  <!-- === TUBE 5: Partially filled === -->
+  <g>
+    <rect x="274" y="78" width="42" height="132" rx="0" ry="21" fill="url(#csTube)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+    <rect x="278" y="82" width="4" height="120" rx="2" fill="rgba(255,255,255,0.06)"/>
+    <circle cx="295" cy="190" r="15" fill="url(#csAmber)"/>
+    <circle cx="295" cy="158" r="15" fill="url(#csOrange)"/>
+  </g>
+
+  <!-- === TUBE 6: Empty === -->
+  <g>
+    <rect x="332" y="78" width="42" height="132" rx="0" ry="21" fill="url(#csTube)" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="4,4"/>
+    <rect x="336" y="82" width="4" height="120" rx="2" fill="rgba(255,255,255,0.03)"/>
+  </g>
+
+  <!-- Arrow hint (tube 3 → tube 5) -->
+  <path d="M195,58 C220,48 260,50 280,70" stroke="#F7B731" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="4,3"/>
+  <polygon points="280,70 274,62 284,64" fill="#F7B731" opacity="0.4"/>
+
   <!-- Title -->
-  <text x="200" y="232" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="16" font-weight="700" fill="#E8E6F0">Chroma Sort</text>
-  <!-- Emoji -->
-  <text x="200" y="30" text-anchor="middle" font-size="20">🎨</text>
+  <text x="200" y="30" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="url(#csTitle)" text-anchor="middle" letter-spacing="3" filter="url(#csGlow)">CHROMA SORT</text>
+
+  <!-- Subtitle -->
+  <text x="200" y="44" text-anchor="middle" fill="#a0a0b8" font-family="system-ui" font-weight="600" font-size="8" letter-spacing="1">DAILY CHALLENGE · ENDLESS MODE · LEADERBOARD</text>
+
+  <!-- HUD: Move counter -->
+  <rect x="10" y="228" width="70" height="16" rx="5" fill="rgba(0,0,0,0.5)"/>
+  <text x="45" y="239" text-anchor="middle" fill="#E8E6F0" font-family="system-ui" font-weight="600" font-size="7">🧪 12 moves</text>
+
+  <!-- HUD: Timer -->
+  <rect x="320" y="228" width="70" height="16" rx="5" fill="rgba(0,0,0,0.5)"/>
+  <text x="355" y="239" text-anchor="middle" fill="#a0a0b8" font-family="system-ui" font-weight="600" font-size="7">⏱ 2:34</text>
+
+  <!-- Daily badge -->
+  <rect x="156" y="216" width="88" height="16" rx="8" fill="#6C3DE8" opacity="0.2"/>
+  <rect x="156" y="216" width="88" height="16" rx="8" fill="none" stroke="#8B5CF6" stroke-width="0.8" opacity="0.5"/>
+  <text x="200" y="227" text-anchor="middle" fill="#8B5CF6" font-family="system-ui" font-weight="700" font-size="7">🧪 DAILY · MEDIUM</text>
 </svg>
