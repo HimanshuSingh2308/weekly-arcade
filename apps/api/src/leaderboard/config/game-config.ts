@@ -343,8 +343,41 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
       'totalMoves', 'avgStars',
     ],
     customValidation: (dto) => {
-      if (dto.metadata?.mode === 'daily' && dto.score > 10400) {
-        return { valid: false, reason: 'Daily score exceeds theoretical maximum' };
+      if (dto.metadata?.mode === 'daily') {
+        // Minimum move count floor per difficulty (structural minimum from puzzle design)
+        const minMovesMap: Record<string, number> = { easy: 8, medium: 15, hard: 20 };
+        const difficulty = dto.metadata.difficulty as string;
+        const minMoves = minMovesMap[difficulty];
+        if (minMoves && dto.guessCount !== undefined && dto.guessCount < minMoves) {
+          return { valid: false, reason: 'Move count below minimum for difficulty' };
+        }
+
+        // Server-side score recalculation to prevent client-side manipulation
+        const TIME_PAR: Record<string, number> = { easy: 120, medium: 300, hard: 720 };
+        const timePar = TIME_PAR[difficulty];
+        const timeSeconds = dto.timeMs ? Math.floor(dto.timeMs / 1000) : 0;
+        const moves = dto.guessCount ?? 0;
+        const hintsUsed = (dto.metadata.hintsUsed as number) ?? 0;
+        const undosUsed = (dto.metadata.undosUsed as number) ?? 0;
+        const extraTubesUsed = dto.metadata.extraTubesUsed ? true : false;
+
+        const BASE = 10000;
+        const movePenalty = moves * 15;
+        const timeBonus = timePar ? Math.max(0, (timePar - timeSeconds) * 8) : 0;
+        const undoMod = Math.max(0.5, 1.0 - undosUsed * 0.02);
+        const hintPenalty = hintsUsed * 150;
+        const extraPenalty = extraTubesUsed ? 1500 : 0;
+        const capped = Math.min(BASE - movePenalty + timeBonus - hintPenalty - extraPenalty, 10000);
+        const expected = Math.max(100, Math.round(capped * undoMod));
+
+        // Allow 5% tolerance for floating-point rounding
+        if (Math.abs(dto.score - expected) > expected * 0.05) {
+          return { valid: false, reason: 'Score does not match game parameters' };
+        }
+
+        if (dto.score > 10400) {
+          return { valid: false, reason: 'Daily score exceeds theoretical maximum' };
+        }
       }
       if (dto.metadata?.mode === 'endless' && dto.score > 9999) {
         return { valid: false, reason: 'Endless level count implausible' };
