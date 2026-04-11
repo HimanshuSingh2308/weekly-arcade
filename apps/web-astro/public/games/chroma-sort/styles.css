@@ -12,7 +12,7 @@
   --cs-surface-hover: rgba(255,255,255,0.10);
   --cs-border: rgba(255,255,255,0.12);
   --cs-text: #E8E6F0;
-  --cs-text-dim: rgba(232,230,240,0.6);
+  --cs-text-dim: rgba(232,230,240,0.75);
   --cs-text-bright: #FFFFFF;
   --cs-tube-bg: rgba(255,255,255,0.08);
   --cs-tube-border: rgba(255,255,255,0.18);
@@ -465,12 +465,12 @@
 }
 
 .cs-action-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--cs-text-dim);
 }
 
 .cs-action-badge {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--cs-accent);
   font-weight: 600;
 }
@@ -757,6 +757,23 @@
     --cs-tube-width: 46px;
     --cs-ball-size: 44px;
     --cs-tube-gap: 6px;
+  }
+}
+
+/* Small + short screens: prevent Hard mode (11 tubes) from overflowing */
+@media (max-width: 380px) and (max-height: 700px) {
+  :root {
+    --cs-tube-width: 38px;
+    --cs-ball-size: 36px;
+    --cs-tube-gap: 4px;
+  }
+  .cs-tube {
+    min-height: calc(var(--cs-ball-size) * 4 + 16px);
+    border-radius: 0 0 16px 16px;
+  }
+  .cs-action-bar {
+    gap: 8px;
+    padding: 6px 0;
   }
 }
 
