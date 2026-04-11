@@ -1034,9 +1034,9 @@
     if (state.hintsUsed === 0 && !state.extraTubeUsed) {
       state.noHintStreak++;
       if (state.noHintStreak >= 5) {
-        state.extraTubesAvailable++;
+        state.extraTubesAvailable = Math.min(state.extraTubesAvailable + 1, 3);
         state.noHintStreak = 0;
-        showToast('Earned an Extra Tube power-up!');
+        if (state.extraTubesAvailable < 3) showToast('Earned an Extra Tube power-up!');
       }
     } else {
       state.noHintStreak = 0;
@@ -1068,11 +1068,11 @@
     var timeSeconds = Math.floor(state.elapsed / 1000);
 
     var BASE = 10000;
-    var movePenalty = state.moveCount * 15;
-    var timeBonus = Math.max(0, (d.timePar - timeSeconds) * 8);
-    var undoMod = Math.max(0.5, 1.0 - state.undoCount * 0.02);
-    var hintPenalty = state.hintsUsed * 150;
-    var extraPenalty = state.extraTubeUsed ? 1500 : 0;
+    var movePenalty = state.moveCount * 40;
+    var timeBonus = Math.max(0, (d.timePar - timeSeconds) * 20);
+    var undoMod = Math.max(0.3, 1.0 - state.undoCount * 0.03);
+    var hintPenalty = state.hintsUsed * 300;
+    var extraPenalty = state.extraTubeUsed ? 2000 : 0;
 
     var capped = Math.min(BASE - movePenalty + timeBonus - hintPenalty - extraPenalty, 10000);
     var raw = capped * undoMod;

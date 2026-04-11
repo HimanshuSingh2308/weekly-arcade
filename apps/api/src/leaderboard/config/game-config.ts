@@ -334,7 +334,7 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   // Chroma Sort: Daily color sorting puzzle
   'chroma-sort': {
     maxScore: 11000,
-    maxScorePerSecond: 50,
+    maxScorePerSecond: 500,
     minTimeMs: 30000,
     maxLevel: 3,
     allowedMetadataKeys: [
@@ -362,11 +362,11 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
         const extraTubesUsed = dto.metadata.extraTubesUsed ? true : false;
 
         const BASE = 10000;
-        const movePenalty = moves * 15;
-        const timeBonus = timePar ? Math.max(0, (timePar - timeSeconds) * 8) : 0;
-        const undoMod = Math.max(0.5, 1.0 - undosUsed * 0.02);
-        const hintPenalty = hintsUsed * 150;
-        const extraPenalty = extraTubesUsed ? 1500 : 0;
+        const movePenalty = moves * 40;
+        const timeBonus = timePar ? Math.max(0, (timePar - timeSeconds) * 20) : 0;
+        const undoMod = Math.max(0.3, 1.0 - undosUsed * 0.03);
+        const hintPenalty = hintsUsed * 300;
+        const extraPenalty = extraTubesUsed ? 2000 : 0;
         const capped = Math.min(BASE - movePenalty + timeBonus - hintPenalty - extraPenalty, 10000);
         const expected = Math.max(100, Math.round(capped * undoMod));
 
