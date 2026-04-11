@@ -580,9 +580,9 @@
     html += '</div>';
     html += '<div class="cs-top-right">';
     if (state.mode === 'daily') {
-      html += '<span class="cs-timer" id="cs-timer">0:00</span>';
+      html += '<span class="cs-timer" id="cs-timer" aria-live="off" aria-label="Timer">0:00</span>';
     }
-    html += '<span class="cs-move-count" id="cs-moves">0 moves</span>';
+    html += '<span class="cs-move-count" id="cs-moves" aria-live="polite" aria-label="Move count">0 moves</span>';
     html += '</div>';
     html += '</div>';
 
@@ -717,6 +717,15 @@
         audio.init();
         var idx = parseInt(el.getAttribute('data-tube'), 10);
         handleTubeClick(idx);
+      });
+      // Keyboard: Enter/Space activates tube (WCAG 2.1.1)
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          audio.init();
+          var idx = parseInt(el.getAttribute('data-tube'), 10);
+          handleTubeClick(idx);
+        }
       });
     });
   }
