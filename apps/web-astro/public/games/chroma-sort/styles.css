@@ -118,59 +118,98 @@
 
 .cs-diff-btn {
   flex: 1;
-  padding: 14px 8px;
-  border: 1px solid var(--cs-border);
+  padding: 16px 8px 12px;
+  border: 2px solid transparent;
   border-radius: var(--cs-radius-sm);
   background: var(--cs-surface);
-  color: var(--cs-text);
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--cs-text-bright);
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   text-align: center;
-  transition: background var(--cs-transition), border-color var(--cs-transition);
+  transition: transform var(--cs-transition), border-color var(--cs-transition), box-shadow var(--cs-transition);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+}
+
+/* Color-coded difficulty borders */
+.cs-diff-btn[data-diff="easy"] {
+  border-color: #10B981;
+  background: rgba(16,185,129,0.08);
+}
+.cs-diff-btn[data-diff="medium"] {
+  border-color: #F59E0B;
+  background: rgba(245,158,11,0.08);
+}
+.cs-diff-btn[data-diff="hard"] {
+  border-color: #EF4444;
+  background: rgba(239,68,68,0.08);
 }
 
 .cs-diff-btn:hover, .cs-diff-btn:focus-visible {
-  background: var(--cs-surface-hover);
-  border-color: var(--cs-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.cs-diff-btn[data-diff="easy"]:hover { border-color: #34d399; box-shadow: 0 4px 16px rgba(16,185,129,0.25); }
+.cs-diff-btn[data-diff="medium"]:hover { border-color: #fbbf24; box-shadow: 0 4px 16px rgba(245,158,11,0.25); }
+.cs-diff-btn[data-diff="hard"]:hover { border-color: #f87171; box-shadow: 0 4px 16px rgba(239,68,68,0.25); }
+
+.cs-diff-btn:active {
+  transform: scale(0.97);
 }
 
 .cs-diff-btn.completed {
-  border-color: #10B981;
-  background: rgba(16,185,129,0.1);
+  border-color: #10B981 !important;
+  background: rgba(16,185,129,0.15) !important;
 }
 
 .cs-diff-btn.completed::after {
-  content: '\2713';
-  font-size: 16px;
+  content: '\2713 Done';
+  font-size: 11px;
   color: #10B981;
+  font-weight: 600;
 }
 
 .cs-diff-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--cs-text-dim);
+  font-weight: 400;
 }
+
+.cs-diff-play {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.cs-diff-btn[data-diff="easy"] .cs-diff-play { color: #10B981; }
+.cs-diff-btn[data-diff="medium"] .cs-diff-play { color: #F59E0B; }
+.cs-diff-btn[data-diff="hard"] .cs-diff-play { color: #EF4444; }
 
 /* Endless Card */
 .cs-endless-card {
   width: 100%;
-  background: var(--cs-surface);
-  border: 1px solid var(--cs-border);
+  background: rgba(108,61,232,0.08);
+  border: 2px solid var(--cs-primary);
   border-radius: var(--cs-radius);
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  transition: background var(--cs-transition);
+  transition: transform var(--cs-transition), box-shadow var(--cs-transition);
 }
 
 .cs-endless-card:hover, .cs-endless-card:focus-visible {
-  background: var(--cs-surface-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(108,61,232,0.25);
+}
+
+.cs-endless-card:active {
+  transform: scale(0.98);
 }
 
 .cs-endless-info {

@@ -663,6 +663,11 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   'cs-endless-50':       { id: 'cs-endless-50',        name: 'Halfway There',      description: 'Reach Endless level 50',                              icon: '🗻', xpReward: 300, category: 'chroma-sort', requirement: { type: 'level', value: 50, gameId: 'chroma-sort' } },
   'cs-endless-100':      { id: 'cs-endless-100',       name: 'Centurion Sorter',   description: 'Reach Endless level 100',                             icon: '🏆', xpReward: 500, category: 'chroma-sort', requirement: { type: 'level', value: 100, gameId: 'chroma-sort' } },
   'cs-share-5':          { id: 'cs-share-5',           name: 'Social Sorter',      description: 'Share your daily result 5 times',                     icon: '📤', xpReward: 100, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-perfect-daily':    { id: 'cs-perfect-daily',     name: 'Flawless Daily',     description: 'Complete a daily puzzle with no hints, undos, or extra tubes', icon: '💎', xpReward: 200, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-hard-first':       { id: 'cs-hard-first',        name: 'Hard Starter',       description: 'Complete your first Hard daily puzzle',               icon: '🔴', xpReward: 100, category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-no-undo-easy':     { id: 'cs-no-undo-easy',      name: 'Clean Solve',        description: 'Complete Easy without using undo',                    icon: '🧹', xpReward: 75,  category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
+  'cs-speed-demon':      { id: 'cs-speed-demon',       name: 'Speed Sorter',       description: 'Complete a daily puzzle in under 60 seconds',         icon: '⚡', xpReward: 150, category: 'chroma-sort', requirement: { type: 'time', value: 60, gameId: 'chroma-sort' } },
+  'cs-daily-streak-3':   { id: 'cs-daily-streak-3',    name: 'Getting Started',    description: 'Maintain a 3-day daily streak',                       icon: '🔥', xpReward: 100, category: 'chroma-sort', requirement: { type: 'streak', value: 3, gameId: 'chroma-sort' } },
 };
 
 export const ACHIEVEMENT_LIST = Object.values(ACHIEVEMENTS);

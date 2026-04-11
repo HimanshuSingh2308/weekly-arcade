@@ -497,6 +497,7 @@
       html += '<button class="cs-diff-btn' + cls + '" data-action="daily" data-diff="' + diff + '" role="button">';
       html += '<span>' + diff.charAt(0).toUpperCase() + diff.slice(1) + '</span>';
       html += '<span class="cs-diff-label">' + d.colors + ' colors</span>';
+      if (!completed) html += '<span class="cs-diff-play">\u25B6 Play</span>';
       html += '</button>';
     });
     html += '</div>';
@@ -1353,56 +1354,48 @@
   // ============================================
 
   function buildShareEmoji() {
-    var lines = [];
-    for (var i = 0; i < state.tubes.length; i++) {
-      var tube = state.tubes[i];
-      if (tube.length === 0) {
-        lines.push('\u2B1B\u2B1B\u2B1B\u2B1B');
-      } else {
-        var row = '';
-        for (var j = 0; j < BALLS_PER_TUBE; j++) {
-          if (j < tube.length) {
-            var c = COLORS.find(function (cl) { return cl.name === tube[j]; });
-            row += c ? c.emoji : '\u2B1C';
-          } else {
-            row += '\u2B1C';
-          }
-        }
-        lines.push(row);
-      }
+    // Performance-based grid (spoiler-free, like Wordle)
+    // Show colored squares for sorted tubes, black for empty
+    var d = DIFFICULTY[state.difficulty];
+    var squares = [];
+    for (var i = 0; i < d.colors; i++) {
+      var c = COLORS[i];
+      squares.push(c ? c.emoji : '\uD83D\uDFE3');
     }
-    return lines.join(' | ');
+    return squares.join('');
   }
 
   function buildShareText(score) {
     var d = state.difficulty.charAt(0).toUpperCase() + state.difficulty.slice(1);
     var dateStr = formatDate(state.dailyDate);
     var time = formatTime(state.elapsed);
+    var diffConfig = DIFFICULTY[state.difficulty];
+    var perfect = state.hintsUsed === 0 && state.undoCount === 0 && !state.extraTubeUsed;
 
-    var text = 'Chroma Sort \u2014 ' + dateStr + ' (' + d + ') \uD83C\uDFA8\n';
+    var text = '\uD83C\uDF61 Chroma Sort \u2014 ' + d + '\n';
+    text += '\uD83D\uDCC5 ' + dateStr + '\n\n';
 
-    // Build tube rows for share (group 3-4 per line)
-    var tubeEmojis = [];
-    for (var i = 0; i < state.tubes.length; i++) {
-      var tube = state.tubes[i];
-      if (tube.length === 0) {
-        tubeEmojis.push('\u2B1B\u2B1B\u2B1B\u2B1B');
+    // Performance bar — filled squares for efficiency
+    var parMoves = { easy: 25, medium: 45, hard: 80 }[state.difficulty] || 45;
+    var efficiency = Math.min(1, parMoves / Math.max(state.moveCount, 1));
+    var barLen = diffConfig.colors;
+    var filled = Math.max(1, Math.round(efficiency * barLen));
+    var bar = '';
+    for (var i = 0; i < barLen; i++) {
+      if (i < filled) {
+        bar += COLORS[i].emoji;
       } else {
-        var row = '';
-        for (var j = 0; j < tube.length; j++) {
-          var c = COLORS.find(function (cl) { return cl.name === tube[j]; });
-          row += c ? c.emoji : '\u2B1C';
-        }
-        tubeEmojis.push(row);
+        bar += '\u2B1B';
       }
     }
+    text += bar + '\n\n';
 
-    // Group into rows of 3
-    for (var r = 0; r < tubeEmojis.length; r += 3) {
-      text += tubeEmojis.slice(r, r + 3).join(' | ') + '\n';
-    }
+    // Stats line
+    text += '\uD83D\uDCCA ' + state.moveCount + ' moves \u2022 ' + time;
+    if (perfect) text += ' \u2022 \uD83D\uDC8E Perfect';
+    text += '\n';
+    text += '\u2B50 ' + score.toLocaleString() + ' pts\n\n';
 
-    text += 'Solved in ' + state.moveCount + ' moves | ' + time + ' | ' + score.toLocaleString() + ' pts\n';
     text += 'weeklyarcade.com/games/chroma-sort';
 
     return text;
@@ -1410,23 +1403,31 @@
 
   function copyShare(score) {
     var text = buildShareText(score);
-    if (navigator.clipboard) {
+
+    function onShared() {
+      state.shareCount++;
+      saveLocal({ shareCount: state.shareCount });
+      if (state.shareCount >= 5) {
+        try {
+          if (currentUser && window.apiClient) {
+            window.apiClient.unlockAchievement('cs-share-5', GAME_ID);
+          }
+        } catch (e) { /* ignore */ }
+      }
+    }
+
+    // Prefer native share sheet (mobile), fallback to clipboard
+    if (navigator.share) {
+      navigator.share({ text: text }).then(function () {
+        onShared();
+      }).catch(function () { /* user cancelled */ });
+    } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(function () {
         showToast('Result copied to clipboard!');
-        state.shareCount++;
-        saveLocal({ shareCount: state.shareCount });
-
-        // Share achievement
-        if (state.shareCount >= 5) {
-          try {
-            if (currentUser && window.apiClient) {
-              window.apiClient.unlockAchievement('cs-share-5', GAME_ID);
-            }
-          } catch (e) { /* ignore */ }
-        }
+        onShared();
       });
     } else {
-      showToast('Could not copy to clipboard');
+      showToast('Could not share');
     }
   }
 
