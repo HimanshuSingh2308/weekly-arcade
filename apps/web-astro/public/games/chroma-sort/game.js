@@ -337,6 +337,110 @@
       this.playTone(1047, 0.15, 'sine', 0.15, 0);
       this.playTone(1319, 0.2, 'sine', 0.12, 0.08);
     },
+
+    // --- BGM (ambient puzzle loop) ---
+    bgm: {
+      playing: false,
+      gainNode: null,
+      oscs: [],
+      interval: null,
+      chordIdx: 0,
+
+      // Gentle ambient chords: Am → F → C → G (puzzle-calm progression)
+      chords: [
+        [220, 261.63, 329.63],  // Am: A3, C4, E4
+        [174.61, 220, 261.63],  // F:  F3, A3, C4
+        [261.63, 329.63, 392],  // C:  C4, E4, G4
+        [196, 246.94, 293.66],  // G:  G3, B3, D4
+      ],
+
+      start: function () {
+        if (this.playing || !audio.ctx || !audio.enabled) return;
+        this.playing = true;
+        this.chordIdx = 0;
+
+        // BGM gain (very quiet — sits behind SFX)
+        this.gainNode = audio.ctx.createGain();
+        this.gainNode.connect(audio.masterGain);
+        this.gainNode.gain.value = 0;
+        // Fade in over 2 seconds
+        this.gainNode.gain.linearRampToValueAtTime(0.04, audio.ctx.currentTime + 2);
+
+        this._playChord();
+        var self = this;
+        // Cycle chords every 4 seconds
+        this.interval = setInterval(function () {
+          if (!audio.enabled || !self.playing) { self.stop(); return; }
+          self.chordIdx = (self.chordIdx + 1) % self.chords.length;
+          self._playChord();
+        }, 4000);
+      },
+
+      _playChord: function () {
+        // Stop previous oscillators
+        this._stopOscs();
+        if (!audio.ctx || !this.gainNode) return;
+
+        var chord = this.chords[this.chordIdx];
+        var now = audio.ctx.currentTime;
+        var self = this;
+
+        chord.forEach(function (freq) {
+          var osc = audio.ctx.createOscillator();
+          var noteGain = audio.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          osc.connect(noteGain);
+          noteGain.connect(self.gainNode);
+          // Soft attack and sustain
+          noteGain.gain.setValueAtTime(0, now);
+          noteGain.gain.linearRampToValueAtTime(0.5, now + 0.8);  // slow attack
+          noteGain.gain.linearRampToValueAtTime(0.35, now + 3.5); // gentle decay
+          noteGain.gain.linearRampToValueAtTime(0, now + 4.2);    // release
+          osc.start(now);
+          osc.stop(now + 4.5);
+          self.oscs.push({ osc: osc, gain: noteGain });
+        });
+      },
+
+      _stopOscs: function () {
+        this.oscs.forEach(function (o) {
+          try { o.osc.stop(); } catch (e) { /* already stopped */ }
+        });
+        this.oscs = [];
+      },
+
+      stop: function () {
+        if (!this.playing) return;
+        this.playing = false;
+        clearInterval(this.interval);
+        this.interval = null;
+        // Fade out
+        if (this.gainNode && audio.ctx) {
+          try {
+            this.gainNode.gain.linearRampToValueAtTime(0, audio.ctx.currentTime + 1);
+          } catch (e) { /* ignore */ }
+        }
+        var self = this;
+        setTimeout(function () {
+          self._stopOscs();
+          self.gainNode = null;
+        }, 1200);
+      },
+
+      // Duck BGM volume when SFX plays, restore after
+      duck: function () {
+        if (!this.gainNode || !audio.ctx) return;
+        try {
+          this.gainNode.gain.linearRampToValueAtTime(0.01, audio.ctx.currentTime + 0.05);
+          var g = this.gainNode;
+          var ctx = audio.ctx;
+          setTimeout(function () {
+            try { g.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.3); } catch (e) {}
+          }, 200);
+        } catch (e) { /* ignore */ }
+      },
+    },
   };
 
   // ============================================
@@ -468,6 +572,7 @@
 
   function renderHome() {
     hideTutorialOverlay();
+    audio.bgm.stop();
     state.screen = 'home';
     state.selectedTube = null;
     clearInterval(timerInterval);
@@ -477,39 +582,62 @@
     var todayData = state.dailyCompleted[today] || {};
     var dateDisplay = formatDate(today);
 
-    var html = '<div class="cs-home">';
-    html += '<div class="cs-home-title">\uD83C\uDF61 Chroma Sort</div>';
-    html += '<div class="cs-home-subtitle">Sort the chaos. Own the day.</div>';
+    var dailyDone = (todayData.easy ? 1 : 0) + (todayData.medium ? 1 : 0) + (todayData.hard ? 1 : 0);
 
-    // Daily Challenge Card
-    html += '<div class="cs-daily-card">';
-    html += '<div class="cs-daily-card-header">';
-    html += '<span class="cs-daily-date">' + dateDisplay + '</span>';
+    var html = '<div class="cs-home">';
+
+    // Hero
+    html += '<div class="cs-hero">';
+    html += '<div class="cs-hero-icon">\uD83C\uDF61</div>';
+    html += '<div class="cs-home-title">Chroma Sort</div>';
+    html += '<div class="cs-home-subtitle">Sort the chaos. Own the day.</div>';
+    html += '</div>';
+
+    // Quick Stats bar
+    html += '<div class="cs-stats-bar">';
     if (state.streak > 0) {
-      html += '<span class="cs-streak-badge">\uD83D\uDD25 ' + state.streak + ' day streak</span>';
+      html += '<div class="cs-stat-chip">\uD83D\uDD25 ' + state.streak + ' day streak</div>';
+    }
+    if (state.endlessLevel > 1) {
+      html += '<div class="cs-stat-chip">\uD83C\uDFAF Level ' + state.endlessLevel + '</div>';
+    }
+    if (state.totalStars > 0) {
+      html += '<div class="cs-stat-chip">\u2B50 ' + state.totalStars + ' stars</div>';
     }
     html += '</div>';
+
+    // Section: Daily Challenge
+    html += '<div class="cs-section-label">\uD83D\uDCC5 Daily Challenge \u2014 ' + dateDisplay + '</div>';
+    html += '<div class="cs-daily-card">';
     html += '<div class="cs-diff-buttons">';
     ['easy', 'medium', 'hard'].forEach(function (diff) {
       var completed = todayData[diff];
       var cls = completed ? ' completed' : '';
       var d = DIFFICULTY[diff];
       html += '<button class="cs-diff-btn' + cls + '" data-action="daily" data-diff="' + diff + '" role="button">';
-      html += '<span>' + diff.charAt(0).toUpperCase() + diff.slice(1) + '</span>';
-      html += '<span class="cs-diff-label">' + d.colors + ' colors</span>';
-      if (!completed) html += '<span class="cs-diff-play">\u25B6 Play</span>';
+      html += '<span class="cs-diff-name">' + diff.charAt(0).toUpperCase() + diff.slice(1) + '</span>';
+      html += '<span class="cs-diff-label">' + d.colors + ' colors \u2022 ' + d.tubes + ' tubes</span>';
+      if (!completed) {
+        html += '<span class="cs-diff-play">\u25B6 Play</span>';
+      }
       html += '</button>';
     });
     html += '</div>';
+    if (dailyDone === 3) {
+      html += '<div class="cs-daily-complete">\u2728 All daily puzzles complete!</div>';
+    } else if (dailyDone > 0) {
+      html += '<div class="cs-daily-progress">' + dailyDone + '/3 completed today</div>';
+    }
     html += '</div>';
 
-    // Endless Mode Card
+    // Section: Endless Mode
+    html += '<div class="cs-section-label">\u267E\uFE0F Endless Mode</div>';
     html += '<button class="cs-endless-card" data-action="endless" role="button">';
     html += '<div class="cs-endless-info">';
-    html += '<div class="cs-endless-title">Endless Mode</div>';
-    html += '<div class="cs-endless-level">' + (state.endlessLevel > 1 ? 'Continue: Level ' + state.endlessLevel : 'Start from Level 1') + ' \u2022 ' + state.totalStars + ' \u2B50</div>';
+    html += '<div class="cs-endless-title">' + (state.endlessLevel > 1 ? 'Continue Level ' + state.endlessLevel : 'Start Playing') + '</div>';
+    html += '<div class="cs-endless-level">Progressive difficulty \u2022 No time limit</div>';
     html += '</div>';
-    html += '<span class="cs-endless-arrow">\u203A</span>';
+    html += '<span class="cs-endless-arrow">\u25B6</span>';
     html += '</button>';
 
     // Settings Row
@@ -702,6 +830,9 @@
 
     bindPuzzleEvents();
     startTimer();
+
+    // Start BGM when puzzle begins
+    audio.bgm.start();
 
     // Show tutorial overlay for first-ever puzzle
     if (!state.tutorialComplete && state.mode === 'endless' && state.endlessLevel === 1 && state.moveCount === 0) {
@@ -1436,6 +1567,7 @@
   // ============================================
 
   function renderWinScreen(score) {
+    audio.bgm.stop();
     state.screen = 'win';
     var d = state.difficulty.charAt(0).toUpperCase() + state.difficulty.slice(1);
     var time = formatTime(state.elapsed);

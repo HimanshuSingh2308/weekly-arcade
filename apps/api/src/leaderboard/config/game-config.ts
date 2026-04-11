@@ -346,9 +346,10 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     ],
     customValidation: (dto) => {
       if (dto.metadata?.mode === 'daily') {
-        // Daily mode requires timeMs and minimum 30 seconds
-        if (!dto.timeMs || dto.timeMs < 30000) {
-          return { valid: false, reason: 'Daily mode requires at least 30 seconds' };
+        // Daily mode requires timeMs and minimum 10 seconds
+        // Easy puzzles (4 colors) can legitimately be solved in 15-20s
+        if (!dto.timeMs || dto.timeMs < 10000) {
+          return { valid: false, reason: 'Daily mode requires at least 10 seconds' };
         }
         // Minimum move count floor per difficulty (structural minimum from puzzle design)
         const minMovesMap: Record<string, number> = { easy: 8, medium: 15, hard: 20 };
