@@ -1617,6 +1617,14 @@
     initAuth();
     initHeader();
 
+    // Mobile UX: prevent context menu on long-press (tubes, balls)
+    app.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    // Mobile UX: prevent pull-to-refresh during gameplay
+    app.addEventListener('touchmove', function (e) {
+      if (state.screen === 'puzzle') e.preventDefault();
+    }, { passive: false });
+
     // Always start at home screen per PRD flow
     // Tutorial triggers when user taps Endless Mode for the first time
     renderHome();
