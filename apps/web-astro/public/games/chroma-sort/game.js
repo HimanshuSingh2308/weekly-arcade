@@ -1456,8 +1456,20 @@
     html += '<div class="cs-win-stat"><div class="cs-win-stat-value">' + state.undoCount + '</div><div class="cs-win-stat-label">Undos</div></div>';
     html += '</div>';
 
-    // Share preview
-    html += '<div class="cs-win-share-preview">' + escapeHtml(buildShareText(score)) + '</div>';
+    // Share preview — compact visual (just the emoji bar)
+    var diffConfig = DIFFICULTY[state.difficulty];
+    var parMoves = { easy: 25, medium: 45, hard: 80 }[state.difficulty] || 45;
+    var efficiency = Math.min(1, parMoves / Math.max(state.moveCount, 1));
+    var barLen = diffConfig.colors;
+    var filled = Math.max(1, Math.round(efficiency * barLen));
+    var bar = '';
+    for (var bi = 0; bi < barLen; bi++) {
+      bar += bi < filled ? COLORS[bi].emoji : '\u2B1B';
+    }
+    html += '<div class="cs-win-share-preview">';
+    html += '<div class="cs-win-share-bar">' + bar + '</div>';
+    html += '<div class="cs-win-share-hint">Tap Share to send your result</div>';
+    html += '</div>';
 
     // Buttons
     html += '<div class="cs-win-buttons">';
