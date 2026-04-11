@@ -45,6 +45,7 @@ export const GAME_REGISTRY: GameInfo[] = [
     multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'turn-based', turnTimeoutSec: 120, sessionTimeoutMin: 90, spectatorAllowed: true } },
   { id: 'drift-legends',     name: 'Drift Legends',        icon: '🏎️', description: '3D kart racing with story mode & multiplayer', genres: ['racing', '3d', 'story', 'multiplayer'],
     multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'real-time', sessionTimeoutMin: 15, spectatorAllowed: false } },
+  { id: 'chroma-sort',       name: 'Chroma Sort',          icon: '🎨', description: 'Daily color sorting puzzle', genres: ['puzzle', 'logic', 'daily'] },
 ];
 
 /** Lookup a game by ID */

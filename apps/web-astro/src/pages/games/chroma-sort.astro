@@ -1,0 +1,34 @@
+---
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/chroma-sort.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+  tips={gameData.tips}
+  howToPlay={gameData.howToPlay}
+  similarTo={gameData.similarTo}
+  aboutGame={gameData.aboutGame}
+  faq={gameData.faq}
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/games/chroma-sort/styles.css">
+  </Fragment>
+
+  <div id="chroma-sort-app"></div>
+
+  <Fragment slot="scripts">
+    <script is:inline src="/games/chroma-sort/game.js"></script>
+  </Fragment>
+</GameLayout>

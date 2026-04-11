@@ -58,7 +58,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 72;
+const CACHE_VERSION = 73;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -118,6 +118,12 @@ const ASSETS = [
   '/games/chess-3d/themes.js',
   '/games/chess-3d/skins.js',
   '/games/chess-3d/puzzles.js',
+
+  // Chroma Sort
+  '/games/chroma-sort/',
+  '/games/chroma-sort/index.html',
+  '/games/chroma-sort/game.js',
+  '/games/chroma-sort/styles.css',
 
   // Drift Legends
   '/games/drift-legends/',

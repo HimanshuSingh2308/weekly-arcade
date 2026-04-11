@@ -331,6 +331,61 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     allowedMetadataKeys: ['battingScore', 'battingWickets', 'battingFours', 'battingSixes', 'bowlingAIScore', 'bowlingAIWickets', 'team', 'result', 'matchMode'],
   },
 
+  // Chroma Sort: Daily color sorting puzzle
+  'chroma-sort': {
+    maxScore: 11000,
+    maxScorePerSecond: 500,
+    minTimeMs: 30000,
+    maxLevel: 3,
+    allowedMetadataKeys: [
+      'mode', 'dailyDate', 'difficulty', 'colorCount', 'tubeCount',
+      'hintsUsed', 'undosUsed', 'extraTubesUsed', 'perfectSolve', 'shareEmoji',
+      'totalMoves', 'avgStars',
+    ],
+    customValidation: (dto) => {
+      if (dto.metadata?.mode === 'daily') {
+        // Minimum move count floor per difficulty (structural minimum from puzzle design)
+        const minMovesMap: Record<string, number> = { easy: 8, medium: 15, hard: 20 };
+        const difficulty = dto.metadata.difficulty as string;
+        const minMoves = minMovesMap[difficulty];
+        if (minMoves && dto.guessCount !== undefined && dto.guessCount < minMoves) {
+          return { valid: false, reason: 'Move count below minimum for difficulty' };
+        }
+
+        // Server-side score recalculation to prevent client-side manipulation
+        const TIME_PAR: Record<string, number> = { easy: 120, medium: 300, hard: 720 };
+        const timePar = TIME_PAR[difficulty];
+        const timeSeconds = dto.timeMs ? Math.floor(dto.timeMs / 1000) : 0;
+        const moves = dto.guessCount ?? 0;
+        const hintsUsed = (dto.metadata.hintsUsed as number) ?? 0;
+        const undosUsed = (dto.metadata.undosUsed as number) ?? 0;
+        const extraTubesUsed = dto.metadata.extraTubesUsed ? true : false;
+
+        const BASE = 10000;
+        const movePenalty = moves * 40;
+        const timeBonus = timePar ? Math.max(0, (timePar - timeSeconds) * 20) : 0;
+        const undoMod = Math.max(0.3, 1.0 - undosUsed * 0.03);
+        const hintPenalty = hintsUsed * 300;
+        const extraPenalty = extraTubesUsed ? 2000 : 0;
+        const capped = Math.min(BASE - movePenalty + timeBonus - hintPenalty - extraPenalty, 10000);
+        const expected = Math.max(100, Math.round(capped * undoMod));
+
+        // Allow 5% tolerance for floating-point rounding
+        if (Math.abs(dto.score - expected) > expected * 0.05) {
+          return { valid: false, reason: 'Score does not match game parameters' };
+        }
+
+        if (dto.score > 10400) {
+          return { valid: false, reason: 'Daily score exceeds theoretical maximum' };
+        }
+      }
+      if (dto.metadata?.mode === 'endless' && dto.score > 9999) {
+        return { valid: false, reason: 'Endless level count implausible' };
+      }
+      return { valid: true };
+    },
+  },
+
   // Drift Legends: 3D kart racing (score = race time in ms; lower = better)
   'drift-legends': {
     maxScore: 600000,        // Max 10 minutes per race
