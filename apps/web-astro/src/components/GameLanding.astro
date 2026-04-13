@@ -103,17 +103,32 @@ const { gameName, icon, description, themeColor, features, howToPlay, screenshot
 </script>
 
 <style is:global>
-  /* GameLanding: hide game content until Play Now is tapped */
-  body.gl-has-landing:not(.gl-playing) [data-nosnippet] {
+  /* GameLanding: hide game + SEO when landing is visible (pure CSS, no JS dependency).
+     Uses adjacent sibling: #gameLanding is followed by [data-nosnippet] in DOM.
+     When #gameLanding is display:none (gl-playing), these rules don't match. */
+  #gameLanding ~ [data-nosnippet] {
     display: none !important;
   }
-  body.gl-has-landing:not(.gl-playing) .game-seo-content {
+  #gameLanding ~ .game-seo-content {
     display: none !important;
   }
-  body.gl-has-landing:not(.gl-playing) .more-games {
+  #gameLanding ~ .more-games {
     display: none !important;
   }
-  body.gl-has-landing:not(.gl-playing) {
+
+  /* When playing (landing hidden), restore game content */
+  body.gl-playing [data-nosnippet] {
+    display: block !important;
+  }
+  body.gl-playing .game-seo-content {
+    display: block !important;
+  }
+  body.gl-playing .more-games {
+    display: block !important;
+  }
+
+  /* Allow scrolling when landing is visible */
+  body:has(#gameLanding:not([style*="display: none"])) {
     overflow: auto !important;
     overflow-x: hidden !important;
     touch-action: auto !important;
