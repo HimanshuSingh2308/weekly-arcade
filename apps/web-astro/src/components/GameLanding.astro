@@ -284,8 +284,18 @@ const { gameName, icon, description, themeColor, features, howToPlay, screenshot
   }
 
   /* Game content hidden until playing */
-  :global(body:not(.gl-playing)) [data-nosnippet] {
-    display: none;
+  :global(body:not(.gl-playing) [data-nosnippet]) {
+    display: none !important;
+  }
+
+  /* SEO content also hidden until playing */
+  :global(body:not(.gl-playing) .game-seo-content) {
+    display: none !important;
+  }
+
+  /* More games hidden until playing */
+  :global(body:not(.gl-playing) .more-games) {
+    display: none !important;
   }
 
   /* Allow scrolling for landing, lock for gameplay */
