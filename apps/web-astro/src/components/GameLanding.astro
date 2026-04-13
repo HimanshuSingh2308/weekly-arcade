@@ -71,6 +71,9 @@ const { gameName, icon, description, themeColor, features, howToPlay, screenshot
 
 <script is:inline>
 (function() {
+  // Mark that this page has a landing section
+  document.body.classList.add('gl-has-landing');
+
   // If user has played before, skip landing and go straight to game
   var played = localStorage.getItem('gl_played_' + document.body.dataset.gameId);
   if (played) {
@@ -283,27 +286,8 @@ const { gameName, icon, description, themeColor, features, howToPlay, screenshot
     display: none !important;
   }
 
-  /* Game content hidden until playing */
-  :global(body:not(.gl-playing) [data-nosnippet]) {
-    display: none !important;
-  }
-
-  /* SEO content also hidden until playing */
-  :global(body:not(.gl-playing) .game-seo-content) {
-    display: none !important;
-  }
-
-  /* More games hidden until playing */
-  :global(body:not(.gl-playing) .more-games) {
-    display: none !important;
-  }
-
-  /* Allow scrolling for landing, lock for gameplay */
-  :global(body:not(.gl-playing)) {
-    overflow: auto !important;
-    overflow-x: hidden !important;
-    touch-action: auto !important;
-  }
+  /* Hide/show rules moved to GameLayout.astro is:global style block
+     to avoid Astro scoping interference */
 
   /* Small screens — ensure CTA is always in first fold */
   @media (max-height: 600px) {
