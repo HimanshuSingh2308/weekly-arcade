@@ -1,0 +1,302 @@
+---
+/**
+ * GameLanding — optional landing/marketing section shown above the game.
+ *
+ * Shows a hero with game name, description, features, and a prominent
+ * "Play Now" CTA. The CTA hides the landing and reveals the game.
+ *
+ * The CTA must always be visible in the first fold regardless of screen size.
+ */
+interface Props {
+  gameName: string;
+  icon?: string;
+  description: string;
+  themeColor: string;
+  features?: { icon: string; title: string; desc: string }[];
+  howToPlay?: string;
+  screenshotSrc?: string;
+}
+
+const { gameName, icon, description, themeColor, features, howToPlay, screenshotSrc } = Astro.props;
+---
+
+<section class="gl-landing" id="gameLanding">
+  <div class="gl-container">
+    <!-- Hero -->
+    <div class="gl-hero">
+      {icon && <div class="gl-icon">{icon}</div>}
+      <h2 class="gl-title">{gameName}</h2>
+      <p class="gl-desc">{description}</p>
+    </div>
+
+    <!-- Features (if provided) -->
+    {features && features.length > 0 && (
+      <div class="gl-features">
+        {features.map((f) => (
+          <div class="gl-feature">
+            <span class="gl-feature-icon">{f.icon}</span>
+            <div class="gl-feature-text">
+              <div class="gl-feature-title">{f.title}</div>
+              <div class="gl-feature-desc">{f.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+
+    <!-- Screenshot slot (optional) -->
+    {screenshotSrc && (
+      <div class="gl-screenshot">
+        <img src={screenshotSrc} alt={`${gameName} gameplay`} loading="lazy" width="400" height="250" />
+      </div>
+    )}
+
+    <!-- How to Play (if provided) -->
+    {howToPlay && (
+      <div class="gl-how">
+        <div class="gl-how-label">How to Play</div>
+        <p class="gl-how-text">{howToPlay}</p>
+      </div>
+    )}
+
+    <!-- CTA — always in first fold -->
+    <button class="gl-cta" id="glPlayBtn" aria-label={`Play ${gameName}`}>
+      ▶ Play Now
+    </button>
+
+    <div class="gl-free-badge">Free · No Ads · No Download</div>
+  </div>
+</section>
+
+<script is:inline>
+(function() {
+  // If user has played before, skip landing and go straight to game
+  var played = localStorage.getItem('gl_played_' + document.body.dataset.gameId);
+  if (played) {
+    var landing = document.getElementById('gameLanding');
+    if (landing) landing.style.display = 'none';
+    document.body.classList.add('gl-playing');
+  }
+
+  var btn = document.getElementById('glPlayBtn');
+  if (btn) {
+    btn.addEventListener('click', function() {
+      var landing = document.getElementById('gameLanding');
+      if (landing) {
+        landing.style.opacity = '0';
+        landing.style.transform = 'translateY(-20px)';
+        setTimeout(function() {
+          landing.style.display = 'none';
+          document.body.classList.add('gl-playing');
+        }, 200);
+      }
+      // Remember for next visit
+      var gameId = document.body.dataset.gameId || '';
+      if (gameId) localStorage.setItem('gl_played_' + gameId, '1');
+    });
+  }
+})();
+</script>
+
+<style define:vars={{ themeColor }}>
+  .gl-landing {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100dvh - 62px);
+    padding: 20px 16px;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .gl-container {
+    max-width: 480px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* Hero */
+  .gl-hero {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .gl-icon {
+    font-size: 56px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 16px color-mix(in srgb, var(--themeColor) 30%, transparent));
+  }
+
+  .gl-title {
+    font-size: 32px;
+    font-weight: 900;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .gl-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    max-width: 360px;
+    line-height: 1.5;
+  }
+
+  /* Features */
+  .gl-features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .gl-feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+  }
+
+  .gl-feature-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .gl-feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .gl-feature-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .gl-feature-desc {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* Screenshot */
+  .gl-screenshot {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .gl-screenshot img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* How to play */
+  .gl-how {
+    width: 100%;
+    text-align: center;
+  }
+
+  .gl-how-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 6px;
+  }
+
+  .gl-how-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* CTA Button — always visible in first fold */
+  .gl-cta {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--themeColor);
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--themeColor) 40%, transparent);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gl-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px color-mix(in srgb, var(--themeColor) 50%, transparent);
+  }
+
+  .gl-cta:active {
+    transform: scale(0.97);
+  }
+
+  .gl-free-badge {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.5px;
+  }
+
+  /* When playing, hide landing and allow game to use full viewport */
+  :global(body.gl-playing) .gl-landing {
+    display: none !important;
+  }
+
+  /* Game content hidden until playing */
+  :global(body:not(.gl-playing)) [data-nosnippet] {
+    display: none;
+  }
+
+  /* Allow scrolling for landing, lock for gameplay */
+  :global(body:not(.gl-playing)) {
+    overflow: auto !important;
+    overflow-x: hidden !important;
+    touch-action: auto !important;
+  }
+
+  /* Small screens — ensure CTA is always in first fold */
+  @media (max-height: 600px) {
+    .gl-landing {
+      min-height: auto;
+      padding: 12px 16px;
+    }
+
+    .gl-icon { font-size: 40px; }
+    .gl-title { font-size: 26px; }
+    .gl-features { display: none; }
+    .gl-screenshot { display: none; }
+    .gl-how { display: none; }
+
+    .gl-cta {
+      padding: 14px 20px;
+      font-size: 16px;
+    }
+  }
+
+  @media (max-height: 480px) {
+    .gl-desc { display: none; }
+    .gl-icon { font-size: 32px; }
+    .gl-title { font-size: 22px; }
+  }
+</style>

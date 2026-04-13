@@ -91,6 +91,14 @@ const {
 
   <GameHeader title={gameName} icon={icon} />
 
+  <!-- Set game ID on body for landing section localStorage key -->
+  <script is:inline define:vars={{ gameId }}>
+    document.body.dataset.gameId = gameId;
+  </script>
+
+  <!-- Optional landing/marketing section (outside nosnippet for SEO indexing) -->
+  <slot name="landing" />
+
   <!-- Game-specific body content (nosnippet prevents Google indexing HUD/UI text) -->
   <div data-nosnippet>
     <slot />
