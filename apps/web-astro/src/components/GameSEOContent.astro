@@ -100,7 +100,13 @@ const faqSchema = faq?.length ? JSON.stringify({
     {similarTo?.length && (
       <div class="seo-block">
         <h2>Games Like {gameName}</h2>
-        <p>If you enjoy {gameName}, you might also like: {similarTo.join(', ')}. {gameName} is available free on Weekly Arcade with no downloads required - <a href="/games/">browse all games</a>.</p>
+        <p>If you enjoy {gameName}, you might also like: {similarTo.map((name, i) => {
+          const slug = name.toLowerCase().replace(/\s+/g, '-');
+          const isInternal = ['wordle', '2048', 'snake', 'memory-match', 'solitaire-roguelite', 'fieldstone', 'coin-cascade', 'stack-tower', 'tiny-tycoon', 'voidbreak', 'lumble', 'chaos-kitchen', 'chess-3d', 'cricket-blitz', 'drift-legends', 'chroma-sort'].includes(slug);
+          return isInternal
+            ? <><a href={`/games/${slug}/`}>{name}</a>{i < similarTo.length - 1 ? ', ' : ''}</>
+            : <>{name}{i < similarTo.length - 1 ? ', ' : ''}</>;
+        })}. {gameName} is available free on Weekly Arcade — <a href="/games/">browse all games</a>.</p>
       </div>
     )}
   </section>
