@@ -102,6 +102,24 @@ const { gameName, icon, description, themeColor, features, howToPlay, screenshot
 })();
 </script>
 
+<style is:global>
+  /* GameLanding: hide game content until Play Now is tapped */
+  body.gl-has-landing:not(.gl-playing) [data-nosnippet] {
+    display: none !important;
+  }
+  body.gl-has-landing:not(.gl-playing) .game-seo-content {
+    display: none !important;
+  }
+  body.gl-has-landing:not(.gl-playing) .more-games {
+    display: none !important;
+  }
+  body.gl-has-landing:not(.gl-playing) {
+    overflow: auto !important;
+    overflow-x: hidden !important;
+    touch-action: auto !important;
+  }
+</style>
+
 <style define:vars={{ themeColor }}>
   .gl-landing {
     display: flex;
@@ -286,8 +304,7 @@ const { gameName, icon, description, themeColor, features, howToPlay, screenshot
     display: none !important;
   }
 
-  /* Hide/show rules moved to GameLayout.astro is:global style block
-     to avoid Astro scoping interference */
+  /* Hide/show rules are in the separate is:global style block above */
 
   /* Small screens — ensure CTA is always in first fold */
   @media (max-height: 600px) {

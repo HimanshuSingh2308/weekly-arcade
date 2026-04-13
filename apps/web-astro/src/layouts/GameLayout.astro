@@ -137,20 +137,4 @@ const {
     overscroll-behavior: none;
   }
 
-  /* ── GameLanding: hide game content until "Play Now" is tapped ── */
-  /* Only applies to pages that have a landing section (gl-has-landing) */
-  body.gl-has-landing:not(.gl-playing) [data-nosnippet] {
-    display: none !important;
-  }
-  body.gl-has-landing:not(.gl-playing) .game-seo-content {
-    display: none !important;
-  }
-  body.gl-has-landing:not(.gl-playing) .more-games {
-    display: none !important;
-  }
-  body.gl-has-landing:not(.gl-playing) {
-    overflow: auto !important;
-    overflow-x: hidden !important;
-    touch-action: auto !important;
-  }
 </style>
