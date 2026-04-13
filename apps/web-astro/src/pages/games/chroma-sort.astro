@@ -1,6 +1,13 @@
 ---
 import GameLayout from '../../layouts/GameLayout.astro';
+import GameLanding from '../../components/GameLanding.astro';
 import gameData from '../../data/games/chroma-sort.json';
+
+const features = [
+  { icon: '📅', title: 'Daily Challenge', desc: 'New puzzle every day at Easy, Medium, and Hard' },
+  { icon: '🚫', title: 'Zero Ads', desc: 'Free unlimited undo, free hints — no ads ever' },
+  { icon: '🏆', title: 'Global Leaderboard', desc: 'Compete on time + moves, share your result' },
+];
 ---
 
 <GameLayout
@@ -24,6 +31,18 @@ import gameData from '../../data/games/chroma-sort.json';
 >
   <Fragment slot="head">
     <link rel="stylesheet" href="/games/chroma-sort/styles.css">
+  </Fragment>
+
+  <Fragment slot="landing">
+    <GameLanding
+      gameName={gameData.name}
+      icon={gameData.icon}
+      description="Sort colored balls into matching tubes in this satisfying puzzle game. Play the daily challenge, climb the leaderboard, or take on 100+ endless levels."
+      themeColor={gameData.themeColor}
+      features={features}
+      howToPlay={gameData.howToPlay}
+      screenshotSrc="/images/thumbnails/chroma-sort.svg"
+    />
   </Fragment>
 
   <div id="chroma-sort-app"></div>
