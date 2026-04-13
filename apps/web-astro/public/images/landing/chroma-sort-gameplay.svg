@@ -1,0 +1,79 @@
+<svg width="320" height="560" viewBox="0 0 320 560" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0F0E17"/>
+      <stop offset="100%" stop-color="#1A1830"/>
+    </linearGradient>
+    <linearGradient id="gTube" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+    <radialGradient id="bViolet" cx="40%" cy="35%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#7c3aed"/></radialGradient>
+    <radialGradient id="bBlue" cx="40%" cy="35%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#2563eb"/></radialGradient>
+    <radialGradient id="bGreen" cx="40%" cy="35%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></radialGradient>
+    <radialGradient id="bAmber" cx="40%" cy="35%"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#d97706"/></radialGradient>
+    <radialGradient id="bRed" cx="40%" cy="35%"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></radialGradient>
+    <radialGradient id="bOrange" cx="40%" cy="35%"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#ea580c"/></radialGradient>
+  </defs>
+
+  <rect width="320" height="560" fill="url(#gBg)" rx="20"/>
+
+  <!-- Top bar -->
+  <text x="20" y="35" font-family="system-ui" font-size="13" fill="rgba(255,255,255,0.6)">← Daily · Easy</text>
+  <text x="295" y="35" text-anchor="end" font-family="system-ui" font-size="12" fill="rgba(255,255,255,0.5)">4 moves</text>
+
+  <!-- 6 tubes (Easy: 4 colors + 2 empty) -->
+  <!-- Tube 1: sorted violet! -->
+  <rect x="22" y="70" width="42" height="170" rx="0" ry="20" fill="url(#gTube)" stroke="#8B5CF6" stroke-width="1.5"/>
+  <circle cx="43" cy="215" r="16" fill="url(#bViolet)"/><circle cx="43" cy="180" r="16" fill="url(#bViolet)"/>
+  <circle cx="43" cy="145" r="16" fill="url(#bViolet)"/><circle cx="43" cy="110" r="16" fill="url(#bViolet)"/>
+  <!-- Check mark -->
+  <path d="M35,82 L40,88 L52,76" stroke="#22c55e" stroke-width="2.5" fill="none"/>
+
+  <!-- Tube 2: mixed -->
+  <rect x="72" y="70" width="42" height="170" rx="0" ry="20" fill="url(#gTube)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <circle cx="93" cy="215" r="16" fill="url(#bBlue)"/><circle cx="93" cy="180" r="16" fill="url(#bGreen)"/>
+  <circle cx="93" cy="145" r="16" fill="url(#bAmber)"/>
+
+  <!-- Tube 3: mixed, selected glow -->
+  <rect x="122" y="70" width="42" height="170" rx="0" ry="20" fill="url(#gTube)" stroke="#8B5CF6" stroke-width="2.5"/>
+  <circle cx="143" cy="215" r="16" fill="url(#bAmber)"/><circle cx="143" cy="180" r="16" fill="url(#bGreen)"/>
+  <circle cx="143" cy="145" r="16" fill="url(#bBlue)"/>
+
+  <!-- Tube 4: mixed -->
+  <rect x="172" y="70" width="42" height="170" rx="0" ry="20" fill="url(#gTube)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <circle cx="193" cy="215" r="16" fill="url(#bGreen)"/><circle cx="193" cy="180" r="16" fill="url(#bAmber)"/>
+  <circle cx="193" cy="145" r="16" fill="url(#bBlue)"/><circle cx="193" cy="110" r="16" fill="url(#bGreen)"/>
+
+  <!-- Tube 5: partial -->
+  <rect x="222" y="70" width="42" height="170" rx="0" ry="20" fill="url(#gTube)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <circle cx="243" cy="215" r="16" fill="url(#bBlue)"/><circle cx="243" cy="180" r="16" fill="url(#bAmber)"/>
+
+  <!-- Tube 6: empty -->
+  <rect x="272" y="70" width="42" height="170" rx="0" ry="20" fill="url(#gTube)" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- Lifted ball above tube 3 -->
+  <circle cx="143" cy="52" r="16" fill="url(#bGreen)"/>
+  <circle cx="143" cy="52" r="20" fill="none" stroke="#8B5CF6" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Action bar -->
+  <rect x="20" y="280" width="66" height="55" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <text x="53" y="305" text-anchor="middle" font-size="18">↩</text>
+  <text x="53" y="323" text-anchor="middle" font-family="system-ui" font-size="10" fill="rgba(255,255,255,0.5)">Undo</text>
+
+  <rect x="93" y="280" width="66" height="55" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <text x="126" y="305" text-anchor="middle" font-size="18">💡</text>
+  <text x="126" y="323" text-anchor="middle" font-family="system-ui" font-size="10" fill="rgba(255,255,255,0.5)">Hint</text>
+  <text x="126" y="330" text-anchor="middle" font-family="system-ui" font-size="9" font-weight="600" fill="#F7B731">3 left</text>
+
+  <rect x="166" y="280" width="66" height="55" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <text x="199" y="305" text-anchor="middle" font-size="18">🧪</text>
+  <text x="199" y="323" text-anchor="middle" font-family="system-ui" font-size="10" fill="rgba(255,255,255,0.5)">Extra</text>
+
+  <rect x="239" y="280" width="66" height="55" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <text x="272" y="305" text-anchor="middle" font-size="18">🔄</text>
+  <text x="272" y="323" text-anchor="middle" font-family="system-ui" font-size="10" fill="rgba(255,255,255,0.5)">Restart</text>
+
+  <!-- Timer -->
+  <text x="160" y="370" text-anchor="middle" font-family="system-ui" font-size="14" font-weight="600" fill="rgba(255,255,255,0.4)">⏱ 1:24</text>
+</svg>

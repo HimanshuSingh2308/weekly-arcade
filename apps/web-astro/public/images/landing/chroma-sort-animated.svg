@@ -1,0 +1,107 @@
+<svg width="320" height="560" viewBox="0 0 320 560" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0F0E17"/>
+      <stop offset="100%" stop-color="#1A1830"/>
+    </linearGradient>
+    <linearGradient id="aTube" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+    <radialGradient id="aViolet" cx="40%" cy="35%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#7c3aed"/></radialGradient>
+    <radialGradient id="aBlue" cx="40%" cy="35%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#2563eb"/></radialGradient>
+    <radialGradient id="aGreen" cx="40%" cy="35%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></radialGradient>
+    <radialGradient id="aAmber" cx="40%" cy="35%"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#d97706"/></radialGradient>
+    <filter id="aGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="320" height="560" fill="url(#aBg)" rx="20"/>
+
+  <!-- Top bar -->
+  <text x="20" y="35" font-family="system-ui" font-size="13" fill="rgba(255,255,255,0.6)">← Daily · Medium</text>
+  <text x="295" y="35" text-anchor="end" font-family="system-ui" font-size="12" fill="rgba(255,255,255,0.5)">
+    <tspan>
+      <animate attributeName="textContent" values="6 moves;7 moves;7 moves;8 moves;8 moves;6 moves" dur="6s" repeatCount="indefinite"/>
+    </tspan>
+  </text>
+
+  <!-- Tube 1: violet sorted -->
+  <rect x="15" y="70" width="42" height="170" rx="0" ry="20" fill="url(#aTube)" stroke="#8B5CF6" stroke-width="1.5"/>
+  <circle cx="36" cy="215" r="15" fill="url(#aViolet)"/><circle cx="36" cy="183" r="15" fill="url(#aViolet)"/>
+  <circle cx="36" cy="151" r="15" fill="url(#aViolet)"/><circle cx="36" cy="119" r="15" fill="url(#aViolet)"/>
+  <path d="M28,85 L33,91 L45,79" stroke="#22c55e" stroke-width="2" fill="none"/>
+
+  <!-- Tube 2 -->
+  <rect x="65" y="70" width="42" height="170" rx="0" ry="20" fill="url(#aTube)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <circle cx="86" cy="215" r="15" fill="url(#aBlue)"/><circle cx="86" cy="183" r="15" fill="url(#aGreen)"/>
+  <circle cx="86" cy="151" r="15" fill="url(#aAmber)"/><circle cx="86" cy="119" r="15" fill="url(#aBlue)"/>
+
+  <!-- Tube 3: source tube (ball leaves) -->
+  <rect x="115" y="70" width="42" height="170" rx="0" ry="20" fill="url(#aTube)" stroke="rgba(255,255,255,0.15)" stroke-width="1">
+    <!-- Glow pulse when selected -->
+    <animate attributeName="stroke" values="rgba(255,255,255,0.15);#8B5CF6;#8B5CF6;rgba(255,255,255,0.15);rgba(255,255,255,0.15);rgba(255,255,255,0.15)" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-width" values="1;2.5;2.5;1;1;1" dur="6s" repeatCount="indefinite"/>
+  </rect>
+  <circle cx="136" cy="215" r="15" fill="url(#aAmber)"/>
+  <circle cx="136" cy="183" r="15" fill="url(#aGreen)"/>
+  <!-- Top ball: visible then hidden when "moved" -->
+  <circle cx="136" cy="151" r="15" fill="url(#aBlue)">
+    <animate attributeName="opacity" values="1;1;0;0;0;1" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Tube 4 -->
+  <rect x="165" y="70" width="42" height="170" rx="0" ry="20" fill="url(#aTube)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <circle cx="186" cy="215" r="15" fill="url(#aGreen)"/><circle cx="186" cy="183" r="15" fill="url(#aAmber)"/>
+  <circle cx="186" cy="151" r="15" fill="url(#aBlue)"/>
+
+  <!-- Tube 5: destination (receives ball) -->
+  <rect x="215" y="70" width="42" height="170" rx="0" ry="20" fill="url(#aTube)" stroke="rgba(255,255,255,0.15)" stroke-width="1">
+    <animate attributeName="stroke" values="rgba(255,255,255,0.15);rgba(255,255,255,0.15);rgba(255,255,255,0.15);#8B5CF6;rgba(255,255,255,0.15);rgba(255,255,255,0.15)" dur="6s" repeatCount="indefinite"/>
+  </rect>
+  <circle cx="236" cy="215" r="15" fill="url(#aBlue)"/>
+  <!-- Ball appears after "placed" -->
+  <circle cx="236" cy="183" r="15" fill="url(#aBlue)">
+    <animate attributeName="opacity" values="0;0;0;0;1;1" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Tube 6: empty -->
+  <rect x="265" y="70" width="42" height="170" rx="0" ry="20" fill="url(#aTube)" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- ANIMATED BALL: lifts from tube 3, arcs to tube 5 -->
+  <circle r="15" fill="url(#aBlue)" filter="url(#aGlow)">
+    <animate attributeName="opacity" values="0;1;1;1;0;0" dur="6s" repeatCount="indefinite"/>
+    <!-- X: tube3 center → tube5 center -->
+    <animate attributeName="cx" values="136;136;136;236;236;136" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;0.4 0 0.2 1;0.4 0 0.2 1;0 0 1 1;0 0 1 1"/>
+    <!-- Y: in tube → lift up → arc → drop into tube -->
+    <animate attributeName="cy" values="151;151;50;50;183;151" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0 0 1 1"/>
+  </circle>
+
+  <!-- Selection glow ring follows the ball -->
+  <circle r="19" fill="none" stroke="#8B5CF6" stroke-width="1.5" opacity="0.5">
+    <animate attributeName="opacity" values="0;0.5;0.5;0.5;0;0" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="136;136;136;236;236;136" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;0.4 0 0.2 1;0.4 0 0.2 1;0 0 1 1;0 0 1 1"/>
+    <animate attributeName="cy" values="151;151;50;50;183;151" dur="6s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0 0 1 1"/>
+  </circle>
+
+  <!-- Action bar -->
+  <g opacity="0.7">
+    <rect x="20" y="275" width="66" height="50" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="53" y="298" text-anchor="middle" font-size="16">↩</text>
+    <text x="53" y="315" text-anchor="middle" font-family="system-ui" font-size="9" fill="rgba(255,255,255,0.5)">Undo</text>
+
+    <rect x="93" y="275" width="66" height="50" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="126" y="298" text-anchor="middle" font-size="16">💡</text>
+    <text x="126" y="315" text-anchor="middle" font-family="system-ui" font-size="9" fill="rgba(255,255,255,0.5)">Hint</text>
+
+    <rect x="166" y="275" width="66" height="50" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="199" y="298" text-anchor="middle" font-size="16">🧪</text>
+    <text x="199" y="315" text-anchor="middle" font-family="system-ui" font-size="9" fill="rgba(255,255,255,0.5)">Extra</text>
+
+    <rect x="239" y="275" width="66" height="50" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="272" y="298" text-anchor="middle" font-size="16">🔄</text>
+    <text x="272" y="315" text-anchor="middle" font-family="system-ui" font-size="9" fill="rgba(255,255,255,0.5)">Restart</text>
+  </g>
+</svg>
