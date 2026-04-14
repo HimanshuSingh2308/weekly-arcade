@@ -6,17 +6,18 @@ const config: CapacitorConfig = {
   // Local files as fallback (used for offline)
   webDir: '../../dist/apps/web-astro',
   server: {
-    // Load from live hosted URL for smooth navigation (no full-page reloads).
-    // The service worker handles caching for offline play.
+    // Load from live hosted URL for smooth navigation
     url: 'https://weeklyarcade.games',
     androidScheme: 'https',
   },
   plugins: {
     SplashScreen: {
-      launchAutoHide: false,
-      launchShowDuration: 0, // We control splash via JS
+      launchAutoHide: true,
+      launchShowDuration: 2000,
+      fadeOutDuration: 300,
       backgroundColor: '#0f0f1a',
-      showSpinner: false,
+      showSpinner: true,
+      spinnerColor: '#8B5CF6',
     },
     StatusBar: {
       style: 'DARK',

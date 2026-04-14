@@ -152,6 +152,11 @@
         clearInterval(timer);
       }
     }, 700);
+
+    // After animation completes, redirect to main app
+    setTimeout(function() {
+      window.location.href = '/';
+    }, 3000);
   </script>
 </body>
 </html>
