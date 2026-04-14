@@ -6,8 +6,9 @@ const config: CapacitorConfig = {
   // Local files as fallback (used for offline)
   webDir: '../../dist/apps/web-astro',
   server: {
-    // Load local files initially (instant splash from bundled video).
-    // After splash, JS redirects to live URL for smooth nav + instant updates.
+    // Live URL for smooth navigation + instant web updates.
+    // Splash GIF loads from CDN (small delay but navigation works perfectly).
+    url: 'https://weeklyarcade.games',
     androidScheme: 'https',
   },
   plugins: {
