@@ -42,9 +42,7 @@ const { title } = Astro.props;
 
     <!-- App splash overlay — animated logo video on brand blue gradient -->
     <div id="appSplash" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,#1a2456,#2a3d7e);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-      <video id="splashVideo" autoplay muted playsinline preload="auto" width="240" height="240" style="border-radius:20px;opacity:0;transform:scale(0.9);">
-        <source src="/images/splash-logo.mp4" type="video/mp4">
-      </video>
+      <img id="splashLogo" src="/images/splash-logo.gif" alt="Weekly Arcade" width="240" height="240" style="border-radius:20px;opacity:0;transform:scale(0.9);">
       <div id="spTitle" style="font-size:22px;font-weight:900;color:#fff;font-family:system-ui;opacity:0;">Weekly Arcade</div>
       <div style="width:140px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
         <div id="spBar" style="height:100%;width:0%;background:linear-gradient(90deg,#10B981,#8B5CF6,#e94560);border-radius:2px;"></div>
@@ -55,31 +53,38 @@ const { title } = Astro.props;
       (function(){
         var isNative=window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform();
         if(!isNative)return;
+        // Only show splash on first launch, not on page navigations
+        if(sessionStorage.getItem('splashShown')){
+          var el=document.getElementById('appSplash');
+          if(el)el.remove();
+          return;
+        }
+        sessionStorage.setItem('splashShown','1');
         var s=document.getElementById('appSplash');
         if(!s)return;
         s.style.display='flex';
 
-        var vid=document.getElementById('splashVideo');
+        var logo=document.getElementById('splashLogo');
         var title=document.getElementById('spTitle');
         var bar=document.getElementById('spBar');
         var status=document.getElementById('spStatus');
 
-        // Video fade in with scale
+        // Logo GIF fade in with scale bounce
         setTimeout(function(){
-          vid.style.transition='opacity 0.5s ease-out, transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
-          vid.style.opacity='1';
-          vid.style.transform='scale(1)';
+          logo.style.transition='opacity 0.5s ease-out, transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
+          logo.style.opacity='1';
+          logo.style.transform='scale(1)';
         },100);
 
         // Title fade in
         setTimeout(function(){
           title.style.transition='opacity 0.5s ease-out';
           title.style.opacity='1';
-        },800);
+        },600);
 
         // Progress bar
         setTimeout(function(){
-          bar.style.transition='width 4s ease-out';
+          bar.style.transition='width 4.5s ease-out';
           bar.style.width='100%';
         },200);
 
@@ -88,17 +93,19 @@ const { title } = Astro.props;
         var i=0;
         var t=setInterval(function(){i++;if(i<msgs.length)status.textContent=msgs[i];else clearInterval(t);},1500);
 
-        // After video ends, fade out and show the local app content.
-        // App loads from local files — web deploys are synced via cap sync.
-        function afterSplash(){
-          s.style.transition='opacity 0.5s ease-out';
-          s.style.opacity='0';
-          setTimeout(function(){s.remove();},600);
-        }
-
-        vid.addEventListener('ended',function(){afterSplash();});
-        // Fallback: fade after 6s if video stalls
-        setTimeout(function(){afterSplash();},6000);
+        // GIF plays for ~5s, then fade out
+        // Also wait for page load to ensure content is ready
+        var ready=false;
+        window.addEventListener('load',function(){ready=true;});
+        setTimeout(function(){
+          function fadeOut(){
+            s.style.transition='opacity 0.5s ease-out';
+            s.style.opacity='0';
+            setTimeout(function(){s.remove();},600);
+          }
+          if(ready)fadeOut();
+          else window.addEventListener('load',function(){setTimeout(fadeOut,300);});
+        },5000);
       })();
     </script>
 
