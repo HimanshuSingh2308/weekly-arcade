@@ -618,7 +618,7 @@ const gameCount = Object.keys(gameModules).length;
     const updateBtn = document.getElementById('pwaUpdateBtn');
     const updateDismiss = document.getElementById('pwaUpdateDismiss');
 
-    if ('serviceWorker' in navigator && !window.Capacitor?.isNativePlatform?.()) {
+    if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then(reg => {
