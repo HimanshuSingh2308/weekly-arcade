@@ -88,25 +88,16 @@ const { title } = Astro.props;
         var i=0;
         var t=setInterval(function(){i++;if(i<msgs.length)status.textContent=msgs[i];else clearInterval(t);},1500);
 
-        // After video ends, redirect to live URL for smooth nav + instant updates.
-        // Local files are only used for the splash — everything else loads from CDN.
-        var liveUrl='https://weeklyarcade.games';
-        var isLocal=window.location.protocol==='capacitor:'||window.location.hostname==='localhost';
-
+        // After video ends, fade out and show the local app content.
+        // App loads from local files — web deploys are synced via cap sync.
         function afterSplash(){
-          if(isLocal){
-            // Redirect to live URL (smooth nav, instant web updates)
-            window.location.href=liveUrl;
-          } else {
-            // Already on live URL — just fade out overlay
-            s.style.transition='opacity 0.5s ease-out';
-            s.style.opacity='0';
-            setTimeout(function(){s.remove();},600);
-          }
+          s.style.transition='opacity 0.5s ease-out';
+          s.style.opacity='0';
+          setTimeout(function(){s.remove();},600);
         }
 
         vid.addEventListener('ended',function(){afterSplash();});
-        // Fallback: redirect after 6s if video stalls
+        // Fallback: fade after 6s if video stalls
         setTimeout(function(){afterSplash();},6000);
       })();
     </script>
