@@ -98,11 +98,12 @@ const { gameName, icon, tagline, description, themeColor, features, howToPlay, s
   // Mark that this page has a landing section
   document.body.classList.add('gl-has-landing');
 
-  // If user has played before, skip landing and go straight to game
+  // If user has played before, REMOVE landing from DOM so sibling CSS
+  // rules (#gameLanding ~ [data-nosnippet]) stop matching entirely
   var played = localStorage.getItem('gl_played_' + document.body.dataset.gameId);
   if (played) {
     var landing = document.getElementById('gameLanding');
-    if (landing) landing.style.display = 'none';
+    if (landing) landing.remove();
     document.body.classList.add('gl-playing');
   }
 
@@ -114,7 +115,7 @@ const { gameName, icon, tagline, description, themeColor, features, howToPlay, s
         landing.style.opacity = '0';
         landing.style.transform = 'translateY(-20px)';
         setTimeout(function() {
-          landing.style.display = 'none';
+          landing.remove(); // Remove from DOM so sibling CSS rules stop matching
           document.body.classList.add('gl-playing');
         }, 200);
       }
