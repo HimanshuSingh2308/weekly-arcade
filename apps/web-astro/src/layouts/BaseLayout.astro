@@ -40,91 +40,68 @@ const { title } = Astro.props;
     <!-- Native bridge for Capacitor (no-op on web) -->
     <script is:inline src="/js/native-bridge.js"></script>
 
-    <!-- App splash overlay (native only) — logo assembles on brand blue gradient -->
-    <div id="appSplash" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,#1a2456,#2a3d7e);flex-direction:column;align-items:center;justify-content:center;gap:0;">
-      <!-- Assembly area: pieces animate into position -->
-      <div style="position:relative;width:240px;height:200px;">
-        <!-- W piece — slides from left -->
-        <div id="spW" style="position:absolute;left:0;top:40px;font-size:120px;font-weight:900;font-family:system-ui;color:#10B981;opacity:0;transform:translateX(-80px);line-height:1;">W</div>
-        <!-- A piece — slides from right -->
-        <div id="spA" style="position:absolute;right:0;top:40px;font-size:120px;font-weight:900;font-family:system-ui;color:#e94560;opacity:0;transform:translateX(80px);line-height:1;">A</div>
-        <!-- Controller — drops from above -->
-        <div id="spCtrl" style="position:absolute;left:50%;top:20px;transform:translateX(-50%) translateY(-60px);opacity:0;font-size:48px;">🎮</div>
-        <!-- Arrow — shoots up from center -->
-        <div id="spArrow" style="position:absolute;left:50%;top:0;transform:translateX(-50%) translateY(40px) scale(0);opacity:0;width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-bottom:28px solid #F7B731;"></div>
-      </div>
-      <!-- Title — fades in last -->
-      <div id="spTitle" style="font-size:22px;font-weight:900;color:#fff;font-family:system-ui;opacity:0;margin-top:8px;">Weekly Arcade</div>
-      <!-- Progress bar -->
-      <div style="width:140px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin-top:16px;">
+    <!-- App splash overlay — animated logo video on brand blue gradient -->
+    <div id="appSplash" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,#1a2456,#2a3d7e);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+      <video id="splashVideo" autoplay muted playsinline width="240" height="240" style="border-radius:20px;opacity:0;transform:scale(0.9);">
+        <source src="/images/splash-logo.mp4" type="video/mp4">
+      </video>
+      <div id="spTitle" style="font-size:22px;font-weight:900;color:#fff;font-family:system-ui;opacity:0;">Weekly Arcade</div>
+      <div style="width:140px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
         <div id="spBar" style="height:100%;width:0%;background:linear-gradient(90deg,#10B981,#8B5CF6,#e94560);border-radius:2px;"></div>
       </div>
-      <div id="spStatus" style="font-size:10px;color:rgba(255,255,255,0.4);font-family:system-ui;margin-top:8px;">Assembling...</div>
+      <div id="spStatus" style="font-size:10px;color:rgba(255,255,255,0.4);font-family:system-ui;">Loading...</div>
     </div>
     <script is:inline>
       (function(){
-        if(!window.Capacitor||!window.Capacitor.isNativePlatform||!window.Capacitor.isNativePlatform())return;
+        var isNative=window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform();
+        if(!isNative)return;
         var s=document.getElementById('appSplash');
         if(!s)return;
         s.style.display='flex';
-        var spW=document.getElementById('spW');
-        var spA=document.getElementById('spA');
-        var spCtrl=document.getElementById('spCtrl');
-        var spArrow=document.getElementById('spArrow');
-        var spTitle=document.getElementById('spTitle');
-        var spBar=document.getElementById('spBar');
-        var spStatus=document.getElementById('spStatus');
-        var ease='cubic-bezier(0.34,1.56,0.64,1)';
 
-        // Step 1 (0ms): W slides in from left
-        setTimeout(function(){
-          spW.style.transition='opacity 0.4s, transform 0.6s '+ease;
-          spW.style.opacity='1'; spW.style.transform='translateX(0)';
-        },200);
+        var vid=document.getElementById('splashVideo');
+        var title=document.getElementById('spTitle');
+        var bar=document.getElementById('spBar');
+        var status=document.getElementById('spStatus');
 
-        // Step 2 (300ms): A slides in from right
+        // Video fade in with scale
         setTimeout(function(){
-          spA.style.transition='opacity 0.4s, transform 0.6s '+ease;
-          spA.style.opacity='1'; spA.style.transform='translateX(0)';
-        },500);
+          vid.style.transition='opacity 0.5s ease-out, transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
+          vid.style.opacity='1';
+          vid.style.transform='scale(1)';
+        },100);
 
-        // Step 3 (700ms): Controller drops from above with bounce
+        // Title fade in
         setTimeout(function(){
-          spCtrl.style.transition='opacity 0.3s, transform 0.5s '+ease;
-          spCtrl.style.opacity='1'; spCtrl.style.transform='translateX(-50%) translateY(0)';
-        },900);
-
-        // Step 4 (1100ms): Arrow shoots up
-        setTimeout(function(){
-          spArrow.style.transition='opacity 0.2s, transform 0.4s '+ease;
-          spArrow.style.opacity='1'; spArrow.style.transform='translateX(-50%) translateY(0) scale(1)';
-        },1300);
-
-        // Step 5 (1500ms): Title fades in
-        setTimeout(function(){
-          spTitle.style.transition='opacity 0.4s ease-out';
-          spTitle.style.opacity='1';
-        },1600);
+          title.style.transition='opacity 0.5s ease-out';
+          title.style.opacity='1';
+        },800);
 
         // Progress bar
         setTimeout(function(){
-          spBar.style.transition='width 1.8s ease-out';
-          spBar.style.width='100%';
-        },400);
+          bar.style.transition='width 4s ease-out';
+          bar.style.width='100%';
+        },200);
 
         // Status text
-        var msgs=['Assembling...','Loading games...','Ready!'];
+        var msgs=['Loading...','Preparing games...','Almost ready...'];
         var i=0;
-        var t=setInterval(function(){i++;if(i<msgs.length)spStatus.textContent=msgs[i];else clearInterval(t);},800);
+        var t=setInterval(function(){i++;if(i<msgs.length)status.textContent=msgs[i];else clearInterval(t);},1500);
 
-        // Fade out
+        // Fade out when video ends or page loads (whichever is later)
+        var videoEnded=false,pageLoaded=false;
+        function tryFadeOut(){
+          if(!videoEnded||!pageLoaded)return;
+          s.style.transition='opacity 0.5s ease-out';
+          s.style.opacity='0';
+          setTimeout(function(){s.remove();},600);
+        }
+        vid.addEventListener('ended',function(){videoEnded=true;tryFadeOut();});
         window.addEventListener('load',function(){
-          setTimeout(function(){
-            s.style.transition='opacity 0.5s ease-out';
-            s.style.opacity='0';
-            setTimeout(function(){s.remove();},600);
-          },Math.max(0,2800-performance.now()));
+          setTimeout(function(){pageLoaded=true;tryFadeOut();},500);
         });
+        // Fallback: force fade after 6s
+        setTimeout(function(){videoEnded=true;pageLoaded=true;tryFadeOut();},6000);
       })();
     </script>
 
