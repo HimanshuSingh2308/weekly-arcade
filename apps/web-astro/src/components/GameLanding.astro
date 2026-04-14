@@ -160,15 +160,17 @@ const { gameName, icon, tagline, description, themeColor, features, howToPlay, s
     display: none !important;
   }
 
-  /* When playing (landing hidden), restore game content */
+  /* When playing (landing removed), restore game content only.
+     SEO content and more-games stay hidden during gameplay —
+     they're for search crawlers, not players. */
   body.gl-playing [data-nosnippet] {
     display: block !important;
   }
   body.gl-playing .game-seo-content {
-    display: block !important;
+    display: none !important;
   }
   body.gl-playing .more-games {
-    display: block !important;
+    display: none !important;
   }
 
   /* Allow scrolling when landing is visible */
