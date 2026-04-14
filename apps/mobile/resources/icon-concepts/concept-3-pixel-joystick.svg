@@ -1,0 +1,41 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept 3: Pixel-art joystick with retro arcade vibes -->
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#1a1830"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg3)"/>
+
+  <!-- Scanline effect -->
+  <g opacity="0.03">
+    <rect y="0" width="1024" height="2" fill="#fff"/><rect y="8" width="1024" height="2" fill="#fff"/>
+    <rect y="16" width="1024" height="2" fill="#fff"/><rect y="24" width="1024" height="2" fill="#fff"/>
+    <rect y="32" width="1024" height="2" fill="#fff"/><rect y="40" width="1024" height="2" fill="#fff"/>
+  </g>
+
+  <!-- Joystick base -->
+  <ellipse cx="512" cy="680" rx="220" ry="60" fill="#2a2a3a"/>
+  <ellipse cx="512" cy="670" rx="200" ry="50" fill="#3a3a4a"/>
+
+  <!-- Joystick stick -->
+  <rect x="492" y="340" width="40" height="340" rx="8" fill="#555"/>
+  <rect x="496" y="340" width="10" height="340" rx="4" fill="#666" opacity="0.5"/>
+
+  <!-- Joystick ball top -->
+  <circle cx="512" cy="320" r="80" fill="#e94560"/>
+  <circle cx="490" cy="296" r="20" fill="#ff8888" opacity="0.5"/>
+
+  <!-- Stars/sparkle -->
+  <text x="300" y="300" font-size="60" fill="#F7B731" opacity="0.8">✦</text>
+  <text x="700" y="250" font-size="40" fill="#8B5CF6" opacity="0.6">✦</text>
+  <text x="200" y="500" font-size="30" fill="#10B981" opacity="0.5">✦</text>
+  <text x="800" y="450" font-size="50" fill="#3B82F6" opacity="0.7">✦</text>
+
+  <!-- Text -->
+  <text x="512" y="840" text-anchor="middle" font-family="system-ui" font-size="64" font-weight="900" fill="#fff" letter-spacing="4">WEEKLY</text>
+  <text x="512" y="910" text-anchor="middle" font-family="system-ui" font-size="52" font-weight="700" fill="#e94560" letter-spacing="10">ARCADE</text>
+</svg>

@@ -1,0 +1,30 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept 5: Minimal — play triangle inside rounded square, gradient accent -->
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="play5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e94560"/>
+      <stop offset="50%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg5)"/>
+
+  <!-- Subtle ring -->
+  <circle cx="512" cy="460" r="250" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+
+  <!-- Play triangle -->
+  <polygon points="420,310 420,610 680,460" fill="url(#play5)"/>
+
+  <!-- Subtle inner glow -->
+  <polygon points="440,340 440,580 650,460" fill="rgba(255,255,255,0.1)"/>
+
+  <!-- "Weekly Arcade" -->
+  <text x="512" y="790" text-anchor="middle" font-family="system-ui" font-size="72" font-weight="900" fill="#fff" letter-spacing="4">WEEKLY</text>
+  <text x="512" y="860" text-anchor="middle" font-family="system-ui" font-size="48" font-weight="600" fill="rgba(255,255,255,0.5)" letter-spacing="14">ARCADE</text>
+</svg>

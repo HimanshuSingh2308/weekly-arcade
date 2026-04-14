@@ -1,0 +1,34 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept 2: Bold "W" in a rounded badge with color accents -->
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff6b6b"/>
+      <stop offset="100%" stop-color="#e94560"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg2)"/>
+
+  <!-- Decorative color dots (representing different games) -->
+  <circle cx="250" cy="200" r="40" fill="#8B5CF6" opacity="0.3"/>
+  <circle cx="774" cy="200" r="40" fill="#10B981" opacity="0.3"/>
+  <circle cx="250" cy="824" r="40" fill="#F59E0B" opacity="0.3"/>
+  <circle cx="774" cy="824" r="40" fill="#3B82F6" opacity="0.3"/>
+
+  <!-- Big bold W -->
+  <text x="512" y="600" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="520" font-weight="900" fill="url(#wGrad)">W</text>
+
+  <!-- "ARCADE" subtitle -->
+  <text x="512" y="760" text-anchor="middle" font-family="system-ui" font-size="80" font-weight="800" fill="rgba(255,255,255,0.7)" letter-spacing="20">ARCADE</text>
+
+  <!-- Bottom color bar -->
+  <rect x="262" y="820" width="100" height="8" rx="4" fill="#e94560"/>
+  <rect x="372" y="820" width="100" height="8" rx="4" fill="#8B5CF6"/>
+  <rect x="482" y="820" width="100" height="8" rx="4" fill="#10B981"/>
+  <rect x="592" y="820" width="100" height="8" rx="4" fill="#F59E0B"/>
+</svg>
