@@ -37,6 +37,8 @@ const { title } = Astro.props;
     <slot name="head" />
   </head>
   <body>
+    <!-- Native bridge for Capacitor (no-op on web) -->
+    <script is:inline src="/js/native-bridge.js"></script>
     <slot />
   </body>
 </html>

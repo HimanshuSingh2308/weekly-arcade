@@ -3,7 +3,9 @@
  * Handles all API communication with the NestJS backend
  */
 
-const API_BASE_URL = window.location.hostname === 'localhost'
+const _isCapacitor = window.Capacitor?.isNativePlatform?.() ?? false;
+const _isLocalDev = !_isCapacitor && window.location.hostname === 'localhost';
+const API_BASE_URL = _isLocalDev
   ? 'http://localhost:8080/api'
   : 'https://weekly-arcade-api-5171085645.us-central1.run.app/api';
 

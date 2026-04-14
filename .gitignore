@@ -43,3 +43,17 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 .firebase/
+
+# Capacitor native build artifacts
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/ios/App/Pods/
+apps/mobile/ios/App/build/
+apps/mobile/ios/App/DerivedData/
+
+# Signing keys (NEVER commit)
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
