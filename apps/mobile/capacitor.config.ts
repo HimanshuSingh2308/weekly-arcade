@@ -13,15 +13,14 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchAutoHide: true,
-      launchShowDuration: 2000,
-      fadeOutDuration: 300,
-      backgroundColor: '#0f0f1a',
-      showSpinner: true,
-      spinnerColor: '#8B5CF6',
+      launchShowDuration: 1500,
+      fadeOutDuration: 200,
+      backgroundColor: '#1e2a5e',
+      showSpinner: false,
     },
     StatusBar: {
       style: 'DARK',
-      backgroundColor: '#0f0f1a',
+      backgroundColor: '#1e2a5e',
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
