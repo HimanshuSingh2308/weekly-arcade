@@ -5333,14 +5333,16 @@ import * as THREE from 'three';
     return probs;
   }
 
+  // probs array: [0runs, 1run, 2runs, 3runs, 4runs, 6runs, OUT]
   function applyFieldModifiers(probs) {
     const mod = FIELD_MODIFIERS[state.bowlingFieldSetting] || FIELD_MODIFIERS.balanced;
-    probs[0] += mod.dot;
-    probs[1] += mod.single;
-    probs[2] += mod.two;
-    probs[3] += mod.four;
-    probs[4] += mod.six;
-    probs[5] += mod.wicket;
+    probs[0] += mod.dot;      // 0 runs (dot ball)
+    probs[1] += mod.single;   // 1 run
+    probs[2] += mod.two;      // 2 runs
+    // probs[3] = 3 runs — no modifier (rare outcome)
+    probs[4] += mod.four;     // 4 runs (boundary)
+    probs[5] += mod.six;      // 6 runs (six)
+    probs[6] += mod.wicket;   // OUT (wicket)
     // Clamp all to >= 0
     for (let i = 0; i < probs.length; i++) probs[i] = Math.max(0, probs[i]);
     return probs;
