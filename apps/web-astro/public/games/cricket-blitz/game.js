@@ -277,6 +277,23 @@ import * as THREE from 'three';
   const DELIVERY_KEYS_NUM = { '1': 'straight', '2': 'inswing', '3': 'outswing', '4': 'bouncer', '5': 'yorker', '6': 'slower' };
   const DELIVERY_KEYS_QWERTY = { 'q': 'straight', 'w': 'inswing', 'e': 'outswing', 'a': 'bouncer', 's': 'yorker', 'd': 'slower' };
 
+  // ---- AI Batsman Weakness System ----
+  const AI_WEAKNESSES = ['yorker', 'bouncer', 'inswing', 'outswing', 'slower'];
+  const WEAKNESS_HINTS = {
+    yorker:   'Batsman shuffles forward — could be exposed to full-length balls!',
+    bouncer:  'Batsman plants back foot — struggling with short pitch!',
+    inswing:  'Batsman opens stance wide — gap on the pads!',
+    outswing: 'Batsman reaches outside — playing away from body!',
+    slower:   'Batsman commits early — vulnerable to change of pace!'
+  };
+
+  // ---- Field Setting Modifiers [dot, 1, 2, 4, 6, wicket] ----
+  const FIELD_MODIFIERS = {
+    attacking:  { dot: -5, single: -5, two: 0, four: 8, six: 5, wicket: 8 },
+    balanced:   { dot: 0,  single: 0,  two: 0, four: 0, six: 0, wicket: 0 },
+    defensive:  { dot: 8,  single: 5,  two: 3, four: -8, six: -5, wicket: -3 }
+  };
+
   const BOWLER_FIRST = ['Ajay','Vikram','Rahul','Suresh','Deepak','Amit','Ravi','Karan','Arun','Pradeep','Naveen','Sanjay'];
   const BOWLER_LAST = ['Kumar','Singh','Patel','Sharma','Yadav','Reddy','Chauhan','Verma','Mishra','Joshi','Nair','Das'];
 
@@ -496,7 +513,17 @@ import * as THREE from 'three';
     pitchDeteriorated: false,
     pitchCracks: [],
     timeoutAvailable: true,
-    timeoutUsed: false
+    timeoutUsed: false,
+
+    // Phase 3: Enhanced Bowling
+    bowlingPressure: 0,           // 0-100, builds on dots/tight balls
+    bowlingConsecutiveDots: 0,    // streak tracker
+    bowlingFieldSetting: 'balanced', // 'attacking' | 'defensive' | 'balanced'
+    aiBatsmanWeakness: null,      // delivery type the current batsman is weak to
+    aiBatsmanBallsFaced: 0,       // balls faced by current AI batsman
+    aiBatsmanWeaknessRevealed: false,
+    bowlingMaidenOvers: 0,
+    bowlingDotStreak: 0           // across overs for streak bonuses
   };
 
   // ============================================
@@ -4575,6 +4602,8 @@ import * as THREE from 'three';
     if (bowlingPanel) bowlingPanel.style.display = 'none';
     if (bowlingMeter) bowlingMeter.style.display = 'none';
     if (scoreboardBowl) scoreboardBowl.style.display = 'none';
+    const pBarTrans = $('pressureBar');
+    if (pBarTrans) pBarTrans.style.display = 'none';
 
     // The AI's score becomes the target the player needs to chase
     // state.bowlingAIScore is what AI scored, player needs bowlingAIScore + 1
@@ -4763,6 +4792,14 @@ import * as THREE from 'three';
     removePitchCracks();
     state.timeoutUsed = false;
 
+    // Phase 3: Enhanced bowling resets
+    state.bowlingPressure = 0;
+    state.bowlingConsecutiveDots = 0;
+    state.bowlingFieldSetting = 'balanced';
+    state.bowlingMaidenOvers = 0;
+    state.bowlingDotStreak = 0;
+    assignAIBatsmanWeakness();
+
     // Keep consistent day match environment across both innings
     setDayEnvironment();
 
@@ -4786,6 +4823,9 @@ import * as THREE from 'three';
     if (bowlingMeter) bowlingMeter.style.display = 'block';
     if (scoreboardBowl) scoreboardBowl.style.display = '';
     if (scoreboardBat) scoreboardBat.style.display = 'none';
+    const pBar = $('pressureBar');
+    if (pBar) pBar.style.display = 'flex';
+    updatePressureBar();
 
     updateBowlingHUD();
 
@@ -5194,6 +5234,143 @@ import * as THREE from 'three';
     }
   }
 
+  // ============================================
+  // BOWLING PHASE 3: PRESSURE, WEAKNESS, FIELD, STREAKS
+  // ============================================
+
+  function assignAIBatsmanWeakness() {
+    state.aiBatsmanWeakness = AI_WEAKNESSES[Math.floor(Math.random() * AI_WEAKNESSES.length)];
+    state.aiBatsmanBallsFaced = 0;
+    state.aiBatsmanWeaknessRevealed = false;
+  }
+
+  function updateBowlingPressure(outcome) {
+    if (outcome.runs === 0 && outcome.type === 'dot') {
+      state.bowlingPressure = Math.min(100, state.bowlingPressure + 12);
+      state.bowlingConsecutiveDots++;
+      state.bowlingDotStreak++;
+    } else if (outcome.runs === 1) {
+      state.bowlingPressure = Math.min(100, state.bowlingPressure + 4);
+      state.bowlingConsecutiveDots = 0;
+      state.bowlingDotStreak = 0;
+    } else if (outcome.runs === -1) {
+      // Wicket — pressure reset
+      state.bowlingPressure = Math.max(0, state.bowlingPressure - 20);
+      state.bowlingConsecutiveDots = 0;
+      state.bowlingDotStreak = 0;
+    } else if (outcome.runs === 4) {
+      state.bowlingPressure = Math.max(0, state.bowlingPressure - 25);
+      state.bowlingConsecutiveDots = 0;
+      state.bowlingDotStreak = 0;
+    } else if (outcome.runs === 6) {
+      state.bowlingPressure = Math.max(0, state.bowlingPressure - 40);
+      state.bowlingConsecutiveDots = 0;
+      state.bowlingDotStreak = 0;
+    } else {
+      state.bowlingPressure = Math.max(0, state.bowlingPressure - 8);
+      state.bowlingConsecutiveDots = 0;
+      state.bowlingDotStreak = 0;
+    }
+    updatePressureBar();
+  }
+
+  function updatePressureBar() {
+    const bar = $('pressureBar');
+    const fill = $('pressureFill');
+    const label = $('pressureLabel');
+    if (!bar || !fill) return;
+    fill.style.width = state.bowlingPressure + '%';
+    // Color transitions
+    if (state.bowlingPressure >= 75) {
+      fill.style.background = 'linear-gradient(90deg, #FF6600, #FF0000)';
+    } else if (state.bowlingPressure >= 40) {
+      fill.style.background = 'linear-gradient(90deg, #FFD700, #FF6600)';
+    } else {
+      fill.style.background = 'linear-gradient(90deg, #4CAF50, #FFD700)';
+    }
+    if (label) {
+      label.textContent = state.bowlingPressure >= 75 ? 'HIGH PRESSURE!'
+        : state.bowlingPressure >= 40 ? 'Building...'
+        : 'Low';
+    }
+  }
+
+  function checkWeaknessHint() {
+    state.aiBatsmanBallsFaced++;
+    if (!state.aiBatsmanWeaknessRevealed && state.aiBatsmanBallsFaced >= 3) {
+      state.aiBatsmanWeaknessRevealed = true;
+      const hint = WEAKNESS_HINTS[state.aiBatsmanWeakness] || '';
+      if (hint) {
+        spawnFloatingText(hint, W / 2, H * 0.25, '#00BFFF', 16);
+        const hintEl = $('weaknessHint');
+        if (hintEl) {
+          hintEl.textContent = hint;
+          hintEl.classList.add('show');
+          setTimeout(() => hintEl.classList.remove('show'), 3500);
+        }
+      }
+    }
+  }
+
+  function getWeaknessBonus(probs) {
+    if (state.aiBatsmanWeakness && state.selectedDelivery === state.aiBatsmanWeakness) {
+      // +15% wicket chance when exploiting weakness
+      probs[5] += 15;
+      probs[3] = Math.max(0, probs[3] - 7);
+      probs[4] = Math.max(0, probs[4] - 8);
+    }
+    return probs;
+  }
+
+  function getPressureBonus(probs) {
+    // High pressure adds wicket chance, reduces boundaries
+    const pFactor = state.bowlingPressure / 100;
+    const wicketBoost = Math.floor(pFactor * 12);
+    const boundaryReduce = Math.floor(pFactor * 8);
+    probs[5] += wicketBoost;
+    probs[3] = Math.max(0, probs[3] - Math.floor(boundaryReduce / 2));
+    probs[4] = Math.max(0, probs[4] - Math.ceil(boundaryReduce / 2));
+    return probs;
+  }
+
+  function applyFieldModifiers(probs) {
+    const mod = FIELD_MODIFIERS[state.bowlingFieldSetting] || FIELD_MODIFIERS.balanced;
+    probs[0] += mod.dot;
+    probs[1] += mod.single;
+    probs[2] += mod.two;
+    probs[3] += mod.four;
+    probs[4] += mod.six;
+    probs[5] += mod.wicket;
+    // Clamp all to >= 0
+    for (let i = 0; i < probs.length; i++) probs[i] = Math.max(0, probs[i]);
+    return probs;
+  }
+
+  function checkBowlingStreaks(outcome) {
+    if (outcome.runs === 0 && outcome.type === 'dot') {
+      if (state.bowlingConsecutiveDots === 3) {
+        spawnFloatingText('MAIDEN BUILDING!', W / 2, H * 0.3, '#00FF88', 22);
+        state.bowlingPressure = Math.min(100, state.bowlingPressure + 10);
+        playCrowdReaction('ooh');
+        haptic([20, 10, 20]);
+      }
+    }
+    // Full maiden over check (done in over-end logic)
+  }
+
+  function handleMaidenOver() {
+    const overRuns = state.bowlingCurrentOverRuns;
+    if (overRuns === 0) {
+      state.bowlingMaidenOvers++;
+      spawnFloatingText('MAIDEN OVER!', W / 2, H * 0.35, '#00FF88', 28);
+      spawnParticles(W / 2, H * 0.35, 25, ['#00FF88', '#4CAF50', '#FFD700'], 120, 0.8);
+      playCrowdReaction('roar');
+      haptic([50, 20, 50]);
+      state.bowlingPressure = Math.min(100, state.bowlingPressure + 20);
+      updatePressureBar();
+    }
+  }
+
   function getMeterAccuracy() {
     // Green zone: 0.35 - 0.65 (center)
     // Yellow zone: 0.2-0.35 and 0.65-0.8
@@ -5335,6 +5512,14 @@ import * as THREE from 'three';
       probs[3] = Math.max(0, probs[3] - 4);
       probs[4] = Math.max(0, probs[4] - 4);
     }
+
+    // Phase 3: Weakness, Pressure, Field modifiers
+    probs = getWeaknessBonus(probs);
+    probs = getPressureBonus(probs);
+    probs = applyFieldModifiers(probs);
+
+    // Check weakness hint
+    checkWeaknessHint();
 
     // Normalize and roll
     const total = probs.reduce((a, b) => a + b, 0);
@@ -5629,6 +5814,14 @@ import * as THREE from 'three';
     }
 
     showBallCommentary(outcome, true);
+
+    // Phase 3: Update pressure, streaks, assign weakness on wicket
+    updateBowlingPressure(outcome);
+    checkBowlingStreaks(outcome);
+    if (outcome.runs === -1) {
+      assignAIBatsmanWeakness(); // new batsman walks in
+    }
+
     updateBowlingHUD();
 
     // Immediate check: AI chased down target — only in bat-first mode (AI chasing)
@@ -5700,6 +5893,9 @@ import * as THREE from 'three';
   }
 
   function showBowlingBetweenOvers() {
+    // Check maiden over before resetting
+    handleMaidenOver();
+
     state.phase = 'BETWEEN_OVERS';
     gameWrap.classList.remove('cb-playing');
     gameWrap.classList.remove('cb-bowling');
@@ -5754,22 +5950,53 @@ import * as THREE from 'three';
         </div>`;
     }
 
+    const maidenHtml = state.bowlingCurrentOverRuns === 0
+      ? '<div class="cb-maiden-badge">MAIDEN OVER!</div>' : '';
+
+    const pressureHtml = `
+      <div class="cb-stat-row"><span>Pressure</span><span>${state.bowlingPressure}%</span></div>`;
+
+    const fieldHtml = `
+      <div class="cb-field-picker">
+        <p class="cb-field-label">SET YOUR FIELD</p>
+        <div class="cb-field-options">
+          <button class="cb-field-btn ${state.bowlingFieldSetting === 'attacking' ? 'selected' : ''}" onclick="window._cbSetField('attacking')">
+            <span class="cb-field-icon">&#9876;</span>
+            <span class="cb-field-name">Attacking</span>
+            <span class="cb-field-desc">+Wickets, +Boundaries</span>
+          </button>
+          <button class="cb-field-btn ${state.bowlingFieldSetting === 'balanced' ? 'selected' : ''}" onclick="window._cbSetField('balanced')">
+            <span class="cb-field-icon">&#9878;</span>
+            <span class="cb-field-name">Balanced</span>
+            <span class="cb-field-desc">Standard field</span>
+          </button>
+          <button class="cb-field-btn ${state.bowlingFieldSetting === 'defensive' ? 'selected' : ''}" onclick="window._cbSetField('defensive')">
+            <span class="cb-field-icon">&#128737;</span>
+            <span class="cb-field-name">Defensive</span>
+            <span class="cb-field-desc">-Runs, -Wickets</span>
+          </button>
+        </div>
+      </div>`;
+
     overModal.innerHTML = `
       <h2>End of Over ${state.bowlingOversCompleted} (Bowling)</h2>
+      ${maidenHtml}
       <div class="cb-over-summary">${ballsHtml}</div>
       <div class="cb-stat-row"><span>Runs conceded this over</span><span>${state.bowlingCurrentOverRuns}</span></div>
       <div class="cb-stat-row"><span>AI Score</span><span>${state.bowlingAIScore}/${state.bowlingAIWickets}</span></div>
+      ${pressureHtml}
       ${extrasLine}
       ${targetHtml}
       ${rateHtml}
+      ${fieldHtml}
       ${drawManhattan()}
       <button class="cb-btn" onclick="window._cbNextBowlingOver()">NEXT OVER &rarr;</button>
-      <p class="cb-countdown" id="overCountdown">Auto-continuing in 5s</p>
+      <p class="cb-countdown" id="overCountdown">Auto-continuing in 8s</p>
     `;
 
     overOverlay.classList.add('cb-visible');
 
-    state.autoOverTimer = 5;
+    state.autoOverTimer = 8;
     clearInterval(window._cbAutoOverInt);
     const countdownEl = overModal.querySelector('#overCountdown');
     window._cbAutoOverInt = setInterval(() => {
@@ -5781,6 +6008,24 @@ import * as THREE from 'three';
       }
     }, 1000);
   }
+
+  // Field setting handler (called from modal)
+  window._cbSetField = function(setting) {
+    state.bowlingFieldSetting = setting;
+    // Update button states in modal
+    const btns = overModal.querySelectorAll('.cb-field-btn');
+    btns.forEach(btn => {
+      btn.classList.toggle('selected', btn.textContent.toLowerCase().includes(setting));
+    });
+    // Re-highlight correct button
+    btns.forEach(btn => {
+      const name = btn.querySelector('.cb-field-name');
+      if (name) btn.classList.toggle('selected', name.textContent.toLowerCase() === setting);
+    });
+    playUISound('select');
+    // Reset auto-timer when player makes a choice
+    state.autoOverTimer = 5;
+  };
 
   function startNextBowlingOver() {
     clearInterval(window._cbAutoOverInt);
@@ -7022,6 +7267,14 @@ import * as THREE from 'three';
       state.freeHitNext = false;
       state.bowlingDeliveryRepeatCount = {};
 
+      // Phase 3: Enhanced bowling init
+      state.bowlingPressure = 0;
+      state.bowlingConsecutiveDots = 0;
+      state.bowlingFieldSetting = 'balanced';
+      state.bowlingMaidenOvers = 0;
+      state.bowlingDotStreak = 0;
+      assignAIBatsmanWeakness();
+
       setDayEnvironment();
 
       // Show bowling UI, hide batting UI
@@ -7034,6 +7287,9 @@ import * as THREE from 'three';
       if (bowlingMeter) bowlingMeter.style.display = 'block';
       if (scoreboardBowl) scoreboardBowl.style.display = '';
       if (scoreboardBat) scoreboardBat.style.display = 'none';
+      const pBarInit = $('pressureBar');
+      if (pBarInit) pBarInit.style.display = 'flex';
+      updatePressureBar();
 
       updateBowlingHUD();
 
@@ -7094,6 +7350,10 @@ import * as THREE from 'three';
     if (scoreboardBat) scoreboardBat.style.display = 'none';
     const timeoutBtnReset = $('timeoutBtn');
     if (timeoutBtnReset) timeoutBtnReset.style.display = 'none';
+    const pBarReset = $('pressureBar');
+    if (pBarReset) pBarReset.style.display = 'none';
+    const whReset = $('weaknessHint');
+    if (whReset) whReset.classList.remove('show');
 
     // Restore day sky for title/batting
     setDayEnvironment();
@@ -7475,10 +7735,71 @@ import * as THREE from 'three';
   let bowlingDragPath = [];
   let bowlingDragStart = null;
 
+  // ---- Swipe Trail Visual ----
+  let swipeTrailCanvas = null;
+  let swipeTrailCtx = null;
+
+  function initSwipeTrail() {
+    if (swipeTrailCanvas) return;
+    swipeTrailCanvas = document.createElement('canvas');
+    swipeTrailCanvas.id = 'swipeTrail';
+    swipeTrailCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;';
+    swipeTrailCanvas.width = window.innerWidth;
+    swipeTrailCanvas.height = window.innerHeight;
+    document.body.appendChild(swipeTrailCanvas);
+    swipeTrailCtx = swipeTrailCanvas.getContext('2d');
+  }
+
+  function drawSwipeTrail(path) {
+    if (!swipeTrailCtx || path.length < 2) return;
+    const ctx = swipeTrailCtx;
+    ctx.clearRect(0, 0, swipeTrailCanvas.width, swipeTrailCanvas.height);
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for (let i = 1; i < path.length; i++) {
+      ctx.lineTo(path[i].x, path[i].y);
+    }
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.7)';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+
+    // Draw dot at start
+    ctx.beginPath();
+    ctx.arc(path[0].x, path[0].y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fill();
+  }
+
+  function fadeSwipeTrail() {
+    if (!swipeTrailCtx) return;
+    const ctx = swipeTrailCtx;
+    let opacity = 1;
+    const fade = () => {
+      opacity -= 0.08;
+      if (opacity <= 0) {
+        ctx.clearRect(0, 0, swipeTrailCanvas.width, swipeTrailCanvas.height);
+        return;
+      }
+      ctx.globalAlpha = opacity;
+      requestAnimationFrame(fade);
+    };
+    requestAnimationFrame(fade);
+    // Fallback clear
+    setTimeout(() => {
+      ctx.globalAlpha = 1;
+      ctx.clearRect(0, 0, swipeTrailCanvas.width, swipeTrailCanvas.height);
+    }, 400);
+  }
+
   function handleBowlingTouchStart(e) {
     if (state.phase !== 'BOWLING') return;
     if (state.bowlingDeliveryPhase !== 'selecting') return;
 
+    initSwipeTrail();
     const touch = e.touches[0];
     bowlingDragStart = { x: touch.clientX, y: touch.clientY, time: Date.now() };
     bowlingDragPath = [{ x: touch.clientX, y: touch.clientY }];
@@ -7489,6 +7810,7 @@ import * as THREE from 'three';
     if (state.phase !== 'BOWLING') return;
     const touch = e.touches[0];
     bowlingDragPath.push({ x: touch.clientX, y: touch.clientY });
+    drawSwipeTrail(bowlingDragPath);
   }
 
   function handleBowlingTouchEnd(e) {
@@ -7523,6 +7845,7 @@ import * as THREE from 'three';
 
     showBowlingGestureIndicator(delivery.type);
     flashPitchZone(bowlingDragStart.y / window.innerHeight);
+    fadeSwipeTrail();
     updateBowlingHUD();
 
     // Bowl immediately after short delay
@@ -7559,12 +7882,16 @@ import * as THREE from 'three';
     // Check delivery type based on gesture shape
     // Order matters: check specific gestures first, default to straight
 
-    // ── YORKER: Tap and hold (> 500ms, barely moved) ──
-    if (duration > 500 && totalDist < 40) {
+    // ── BOUNCER: Short fast flick UPWARD ──
+    if (totalDist < screenH * 0.15 && duration < 250 && speed > 0.8 && dragLength < -20) {
+      type = 'bouncer';
+    }
+    // ── YORKER: Short fast flick DOWNWARD (stab at the crease) ──
+    else if (totalDist < screenH * 0.2 && duration < 300 && speed > 0.6 && dragLength > 30) {
       type = 'yorker';
     }
-    // ── SLOWER BALL: Very slow deliberate swipe ──
-    else if (speed < 0.2 && duration > 500 && totalDist > 50) {
+    // ── SLOWER BALL: Tap and hold (> 400ms, barely moved) ──
+    else if (duration > 400 && totalDist < 50) {
       type = 'slower';
     }
     // ── SWING: Check lateral curve in the drag path ──
@@ -7578,14 +7905,6 @@ import * as THREE from 'three';
         if (curve > 15) type = 'outswing';      // drag curves right
         else if (curve < -15) type = 'inswing';  // drag curves left
       }
-      // ── BOUNCER: If still straight but very short + fast flick ──
-      if (type === 'straight' && totalDist < screenH * 0.15 && duration < 200 && speed > 1.0) {
-        type = 'bouncer';
-      }
-    }
-    // Very short path (< 4 points) — check for bouncer flick
-    else if (totalDist < screenH * 0.12 && duration < 180 && speed > 1.2) {
-      type = 'bouncer';
     }
 
     // Line from horizontal end position
@@ -7668,8 +7987,8 @@ import * as THREE from 'three';
     },
     {
       title: 'SPECIAL DELIVERIES',
-      body: '<b>Quick flick</b> (fast + short) \u2192 Bouncer \u{1F4A5}<br><b>Tap & hold</b> (500ms+) \u2192 Yorker \u{1F3AF}<br><b>Slow swipe</b> \u2192 Slower ball',
-      diagram: '<div style="font-size:1.5rem;">\u26A1 Flick &nbsp; \u{1F44A} Hold &nbsp; \u{1F40C} Slow</div>'
+      body: '<b>Flick UP</b> \u2192 Bouncer \u{1F4A5}<br><b>Stab DOWN</b> (short + fast) \u2192 Yorker \u{1F3AF}<br><b>Tap & hold</b> \u2192 Slower ball',
+      diagram: '<div style="font-size:1.5rem;">\u2B06 Bouncer &nbsp; \u2B07 Yorker &nbsp; \u{1F44A} Slower</div>'
     },
     {
       title: 'AIM & ACCURACY',

@@ -1363,6 +1363,155 @@ input, select, textarea, button {
   box-shadow: 0 0 12px rgba(255,215,0,0.3);
 }
 
+/* ---- Bowling Pressure Bar ---- */
+.cb-pressure-bar {
+  position: fixed;
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(10,5,30,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  width: 200px;
+  max-width: 50vw;
+}
+
+.cb-pressure-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--cb-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  min-width: 42px;
+}
+
+.cb-pressure-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cb-pressure-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #4CAF50, #FFD700);
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+/* ---- Batsman Weakness Hint ---- */
+.cb-weakness-hint {
+  position: fixed;
+  top: calc(var(--cb-header-h, 52px) + var(--cb-safe-top, 0px) + 90px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  z-index: 14;
+  padding: 6px 14px;
+  background: rgba(0, 191, 255, 0.15);
+  border: 1px solid rgba(0, 191, 255, 0.4);
+  border-radius: 10px;
+  color: #00BFFF;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  max-width: 300px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cb-weakness-hint.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- Field Placement Picker (between overs) ---- */
+.cb-field-picker {
+  margin: 12px 0 8px;
+}
+
+.cb-field-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--cb-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.cb-field-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.cb-field-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--cb-text);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 60px;
+}
+
+.cb-field-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.cb-field-btn.selected {
+  border-color: var(--cb-accent);
+  background: rgba(255,215,0,0.12);
+  box-shadow: 0 0 10px rgba(255,215,0,0.2);
+}
+
+.cb-field-icon {
+  font-size: 1.2rem;
+}
+
+.cb-field-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cb-field-desc {
+  font-size: 0.55rem;
+  color: var(--cb-text-dim);
+  text-align: center;
+}
+
+/* ---- Maiden Over Badge ---- */
+.cb-maiden-badge {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #00FF88;
+  text-shadow: 0 0 12px rgba(0,255,136,0.5);
+  margin: 4px 0 8px;
+  animation: cb-maiden-pulse 1s ease infinite;
+}
+
+@keyframes cb-maiden-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
 /* ---- Ball Commentary Overlay ---- */
 .cb-ball-commentary {
   position: fixed;

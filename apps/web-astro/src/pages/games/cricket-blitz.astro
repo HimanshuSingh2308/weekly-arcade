@@ -103,6 +103,17 @@ import gameData from '../../data/games/cricket-blitz.json';
     <div class="cb-sb-dots" id="sbBowlDots"></div>
   </div>
 
+  <!-- Bowling Pressure Bar -->
+  <div class="cb-pressure-bar" id="pressureBar" style="display:none;">
+    <div class="cb-pressure-label" id="pressureLabel">Low</div>
+    <div class="cb-pressure-track">
+      <div class="cb-pressure-fill" id="pressureFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Batsman Weakness Hint -->
+  <div class="cb-weakness-hint" id="weaknessHint" aria-live="polite"></div>
+
   <!-- Shot direction indicator (desktop) -->
   <div class="cb-shot-indicator" id="shotIndicator">
     <span id="shotArrow">&uarr;</span>
