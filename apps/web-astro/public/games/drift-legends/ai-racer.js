@@ -32,7 +32,7 @@
       this.personalityName = personality;
 
       // Chapter difficulty
-      this.speedMultiplier = chapterConfig?.aiSpeedMultiplier || 0.9;
+      this.speedMultiplier = (chapterConfig?.aiSpeedMultiplier || 0.9) * 0.7;
       this.driftFrequency = chapterConfig?.aiDriftFrequency || 0.3;
       this.rubberBandCap = chapterConfig?.rubberBandCap || 1.2;
 
@@ -209,7 +209,7 @@
     const rival = chapter.rival;
     const carMesh = window.DriftLegends.CarBuilder.buildRivalCar(scene, rival.name.toLowerCase(), rival.carId);
     const ai = new AIRacer(carMesh, rival.personality, chapter);
-    ai.targetSpeed = 28;
+    ai.targetSpeed = 20;
     return ai;
   }
 
@@ -218,7 +218,7 @@
     for (let i = 0; i < count; i++) {
       const carMesh = window.DriftLegends.CarBuilder.buildAICar(scene, i);
       const ai = new AIRacer(carMesh, 'filler', chapter);
-      ai.targetSpeed = 18 + Math.random() * 8;
+      ai.targetSpeed = 13 + Math.random() * 5.5;
       racers.push(ai);
     }
     return racers;
