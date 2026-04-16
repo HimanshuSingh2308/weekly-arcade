@@ -119,12 +119,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   z-index: 200;
   text-align: center;
-  padding: 2rem;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  padding: clamp(0.5rem, 2dvh, 2rem);
 }
 .menu-screen.hidden { display: none; }
 
@@ -143,8 +141,8 @@
 }
 
 .menu-icon {
-  font-size: 5rem;
-  margin-bottom: 1rem;
+  font-size: clamp(2rem, 8dvh, 5rem);
+  margin-bottom: clamp(0.2rem, 1dvh, 1rem);
   animation: float 3s ease-in-out infinite;
   filter: drop-shadow(0 0 20px rgba(78,203,141,0.4));
 }
@@ -155,24 +153,24 @@
 }
 
 .menu-title {
-  font-size: 3.2rem;
+  font-size: clamp(1.5rem, 7dvh, 3.2rem);
   font-weight: 800;
   color: white;
-  margin-bottom: 0.3rem;
+  margin-bottom: clamp(0.1rem, 0.5dvh, 0.3rem);
   text-shadow: 0 2px 16px rgba(0,0,0,0.5);
 }
 
 .menu-tagline {
-  font-size: 1.1rem;
+  font-size: clamp(0.75rem, 2.5dvh, 1.1rem);
   color: rgba(255,255,255,0.7);
-  margin-bottom: 0.5rem;
+  margin-bottom: clamp(0.2rem, 1dvh, 0.5rem);
   font-style: italic;
 }
 
 .menu-best {
-  font-size: 0.95rem;
+  font-size: clamp(0.75rem, 2dvh, 0.95rem);
   color: var(--accent-bright);
-  margin-bottom: 2rem;
+  margin-bottom: clamp(0.5rem, 3dvh, 2rem);
   font-weight: 600;
 }
 
@@ -180,13 +178,13 @@
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
   color: white;
   border: none;
-  padding: 1rem 3.5rem;
+  padding: clamp(0.5rem, 2dvh, 1rem) clamp(2rem, 8vw, 3.5rem);
   border-radius: 30px;
-  font-size: 1.3rem;
+  font-size: clamp(1rem, 3dvh, 1.3rem);
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(0.3rem, 1.5dvh, 1rem);
   box-shadow: 0 4px 20px rgba(26,107,74,0.5);
 }
 .play-btn:hover {
@@ -241,7 +239,7 @@
   margin-top: 0.5rem;
 }
 
-/* Game Over Screen */
+/* Game Over Screen — fully dynamic, no scroll needed */
 .gameover-screen {
   position: fixed;
   top: 50px; left: 0; right: 0; bottom: 0;
@@ -251,12 +249,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   z-index: 200;
-  padding: 1.5rem;
+  padding: clamp(0.5rem, 2dvh, 1.5rem) clamp(0.75rem, 3vw, 2rem);
   text-align: center;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  gap: clamp(0.2rem, 1dvh, 0.5rem);
 }
 .gameover-screen.hidden { display: none; }
 
@@ -394,46 +391,43 @@
   justify-content: center;
 }
 
-.gameover-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+.gameover-icon { font-size: clamp(1.2rem, 4dvh, 3rem); }
 
 .gameover-title {
-  font-size: 2.2rem;
+  font-size: clamp(1.2rem, 5dvh, 2.2rem);
   font-weight: 800;
   color: var(--accent-bright);
-  margin-bottom: 0.25rem;
 }
 
 .gameover-subtitle {
   color: rgba(255,255,255,0.5);
-  font-size: 0.95rem;
-  margin-bottom: 1.5rem;
+  font-size: clamp(0.7rem, 2dvh, 0.95rem);
 }
 
 .gameover-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: clamp(0.4rem, 1.2vw, 0.75rem);
   width: 100%;
-  max-width: 400px;
+  max-width: 700px;
 }
 
 .gameover-stat {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.9rem 0.5rem;
+  border-radius: clamp(8px, 1.5dvh, 12px);
+  padding: clamp(0.5rem, 2dvh, 0.9rem) clamp(0.4rem, 1vw, 0.5rem);
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: clamp(0.9rem, 3dvh, 1.5rem);
   font-weight: 700;
   color: var(--accent-bright);
 }
 .stat-value.new-best { color: var(--gold); }
 
 .stat-label {
-  font-size: 0.7rem;
+  font-size: clamp(0.5rem, 1.2dvh, 0.7rem);
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -441,27 +435,25 @@
 }
 
 .biome-reached {
-  font-size: 0.95rem;
+  font-size: clamp(0.7rem, 2dvh, 0.95rem);
   color: rgba(255,255,255,0.6);
-  margin-bottom: 1.5rem;
 }
 
 .gap-to-best {
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 2dvh, 0.9rem);
   color: var(--text-secondary);
-  margin-bottom: 1.5rem;
 }
 .gap-to-best strong { color: var(--accent-bright); }
 
 .gameover-buttons {
-  display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;
+  display: flex; gap: clamp(0.4rem, 1.5dvh, 0.75rem); flex-wrap: wrap; justify-content: center;
 }
 
 .retry-btn {
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
   color: white; border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 25px; font-size: 1.1rem; font-weight: 600;
+  padding: clamp(0.4rem, 1.5dvh, 0.75rem) clamp(1.2rem, 5vw, 2rem);
+  border-radius: 25px; font-size: clamp(0.85rem, 2.5dvh, 1.1rem); font-weight: 600;
   cursor: pointer; transition: transform 0.2s;
 }
 .retry-btn:hover { transform: translateY(-2px); }
@@ -553,43 +545,10 @@
   opacity: 0;
 }
 
-/* Landscape mode — compact layout so everything fits */
-@media (max-height: 500px) and (orientation: landscape) {
-  .gameover-screen { padding: 0.75rem 1.5rem; }
-  .gameover-icon { font-size: 1.5rem; margin-bottom: 0.2rem; }
-  .gameover-title { font-size: 1.4rem; margin-bottom: 0.1rem; }
-  .gameover-subtitle { font-size: 0.8rem; margin-bottom: 0.5rem; }
-  .gameover-stats {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.4rem;
-    margin-bottom: 0.75rem;
-    max-width: 600px;
-  }
-  .gameover-stat { padding: 0.5rem 0.3rem; }
-  .stat-value { font-size: 1.1rem; }
-  .stat-label { font-size: 0.6rem; }
-  .biome-reached { font-size: 0.8rem; margin-bottom: 0.3rem; }
-  .gap-to-best { font-size: 0.8rem; margin-bottom: 0.5rem; }
-  .gameover-buttons { gap: 0.5rem; }
-  .retry-btn, .menu-btn-go { padding: 0.5rem 1.5rem; font-size: 0.85rem; }
-
-  .menu-screen { padding: 0.5rem 1rem; }
-  .menu-content { gap: 0; }
-  .menu-icon { font-size: 1.8rem; margin-bottom: 0.2rem; }
-  .menu-title { font-size: 1.4rem; margin-bottom: 0.1rem; }
-  .menu-tagline { font-size: 0.75rem; margin-bottom: 0.2rem; }
-  .menu-best { font-size: 0.8rem; margin-bottom: 0.3rem; }
-  .play-btn { padding: 0.5rem 2rem; font-size: 0.95rem; margin-bottom: 0.3rem; }
-  .zen-toggle { padding: 0.3rem 0.8rem; font-size: 0.8rem; min-height: 36px; margin-bottom: 0.3rem; }
-  .controls-hint { font-size: 0.65rem; }
-
-  .pause-title { font-size: 1.5rem; }
-  .pause-icon { font-size: 2rem; }
-
-  .tap-title { font-size: 1.3rem; }
-  .tap-icon { font-size: 2rem; margin-bottom: 0.2rem; }
-  .tap-hint { font-size: 0.85rem; margin-bottom: 0.75rem; }
-  .tap-control { font-size: 0.75rem; }
+/* Landscape — stretch stats across full width */
+@media (orientation: landscape) {
+  .gameover-stats { max-width: min(90vw, 800px); }
+  .gameover-stat { padding: clamp(0.5rem, 2dvh, 0.9rem) clamp(0.5rem, 2vw, 1rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
