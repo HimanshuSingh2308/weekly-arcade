@@ -814,35 +814,44 @@ function drawGlider() {
   ctx.closePath();
   ctx.clip();
 
-  // 2) Paint color stripes across canopy (horizontal bands = saffron/white/green)
-  const stripes = [
-    { from: 0, to: 0.22, color: '#FF6D00' },  // deep saffron
-    { from: 0.22, to: 0.35, color: '#FF9100' }, // bright saffron
-    { from: 0.35, to: 0.42, color: '#FFB74D' }, // light orange
-    { from: 0.42, to: 0.58, color: '#FFFFFF' }, // white center
-    { from: 0.58, to: 0.65, color: '#81C784' }, // pale green
-    { from: 0.65, to: 0.78, color: '#43A047' }, // medium green
-    { from: 0.78, to: 1.0,  color: '#1B5E20' }, // deep green
-  ];
-  for (const s of stripes) {
-    ctx.fillStyle = s.color;
-    ctx.fillRect(-CW + s.from * CW * 2, topY - 5, (s.to - s.from) * CW * 2, CH + 20);
-  }
-
-  // 3) 3D shading overlay on canopy (darker at edges, light at center top)
-  const shade = ctx.createRadialGradient(0, topY + CH * 0.3, CW * 0.2, 0, topY + CH * 0.3, CW * 1.2);
-  shade.addColorStop(0, 'rgba(255,255,255,0.15)');
-  shade.addColorStop(0.5, 'rgba(0,0,0,0)');
-  shade.addColorStop(1, 'rgba(0,0,0,0.2)');
-  ctx.fillStyle = shade;
+  // 2) Base canopy fill — vibrant gradient (like real Bir paragliders: red/purple/blue)
+  const canopyGrad = ctx.createLinearGradient(-CW, 0, CW, 0);
+  canopyGrad.addColorStop(0, '#E53935');    // red tip
+  canopyGrad.addColorStop(0.15, '#FF7043'); // orange-red
+  canopyGrad.addColorStop(0.3, '#FFB300');  // amber/yellow
+  canopyGrad.addColorStop(0.45, '#FFFFFF'); // white
+  canopyGrad.addColorStop(0.55, '#FFFFFF'); // white
+  canopyGrad.addColorStop(0.7, '#42A5F5'); // sky blue
+  canopyGrad.addColorStop(0.85, '#1E88E5'); // blue
+  canopyGrad.addColorStop(1, '#7B1FA2');    // purple tip
+  ctx.fillStyle = canopyGrad;
   ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
 
-  // Bottom shadow (underside of canopy)
-  const botShade = ctx.createLinearGradient(0, botY - 3, 0, botY + 6);
-  botShade.addColorStop(0, 'rgba(0,0,0,0)');
-  botShade.addColorStop(1, 'rgba(0,0,0,0.2)');
-  ctx.fillStyle = botShade;
-  ctx.fillRect(-CW, botY - 3, CW * 2, 10);
+  // Top-to-bottom light/shadow gradient (gives 3D inflated shape)
+  const vertGrad = ctx.createLinearGradient(0, topY - 3, 0, botY + 8);
+  vertGrad.addColorStop(0, 'rgba(255,255,255,0.25)'); // top highlight
+  vertGrad.addColorStop(0.3, 'rgba(255,255,255,0.05)');
+  vertGrad.addColorStop(0.7, 'rgba(0,0,0,0.05)');
+  vertGrad.addColorStop(1, 'rgba(0,0,0,0.25)');        // bottom shadow
+  ctx.fillStyle = vertGrad;
+  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
+
+  // Edge darkening (canopy tips fold away from light)
+  const edgeGrad = ctx.createRadialGradient(0, topY + CH * 0.4, CW * 0.3, 0, topY + CH * 0.4, CW * 1.1);
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(0.7, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, 'rgba(0,0,0,0.18)');
+  ctx.fillStyle = edgeGrad;
+  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
+
+  // Specular highlight (sun catching the top center)
+  const specGrad = ctx.createRadialGradient(CW * 0.1, topY + 4, 2, CW * 0.1, topY + 4, CW * 0.5);
+  specGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
+  specGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = specGrad;
+  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
+
+  // (3D shading already applied above)
 
   ctx.restore(); // remove clip
 
