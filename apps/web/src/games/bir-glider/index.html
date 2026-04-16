@@ -700,7 +700,7 @@ let maxAltitudeM = 0;
 let velocity = 0;   // vertical velocity (positive = up)
 let isHolding = false;
 let gliderX, gliderY;
-let scrollSpeed = 2.5;
+let scrollSpeed = 0.25;
 let gameTime = 0;
 let runStartTime = 0;
 let prayerFlagsCollected = 0;
@@ -752,7 +752,7 @@ let zenDroneStarted = false;
 const BIOMES = [
   { name: 'Bir Valley', sub: 'Dawn over the tea gardens', minDist: 0,    color1: '#f4a261', color2: '#a8dadc' },
   { name: 'Pine Forest', sub: 'Into the cedar groves',    minDist: 800,  color1: '#023e8a', color2: '#48cae4' },
-  { name: 'Snow Peaks',  sub: 'Above 4000m',              minDist: 2500, color1: '#caf0f8', color2: '#90e0ef' },
+  { name: 'Snow Peaks',  sub: 'Through the high passes',   minDist: 2500, color1: '#caf0f8', color2: '#90e0ef' },
   { name: 'Above Clouds', sub: 'Only sky, only silence',  minDist: 3500, color1: '#10002b', color2: '#3c096c' },
 ];
 
@@ -988,7 +988,7 @@ function spawnObjects() {
   }
 
   // Eagles — appear after 200m
-  if (distance > 200 && Math.random() < 0.004 + biomeIndex * 0.002) {
+  if (distance > 200 && Math.random() < 0.008 + biomeIndex * 0.002) {
     const yRand = H * 0.2 + Math.random() * H * 0.5;
     eagles.push({
       x: W + 60,
@@ -1002,7 +1002,7 @@ function spawnObjects() {
   }
 
   // Thermals — every ~300px
-  if (Math.random() < 0.006) {
+  if (Math.random() < 0.009) {
     const xWorld = terrainOffset + W + 80;
     const groundY = getTerrainY(xWorld, biomeIndex);
     thermals.push({
@@ -1365,9 +1365,8 @@ function checkCollisions() {
       flagComboTimer = 180; // 3 seconds at 60fps
       maxCombo = Math.max(maxCombo, flagCombo);
 
-      // Score
-      const multipliers = [1,1,2,3,5];
-      const mult = multipliers[Math.min(flagCombo - 1, 4)];
+      // Score — PRD combo tiers: x1(1-2), x2(3-4), x3(5-7), x5(8+)
+      const mult = flagCombo <= 2 ? 1 : flagCombo <= 4 ? 2 : flagCombo <= 7 ? 3 : 5;
       const pts = 100 * mult;
       totalFlagScore += pts;
       totalScore += pts;
@@ -1483,7 +1482,7 @@ function gameLoop(ts) {
   [1000, 2000, 3000, 4000].forEach(m => {
     if (altitudeM >= m && !altitudeMilestonesHit.has(m)) {
       altitudeMilestonesHit.add(m);
-      const bonus = {1000:500, 2000:1000, 3000:2000, 4000:5000}[m];
+      const bonus = {1000:500, 2000:1500, 3000:3000, 4000:5000}[m];
       altitudeMilestoneBonus += bonus;
       totalScore += bonus;
       flashScreen('rgba(255,255,255,0.15)');
@@ -1500,7 +1499,7 @@ function gameLoop(ts) {
   }
 
   // Scroll difficulty
-  scrollSpeed = Math.min(7.5, 2.5 + distance * 0.0003);
+  scrollSpeed = Math.min(0.75, 0.25 + distance * 0.00003);
 
   // Scroll terrain
   terrainOffset -= scrollSpeed * dt;
@@ -1556,8 +1555,7 @@ function updateHUD() {
 function updateComboDisplay() {
   const el = document.getElementById('hudCombo');
   if (flagCombo >= 2) {
-    const multipliers = [1,1,2,3,5];
-    const mult = multipliers[Math.min(flagCombo - 1, 4)];
+    const mult = flagCombo <= 2 ? 1 : flagCombo <= 4 ? 2 : flagCombo <= 7 ? 3 : 5;
     el.textContent = 'x' + mult + ' Combo!';
     el.classList.add('active');
   } else {
@@ -1639,7 +1637,7 @@ function startGame() {
   velocity = 2;
   gliderX = W * 0.3;
   gliderY = H * 0.45;
-  scrollSpeed = 2.5;
+  scrollSpeed = 0.25;
   prayerFlagsCollected = 0;
   flagCombo = 0;
   flagComboTimer = 0;

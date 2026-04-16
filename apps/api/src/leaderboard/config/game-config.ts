@@ -172,6 +172,21 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     maxGuessCount: 10,
   },
 
+  // Bir Glider: Endless paragliding with distance + flag combos + altitude milestones
+  'bir-glider': {
+    maxScore: 100000, // Allows ~3-min expert sessions with all bonuses
+    maxScorePerSecond: 500, // Distance accumulation + flag combo bursts
+    minTimeMs: 2000, // Can legitimately crash in ~2s
+    maxLevel: 3, // biomeIndex 0-3
+    customValidation: (dto) => {
+      // Score must be >= distance (distance is always part of score)
+      if (dto.metadata?.distance && dto.score < (dto.metadata.distance as number)) {
+        return { valid: false, reason: 'Score below distance value' };
+      }
+      return { valid: true };
+    },
+  },
+
   // Solitaire Roguelite: Klondike with Joker multipliers
   'solitaire-roguelite': {
     maxScore: 200000, // Perfect clear + S7 (×3) + S8 (×2) + R3 (×1.5) stacking
