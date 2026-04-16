@@ -112,6 +112,29 @@ import gameData from '../../data/games/bir-glider.json';
     </div>
   </div>
 
+  <!-- Tap to start overlay (hidden by default, shown after clicking Fly) -->
+  <div class="tap-overlay hidden" id="tapOverlay">
+    <div class="tap-content">
+      <div class="tap-icon">🪂</div>
+      <div class="tap-title">Ready to Soar</div>
+      <!-- Desktop controls -->
+      <div class="tap-hint tap-desktop">Press Space or Click to launch</div>
+      <div class="tap-controls tap-desktop">
+        <div class="tap-control"><span class="tap-key">Hold Click</span> Rise on thermals</div>
+        <div class="tap-control"><span class="tap-key">Release</span> Glide gently</div>
+        <div class="tap-control"><span class="tap-key">↓ Arrow</span> Perform stunts</div>
+        <div class="tap-control"><span class="tap-key">Esc</span> Pause</div>
+      </div>
+      <!-- Mobile controls -->
+      <div class="tap-hint tap-mobile">Tap anywhere to launch</div>
+      <div class="tap-controls tap-mobile">
+        <div class="tap-control"><span class="tap-key">Hold</span> Rise on thermals</div>
+        <div class="tap-control"><span class="tap-key">Lift</span> Glide gently</div>
+        <div class="tap-control"><span class="tap-key">Swipe ↓</span> Perform stunts</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Biome card -->
   <div class="biome-card" id="biomeCard">
     <div class="biome-card-name" id="biomeCardName"></div>

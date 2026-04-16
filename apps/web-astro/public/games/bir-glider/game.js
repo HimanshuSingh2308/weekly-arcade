@@ -6,7 +6,7 @@
 
 // ---- State ----
 let currentUser = null;
-let gameState = 'menu'; // menu | playing | paused | gameover
+let gameState = 'menu'; // menu | waiting | playing | paused | gameover
 let zenMode = false;
 let muted = false;
 let animFrameId = null;
@@ -1102,13 +1102,34 @@ function checkCollisions() {
   if (thermalTimer > 0) thermalTimer--;
 }
 
-// ---- Physics ----
-const GRAVITY = 0.18, RISE_FORCE = 0.5, THERMAL_BOOST = 0.25, MAX_RISE = 8, MAX_FALL = -6;
+// ---- Physics (realistic glide — gentle descent when neutral) ----
+const GLIDE_SINK = 0.04;     // gentle natural sink rate (gliders don't plummet)
+const DIVE_GRAVITY = 0.15;   // stronger pull when actively NOT holding after a rise
+const RISE_FORCE = 0.35;     // hold to catch lift / pull up
+const THERMAL_BOOST = 0.3;   // thermals push you up
+const MAX_RISE = 6;
+const MAX_FALL = -4;          // terminal sink speed (slower — it's a glider, not a rock)
+
 function updatePhysics(dt) {
-  if (isHolding) velocity += RISE_FORCE; else velocity -= GRAVITY;
-  if (inThermal) velocity += THERMAL_BOOST;
+  if (isHolding) {
+    // Pulling up — active climb
+    velocity += RISE_FORCE * dt;
+  } else if (velocity > 0.5) {
+    // Was rising, now releasing — transition to glide (gentle deceleration)
+    velocity -= GLIDE_SINK * dt * 2;
+  } else {
+    // Neutral glide — very gentle constant sink
+    velocity -= GLIDE_SINK * dt;
+  }
+
+  if (inThermal) {
+    velocity += THERMAL_BOOST * dt;
+  }
+
   velocity = Math.max(MAX_FALL, Math.min(MAX_RISE, velocity));
-  gliderY -= velocity;
+  gliderY -= velocity * dt;
+
+  // Ceiling clamp
   if (gliderY < 60) { gliderY = 60; velocity = Math.min(velocity, 0); }
 }
 
@@ -1119,7 +1140,7 @@ function gameLoop(ts) {
   const dt = Math.min((ts - lastTime) / 16.67, 3);
   lastTime = ts;
   if (gameState !== 'playing') {
-    if (gameState === 'paused') { draw(); } // keep rendering while paused
+    if (gameState === 'paused' || gameState === 'waiting') { draw(); }
     return;
   }
   gameTime += dt;
@@ -1313,14 +1334,25 @@ function startGame() {
   if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
   if (menuBgAnimId) { cancelAnimationFrame(menuBgAnimId); menuBgAnimId = null; }
 
-  gameState = 'playing';
+  // Show "tap to start" overlay — game waits for first input
+  gameState = 'waiting';
+  document.getElementById('tapOverlay').classList.remove('hidden');
 
   initAudio();
+
+  // Start rendering so player sees the world, but don't move anything
+  animFrameId = requestAnimationFrame(gameLoop);
+}
+
+// Called on first tap/click/key after pressing Fly — actually starts gameplay
+function launchFlight() {
+  if (gameState !== 'waiting') return;
+  document.getElementById('tapOverlay').classList.add('hidden');
+  gameState = 'playing';
+  runStartTime = Date.now();
   startWind();
   stopZenDrone();
   if (zenMode) startZenDrone();
-
-  animFrameId = requestAnimationFrame(gameLoop);
 }
 
 function endGame() {
@@ -1459,6 +1491,7 @@ async function autoSubmitScore() {
 // ---- Controls ----
 function onHoldStart(e) {
   e.preventDefault();
+  if (gameState === 'waiting') { launchFlight(); isHolding = true; return; }
   if (gameState !== 'playing') return;
   isHolding = true;
 }
@@ -1474,6 +1507,12 @@ function setupControls() {
   canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
   canvas.addEventListener('touchend', onHoldEnd);
   canvas.addEventListener('touchcancel', onHoldEnd);
+  // Tap overlay also triggers launch
+  const tapOverlay = document.getElementById('tapOverlay');
+  if (tapOverlay) {
+    tapOverlay.addEventListener('click', () => { if (gameState === 'waiting') { launchFlight(); isHolding = true; } });
+    tapOverlay.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameState === 'waiting') { launchFlight(); isHolding = true; } }, { passive: false });
+  }
   document.addEventListener('keydown', e => {
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onHoldStart(e); }
     if (e.code === 'Escape') {
