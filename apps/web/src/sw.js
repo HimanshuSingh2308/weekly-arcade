@@ -1,5 +1,5 @@
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 8;
+const CACHE_VERSION = 9;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -9,6 +9,8 @@ const ASSETS = [
   '/manifest.json',
   '/leaderboard/',
   '/leaderboard/index.html',
+  '/games/bir-glider/',
+  '/games/bir-glider/index.html',
   '/games/wordle/',
   '/games/wordle/index.html',
   '/games/memory-match/',

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="400" height="240">
+  <!-- Sky gradient -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4a261"/>
+      <stop offset="45%" stop-color="#e9c46a"/>
+      <stop offset="100%" stop-color="#a8dadc"/>
+    </linearGradient>
+    <linearGradient id="mountain1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b4332"/>
+      <stop offset="100%" stop-color="#2d6a4f"/>
+    </linearGradient>
+    <linearGradient id="mountain2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#40916c"/>
+      <stop offset="100%" stop-color="#1a6b4a"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d6a4f"/>
+      <stop offset="100%" stop-color="#1b4332"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky background -->
+  <rect width="400" height="240" fill="url(#sky)"/>
+
+  <!-- Far mountains -->
+  <polygon points="0,180 60,80 120,180" fill="url(#mountain1)" opacity="0.5"/>
+  <polygon points="80,180 160,60 240,180" fill="url(#mountain1)" opacity="0.55"/>
+  <polygon points="200,180 290,50 380,180" fill="url(#mountain1)" opacity="0.5"/>
+  <polygon points="320,180 400,90 400,180" fill="url(#mountain1)" opacity="0.45"/>
+
+  <!-- Mid mountains -->
+  <polygon points="-20,240 70,120 160,240" fill="url(#mountain2)" opacity="0.75"/>
+  <polygon points="100,240 200,100 300,240" fill="url(#mountain2)" opacity="0.8"/>
+  <polygon points="260,240 360,130 460,240" fill="url(#mountain2)" opacity="0.7"/>
+
+  <!-- Ground -->
+  <path d="M0,200 Q50,185 100,195 Q150,205 200,192 Q250,180 300,195 Q350,210 400,200 L400,240 L0,240 Z" fill="url(#ground)"/>
+
+  <!-- Prayer flags string -->
+  <line x1="60" y1="140" x2="160" y2="148" stroke="rgba(200,180,140,0.6)" stroke-width="1"/>
+  <rect x="70" y="136" width="12" height="9" fill="#e63946" opacity="0.85"/>
+  <rect x="88" y="138" width="12" height="9" fill="#f4a261" opacity="0.85"/>
+  <rect x="106" y="139" width="12" height="9" fill="#2a9d8f" opacity="0.85"/>
+  <rect x="124" y="141" width="12" height="9" fill="#e9c46a" opacity="0.85"/>
+  <rect x="142" y="142" width="12" height="9" fill="#264653" opacity="0.85"/>
+
+  <!-- Sun -->
+  <circle cx="340" cy="45" r="22" fill="rgba(255,220,120,0.7)"/>
+  <circle cx="340" cy="45" r="14" fill="rgba(255,200,80,0.9)"/>
+
+  <!-- Paraglider canopy -->
+  <ellipse cx="190" cy="95" rx="46" ry="14" fill="#e8821a"/>
+  <path d="M144,95 Q190,82 236,95 Q230,88 190,85 Q150,88 144,95 Z" fill="rgba(255,255,255,0.2)"/>
+  <!-- Canopy outline -->
+  <ellipse cx="190" cy="95" rx="46" ry="14" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+
+  <!-- Lines -->
+  <line x1="172" y1="100" x2="182" y2="118" stroke="rgba(100,70,30,0.6)" stroke-width="1"/>
+  <line x1="190" y1="100" x2="190" y2="118" stroke="rgba(100,70,30,0.6)" stroke-width="1"/>
+  <line x1="208" y1="100" x2="198" y2="118" stroke="rgba(100,70,30,0.6)" stroke-width="1"/>
+
+  <!-- Pilot harness -->
+  <ellipse cx="190" cy="124" rx="9" ry="6" fill="#2c3e50"/>
+  <!-- Helmet -->
+  <path d="M183,118 Q190,112 197,118 Z" fill="#e63946"/>
+  <circle cx="190" cy="119" r="5" fill="#e63946"/>
+
+  <!-- Thermal glow -->
+  <radialGradient id="thermal" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="rgba(255,180,50,0.3)"/>
+    <stop offset="100%" stop-color="rgba(255,180,50,0)"/>
+  </radialGradient>
+  <ellipse cx="190" cy="155" rx="30" ry="25" fill="url(#thermal)"/>
+
+  <!-- Game title -->
+  <text x="20" y="230" font-family="-apple-system, system-ui, sans-serif" font-size="13" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.5">Bir Glider</text>
+  <text x="20" y="218" font-family="-apple-system, system-ui, sans-serif" font-size="10" fill="rgba(255,255,255,0.6)">Himalayan Paragliding</text>
+</svg>

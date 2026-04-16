@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Bir Glider | Weekly Arcade - Himalayan Paragliding</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Play Bir Glider free online. Soar through the Himalayas above Bir, India. One-tap paragliding through prayer flags, eagle thermals, and mountain valleys. Zen-like, endless, beautiful.">
+  <meta name="keywords" content="bir glider, paragliding game, himalayas, endless runner, zen game, browser game, free game, alto adventure">
+  <link rel="canonical" href="https://weeklyarcade.games/games/bir-glider/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Bir Glider | Weekly Arcade - Himalayan Paragliding">
+  <meta property="og:description" content="Soar through the Himalayas. One-tap paragliding over Bir Valley. Rise on the wind. Find your calm.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://weeklyarcade.games/games/bir-glider/">
+  <meta property="og:image" content="https://weeklyarcade.games/og-image.png">
+  <meta property="og:site_name" content="Weekly Arcade">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bir Glider | Weekly Arcade">
+  <meta name="twitter:description" content="Soar through the Himalayas. One-tap paragliding over Bir Valley.">
+  <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a6b4a">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Bir Glider",
+    "url": "https://weeklyarcade.games/games/bir-glider/",
+    "description": "Soar through the Himalayas above Bir, India. One-tap paragliding through prayer flags, eagle thermals, and mountain valleys.",
+    "genre": ["Endless", "Zen", "Adventure", "Runner"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "gamePlatform": "Web Browser",
+    "inLanguage": "en",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Weekly Arcade",
+      "url": "https://weeklyarcade.games/"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://weeklyarcade.games/" },
+      { "@type": "ListItem", "position": 2, "name": "Games", "item": "https://weeklyarcade.games/#new" },
+      { "@type": "ListItem", "position": 3, "name": "Bir Glider", "item": "https://weeklyarcade.games/games/bir-glider/" }
+    ]
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { scrollbar-width: none; -ms-overflow-style: none; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
+    :root {
+      --bg-primary: #0a1628;
+      --bg-secondary: #0d1f35;
+      --bg-card: #132840;
+      --accent: #1a6b4a;
+      --accent-light: #2d9b6f;
+      --accent-bright: #4ecb8d;
+      --text-primary: #f0f4f8;
+      --text-secondary: #7a9bb5;
+      --border: #1e3a54;
+      --gold: #f4c430;
+      --saffron: #e8821a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    /* Header */
+    .header {
+      background: rgba(10, 22, 40, 0.9);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      padding-top: max(0.75rem, env(safe-area-inset-top));
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 500;
+      height: 50px;
+      backdrop-filter: blur(8px);
+    }
+
+    .back-btn {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.75rem;
+      min-height: 44px; min-width: 44px;
+      display: flex; align-items: center;
+    }
+    .back-btn:hover { color: var(--accent-bright); }
+
+    .title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent-bright);
+    }
+
+    .header-right {
+      display: flex; gap: 0.5rem; align-items: center;
+    }
+
+    .auth-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .auth-btn:hover { background: var(--accent-light); }
+
+    .icon-btn {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.4rem;
+      border-radius: 8px;
+      min-width: 44px; min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .icon-btn:hover { border-color: var(--accent-bright); }
+
+    /* Canvas */
+    #gameCanvas {
+      display: block;
+      position: fixed;
+      top: 50px; left: 0; right: 0; bottom: 0;
+      width: 100%;
+      height: calc(100dvh - 50px);
+      touch-action: none;
+    }
+
+    /* HUD Overlay */
+    .hud {
+      position: fixed;
+      top: 58px; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .hud-distance {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      letter-spacing: 0.02em;
+    }
+
+    .hud-distance span {
+      font-size: 1rem;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    .hud-best {
+      position: absolute;
+      top: 14px; right: 16px;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      text-align: right;
+    }
+
+    .hud-combo {
+      position: absolute;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--saffron);
+      text-shadow: 0 0 12px rgba(232,130,26,0.8);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .hud-combo.active { opacity: 1; }
+
+    /* Altitude bar */
+    .altitude-bar {
+      position: absolute;
+      left: 12px;
+      top: 8px; bottom: 8px;
+      width: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .altitude-fill {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, #4ecb8d, #0096c7, #caf0f8);
+      border-radius: 3px;
+      transition: height 0.2s;
+    }
+    .altitude-label {
+      position: absolute;
+      left: 24px; top: 8px;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* Goals panel */
+    .goals-panel {
+      position: absolute;
+      bottom: 16px; left: 12px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.8;
+    }
+    .goal-item { display: flex; align-items: center; gap: 6px; }
+    .goal-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); flex-shrink: 0; }
+    .goal-dot.done { background: var(--accent-bright); }
+
+    /* Menu Screen */
+    .menu-screen {
+      position: fixed;
+      top: 50px; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      text-align: center;
+      padding: 2rem;
+    }
+    .menu-screen.hidden { display: none; }
+
+    .menu-bg-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .menu-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .menu-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(78,203,141,0.4));
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-12px) rotate(5deg); }
+    }
+
+    .menu-title {
+      font-size: 3.2rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 0.3rem;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.5);
+    }
+
+    .menu-tagline {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 0.5rem;
+      font-style: italic;
+    }
+
+    .menu-best {
+      font-size: 0.95rem;
+      color: var(--accent-bright);
+      margin-bottom: 2rem;
+      font-weight: 600;
+    }
+
+    .play-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border: none;
+      padding: 1rem 3.5rem;
+      border-radius: 30px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 20px rgba(26,107,74,0.5);
+    }
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(26,107,74,0.7);
+    }
+
+    .zen-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 24px;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.95rem;
+      transition: background 0.2s, border-color 0.2s;
+      margin-bottom: 1.5rem;
+    }
+    .zen-toggle:hover { background: rgba(255,255,255,0.14); }
+    .zen-toggle.active {
+      background: rgba(78,203,141,0.15);
+      border-color: var(--accent-bright);
+      color: var(--accent-bright);
+    }
+
+    .toggle-knob {
+      width: 36px; height: 20px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .zen-toggle.active .toggle-knob { background: var(--accent-bright); }
+    .toggle-knob::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 14px; height: 14px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .zen-toggle.active .toggle-knob::after { transform: translateX(16px); }
+
+    .controls-hint {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.88rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Game Over Screen */
+    .gameover-screen {
+      position: fixed;
+      top: 50px; left: 0; right: 0; bottom: 0;
+      background: rgba(5, 15, 30, 0.97);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 2rem;
+      text-align: center;
+    }
+    .gameover-screen.hidden { display: none; }
+
+    .gameover-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+
+    .gameover-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent-bright);
+      margin-bottom: 0.25rem;
+    }
+
+    .gameover-subtitle {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .gameover-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .gameover-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-bright);
+    }
+    .stat-value.new-best { color: var(--gold); }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.2rem;
+    }
+
+    .biome-reached {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 1.5rem;
+    }
+
+    .gap-to-best {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+    .gap-to-best strong { color: var(--accent-bright); }
+
+    .gameover-buttons {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;
+    }
+
+    .retry-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white; border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 25px; font-size: 1.1rem; font-weight: 600;
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .retry-btn:hover { transform: translateY(-2px); }
+
+    .submit-btn {
+      background: var(--bg-card);
+      color: var(--accent-bright);
+      border: 2px solid var(--accent);
+      padding: 0.75rem 1.75rem;
+      border-radius: 25px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .submit-btn:hover { background: var(--accent); color: white; }
+    .submit-btn:disabled { opacity: 0.5; cursor: default; }
+
+    .menu-btn-go {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.5);
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px; font-size: 0.9rem;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .menu-btn-go:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
+
+    /* Zen mode gameover */
+    .zen-end-screen {
+      position: fixed;
+      top: 50px; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 2rem;
+      text-align: center;
+    }
+    .zen-end-screen.hidden { display: none; }
+
+    /* Biome title card */
+    .biome-card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 1rem 2rem;
+      text-align: center;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .biome-card.show { opacity: 1; }
+    .biome-card-name { font-size: 1.4rem; font-weight: 700; color: white; }
+    .biome-card-sub { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 0.25rem; }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: rgba(20,40,60,0.95);
+      border: 1px solid var(--accent);
+      border-radius: 24px;
+      padding: 0.6rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+      color: white;
+      animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
+      white-space: nowrap;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    /* Screen flash */
+    .screen-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 400;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a href="/" class="back-btn" aria-label="Back to home">&#8592; Games</a>
+    <div class="title">🪂 Bir Glider</div>
+    <div class="header-right">
+      <button class="auth-btn" id="authBtn" onclick="handleAuth()">Sign In</button>
+      <button class="icon-btn" onclick="toggleMute()" id="muteBtn" title="Toggle sound">🔊</button>
+    </div>
+  </header>
+
+  <!-- Main canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD (visible during play) -->
+  <div class="hud" id="hud" style="display:none;">
+    <div class="altitude-bar" id="altBar">
+      <div class="altitude-fill" id="altFill" style="height:10%"></div>
+    </div>
+    <div class="altitude-label" id="altLabel">0m</div>
+    <div class="hud-distance" id="hudDistance">0 <span>m</span></div>
+    <div class="hud-best" id="hudBest"></div>
+    <div class="hud-combo" id="hudCombo"></div>
+    <div class="goals-panel" id="goalsPanel"></div>
+  </div>
+
+  <!-- Menu Screen -->
+  <div class="menu-screen" id="menuScreen">
+    <canvas class="menu-bg-canvas" id="menuBgCanvas"></canvas>
+    <div class="menu-content">
+      <div class="menu-icon">🪂</div>
+      <div class="menu-title">Bir Glider</div>
+      <div class="menu-tagline">"Rise on the wind. Find your calm."</div>
+      <div class="menu-best" id="menuBest"></div>
+      <button class="play-btn" id="playBtn" onclick="startGame()">Fly</button>
+      <div class="zen-toggle" id="zenToggle" onclick="toggleZenMode()">
+        <span>🧘 Zen Mode</span>
+        <div class="toggle-knob"></div>
+      </div>
+      <div class="controls-hint">Hold anywhere to rise &bull; Release to glide</div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="gameover-screen hidden" id="gameoverScreen">
+    <div class="gameover-icon">🏔️</div>
+    <div class="gameover-title" id="gameoverTitle">Landed</div>
+    <div class="gameover-subtitle" id="gameoverSubtitle">The mountain is patient. Fly again.</div>
+    <div class="gameover-stats">
+      <div class="gameover-stat">
+        <div class="stat-value" id="statDistance">0</div>
+        <div class="stat-label">Distance</div>
+      </div>
+      <div class="gameover-stat">
+        <div class="stat-value" id="statAltitude">0</div>
+        <div class="stat-label">Max Alt.</div>
+      </div>
+      <div class="gameover-stat">
+        <div class="stat-value" id="statFlags">0</div>
+        <div class="stat-label">Flags</div>
+      </div>
+    </div>
+    <div class="biome-reached" id="biomeReached"></div>
+    <div class="gap-to-best" id="gapToBest"></div>
+    <div class="gameover-buttons">
+      <button class="retry-btn" onclick="startGame()">Fly Again</button>
+      <button class="submit-btn" id="submitBtn" onclick="submitScore()">Submit Score</button>
+      <button class="menu-btn-go" onclick="showMenu()">Menu</button>
+    </div>
+  </div>
+
+  <!-- Biome card -->
+  <div class="biome-card" id="biomeCard">
+    <div class="biome-card-name" id="biomeCardName"></div>
+    <div class="biome-card-sub" id="biomeCardSub"></div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Screen flash -->
+  <div class="screen-flash" id="screenFlash"></div>
+
+<script>
+// ================================================
+// BIR GLIDER — Main Game Script
+// ================================================
+
+// ---- State ----
+let currentUser = null;
+let gameState = 'menu'; // menu | playing | gameover
+let zenMode = false;
+let muted = false;
+let animFrameId = null;
+
+// Game vars
+let canvas, ctx;
+let W, H;
+let distance = 0;
+let score = 0;
+let altitude = 200; // px from bottom ground surface (visual)
+let altitudeM = 0;  // meters (computed from altitude)
+let maxAltitudeM = 0;
+let velocity = 0;   // vertical velocity (positive = up)
+let isHolding = false;
+let gliderX, gliderY;
+let scrollSpeed = 2.5;
+let gameTime = 0;
+let runStartTime = 0;
+let prayerFlagsCollected = 0;
+let flagCombo = 0;
+let flagComboTimer = 0;
+let maxCombo = 0;
+let eagleNearMisses = 0;
+let thermalsCount = 0;
+let inThermal = false;
+let thermalTimer = 0;
+let biomeIndex = 0;
+let visitedBiomes = new Set();
+let altitudeMilestonesHit = new Set();
+
+// Score
+let totalScore = 0;
+let totalFlagScore = 0;
+let totalNearMissBonus = 0;
+let altitudeMilestoneBonus = 0;
+
+// Personal best
+let personalBest = 0;
+let isNewBest = false;
+
+// Goals
+let goals = [];
+let goalProgress = {};
+
+// Terrain
+let terrainPoints = [];
+const TERRAIN_SEGMENT_W = 6;
+let terrainOffset = 0;
+let terrainSeed = Math.random() * 10000;
+let backMountains = [];
+let midTrees = [];
+
+// Objects
+let prayerFlags = [];
+let eagles = [];
+let thermals = [];
+let particles = [];
+
+// Zen
+let zenRecovering = false;
+let zenTimer = 0;
+let zenDroneStarted = false;
+
+// Biomes
+const BIOMES = [
+  { name: 'Bir Valley', sub: 'Dawn over the tea gardens', minDist: 0,    color1: '#f4a261', color2: '#a8dadc' },
+  { name: 'Pine Forest', sub: 'Into the cedar groves',    minDist: 800,  color1: '#023e8a', color2: '#48cae4' },
+  { name: 'Snow Peaks',  sub: 'Above 4000m',              minDist: 2500, color1: '#caf0f8', color2: '#90e0ef' },
+  { name: 'Above Clouds', sub: 'Only sky, only silence',  minDist: 3500, color1: '#10002b', color2: '#3c096c' },
+];
+
+// Goal pool
+const GOAL_POOL = [
+  { id: 'thermals3',   text: 'Catch 3 thermals',         check: () => thermalsCount >= 3 },
+  { id: 'flags5',      text: 'Collect 5 flags in a row', check: () => flagCombo >= 5 },
+  { id: 'dist1000',    text: 'Fly 1000m',                check: () => distance >= 1000 },
+  { id: 'flags10',     text: 'Collect 10 flags',         check: () => prayerFlagsCollected >= 10 },
+  { id: 'thermals5',   text: 'Catch 5 thermals',         check: () => thermalsCount >= 5 },
+  { id: 'alt1500',     text: 'Reach 1500m altitude',     check: () => altitudeM >= 1500 },
+];
+
+// ---- Audio ----
+let audioCtx = null;
+let windGain = null;
+let windFilter = null;
+let zenDroneGain = null;
+const PENTATONIC = [261.63, 293.66, 329.63, 392.00, 440.00]; // C4 D4 E4 G4 A4
+
+function initAudio() {
+  if (audioCtx || muted) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Wind layer
+    const bufferSize = audioCtx.sampleRate * 2;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    noiseSource.loop = true;
+    windFilter = audioCtx.createBiquadFilter();
+    windFilter.type = 'bandpass';
+    windFilter.frequency.value = 800;
+    windFilter.Q.value = 0.5;
+    windGain = audioCtx.createGain();
+    windGain.gain.value = 0;
+    noiseSource.connect(windFilter);
+    windFilter.connect(windGain);
+    windGain.connect(audioCtx.destination);
+    noiseSource.start();
+  } catch(e) {}
+}
+
+function startWind() {
+  if (!audioCtx || muted) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (windGain) {
+    windGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    windGain.gain.setTargetAtTime(zenMode ? 0.07 : 0.04, audioCtx.currentTime, 0.5);
+  }
+}
+
+function stopWind() {
+  if (!windGain) return;
+  windGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.8);
+}
+
+function updateWindPitch() {
+  if (!windFilter || muted) return;
+  const freq = 200 + (altitudeM / 4000) * 1800;
+  windFilter.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.2);
+}
+
+function playNote(freq, duration = 0.3, volume = 0.15) {
+  if (!audioCtx || muted) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {}
+}
+
+function playFlagSound(combo) {
+  if (muted) return;
+  const notes = PENTATONIC;
+  const idx = (prayerFlagsCollected) % notes.length;
+  playNote(notes[idx], 0.3, 0.15);
+  if (combo >= 3) {
+    setTimeout(() => playNote(notes[(idx + 2) % 5], 0.25, 0.1), 80);
+    if (combo >= 5) setTimeout(() => playNote(notes[(idx + 4) % 5], 0.2, 0.08), 160);
+  }
+}
+
+function playThermalSound() {
+  if (muted) return;
+  playNote(523.25, 0.4, 0.1); // C5 ascending chime
+  setTimeout(() => playNote(659.25, 0.3, 0.07), 150);
+}
+
+function playCrashSound() {
+  if (!audioCtx || muted) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.6);
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.7);
+  } catch(e) {}
+}
+
+function startZenDrone() {
+  if (!audioCtx || muted || zenDroneStarted) return;
+  zenDroneStarted = true;
+  try {
+    const droneFreqs = [65.41, 130.81, 196.00]; // C2 C3 G3
+    droneFreqs.forEach((f, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.04 - i * 0.01, audioCtx.currentTime, 2);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start();
+      zenDroneGain = gain; // keep last reference
+    });
+  } catch(e) {}
+}
+
+// ---- Perlin noise (simple 1D) ----
+function fade(t) { return t*t*t*(t*(t*6-15)+10); }
+function lerp(a,b,t) { return a+t*(b-a); }
+const perm = new Uint8Array(512);
+(function(){
+  for(let i=0;i<256;i++) perm[i]=i;
+  for(let i=255;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [perm[i],perm[j]]=[perm[j],perm[i]]; }
+  for(let i=0;i<256;i++) perm[i+256]=perm[i];
+})();
+function grad(h,x){ const g=h&1?-1:1; return g*x; }
+function noise1d(x){
+  const X=Math.floor(x)&255;
+  x-=Math.floor(x);
+  const u=fade(x);
+  return lerp(grad(perm[X],x),grad(perm[X+1],x-1),u)*2;
+}
+function fbm(x, octaves=4, persistence=0.5){
+  let val=0, amp=1, freq=1, max=0;
+  for(let i=0;i<octaves;i++){
+    val+=noise1d(x*freq)*amp;
+    max+=amp; amp*=persistence; freq*=2;
+  }
+  return val/max;
+}
+
+// ---- Terrain generation ----
+function getTerrainY(xWorld, biome) {
+  const b = Math.min(biome, 3);
+  const amplitude = [80, 120, 160, 100][b];
+  const freqMult = [0.003, 0.004, 0.005, 0.003][b];
+  const base = H * 0.75;
+  const n = fbm((xWorld + terrainSeed) * freqMult);
+  return base + n * amplitude;
+}
+
+function generateTerrain() {
+  terrainPoints = [];
+  const numPoints = Math.ceil(W / TERRAIN_SEGMENT_W) + 10;
+  for (let i = 0; i < numPoints; i++) {
+    const xWorld = terrainOffset + i * TERRAIN_SEGMENT_W;
+    terrainPoints.push(getTerrainY(xWorld, biomeIndex));
+  }
+}
+
+function extendTerrain() {
+  // Remove points that have scrolled off left
+  while (terrainPoints.length > 0 && terrainOffset < -TERRAIN_SEGMENT_W) {
+    terrainPoints.shift();
+    terrainOffset += TERRAIN_SEGMENT_W;
+  }
+  // Add new points on the right
+  const needed = Math.ceil(W / TERRAIN_SEGMENT_W) + 10;
+  while (terrainPoints.length < needed) {
+    const xWorld = terrainOffset + terrainPoints.length * TERRAIN_SEGMENT_W;
+    terrainPoints.push(getTerrainY(xWorld, biomeIndex));
+  }
+}
+
+// ---- Background elements ----
+function generateBackMountains() {
+  backMountains = [];
+  const count = 12;
+  for (let i = 0; i < count; i++) {
+    backMountains.push({
+      x: (i / count) * W * 1.5,
+      peakY: H * 0.3 + Math.random() * H * 0.2,
+      width: W * 0.15 + Math.random() * W * 0.2,
+    });
+  }
+}
+
+function generateMidTrees() {
+  midTrees = [];
+  for (let i = 0; i < 30; i++) {
+    midTrees.push({
+      x: Math.random() * W * 3,
+      height: 20 + Math.random() * 40,
+    });
+  }
+}
+
+// ---- Object spawning ----
+function spawnObjects() {
+  // Prayer flags — every 200-350m equivalent pixels
+  if (Math.random() < 0.012) {
+    const xWorld = terrainOffset + W + 50;
+    const groundY = getTerrainY(xWorld, biomeIndex);
+    const h = 30 + Math.random() * 60;
+    prayerFlags.push({
+      x: W + 50 + Math.random() * 100,
+      y: groundY - h,
+      collected: false,
+      phase: Math.random() * Math.PI * 2,
+      colors: ['#e63946','#f4a261','#2a9d8f','#e9c46a','#264653'],
+    });
+  }
+
+  // Eagles — appear after 200m
+  if (distance > 200 && Math.random() < 0.004 + biomeIndex * 0.002) {
+    const yRand = H * 0.2 + Math.random() * H * 0.5;
+    eagles.push({
+      x: W + 60,
+      y: yRand,
+      vy: (Math.random() - 0.5) * 0.5,
+      speed: 1.5 + Math.random() * biomeIndex * 0.5,
+      nearMissed: false,
+      radius: 18,
+      wingPhase: 0,
+    });
+  }
+
+  // Thermals — every ~300px
+  if (Math.random() < 0.006) {
+    const xWorld = terrainOffset + W + 80;
+    const groundY = getTerrainY(xWorld, biomeIndex);
+    thermals.push({
+      x: W + 80 + Math.random() * 80,
+      y: groundY - 200,
+      height: 150 + Math.random() * 100,
+      width: 40 + Math.random() * 30,
+      phase: Math.random() * Math.PI * 2,
+      active: true,
+    });
+  }
+}
+
+// ---- Particles ----
+function spawnFlagParticles(x, y, colors) {
+  for (let i = 0; i < 12; i++) {
+    const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * (2 + Math.random() * 3),
+      vy: Math.sin(angle) * (2 + Math.random() * 3) - 1,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      life: 1, decay: 0.03 + Math.random() * 0.02,
+      r: 3 + Math.random() * 3,
+    });
+  }
+}
+
+function spawnThermalParticles(x, y) {
+  for (let i = 0; i < 6; i++) {
+    particles.push({
+      x: x + (Math.random() - 0.5) * 30,
+      y: y + Math.random() * 20,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: -(1 + Math.random() * 2),
+      color: `rgba(255,${150 + Math.floor(Math.random()*80)},50,`,
+      life: 1, decay: 0.025,
+      r: 4 + Math.random() * 4,
+      alpha: true,
+    });
+  }
+}
+
+// ---- Sky gradient by biome + time ----
+function getSkyGradient(ctx, biome, distLocal) {
+  const phase = (distLocal % 400) / 400; // 0..1 day cycle
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+
+  if (biome === 0) { // Bir Valley
+    if (phase < 0.33) { // Dawn
+      grad.addColorStop(0, '#f4a261'); grad.addColorStop(0.5, '#e9c46a'); grad.addColorStop(1, '#a8dadc');
+    } else if (phase < 0.66) { // Midday
+      grad.addColorStop(0, '#0096c7'); grad.addColorStop(0.5, '#48cae4'); grad.addColorStop(1, '#90e0ef');
+    } else { // Dusk
+      grad.addColorStop(0, '#e76f51'); grad.addColorStop(0.5, '#9b2335'); grad.addColorStop(1, '#3a0ca3');
+    }
+  } else if (biome === 1) { // Pine Forest
+    grad.addColorStop(0, '#023e8a'); grad.addColorStop(0.5, '#0077b6'); grad.addColorStop(1, '#48cae4');
+  } else if (biome === 2) { // Snow Peaks
+    grad.addColorStop(0, '#caf0f8'); grad.addColorStop(0.5, '#90e0ef'); grad.addColorStop(1, '#ade8f4');
+  } else { // Above Clouds
+    grad.addColorStop(0, '#10002b'); grad.addColorStop(0.5, '#240046'); grad.addColorStop(1, '#3c096c');
+  }
+  return grad;
+}
+
+function getTerrainColor(biome) {
+  const colors = [
+    ['#2d6a4f','#40916c'],
+    ['#1b4332','#081c15'],
+    ['#f8f9fa','#dee2e6'],
+    ['#ced4da','#adb5bd'],
+  ];
+  return colors[Math.min(biome, 3)];
+}
+
+// ---- Drawing ----
+function drawSky() {
+  ctx.fillStyle = getSkyGradient(ctx, biomeIndex, distance);
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars at night (above clouds)
+  if (biomeIndex === 3) {
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (let i = 0; i < 80; i++) {
+      const sx = ((i * 137.5 + distance * 0.02) % W);
+      const sy = (i * 97.3) % (H * 0.6);
+      const r = 0.5 + (i % 3) * 0.5;
+      ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2); ctx.fill();
+    }
+  }
+}
+
+function drawBackMountains() {
+  const scrollFar = distance * 0.15;
+  const [c1, c2] = getTerrainColor(biomeIndex);
+
+  ctx.fillStyle = c1;
+  ctx.globalAlpha = 0.6;
+  for (const m of backMountains) {
+    const mx = ((m.x - scrollFar) % (W * 2) + W * 2) % (W * 2) - W * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(mx - m.width, H);
+    ctx.lineTo(mx, m.peakY);
+    ctx.lineTo(mx + m.width, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawMidLayer() {
+  if (biomeIndex === 0 || biomeIndex === 1) {
+    const scrollMid = distance * 0.4;
+    ctx.fillStyle = getTerrainColor(biomeIndex)[1];
+    ctx.globalAlpha = 0.7;
+    for (const t of midTrees) {
+      const tx = ((t.x - scrollMid) % (W * 3) + W * 3) % (W * 3);
+      if (tx > W + 20) continue;
+      // Pine tree shape
+      ctx.beginPath();
+      ctx.moveTo(tx, H * 0.7);
+      ctx.lineTo(tx - 8, H * 0.7 + t.height * 0.4);
+      ctx.lineTo(tx - 5, H * 0.7 + t.height * 0.4);
+      ctx.lineTo(tx - 10, H * 0.7 + t.height * 0.7);
+      ctx.lineTo(tx - 6, H * 0.7 + t.height * 0.7);
+      ctx.lineTo(tx, H * 0.7 + t.height);
+      ctx.lineTo(tx + 6, H * 0.7 + t.height * 0.7);
+      ctx.lineTo(tx + 10, H * 0.7 + t.height * 0.7);
+      ctx.lineTo(tx + 5, H * 0.7 + t.height * 0.4);
+      ctx.lineTo(tx + 8, H * 0.7 + t.height * 0.4);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawTerrain() {
+  const [c1, c2] = getTerrainColor(biomeIndex);
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  for (let i = 0; i < terrainPoints.length; i++) {
+    const x = terrainOffset + i * TERRAIN_SEGMENT_W;
+    const screenX = x - (terrainOffset % W);
+    ctx.lineTo(screenX - terrainOffset % W, terrainPoints[i]);
+  }
+  // Fix: just use simpler x mapping
+  ctx.reset && ctx.reset();
+  ctx.beginPath();
+  ctx.moveTo(-10, H);
+  for (let i = 0; i < terrainPoints.length; i++) {
+    const screenX = i * TERRAIN_SEGMENT_W;
+    ctx.lineTo(screenX, terrainPoints[i]);
+  }
+  ctx.lineTo(W + 20, H);
+  ctx.closePath();
+  const tGrad = ctx.createLinearGradient(0, H * 0.6, 0, H);
+  tGrad.addColorStop(0, c1);
+  tGrad.addColorStop(1, c2);
+  ctx.fillStyle = tGrad;
+  ctx.fill();
+}
+
+function drawThermals() {
+  for (const t of thermals) {
+    if (!t.active) continue;
+    t.phase += 0.03;
+    const grd = ctx.createRadialGradient(t.x, t.y + t.height/2, 5, t.x, t.y + t.height/2, t.width);
+    grd.addColorStop(0, 'rgba(255,180,50,0.25)');
+    grd.addColorStop(1, 'rgba(255,180,50,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.ellipse(t.x, t.y + t.height/2, t.width * (0.8 + 0.2*Math.sin(t.phase)), t.height/2, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Shimmer lines
+    ctx.strokeStyle = 'rgba(255,200,80,0.15)';
+    ctx.lineWidth = 1;
+    for (let l = 0; l < 3; l++) {
+      const phase2 = t.phase + l * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(t.x + Math.sin(phase2) * t.width * 0.3, t.y + t.height);
+      ctx.bezierCurveTo(
+        t.x + Math.sin(phase2 + 1) * t.width * 0.5, t.y + t.height * 0.5,
+        t.x + Math.sin(phase2 + 2) * t.width * 0.3, t.y + t.height * 0.3,
+        t.x + Math.sin(phase2 + 3) * t.width * 0.1, t.y,
+      );
+      ctx.stroke();
+    }
+  }
+}
+
+function drawPrayerFlags() {
+  for (const f of prayerFlags) {
+    if (f.collected) continue;
+    f.phase += 0.04;
+    // Pole
+    const groundY = getTerrainY(f.x + distance, biomeIndex);
+    const poleBottom = groundY;
+    const poleTop = f.y;
+    ctx.strokeStyle = 'rgba(180,160,120,0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(f.x, poleBottom);
+    ctx.lineTo(f.x, poleTop);
+    ctx.stroke();
+
+    // String and flags
+    const flagW = 14, flagH = 10;
+    const numFlags = Math.min(5, f.colors.length);
+    for (let i = 0; i < numFlags; i++) {
+      const fx = f.x - 30 + i * 16 + Math.sin(f.phase + i * 0.5) * 3;
+      const fy = poleTop + 10 + i * 3 + Math.sin(f.phase + i * 0.7) * 2;
+      ctx.fillStyle = f.colors[i];
+      ctx.fillRect(fx, fy, flagW, flagH);
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(fx, fy, flagW, flagH);
+    }
+    // String
+    ctx.strokeStyle = 'rgba(200,180,140,0.5)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(f.x - 35, poleTop + 8);
+    ctx.lineTo(f.x + 40, poleTop + 18);
+    ctx.stroke();
+  }
+}
+
+function drawEagles() {
+  for (const e of eagles) {
+    e.wingPhase += 0.08;
+    const wing = Math.sin(e.wingPhase) * 8;
+    ctx.fillStyle = '#1a1a1a';
+    // Body
+    ctx.beginPath();
+    ctx.ellipse(e.x, e.y, 10, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Wings
+    ctx.beginPath();
+    ctx.moveTo(e.x - 22, e.y + wing);
+    ctx.quadraticCurveTo(e.x - 10, e.y + wing - 6, e.x, e.y);
+    ctx.quadraticCurveTo(e.x + 10, e.y + wing - 6, e.x + 22, e.y + wing);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fill();
+    // Head
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(e.x + 10, e.y - 2, 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawGlider() {
+  const gx = gliderX;
+  const gy = gliderY;
+
+  // Tilt angle based on velocity
+  const tilt = Math.max(-0.4, Math.min(0.4, -velocity * 0.04));
+  const thermal_glow = inThermal;
+
+  ctx.save();
+  ctx.translate(gx, gy);
+  ctx.rotate(tilt);
+
+  // Thermal amber glow
+  if (thermal_glow) {
+    const glowPhase = Date.now() * 0.005;
+    ctx.shadowColor = 'rgba(255,180,50,0.7)';
+    ctx.shadowBlur = 15 + Math.sin(glowPhase) * 5;
+  }
+
+  // Canopy (trapezoid)
+  ctx.fillStyle = '#e8821a'; // saffron
+  ctx.beginPath();
+  ctx.moveTo(-28, -8);
+  ctx.lineTo(28, -8);
+  ctx.lineTo(18, -22);
+  ctx.lineTo(-18, -22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Canopy highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.moveTo(-20, -20);
+  ctx.lineTo(20, -20);
+  ctx.lineTo(14, -12);
+  ctx.lineTo(-14, -12);
+  ctx.closePath();
+  ctx.fill();
+
+  // Lines
+  ctx.strokeStyle = 'rgba(100,80,50,0.7)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.moveTo(-15, -8); ctx.lineTo(-4, 6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, 6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(15, -8); ctx.lineTo(4, 6); ctx.stroke();
+
+  // Pilot harness
+  ctx.fillStyle = '#2c3e50';
+  ctx.beginPath();
+  ctx.ellipse(0, 10, 7, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Helmet
+  ctx.fillStyle = '#e63946';
+  ctx.beginPath();
+  ctx.arc(0, 5, 5, Math.PI, 0);
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+function drawParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.life -= p.decay;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.alpha ? p.color + p.life + ')' : p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ---- Collision ----
+function getTerrainYAtX(screenX) {
+  const idx = Math.floor(screenX / TERRAIN_SEGMENT_W);
+  if (idx < 0 || idx >= terrainPoints.length - 1) return H * 0.8;
+  const frac = (screenX % TERRAIN_SEGMENT_W) / TERRAIN_SEGMENT_W;
+  return terrainPoints[idx] * (1 - frac) + terrainPoints[idx + 1] * frac;
+}
+
+function checkCollisions() {
+  const terrainY = getTerrainYAtX(gliderX);
+
+  // Ground collision
+  if (gliderY + 12 >= terrainY) {
+    if (zenMode) {
+      // Auto-recover: bounce up
+      velocity = 8;
+      gliderY = terrainY - 20;
+      zenRecovering = true;
+      return;
+    }
+    endGame();
+    return;
+  }
+
+  // Prayer flags
+  for (let i = prayerFlags.length - 1; i >= 0; i--) {
+    const f = prayerFlags[i];
+    if (f.collected) continue;
+    const dx = gliderX - f.x;
+    const dy = gliderY - f.y;
+    if (Math.abs(dx) < 30 && Math.abs(dy) < 30) {
+      f.collected = true;
+      prayerFlagsCollected++;
+      flagCombo++;
+      flagComboTimer = 180; // 3 seconds at 60fps
+      maxCombo = Math.max(maxCombo, flagCombo);
+
+      // Score
+      const multipliers = [1,1,2,3,5];
+      const mult = multipliers[Math.min(flagCombo - 1, 4)];
+      const pts = 100 * mult;
+      totalFlagScore += pts;
+      totalScore += pts;
+
+      playFlagSound(flagCombo);
+      spawnFlagParticles(f.x, f.y, f.colors);
+
+      // HUD combo
+      updateComboDisplay();
+      checkAchievements();
+    }
+  }
+
+  // Eagles
+  for (const e of eagles) {
+    const dx = gliderX - e.x;
+    const dy = gliderY - e.y;
+    const dist2 = dx*dx + dy*dy;
+
+    // Near miss range (60px) but not collision (20px)
+    if (!e.nearMissed && dist2 < 60*60 && dist2 > 20*20) {
+      e.nearMissed = true;
+      eagleNearMisses++;
+      totalNearMissBonus += 250;
+      totalScore += 250;
+      flashScreen('rgba(255,255,255,0.25)');
+    }
+
+    // Collision
+    if (!zenMode && dist2 < 22*22) {
+      endGame();
+      return;
+    }
+  }
+
+  // Thermals
+  inThermal = false;
+  for (const t of thermals) {
+    if (!t.active) continue;
+    const dx = Math.abs(gliderX - t.x);
+    const dy = gliderY - t.y;
+    if (dx < t.width && dy > 0 && dy < t.height) {
+      inThermal = true;
+      if (thermalTimer === 0) {
+        thermalsCount++;
+        playThermalSound();
+        spawnThermalParticles(gliderX, gliderY);
+        checkAchievements();
+      }
+      thermalTimer = 30;
+    }
+  }
+  if (thermalTimer > 0) thermalTimer--;
+}
+
+// ---- Physics ----
+const GRAVITY = 0.18;
+const RISE_FORCE = 0.5;
+const THERMAL_BOOST = 0.25;
+const MAX_RISE = 8;
+const MAX_FALL = -6;
+
+function updatePhysics(dt) {
+  if (isHolding) {
+    velocity += RISE_FORCE;
+  } else {
+    velocity -= GRAVITY;
+  }
+
+  if (inThermal) velocity += THERMAL_BOOST;
+
+  velocity = Math.max(MAX_FALL, Math.min(MAX_RISE, velocity));
+  gliderY -= velocity;
+
+  // Altitude clamp (don't go above screen)
+  if (gliderY < 60) {
+    gliderY = 60;
+    velocity = Math.min(velocity, 0);
+  }
+}
+
+// ---- Game Update ----
+let lastTime = 0;
+function gameLoop(ts) {
+  animFrameId = requestAnimationFrame(gameLoop);
+  const dt = Math.min((ts - lastTime) / 16.67, 3);
+  lastTime = ts;
+
+  if (gameState !== 'playing') return;
+
+  gameTime += dt;
+  distance += scrollSpeed * dt;
+  totalScore = Math.floor(distance) + totalFlagScore + totalNearMissBonus + altitudeMilestoneBonus;
+
+  // Update biome
+  const newBiome = BIOMES.findLastIndex(b => distance >= b.minDist);
+  if (newBiome !== biomeIndex) {
+    biomeIndex = newBiome;
+    if (!visitedBiomes.has(biomeIndex)) {
+      visitedBiomes.add(biomeIndex);
+      showBiomeCard(BIOMES[biomeIndex]);
+    }
+  }
+
+  // Altitude in meters (scale: canvas bottom ~= 0m, top ~= 4000m)
+  altitudeM = Math.max(0, Math.floor((1 - gliderY / H) * 4000));
+  maxAltitudeM = Math.max(maxAltitudeM, altitudeM);
+
+  // Altitude milestones
+  [1000, 2000, 3000, 4000].forEach(m => {
+    if (altitudeM >= m && !altitudeMilestonesHit.has(m)) {
+      altitudeMilestonesHit.add(m);
+      const bonus = {1000:500, 2000:1000, 3000:2000, 4000:5000}[m];
+      altitudeMilestoneBonus += bonus;
+      totalScore += bonus;
+      flashScreen('rgba(255,255,255,0.15)');
+    }
+  });
+
+  // Flag combo timer
+  if (flagComboTimer > 0) {
+    flagComboTimer -= dt;
+    if (flagComboTimer <= 0) {
+      flagCombo = 0;
+      updateComboDisplay();
+    }
+  }
+
+  // Scroll difficulty
+  scrollSpeed = 2.5 + distance * 0.0003;
+
+  // Scroll terrain
+  terrainOffset -= scrollSpeed * dt;
+  extendTerrain();
+
+  // Scroll objects
+  for (const f of prayerFlags) f.x -= scrollSpeed * dt;
+  for (const e of eagles) { e.x -= (scrollSpeed + e.speed) * dt; e.y += e.vy * dt; }
+  for (const t of thermals) t.x -= scrollSpeed * dt;
+
+  // Remove off-screen objects
+  prayerFlags = prayerFlags.filter(f => f.x > -60);
+  eagles = eagles.filter(e => e.x > -60);
+  thermals = thermals.filter(t => t.x > -100);
+
+  // Spawn new objects
+  spawnObjects();
+
+  updatePhysics(dt);
+  checkCollisions();
+  checkGoals();
+  updateWindPitch();
+
+  // Draw
+  draw();
+  updateHUD();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawSky();
+  drawBackMountains();
+  drawMidLayer();
+  drawThermals();
+  drawPrayerFlags();
+  drawEagles();
+  drawTerrain();
+  drawGlider();
+  drawParticles();
+}
+
+// ---- HUD ----
+function updateHUD() {
+  document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' <span>m</span>';
+  if (personalBest > 0) {
+    document.getElementById('hudBest').textContent = 'Best: ' + personalBest + 'm';
+  }
+  const altPct = Math.min(100, (altitudeM / 4000) * 100);
+  document.getElementById('altFill').style.height = altPct + '%';
+  document.getElementById('altLabel').textContent = altitudeM + 'm';
+}
+
+function updateComboDisplay() {
+  const el = document.getElementById('hudCombo');
+  if (flagCombo >= 2) {
+    const multipliers = [1,1,2,3,5];
+    const mult = multipliers[Math.min(flagCombo - 1, 4)];
+    el.textContent = 'x' + mult + ' Combo!';
+    el.classList.add('active');
+  } else {
+    el.classList.remove('active');
+  }
+}
+
+// ---- Goals ----
+const GOAL_POOL_ACTIVE = [
+  { id: 'thermals3', text: 'Catch 3 thermals', check: () => thermalsCount >= 3 },
+  { id: 'flags10',   text: 'Collect 10 flags',  check: () => prayerFlagsCollected >= 10 },
+  { id: 'dist1000',  text: 'Fly 1000m',          check: () => distance >= 1000 },
+];
+
+function pickGoals() {
+  goals = GOAL_POOL_ACTIVE.slice(0, 3);
+  renderGoals();
+}
+
+function checkGoals() {
+  let changed = false;
+  for (const g of goals) {
+    const was = goalProgress[g.id];
+    const now = g.check();
+    if (now && !was) { goalProgress[g.id] = true; changed = true; }
+  }
+  if (changed) renderGoals();
+}
+
+function renderGoals() {
+  const panel = document.getElementById('goalsPanel');
+  if (!panel) return;
+  panel.innerHTML = goals.map(g => {
+    const done = goalProgress[g.id];
+    return `<div class="goal-item"><div class="goal-dot ${done?'done':''}"></div>${g.text}</div>`;
+  }).join('');
+}
+
+// ---- Biome card ----
+let biomeCardTimeout = null;
+function showBiomeCard(biome) {
+  const card = document.getElementById('biomeCard');
+  document.getElementById('biomeCardName').textContent = biome.name;
+  document.getElementById('biomeCardSub').textContent = biome.sub;
+  card.classList.add('show');
+  clearTimeout(biomeCardTimeout);
+  biomeCardTimeout = setTimeout(() => card.classList.remove('show'), 2500);
+}
+
+// ---- Screen flash ----
+function flashScreen(color) {
+  const el = document.getElementById('screenFlash');
+  el.style.background = color;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.transition = 'opacity 0.5s'; el.style.opacity = '0'; }, 50);
+  setTimeout(() => { el.style.transition = ''; }, 600);
+}
+
+// ---- Toast ----
+function showToast(icon, text) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<span>${icon}</span><span>${text}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3200);
+}
+
+// ---- Game Flow ----
+function startGame() {
+  // Reset state
+  distance = 0;
+  score = 0;
+  totalScore = 0;
+  totalFlagScore = 0;
+  totalNearMissBonus = 0;
+  altitudeMilestoneBonus = 0;
+  altitude = 200;
+  velocity = 2;
+  gliderX = W * 0.3;
+  gliderY = H * 0.45;
+  scrollSpeed = 2.5;
+  prayerFlagsCollected = 0;
+  flagCombo = 0;
+  flagComboTimer = 0;
+  maxCombo = 0;
+  eagleNearMisses = 0;
+  thermalsCount = 0;
+  inThermal = false;
+  thermalTimer = 0;
+  biomeIndex = 0;
+  altitudeM = 0;
+  maxAltitudeM = 0;
+  visitedBiomes = new Set([0]);
+  altitudeMilestonesHit = new Set();
+  isNewBest = false;
+  zenRecovering = false;
+  zenTimer = 0;
+  zenDroneStarted = false;
+
+  prayerFlags = [];
+  eagles = [];
+  thermals = [];
+  particles = [];
+  goals = [];
+  goalProgress = {};
+
+  terrainOffset = 0;
+  terrainSeed = Math.random() * 10000;
+  generateTerrain();
+  generateBackMountains();
+  generateMidTrees();
+
+  pickGoals();
+
+  runStartTime = Date.now();
+  gameTime = 0;
+
+  // Hide/show UI
+  document.getElementById('menuScreen').classList.add('hidden');
+  document.getElementById('gameoverScreen').classList.add('hidden');
+  document.getElementById('hud').style.display = 'block';
+
+  gameState = 'playing';
+
+  initAudio();
+  startWind();
+  if (zenMode) startZenDrone();
+}
+
+function endGame() {
+  if (gameState !== 'playing') return;
+  gameState = 'gameover';
+
+  stopWind();
+  playCrashSound();
+
+  // Check personal best
+  if (distance > personalBest) {
+    personalBest = Math.floor(distance);
+    isNewBest = true;
+    localStorage.setItem('bir-glider-best', personalBest);
+  }
+
+  document.getElementById('hud').style.display = 'none';
+  showGameOver();
+}
+
+function showMenu() {
+  gameState = 'menu';
+  document.getElementById('gameoverScreen').classList.add('hidden');
+  document.getElementById('menuScreen').classList.remove('hidden');
+  document.getElementById('hud').style.display = 'none';
+  updateMenuBest();
+}
+
+function showGameOver() {
+  const screen = document.getElementById('gameoverScreen');
+  screen.classList.remove('hidden');
+
+  document.getElementById('statDistance').textContent = Math.floor(distance) + 'm';
+  document.getElementById('statAltitude').textContent = maxAltitudeM + 'm';
+  document.getElementById('statFlags').textContent = prayerFlagsCollected;
+
+  if (isNewBest) {
+    document.getElementById('statDistance').classList.add('new-best');
+    document.getElementById('gameoverTitle').textContent = 'New Record!';
+    document.getElementById('gameoverSubtitle').textContent = 'You soared further than ever before.';
+  } else {
+    document.getElementById('statDistance').classList.remove('new-best');
+    document.getElementById('gameoverTitle').textContent = 'Landed';
+    document.getElementById('gameoverSubtitle').textContent = 'The mountain is patient. Fly again.';
+    const gap = personalBest - Math.floor(distance);
+    if (gap > 0) {
+      document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
+    } else {
+      document.getElementById('gapToBest').textContent = '';
+    }
+  }
+
+  const biomeName = BIOMES[biomeIndex].name;
+  document.getElementById('biomeReached').textContent = 'Reached: ' + biomeName;
+
+  // Unlock achievements
+  checkAndUnlockAchievements();
+
+  // Submit score button
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Submit Score';
+  if (!currentUser) {
+    submitBtn.textContent = 'Sign in to Submit';
+  }
+}
+
+// ---- Achievements ----
+function checkAchievements() {
+  // In-game quick checks (lightweight)
+}
+
+async function checkAndUnlockAchievements() {
+  if (!currentUser || !window.apiClient) return;
+
+  const toUnlock = [];
+
+  // First flight
+  toUnlock.push('bir_first_flight');
+
+  // Flag collector (10 in one run)
+  if (prayerFlagsCollected >= 10) toUnlock.push('bir_flag_collector');
+
+  // Altitude 1000
+  if (maxAltitudeM >= 1000) toUnlock.push('bir_altitude_1000');
+
+  // Eagle dodger
+  if (eagleNearMisses >= 10) toUnlock.push('bir_eagle_dodger');
+
+  // Himalayan explorer (Snow Peaks = biome index 2, distance 2500m)
+  if (distance >= 2500) toUnlock.push('bir_himalayan_explorer');
+
+  // Thermal rider (20 thermals)
+  if (thermalsCount >= 20) toUnlock.push('bir_thermal_rider');
+
+  // Legend (10k score)
+  if (totalScore >= 10000) toUnlock.push('bir_legend');
+
+  // Zen master (5 min = 300s) — tracked separately via zenTimer
+  if (zenMode && gameTime / 60 >= 300) toUnlock.push('bir_zen_master');
+
+  for (const id of toUnlock) {
+    try {
+      await window.apiClient.unlockAchievement(id, 'bir-glider');
+    } catch(e) {}
+  }
+}
+
+// ---- Score submission ----
+async function submitScore() {
+  if (!currentUser) {
+    if (window.authManager) window.authManager.signIn();
+    return;
+  }
+  if (!window.apiClient) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    await window.apiClient.submitScore('bir-glider', {
+      score: totalScore,
+      level: biomeIndex,
+      timeMs: Date.now() - runStartTime,
+      metadata: {
+        distance: Math.floor(distance),
+        maxAltitude: maxAltitudeM,
+        prayerFlags: prayerFlagsCollected,
+        maxCombo: maxCombo,
+        eagleNearMisses: eagleNearMisses,
+        biome: BIOMES[biomeIndex].name,
+        goalsCompleted: goals.filter(g => goalProgress[g.id]).length,
+        zenMode: zenMode,
+      }
+    });
+    btn.textContent = 'Submitted!';
+    showToast('✅', 'Score submitted!');
+  } catch(err) {
+    console.error('Score submit failed:', err);
+    btn.disabled = false;
+    btn.textContent = 'Retry Submit';
+  }
+}
+
+// ---- Controls ----
+function onHoldStart(e) {
+  e.preventDefault();
+  if (gameState !== 'playing') return;
+  isHolding = true;
+}
+function onHoldEnd(e) {
+  isHolding = false;
+}
+
+canvas.addEventListener('mousedown', onHoldStart);
+canvas.addEventListener('mouseup', onHoldEnd);
+canvas.addEventListener('mouseleave', onHoldEnd);
+canvas.addEventListener('touchstart', onHoldStart, { passive: false });
+canvas.addEventListener('touchend', onHoldEnd);
+canvas.addEventListener('touchcancel', onHoldEnd);
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onHoldStart(e); }
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') onHoldEnd(e);
+});
+
+// ---- Zen mode ----
+function toggleZenMode() {
+  zenMode = !zenMode;
+  const toggle = document.getElementById('zenToggle');
+  toggle.classList.toggle('active', zenMode);
+  localStorage.setItem('bir-glider-zen', zenMode ? '1' : '0');
+}
+
+// ---- Sound toggle ----
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+  if (windGain) windGain.gain.value = muted ? 0 : 0.04;
+}
+
+// ---- Auth ----
+function handleAuth() {
+  if (currentUser) {
+    window.location.href = '/profile/';
+  } else if (window.authManager) {
+    window.authManager.signIn();
+  }
+}
+
+function setupAuth() {
+  if (window.authManager) {
+    window.authManager.onAuthStateChanged(user => {
+      currentUser = user;
+      const btn = document.getElementById('authBtn');
+      if (user) {
+        btn.textContent = user.displayName || 'Profile';
+        btn.onclick = () => window.location.href = '/profile/';
+      } else {
+        btn.textContent = 'Sign In';
+        btn.onclick = () => window.authManager.signIn();
+      }
+    });
+  }
+}
+
+// ---- Menu background animation ----
+let menuBgOffset = 0;
+function animateMenuBg() {
+  if (gameState !== 'menu') return;
+  const mbCanvas = document.getElementById('menuBgCanvas');
+  if (!mbCanvas) return;
+  const mc = mbCanvas.getContext('2d');
+  const mw = mbCanvas.width;
+  const mh = mbCanvas.height;
+  menuBgOffset += 0.5;
+
+  const grad = mc.createLinearGradient(0, 0, 0, mh);
+  grad.addColorStop(0, '#f4a261');
+  grad.addColorStop(0.4, '#e9c46a');
+  grad.addColorStop(1, '#a8dadc');
+  mc.fillStyle = grad;
+  mc.fillRect(0, 0, mw, mh);
+
+  // Mountains
+  mc.fillStyle = 'rgba(45,106,79,0.6)';
+  for (let i = 0; i < 5; i++) {
+    const mx = ((i * mw/4) - menuBgOffset * 0.2 + mw * 2) % (mw * 1.5);
+    mc.beginPath();
+    mc.moveTo(mx - mw*0.2, mh);
+    mc.lineTo(mx, mh * 0.25 + Math.sin(i*1.3)*mh*0.1);
+    mc.lineTo(mx + mw*0.2, mh);
+    mc.closePath();
+    mc.fill();
+  }
+
+  requestAnimationFrame(animateMenuBg);
+}
+
+// ---- Resize ----
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight - 50;
+  gliderX = W * 0.3;
+  if (gameState === 'menu') {
+    const mb = document.getElementById('menuBgCanvas');
+    mb.width = mb.parentElement.offsetWidth;
+    mb.height = mb.parentElement.offsetHeight;
+  }
+}
+
+// ---- Init ----
+function updateMenuBest() {
+  const el = document.getElementById('menuBest');
+  if (personalBest > 0) {
+    el.textContent = 'Personal Best: ' + personalBest + 'm';
+  } else {
+    el.textContent = 'First flight awaits';
+  }
+}
+
+function init() {
+  canvas = document.getElementById('gameCanvas');
+  ctx = canvas.getContext('2d');
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Load saved data
+  personalBest = parseInt(localStorage.getItem('bir-glider-best') || '0');
+  zenMode = localStorage.getItem('bir-glider-zen') === '1';
+  muted = localStorage.getItem('bir-glider-muted') === '1';
+
+  if (zenMode) document.getElementById('zenToggle').classList.add('active');
+  if (muted) document.getElementById('muteBtn').textContent = '🔇';
+
+  updateMenuBest();
+  setupAuth();
+
+  // Start menu bg animation
+  const mb = document.getElementById('menuBgCanvas');
+  mb.width = window.innerWidth;
+  mb.height = window.innerHeight - 50;
+  animateMenuBg();
+
+  // Start animation loop
+  requestAnimationFrame(ts => { lastTime = ts; requestAnimationFrame(gameLoop); });
+}
+
+// Start when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
