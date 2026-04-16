@@ -124,6 +124,7 @@
   z-index: 200;
   text-align: center;
   padding: clamp(0.5rem, 2dvh, 2rem);
+  background: var(--bg-primary); /* solid fallback behind canvas */
 }
 .menu-screen.hidden { display: none; }
 

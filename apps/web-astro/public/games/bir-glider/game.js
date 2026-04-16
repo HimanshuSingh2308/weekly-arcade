@@ -1532,9 +1532,15 @@ function showMenu() {
   showHeader();
   gameState = 'menu';
   document.getElementById('gameoverScreen').classList.add('hidden');
+  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('tapOverlay').classList.add('hidden');
   document.getElementById('menuScreen').classList.remove('hidden');
   document.getElementById('hud').style.display = 'none';
+  document.getElementById('pauseBtn').style.display = 'none';
   updateMenuBest();
+  window.scrollTo(0, 0);
+  // Restart menu background animation
+  animateMenuBg();
 }
 
 function showGameOver() {
