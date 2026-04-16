@@ -1227,7 +1227,7 @@ function startGame() {
   totalNearMissBonus = 0;
   altitudeMilestoneBonus = 0;
   altitude = 200;
-  velocity = 2;
+  velocity = 0; // starts in neutral glide — player must hold to rise
   gliderX = W * 0.3;
   gliderY = H * 0.45;
   scrollSpeed = 0.25;
@@ -1455,7 +1455,7 @@ async function autoSubmitScore() {
 // ---- Controls ----
 function onHoldStart(e) {
   e.preventDefault();
-  if (gameState === 'waiting') { launchFlight(); isHolding = true; return; }
+  if (gameState === 'waiting') { launchFlight(); return; }
   if (gameState !== 'playing') return;
   isHolding = true;
 }
@@ -1474,8 +1474,8 @@ function setupControls() {
   // Tap overlay also triggers launch
   const tapOverlay = document.getElementById('tapOverlay');
   if (tapOverlay) {
-    tapOverlay.addEventListener('click', () => { if (gameState === 'waiting') { launchFlight(); isHolding = true; } });
-    tapOverlay.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameState === 'waiting') { launchFlight(); isHolding = true; } }, { passive: false });
+    tapOverlay.addEventListener('click', () => { if (gameState === 'waiting') launchFlight(); });
+    tapOverlay.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameState === 'waiting') launchFlight(); }, { passive: false });
   }
   document.addEventListener('keydown', e => {
     if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onHoldStart(e); }
