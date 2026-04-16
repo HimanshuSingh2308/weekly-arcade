@@ -119,10 +119,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   z-index: 200;
   text-align: center;
   padding: 2rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .menu-screen.hidden { display: none; }
 
@@ -571,12 +573,15 @@
   .gameover-buttons { gap: 0.5rem; }
   .retry-btn, .menu-btn-go { padding: 0.5rem 1.5rem; font-size: 0.85rem; }
 
-  .menu-screen { padding: 0.5rem; }
-  .menu-icon { font-size: 2rem; }
-  .menu-title { font-size: 1.5rem; }
-  .menu-tagline { font-size: 0.8rem; margin-bottom: 0.3rem; }
-  .play-btn { padding: 0.6rem 2.5rem; font-size: 1rem; }
-  .controls-hint { font-size: 0.7rem; }
+  .menu-screen { padding: 0.5rem 1rem; }
+  .menu-content { gap: 0; }
+  .menu-icon { font-size: 1.8rem; margin-bottom: 0.2rem; }
+  .menu-title { font-size: 1.4rem; margin-bottom: 0.1rem; }
+  .menu-tagline { font-size: 0.75rem; margin-bottom: 0.2rem; }
+  .menu-best { font-size: 0.8rem; margin-bottom: 0.3rem; }
+  .play-btn { padding: 0.5rem 2rem; font-size: 0.95rem; margin-bottom: 0.3rem; }
+  .zen-toggle { padding: 0.3rem 0.8rem; font-size: 0.8rem; min-height: 36px; margin-bottom: 0.3rem; }
+  .controls-hint { font-size: 0.65rem; }
 
   .pause-title { font-size: 1.5rem; }
   .pause-icon { font-size: 2rem; }
