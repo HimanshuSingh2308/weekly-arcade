@@ -767,14 +767,14 @@ function drawEagles() {
 function drawGlider() {
   ctx.save();
   ctx.translate(gliderX, gliderY);
-  const tilt = Math.max(-0.3, Math.min(0.3, -velocity * 0.03));
+  const tilt = Math.max(-0.25, Math.min(0.25, -velocity * 0.025));
   ctx.rotate(tilt);
 
-  const t = Date.now() * 0.001; // time in seconds for animation
-  const windWobble = Math.sin(t * 2.5) * 1.5; // subtle canopy breathing
-  const CW = 42; // canopy half-width
-  const CH = 22; // canopy height (top to bottom surface)
-  const cellCount = 9; // number of inflated cells
+  const t = Date.now() * 0.001;
+  const breathe = Math.sin(t * 2) * 1.2; // canopy breathing
+  const CW = 48; // canopy half-width (bigger = more visible)
+  const CH = 18; // canopy height
+  const cellCount = 9;
 
   // ── Thermal glow ──
   if (inThermal) {
@@ -785,249 +785,188 @@ function drawGlider() {
     ctx.fillRect(-60, -40, 120, 80);
   }
 
-  // ── Canopy (inflated elliptical wing with 3D cell shading) ──
+  // ── Canopy — smooth billowing arc (like 🪂 emoji) ──
+  const topY = -CH - 10 + breathe;
+  const botY = -6;
 
-  // Outer canopy shape (upper surface — the visible curved top)
-  const topY = -CH - 8 + windWobble;
-  const botY = -8;
-  const midY = topY + CH * 0.4;
+  // 1) Draw one smooth canopy shape (billowing arc)
+  // Compute the elliptical top edge as a function
+  function canopyTopAt(norm) {
+    const ellF = 1 - Math.pow(norm * 2 - 1, 2); // 0 at edges, 1 at center
+    return topY + (1 - ellF) * CH * 0.7;
+  }
+  function canopyBotAt(norm) {
+    const ellF = 1 - Math.pow(norm * 2 - 1, 2);
+    return botY + (1 - ellF) * 4;
+  }
 
-  // Real paraglider color panels — bold blocks like actual Bir canopies
-  // Pattern: saffron | saffron | orange | white | white | white | green | green | deep green
-  const panelColors = [
-    ['#FF6D00', '#FF8F00'], // cell 0: deep saffron
-    ['#FF8F00', '#FFA726'], // cell 1: bright saffron
-    ['#FFB74D', '#FFCC80'], // cell 2: light orange
-    ['#FFF8E1', '#FFFFFF'], // cell 3: cream to white
-    ['#FFFFFF', '#F5F5F5'], // cell 4: pure white (center)
-    ['#F5F5F5', '#E8F5E9'], // cell 5: white to pale green
-    ['#66BB6A', '#43A047'], // cell 6: medium green
-    ['#2E7D32', '#1B5E20'], // cell 7: deep green
-    ['#1B5E20', '#0D3B0D'], // cell 8: darkest green
+  // Clip region = canopy shape (so color bands stay inside)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(-CW, botY + 4);
+  for (let i = 0; i <= 40; i++) {
+    const norm = i / 40;
+    ctx.lineTo(-CW + norm * CW * 2, canopyTopAt(norm));
+  }
+  ctx.lineTo(CW, botY + 4);
+  // Bottom edge (slight belly curve)
+  ctx.quadraticCurveTo(0, botY + 6 + breathe * 0.5, -CW, botY + 4);
+  ctx.closePath();
+  ctx.clip();
+
+  // 2) Paint color stripes across canopy (horizontal bands = saffron/white/green)
+  const stripes = [
+    { from: 0, to: 0.22, color: '#FF6D00' },  // deep saffron
+    { from: 0.22, to: 0.35, color: '#FF9100' }, // bright saffron
+    { from: 0.35, to: 0.42, color: '#FFB74D' }, // light orange
+    { from: 0.42, to: 0.58, color: '#FFFFFF' }, // white center
+    { from: 0.58, to: 0.65, color: '#81C784' }, // pale green
+    { from: 0.65, to: 0.78, color: '#43A047' }, // medium green
+    { from: 0.78, to: 1.0,  color: '#1B5E20' }, // deep green
   ];
+  for (const s of stripes) {
+    ctx.fillStyle = s.color;
+    ctx.fillRect(-CW + s.from * CW * 2, topY - 5, (s.to - s.from) * CW * 2, CH + 20);
+  }
 
-  // Draw each cell as an inflated segment
+  // 3) 3D shading overlay on canopy (darker at edges, light at center top)
+  const shade = ctx.createRadialGradient(0, topY + CH * 0.3, CW * 0.2, 0, topY + CH * 0.3, CW * 1.2);
+  shade.addColorStop(0, 'rgba(255,255,255,0.15)');
+  shade.addColorStop(0.5, 'rgba(0,0,0,0)');
+  shade.addColorStop(1, 'rgba(0,0,0,0.2)');
+  ctx.fillStyle = shade;
+  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
+
+  // Bottom shadow (underside of canopy)
+  const botShade = ctx.createLinearGradient(0, botY - 3, 0, botY + 6);
+  botShade.addColorStop(0, 'rgba(0,0,0,0)');
+  botShade.addColorStop(1, 'rgba(0,0,0,0.2)');
+  ctx.fillStyle = botShade;
+  ctx.fillRect(-CW, botY - 3, CW * 2, 10);
+
+  ctx.restore(); // remove clip
+
+  // 4) Cell rib lines (subtle seams on top of the smooth canopy)
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 0.6;
   const cellW = (CW * 2) / cellCount;
-  for (let c = 0; c < cellCount; c++) {
+  for (let c = 1; c < cellCount; c++) {
     const cx = -CW + c * cellW;
-    const cx2 = cx + cellW;
-    const normC = (c + 0.5) / cellCount;
-    const ellipseF = 1 - Math.pow(normC * 2 - 1, 2);
-    const cellTopY = topY + (1 - ellipseF) * CH * 0.6;
-    const cellBotY = botY + (1 - ellipseF) * 3;
-    const cellMidY = cellTopY + (cellBotY - cellTopY) * 0.35;
-    const bulge = 2.5 * ellipseF;
-
-    // Per-cell gradient (top lit, bottom shaded — gives each cell 3D roundness)
-    const colors = panelColors[Math.min(c, panelColors.length - 1)];
-    const cellGrad = ctx.createLinearGradient(cx, cellTopY, cx, cellBotY + bulge);
-    cellGrad.addColorStop(0, colors[0]);    // top (lit)
-    cellGrad.addColorStop(0.6, colors[1]);  // middle
-    cellGrad.addColorStop(1, colors[0]);    // bottom rim (slightly lit again by ambient)
-
-    // Upper inflated surface
-    ctx.fillStyle = cellGrad;
+    const norm = c / cellCount;
     ctx.beginPath();
-    ctx.moveTo(cx, cellBotY);
-    ctx.quadraticCurveTo(cx + cellW * 0.1, cellMidY, cx + cellW * 0.5, cellTopY);
-    ctx.quadraticCurveTo(cx + cellW * 0.9, cellMidY, cx2, cellBotY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Bottom surface shadow (inflated belly underneath)
-    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-    ctx.beginPath();
-    ctx.moveTo(cx + 1, cellBotY);
-    ctx.quadraticCurveTo(cx + cellW * 0.5, cellBotY + bulge + 2, cx2 - 1, cellBotY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Cell top highlight (specular — light catching the peak of each cell)
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.beginPath();
-    const peakX = cx + cellW * 0.5;
-    const peakY = cellTopY + 1;
-    ctx.ellipse(peakX, peakY + 3, cellW * 0.25, 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cell rib line (seam between cells — subtle dark line)
-    if (c > 0) {
-      ctx.strokeStyle = 'rgba(0,0,0,0.18)';
-      ctx.lineWidth = 0.7;
-      ctx.beginPath();
-      ctx.moveTo(cx, cellBotY);
-      ctx.lineTo(cx, cellTopY + 2);
-      ctx.stroke();
-    }
-  }
-
-  // Leading edge highlight (curved top rim catching light)
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(-CW + 2, botY);
-  for (let i = 0; i <= 20; i++) {
-    const norm = i / 20;
-    const x = -CW + norm * CW * 2;
-    const ellF = 1 - Math.pow(norm * 2 - 1, 2);
-    ctx.lineTo(x, topY + (1 - ellF) * CH * 0.6 + windWobble * 0.5);
-  }
-  ctx.stroke();
-
-  // Trailing edge (subtle darker line at bottom of canopy)
-  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(-CW, botY);
-  ctx.quadraticCurveTo(0, botY + 2, CW, botY);
-  ctx.stroke();
-
-  // ── Suspension lines (A/B/C/D rows — realistic line cascade) ──
-  const pilotY = 18;
-  const riserL = -3; // left riser attach
-  const riserR = 3;  // right riser attach
-  // A-lines (front, to leading edge)
-  // B-lines (middle)
-  // C-lines (rear)
-  const lineAlpha = 0.35;
-  ctx.strokeStyle = `rgba(70,55,40,${lineAlpha})`;
-  ctx.lineWidth = 0.4;
-
-  // Fan of lines from each riser to the canopy
-  const lineAttachPoints = [-CW+4, -CW*0.6, -CW*0.25, 0, CW*0.25, CW*0.6, CW-4];
-  for (const ax of lineAttachPoints) {
-    const norm = (ax + CW) / (CW * 2);
-    const ellF = 1 - Math.pow(norm * 2 - 1, 2);
-    const attachY = botY + (1 - ellF) * 3;
-    // Line to left riser
-    ctx.beginPath();
-    ctx.moveTo(ax, attachY);
-    // Slight sag in the middle of the line
-    const midX = (ax + (ax < 0 ? riserL : riserR)) / 2;
-    const sagY = (attachY + pilotY) / 2 + 3;
-    ctx.quadraticCurveTo(midX, sagY, ax < 0 ? riserL : riserR, pilotY - 5);
+    ctx.moveTo(cx, canopyBotAt(norm));
+    ctx.lineTo(cx, canopyTopAt(norm) + 1);
     ctx.stroke();
   }
 
-  // Brake lines (colored — left red, right red, thicker)
-  ctx.strokeStyle = 'rgba(180,40,40,0.3)';
-  ctx.lineWidth = 0.6;
-  // Left brake
-  ctx.beginPath();
-  ctx.moveTo(-CW + 8, botY + 1);
-  ctx.quadraticCurveTo(-8, pilotY * 0.5, riserL - 2, pilotY - 3);
-  ctx.stroke();
-  // Right brake
-  ctx.beginPath();
-  ctx.moveTo(CW - 8, botY + 1);
-  ctx.quadraticCurveTo(8, pilotY * 0.5, riserR + 2, pilotY - 3);
-  ctx.stroke();
-
-  // ── Risers (short straps from lines to harness) ──
-  ctx.strokeStyle = 'rgba(50,40,30,0.5)';
+  // 5) Leading edge highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
   ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(riserL, pilotY - 5); ctx.lineTo(riserL, pilotY + 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(riserR, pilotY - 5); ctx.lineTo(riserR, pilotY + 2); ctx.stroke();
+  ctx.beginPath();
+  for (let i = 0; i <= 30; i++) {
+    const norm = i / 30;
+    const x = -CW + norm * CW * 2;
+    if (i === 0) ctx.moveTo(x, canopyTopAt(norm));
+    else ctx.lineTo(x, canopyTopAt(norm));
+  }
+  ctx.stroke();
 
-  // ── Harness (cocoon-shaped, pilot seated inside) ──
-  // Harness shell
-  const hGrad = ctx.createLinearGradient(-8, pilotY - 2, 8, pilotY + 16);
-  hGrad.addColorStop(0, '#2C3E50');
-  hGrad.addColorStop(0.5, '#34495E');
+  // 6) Trailing edge
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-CW, botY + 4);
+  ctx.quadraticCurveTo(0, botY + 6, CW, botY + 4);
+  ctx.stroke();
+
+  // ── Lines + Pilot (simplified but clear) ──
+  const pilotY = 22;
+
+  // Suspension lines (thin fan from canopy to pilot)
+  ctx.strokeStyle = 'rgba(60,50,40,0.25)';
+  ctx.lineWidth = 0.4;
+  const attachPts = [-CW*0.85, -CW*0.55, -CW*0.2, 0, CW*0.2, CW*0.55, CW*0.85];
+  for (const ax of attachPts) {
+    const norm = (ax + CW) / (CW * 2);
+    const ay = canopyBotAt(norm) + 1;
+    const toX = ax < 0 ? -3 : 3;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.quadraticCurveTo((ax + toX) / 2, (ay + pilotY) / 2 + 2, toX, pilotY - 4);
+    ctx.stroke();
+  }
+
+  // Brake lines (red tint)
+  ctx.strokeStyle = 'rgba(180,50,50,0.25)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(-CW * 0.7, botY + 3); ctx.quadraticCurveTo(-6, pilotY * 0.5, -4, pilotY - 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CW * 0.7, botY + 3); ctx.quadraticCurveTo(6, pilotY * 0.5, 4, pilotY - 2); ctx.stroke();
+
+  // Harness (cocoon shape)
+  const hGrad = ctx.createLinearGradient(-7, pilotY, 7, pilotY + 18);
+  hGrad.addColorStop(0, '#34495E');
   hGrad.addColorStop(1, '#1A252F');
   ctx.fillStyle = hGrad;
   ctx.beginPath();
-  ctx.moveTo(-7, pilotY);
-  ctx.quadraticCurveTo(-9, pilotY + 8, -6, pilotY + 18);
-  ctx.quadraticCurveTo(0, pilotY + 22, 6, pilotY + 18);
-  ctx.quadraticCurveTo(9, pilotY + 8, 7, pilotY);
+  ctx.moveTo(-6, pilotY);
+  ctx.quadraticCurveTo(-8, pilotY + 10, -5, pilotY + 18);
+  ctx.quadraticCurveTo(0, pilotY + 21, 5, pilotY + 18);
+  ctx.quadraticCurveTo(8, pilotY + 10, 6, pilotY);
   ctx.closePath();
   ctx.fill();
 
-  // Harness edge highlight
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(-6, pilotY + 1);
-  ctx.quadraticCurveTo(-8, pilotY + 8, -5, pilotY + 16);
-  ctx.stroke();
-
-  // ── Pilot (upper body visible above harness) ──
-  // Torso/jacket
+  // Pilot torso
   ctx.fillStyle = '#1A3A5C';
   ctx.beginPath();
-  ctx.ellipse(0, pilotY + 2, 5, 5, 0, -Math.PI, 0);
+  ctx.ellipse(0, pilotY + 2, 5, 4, 0, -Math.PI, 0);
   ctx.fill();
 
-  // Arms (holding brake toggles)
+  // Arms reaching for brakes
   ctx.strokeStyle = '#1A3A5C';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 2.2;
   ctx.lineCap = 'round';
-  // Left arm reaching to brake toggle
-  ctx.beginPath();
-  ctx.moveTo(-4, pilotY + 1);
-  ctx.quadraticCurveTo(-7, pilotY - 1, riserL - 3, pilotY - 2);
-  ctx.stroke();
-  // Right arm
-  ctx.beginPath();
-  ctx.moveTo(4, pilotY + 1);
-  ctx.quadraticCurveTo(7, pilotY - 1, riserR + 3, pilotY - 2);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-4, pilotY + 1); ctx.quadraticCurveTo(-7, pilotY - 1, -5, pilotY - 3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(4, pilotY + 1); ctx.quadraticCurveTo(7, pilotY - 1, 5, pilotY - 3); ctx.stroke();
   ctx.lineCap = 'butt';
 
-  // Helmet
-  const helmetGrad = ctx.createRadialGradient(-1, pilotY - 5, 1, 0, pilotY - 4, 5);
-  helmetGrad.addColorStop(0, '#FF4444');
-  helmetGrad.addColorStop(0.6, '#CC2222');
-  helmetGrad.addColorStop(1, '#991111');
-  ctx.fillStyle = helmetGrad;
+  // Helmet (red with shine)
+  const hg = ctx.createRadialGradient(-1, pilotY - 5, 1, 0, pilotY - 4, 5);
+  hg.addColorStop(0, '#FF3333');
+  hg.addColorStop(0.7, '#CC1111');
+  hg.addColorStop(1, '#880000');
+  ctx.fillStyle = hg;
   ctx.beginPath();
   ctx.arc(0, pilotY - 4, 4.5, 0, Math.PI * 2);
   ctx.fill();
   // Visor
-  ctx.fillStyle = 'rgba(100,180,255,0.3)';
+  ctx.fillStyle = 'rgba(100,180,255,0.35)';
   ctx.beginPath();
-  ctx.ellipse(1.5, pilotY - 3.5, 2.5, 1.8, 0.2, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.ellipse(1.5, pilotY - 3.5, 2.5, 1.6, 0.2, -0.8, 0.8);
   ctx.fill();
-  // Helmet shine
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  // Shine
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.beginPath();
-  ctx.arc(-1.5, pilotY - 6, 1.5, 0, Math.PI * 2);
+  ctx.arc(-1.5, pilotY - 6, 1.3, 0, Math.PI * 2);
   ctx.fill();
 
-  // ── Boots (dangling below harness) ──
-  ctx.fillStyle = '#1A1A1A';
-  // Left boot
-  ctx.beginPath();
-  ctx.moveTo(-4, pilotY + 18);
-  ctx.lineTo(-5, pilotY + 26 + Math.sin(t * 3) * 1.5);
-  ctx.lineTo(-1, pilotY + 26 + Math.sin(t * 3) * 1.5);
-  ctx.lineTo(-2, pilotY + 18);
-  ctx.closePath();
-  ctx.fill();
-  // Right boot
-  ctx.beginPath();
-  ctx.moveTo(2, pilotY + 18);
-  ctx.lineTo(1, pilotY + 26 + Math.sin(t * 3 + 0.5) * 1.5);
-  ctx.lineTo(5, pilotY + 26 + Math.sin(t * 3 + 0.5) * 1.5);
-  ctx.lineTo(4, pilotY + 18);
-  ctx.closePath();
-  ctx.fill();
-  // Boot soles
+  // Legs/boots dangling
+  ctx.fillStyle = '#1A1A2A';
+  const legSwing = Math.sin(t * 2.5);
+  ctx.fillRect(-4, pilotY + 18, 2.5, 8 + legSwing);
+  ctx.fillRect(1.5, pilotY + 18, 2.5, 8 - legSwing * 0.5);
+  // Shoes
   ctx.fillStyle = '#333';
-  ctx.fillRect(-5, pilotY + 25 + Math.sin(t * 3) * 1.5, 4, 1.5);
-  ctx.fillRect(1, pilotY + 25 + Math.sin(t * 3 + 0.5) * 1.5, 4, 1.5);
+  ctx.fillRect(-4.5, pilotY + 25.5 + legSwing, 3.5, 1.5);
+  ctx.fillRect(1, pilotY + 25.5 - legSwing * 0.5, 3.5, 1.5);
 
-  // ── Speed bar (optional visual when holding/rising fast) ──
-  if (isHolding && velocity > 3) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  // Speed streaks
+  if (isHolding && velocity > 2) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < 3; i++) {
-      const sx = -15 - i * 8;
-      const sy = pilotY + 10 + i * 3;
       ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx - 10 - velocity * 2, sy + 1);
+      ctx.moveTo(-18 - i * 7, pilotY + 8 + i * 4);
+      ctx.lineTo(-18 - i * 7 - 8 - velocity * 1.5, pilotY + 8 + i * 4 + 0.5);
       ctx.stroke();
     }
   }
