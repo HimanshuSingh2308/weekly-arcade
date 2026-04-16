@@ -756,38 +756,29 @@ function drawSky() {
 
 function drawBackMountains() {
   const bi = Math.min(biomeIndex, 3);
-  const phase = ((distance % 600) / 600);
-  const isSunset = bi === 0 && phase > 0.7;
-  const isDawn = bi === 0 && phase < 0.3;
   const totalW = W * 3;
 
-  // Helper: draw a smooth bezier mountain silhouette from control points, filled with gradient
-  function drawMountainLayer(points, scroll, baseY, gradTop, gradBot, alpha, peakTopY) {
+  // Helper: draw smooth mountain silhouette
+  function drawLayer(points, scroll, baseY, topColor, botColor, alpha) {
     if (!points || points.length < 2) return;
     ctx.save();
     ctx.globalAlpha = alpha;
-
-    // Create gradient fill — every surface is a gradient, never flat
-    const grad = ctx.createLinearGradient(0, peakTopY, 0, baseY);
-    grad.addColorStop(0.0, gradTop);
-    grad.addColorStop(0.35, gradBot[0] || gradBot);
-    grad.addColorStop(0.7, gradBot[1] || gradBot);
-    grad.addColorStop(1.0, gradBot[2] || gradBot);
+    const minY = Math.min(...points.map(p => p.y));
+    const grad = ctx.createLinearGradient(0, minY, 0, baseY);
+    grad.addColorStop(0, topColor);
+    grad.addColorStop(1, botColor);
     ctx.fillStyle = grad;
-
     ctx.beginPath();
     ctx.moveTo(-20, baseY);
-
-    // Draw smooth quadratic bezier curves through the control points with parallax scroll
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i];
-      const p1 = points[i + 1];
-      const sx0 = ((p0.x - scroll) % totalW + totalW) % totalW - totalW * 0.2;
-      const sx1 = ((p1.x - scroll) % totalW + totalW) % totalW - totalW * 0.2;
-      const cpx = (sx0 + sx1) / 2;
-      const cpy = (p0.y + p1.y) / 2;
-      if (i === 0) ctx.lineTo(sx0, p0.y);
-      ctx.quadraticCurveTo(sx0 + (sx1 - sx0) * 0.5, p0.y * 0.5 + p1.y * 0.5 - Math.abs(sx1 - sx0) * 0.02, sx1, p1.y);
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i];
+      const sx = ((p.x - scroll) % totalW + totalW) % totalW - totalW * 0.2;
+      if (i === 0) ctx.lineTo(sx, p.y);
+      else {
+        const pp = points[i-1];
+        const psx = ((pp.x - scroll) % totalW + totalW) % totalW - totalW * 0.2;
+        ctx.quadraticCurveTo((psx + sx)/2, (pp.y + p.y)/2 - 8, sx, p.y);
+      }
     }
     ctx.lineTo(W + 20, baseY);
     ctx.closePath();
@@ -795,139 +786,45 @@ function drawBackMountains() {
     ctx.restore();
   }
 
-  // === LAYER 0 (farthest): barely visible, almost sky-colored ===
-  // Atmospheric perspective: very hazy, desaturated, close to sky color
-  const layer0Colors = [
-    { top: 'rgba(140,160,190,1)', bot: ['rgba(160,175,200,1)', 'rgba(175,188,210,1)', 'rgba(190,200,218,1)'] },
-    { top: 'rgba(100,125,150,1)', bot: ['rgba(120,140,165,1)', 'rgba(135,150,175,1)', 'rgba(150,165,185,1)'] },
-    { top: 'rgba(170,185,210,1)', bot: ['rgba(185,198,220,1)', 'rgba(195,208,228,1)', 'rgba(210,218,235,1)'] },
-    { top: 'rgba(30,22,55,1)',    bot: ['rgba(40,30,68,1)',    'rgba(48,38,78,1)',    'rgba(55,45,88,1)'] },
-  ];
-  const l0 = layer0Colors[bi];
-  drawMountainLayer(farMountains, distance * 0.02, H * 0.52, l0.top, l0.bot, 0.35, H * 0.05);
+  // 3 clean layers — NO haze rectangles, just gradient-filled silhouettes
+  const colors = [
+    // Biome 0: Bir Valley
+    { far: ['#8090A8','#A0AABB'], mid: ['#3A6B45','#4A8A58'], near: ['#1E4A25','#2D6A35'] },
+    // Biome 1: Pine Forest
+    { far: ['#506878','#708898'], mid: ['#1E3E22','#2E5530'], near: ['#0E2A12','#1E3E1E'] },
+    // Biome 2: Snow Peaks
+    { far: ['#8898B0','#A8B8CC'], mid: ['#6878A0','#8898B8'], near: ['#506888','#6880A0'] },
+    // Biome 3: Above Clouds
+    { far: ['#1A1535','#2A2048'], mid: ['#221A42','#2E2455'], near: ['#181030','#221840'] },
+  ][bi];
 
-  // Snow shimmer on farthest peaks (very subtle)
-  if (bi < 3 && farMountains.length > 1) {
-    ctx.save();
-    ctx.globalAlpha = isSunset ? 0.18 : isDawn ? 0.15 : 0.22;
-    const snowGrad = ctx.createLinearGradient(0, H * 0.05, 0, H * 0.30);
-    snowGrad.addColorStop(0, isSunset ? 'rgba(255,210,180,0.6)' : isDawn ? 'rgba(255,225,195,0.5)' : 'rgba(245,248,255,0.6)');
-    snowGrad.addColorStop(0.5, isSunset ? 'rgba(255,200,170,0.2)' : 'rgba(240,245,250,0.2)');
-    snowGrad.addColorStop(1, 'rgba(240,245,250,0)');
-    ctx.fillStyle = snowGrad;
-    ctx.beginPath();
-    ctx.moveTo(-20, H * 0.30);
-    const snowLine = H * 0.28;
-    for (let i = 0; i < farMountains.length - 1; i++) {
-      const p0 = farMountains[i];
-      const p1 = farMountains[i + 1];
-      const sx0 = ((p0.x - distance * 0.02) % totalW + totalW) % totalW - totalW * 0.2;
-      const sx1 = ((p1.x - distance * 0.02) % totalW + totalW) % totalW - totalW * 0.2;
-      if (p0.y < snowLine || p1.y < snowLine) {
-        const sy0 = Math.min(p0.y, snowLine);
-        const sy1 = Math.min(p1.y, snowLine);
-        ctx.quadraticCurveTo((sx0 + sx1) / 2, (sy0 + sy1) / 2, sx1, sy1);
-      }
-    }
-    ctx.lineTo(W + 20, H * 0.30);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
+  // Layer 1 — FAR: faint, hazy peaks (Dhauladhar in distance)
+  drawLayer(farMountains, distance * 0.02, H * 0.55, colors.far[0], colors.far[1], 0.45);
 
-  // Atmospheric haze between layer 0 and 1
-  if (bi <= 2) {
-    ctx.save();
-    const h1 = ctx.createLinearGradient(0, H * 0.28, 0, H * 0.50);
-    const hazeC = isSunset ? [255,190,150] : isDawn ? [220,210,200] : [190,208,228];
-    h1.addColorStop(0, `rgba(${hazeC[0]},${hazeC[1]},${hazeC[2]},0)`);
-    h1.addColorStop(0.5, `rgba(${hazeC[0]},${hazeC[1]},${hazeC[2]},0.05)`);
-    h1.addColorStop(1, `rgba(${hazeC[0]},${hazeC[1]},${hazeC[2]},0.10)`);
-    ctx.fillStyle = h1;
-    ctx.fillRect(0, H * 0.28, W, H * 0.22);
-    ctx.restore();
-  }
+  // Layer 2 — MID: main mountain range
+  drawLayer(backMountains, distance * 0.07, H * 0.65, colors.mid[0], colors.mid[1], 0.85);
 
-  // === LAYER 1 (far-mid): blue-grey, medium opacity ===
-  const layer1Colors = [
-    { top: 'rgba(80,105,120,1)', bot: ['rgba(95,120,135,1)', 'rgba(105,130,145,1)', 'rgba(118,142,158,1)'] },
-    { top: 'rgba(55,78,90,1)',   bot: ['rgba(68,90,102,1)',  'rgba(78,98,110,1)',  'rgba(88,108,120,1)'] },
-    { top: 'rgba(120,138,160,1)', bot: ['rgba(138,155,175,1)', 'rgba(150,168,188,1)', 'rgba(165,180,198,1)'] },
-    { top: 'rgba(25,20,48,1)',   bot: ['rgba(35,28,60,1)',   'rgba(42,35,70,1)',   'rgba(50,42,80,1)'] },
-  ];
-  const l1 = layer1Colors[bi];
-  drawMountainLayer(midMountains, distance * 0.05, H * 0.58, l1.top, l1.bot, 0.55, H * 0.18);
-
-  // Atmospheric haze between layer 1 and 2
-  if (bi <= 2) {
-    ctx.save();
-    const h2 = ctx.createLinearGradient(0, H * 0.42, 0, H * 0.60);
-    const hazeC2 = isSunset ? [240,180,140] : isDawn ? [210,205,200] : [185,205,225];
-    h2.addColorStop(0, `rgba(${hazeC2[0]},${hazeC2[1]},${hazeC2[2]},0)`);
-    h2.addColorStop(0.4, `rgba(${hazeC2[0]},${hazeC2[1]},${hazeC2[2]},0.04)`);
-    h2.addColorStop(1, `rgba(${hazeC2[0]},${hazeC2[1]},${hazeC2[2]},0.10)`);
-    ctx.fillStyle = h2;
-    ctx.fillRect(0, H * 0.42, W, H * 0.18);
-    ctx.restore();
-  }
-
-  // === LAYER 2 (mid): main visible mountains — rich gradient, higher opacity ===
-  const layer2Colors = [
-    { top: 'rgba(38,78,48,1)', bot: ['rgba(48,95,58,1)', 'rgba(55,105,65,1)', 'rgba(65,115,72,1)'] },
-    { top: 'rgba(22,52,28,1)', bot: ['rgba(30,62,35,1)', 'rgba(36,70,40,1)', 'rgba(42,78,45,1)'] },
-    { top: 'rgba(85,100,118,1)', bot: ['rgba(100,115,132,1)', 'rgba(112,125,142,1)', 'rgba(125,138,155,1)'] },
-    { top: 'rgba(30,24,52,1)', bot: ['rgba(38,30,62,1)', 'rgba(45,36,72,1)', 'rgba(52,42,82,1)'] },
-  ];
-  const l2 = layer2Colors[bi];
-  drawMountainLayer(backMountains, distance * 0.08, H * 0.66, l2.top, l2.bot, 0.80, H * 0.30);
-
-  // === LAYER 3 (near-mid): dark treeline silhouette with wavy canopy edge ===
+  // Layer 3 — NEAR: dark forested hills (treeline silhouette)
   if (bi <= 1) {
+    // Draw treeline as a noise-based wavy edge filled solid dark
     ctx.save();
-    ctx.globalAlpha = 0.88;
-    const treeGrad = ctx.createLinearGradient(0, H * 0.48, 0, H * 0.68);
-    if (bi === 0) {
-      treeGrad.addColorStop(0, 'rgba(20,52,25,1)');
-      treeGrad.addColorStop(0.4, 'rgba(25,60,30,1)');
-      treeGrad.addColorStop(0.7, 'rgba(30,68,35,1)');
-      treeGrad.addColorStop(1, 'rgba(38,75,42,1)');
-    } else {
-      treeGrad.addColorStop(0, 'rgba(12,35,15,1)');
-      treeGrad.addColorStop(0.4, 'rgba(16,42,20,1)');
-      treeGrad.addColorStop(0.7, 'rgba(20,48,24,1)');
-      treeGrad.addColorStop(1, 'rgba(25,55,28,1)');
-    }
+    ctx.globalAlpha = 0.92;
+    const treeGrad = ctx.createLinearGradient(0, H * 0.50, 0, H * 0.70);
+    treeGrad.addColorStop(0, colors.near[0]);
+    treeGrad.addColorStop(1, colors.near[1]);
     ctx.fillStyle = treeGrad;
-
-    // Draw wavy treeline using noise for organic canopy edge
-    const treeScroll = distance * 0.12;
+    const treeScroll = distance * 0.14;
     ctx.beginPath();
-    ctx.moveTo(-20, H * 0.68);
-    for (let x = -20; x <= W + 20; x += 6) {
-      const worldX = x + treeScroll;
-      const n = fbm(worldX * 0.003 + 350, 3, 0.5);
-      const treeY = H * 0.52 + n * H * 0.10;
-      // Add subtle bumps for tree-tip silhouettes
-      const tipNoise = fbm(worldX * 0.015 + 700, 2, 0.4) * 6;
-      ctx.lineTo(x, treeY - tipNoise);
+    ctx.moveTo(-20, H * 0.70);
+    for (let x = -20; x <= W + 20; x += 5) {
+      const wx = x + treeScroll;
+      const base = H * 0.55 + fbm(wx * 0.002 + 350, 3, 0.5) * H * 0.08;
+      const tips = fbm(wx * 0.012 + 700, 2, 0.4) * 5;
+      ctx.lineTo(x, base - tips);
     }
-    ctx.lineTo(W + 20, H * 0.68);
+    ctx.lineTo(W + 20, H * 0.70);
     ctx.closePath();
     ctx.fill();
-    ctx.restore();
-  }
-
-  // Final atmospheric haze wash at base of all mountains
-  if (bi <= 2) {
-    ctx.save();
-    const hazeGrad = ctx.createLinearGradient(0, H * 0.52, 0, H * 0.70);
-    const hC = isSunset ? [240,180,140] : isDawn ? [215,210,205] : [190,210,228];
-    hazeGrad.addColorStop(0, `rgba(${hC[0]},${hC[1]},${hC[2]},0)`);
-    hazeGrad.addColorStop(0.3, `rgba(${hC[0]},${hC[1]},${hC[2]},0.03)`);
-    hazeGrad.addColorStop(0.6, `rgba(${hC[0]},${hC[1]},${hC[2]},0.07)`);
-    hazeGrad.addColorStop(1, `rgba(${hC[0]},${hC[1]},${hC[2]},0.12)`);
-    ctx.fillStyle = hazeGrad;
-    ctx.fillRect(0, H * 0.52, W, H * 0.18);
     ctx.restore();
   }
 }
@@ -936,7 +833,8 @@ function drawMidLayer() {
   const scrollMid = distance * 0.22;
   ctx.save();
 
-  if (biomeIndex === 0 || biomeIndex === 1) {
+  // Biomes 0-1: treeline is handled by drawBackMountains Layer 3
+  if (false && (biomeIndex === 0 || biomeIndex === 1)) {
     // --- Treeline silhouette: one continuous wavy curve, gradient-filled ---
     // This replaces individual tree drawing with an Alto's Adventure style canopy silhouette
     const baseY = H * 0.66;
@@ -1128,67 +1026,15 @@ function drawTerrain() {
   ctx.fillStyle = tGrad;
   ctx.fill();
 
-  // --- Subtle horizontal terrace lines (very low alpha) for texture ---
-  if (bi <= 1) {
-    ctx.save();
-    ctx.globalAlpha = 0.06;
-    ctx.strokeStyle = bi === 0 ? 'rgba(60,40,20,1)' : 'rgba(30,50,30,1)';
-    ctx.lineWidth = 0.8;
-    // Find approximate terrain top for visible area
-    let minY = H;
-    for (let i = 0; i < terrainPoints.length; i++) {
-      if (terrainPoints[i] < minY) minY = terrainPoints[i];
-    }
-    // Draw horizontal lines suggesting terraced fields
-    for (let y = minY + 8; y < H; y += 6) {
-      ctx.beginPath();
-      let drawing = false;
-      for (let i = 0; i < terrainPoints.length; i++) {
-        const px = i * TERRAIN_SEGMENT_W;
-        if (terrainPoints[i] <= y) {
-          if (!drawing) { ctx.moveTo(px, y); drawing = true; }
-          else ctx.lineTo(px, y);
-        } else {
-          drawing = false;
-        }
-      }
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  // --- Ridgeline highlight stroke (bright lit edge) ---
-  ctx.save();
-  // Outer glow
-  if (bi <= 1) {
-    ctx.globalAlpha = 0.08;
-    ctx.strokeStyle = bi === 0 ? 'rgba(160,220,120,1)' : 'rgba(100,160,80,1)';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    for (let i = 0; i < terrainPoints.length; i++) {
-      if (i === 0) ctx.moveTo(0, terrainPoints[0]);
-      else ctx.lineTo(i * TERRAIN_SEGMENT_W, terrainPoints[i]);
-    }
-    ctx.stroke();
-  }
-
-  // Crisp highlight
-  const hlColors = [
-    'rgba(180,230,140,0.14)',  // biome 0
-    'rgba(120,180,90,0.12)',   // biome 1
-    'rgba(255,255,255,0.25)',  // biome 2
-    'rgba(200,180,240,0.10)',  // biome 3
-  ];
-  ctx.strokeStyle = hlColors[bi];
+  // Ridgeline highlight
+  ctx.strokeStyle = bi === 2 ? 'rgba(255,255,255,0.2)' : 'rgba(200,240,160,0.1)';
   ctx.lineWidth = 1.5;
-  ctx.globalAlpha = 1;
   ctx.beginPath();
   for (let i = 0; i < terrainPoints.length; i++) {
     if (i === 0) ctx.moveTo(0, terrainPoints[0]);
     else ctx.lineTo(i * TERRAIN_SEGMENT_W, terrainPoints[i]);
   }
   ctx.stroke();
-  ctx.restore();
 }
 
 function drawThermals() {
