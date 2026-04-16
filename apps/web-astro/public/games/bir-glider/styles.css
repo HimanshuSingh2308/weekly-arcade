@@ -249,10 +249,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   z-index: 200;
-  padding: 2rem;
+  padding: 1.5rem;
   text-align: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .gameover-screen.hidden { display: none; }
 
@@ -547,6 +549,42 @@
   pointer-events: none;
   z-index: 400;
   opacity: 0;
+}
+
+/* Landscape mode — compact layout so everything fits */
+@media (max-height: 500px) and (orientation: landscape) {
+  .gameover-screen { padding: 0.75rem 1.5rem; }
+  .gameover-icon { font-size: 1.5rem; margin-bottom: 0.2rem; }
+  .gameover-title { font-size: 1.4rem; margin-bottom: 0.1rem; }
+  .gameover-subtitle { font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .gameover-stats {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    max-width: 600px;
+  }
+  .gameover-stat { padding: 0.5rem 0.3rem; }
+  .stat-value { font-size: 1.1rem; }
+  .stat-label { font-size: 0.6rem; }
+  .biome-reached { font-size: 0.8rem; margin-bottom: 0.3rem; }
+  .gap-to-best { font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .gameover-buttons { gap: 0.5rem; }
+  .retry-btn, .menu-btn-go { padding: 0.5rem 1.5rem; font-size: 0.85rem; }
+
+  .menu-screen { padding: 0.5rem; }
+  .menu-icon { font-size: 2rem; }
+  .menu-title { font-size: 1.5rem; }
+  .menu-tagline { font-size: 0.8rem; margin-bottom: 0.3rem; }
+  .play-btn { padding: 0.6rem 2.5rem; font-size: 1rem; }
+  .controls-hint { font-size: 0.7rem; }
+
+  .pause-title { font-size: 1.5rem; }
+  .pause-icon { font-size: 2rem; }
+
+  .tap-title { font-size: 1.3rem; }
+  .tap-icon { font-size: 2rem; margin-bottom: 0.2rem; }
+  .tap-hint { font-size: 0.85rem; margin-bottom: 0.75rem; }
+  .tap-control { font-size: 0.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
