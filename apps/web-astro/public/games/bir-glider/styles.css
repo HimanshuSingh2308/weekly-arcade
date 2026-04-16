@@ -5,6 +5,7 @@
    ============================================ */
 
 :root {
+  --header-h: 50px;
   --bg-primary: #0a1628;
   --bg-secondary: #0d1f35;
   --bg-card: #132840;
@@ -22,16 +23,16 @@
 #gameCanvas {
   display: block;
   position: fixed;
-  top: 50px; left: 0; right: 0; bottom: 0;
+  top: var(--header-h); left: 0; right: 0; bottom: 0;
   width: 100%;
-  height: calc(100dvh - 50px);
+  height: calc(100dvh - var(--header-h));
   touch-action: none;
 }
 
 /* HUD Overlay */
 .hud {
   position: fixed;
-  top: 58px; left: 0; right: 0; bottom: 0;
+  top: calc(var(--header-h) + 8px); left: 0; right: 0; bottom: 0;
   pointer-events: none;
   z-index: 50;
 }
@@ -115,7 +116,7 @@
 /* Menu Screen */
 .menu-screen {
   position: fixed;
-  top: 50px; left: 0; right: 0; bottom: 0;
+  top: var(--header-h); left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -242,7 +243,7 @@
 /* Game Over Screen — fully dynamic, no scroll needed */
 .gameover-screen {
   position: fixed;
-  top: 50px; left: 0; right: 0; bottom: 0;
+  top: var(--header-h); left: 0; right: 0; bottom: 0;
   background: rgba(5, 15, 30, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -259,7 +260,7 @@
 
 .pause-screen {
   position: fixed;
-  top: 50px; left: 0; right: 0; bottom: 0;
+  top: var(--header-h); left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.7);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);

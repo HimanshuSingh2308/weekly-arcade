@@ -1293,11 +1293,27 @@ function startGame() {
 function launchFlight() {
   if (gameState !== 'waiting') return;
   document.getElementById('tapOverlay').classList.add('hidden');
+  hideHeader();
   gameState = 'playing';
   runStartTime = Date.now();
+  resize();
   startWind();
   stopZenDrone();
   if (zenMode) startZenDrone();
+}
+
+function hideHeader() {
+  const hdr = document.getElementById('gameHeader');
+  if (hdr) hdr.style.display = 'none';
+  document.documentElement.style.setProperty('--header-h', '0px');
+  resize();
+}
+
+function showHeader() {
+  const hdr = document.getElementById('gameHeader');
+  if (hdr) hdr.style.display = '';
+  document.documentElement.style.setProperty('--header-h', '50px');
+  resize();
 }
 
 let crashReason = 'landed';
@@ -1306,6 +1322,7 @@ function endGame(reason) {
   gameState = 'gameover';
   crashReason = reason || 'landed';
 
+  // Keep header hidden on game over — full screen experience
   stopWind();
   stopZenDrone();
   playCrashSound();
@@ -1322,6 +1339,7 @@ function endGame(reason) {
 }
 
 function showMenu() {
+  showHeader();
   gameState = 'menu';
   document.getElementById('gameoverScreen').classList.add('hidden');
   document.getElementById('menuScreen').classList.remove('hidden');
@@ -1710,13 +1728,16 @@ function animateMenuBg() {
 
 // ---- Resize ----
 function resize() {
+  const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 0;
   W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight - 50;
+  H = canvas.height = window.innerHeight - headerH;
   gliderX = W * 0.3;
-  if (gameState === 'menu') {
+  if (gameState === 'menu' || gameState === 'waiting') {
     const mb = document.getElementById('menuBgCanvas');
-    mb.width = mb.parentElement.offsetWidth;
-    mb.height = mb.parentElement.offsetHeight;
+    if (mb && mb.parentElement) {
+      mb.width = mb.parentElement.offsetWidth;
+      mb.height = mb.parentElement.offsetHeight;
+    }
   }
 }
 
