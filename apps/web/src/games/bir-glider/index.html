@@ -667,6 +667,7 @@ let gameState = 'menu'; // menu | playing | gameover
 let zenMode = false;
 let muted = false;
 let animFrameId = null;
+let menuBgAnimId = null;
 
 // Game vars
 let canvas, ctx;
@@ -1120,15 +1121,6 @@ function drawMidLayer() {
 function drawTerrain() {
   const [c1, c2] = getTerrainColor(biomeIndex);
   ctx.beginPath();
-  ctx.moveTo(0, H);
-  for (let i = 0; i < terrainPoints.length; i++) {
-    const x = terrainOffset + i * TERRAIN_SEGMENT_W;
-    const screenX = x - (terrainOffset % W);
-    ctx.lineTo(screenX - terrainOffset % W, terrainPoints[i]);
-  }
-  // Fix: just use simpler x mapping
-  ctx.reset && ctx.reset();
-  ctx.beginPath();
   ctx.moveTo(-10, H);
   for (let i = 0; i < terrainPoints.length; i++) {
     const screenX = i * TERRAIN_SEGMENT_W;
@@ -1303,7 +1295,7 @@ function drawParticles() {
     const p = particles[i];
     p.x += p.vx; p.y += p.vy;
     p.life -= p.decay;
-    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    if (p.life <= 0) { particles[i] = particles[particles.length - 1]; particles.pop(); continue; }
     ctx.globalAlpha = p.life;
     ctx.fillStyle = p.alpha ? p.color + p.life + ')' : p.color;
     ctx.beginPath();
@@ -1482,7 +1474,7 @@ function gameLoop(ts) {
   }
 
   // Scroll difficulty
-  scrollSpeed = 2.5 + distance * 0.0003;
+  scrollSpeed = Math.min(7.5, 2.5 + distance * 0.0003);
 
   // Scroll terrain
   terrainOffset -= scrollSpeed * dt;
@@ -1745,8 +1737,11 @@ async function checkAndUnlockAchievements() {
 
   const toUnlock = [];
 
-  // First flight
-  toUnlock.push('bir_first_flight');
+  // First flight (only unlock once)
+  if (!localStorage.getItem('bir-glider-first-flight')) {
+    toUnlock.push('bir_first_flight');
+    localStorage.setItem('bir-glider-first-flight', '1');
+  }
 
   // Flag collector (10 in one run)
   if (prayerFlagsCollected >= 10) toUnlock.push('bir_flag_collector');
@@ -1849,6 +1844,7 @@ function toggleMute() {
   muted = !muted;
   document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
   if (windGain) windGain.gain.value = muted ? 0 : 0.04;
+  localStorage.setItem('bir-glider-muted', muted ? '1' : '0');
 }
 
 // ---- Auth ----
@@ -1906,7 +1902,7 @@ function animateMenuBg() {
     mc.fill();
   }
 
-  requestAnimationFrame(animateMenuBg);
+  menuBgAnimId = requestAnimationFrame(animateMenuBg);
 }
 
 // ---- Resize ----
@@ -1956,7 +1952,10 @@ function init() {
   animateMenuBg();
 
   // Start animation loop
-  requestAnimationFrame(ts => { lastTime = ts; requestAnimationFrame(gameLoop); });
+  animFrameId = requestAnimationFrame(ts => {
+    lastTime = ts;
+    animFrameId = requestAnimationFrame(gameLoop);
+  });
 }
 
 // Start when DOM ready
