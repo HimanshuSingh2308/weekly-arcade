@@ -1420,12 +1420,33 @@ function toggleMute() {
   localStorage.setItem('bir-glider-muted', muted ? '1' : '0');
 }
 
-// ---- Auth (uses window.authManager provided by GameLayout) ----
+// ---- Header + Auth (uses gameHeader, gameCloud provided by GameLayout) ----
 function setupAuth() {
-  if (window.authManager) {
-    window.authManager.onAuthStateChanged(user => {
-      currentUser = user;
+  if (window.gameHeader) {
+    window.gameHeader.init({
+      title: 'Bir Glider',
+      icon: '🪂',
+      gameId: 'bir-glider',
+      buttons: ['sound', 'leaderboard', 'auth'],
+      onSound: () => toggleMute(),
+      onSignIn: async () => {
+        currentUser = window.gameCloud ? window.gameCloud.getUser() : null;
+        if (window.gameCloud) {
+          const cloudState = await window.gameCloud.loadState('bir-glider');
+          if (cloudState && cloudState.additionalData?.highScore) {
+            const cloudBest = cloudState.additionalData.highScore;
+            if (cloudBest > personalBest) {
+              personalBest = cloudBest;
+              localStorage.setItem('bir-glider-best', personalBest);
+              updateMenuBest();
+            }
+          }
+        }
+      },
+      onSignOut: () => { currentUser = null; },
     });
+  } else if (window.authManager) {
+    window.authManager.onAuthStateChanged(user => { currentUser = user; });
   }
 }
 
