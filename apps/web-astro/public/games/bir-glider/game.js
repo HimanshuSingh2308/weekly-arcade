@@ -767,14 +767,15 @@ function drawEagles() {
 function drawGlider() {
   ctx.save();
   ctx.translate(gliderX, gliderY);
-  const tilt = Math.max(-0.25, Math.min(0.25, -velocity * 0.025));
+  // Tilt based on velocity — nose up when rising, nose down when sinking
+  const tilt = Math.max(-0.2, Math.min(0.2, -velocity * 0.04));
   ctx.rotate(tilt);
 
   const t = Date.now() * 0.001;
-  const breathe = Math.sin(t * 2) * 1.2; // canopy breathing
-  const CW = 48; // canopy half-width (bigger = more visible)
-  const CH = 18; // canopy height
-  const cellCount = 9;
+  const breathe = Math.sin(t * 2) * 0.8;
+
+  // Side-view paraglider: canopy is an elongated airfoil shape above,
+  // pilot hangs below in profile view, lines connect at angle
 
   // ── Thermal glow ──
   if (inThermal) {
@@ -785,281 +786,189 @@ function drawGlider() {
     ctx.fillRect(-60, -40, 120, 80);
   }
 
-  // ── Canopy — smooth billowing arc (like 🪂 emoji) ──
-  const topY = -CH - 10 + breathe;
-  const botY = -6;
+  // ── SIDE-VIEW CANOPY (airfoil profile seen from the side) ──
+  // The canopy from the side looks like a thick curved crescent/lens shape
+  const canopyLen = 55;  // length front to back
+  const canopyH = 10;    // thickness
+  const canopyY = -22 + breathe; // above pilot
 
-  // 1) Draw one smooth canopy shape (billowing arc)
-  // Compute the elliptical top edge as a function
-  function canopyTopAt(norm) {
-    const ellF = 1 - Math.pow(norm * 2 - 1, 2); // 0 at edges, 1 at center
-    return topY + (1 - ellF) * CH * 0.7;
-  }
-  function canopyBotAt(norm) {
-    const ellF = 1 - Math.pow(norm * 2 - 1, 2);
-    return botY + (1 - ellF) * 4;
+  // ── Stunt spin animation ──
+  if (stuntActive) {
+    const spinProgress = 1 - (stuntTimer / 60); // 0→1
+    const spinAngle = spinProgress * Math.PI * 2; // full 360° rotation
+    ctx.rotate(spinAngle);
   }
 
-  // Clip region = canopy shape (so color bands stay inside)
-  ctx.save();
+  // ── SIDE-VIEW CANOPY (airfoil seen from the side) ──
+  // From the side, a paraglider canopy looks like a thick curved lens/crescent
+  const cFront = -canopyLen * 0.55; // leading edge (front, leftward in side view)
+  const cBack = canopyLen * 0.45;   // trailing edge (back)
+
+  // Canopy shape — curved top, flatter bottom (airfoil cross-section)
   ctx.beginPath();
-  ctx.moveTo(-CW, botY + 4);
-  for (let i = 0; i <= 40; i++) {
-    const norm = i / 40;
-    ctx.lineTo(-CW + norm * CW * 2, canopyTopAt(norm));
-  }
-  ctx.lineTo(CW, botY + 4);
-  // Bottom edge (slight belly curve)
-  ctx.quadraticCurveTo(0, botY + 6 + breathe * 0.5, -CW, botY + 4);
+  ctx.moveTo(cFront, canopyY + 2);
+  // Top surface (curved, inflated)
+  ctx.bezierCurveTo(
+    cFront + canopyLen * 0.25, canopyY - canopyH,
+    cBack - canopyLen * 0.25, canopyY - canopyH,
+    cBack, canopyY + 2
+  );
+  // Bottom surface (flatter)
+  ctx.bezierCurveTo(
+    cBack - canopyLen * 0.2, canopyY + canopyH * 0.5,
+    cFront + canopyLen * 0.2, canopyY + canopyH * 0.5,
+    cFront, canopyY + 2
+  );
   ctx.closePath();
-  ctx.clip();
 
-  // 2) Base canopy fill — vibrant gradient (like real Bir paragliders: red/purple/blue)
-  const canopyGrad = ctx.createLinearGradient(-CW, 0, CW, 0);
-  canopyGrad.addColorStop(0, '#E53935');    // red tip
-  canopyGrad.addColorStop(0.15, '#FF7043'); // orange-red
-  canopyGrad.addColorStop(0.3, '#FFB300');  // amber/yellow
-  canopyGrad.addColorStop(0.45, '#FFFFFF'); // white
-  canopyGrad.addColorStop(0.55, '#FFFFFF'); // white
-  canopyGrad.addColorStop(0.7, '#42A5F5'); // sky blue
-  canopyGrad.addColorStop(0.85, '#1E88E5'); // blue
-  canopyGrad.addColorStop(1, '#7B1FA2');    // purple tip
-  ctx.fillStyle = canopyGrad;
-  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
-
-  // Top-to-bottom light/shadow gradient (gives 3D inflated shape)
-  const vertGrad = ctx.createLinearGradient(0, topY - 3, 0, botY + 8);
-  vertGrad.addColorStop(0, 'rgba(255,255,255,0.25)'); // top highlight
-  vertGrad.addColorStop(0.3, 'rgba(255,255,255,0.05)');
-  vertGrad.addColorStop(0.7, 'rgba(0,0,0,0.05)');
-  vertGrad.addColorStop(1, 'rgba(0,0,0,0.25)');        // bottom shadow
-  ctx.fillStyle = vertGrad;
-  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
-
-  // Edge darkening (canopy tips fold away from light)
-  const edgeGrad = ctx.createRadialGradient(0, topY + CH * 0.4, CW * 0.3, 0, topY + CH * 0.4, CW * 1.1);
-  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
-  edgeGrad.addColorStop(0.7, 'rgba(0,0,0,0)');
-  edgeGrad.addColorStop(1, 'rgba(0,0,0,0.18)');
-  ctx.fillStyle = edgeGrad;
-  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
-
-  // Specular highlight (sun catching the top center)
-  const specGrad = ctx.createRadialGradient(CW * 0.1, topY + 4, 2, CW * 0.1, topY + 4, CW * 0.5);
-  specGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
-  specGrad.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = specGrad;
-  ctx.fillRect(-CW, topY - 5, CW * 2, CH + 20);
-
-  // (3D shading already applied above)
-
-  ctx.restore(); // remove clip
-
-  // 4) Cell rib lines (subtle seams on top of the smooth canopy)
-  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-  ctx.lineWidth = 0.6;
-  const cellW = (CW * 2) / cellCount;
-  for (let c = 1; c < cellCount; c++) {
-    const cx = -CW + c * cellW;
-    const norm = c / cellCount;
-    ctx.beginPath();
-    ctx.moveTo(cx, canopyBotAt(norm));
-    ctx.lineTo(cx, canopyTopAt(norm) + 1);
-    ctx.stroke();
-  }
-
-  // 5) Leading edge highlight
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  for (let i = 0; i <= 30; i++) {
-    const norm = i / 30;
-    const x = -CW + norm * CW * 2;
-    if (i === 0) ctx.moveTo(x, canopyTopAt(norm));
-    else ctx.lineTo(x, canopyTopAt(norm));
-  }
-  ctx.stroke();
-
-  // 6) Trailing edge
-  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(-CW, botY + 4);
-  ctx.quadraticCurveTo(0, botY + 6, CW, botY + 4);
-  ctx.stroke();
-
-  // ── Lines + Pilot (simplified but clear) ──
-  const pilotY = 22;
-
-  // Suspension lines (thin fan from canopy to pilot)
-  ctx.strokeStyle = 'rgba(60,50,40,0.25)';
-  ctx.lineWidth = 0.4;
-  const attachPts = [-CW*0.85, -CW*0.55, -CW*0.2, 0, CW*0.2, CW*0.55, CW*0.85];
-  for (const ax of attachPts) {
-    const norm = (ax + CW) / (CW * 2);
-    const ay = canopyBotAt(norm) + 1;
-    const toX = ax < 0 ? -3 : 3;
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.quadraticCurveTo((ax + toX) / 2, (ay + pilotY) / 2 + 2, toX, pilotY - 4);
-    ctx.stroke();
-  }
-
-  // Brake lines (red tint)
-  ctx.strokeStyle = 'rgba(180,50,50,0.25)';
-  ctx.lineWidth = 0.5;
-  ctx.beginPath(); ctx.moveTo(-CW * 0.7, botY + 3); ctx.quadraticCurveTo(-6, pilotY * 0.5, -4, pilotY - 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(CW * 0.7, botY + 3); ctx.quadraticCurveTo(6, pilotY * 0.5, 4, pilotY - 2); ctx.stroke();
-
-  // Harness (cocoon shape)
-  const hGrad = ctx.createLinearGradient(-7, pilotY, 7, pilotY + 18);
-  hGrad.addColorStop(0, '#34495E');
-  hGrad.addColorStop(1, '#1A252F');
-  ctx.fillStyle = hGrad;
-  ctx.beginPath();
-  ctx.moveTo(-6, pilotY);
-  ctx.quadraticCurveTo(-8, pilotY + 10, -5, pilotY + 18);
-  ctx.quadraticCurveTo(0, pilotY + 21, 5, pilotY + 18);
-  ctx.quadraticCurveTo(8, pilotY + 10, 6, pilotY);
-  ctx.closePath();
+  // Canopy gradient — vibrant multi-color
+  const cGrad = ctx.createLinearGradient(cFront, canopyY - canopyH, cBack, canopyY + canopyH * 0.5);
+  cGrad.addColorStop(0, '#E53935');    // red leading edge
+  cGrad.addColorStop(0.2, '#FF7043');  // orange
+  cGrad.addColorStop(0.4, '#FFB300');  // amber
+  cGrad.addColorStop(0.55, '#FFFFFF'); // white center
+  cGrad.addColorStop(0.7, '#42A5F5');  // blue
+  cGrad.addColorStop(0.85, '#1E88E5'); // deeper blue
+  cGrad.addColorStop(1, '#7B1FA2');    // purple trailing edge
+  ctx.fillStyle = cGrad;
   ctx.fill();
 
-  // ── Pilot — natural seated paraglider position ──
+  // 3D shading — top lit, bottom in shadow
+  const shadeGrad = ctx.createLinearGradient(0, canopyY - canopyH, 0, canopyY + canopyH * 0.5);
+  shadeGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
+  shadeGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
+  shadeGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
+  ctx.fillStyle = shadeGrad;
+  ctx.fill();
+
+  // Leading edge highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(cFront, canopyY + 2);
+  ctx.bezierCurveTo(
+    cFront + canopyLen * 0.25, canopyY - canopyH,
+    cBack - canopyLen * 0.25, canopyY - canopyH,
+    cBack, canopyY + 2
+  );
+  ctx.stroke();
+
+  // Rib lines on canopy (vertical seams as seen from side — short dashes)
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+  ctx.lineWidth = 0.5;
+  for (let i = 1; i < 8; i++) {
+    const ribT = i / 8;
+    const ribX = cFront + ribT * canopyLen;
+    const ribTop = canopyY - canopyH * (1 - Math.pow(ribT * 2 - 1, 2)) * 0.9 + 1;
+    const ribBot = canopyY + canopyH * 0.3 * (1 - Math.pow(ribT * 2 - 1, 2));
+    ctx.beginPath();
+    ctx.moveTo(ribX, ribTop);
+    ctx.lineTo(ribX, ribBot);
+    ctx.stroke();
+  }
+
+  // ── SUSPENSION LINES (from canopy bottom to pilot — angled) ──
+  const pilotY = 20;
+  ctx.strokeStyle = 'rgba(60,50,40,0.2)';
+  ctx.lineWidth = 0.4;
+  // Lines fan from canopy to a single riser point near pilot's shoulders
+  const riserX = 0, riserY = pilotY - 6;
+  for (let i = 0; i < 6; i++) {
+    const lt = (i + 0.5) / 6;
+    const lx = cFront + lt * canopyLen;
+    const ly = canopyY + canopyH * 0.3 * (1 - Math.pow(lt * 2 - 1, 2));
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.lineTo(riserX, riserY);
+    ctx.stroke();
+  }
+
+  // ── PILOT (side profile — facing right) ──
   const legSwing = Math.sin(t * 2) * 1.5;
-  const armReach = Math.sin(t * 1.5) * 0.5; // subtle arm movement
 
-  // Neck
-  ctx.fillStyle = '#D4A574'; // skin tone
-  ctx.fillRect(-1.5, pilotY - 1, 3, 3);
+  // Harness (side view — narrow profile)
+  ctx.fillStyle = '#2C3E50';
+  ctx.beginPath();
+  ctx.ellipse(0, pilotY + 6, 4, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Helmet (rounded, with proper shape)
+  // Jacket (blue windbreaker, side view)
+  const jGrad = ctx.createLinearGradient(-4, pilotY, 4, pilotY + 10);
+  jGrad.addColorStop(0, '#1565C0');
+  jGrad.addColorStop(1, '#0D47A1');
+  ctx.fillStyle = jGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, pilotY + 3, 4.5, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Arm (one visible in side view — reaching up to risers)
+  ctx.strokeStyle = '#1565C0';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(1, pilotY + 1);
+  ctx.quadraticCurveTo(3, pilotY - 3, riserX + 1, riserY + 2);
+  ctx.stroke();
+  // Gloved hand
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(riserX + 1, riserY + 2, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineCap = 'butt';
+
+  // Head/helmet (side profile)
   ctx.fillStyle = '#CC2222';
   ctx.beginPath();
-  ctx.arc(0, pilotY - 4, 5, Math.PI, 0); // top half
-  ctx.quadraticCurveTo(5, pilotY - 1, 3, pilotY);
-  ctx.lineTo(-3, pilotY);
-  ctx.quadraticCurveTo(-5, pilotY - 1, -5, pilotY - 4);
-  ctx.closePath();
+  ctx.arc(1, pilotY - 5, 4.5, 0, Math.PI * 2);
   ctx.fill();
-  // Helmet top highlight
+  // Helmet highlight
   ctx.fillStyle = '#EE4444';
   ctx.beginPath();
-  ctx.arc(0, pilotY - 5, 3.5, Math.PI + 0.3, -0.3);
-  ctx.closePath();
+  ctx.arc(0, pilotY - 6.5, 2.5, 0, Math.PI * 2);
   ctx.fill();
-  // Visor (wraparound sunglasses look)
-  ctx.fillStyle = 'rgba(40,40,40,0.8)';
+  // Visor (side view — curved strip on the front of helmet)
+  ctx.fillStyle = 'rgba(40,40,40,0.85)';
   ctx.beginPath();
-  ctx.ellipse(0, pilotY - 2, 4, 1.8, 0, 0, Math.PI);
+  ctx.ellipse(3.5, pilotY - 4.5, 2, 2.5, 0.3, -0.8, 0.8);
   ctx.fill();
-  // Visor reflection
-  ctx.fillStyle = 'rgba(120,200,255,0.25)';
+  // Visor glare
+  ctx.fillStyle = 'rgba(120,200,255,0.3)';
   ctx.beginPath();
-  ctx.ellipse(1, pilotY - 2.5, 2, 0.8, 0.1, 0, Math.PI);
-  ctx.fill();
-
-  // Jacket / torso (windbreaker with collar)
-  const jacketGrad = ctx.createLinearGradient(-6, pilotY + 2, 6, pilotY + 12);
-  jacketGrad.addColorStop(0, '#1565C0'); // blue jacket
-  jacketGrad.addColorStop(1, '#0D47A1');
-  ctx.fillStyle = jacketGrad;
-  ctx.beginPath();
-  ctx.moveTo(-5, pilotY + 1);
-  ctx.lineTo(-7, pilotY + 6);
-  ctx.quadraticCurveTo(-7, pilotY + 12, -4, pilotY + 13);
-  ctx.lineTo(4, pilotY + 13);
-  ctx.quadraticCurveTo(7, pilotY + 12, 7, pilotY + 6);
-  ctx.lineTo(5, pilotY + 1);
-  ctx.closePath();
-  ctx.fill();
-  // Jacket zipper line
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(0, pilotY + 2);
-  ctx.lineTo(0, pilotY + 12);
-  ctx.stroke();
-  // Collar
-  ctx.fillStyle = '#1976D2';
-  ctx.beginPath();
-  ctx.moveTo(-4, pilotY + 1);
-  ctx.quadraticCurveTo(-3, pilotY - 0.5, 0, pilotY + 0.5);
-  ctx.quadraticCurveTo(3, pilotY - 0.5, 4, pilotY + 1);
-  ctx.lineTo(3, pilotY + 3);
-  ctx.lineTo(-3, pilotY + 3);
-  ctx.closePath();
+  ctx.ellipse(4, pilotY - 5, 1, 1.2, 0.3, -0.5, 0.5);
   ctx.fill();
 
-  // Arms (reaching up to brake toggles — natural bent pose)
-  ctx.strokeStyle = '#1565C0';
+  // Neck (skin)
+  ctx.fillStyle = '#D4A574';
+  ctx.fillRect(0, pilotY - 1, 2.5, 2.5);
+
+  // Leg (one visible from side — bent at knee, seated)
+  ctx.strokeStyle = '#1A1A3A';
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
-  // Left arm — upper arm, elbow, forearm reaching up
   ctx.beginPath();
-  ctx.moveTo(-6, pilotY + 4);
-  ctx.quadraticCurveTo(-9, pilotY + 1 + armReach, -7, pilotY - 2);
-  ctx.stroke();
-  // Left hand/glove
-  ctx.fillStyle = '#333';
-  ctx.beginPath();
-  ctx.arc(-7, pilotY - 2.5, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-  // Right arm
-  ctx.strokeStyle = '#1565C0';
-  ctx.beginPath();
-  ctx.moveTo(6, pilotY + 4);
-  ctx.quadraticCurveTo(9, pilotY + 1 - armReach, 7, pilotY - 2);
-  ctx.stroke();
-  // Right hand/glove
-  ctx.fillStyle = '#333';
-  ctx.beginPath();
-  ctx.arc(7, pilotY - 2.5, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineCap = 'butt';
-
-  // Legs (bent at knees, natural seated position — not straight rectangles)
-  ctx.strokeStyle = '#1A1A3A'; // dark pants
-  ctx.lineWidth = 3.5;
-  ctx.lineCap = 'round';
-  // Left leg — thigh → knee → shin
-  ctx.beginPath();
-  ctx.moveTo(-3, pilotY + 13);
-  ctx.quadraticCurveTo(-5, pilotY + 18, -4, pilotY + 22 + legSwing);
-  ctx.stroke();
-  // Right leg
-  ctx.beginPath();
-  ctx.moveTo(3, pilotY + 13);
-  ctx.quadraticCurveTo(5, pilotY + 18, 4, pilotY + 22 - legSwing * 0.5);
+  ctx.moveTo(0, pilotY + 10);
+  ctx.quadraticCurveTo(4, pilotY + 15, 2, pilotY + 20 + legSwing);
   ctx.stroke();
   ctx.lineCap = 'butt';
 
-  // Boots (chunky hiking boots)
+  // Boot
   ctx.fillStyle = '#4E342E';
-  // Left boot
   ctx.beginPath();
-  ctx.moveTo(-5.5, pilotY + 21 + legSwing);
-  ctx.lineTo(-6, pilotY + 24 + legSwing);
-  ctx.lineTo(-1.5, pilotY + 24 + legSwing);
-  ctx.lineTo(-2, pilotY + 21 + legSwing);
-  ctx.closePath();
-  ctx.fill();
-  // Right boot
-  ctx.beginPath();
-  ctx.moveTo(2, pilotY + 21 - legSwing * 0.5);
-  ctx.lineTo(1.5, pilotY + 24 - legSwing * 0.5);
-  ctx.lineTo(6, pilotY + 24 - legSwing * 0.5);
-  ctx.lineTo(5.5, pilotY + 21 - legSwing * 0.5);
+  ctx.moveTo(0.5, pilotY + 19 + legSwing);
+  ctx.lineTo(0, pilotY + 22 + legSwing);
+  ctx.lineTo(5, pilotY + 22 + legSwing);
+  ctx.lineTo(4, pilotY + 19 + legSwing);
   ctx.closePath();
   ctx.fill();
 
-  // Speed streaks
-  if (isHolding && velocity > 2) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  // Speed streaks (behind the glider when moving fast)
+  if (isHolding && velocity > 1.5) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
-      ctx.moveTo(-18 - i * 7, pilotY + 8 + i * 4);
-      ctx.lineTo(-18 - i * 7 - 8 - velocity * 1.5, pilotY + 8 + i * 4 + 0.5);
+      ctx.moveTo(cFront - 5 - i * 6, canopyY + i * 4);
+      ctx.lineTo(cFront - 15 - i * 6 - velocity * 3, canopyY + i * 4 + 0.5);
       ctx.stroke();
     }
   }
