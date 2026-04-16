@@ -793,28 +793,41 @@ function drawGlider() {
   const botY = -8;
   const midY = topY + CH * 0.4;
 
+  // Real paraglider color panels — bold blocks like actual Bir canopies
+  // Pattern: saffron | saffron | orange | white | white | white | green | green | deep green
+  const panelColors = [
+    ['#FF6D00', '#FF8F00'], // cell 0: deep saffron
+    ['#FF8F00', '#FFA726'], // cell 1: bright saffron
+    ['#FFB74D', '#FFCC80'], // cell 2: light orange
+    ['#FFF8E1', '#FFFFFF'], // cell 3: cream to white
+    ['#FFFFFF', '#F5F5F5'], // cell 4: pure white (center)
+    ['#F5F5F5', '#E8F5E9'], // cell 5: white to pale green
+    ['#66BB6A', '#43A047'], // cell 6: medium green
+    ['#2E7D32', '#1B5E20'], // cell 7: deep green
+    ['#1B5E20', '#0D3B0D'], // cell 8: darkest green
+  ];
+
   // Draw each cell as an inflated segment
   const cellW = (CW * 2) / cellCount;
   for (let c = 0; c < cellCount; c++) {
     const cx = -CW + c * cellW;
     const cx2 = cx + cellW;
-    // Cell curvature: center cells are higher, edge cells lower (elliptical profile)
-    const normC = (c + 0.5) / cellCount; // 0..1
-    const ellipseF = 1 - Math.pow(normC * 2 - 1, 2); // parabolic — 1 at center, 0 at edges
+    const normC = (c + 0.5) / cellCount;
+    const ellipseF = 1 - Math.pow(normC * 2 - 1, 2);
     const cellTopY = topY + (1 - ellipseF) * CH * 0.6;
     const cellBotY = botY + (1 - ellipseF) * 3;
     const cellMidY = cellTopY + (cellBotY - cellTopY) * 0.35;
-    // Inflate: each cell bulges downward slightly in the middle
     const bulge = 2.5 * ellipseF;
 
-    // Cell color — Indian tricolor gradient across canopy
-    let cellColor;
-    if (normC < 0.3) cellColor = `hsl(25, 100%, ${48 + normC * 30}%)`; // saffron/orange
-    else if (normC < 0.7) cellColor = `hsl(0, 0%, ${92 + Math.sin(normC * 10) * 4}%)`; // white
-    else cellColor = `hsl(140, 60%, ${25 + (1 - normC) * 25}%)`; // green
+    // Per-cell gradient (top lit, bottom shaded — gives each cell 3D roundness)
+    const colors = panelColors[Math.min(c, panelColors.length - 1)];
+    const cellGrad = ctx.createLinearGradient(cx, cellTopY, cx, cellBotY + bulge);
+    cellGrad.addColorStop(0, colors[0]);    // top (lit)
+    cellGrad.addColorStop(0.6, colors[1]);  // middle
+    cellGrad.addColorStop(1, colors[0]);    // bottom rim (slightly lit again by ambient)
 
-    // Upper surface (lit by sun — brighter)
-    ctx.fillStyle = cellColor;
+    // Upper inflated surface
+    ctx.fillStyle = cellGrad;
     ctx.beginPath();
     ctx.moveTo(cx, cellBotY);
     ctx.quadraticCurveTo(cx + cellW * 0.1, cellMidY, cx + cellW * 0.5, cellTopY);
@@ -822,18 +835,26 @@ function drawGlider() {
     ctx.closePath();
     ctx.fill();
 
-    // Bottom surface shadow (under the cell — creates 3D inflated look)
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    // Bottom surface shadow (inflated belly underneath)
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
     ctx.beginPath();
     ctx.moveTo(cx + 1, cellBotY);
     ctx.quadraticCurveTo(cx + cellW * 0.5, cellBotY + bulge + 2, cx2 - 1, cellBotY);
     ctx.closePath();
     ctx.fill();
 
-    // Cell rib line (seam between cells)
+    // Cell top highlight (specular — light catching the peak of each cell)
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.beginPath();
+    const peakX = cx + cellW * 0.5;
+    const peakY = cellTopY + 1;
+    ctx.ellipse(peakX, peakY + 3, cellW * 0.25, 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cell rib line (seam between cells — subtle dark line)
     if (c > 0) {
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-      ctx.lineWidth = 0.6;
+      ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+      ctx.lineWidth = 0.7;
       ctx.beginPath();
       ctx.moveTo(cx, cellBotY);
       ctx.lineTo(cx, cellTopY + 2);
