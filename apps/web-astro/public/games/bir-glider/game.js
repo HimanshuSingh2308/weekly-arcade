@@ -768,76 +768,249 @@ function drawEagles() {
 function drawGlider() {
   ctx.save();
   ctx.translate(gliderX, gliderY);
-  ctx.rotate(Math.max(-0.3, Math.min(0.3, -velocity * 0.03)));
+  const tilt = Math.max(-0.3, Math.min(0.3, -velocity * 0.03));
+  ctx.rotate(tilt);
 
-  // Thermal glow
+  const t = Date.now() * 0.001; // time in seconds for animation
+  const windWobble = Math.sin(t * 2.5) * 1.5; // subtle canopy breathing
+  const CW = 42; // canopy half-width
+  const CH = 22; // canopy height (top to bottom surface)
+  const cellCount = 9; // number of inflated cells
+
+  // ── Thermal glow ──
   if (inThermal) {
-    const gp = Date.now() * 0.004;
-    const gg = ctx.createRadialGradient(0, -5, 8, 0, -5, 45);
-    gg.addColorStop(0, `rgba(255,200,80,${0.15 + Math.sin(gp) * 0.08})`);
-    gg.addColorStop(1, 'rgba(255,200,80,0)');
+    const gg = ctx.createRadialGradient(0, -8, 10, 0, -8, 55);
+    gg.addColorStop(0, `rgba(255,210,100,${0.12 + Math.sin(t * 4) * 0.06})`);
+    gg.addColorStop(1, 'rgba(255,210,100,0)');
     ctx.fillStyle = gg;
-    ctx.fillRect(-50, -35, 100, 65);
+    ctx.fillRect(-60, -40, 120, 80);
   }
 
-  // Canopy — smooth curved paraglider wing
-  ctx.beginPath();
-  ctx.moveTo(-34, -5);
-  ctx.quadraticCurveTo(-22, -28, 0, -30);
-  ctx.quadraticCurveTo(22, -28, 34, -5);
-  ctx.quadraticCurveTo(22, -10, 0, -12);
-  ctx.quadraticCurveTo(-22, -10, -34, -5);
-  ctx.closePath();
+  // ── Canopy (inflated elliptical wing with 3D cell shading) ──
 
-  // Indian tricolor canopy
-  const cg = ctx.createLinearGradient(-34, -30, 34, -5);
-  cg.addColorStop(0, '#FF6F00');
-  cg.addColorStop(0.2, '#FF8F00');
-  cg.addColorStop(0.42, '#FFF3E0');
-  cg.addColorStop(0.58, '#FFF3E0');
-  cg.addColorStop(0.8, '#2E7D32');
-  cg.addColorStop(1, '#1B5E20');
-  ctx.fillStyle = cg;
-  ctx.fill();
+  // Outer canopy shape (upper surface — the visible curved top)
+  const topY = -CH - 8 + windWobble;
+  const botY = -8;
+  const midY = topY + CH * 0.4;
 
-  // Rib lines
-  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-  ctx.lineWidth = 0.5;
-  for (let i = -3; i <= 3; i++) {
+  // Draw each cell as an inflated segment
+  const cellW = (CW * 2) / cellCount;
+  for (let c = 0; c < cellCount; c++) {
+    const cx = -CW + c * cellW;
+    const cx2 = cx + cellW;
+    // Cell curvature: center cells are higher, edge cells lower (elliptical profile)
+    const normC = (c + 0.5) / cellCount; // 0..1
+    const ellipseF = 1 - Math.pow(normC * 2 - 1, 2); // parabolic — 1 at center, 0 at edges
+    const cellTopY = topY + (1 - ellipseF) * CH * 0.6;
+    const cellBotY = botY + (1 - ellipseF) * 3;
+    const cellMidY = cellTopY + (cellBotY - cellTopY) * 0.35;
+    // Inflate: each cell bulges downward slightly in the middle
+    const bulge = 2.5 * ellipseF;
+
+    // Cell color — Indian tricolor gradient across canopy
+    let cellColor;
+    if (normC < 0.3) cellColor = `hsl(25, 100%, ${48 + normC * 30}%)`; // saffron/orange
+    else if (normC < 0.7) cellColor = `hsl(0, 0%, ${92 + Math.sin(normC * 10) * 4}%)`; // white
+    else cellColor = `hsl(140, 60%, ${25 + (1 - normC) * 25}%)`; // green
+
+    // Upper surface (lit by sun — brighter)
+    ctx.fillStyle = cellColor;
     ctx.beginPath();
-    ctx.moveTo(i * 8, -28 + Math.abs(i) * 2.5);
-    ctx.lineTo(i * 8, -10 + Math.abs(i) * 0.5);
+    ctx.moveTo(cx, cellBotY);
+    ctx.quadraticCurveTo(cx + cellW * 0.1, cellMidY, cx + cellW * 0.5, cellTopY);
+    ctx.quadraticCurveTo(cx + cellW * 0.9, cellMidY, cx2, cellBotY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Bottom surface shadow (under the cell — creates 3D inflated look)
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(cx + 1, cellBotY);
+    ctx.quadraticCurveTo(cx + cellW * 0.5, cellBotY + bulge + 2, cx2 - 1, cellBotY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Cell rib line (seam between cells)
+    if (c > 0) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(cx, cellBotY);
+      ctx.lineTo(cx, cellTopY + 2);
+      ctx.stroke();
+    }
+  }
+
+  // Leading edge highlight (curved top rim catching light)
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-CW + 2, botY);
+  for (let i = 0; i <= 20; i++) {
+    const norm = i / 20;
+    const x = -CW + norm * CW * 2;
+    const ellF = 1 - Math.pow(norm * 2 - 1, 2);
+    ctx.lineTo(x, topY + (1 - ellF) * CH * 0.6 + windWobble * 0.5);
+  }
+  ctx.stroke();
+
+  // Trailing edge (subtle darker line at bottom of canopy)
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-CW, botY);
+  ctx.quadraticCurveTo(0, botY + 2, CW, botY);
+  ctx.stroke();
+
+  // ── Suspension lines (A/B/C/D rows — realistic line cascade) ──
+  const pilotY = 18;
+  const riserL = -3; // left riser attach
+  const riserR = 3;  // right riser attach
+  // A-lines (front, to leading edge)
+  // B-lines (middle)
+  // C-lines (rear)
+  const lineAlpha = 0.35;
+  ctx.strokeStyle = `rgba(70,55,40,${lineAlpha})`;
+  ctx.lineWidth = 0.4;
+
+  // Fan of lines from each riser to the canopy
+  const lineAttachPoints = [-CW+4, -CW*0.6, -CW*0.25, 0, CW*0.25, CW*0.6, CW-4];
+  for (const ax of lineAttachPoints) {
+    const norm = (ax + CW) / (CW * 2);
+    const ellF = 1 - Math.pow(norm * 2 - 1, 2);
+    const attachY = botY + (1 - ellF) * 3;
+    // Line to left riser
+    ctx.beginPath();
+    ctx.moveTo(ax, attachY);
+    // Slight sag in the middle of the line
+    const midX = (ax + (ax < 0 ? riserL : riserR)) / 2;
+    const sagY = (attachY + pilotY) / 2 + 3;
+    ctx.quadraticCurveTo(midX, sagY, ax < 0 ? riserL : riserR, pilotY - 5);
     ctx.stroke();
   }
 
-  // Top edge highlight
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-  ctx.lineWidth = 1;
+  // Brake lines (colored — left red, right red, thicker)
+  ctx.strokeStyle = 'rgba(180,40,40,0.3)';
+  ctx.lineWidth = 0.6;
+  // Left brake
   ctx.beginPath();
-  ctx.moveTo(-32, -7);
-  ctx.quadraticCurveTo(-20, -27, 0, -29);
-  ctx.quadraticCurveTo(20, -27, 32, -7);
+  ctx.moveTo(-CW + 8, botY + 1);
+  ctx.quadraticCurveTo(-8, pilotY * 0.5, riserL - 2, pilotY - 3);
+  ctx.stroke();
+  // Right brake
+  ctx.beginPath();
+  ctx.moveTo(CW - 8, botY + 1);
+  ctx.quadraticCurveTo(8, pilotY * 0.5, riserR + 2, pilotY - 3);
   ctx.stroke();
 
-  // Lines to harness
-  ctx.strokeStyle = 'rgba(80,60,40,0.5)';
-  ctx.lineWidth = 0.5;
-  [[-18,-7,-4,7],[-7,-10,-1,8],[7,-10,1,8],[18,-7,4,7]].forEach(l => {
-    ctx.beginPath(); ctx.moveTo(l[0],l[1]); ctx.lineTo(l[2],l[3]); ctx.stroke();
-  });
+  // ── Risers (short straps from lines to harness) ──
+  ctx.strokeStyle = 'rgba(50,40,30,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(riserL, pilotY - 5); ctx.lineTo(riserL, pilotY + 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(riserR, pilotY - 5); ctx.lineTo(riserR, pilotY + 2); ctx.stroke();
 
-  // Pilot silhouette
-  ctx.fillStyle = '#2C3E50';
+  // ── Harness (cocoon-shaped, pilot seated inside) ──
+  // Harness shell
+  const hGrad = ctx.createLinearGradient(-8, pilotY - 2, 8, pilotY + 16);
+  hGrad.addColorStop(0, '#2C3E50');
+  hGrad.addColorStop(0.5, '#34495E');
+  hGrad.addColorStop(1, '#1A252F');
+  ctx.fillStyle = hGrad;
   ctx.beginPath();
-  ctx.ellipse(0, 12, 5, 6, 0, 0, Math.PI * 2);
+  ctx.moveTo(-7, pilotY);
+  ctx.quadraticCurveTo(-9, pilotY + 8, -6, pilotY + 18);
+  ctx.quadraticCurveTo(0, pilotY + 22, 6, pilotY + 18);
+  ctx.quadraticCurveTo(9, pilotY + 8, 7, pilotY);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#1A2A3A';
-  ctx.fillRect(-4, 17, 3, 8);
-  ctx.fillRect(1, 17, 3, 8);
-  ctx.fillStyle = '#E63946';
+
+  // Harness edge highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.arc(0, 5, 4, 0, Math.PI * 2);
+  ctx.moveTo(-6, pilotY + 1);
+  ctx.quadraticCurveTo(-8, pilotY + 8, -5, pilotY + 16);
+  ctx.stroke();
+
+  // ── Pilot (upper body visible above harness) ──
+  // Torso/jacket
+  ctx.fillStyle = '#1A3A5C';
+  ctx.beginPath();
+  ctx.ellipse(0, pilotY + 2, 5, 5, 0, -Math.PI, 0);
   ctx.fill();
+
+  // Arms (holding brake toggles)
+  ctx.strokeStyle = '#1A3A5C';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  // Left arm reaching to brake toggle
+  ctx.beginPath();
+  ctx.moveTo(-4, pilotY + 1);
+  ctx.quadraticCurveTo(-7, pilotY - 1, riserL - 3, pilotY - 2);
+  ctx.stroke();
+  // Right arm
+  ctx.beginPath();
+  ctx.moveTo(4, pilotY + 1);
+  ctx.quadraticCurveTo(7, pilotY - 1, riserR + 3, pilotY - 2);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+
+  // Helmet
+  const helmetGrad = ctx.createRadialGradient(-1, pilotY - 5, 1, 0, pilotY - 4, 5);
+  helmetGrad.addColorStop(0, '#FF4444');
+  helmetGrad.addColorStop(0.6, '#CC2222');
+  helmetGrad.addColorStop(1, '#991111');
+  ctx.fillStyle = helmetGrad;
+  ctx.beginPath();
+  ctx.arc(0, pilotY - 4, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Visor
+  ctx.fillStyle = 'rgba(100,180,255,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(1.5, pilotY - 3.5, 2.5, 1.8, 0.2, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.fill();
+  // Helmet shine
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.arc(-1.5, pilotY - 6, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Boots (dangling below harness) ──
+  ctx.fillStyle = '#1A1A1A';
+  // Left boot
+  ctx.beginPath();
+  ctx.moveTo(-4, pilotY + 18);
+  ctx.lineTo(-5, pilotY + 26 + Math.sin(t * 3) * 1.5);
+  ctx.lineTo(-1, pilotY + 26 + Math.sin(t * 3) * 1.5);
+  ctx.lineTo(-2, pilotY + 18);
+  ctx.closePath();
+  ctx.fill();
+  // Right boot
+  ctx.beginPath();
+  ctx.moveTo(2, pilotY + 18);
+  ctx.lineTo(1, pilotY + 26 + Math.sin(t * 3 + 0.5) * 1.5);
+  ctx.lineTo(5, pilotY + 26 + Math.sin(t * 3 + 0.5) * 1.5);
+  ctx.lineTo(4, pilotY + 18);
+  ctx.closePath();
+  ctx.fill();
+  // Boot soles
+  ctx.fillStyle = '#333';
+  ctx.fillRect(-5, pilotY + 25 + Math.sin(t * 3) * 1.5, 4, 1.5);
+  ctx.fillRect(1, pilotY + 25 + Math.sin(t * 3 + 0.5) * 1.5, 4, 1.5);
+
+  // ── Speed bar (optional visual when holding/rising fast) ──
+  if (isHolding && velocity > 3) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 3; i++) {
+      const sx = -15 - i * 8;
+      const sy = pilotY + 10 + i * 3;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx - 10 - velocity * 2, sy + 1);
+      ctx.stroke();
+    }
+  }
 
   ctx.restore();
 }
