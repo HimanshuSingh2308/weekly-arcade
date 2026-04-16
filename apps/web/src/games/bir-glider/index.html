@@ -736,21 +736,14 @@ const BIOMES = [
   { name: 'Above Clouds', sub: 'Only sky, only silence',  minDist: 3500, color1: '#10002b', color2: '#3c096c' },
 ];
 
-// Goal pool
-const GOAL_POOL = [
-  { id: 'thermals3',   text: 'Catch 3 thermals',         check: () => thermalsCount >= 3 },
-  { id: 'flags5',      text: 'Collect 5 flags in a row', check: () => flagCombo >= 5 },
-  { id: 'dist1000',    text: 'Fly 1000m',                check: () => distance >= 1000 },
-  { id: 'flags10',     text: 'Collect 10 flags',         check: () => prayerFlagsCollected >= 10 },
-  { id: 'thermals5',   text: 'Catch 5 thermals',         check: () => thermalsCount >= 5 },
-  { id: 'alt1500',     text: 'Reach 1500m altitude',     check: () => altitudeM >= 1500 },
-];
+// Goal pool (active goals are defined in GOAL_POOL_ACTIVE below)
 
 // ---- Audio ----
 let audioCtx = null;
 let windGain = null;
 let windFilter = null;
 let zenDroneGain = null;
+let zenDroneNodes = [];
 const PENTATONIC = [261.63, 293.66, 329.63, 392.00, 440.00]; // C4 D4 E4 G4 A4
 
 function initAudio() {
@@ -848,8 +841,17 @@ function playCrashSound() {
   } catch(e) {}
 }
 
+function stopZenDrone() {
+  zenDroneNodes.forEach(({ osc, gain }) => {
+    try { osc.stop(); osc.disconnect(); gain.disconnect(); } catch(e) {}
+  });
+  zenDroneNodes = [];
+  zenDroneStarted = false;
+}
+
 function startZenDrone() {
-  if (!audioCtx || muted || zenDroneStarted) return;
+  if (!audioCtx || muted) return;
+  stopZenDrone();
   zenDroneStarted = true;
   try {
     const droneFreqs = [65.41, 130.81, 196.00]; // C2 C3 G3
@@ -862,7 +864,8 @@ function startZenDrone() {
       gain.gain.setTargetAtTime(0.04 - i * 0.01, audioCtx.currentTime, 2);
       osc.connect(gain); gain.connect(audioCtx.destination);
       osc.start();
-      zenDroneGain = gain; // keep last reference
+      zenDroneNodes.push({ osc, gain });
+      zenDroneGain = gain;
     });
   } catch(e) {}
 }
@@ -1440,7 +1443,10 @@ function gameLoop(ts) {
   totalScore = Math.floor(distance) + totalFlagScore + totalNearMissBonus + altitudeMilestoneBonus;
 
   // Update biome
-  const newBiome = BIOMES.findLastIndex(b => distance >= b.minDist);
+  let newBiome = 0;
+  for (let i = BIOMES.length - 1; i >= 0; i--) {
+    if (distance >= BIOMES[i].minDist) { newBiome = i; break; }
+  }
   if (newBiome !== biomeIndex) {
     biomeIndex = newBiome;
     if (!visitedBiomes.has(biomeIndex)) {
@@ -1655,11 +1661,18 @@ function startGame() {
   document.getElementById('gameoverScreen').classList.add('hidden');
   document.getElementById('hud').style.display = 'block';
 
+  // Cancel any existing game loop to prevent duplicate rAF chains
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  if (menuBgAnimId) { cancelAnimationFrame(menuBgAnimId); menuBgAnimId = null; }
+
   gameState = 'playing';
 
   initAudio();
   startWind();
+  stopZenDrone();
   if (zenMode) startZenDrone();
+
+  animFrameId = requestAnimationFrame(gameLoop);
 }
 
 function endGame() {
@@ -1667,6 +1680,7 @@ function endGame() {
   gameState = 'gameover';
 
   stopWind();
+  stopZenDrone();
   playCrashSound();
 
   // Check personal best
@@ -1822,6 +1836,7 @@ canvas.addEventListener('mousedown', onHoldStart);
 canvas.addEventListener('mouseup', onHoldEnd);
 canvas.addEventListener('mouseleave', onHoldEnd);
 canvas.addEventListener('touchstart', onHoldStart, { passive: false });
+canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 canvas.addEventListener('touchend', onHoldEnd);
 canvas.addEventListener('touchcancel', onHoldEnd);
 document.addEventListener('keydown', e => {
@@ -1830,6 +1845,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keyup', e => {
   if (e.code === 'Space' || e.code === 'ArrowUp') onHoldEnd(e);
 });
+window.addEventListener('blur', () => { isHolding = false; });
 
 // ---- Zen mode ----
 function toggleZenMode() {
@@ -1935,9 +1951,13 @@ function init() {
   window.addEventListener('resize', resize);
 
   // Load saved data
-  personalBest = parseInt(localStorage.getItem('bir-glider-best') || '0');
-  zenMode = localStorage.getItem('bir-glider-zen') === '1';
-  muted = localStorage.getItem('bir-glider-muted') === '1';
+  try {
+    personalBest = parseInt(localStorage.getItem('bir-glider-best') || '0') || 0;
+    zenMode = localStorage.getItem('bir-glider-zen') === '1';
+    muted = localStorage.getItem('bir-glider-muted') === '1';
+  } catch(e) {
+    personalBest = 0; zenMode = false; muted = false;
+  }
 
   if (zenMode) document.getElementById('zenToggle').classList.add('active');
   if (muted) document.getElementById('muteBtn').textContent = '🔇';
