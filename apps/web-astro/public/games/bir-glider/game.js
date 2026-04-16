@@ -320,17 +320,16 @@ function generateMidTrees() {
 
 // ---- Object spawning ----
 function spawnObjects() {
-  // Prayer flags — every 200-350m equivalent pixels
+  // Prayer flags — spawn in the glider's flight zone, not on the ground
   if (Math.random() < 0.012) {
-    const xWorld = terrainOffset + W + 50;
-    const groundY = getTerrainY(xWorld, biomeIndex);
-    const h = 30 + Math.random() * 60;
+    // Spawn flags in the air between 20%-70% of screen height (where glider flies)
+    const flagY = H * 0.2 + Math.random() * H * 0.5;
     prayerFlags.push({
       x: W + 50 + Math.random() * 100,
-      y: groundY - h,
+      y: flagY,
       collected: false,
       phase: Math.random() * Math.PI * 2,
-      colors: ['#e63946','#f4a261','#2a9d8f','#e9c46a','#264653'],
+      colors: ['#1565C0','#F5F5F0','#C62828','#2E7D32','#F9A825'], // Tibetan order
     });
   }
 
@@ -1282,6 +1281,9 @@ function startGame() {
   isNewBest = false;
   zenRecovering = false;
   zenTimer = 0;
+  stuntsPerformed = 0;
+  stuntCooldown = 0;
+  stuntActive = false;
   zenDroneStarted = false;
 
   prayerFlags = [];
@@ -1355,6 +1357,8 @@ function showGameOver() {
   document.getElementById('statDistance').textContent = Math.floor(distance) + 'm';
   document.getElementById('statAltitude').textContent = maxAltitudeM + 'm';
   document.getElementById('statFlags').textContent = prayerFlagsCollected;
+  document.getElementById('statThermals').textContent = thermalsCount;
+  document.getElementById('statStunts').textContent = stuntsPerformed || 0;
 
   if (isNewBest) {
     document.getElementById('statDistance').classList.add('new-best');
@@ -1527,6 +1531,7 @@ let stuntActive = false;
 let stuntType = '';
 let stuntTimer = 0;
 let stuntScore = 0;
+let stuntsPerformed = 0;
 
 function triggerStunt() {
   if (stuntCooldown > 0 || stuntActive) return;
@@ -1549,6 +1554,7 @@ function triggerStunt() {
   }
 
   stuntActive = true;
+  stuntsPerformed++;
   stuntTimer = 60; // ~1 second
   stuntCooldown = 180; // ~3 second cooldown
   totalFlagScore += stuntScore;
