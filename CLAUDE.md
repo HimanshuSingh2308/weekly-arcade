@@ -126,12 +126,47 @@ await window.apiClient.unlockAchievement('achievement-id', 'game-id', { metadata
 
 ## Adding a New Game
 
-1. Create game in `apps/web/src/games/{game-name}/index.html`
-2. Add to home page in `apps/web/src/index.html`
-3. Add to leaderboard GAMES array in `apps/web/src/leaderboard/index.html`
-4. Add to service worker cache in `apps/web/src/sw.js`
-5. Include auth integration (see above)
-6. Create SVG thumbnail in `apps/web/src/images/thumbnails/{game-name}.svg`
+### Files to Create
+1. **Game file**: `apps/web/src/games/{game-slug}/index.html` — Complete self-contained game (HTML + inline CSS + inline JS)
+2. **SVG thumbnail**: `apps/web/src/images/thumbnails/{game-slug}.svg` — Used on homepage game cards
+
+### Files to Modify
+3. **Homepage**: `apps/web/src/index.html`
+   - Add game card to games grid (position 0 for newest game, with `<span class="tag new">NEW</span>`)
+   - Add to hero badge: `🎮 New Game This Week: {Game Name}`
+   - Add to ItemList structured data (schema.org)
+   - Remove NEW tag from previous newest game
+4. **Leaderboard**: `apps/web/src/leaderboard/index.html` — Add to GAMES array (position 0)
+5. **Service worker**: `apps/web/src/sw.js` — Add game paths to ASSETS cache list, bump `CACHE_VERSION`
+6. **Achievements**: `packages/shared/src/lib/constants/achievements.ts` — Register game achievements
+7. **Achievement types**: `packages/shared/src/lib/types/achievement.types.ts` — Add `'{game-slug}'` to AchievementCategory union
+8. **Server game config**: `apps/api/src/leaderboard/config/game-config.ts` — Add server-side score validation entry
+
+### Game HTML Template Pattern
+Each game file follows this structure:
+- SEO meta tags (title, description, OG, Twitter, canonical)
+- Structured data (VideoGame + BreadcrumbList JSON-LD)
+- PWA tags (manifest, theme-color, apple-touch-icon)
+- Inline CSS (all styles)
+- Game UI (header, canvas, HUD, menus, game over screen)
+- Inline JS (all game logic)
+
+### Required Integrations
+- **Auth**: `window.authManager.onAuthStateChanged(user => { ... })`
+- **Score**: `window.apiClient.submitScore('{game-slug}', { score, level, timeMs, metadata: {...} })`
+- **Achievements**: `window.apiClient.unlockAchievement('{achievement-id}', '{game-slug}')`
+- **Cloud save**: `window.apiClient.saveGameState('{game-slug}', state)` / `getGameState('{game-slug}')`
+- **localStorage**: Personal best at `{game-slug}-best`, settings at `{game-slug}-{setting}`
+
+### Naming Conventions
+- Game slug: kebab-case (`bir-glider`, `stack-tower`)
+- Achievement IDs: `{slug-prefix}_{achievement_name}` (`bir_first_flight`, `bir_legend`)
+- localStorage keys: `{game-slug}-{key}` (`bir-glider-best`, `bir-glider-muted`)
+
+### DO NOT Modify
+- `apps/web/src/js/api-client.js` — Shared API client
+- `apps/web/src/js/auth.js` — Shared auth manager
+- Other games' files
 
 ## Deployment
 
