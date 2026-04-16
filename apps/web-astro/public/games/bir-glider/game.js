@@ -1501,7 +1501,10 @@ function hideHeader() {
 
 function showHeader() {
   const hdr = document.getElementById('gameHeader');
-  if (hdr) hdr.style.display = '';
+  if (hdr) {
+    hdr.style.display = 'flex';
+    hdr.style.visibility = 'visible';
+  }
   document.documentElement.style.setProperty('--header-h', '50px');
   resize();
 }
