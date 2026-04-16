@@ -406,18 +406,22 @@
 }
 
 .gameover-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: clamp(0.4rem, 1.2vw, 0.75rem);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.4rem, 1.5vw, 0.75rem);
   width: 100%;
-  max-width: 700px;
+  max-width: 650px;
 }
 
 .gameover-stat {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: clamp(8px, 1.5dvh, 12px);
-  padding: clamp(0.5rem, 2dvh, 0.9rem) clamp(0.4rem, 1vw, 0.5rem);
+  border-radius: 12px;
+  padding: clamp(0.6rem, 2dvh, 1rem) clamp(0.8rem, 2vw, 1.2rem);
+  flex: 1 1 120px;
+  min-width: 100px;
+  max-width: 180px;
 }
 
 .stat-value {
@@ -546,10 +550,17 @@
   opacity: 0;
 }
 
-/* Landscape — stretch stats across full width */
+/* Landscape — all 5 stats in one row */
 @media (orientation: landscape) {
-  .gameover-stats { max-width: min(90vw, 800px); }
-  .gameover-stat { padding: clamp(0.5rem, 2dvh, 0.9rem) clamp(0.5rem, 2vw, 1rem); }
+  .gameover-stats {
+    max-width: min(92vw, 900px);
+    flex-wrap: nowrap;
+  }
+  .gameover-stat {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

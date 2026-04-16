@@ -59,8 +59,12 @@ let terrainOffset = 0;
 let terrainSeed = Math.random() * 10000;
 let backMountains = [];
 let farMountains = [];
+let midMountains = []; // third ridge layer between far and mid
 let midTrees = [];
 let clouds = [];
+let midBuildings = [];
+let riverPoints = [];
+let cropPatches = [];
 
 // Objects
 let prayerFlags = [];
@@ -290,30 +294,86 @@ function extendTerrain() {
 function generateBackMountains() {
   backMountains = [];
   farMountains = [];
+  midMountains = [];
+  clouds = [];
   const segW = 4;
   const totalW = W * 3;
   const segs = Math.ceil(totalW / segW);
 
-  // Far Dhauladhar ridge (smooth rolling profile)
+  // Far Dhauladhar ridge — low frequency, dramatic peaks
   for (let i = 0; i <= segs; i++) {
     const x = i * segW;
-    const n = fbm(x * 0.0008 + 50, 3, 0.5);
-    farMountains.push(H * 0.22 + n * H * 0.18);
+    const n = fbm(x * 0.0006 + 50, 4, 0.55);
+    farMountains.push(H * 0.20 + n * H * 0.20);
   }
-  // Mid forest ridge
+  // Middle ridge layer (between far and near) — medium frequency
   for (let i = 0; i <= segs; i++) {
     const x = i * segW;
-    const n = fbm(x * 0.0012 + 200, 3, 0.5);
+    const n = fbm(x * 0.001 + 120, 3, 0.5);
+    midMountains.push(H * 0.32 + n * H * 0.15);
+  }
+  // Near forest ridge — higher frequency, more detail
+  for (let i = 0; i <= segs; i++) {
+    const x = i * segW;
+    const n = fbm(x * 0.0015 + 200, 4, 0.45);
     backMountains.push(H * 0.42 + n * H * 0.14);
+  }
+
+  // Pre-generate wispy clouds (2-4 elongated ellipses)
+  for (let i = 0; i < 4; i++) {
+    clouds.push({
+      x: Math.random() * W * 2,
+      y: H * 0.08 + Math.random() * H * 0.18,
+      w: 80 + Math.random() * 120,
+      h: 8 + Math.random() * 12,
+      speed: 0.08 + Math.random() * 0.12,
+      alpha: 0.08 + Math.random() * 0.12,
+    });
   }
 }
 
 function generateMidTrees() {
   midTrees = [];
-  for (let i = 0; i < 50; i++) {
+  midBuildings = [];
+  riverPoints = [];
+  cropPatches = [];
+
+  // Irregularly spaced trees with varied sizes and shapes
+  let tx = 10 + Math.random() * 30;
+  while (tx < W * 3) {
     midTrees.push({
-      x: Math.random() * W * 3,
-      height: 25 + Math.random() * 50,
+      x: tx,
+      height: 15 + Math.random() * 55, // 15-70px
+      width: 0.15 + Math.random() * 0.25, // width ratio — some narrow, some wide
+      shade: Math.random(), // for color variation
+    });
+    tx += 15 + Math.random() * 60; // irregular spacing
+  }
+
+  // 2-3 small Tibetan-style buildings
+  for (let i = 0; i < 3; i++) {
+    midBuildings.push({
+      x: W * 0.3 + i * W * 0.8 + Math.random() * W * 0.3,
+      w: 12 + Math.random() * 10,
+      h: 10 + Math.random() * 8,
+    });
+  }
+
+  // Pre-generate river path control points
+  for (let i = 0; i <= 20; i++) {
+    riverPoints.push({
+      x: i * (W / 20) * 3,
+      yOff: (Math.random() - 0.5) * 40,
+    });
+  }
+
+  // Crop field patches
+  for (let i = 0; i < 8; i++) {
+    cropPatches.push({
+      x: Math.random() * W * 2.5,
+      w: 30 + Math.random() * 60,
+      h: 8 + Math.random() * 12,
+      isMustard: Math.random() > 0.5,
     });
   }
 }
@@ -467,23 +527,63 @@ function getTerrainColor(biome) {
 // ---- Drawing (Alto's Adventure-style smooth silhouette layers) ----
 
 function drawSky() {
-  ctx.fillStyle = getSkyGradient(ctx, biomeIndex, distance);
+  // Smoother sky gradient with more color stops
+  const sky = getSkyGradient(ctx, biomeIndex, distance);
+  ctx.fillStyle = sky;
   ctx.fillRect(0, 0, W, H);
 
   const phase = ((distance % 600) / 600);
 
-  // Sun glow
+  // Sun glow — bigger, softer, layered
   if (biomeIndex < 3) {
     const sunX = W * 0.65 + phase * W * 0.2;
-    const sunY = H * 0.15 + Math.sin(phase * Math.PI) * H * 0.05;
-    const sunR = phase > 0.7 ? 150 : 90;
-    const sunAlpha = phase > 0.7 ? 0.5 : 0.25;
-    const sunGrad = ctx.createRadialGradient(sunX, sunY, 5, sunX, sunY, sunR);
-    sunGrad.addColorStop(0, `rgba(255,255,220,${sunAlpha})`);
-    sunGrad.addColorStop(0.3, `rgba(255,240,180,${sunAlpha * 0.4})`);
-    sunGrad.addColorStop(1, 'rgba(255,200,100,0)');
-    ctx.fillStyle = sunGrad;
+    const sunY = H * 0.12 + Math.sin(phase * Math.PI) * H * 0.06;
+    const isSunset = biomeIndex === 0 && phase > 0.7;
+
+    // Outer halo (large soft glow)
+    const outerR = isSunset ? 220 : 160;
+    const outerAlpha = isSunset ? 0.25 : 0.12;
+    const outerGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, outerR);
+    outerGrad.addColorStop(0, `rgba(255,250,230,${outerAlpha})`);
+    outerGrad.addColorStop(0.3, `rgba(255,240,200,${outerAlpha * 0.5})`);
+    outerGrad.addColorStop(0.7, `rgba(255,220,160,${outerAlpha * 0.15})`);
+    outerGrad.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = outerGrad;
     ctx.fillRect(0, 0, W, H);
+
+    // Inner bright core
+    const coreR = isSunset ? 50 : 30;
+    const coreAlpha = isSunset ? 0.6 : 0.35;
+    const coreGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, coreR);
+    coreGrad.addColorStop(0, `rgba(255,255,240,${coreAlpha})`);
+    coreGrad.addColorStop(0.5, `rgba(255,250,210,${coreAlpha * 0.4})`);
+    coreGrad.addColorStop(1, 'rgba(255,240,180,0)');
+    ctx.fillStyle = coreGrad;
+    ctx.fillRect(sunX - coreR, sunY - coreR, coreR * 2, coreR * 2);
+  }
+
+  // Wispy clouds — drifting slowly
+  if (biomeIndex < 3 && clouds.length > 0) {
+    ctx.save();
+    for (const c of clouds) {
+      c.x += c.speed;
+      if (c.x > W * 2.5) c.x = -c.w;
+      const cx = (c.x - distance * 0.02) % (W * 2);
+      if (cx < -c.w || cx > W + c.w) continue;
+      ctx.globalAlpha = c.alpha;
+      ctx.fillStyle = biomeIndex === 0 && phase > 0.7
+        ? 'rgba(255,200,160,0.7)' // sunset-tinted clouds
+        : 'rgba(255,255,255,0.7)';
+      // Main cloud body
+      ctx.beginPath();
+      ctx.ellipse(cx, c.y, c.w, c.h, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Secondary lobe for natural shape
+      ctx.beginPath();
+      ctx.ellipse(cx + c.w * 0.3, c.y - c.h * 0.3, c.w * 0.6, c.h * 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   // Stars (above clouds)
@@ -496,55 +596,131 @@ function drawSky() {
       ctx.beginPath(); ctx.arc(sx, sy, 0.4 + (i % 3) * 0.5, 0, Math.PI * 2); ctx.fill();
     }
   }
+
+  // Valley haze near the bottom of the sky
+  if (biomeIndex <= 2) {
+    ctx.save();
+    const hazeY = H * 0.55;
+    const hazeH = H * 0.25;
+    const valleyHaze = ctx.createLinearGradient(0, hazeY, 0, hazeY + hazeH);
+    valleyHaze.addColorStop(0, 'rgba(180,200,220,0)');
+    valleyHaze.addColorStop(0.5, 'rgba(180,200,220,0.06)');
+    valleyHaze.addColorStop(1, 'rgba(180,200,220,0.1)');
+    ctx.fillStyle = valleyHaze;
+    ctx.fillRect(0, hazeY, W, hazeH);
+    ctx.restore();
+  }
 }
 
 function drawBackMountains() {
   const segW = 4;
+  const bi = Math.min(biomeIndex, 3);
+  const phase = ((distance % 600) / 600);
+  const isSunset = biomeIndex === 0 && phase > 0.7;
 
-  // --- Layer 1: Far Dhauladhar range (smooth rolling ridge, very slow parallax) ---
-  const farScroll = distance * 0.04;
+  // === Layer 1: Far Dhauladhar range — hazy blue-purple, atmospheric perspective ===
+  const farScroll = distance * 0.03;
   const farColors = [
-    ['#6A7088', '#8A90A5'], // biome 0: hazy blue-grey (atmospheric perspective)
-    ['#4A5565', '#657080'], // biome 1: darker blue-grey
-    ['#9AA8B8', '#B8C8D5'], // biome 2: pale icy
-    ['#2A2040', '#3A2850'], // biome 3: deep purple
+    ['#5A6088', '#7A80A5'], // biome 0: hazy blue-purple
+    ['#4A5565', '#606878'], // biome 1: darker blue-grey
+    ['#8A98B0', '#A8B8CC'], // biome 2: pale icy
+    ['#201838', '#302050'], // biome 3: deep purple
   ];
-  const fc = farColors[Math.min(biomeIndex, 3)];
+  const fc = farColors[bi];
 
   ctx.save();
-  const farGrad = ctx.createLinearGradient(0, H * 0.1, 0, H * 0.55);
+  const farGrad = ctx.createLinearGradient(0, H * 0.08, 0, H * 0.50);
   farGrad.addColorStop(0, fc[0]);
-  farGrad.addColorStop(1, fc[1]);
+  farGrad.addColorStop(0.6, fc[1]);
+  farGrad.addColorStop(1, isSunset ? '#9A8090' : fc[1]);
   ctx.fillStyle = farGrad;
-  ctx.globalAlpha = 0.75;
+  ctx.globalAlpha = 0.7;
   ctx.beginPath();
-  ctx.moveTo(-10, H * 0.55);
-  for (let i = 0; i <= Math.ceil(W / segW) + 20; i++) {
+  ctx.moveTo(-10, H * 0.50);
+  const farSegs = Math.ceil(W / segW) + 20;
+  for (let i = 0; i <= farSegs; i++) {
     const worldI = (Math.floor((i * segW + farScroll) / segW) % farMountains.length + farMountains.length) % farMountains.length;
     ctx.lineTo(i * segW, farMountains[worldI]);
   }
-  ctx.lineTo(W + 20, H * 0.55);
+  ctx.lineTo(W + 20, H * 0.50);
   ctx.closePath();
   ctx.fill();
 
-  // Snow highlight on far peaks
-  if (biomeIndex < 3) {
-    const isSunset = biomeIndex === 0 && ((distance % 600) / 600) > 0.7;
-    ctx.fillStyle = isSunset ? 'rgba(232,160,120,0.3)' : 'rgba(240,245,250,0.35)';
+  // Snow caps on far peaks — only on the highest points
+  if (bi < 3) {
+    ctx.globalAlpha = isSunset ? 0.35 : 0.40;
+    ctx.fillStyle = isSunset ? 'rgba(240,190,160,0.5)' : 'rgba(240,245,250,0.5)';
     ctx.beginPath();
-    ctx.moveTo(-10, H * 0.55);
-    for (let i = 0; i <= Math.ceil(W / segW) + 20; i++) {
+    let started = false;
+    for (let i = 0; i <= farSegs; i++) {
       const worldI = (Math.floor((i * segW + farScroll) / segW) % farMountains.length + farMountains.length) % farMountains.length;
       const y = farMountains[worldI];
-      ctx.lineTo(i * segW, Math.min(y + 20, H * 0.35));
+      // Only draw snow on peaks above threshold
+      const snowLine = H * 0.28;
+      if (y < snowLine) {
+        const snowY = y + (snowLine - y) * 0.4; // snow covers upper portion
+        if (!started) { ctx.moveTo(i * segW, snowY); started = true; }
+        else ctx.lineTo(i * segW, snowY);
+      } else if (started) {
+        ctx.lineTo(i * segW, y);
+        started = false;
+      }
     }
-    ctx.lineTo(W + 20, H * 0.55);
-    ctx.closePath();
+    if (started) ctx.lineTo(W + 20, H * 0.50);
     ctx.fill();
   }
   ctx.restore();
 
-  // --- Layer 2: Mid mountain ridge (forest-covered, closer) ---
+  // Haze between far and mid layers
+  if (bi <= 2) {
+    ctx.save();
+    const h1 = ctx.createLinearGradient(0, H * 0.28, 0, H * 0.45);
+    h1.addColorStop(0, 'rgba(180,200,220,0)');
+    h1.addColorStop(1, 'rgba(180,200,220,0.08)');
+    ctx.fillStyle = h1;
+    ctx.fillRect(0, H * 0.28, W, H * 0.17);
+    ctx.restore();
+  }
+
+  // === Layer 2: Middle ridge (grey-green transitional layer) ===
+  const midScroll2 = distance * 0.06;
+  const midColors2 = [
+    ['#4A6A55', '#5A8068'], // biome 0: muted grey-green
+    ['#3A5040', '#4A6050'], // biome 1: darker grey-green
+    ['#6A7888', '#8A9098'], // biome 2: grey-blue rock
+    ['#2A2540', '#3A3055'], // biome 3: dark purple
+  ];
+  const mc2 = midColors2[bi];
+  ctx.save();
+  const midGrad2 = ctx.createLinearGradient(0, H * 0.25, 0, H * 0.58);
+  midGrad2.addColorStop(0, mc2[0]);
+  midGrad2.addColorStop(1, mc2[1]);
+  ctx.fillStyle = midGrad2;
+  ctx.globalAlpha = 0.75;
+  ctx.beginPath();
+  ctx.moveTo(-10, H * 0.58);
+  const midSegs2 = Math.ceil(W / segW) + 20;
+  for (let i = 0; i <= midSegs2; i++) {
+    const worldI = (Math.floor((i * segW + midScroll2) / segW) % midMountains.length + midMountains.length) % midMountains.length;
+    ctx.lineTo(i * segW, midMountains[worldI]);
+  }
+  ctx.lineTo(W + 20, H * 0.58);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Haze between middle and near layers
+  if (bi <= 1) {
+    ctx.save();
+    const h2 = ctx.createLinearGradient(0, H * 0.42, 0, H * 0.58);
+    h2.addColorStop(0, 'rgba(180,200,220,0)');
+    h2.addColorStop(1, 'rgba(180,200,220,0.10)');
+    ctx.fillStyle = h2;
+    ctx.fillRect(0, H * 0.42, W, H * 0.16);
+    ctx.restore();
+  }
+
+  // === Layer 3: Near forest ridge — vivid greens, detailed ===
   const midScroll = distance * 0.1;
   const midColors = [
     ['#2D5A27', '#3A7A3F'], // biome 0: forest green
@@ -552,32 +728,46 @@ function drawBackMountains() {
     ['#5A6575', '#7A8595'], // biome 2: grey rock
     ['#2A2045', '#3A3060'], // biome 3: purple
   ];
-  const mc = midColors[Math.min(biomeIndex, 3)];
+  const mc = midColors[bi];
   ctx.save();
-  const midGrad = ctx.createLinearGradient(0, H * 0.3, 0, H * 0.68);
+  const midGrad = ctx.createLinearGradient(0, H * 0.35, 0, H * 0.68);
   midGrad.addColorStop(0, mc[0]);
   midGrad.addColorStop(1, mc[1]);
   ctx.fillStyle = midGrad;
-  ctx.globalAlpha = 0.85;
+  ctx.globalAlpha = 0.88;
   ctx.beginPath();
   ctx.moveTo(-10, H * 0.68);
-  for (let i = 0; i <= Math.ceil(W / segW) + 20; i++) {
+  const midSegs = Math.ceil(W / segW) + 20;
+  for (let i = 0; i <= midSegs; i++) {
     const worldI = (Math.floor((i * segW + midScroll) / segW) % backMountains.length + backMountains.length) % backMountains.length;
     ctx.lineTo(i * segW, backMountains[worldI]);
   }
   ctx.lineTo(W + 20, H * 0.68);
   ctx.closePath();
   ctx.fill();
+
+  // Subtle color variation along the near ridge (lighter patches simulating clearings)
+  if (bi <= 1) {
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = bi === 0 ? '#4A8A4A' : '#2A5A2A';
+    for (let i = 0; i <= midSegs; i += 40) {
+      const worldI = (Math.floor((i * segW + midScroll) / segW) % backMountains.length + backMountains.length) % backMountains.length;
+      const y = backMountains[worldI];
+      ctx.beginPath();
+      ctx.ellipse(i * segW, y + 15, 50, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   ctx.restore();
 
-  // Atmospheric haze between layers
-  if (biomeIndex <= 1) {
+  // Final atmospheric haze wash at the base of all mountains
+  if (bi <= 2) {
     ctx.save();
-    const hazeGrad = ctx.createLinearGradient(0, H * 0.4, 0, H * 0.65);
+    const hazeGrad = ctx.createLinearGradient(0, H * 0.52, 0, H * 0.68);
     hazeGrad.addColorStop(0, 'rgba(180,200,220,0)');
     hazeGrad.addColorStop(1, 'rgba(180,200,220,0.12)');
     ctx.fillStyle = hazeGrad;
-    ctx.fillRect(0, H * 0.4, W, H * 0.25);
+    ctx.fillRect(0, H * 0.52, W, H * 0.16);
     ctx.restore();
   }
 }
@@ -1322,7 +1512,7 @@ function endGame(reason) {
   gameState = 'gameover';
   crashReason = reason || 'landed';
 
-  // Keep header hidden on game over — full screen experience
+  showHeader();
   stopWind();
   stopZenDrone();
   playCrashSound();
