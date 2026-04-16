@@ -1775,8 +1775,10 @@ async function checkAndUnlockAchievements() {
   // Legend (10k score)
   if (totalScore >= 10000) toUnlock.push('bir_legend');
 
-  // Zen master (5 min = 300s) — tracked separately via zenTimer
-  if (zenMode && gameTime / 60 >= 300) toUnlock.push('bir_zen_master');
+  // Zen master (5 min = 300s) — gameTime is in dt units (~60/sec at 60fps)
+  // gameTime/60 converts to real seconds
+  const zenPlaytimeSeconds = gameTime / 60;
+  if (zenMode && zenPlaytimeSeconds >= 300) toUnlock.push('bir_zen_master');
 
   for (const id of toUnlock) {
     try {
@@ -1786,12 +1788,21 @@ async function checkAndUnlockAchievements() {
 }
 
 // ---- Score submission ----
+let lastSubmitTime = 0;
+const SUBMIT_COOLDOWN_MS = 10_000;
+
 async function submitScore() {
+  if (gameState !== 'gameover') return;
   if (!currentUser) {
     if (window.authManager) window.authManager.signIn();
     return;
   }
   if (!window.apiClient) return;
+  if (Date.now() - lastSubmitTime < SUBMIT_COOLDOWN_MS) return;
+  lastSubmitTime = Date.now();
+
+  // Re-derive score from components
+  const derivedScore = Math.floor(distance) + totalFlagScore + totalNearMissBonus + altitudeMilestoneBonus;
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -1799,7 +1810,7 @@ async function submitScore() {
 
   try {
     await window.apiClient.submitScore('bir-glider', {
-      score: totalScore,
+      score: derivedScore,
       level: biomeIndex,
       timeMs: Date.now() - runStartTime,
       metadata: {
