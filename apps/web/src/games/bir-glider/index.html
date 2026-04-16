@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
   <title>Bir Glider | Weekly Arcade - Himalayan Paragliding</title>
 
   <!-- SEO -->
@@ -148,6 +148,8 @@
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
+      min-height: 44px;
+      min-width: 44px;
     }
     .auth-btn:hover { background: var(--accent-light); }
 
@@ -347,6 +349,7 @@
       border-radius: 24px;
       padding: 0.6rem 1.2rem;
       cursor: pointer;
+      min-height: 44px;
       color: rgba(255,255,255,0.8);
       font-size: 0.95rem;
       transition: background 0.2s, border-color 0.2s;
@@ -571,21 +574,37 @@
       z-index: 400;
       opacity: 0;
     }
+    @media (prefers-reduced-motion: reduce) {
+      .menu-icon { animation: none; }
+      .toast { animation: none; opacity: 1; }
+      .play-btn, .retry-btn { transition: none; }
+      .biome-card { transition: none; }
+      .altitude-fill { transition: none; }
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--accent-bright);
+      outline-offset: 2px;
+    }
+    :focus:not(:focus-visible) {
+      outline: none;
+    }
   </style>
 </head>
 <body>
 
   <header class="header">
     <a href="/" class="back-btn" aria-label="Back to home">&#8592; Games</a>
-    <div class="title">🪂 Bir Glider</div>
+    <div class="title"><span aria-hidden="true">🪂</span> Bir Glider</div>
     <div class="header-right">
       <button class="auth-btn" id="authBtn" onclick="handleAuth()">Sign In</button>
-      <button class="icon-btn" onclick="toggleMute()" id="muteBtn" title="Toggle sound">🔊</button>
+      <button class="icon-btn" onclick="toggleMute()" id="muteBtn" aria-label="Sound on" aria-pressed="false"><span aria-hidden="true">🔊</span></button>
     </div>
   </header>
 
+  <main id="gameMain" aria-label="Bir Glider game">
   <!-- Main canvas -->
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" role="application" aria-label="Bir Glider — paragliding game. Use Space or Arrow Up to rise, release to glide."></canvas>
 
   <!-- HUD (visible during play) -->
   <div class="hud" id="hud" style="display:none;">
@@ -593,7 +612,7 @@
       <div class="altitude-fill" id="altFill" style="height:10%"></div>
     </div>
     <div class="altitude-label" id="altLabel">0m</div>
-    <div class="hud-distance" id="hudDistance">0 <span>m</span></div>
+    <div class="hud-distance" id="hudDistance" role="status" aria-live="polite" aria-atomic="true">0 <span>m</span></div>
     <div class="hud-best" id="hudBest"></div>
     <div class="hud-combo" id="hudCombo"></div>
     <div class="goals-panel" id="goalsPanel"></div>
@@ -608,10 +627,10 @@
       <div class="menu-tagline">"Rise on the wind. Find your calm."</div>
       <div class="menu-best" id="menuBest"></div>
       <button class="play-btn" id="playBtn" onclick="startGame()">Fly</button>
-      <div class="zen-toggle" id="zenToggle" onclick="toggleZenMode()">
-        <span>🧘 Zen Mode</span>
+      <button class="zen-toggle" id="zenToggle" onclick="toggleZenMode()" role="switch" aria-checked="false" aria-label="Zen Mode">
+        <span aria-hidden="true">🧘</span> Zen Mode
         <div class="toggle-knob"></div>
-      </div>
+      </button>
       <div class="controls-hint">Hold anywhere to rise &bull; Release to glide</div>
     </div>
   </div>
@@ -619,7 +638,7 @@
   <!-- Game Over Screen -->
   <div class="gameover-screen hidden" id="gameoverScreen">
     <div class="gameover-icon">🏔️</div>
-    <div class="gameover-title" id="gameoverTitle">Landed</div>
+    <div class="gameover-title" id="gameoverTitle" role="alert" aria-live="assertive">Landed</div>
     <div class="gameover-subtitle" id="gameoverSubtitle">The mountain is patient. Fly again.</div>
     <div class="gameover-stats">
       <div class="gameover-stat">
@@ -651,7 +670,8 @@
   </div>
 
   <!-- Toast notifications -->
-  <div class="toast-container" id="toastContainer"></div>
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+  </main>
 
   <!-- Screen flash -->
   <div class="screen-flash" id="screenFlash"></div>
@@ -1863,13 +1883,17 @@ function toggleZenMode() {
   zenMode = !zenMode;
   const toggle = document.getElementById('zenToggle');
   toggle.classList.toggle('active', zenMode);
+  toggle.setAttribute('aria-checked', zenMode ? 'true' : 'false');
   localStorage.setItem('bir-glider-zen', zenMode ? '1' : '0');
 }
 
 // ---- Sound toggle ----
 function toggleMute() {
   muted = !muted;
-  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+  const btn = document.getElementById('muteBtn');
+  btn.querySelector('span').textContent = muted ? '🔇' : '🔊';
+  btn.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on');
+  btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
   if (windGain) windGain.gain.value = muted ? 0 : 0.04;
   localStorage.setItem('bir-glider-muted', muted ? '1' : '0');
 }
@@ -1970,8 +1994,16 @@ function init() {
     personalBest = 0; zenMode = false; muted = false;
   }
 
-  if (zenMode) document.getElementById('zenToggle').classList.add('active');
-  if (muted) document.getElementById('muteBtn').textContent = '🔇';
+  if (zenMode) {
+    document.getElementById('zenToggle').classList.add('active');
+    document.getElementById('zenToggle').setAttribute('aria-checked', 'true');
+  }
+  if (muted) {
+    const btn = document.getElementById('muteBtn');
+    btn.querySelector('span').textContent = '🔇';
+    btn.setAttribute('aria-label', 'Sound off');
+    btn.setAttribute('aria-pressed', 'true');
+  }
 
   updateMenuBest();
   setupAuth();
