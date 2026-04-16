@@ -1861,20 +1861,22 @@ function onHoldEnd(e) {
   isHolding = false;
 }
 
-canvas.addEventListener('mousedown', onHoldStart);
-canvas.addEventListener('mouseup', onHoldEnd);
-canvas.addEventListener('mouseleave', onHoldEnd);
-canvas.addEventListener('touchstart', onHoldStart, { passive: false });
-canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
-canvas.addEventListener('touchend', onHoldEnd);
-canvas.addEventListener('touchcancel', onHoldEnd);
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onHoldStart(e); }
-});
-document.addEventListener('keyup', e => {
-  if (e.code === 'Space' || e.code === 'ArrowUp') onHoldEnd(e);
-});
-window.addEventListener('blur', () => { isHolding = false; });
+function setupControls() {
+  canvas.addEventListener('mousedown', onHoldStart);
+  canvas.addEventListener('mouseup', onHoldEnd);
+  canvas.addEventListener('mouseleave', onHoldEnd);
+  canvas.addEventListener('touchstart', onHoldStart, { passive: false });
+  canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+  canvas.addEventListener('touchend', onHoldEnd);
+  canvas.addEventListener('touchcancel', onHoldEnd);
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onHoldStart(e); }
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') onHoldEnd(e);
+  });
+  window.addEventListener('blur', () => { isHolding = false; });
+}
 
 // ---- Zen mode ----
 function toggleZenMode() {
@@ -1980,6 +1982,7 @@ function init() {
   canvas = document.getElementById('gameCanvas');
   ctx = canvas.getContext('2d');
 
+  setupControls();
   resize();
   window.addEventListener('resize', resize);
 
