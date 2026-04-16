@@ -735,7 +735,9 @@ const TERRAIN_SEGMENT_W = 6;
 let terrainOffset = 0;
 let terrainSeed = Math.random() * 10000;
 let backMountains = [];
+let farMountains = [];
 let midTrees = [];
+let clouds = [];
 
 // Objects
 let prayerFlags = [];
@@ -950,13 +952,25 @@ function extendTerrain() {
 
 // ---- Background elements ----
 function generateBackMountains() {
+  // Mid-range mountains
   backMountains = [];
-  const count = 12;
+  const count = 10;
   for (let i = 0; i < count; i++) {
     backMountains.push({
-      x: (i / count) * W * 1.5,
-      peakY: H * 0.3 + Math.random() * H * 0.2,
-      width: W * 0.15 + Math.random() * W * 0.2,
+      x: (i / count) * W * 2,
+      peakY: H * 0.35 + Math.random() * H * 0.15,
+      width: W * 0.12 + Math.random() * W * 0.15,
+    });
+  }
+  // Far Dhauladhar peaks (taller, slower, snow-capped)
+  farMountains = [];
+  for (let i = 0; i < 7; i++) {
+    const peakY = H * 0.12 + Math.random() * H * 0.12;
+    farMountains.push({
+      x: (i / 7) * W * 2.5 + Math.random() * W * 0.3,
+      peakY: peakY,
+      height: H * 0.6 - peakY,
+      width: W * 0.18 + Math.random() * W * 0.15,
     });
   }
 }
@@ -1047,36 +1061,74 @@ function spawnThermalParticles(x, y) {
 }
 
 // ---- Sky gradient by biome + time ----
+// Authentic Bir Billing color palette (derived from real landscape photography)
+const BIR_PALETTE = {
+  // Sky
+  dawn:     { top: '#3A7FCC', mid: '#87CEEB', low: '#F5C87A', horizon: '#E8A845' },
+  midday:   { top: '#2B72BF', mid: '#4A90D9', low: '#6AAFE0', horizon: '#A8C4D8' },
+  sunset:   { top: '#7A4A9E', mid: '#D4608A', low: '#F5813A', horizon: '#E85C20' },
+  night:    { top: '#0D1A42', mid: '#1A2A5E', low: '#2A3A6E', horizon: '#3A4A7E' },
+  // Pine Forest sky
+  forest:   { top: '#1A3A6E', mid: '#2E5A8E', low: '#4A8ABE', horizon: '#7AAECC' },
+  // Snow Peaks sky
+  alpine:   { top: '#2B72BF', mid: '#6AAAE0', low: '#B8D8F0', horizon: '#D8E8F4' },
+  // Above Clouds
+  cosmos:   { top: '#0A0A20', mid: '#10002b', low: '#240046', horizon: '#3c096c' },
+
+  // Terrain per biome
+  terrain: [
+    // Bir Valley: tea gardens + terraced farms
+    { top: '#4CAF50', bottom: '#3A8C3F', accent: '#8B6914', detail: '#D4AC0D' },
+    // Pine Forest: deodar cedar
+    { top: '#2D5A27', bottom: '#1A3A17', accent: '#335C2B', detail: '#4A7A3A' },
+    // Snow Peaks: rock + snow
+    { top: '#B8C8D8', bottom: '#E8EEF5', accent: '#4A4E5A', detail: '#F5F5F0' },
+    // Above Clouds: ethereal
+    { top: '#C8B8D8', bottom: '#9880B8', accent: '#6A5090', detail: '#E0D0F0' },
+  ],
+
+  // Mountains (Dhauladhar range)
+  mountains: {
+    far:     { fill: '#4A4E5A', snow: '#E8EEF5', shadow: '#3D3F47' },
+    mid:     { fill: '#5A6070', snow: '#F0F4F8', shadow: '#4A5060' },
+    near:    { fill: '#3A3E48', snow: '#F5F5F0' },
+  },
+
+  // Prayer flags (Tibetan lung ta — fixed religious order)
+  flags: ['#1565C0', '#F5F5F0', '#C62828', '#2E7D32', '#F9A825'],
+  flagsWeathered: ['#7090B0', '#D8D0C0', '#B06050', '#507050', '#C8A050'],
+
+  // Atmospheric haze
+  haze: 'rgba(168,196,216,',
+};
+
 function getSkyGradient(ctx, biome, distLocal) {
-  const phase = (distLocal % 400) / 400; // 0..1 day cycle
+  const phase = (distLocal % 600) / 600; // slower day cycle
   const grad = ctx.createLinearGradient(0, 0, 0, H);
 
-  if (biome === 0) { // Bir Valley
-    if (phase < 0.33) { // Dawn
-      grad.addColorStop(0, '#f4a261'); grad.addColorStop(0.5, '#e9c46a'); grad.addColorStop(1, '#a8dadc');
-    } else if (phase < 0.66) { // Midday
-      grad.addColorStop(0, '#0096c7'); grad.addColorStop(0.5, '#48cae4'); grad.addColorStop(1, '#90e0ef');
-    } else { // Dusk
-      grad.addColorStop(0, '#e76f51'); grad.addColorStop(0.5, '#9b2335'); grad.addColorStop(1, '#3a0ca3');
-    }
-  } else if (biome === 1) { // Pine Forest
-    grad.addColorStop(0, '#023e8a'); grad.addColorStop(0.5, '#0077b6'); grad.addColorStop(1, '#48cae4');
-  } else if (biome === 2) { // Snow Peaks
-    grad.addColorStop(0, '#caf0f8'); grad.addColorStop(0.5, '#90e0ef'); grad.addColorStop(1, '#ade8f4');
-  } else { // Above Clouds
-    grad.addColorStop(0, '#10002b'); grad.addColorStop(0.5, '#240046'); grad.addColorStop(1, '#3c096c');
+  let sky;
+  if (biome === 0) {
+    if (phase < 0.3) sky = BIR_PALETTE.dawn;
+    else if (phase < 0.7) sky = BIR_PALETTE.midday;
+    else sky = BIR_PALETTE.sunset;
+  } else if (biome === 1) {
+    sky = BIR_PALETTE.forest;
+  } else if (biome === 2) {
+    sky = BIR_PALETTE.alpine;
+  } else {
+    sky = BIR_PALETTE.cosmos;
   }
+
+  grad.addColorStop(0, sky.top);
+  grad.addColorStop(0.35, sky.mid);
+  grad.addColorStop(0.7, sky.low);
+  grad.addColorStop(1, sky.horizon);
   return grad;
 }
 
 function getTerrainColor(biome) {
-  const colors = [
-    ['#2d6a4f','#40916c'],
-    ['#1b4332','#081c15'],
-    ['#f8f9fa','#dee2e6'],
-    ['#ced4da','#adb5bd'],
-  ];
-  return colors[Math.min(biome, 3)];
+  const t = BIR_PALETTE.terrain[Math.min(biome, 3)];
+  return [t.top, t.bottom];
 }
 
 // ---- Drawing ----
@@ -1084,78 +1136,327 @@ function drawSky() {
   ctx.fillStyle = getSkyGradient(ctx, biomeIndex, distance);
   ctx.fillRect(0, 0, W, H);
 
-  // Stars at night (above clouds)
+  const phase = ((distance % 600) / 600);
+
+  // Sun or moon
+  if (biomeIndex < 3) {
+    const sunX = W * (0.7 + phase * 0.2);
+    const sunY = H * 0.12 + Math.sin(phase * Math.PI) * H * 0.08;
+    if (phase > 0.7) {
+      // Sunset sun — large warm glow
+      const sunGrad = ctx.createRadialGradient(sunX, sunY + H*0.1, 10, sunX, sunY + H*0.1, 120);
+      sunGrad.addColorStop(0, 'rgba(245,180,80,0.9)');
+      sunGrad.addColorStop(0.3, 'rgba(245,130,58,0.4)');
+      sunGrad.addColorStop(1, 'rgba(245,130,58,0)');
+      ctx.fillStyle = sunGrad;
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      // Daytime sun glow
+      const sunGrad = ctx.createRadialGradient(sunX, sunY, 8, sunX, sunY, 80);
+      sunGrad.addColorStop(0, 'rgba(255,255,230,0.6)');
+      sunGrad.addColorStop(0.5, 'rgba(255,255,200,0.15)');
+      sunGrad.addColorStop(1, 'rgba(255,255,200,0)');
+      ctx.fillStyle = sunGrad;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  // Stars (above clouds biome)
   if (biomeIndex === 3) {
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    for (let i = 0; i < 80; i++) {
-      const sx = ((i * 137.5 + distance * 0.02) % W);
-      const sy = (i * 97.3) % (H * 0.6);
-      const r = 0.5 + (i % 3) * 0.5;
+    for (let i = 0; i < 120; i++) {
+      const sx = ((i * 137.5 + distance * 0.01) % W);
+      const sy = (i * 97.3) % (H * 0.55);
+      const twinkle = 0.4 + 0.6 * Math.abs(Math.sin(distance * 0.005 + i));
+      const r = 0.4 + (i % 4) * 0.4;
+      ctx.fillStyle = `rgba(255,255,255,${twinkle})`;
       ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2); ctx.fill();
     }
   }
+
+  // Atmospheric haze band at horizon (Kangra Valley haze)
+  if (biomeIndex <= 1) {
+    const hazeGrad = ctx.createLinearGradient(0, H * 0.6, 0, H);
+    hazeGrad.addColorStop(0, 'rgba(168,196,216,0)');
+    hazeGrad.addColorStop(0.5, 'rgba(168,196,216,0.12)');
+    hazeGrad.addColorStop(1, 'rgba(168,196,216,0.25)');
+    ctx.fillStyle = hazeGrad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Floating clouds (biomes 0-2)
+  if (biomeIndex < 3) {
+    drawClouds();
+  }
+}
+
+function drawClouds() {
+  ctx.save();
+  for (let i = 0; i < 6; i++) {
+    const cx = ((i * W * 0.4 + 200 - distance * 0.05) % (W * 2.5) + W * 2.5) % (W * 2.5) - W * 0.3;
+    const cy = H * 0.08 + (i % 3) * H * 0.1;
+    const scale = 0.6 + (i % 3) * 0.3;
+    const alpha = biomeIndex === 2 ? 0.8 : 0.35;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#F0F4FF';
+
+    // Soft cloud shape (3 overlapping ellipses)
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 60 * scale, 20 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx - 30 * scale, cy + 5 * scale, 40 * scale, 15 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 35 * scale, cy + 3 * scale, 45 * scale, 17 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 function drawBackMountains() {
-  const scrollFar = distance * 0.15;
-  const [c1, c2] = getTerrainColor(biomeIndex);
+  const mp = BIR_PALETTE.mountains;
 
-  ctx.fillStyle = c1;
-  ctx.globalAlpha = 0.6;
-  for (const m of backMountains) {
-    const mx = ((m.x - scrollFar) % (W * 2) + W * 2) % (W * 2) - W * 0.5;
+  // Layer 1: Far Dhauladhar range (slowest parallax — majestic backdrop)
+  const scrollFar = distance * 0.05;
+  ctx.save();
+  for (const m of farMountains) {
+    const mx = ((m.x - scrollFar) % (W * 2.5) + W * 2.5) % (W * 2.5) - W * 0.3;
+
+    // Mountain body (dark slate rock)
+    const rockGrad = ctx.createLinearGradient(0, m.peakY, 0, H * 0.75);
+    rockGrad.addColorStop(0, mp.far.shadow);
+    rockGrad.addColorStop(1, mp.far.fill);
+    ctx.fillStyle = rockGrad;
+    ctx.globalAlpha = 0.5;
     ctx.beginPath();
-    ctx.moveTo(mx - m.width, H);
+    ctx.moveTo(mx - m.width, H * 0.75);
+    // Jagged peak shape (not just triangle)
+    ctx.lineTo(mx - m.width * 0.6, m.peakY + m.height * 0.3);
+    ctx.lineTo(mx - m.width * 0.2, m.peakY + m.height * 0.08);
     ctx.lineTo(mx, m.peakY);
-    ctx.lineTo(mx + m.width, H);
+    ctx.lineTo(mx + m.width * 0.25, m.peakY + m.height * 0.12);
+    ctx.lineTo(mx + m.width * 0.5, m.peakY + m.height * 0.25);
+    ctx.lineTo(mx + m.width, H * 0.75);
     ctx.closePath();
     ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
 
-function drawMidLayer() {
-  if (biomeIndex === 0 || biomeIndex === 1) {
-    const scrollMid = distance * 0.4;
-    ctx.fillStyle = getTerrainColor(biomeIndex)[1];
-    ctx.globalAlpha = 0.7;
-    for (const t of midTrees) {
-      const tx = ((t.x - scrollMid) % (W * 3) + W * 3) % (W * 3);
-      if (tx > W + 20) continue;
-      // Pine tree shape
+    // Snow cap on peaks (biome 0-2 only, above clouds has no visible snow)
+    if (biomeIndex < 3) {
+      ctx.fillStyle = biomeIndex === 0 && ((distance % 600) / 600) > 0.7
+        ? '#E8906A' // sunset glow on snow
+        : mp.far.snow;
+      ctx.globalAlpha = 0.7;
       ctx.beginPath();
-      ctx.moveTo(tx, H * 0.7);
-      ctx.lineTo(tx - 8, H * 0.7 + t.height * 0.4);
-      ctx.lineTo(tx - 5, H * 0.7 + t.height * 0.4);
-      ctx.lineTo(tx - 10, H * 0.7 + t.height * 0.7);
-      ctx.lineTo(tx - 6, H * 0.7 + t.height * 0.7);
-      ctx.lineTo(tx, H * 0.7 + t.height);
-      ctx.lineTo(tx + 6, H * 0.7 + t.height * 0.7);
-      ctx.lineTo(tx + 10, H * 0.7 + t.height * 0.7);
-      ctx.lineTo(tx + 5, H * 0.7 + t.height * 0.4);
-      ctx.lineTo(tx + 8, H * 0.7 + t.height * 0.4);
+      ctx.moveTo(mx - m.width * 0.3, m.peakY + m.height * 0.2);
+      ctx.lineTo(mx - m.width * 0.2, m.peakY + m.height * 0.08);
+      ctx.lineTo(mx, m.peakY);
+      ctx.lineTo(mx + m.width * 0.25, m.peakY + m.height * 0.12);
+      ctx.lineTo(mx + m.width * 0.35, m.peakY + m.height * 0.22);
       ctx.closePath();
       ctx.fill();
     }
-    ctx.globalAlpha = 1;
   }
+  ctx.restore();
+
+  // Layer 2: Mid mountains (closer range, faster parallax)
+  const scrollMid = distance * 0.12;
+  ctx.save();
+  for (const m of backMountains) {
+    const mx = ((m.x - scrollMid) % (W * 2) + W * 2) % (W * 2) - W * 0.4;
+    const baseY = H * 0.65;
+
+    // Mountain body with gradient
+    const bodyGrad = ctx.createLinearGradient(0, m.peakY, 0, baseY);
+    if (biomeIndex === 0) {
+      bodyGrad.addColorStop(0, '#2D5A27'); // deodar forest green
+      bodyGrad.addColorStop(1, '#3A8C3F');
+    } else if (biomeIndex === 1) {
+      bodyGrad.addColorStop(0, '#1A3A17');
+      bodyGrad.addColorStop(1, '#2D5A27');
+    } else if (biomeIndex === 2) {
+      bodyGrad.addColorStop(0, '#5A6070');
+      bodyGrad.addColorStop(1, '#7A8090');
+    } else {
+      bodyGrad.addColorStop(0, '#3A3050');
+      bodyGrad.addColorStop(1, '#5A4070');
+    }
+    ctx.fillStyle = bodyGrad;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(mx - m.width, baseY);
+    ctx.lineTo(mx - m.width * 0.4, m.peakY + (baseY - m.peakY) * 0.4);
+    ctx.lineTo(mx, m.peakY);
+    ctx.lineTo(mx + m.width * 0.35, m.peakY + (baseY - m.peakY) * 0.35);
+    ctx.lineTo(mx + m.width, baseY);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawMidLayer() {
+  const scrollMid = distance * 0.3;
+  ctx.save();
+
+  if (biomeIndex === 0) {
+    // Bir Valley: Deodar cedars + tea garden patches
+    for (const t of midTrees) {
+      const tx = ((t.x - scrollMid) % (W * 3) + W * 3) % (W * 3);
+      if (tx > W + 30 || tx < -30) continue;
+      const baseY = H * 0.68;
+
+      // Deodar cedar — pyramidal shape with drooping tips
+      const h = t.height;
+      const darkGreen = '#2D5A27';
+      const midGreen = '#3D6B35';
+
+      // Trunk
+      ctx.fillStyle = '#5C4A2A';
+      ctx.fillRect(tx - 1.5, baseY, 3, h * 0.3);
+
+      // Layered canopy (3 tiers, getting wider)
+      ctx.fillStyle = darkGreen;
+      ctx.globalAlpha = 0.8;
+      for (let tier = 0; tier < 3; tier++) {
+        const ty = baseY - h * (0.3 + tier * 0.25);
+        const tw = 5 + (2 - tier) * 5;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx - tw, ty + h * 0.3);
+        // Drooping tip
+        ctx.quadraticCurveTo(tx - tw - 3, ty + h * 0.32, tx - tw - 2, ty + h * 0.35);
+        ctx.lineTo(tx + tw + 2, ty + h * 0.35);
+        ctx.quadraticCurveTo(tx + tw + 3, ty + h * 0.32, tx + tw, ty + h * 0.3);
+        ctx.closePath();
+        ctx.fillStyle = tier === 0 ? midGreen : darkGreen;
+        ctx.fill();
+      }
+    }
+
+    // Tea garden strips (horizontal green bands on terrain)
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#4CAF50';
+    for (let i = 0; i < 4; i++) {
+      const sx = ((i * W * 0.6 + 100 - scrollMid * 0.8) % (W * 2.5) + W * 2.5) % (W * 2.5) - W * 0.2;
+      ctx.fillRect(sx, H * 0.78 + i * 8, W * 0.15, 4);
+      ctx.fillRect(sx + 5, H * 0.78 + i * 8 + 5, W * 0.14, 3);
+    }
+
+  } else if (biomeIndex === 1) {
+    // Dense pine forest — darker, thicker
+    ctx.globalAlpha = 0.75;
+    for (const t of midTrees) {
+      const tx = ((t.x - scrollMid) % (W * 3) + W * 3) % (W * 3);
+      if (tx > W + 20 || tx < -20) continue;
+      const baseY = H * 0.65;
+      const h = t.height * 1.3;
+
+      // Dense triangular pines
+      ctx.fillStyle = '#1A3A17';
+      ctx.beginPath();
+      ctx.moveTo(tx, baseY - h);
+      ctx.lineTo(tx - 8, baseY);
+      ctx.lineTo(tx + 8, baseY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Second layer slightly offset
+      ctx.fillStyle = '#243F20';
+      ctx.beginPath();
+      ctx.moveTo(tx, baseY - h * 0.85);
+      ctx.lineTo(tx - 10, baseY - h * 0.1);
+      ctx.lineTo(tx + 10, baseY - h * 0.1);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+  } else if (biomeIndex === 2) {
+    // Snow peaks: rocky outcrops
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#5A5E68';
+    for (let i = 0; i < 8; i++) {
+      const rx = ((i * W * 0.35 - scrollMid * 0.6) % (W * 3) + W * 3) % (W * 3);
+      const rh = 15 + (i % 3) * 12;
+      ctx.beginPath();
+      ctx.moveTo(rx, H * 0.72);
+      ctx.lineTo(rx + 8, H * 0.72 - rh);
+      ctx.lineTo(rx + 18, H * 0.72 - rh * 0.7);
+      ctx.lineTo(rx + 25, H * 0.72);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+  } else {
+    // Above clouds: cloud floor below
+    ctx.globalAlpha = 0.6;
+    for (let i = 0; i < 10; i++) {
+      const cx = ((i * W * 0.28 - distance * 0.08) % (W * 3) + W * 3) % (W * 3);
+      const cy = H * 0.78 + (i % 3) * 10;
+      ctx.fillStyle = 'rgba(200,180,220,0.4)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 80, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + 40, cy + 5, 50, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
 }
 
 function drawTerrain() {
-  const [c1, c2] = getTerrainColor(biomeIndex);
+  const t = BIR_PALETTE.terrain[Math.min(biomeIndex, 3)];
+
+  // Main terrain fill
   ctx.beginPath();
   ctx.moveTo(-10, H);
   for (let i = 0; i < terrainPoints.length; i++) {
-    const screenX = i * TERRAIN_SEGMENT_W;
-    ctx.lineTo(screenX, terrainPoints[i]);
+    ctx.lineTo(i * TERRAIN_SEGMENT_W, terrainPoints[i]);
   }
   ctx.lineTo(W + 20, H);
   ctx.closePath();
-  const tGrad = ctx.createLinearGradient(0, H * 0.6, 0, H);
-  tGrad.addColorStop(0, c1);
-  tGrad.addColorStop(1, c2);
+  const tGrad = ctx.createLinearGradient(0, H * 0.55, 0, H);
+  tGrad.addColorStop(0, t.top);
+  tGrad.addColorStop(0.6, t.bottom);
+  tGrad.addColorStop(1, t.top);
   ctx.fillStyle = tGrad;
   ctx.fill();
+
+  // Terrain detail overlay (terracing for Bir, snow patches for peaks)
+  if (biomeIndex === 0) {
+    // Terrace lines (horizontal stripes suggesting tea garden rows)
+    ctx.strokeStyle = 'rgba(139,105,20,0.15)'; // ochre
+    ctx.lineWidth = 1;
+    for (let y = H * 0.82; y < H; y += 6) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y + Math.sin(y * 0.1) * 2);
+      ctx.stroke();
+    }
+  } else if (biomeIndex === 2) {
+    // Snow patches on terrain ridges
+    ctx.fillStyle = 'rgba(240,244,248,0.4)';
+    for (let i = 0; i < terrainPoints.length; i += 8) {
+      const sx = i * TERRAIN_SEGMENT_W;
+      const sy = terrainPoints[i];
+      if (sy < H * 0.85) {
+        ctx.beginPath();
+        ctx.ellipse(sx, sy + 2, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Terrain edge highlight (subtle light on ridgeline)
+  ctx.strokeStyle = biomeIndex === 2 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = 0; i < terrainPoints.length; i++) {
+    const x = i * TERRAIN_SEGMENT_W;
+    if (i === 0) ctx.moveTo(x, terrainPoints[i]);
+    else ctx.lineTo(x, terrainPoints[i]);
+  }
+  ctx.stroke();
 }
 
 function drawThermals() {
@@ -1188,63 +1489,155 @@ function drawThermals() {
 }
 
 function drawPrayerFlags() {
+  const flagColors = BIR_PALETTE.flags; // Blue, White, Red, Green, Yellow
+
   for (const f of prayerFlags) {
     if (f.collected) continue;
-    f.phase += 0.04;
-    // Pole
+    f.phase += 0.05;
+
     const groundY = getTerrainY(f.x + distance, biomeIndex);
-    const poleBottom = groundY;
     const poleTop = f.y;
-    ctx.strokeStyle = 'rgba(180,160,120,0.8)';
-    ctx.lineWidth = 1.5;
+
+    // Bamboo pole (warm brown)
+    ctx.strokeStyle = '#8B7355';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(f.x, poleBottom);
-    ctx.lineTo(f.x, poleTop);
+    ctx.moveTo(f.x, groundY);
+    ctx.lineTo(f.x, poleTop - 5);
     ctx.stroke();
 
-    // String and flags
-    const flagW = 14, flagH = 10;
-    const numFlags = Math.min(5, f.colors.length);
-    for (let i = 0; i < numFlags; i++) {
-      const fx = f.x - 30 + i * 16 + Math.sin(f.phase + i * 0.5) * 3;
-      const fy = poleTop + 10 + i * 3 + Math.sin(f.phase + i * 0.7) * 2;
-      ctx.fillStyle = f.colors[i];
-      ctx.fillRect(fx, fy, flagW, flagH);
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-      ctx.lineWidth = 0.5;
-      ctx.strokeRect(fx, fy, flagW, flagH);
-    }
-    // String
-    ctx.strokeStyle = 'rgba(200,180,140,0.5)';
+    // String line (catenary curve between invisible poles)
+    const stringStartX = f.x - 38;
+    const stringEndX = f.x + 42;
+    const stringY = poleTop + 4;
+    ctx.strokeStyle = 'rgba(180,160,120,0.6)';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.moveTo(f.x - 35, poleTop + 8);
-    ctx.lineTo(f.x + 40, poleTop + 18);
+    ctx.moveTo(stringStartX, stringY);
+    ctx.quadraticCurveTo(f.x, stringY + 8 + Math.sin(f.phase) * 2, stringEndX, stringY + 2);
     ctx.stroke();
+
+    // 5 prayer flags (authentic Tibetan order: blue, white, red, green, yellow)
+    const flagW = 13, flagH = 9;
+    for (let i = 0; i < 5; i++) {
+      const t = i / 4;
+      const fx = stringStartX + t * (stringEndX - stringStartX);
+      const sag = Math.sin(t * Math.PI) * 8 + Math.sin(f.phase) * 2;
+      const fy = stringY + sag;
+      const wave = Math.sin(f.phase + i * 0.6) * 3;
+
+      // Flag body (slight wave distortion)
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(wave * 0.02);
+      ctx.fillStyle = flagColors[i];
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(flagW, wave * 0.3);
+      ctx.lineTo(flagW + wave, flagH + wave * 0.2);
+      ctx.lineTo(0, flagH);
+      ctx.closePath();
+      ctx.fill();
+
+      // Subtle fabric texture lines
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+      ctx.lineWidth = 0.3;
+      ctx.beginPath();
+      ctx.moveTo(2, flagH * 0.3); ctx.lineTo(flagW - 2, flagH * 0.3 + wave * 0.1);
+      ctx.moveTo(2, flagH * 0.6); ctx.lineTo(flagW - 2, flagH * 0.6 + wave * 0.15);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
   }
 }
 
 function drawEagles() {
   for (const e of eagles) {
-    e.wingPhase += 0.08;
-    const wing = Math.sin(e.wingPhase) * 8;
-    ctx.fillStyle = '#1a1a1a';
+    e.wingPhase += 0.06;
+    const wing = Math.sin(e.wingPhase) * 10;
+    const soar = Math.cos(e.wingPhase * 0.5) * 3;
+
+    ctx.save();
+    ctx.translate(e.x, e.y + soar);
+
+    // Shadow underneath (subtle ground shadow effect)
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(0, 30, 18, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wings — curved, raptor-like with finger feathers
+    ctx.fillStyle = '#2A1A0A'; // dark brown (Himalayan griffon coloring)
+    ctx.beginPath();
+    // Left wing
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(-12, -3 + wing * 0.5, -28, wing);
+    // Finger feathers at tip
+    ctx.lineTo(-30, wing + 2);
+    ctx.lineTo(-26, wing - 1);
+    ctx.lineTo(-24, wing + 3);
+    ctx.quadraticCurveTo(-12, wing * 0.3 + 2, 0, 3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Right wing
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(12, -3 + wing * 0.5, 28, wing);
+    ctx.lineTo(30, wing + 2);
+    ctx.lineTo(26, wing - 1);
+    ctx.lineTo(24, wing + 3);
+    ctx.quadraticCurveTo(12, wing * 0.3 + 2, 0, 3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wing highlight
+    ctx.fillStyle = '#4A3520';
+    ctx.beginPath();
+    ctx.moveTo(-3, 0);
+    ctx.quadraticCurveTo(-10, -1 + wing * 0.3, -20, wing * 0.8);
+    ctx.quadraticCurveTo(-10, wing * 0.3 + 3, -3, 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(3, 0);
+    ctx.quadraticCurveTo(10, -1 + wing * 0.3, 20, wing * 0.8);
+    ctx.quadraticCurveTo(10, wing * 0.3 + 3, 3, 2);
+    ctx.closePath();
+    ctx.fill();
+
     // Body
+    ctx.fillStyle = '#1A0E05';
     ctx.beginPath();
-    ctx.ellipse(e.x, e.y, 10, 5, 0, 0, Math.PI*2);
+    ctx.ellipse(0, 1, 6, 8, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Wings
+
+    // Head + beak
+    ctx.fillStyle = '#F5F5E0'; // white head (like bearded vulture)
     ctx.beginPath();
-    ctx.moveTo(e.x - 22, e.y + wing);
-    ctx.quadraticCurveTo(e.x - 10, e.y + wing - 6, e.x, e.y);
-    ctx.quadraticCurveTo(e.x + 10, e.y + wing - 6, e.x + 22, e.y + wing);
-    ctx.fillStyle = '#2a2a2a';
+    ctx.arc(0, -7, 3.5, 0, Math.PI * 2);
     ctx.fill();
-    // Head
-    ctx.fillStyle = '#1a1a1a';
+    // Hooked beak
+    ctx.fillStyle = '#D4A030';
     ctx.beginPath();
-    ctx.arc(e.x + 10, e.y - 2, 4, 0, Math.PI*2);
+    ctx.moveTo(0, -5);
+    ctx.lineTo(2, -4);
+    ctx.lineTo(0, -2.5);
+    ctx.closePath();
     ctx.fill();
+
+    // Tail
+    ctx.fillStyle = '#2A1A0A';
+    ctx.beginPath();
+    ctx.moveTo(-3, 8);
+    ctx.lineTo(0, 14);
+    ctx.lineTo(3, 8);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
   }
 }
 
@@ -1252,8 +1645,7 @@ function drawGlider() {
   const gx = gliderX;
   const gy = gliderY;
 
-  // Tilt angle based on velocity
-  const tilt = Math.max(-0.4, Math.min(0.4, -velocity * 0.04));
+  const tilt = Math.max(-0.35, Math.min(0.35, -velocity * 0.035));
   const thermal_glow = inThermal;
 
   ctx.save();
@@ -1262,54 +1654,96 @@ function drawGlider() {
 
   // Thermal amber glow
   if (thermal_glow) {
-    const glowPhase = Date.now() * 0.005;
-    ctx.shadowColor = 'rgba(255,180,50,0.7)';
-    ctx.shadowBlur = 15 + Math.sin(glowPhase) * 5;
+    const glowPhase = Date.now() * 0.004;
+    const glowGrad = ctx.createRadialGradient(0, -5, 10, 0, -5, 50);
+    glowGrad.addColorStop(0, `rgba(255,180,50,${0.2 + Math.sin(glowPhase) * 0.1})`);
+    glowGrad.addColorStop(1, 'rgba(255,180,50,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(-55, -35, 110, 70);
   }
 
-  // Canopy (trapezoid)
-  ctx.fillStyle = '#e8821a'; // saffron
+  // Canopy — curved paraglider wing (not a trapezoid)
+  // Main canopy arc
   ctx.beginPath();
-  ctx.moveTo(-28, -8);
-  ctx.lineTo(28, -8);
-  ctx.lineTo(18, -22);
-  ctx.lineTo(-18, -22);
+  ctx.moveTo(-32, -6);
+  ctx.quadraticCurveTo(-20, -26, 0, -28);
+  ctx.quadraticCurveTo(20, -26, 32, -6);
+  ctx.quadraticCurveTo(20, -10, 0, -11);
+  ctx.quadraticCurveTo(-20, -10, -32, -6);
   ctx.closePath();
+
+  // Canopy gradient (Indian tricolor inspired — saffron, white, green)
+  const canopyGrad = ctx.createLinearGradient(-32, -28, 32, -6);
+  canopyGrad.addColorStop(0, '#FF6F00'); // saffron edge
+  canopyGrad.addColorStop(0.2, '#FF8F00');
+  canopyGrad.addColorStop(0.45, '#FFF3E0'); // white center
+  canopyGrad.addColorStop(0.55, '#FFF3E0');
+  canopyGrad.addColorStop(0.8, '#2E7D32'); // green edge
+  canopyGrad.addColorStop(1, '#1B5E20');
+  ctx.fillStyle = canopyGrad;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+
+  // Canopy cell lines (the ribs of a paraglider)
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 0.6;
+  for (let i = -3; i <= 3; i++) {
+    const ribX = i * 8;
+    const ribTopY = -27 + Math.abs(i) * 2.5;
+    const ribBotY = -9 + Math.abs(i) * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(ribX, ribTopY);
+    ctx.lineTo(ribX, ribBotY);
+    ctx.stroke();
+  }
+
+  // Canopy edge highlight (light catching top surface)
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
   ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-30, -8);
+  ctx.quadraticCurveTo(-18, -25, 0, -27);
+  ctx.quadraticCurveTo(18, -25, 30, -8);
   ctx.stroke();
 
-  // Canopy highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  // Brake/control lines (4 lines from canopy to harness)
+  ctx.strokeStyle = 'rgba(80,60,40,0.6)';
+  ctx.lineWidth = 0.6;
+  const lineAnchors = [[-20, -8], [-8, -10], [8, -10], [20, -8]];
+  const harnessPts = [[-5, 6], [-2, 7], [2, 7], [5, 6]];
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(lineAnchors[i][0], lineAnchors[i][1]);
+    ctx.lineTo(harnessPts[i][0], harnessPts[i][1]);
+    ctx.stroke();
+  }
+
+  // Pilot in harness (seated position)
+  // Harness/body
+  ctx.fillStyle = '#2C3E50';
   ctx.beginPath();
-  ctx.moveTo(-20, -20);
-  ctx.lineTo(20, -20);
-  ctx.lineTo(14, -12);
-  ctx.lineTo(-14, -12);
-  ctx.closePath();
+  ctx.ellipse(0, 11, 6, 7, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Lines
-  ctx.strokeStyle = 'rgba(100,80,50,0.7)';
-  ctx.lineWidth = 0.8;
-  ctx.beginPath(); ctx.moveTo(-15, -8); ctx.lineTo(-4, 6); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, 6); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(15, -8); ctx.lineTo(4, 6); ctx.stroke();
-
-  // Pilot harness
-  ctx.fillStyle = '#2c3e50';
+  // Legs (dangling)
+  ctx.fillStyle = '#1A2A3A';
   ctx.beginPath();
-  ctx.ellipse(0, 10, 7, 5, 0, 0, Math.PI*2);
+  ctx.moveTo(-4, 16); ctx.lineTo(-5, 24); ctx.lineTo(-2, 24); ctx.lineTo(-2, 16);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(2, 16); ctx.lineTo(2, 24); ctx.lineTo(5, 24); ctx.lineTo(4, 16);
   ctx.fill();
 
-  // Helmet
-  ctx.fillStyle = '#e63946';
+  // Helmet (red — visible from below, standard safety color)
+  ctx.fillStyle = '#E63946';
   ctx.beginPath();
-  ctx.arc(0, 5, 5, Math.PI, 0);
+  ctx.arc(0, 5, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Helmet shine
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath();
+  ctx.arc(-1.5, 3.5, 2, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.shadowBlur = 0;
   ctx.restore();
 }
 
@@ -1530,15 +1964,15 @@ function gameLoop(ts) {
 
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  drawSky();
-  drawBackMountains();
-  drawMidLayer();
-  drawThermals();
-  drawPrayerFlags();
-  drawEagles();
-  drawTerrain();
-  drawGlider();
-  drawParticles();
+  drawSky();           // Layer 0: sky + sun/moon + haze + clouds
+  drawBackMountains(); // Layer 1-2: far Dhauladhar peaks + mid range
+  drawMidLayer();      // Layer 3: trees / rocks / cloud floor
+  drawThermals();      // Layer 4: thermal shimmer
+  drawPrayerFlags();   // Layer 5: prayer flags on poles
+  drawEagles();        // Layer 6: eagles (can be above or below glider)
+  drawTerrain();       // Layer 7: foreground terrain (Perlin)
+  drawGlider();        // Layer 8: player paraglider
+  drawParticles();     // Layer 9: particles (flag sparkles, thermal wisps)
 }
 
 // ---- HUD ----
@@ -1934,24 +2368,68 @@ function animateMenuBg() {
   const mh = mbCanvas.height;
   menuBgOffset += 0.5;
 
+  // Golden hour sunset sky (Bir's famous sunset)
   const grad = mc.createLinearGradient(0, 0, 0, mh);
-  grad.addColorStop(0, '#f4a261');
-  grad.addColorStop(0.4, '#e9c46a');
-  grad.addColorStop(1, '#a8dadc');
+  grad.addColorStop(0, '#7A4A9E');   // violet upper sky
+  grad.addColorStop(0.25, '#D4608A'); // rose mid
+  grad.addColorStop(0.5, '#F5813A');  // deep orange
+  grad.addColorStop(0.75, '#E8A845'); // golden horizon
+  grad.addColorStop(1, '#A8C4D8');    // valley haze
   mc.fillStyle = grad;
   mc.fillRect(0, 0, mw, mh);
 
-  // Mountains
-  mc.fillStyle = 'rgba(45,106,79,0.6)';
-  for (let i = 0; i < 5; i++) {
-    const mx = ((i * mw/4) - menuBgOffset * 0.2 + mw * 2) % (mw * 1.5);
+  // Sun glow near horizon
+  const sunGrad = mc.createRadialGradient(mw * 0.7, mh * 0.45, 20, mw * 0.7, mh * 0.45, mw * 0.3);
+  sunGrad.addColorStop(0, 'rgba(245,200,100,0.5)');
+  sunGrad.addColorStop(1, 'rgba(245,130,58,0)');
+  mc.fillStyle = sunGrad;
+  mc.fillRect(0, 0, mw, mh);
+
+  // Far Dhauladhar peaks (snow-capped, sunset glow)
+  for (let i = 0; i < 4; i++) {
+    const mx = ((i * mw/3 + mw*0.1) - menuBgOffset * 0.05 + mw * 3) % (mw * 2);
+    const peakY = mh * 0.2 + Math.sin(i * 1.7) * mh * 0.08;
+    const w = mw * 0.2 + i * mw * 0.03;
+
+    // Dark rock body
+    mc.fillStyle = 'rgba(58,62,72,0.5)';
     mc.beginPath();
-    mc.moveTo(mx - mw*0.2, mh);
-    mc.lineTo(mx, mh * 0.25 + Math.sin(i*1.3)*mh*0.1);
-    mc.lineTo(mx + mw*0.2, mh);
+    mc.moveTo(mx - w, mh * 0.7);
+    mc.lineTo(mx - w * 0.3, peakY + (mh * 0.7 - peakY) * 0.3);
+    mc.lineTo(mx, peakY);
+    mc.lineTo(mx + w * 0.4, peakY + (mh * 0.7 - peakY) * 0.25);
+    mc.lineTo(mx + w, mh * 0.7);
+    mc.closePath();
+    mc.fill();
+
+    // Sunset-glow snow cap
+    mc.fillStyle = 'rgba(232,144,106,0.6)';
+    mc.beginPath();
+    mc.moveTo(mx - w * 0.25, peakY + (mh * 0.7 - peakY) * 0.18);
+    mc.lineTo(mx, peakY);
+    mc.lineTo(mx + w * 0.3, peakY + (mh * 0.7 - peakY) * 0.15);
     mc.closePath();
     mc.fill();
   }
+
+  // Mid-range green mountains (deodar forest)
+  mc.fillStyle = 'rgba(45,90,39,0.6)';
+  for (let i = 0; i < 6; i++) {
+    const mx = ((i * mw/4.5) - menuBgOffset * 0.15 + mw * 2.5) % (mw * 2);
+    mc.beginPath();
+    mc.moveTo(mx - mw*0.12, mh);
+    mc.lineTo(mx, mh * 0.45 + Math.sin(i*1.3)*mh*0.08);
+    mc.lineTo(mx + mw*0.12, mh);
+    mc.closePath();
+    mc.fill();
+  }
+
+  // Valley floor haze
+  const hazeGrad = mc.createLinearGradient(0, mh * 0.7, 0, mh);
+  hazeGrad.addColorStop(0, 'rgba(168,196,216,0)');
+  hazeGrad.addColorStop(1, 'rgba(168,196,216,0.3)');
+  mc.fillStyle = hazeGrad;
+  mc.fillRect(0, 0, mw, mh);
 
   menuBgAnimId = requestAnimationFrame(animateMenuBg);
 }
