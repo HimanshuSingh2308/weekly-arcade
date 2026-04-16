@@ -380,26 +380,25 @@ function generateMidTrees() {
 
 // ---- Object spawning ----
 function spawnObjects() {
-  // Prayer flags — spawn in the glider's flight zone, not on the ground
-  if (Math.random() < 0.012) {
-    // Spawn flags in the air between 20%-70% of screen height (where glider flies)
-    const flagY = H * 0.2 + Math.random() * H * 0.5;
+  // Prayer flags — max 4 on screen at once, spawn every ~3-5 seconds
+  const activeFlags = prayerFlags.filter(f => !f.collected).length;
+  if (activeFlags < 4 && Math.random() < 0.003) {
+    const flagY = H * 0.25 + Math.random() * H * 0.4;
     prayerFlags.push({
       x: W + 50 + Math.random() * 100,
       y: flagY,
       collected: false,
       phase: Math.random() * Math.PI * 2,
-      colors: ['#1565C0','#F5F5F0','#C62828','#2E7D32','#F9A825'], // Tibetan order
+      colors: ['#1565C0','#F5F5F0','#C62828','#2E7D32','#F9A825'],
     });
   }
 
-  // Eagles — appear after 200m
-  if (distance > 200 && Math.random() < 0.008 + biomeIndex * 0.002) {
-    const yRand = H * 0.2 + Math.random() * H * 0.5;
+  // Eagles — max 3 on screen, appear after 200m
+  if (distance > 200 && eagles.length < 3 && Math.random() < 0.002 + biomeIndex * 0.001) {
     eagles.push({
       x: W + 60,
-      y: yRand,
-      vy: (Math.random() - 0.5) * 0.5,
+      y: H * 0.15 + Math.random() * H * 0.45,
+      vy: (Math.random() - 0.5) * 0.3,
       speed: 1.5 + Math.random() * biomeIndex * 0.5,
       nearMissed: false,
       radius: 18,
@@ -407,8 +406,8 @@ function spawnObjects() {
     });
   }
 
-  // Thermals — every ~300px
-  if (Math.random() < 0.009) {
+  // Thermals — max 2 on screen
+  if (thermals.length < 2 && Math.random() < 0.002) {
     const xWorld = terrainOffset + W + 80;
     const groundY = getTerrainY(xWorld, biomeIndex);
     thermals.push({
