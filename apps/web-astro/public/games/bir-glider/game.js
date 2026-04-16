@@ -924,49 +924,133 @@ function drawGlider() {
   ctx.closePath();
   ctx.fill();
 
-  // Pilot torso
-  ctx.fillStyle = '#1A3A5C';
+  // ── Pilot — natural seated paraglider position ──
+  const legSwing = Math.sin(t * 2) * 1.5;
+  const armReach = Math.sin(t * 1.5) * 0.5; // subtle arm movement
+
+  // Neck
+  ctx.fillStyle = '#D4A574'; // skin tone
+  ctx.fillRect(-1.5, pilotY - 1, 3, 3);
+
+  // Helmet (rounded, with proper shape)
+  ctx.fillStyle = '#CC2222';
   ctx.beginPath();
-  ctx.ellipse(0, pilotY + 2, 5, 4, 0, -Math.PI, 0);
+  ctx.arc(0, pilotY - 4, 5, Math.PI, 0); // top half
+  ctx.quadraticCurveTo(5, pilotY - 1, 3, pilotY);
+  ctx.lineTo(-3, pilotY);
+  ctx.quadraticCurveTo(-5, pilotY - 1, -5, pilotY - 4);
+  ctx.closePath();
+  ctx.fill();
+  // Helmet top highlight
+  ctx.fillStyle = '#EE4444';
+  ctx.beginPath();
+  ctx.arc(0, pilotY - 5, 3.5, Math.PI + 0.3, -0.3);
+  ctx.closePath();
+  ctx.fill();
+  // Visor (wraparound sunglasses look)
+  ctx.fillStyle = 'rgba(40,40,40,0.8)';
+  ctx.beginPath();
+  ctx.ellipse(0, pilotY - 2, 4, 1.8, 0, 0, Math.PI);
+  ctx.fill();
+  // Visor reflection
+  ctx.fillStyle = 'rgba(120,200,255,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(1, pilotY - 2.5, 2, 0.8, 0.1, 0, Math.PI);
   ctx.fill();
 
-  // Arms reaching for brakes
-  ctx.strokeStyle = '#1A3A5C';
-  ctx.lineWidth = 2.2;
+  // Jacket / torso (windbreaker with collar)
+  const jacketGrad = ctx.createLinearGradient(-6, pilotY + 2, 6, pilotY + 12);
+  jacketGrad.addColorStop(0, '#1565C0'); // blue jacket
+  jacketGrad.addColorStop(1, '#0D47A1');
+  ctx.fillStyle = jacketGrad;
+  ctx.beginPath();
+  ctx.moveTo(-5, pilotY + 1);
+  ctx.lineTo(-7, pilotY + 6);
+  ctx.quadraticCurveTo(-7, pilotY + 12, -4, pilotY + 13);
+  ctx.lineTo(4, pilotY + 13);
+  ctx.quadraticCurveTo(7, pilotY + 12, 7, pilotY + 6);
+  ctx.lineTo(5, pilotY + 1);
+  ctx.closePath();
+  ctx.fill();
+  // Jacket zipper line
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(0, pilotY + 2);
+  ctx.lineTo(0, pilotY + 12);
+  ctx.stroke();
+  // Collar
+  ctx.fillStyle = '#1976D2';
+  ctx.beginPath();
+  ctx.moveTo(-4, pilotY + 1);
+  ctx.quadraticCurveTo(-3, pilotY - 0.5, 0, pilotY + 0.5);
+  ctx.quadraticCurveTo(3, pilotY - 0.5, 4, pilotY + 1);
+  ctx.lineTo(3, pilotY + 3);
+  ctx.lineTo(-3, pilotY + 3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Arms (reaching up to brake toggles — natural bent pose)
+  ctx.strokeStyle = '#1565C0';
+  ctx.lineWidth = 3;
   ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(-4, pilotY + 1); ctx.quadraticCurveTo(-7, pilotY - 1, -5, pilotY - 3); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(4, pilotY + 1); ctx.quadraticCurveTo(7, pilotY - 1, 5, pilotY - 3); ctx.stroke();
+  // Left arm — upper arm, elbow, forearm reaching up
+  ctx.beginPath();
+  ctx.moveTo(-6, pilotY + 4);
+  ctx.quadraticCurveTo(-9, pilotY + 1 + armReach, -7, pilotY - 2);
+  ctx.stroke();
+  // Left hand/glove
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(-7, pilotY - 2.5, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  // Right arm
+  ctx.strokeStyle = '#1565C0';
+  ctx.beginPath();
+  ctx.moveTo(6, pilotY + 4);
+  ctx.quadraticCurveTo(9, pilotY + 1 - armReach, 7, pilotY - 2);
+  ctx.stroke();
+  // Right hand/glove
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(7, pilotY - 2.5, 1.8, 0, Math.PI * 2);
+  ctx.fill();
   ctx.lineCap = 'butt';
 
-  // Helmet (red with shine)
-  const hg = ctx.createRadialGradient(-1, pilotY - 5, 1, 0, pilotY - 4, 5);
-  hg.addColorStop(0, '#FF3333');
-  hg.addColorStop(0.7, '#CC1111');
-  hg.addColorStop(1, '#880000');
-  ctx.fillStyle = hg;
+  // Legs (bent at knees, natural seated position — not straight rectangles)
+  ctx.strokeStyle = '#1A1A3A'; // dark pants
+  ctx.lineWidth = 3.5;
+  ctx.lineCap = 'round';
+  // Left leg — thigh → knee → shin
   ctx.beginPath();
-  ctx.arc(0, pilotY - 4, 4.5, 0, Math.PI * 2);
-  ctx.fill();
-  // Visor
-  ctx.fillStyle = 'rgba(100,180,255,0.35)';
+  ctx.moveTo(-3, pilotY + 13);
+  ctx.quadraticCurveTo(-5, pilotY + 18, -4, pilotY + 22 + legSwing);
+  ctx.stroke();
+  // Right leg
   ctx.beginPath();
-  ctx.ellipse(1.5, pilotY - 3.5, 2.5, 1.6, 0.2, -0.8, 0.8);
-  ctx.fill();
-  // Shine
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.beginPath();
-  ctx.arc(-1.5, pilotY - 6, 1.3, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(3, pilotY + 13);
+  ctx.quadraticCurveTo(5, pilotY + 18, 4, pilotY + 22 - legSwing * 0.5);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
 
-  // Legs/boots dangling
-  ctx.fillStyle = '#1A1A2A';
-  const legSwing = Math.sin(t * 2.5);
-  ctx.fillRect(-4, pilotY + 18, 2.5, 8 + legSwing);
-  ctx.fillRect(1.5, pilotY + 18, 2.5, 8 - legSwing * 0.5);
-  // Shoes
-  ctx.fillStyle = '#333';
-  ctx.fillRect(-4.5, pilotY + 25.5 + legSwing, 3.5, 1.5);
-  ctx.fillRect(1, pilotY + 25.5 - legSwing * 0.5, 3.5, 1.5);
+  // Boots (chunky hiking boots)
+  ctx.fillStyle = '#4E342E';
+  // Left boot
+  ctx.beginPath();
+  ctx.moveTo(-5.5, pilotY + 21 + legSwing);
+  ctx.lineTo(-6, pilotY + 24 + legSwing);
+  ctx.lineTo(-1.5, pilotY + 24 + legSwing);
+  ctx.lineTo(-2, pilotY + 21 + legSwing);
+  ctx.closePath();
+  ctx.fill();
+  // Right boot
+  ctx.beginPath();
+  ctx.moveTo(2, pilotY + 21 - legSwing * 0.5);
+  ctx.lineTo(1.5, pilotY + 24 - legSwing * 0.5);
+  ctx.lineTo(6, pilotY + 24 - legSwing * 0.5);
+  ctx.lineTo(5.5, pilotY + 21 - legSwing * 0.5);
+  ctx.closePath();
+  ctx.fill();
 
   // Speed streaks
   if (isHolding && velocity > 2) {
@@ -1016,7 +1100,7 @@ function checkCollisions() {
   const terrainY = getTerrainYAtX(gliderX);
   if (gliderY + 12 >= terrainY) {
     if (zenMode) { velocity = 8; gliderY = terrainY - 20; zenRecovering = true; return; }
-    endGame(); return;
+    endGame('landed'); return;
   }
   for (let i = prayerFlags.length - 1; i >= 0; i--) {
     const f = prayerFlags[i];
@@ -1036,7 +1120,7 @@ function checkCollisions() {
       e.nearMissed = true; eagleNearMisses++; totalNearMissBonus += 250; totalScore += 250;
       flashScreen('rgba(255,255,255,0.25)');
     }
-    if (!zenMode && dist2 < 22*22) { endGame(); return; }
+    if (!zenMode && dist2 < 22*22) { endGame('crashed'); return; }
   }
   inThermal = false;
   for (const t of thermals) {
@@ -1051,22 +1135,25 @@ function checkCollisions() {
 }
 
 // ---- Physics (realistic glide — gentle descent when neutral) ----
-const GLIDE_SINK = 0.04;     // gentle natural sink rate (gliders don't plummet)
-const DIVE_GRAVITY = 0.15;   // stronger pull when actively NOT holding after a rise
-const RISE_FORCE = 0.35;     // hold to catch lift / pull up
-const THERMAL_BOOST = 0.3;   // thermals push you up
-const MAX_RISE = 6;
-const MAX_FALL = -4;          // terminal sink speed (slower — it's a glider, not a rock)
+// Physics tuned for paraglider feel:
+// - Hold: gradual climb (not instant rocket)
+// - Release: gentle glide that slowly descends
+// - Neutral: always sinking slightly (real glide ratio ~8:1)
+const RISE_FORCE = 0.12;      // gentle climb when holding
+const GLIDE_SINK = 0.06;      // natural sink in neutral glide
+const RELEASE_DRAG = 0.92;    // velocity dampening on release (smooth transition)
+const THERMAL_BOOST = 0.15;   // thermals give a nice lift
+const MAX_RISE = 3;            // max upward speed (can't rocket up)
+const MAX_FALL = -3;           // max downward speed (gentle terminal velocity)
 
 function updatePhysics(dt) {
   if (isHolding) {
-    // Pulling up — active climb
+    // Holding — pull up, climb gradually
     velocity += RISE_FORCE * dt;
-  } else if (velocity > 0.5) {
-    // Was rising, now releasing — transition to glide (gentle deceleration)
-    velocity -= GLIDE_SINK * dt * 2;
   } else {
-    // Neutral glide — very gentle constant sink
+    // Released — velocity decays smoothly toward gentle sink
+    velocity *= RELEASE_DRAG;
+    // Constant gentle downward pull (gravity on a glider)
     velocity -= GLIDE_SINK * dt;
   }
 
@@ -1079,6 +1166,7 @@ function updatePhysics(dt) {
 
   // Ceiling clamp
   if (gliderY < 60) { gliderY = 60; velocity = Math.min(velocity, 0); }
+  // Floor clamp (don't go below screen — collision handles death)
 }
 
 // ---- Game Loop ----
@@ -1303,9 +1391,11 @@ function launchFlight() {
   if (zenMode) startZenDrone();
 }
 
-function endGame() {
+let crashReason = 'landed';
+function endGame(reason) {
   if (gameState !== 'playing') return;
   gameState = 'gameover';
+  crashReason = reason || 'landed';
 
   stopWind();
   stopZenDrone();
@@ -1340,14 +1430,31 @@ function showGameOver() {
   document.getElementById('statThermals').textContent = thermalsCount;
   document.getElementById('statStunts').textContent = stuntsPerformed || 0;
 
+  const titleEl = document.getElementById('gameoverTitle');
+  const subEl = document.getElementById('gameoverSubtitle');
+  const iconEl = document.getElementById('gameoverIcon');
+
   if (isNewBest) {
     document.getElementById('statDistance').classList.add('new-best');
-    document.getElementById('gameoverTitle').textContent = 'New Record!';
-    document.getElementById('gameoverSubtitle').textContent = 'You soared further than ever before.';
+    titleEl.textContent = 'New Record!';
+    subEl.textContent = 'You soared further than ever before.';
+    if (iconEl) iconEl.textContent = '🏆';
+  } else if (crashReason === 'crashed') {
+    document.getElementById('statDistance').classList.remove('new-best');
+    titleEl.textContent = 'Crashed!';
+    subEl.textContent = 'An eagle clipped your wing. Try again!';
+    if (iconEl) iconEl.textContent = '🦅';
+    const gap = personalBest - Math.floor(distance);
+    if (gap > 0) {
+      document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
+    } else {
+      document.getElementById('gapToBest').textContent = '';
+    }
   } else {
     document.getElementById('statDistance').classList.remove('new-best');
-    document.getElementById('gameoverTitle').textContent = 'Landed';
-    document.getElementById('gameoverSubtitle').textContent = 'The mountain is patient. Fly again.';
+    titleEl.textContent = 'Landed';
+    subEl.textContent = 'The mountain is patient. Fly again.';
+    if (iconEl) iconEl.textContent = '🏔️';
     const gap = personalBest - Math.floor(distance);
     if (gap > 0) {
       document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
