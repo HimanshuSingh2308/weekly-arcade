@@ -241,10 +241,10 @@
   margin-top: 0.5rem;
 }
 
-/* Game Over Screen — fully dynamic, no scroll needed */
+/* Game Over Screen — covers full viewport (header shows on top via z-index) */
 .gameover-screen {
   position: fixed;
-  top: var(--header-h); left: 0; right: 0; bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(5, 15, 30, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);

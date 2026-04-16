@@ -2441,6 +2441,7 @@ function init() {
 
   updateMenuBest();
   setupAuth();
+  showHeader(); // ensure header visible on initial load
 
   // Start menu bg animation
   const mb = document.getElementById('menuBgCanvas');
