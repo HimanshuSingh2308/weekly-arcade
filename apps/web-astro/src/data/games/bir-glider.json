@@ -1,0 +1,42 @@
+{
+  "id": "bir-glider",
+  "name": "Bir Glider",
+  "icon": "🪂",
+  "title": "Bir Glider | Weekly Arcade - Himalayan Paragliding",
+  "description": "Play Bir Glider free online. Soar through the Himalayas above Bir, India. One-tap paragliding with prayer flags, thermals, and stunning mountain views.",
+  "keywords": "bir glider, paragliding game, himalayas, endless runner, zen game, browser game, free game, alto adventure",
+  "url": "/games/bir-glider/",
+  "themeColor": "#1a6b4a",
+  "accentColor": "#1a6b4a",
+  "genres": ["Endless", "Zen", "Adventure"],
+  "ratingValue": "4.9",
+  "ratingCount": "88",
+  "tips": [
+    "Hold to rise, release to glide — timing your thermals is the key to distance",
+    "Chain prayer flag collections within 3 seconds for combo multipliers up to x5",
+    "Watch for the golden shimmer — thermals give you free altitude without holding",
+    "Eagles fly faster in later biomes — focus on their flight pattern to dodge",
+    "Press ArrowDown mid-air to perform stunts for bonus points"
+  ],
+  "similarTo": ["Alto's Adventure", "Alto's Odyssey", "Tiny Wings", "Sky Dancer"],
+  "howToPlay": "Hold anywhere (or Space/ArrowUp) to rise. Release to glide down. Catch thermals for free altitude, collect prayer flags for combo scores, dodge eagles, and soar through 4 beautiful Himalayan biomes.",
+  "aboutGame": "Bir Glider is an endless paragliding game inspired by the famous paragliding destination Bir Billing in Himachal Pradesh, India. Soar through procedurally generated Himalayan landscapes featuring the Dhauladhar mountain range, deodar cedar forests, and Kangra Valley tea gardens. Features Zen Mode for relaxing infinite flight with generative ambient audio.",
+  "faq": [
+    {
+      "q": "Is Bir Glider free?",
+      "a": "Yes. Bir Glider is completely free on Weekly Arcade — no ads, no downloads, no signup required."
+    },
+    {
+      "q": "What is Zen Mode?",
+      "a": "Zen Mode removes the crash mechanic so you can fly forever. The glider bounces off the ground instead of crashing, perfect for relaxed exploration with the ambient drone audio."
+    },
+    {
+      "q": "How do combo multipliers work?",
+      "a": "Collecting prayer flags within 3 seconds of each other builds a combo. At 3 flags you get x2, at 5 flags x3, and at 8+ flags x5 multiplier on each flag's point value."
+    },
+    {
+      "q": "What are the 4 biomes?",
+      "a": "Bir Valley (dawn over the tea gardens), Pine Forest (into the cedar groves), Snow Peaks (through the high passes), and Above Clouds (only sky, only silence). Each unlocks at different distances."
+    }
+  ]
+}

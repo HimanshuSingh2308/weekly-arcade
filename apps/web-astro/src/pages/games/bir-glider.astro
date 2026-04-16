@@ -1,0 +1,123 @@
+---
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/bir-glider.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+  tips={gameData.tips}
+  howToPlay={gameData.howToPlay}
+  similarTo={gameData.similarTo}
+  aboutGame={gameData.aboutGame}
+  faq={gameData.faq}
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/games/bir-glider/styles.css">
+  </Fragment>
+
+  <!-- Main canvas -->
+  <canvas id="gameCanvas" role="application" aria-label="Bir Glider — paragliding game. Use Space or Arrow Up to rise, release to glide."></canvas>
+
+  <!-- Pause button (visible during play) -->
+  <button class="pause-btn-inline" id="pauseBtn" onclick="pauseGame()" aria-label="Pause game">&#9646;&#9646;</button>
+
+  <!-- HUD (visible during play) -->
+  <div class="hud" id="hud" style="display:none;">
+    <div class="altitude-bar" id="altBar">
+      <div class="altitude-fill" id="altFill" style="height:10%"></div>
+    </div>
+    <div class="altitude-label" id="altLabel">0m</div>
+    <div class="hud-distance" id="hudDistance" role="status" aria-live="polite" aria-atomic="true">0 <span>m</span></div>
+    <div class="hud-best" id="hudBest"></div>
+    <div class="hud-combo" id="hudCombo"></div>
+    <div class="goals-panel" id="goalsPanel"></div>
+  </div>
+
+  <!-- Menu Screen -->
+  <div class="menu-screen" id="menuScreen">
+    <canvas class="menu-bg-canvas" id="menuBgCanvas"></canvas>
+    <div class="menu-content">
+      <div class="menu-icon">🪂</div>
+      <div class="menu-title">Bir Glider</div>
+      <div class="menu-tagline">"Rise on the wind. Find your calm."</div>
+      <div class="menu-best" id="menuBest"></div>
+      <button class="play-btn" id="playBtn" onclick="startGame()">Fly</button>
+      <button class="zen-toggle" id="zenToggle" onclick="toggleZenMode()" role="switch" aria-checked="false" aria-label="Zen Mode">
+        <span aria-hidden="true">🧘</span> Zen Mode
+        <div class="toggle-knob"></div>
+      </button>
+      <div class="controls-hint">Hold anywhere to rise &bull; Release to glide</div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="gameover-screen hidden" id="gameoverScreen">
+    <div class="gameover-icon">🏔️</div>
+    <div class="gameover-title" id="gameoverTitle" role="alert" aria-live="assertive">Landed</div>
+    <div class="gameover-subtitle" id="gameoverSubtitle">The mountain is patient. Fly again.</div>
+    <div class="gameover-stats">
+      <div class="gameover-stat">
+        <div class="stat-value" id="statDistance">0</div>
+        <div class="stat-label">Distance</div>
+      </div>
+      <div class="gameover-stat">
+        <div class="stat-value" id="statAltitude">0</div>
+        <div class="stat-label">Max Alt.</div>
+      </div>
+      <div class="gameover-stat">
+        <div class="stat-value" id="statFlags">0</div>
+        <div class="stat-label">Flags</div>
+      </div>
+    </div>
+    <div class="biome-reached" id="biomeReached"></div>
+    <div class="gap-to-best" id="gapToBest"></div>
+    <div class="gameover-buttons">
+      <button class="retry-btn" onclick="startGame()">Fly Again</button>
+      <button class="submit-btn" id="submitBtn" onclick="submitScore()">Submit Score</button>
+      <button class="menu-btn-go" onclick="showMenu()">Menu</button>
+    </div>
+  </div>
+
+  <!-- Pause Screen -->
+  <div class="pause-screen hidden" id="pauseScreen">
+    <div class="pause-content">
+      <div class="pause-icon">⏸️</div>
+      <div class="pause-title">Paused</div>
+      <div class="pause-stats">
+        <span id="pauseDistance">0m</span> · <span id="pauseAltitude">0m alt</span>
+      </div>
+      <div class="pause-buttons">
+        <button class="play-btn" onclick="resumeGame()">Resume</button>
+        <button class="menu-btn-go" onclick="quitToMenu()">Quit to Menu</button>
+      </div>
+      <div class="pause-hint">Press Escape or tap to resume</div>
+    </div>
+  </div>
+
+  <!-- Biome card -->
+  <div class="biome-card" id="biomeCard">
+    <div class="biome-card-name" id="biomeCardName"></div>
+    <div class="biome-card-sub" id="biomeCardSub"></div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Screen flash -->
+  <div class="screen-flash" id="screenFlash"></div>
+
+  <Fragment slot="scripts">
+    <script is:inline src="/games/bir-glider/game.js"></script>
+  </Fragment>
+</GameLayout>
