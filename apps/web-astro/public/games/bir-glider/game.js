@@ -1181,16 +1181,9 @@ function showGameOver() {
   const biomeName = BIOMES[biomeIndex].name;
   document.getElementById('biomeReached').textContent = 'Reached: ' + biomeName;
 
-  // Unlock achievements
+  // Auto-submit score + unlock achievements (gameCloud handles auth nudge)
+  autoSubmitScore();
   checkAndUnlockAchievements();
-
-  // Submit score button
-  const submitBtn = document.getElementById('submitBtn');
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Submit Score';
-  if (!currentUser) {
-    submitBtn.textContent = 'Sign in to Submit';
-  }
 }
 
 // ---- Achievements ----
@@ -1229,34 +1222,16 @@ async function checkAndUnlockAchievements() {
 
   for (const id of toUnlock) {
     try {
-      await window.apiClient.unlockAchievement(id, 'bir-glider');
+      if (window.gameCloud) await window.gameCloud.unlockAchievement(id, 'bir-glider');
     } catch(e) {}
   }
 }
 
-// ---- Score submission ----
-let lastSubmitTime = 0;
-const SUBMIT_COOLDOWN_MS = 10_000;
-
-async function submitScore() {
-  if (gameState !== 'gameover') return;
-  if (!currentUser) {
-    if (window.authManager) window.authManager.signIn();
-    return;
-  }
-  if (!window.apiClient) return;
-  if (Date.now() - lastSubmitTime < SUBMIT_COOLDOWN_MS) return;
-  lastSubmitTime = Date.now();
-
-  // Re-derive score from components
+// ---- Score submission (uses gameCloud — auto auth nudge) ----
+async function autoSubmitScore() {
   const derivedScore = Math.floor(distance) + totalFlagScore + totalNearMissBonus + altitudeMilestoneBonus;
-
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-  btn.textContent = 'Submitting...';
-
-  try {
-    await window.apiClient.submitScore('bir-glider', {
+  if (window.gameCloud) {
+    await window.gameCloud.submitOrQueue('bir-glider', {
       score: derivedScore,
       level: biomeIndex,
       timeMs: Date.now() - runStartTime,
@@ -1271,12 +1246,15 @@ async function submitScore() {
         zenMode: zenMode,
       }
     });
-    btn.textContent = 'Submitted!';
-    showToast('✅', 'Score submitted!');
-  } catch(err) {
-    console.error('Score submit failed:', err);
-    btn.disabled = false;
-    btn.textContent = 'Retry Submit';
+    // Save cloud state
+    await window.gameCloud.saveState('bir-glider', {
+      currentLevel: biomeIndex,
+      bestStreak: personalBest,
+      gamesPlayed: (parseInt(localStorage.getItem('bir-glider-plays') || '0') || 0) + 1,
+      lastPlayedDate: new Date().toISOString(),
+      additionalData: { highScore: personalBest },
+    });
+    localStorage.setItem('bir-glider-plays', ((parseInt(localStorage.getItem('bir-glider-plays') || '0') || 0) + 1).toString());
   }
 }
 
