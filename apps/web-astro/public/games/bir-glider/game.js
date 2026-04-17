@@ -13,6 +13,8 @@ let currentLevel = null;
 let levelProgress = {};
 let endlessUnlocked = false;
 let levelCompleteShown = false;
+let goldenSlowMo = 0; // frames of slow motion after golden prayer wheel
+let comboChainPoints = []; // screen positions of recent flag collections for chain viz
 let muted = false;
 let animFrameId = null;
 let menuBgAnimId = null;
@@ -687,17 +689,18 @@ function generateTerrainPatches() {
 
 // ---- Object spawning ----
 function spawnObjects() {
-  // Prayer flags — max 6 on screen, spawn frequently so player always has something to chase
+  // Prayer flags — max 6 on screen, 1 in 15 chance of golden prayer wheel
   const activeFlags = prayerFlags.filter(f => !f.collected).length;
   if (activeFlags < 6 && Math.random() < 0.015) {
-    // Spawn flags near the glider's typical altitude range for better collectibility
     const flagY = H * 0.2 + Math.random() * H * 0.45;
+    const isGolden = Math.random() < 0.07; // ~1 in 15 flags is golden
     prayerFlags.push({
       x: W + 30 + Math.random() * 80,
       y: flagY,
       collected: false,
       phase: Math.random() * Math.PI * 2,
-      colors: ['#1565C0','#F5F5F0','#C62828','#2E7D32','#F9A825'],
+      colors: isGolden ? ['#FFD700','#FFA500','#FFE066','#FFCC00','#F0C040'] : ['#1565C0','#F5F5F0','#C62828','#2E7D32','#F9A825'],
+      golden: isGolden,
     });
   }
 
@@ -1245,8 +1248,20 @@ function drawPrayerFlags() {
     const groundY = getTerrainY(f.x + distance, biomeIndex);
     const poleTop = f.y;
 
+    // Golden prayer wheel glow
+    if (f.golden) {
+      ctx.save();
+      const pulse = 0.3 + Math.sin(f.phase * 3) * 0.15;
+      const grd = ctx.createRadialGradient(f.x, f.y, 5, f.x, f.y, 35);
+      grd.addColorStop(0, `rgba(255,215,0,${pulse})`);
+      grd.addColorStop(1, 'rgba(255,215,0,0)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(f.x - 35, f.y - 35, 70, 70);
+      ctx.restore();
+    }
+
     // Pole
-    ctx.strokeStyle = '#7A6A50';
+    ctx.strokeStyle = f.golden ? '#C0A030' : '#7A6A50';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(f.x, groundY);
@@ -1781,38 +1796,68 @@ function drawGroundSilhouettes() {
     ctx.restore();
   }
 
-  // Best distance marker
+  // Best distance marker — Alto-style tooltip + flag pole
   if (bestDistanceMarker && personalBest > 0) {
     const markerScreenX = bestDistanceMarker.worldX - distance + W * 0.5;
-    if (markerScreenX > -20 && markerScreenX < W + 20) {
+    if (markerScreenX > -60 && markerScreenX < W + 60) {
       const markerBaseY = getTerrainYAtX(markerScreenX);
+      const poleH = 40;
       ctx.save();
+
       // Pole
       ctx.strokeStyle = 'rgba(180,150,60,0.8)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(markerScreenX, markerBaseY);
-      ctx.lineTo(markerScreenX, markerBaseY - 28);
+      ctx.lineTo(markerScreenX, markerBaseY - poleH);
       ctx.stroke();
-      // Flag pennant
+
+      // Small flag at top
       ctx.fillStyle = 'rgba(220,180,50,0.85)';
       ctx.beginPath();
-      ctx.moveTo(markerScreenX, markerBaseY - 28);
-      ctx.lineTo(markerScreenX + 14, markerBaseY - 24);
-      ctx.lineTo(markerScreenX, markerBaseY - 20);
+      ctx.moveTo(markerScreenX, markerBaseY - poleH);
+      ctx.lineTo(markerScreenX + 12, markerBaseY - poleH + 4);
+      ctx.lineTo(markerScreenX, markerBaseY - poleH + 8);
       ctx.fill();
-      // Subtle glow
-      ctx.globalAlpha = 0.15;
+
+      // Speech bubble tooltip — "Best distance / Xm"
+      const bubbleW = 80, bubbleH = 32, bubbleY = markerBaseY - poleH - bubbleH - 10;
+      const bubbleX = markerScreenX - bubbleW / 2;
+      // Bubble background
+      ctx.fillStyle = 'rgba(10,15,25,0.85)';
+      ctx.beginPath();
+      ctx.roundRect(bubbleX, bubbleY, bubbleW, bubbleH, 6);
+      ctx.fill();
+      // Bubble arrow pointing down
+      ctx.beginPath();
+      ctx.moveTo(markerScreenX - 6, bubbleY + bubbleH);
+      ctx.lineTo(markerScreenX, bubbleY + bubbleH + 7);
+      ctx.lineTo(markerScreenX + 6, bubbleY + bubbleH);
+      ctx.fill();
+      // Text
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = '600 9px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Best distance', markerScreenX, bubbleY + 13);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '400 9px system-ui, sans-serif';
+      ctx.fillText(personalBest + 'm', markerScreenX, bubbleY + 25);
+
+      // Glow
+      ctx.globalAlpha = 0.12;
       ctx.fillStyle = '#FFD700';
       ctx.beginPath();
-      ctx.arc(markerScreenX, markerBaseY - 24, 10, 0, Math.PI * 2);
+      ctx.arc(markerScreenX, markerBaseY - poleH, 12, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       // Check if player just passed it
       if (!bestDistanceMarker.passed && distance > bestDistanceMarker.worldX) {
         bestDistanceMarker.passed = true;
-        flashScreen('rgba(255,215,0,0.15)');
+        flashScreen('rgba(255,215,0,0.2)');
+        showToast('🏆', 'New Record!');
+        playNote(1046.5, 0.3, 0.12);
+        setTimeout(() => playNote(1318.5, 0.25, 0.1), 120);
       }
     }
   }
@@ -1901,6 +1946,51 @@ function draw() {
   drawGlider();
   drawParticles();
   drawAmbientParticles();
+  drawComboChain();
+}
+
+function drawComboChain() {
+  if (comboChainPoints.length < 2 || flagCombo < 2) return;
+  ctx.save();
+  const mult = flagCombo <= 2 ? 1 : flagCombo <= 4 ? 2 : flagCombo <= 7 ? 3 : 5;
+  // Chain line color intensifies with combo
+  const colors = ['rgba(255,200,80,', 'rgba(255,200,80,', 'rgba(255,160,40,', 'rgba(255,100,20,'];
+  const col = colors[Math.min(mult - 1, 3)];
+  ctx.lineWidth = 1.5 + mult * 0.5;
+  ctx.lineCap = 'round';
+  // Draw chain connecting recent flag positions
+  for (let i = 1; i < comboChainPoints.length; i++) {
+    const prev = comboChainPoints[i - 1];
+    const curr = comboChainPoints[i];
+    if (prev.life <= 0 || curr.life <= 0) continue;
+    const alpha = Math.min(prev.life, curr.life) * 0.5;
+    ctx.strokeStyle = col + alpha + ')';
+    ctx.beginPath();
+    ctx.moveTo(prev.x, prev.y);
+    ctx.lineTo(curr.x, curr.y);
+    ctx.stroke();
+  }
+  // Fade and scroll chain points
+  for (const p of comboChainPoints) {
+    p.x -= scrollSpeed * 0.5;
+    p.life -= 0.008;
+  }
+  comboChainPoints = comboChainPoints.filter(p => p.life > 0);
+  // Combo glow on screen edges when high combo
+  if (mult >= 3) {
+    const glowAlpha = 0.03 + (mult - 2) * 0.015;
+    const g = ctx.createLinearGradient(0, 0, 20, 0);
+    g.addColorStop(0, `rgba(255,180,40,${glowAlpha})`);
+    g.addColorStop(1, 'rgba(255,180,40,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 20, H);
+    const g2 = ctx.createLinearGradient(W, 0, W - 20, 0);
+    g2.addColorStop(0, `rgba(255,180,40,${glowAlpha})`);
+    g2.addColorStop(1, 'rgba(255,180,40,0)');
+    ctx.fillStyle = g2;
+    ctx.fillRect(W - 20, 0, 20, H);
+  }
+  ctx.restore();
 }
 
 // ---- Collisions ----
@@ -1917,8 +2007,25 @@ function checkCollisions() {
       f.collected = true; prayerFlagsCollected++; flagCombo++;
       flagComboTimer = 180; maxCombo = Math.max(maxCombo, flagCombo);
       const mult = flagCombo <= 2 ? 1 : flagCombo <= 4 ? 2 : flagCombo <= 7 ? 3 : 5;
-      const pts = 100 * mult; totalFlagScore += pts; totalScore += pts;
+      if (f.golden) {
+        // Golden prayer wheel — 500pts, slow-mo, golden flash
+        const pts = 500; totalFlagScore += pts; totalScore += pts;
+        goldenSlowMo = 45; // frames of slow motion
+        flashScreen('rgba(255,215,0,0.2)');
+        showToast('🪷', '+500 Golden Prayer Wheel!');
+        playNote(880, 0.4, 0.12); setTimeout(() => playNote(1108.73, 0.3, 0.1), 100);
+        // Extra particles
+        for (let p = 0; p < 20; p++) {
+          const angle = (Math.PI * 2 * p) / 20;
+          particles.push({ x: f.x, y: f.y, vx: Math.cos(angle) * (3 + Math.random() * 3), vy: Math.sin(angle) * (3 + Math.random() * 3) - 1, color: '#FFD700', life: 1, decay: 0.02, r: 4 + Math.random() * 3 });
+        }
+      } else {
+        const pts = 100 * mult; totalFlagScore += pts; totalScore += pts;
+      }
       playFlagSound(flagCombo); spawnFlagParticles(f.x, f.y, f.colors);
+      // Combo chain — store position for visual chain
+      comboChainPoints.push({ x: f.x, y: f.y, life: 1 });
+      if (comboChainPoints.length > 10) comboChainPoints.shift();
       updateComboDisplay();
     }
   }
@@ -1981,12 +2088,14 @@ function updatePhysics(dt) {
 let lastTime = 0;
 function gameLoop(ts) {
   animFrameId = requestAnimationFrame(gameLoop);
-  const dt = Math.min((ts - lastTime) / 16.67, 3);
+  let dt = Math.min((ts - lastTime) / 16.67, 3);
   lastTime = ts;
   if (gameState !== 'playing') {
     if (gameState === 'paused' || gameState === 'waiting' || gameState === 'levelcomplete') { draw(); }
     return;
   }
+  // Golden prayer wheel slow-mo
+  if (goldenSlowMo > 0) { dt *= 0.4; goldenSlowMo--; }
   gameTime += dt;
   distance += scrollSpeed * dt;
   totalScore = Math.floor(distance) + totalFlagScore + totalNearMissBonus + altitudeMilestoneBonus;
@@ -2197,6 +2306,8 @@ function startGame(levelId) {
   stuntCooldown = 0;
   stuntActive = false;
   zenDroneStarted = false;
+  goldenSlowMo = 0;
+  comboChainPoints = [];
 
   // Set starting biome from level
   biomeIndex = (gameMode === 'levels' && currentLevel) ? currentLevel.biome : 0;
@@ -2573,13 +2684,30 @@ function showGameOver() {
   if (detailAlt) detailAlt.textContent = maxAltitudeM + 'm alt';
   if (detailBiome) detailBiome.textContent = biomeName;
 
-  // Gap to best
-  const gap = personalBest - Math.floor(distance);
-  if (!isNewBest && gap > 0) {
-    document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
+  // Near-miss tease — show what was almost achieved (Zeigarnik effect)
+  const gapEl = document.getElementById('gapToBest');
+  const teases = [];
+  if (gameMode === 'levels' && currentLevel) {
+    const distLeft = currentLevel.distGoal - Math.floor(distance);
+    if (distLeft > 0 && distLeft < currentLevel.distGoal * 0.3) {
+      teases.push(`Only <strong>${distLeft}m</strong> from completing the level!`);
+    }
   } else {
-    document.getElementById('gapToBest').textContent = '';
+    const gap = personalBest - Math.floor(distance);
+    if (!isNewBest && gap > 0 && gap < 200) {
+      teases.push(`Only <strong>${gap}m</strong> from your record!`);
+    }
   }
+  // Flag tease
+  const flagsFor3Stars = gameMode === 'levels' && currentLevel ? Math.ceil((currentLevel.starScores[0] - totalScore) / 100) : 0;
+  if (flagsFor3Stars > 0 && flagsFor3Stars <= 5) {
+    teases.push(`<strong>${flagsFor3Stars}</strong> more flags would have earned 3 stars!`);
+  }
+  // Combo tease
+  if (maxCombo >= 2 && maxCombo < 5) {
+    teases.push(`Your <strong>x${maxCombo <= 2 ? 1 : maxCombo <= 4 ? 2 : 3}</strong> combo was building — keep chaining!`);
+  }
+  gapEl.innerHTML = teases.length > 0 ? teases[0] : '';
 
   // Restore default buttons for non-level game overs
   const btns = document.querySelector('.gameover-buttons');
