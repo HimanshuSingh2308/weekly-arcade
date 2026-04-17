@@ -57,7 +57,7 @@ import gameData from '../../data/games/bir-glider.json';
       <div class="menu-tagline">"Rise on the wind. Find your calm."</div>
       <div class="menu-best" id="menuBest"></div>
       <button class="play-btn" id="playBtn" onclick="onMenuFly()">Fly</button>
-      <button class="zen-toggle" id="zenToggle" onclick="toggleZenMode()" role="switch" aria-checked="false" aria-label="Zen Mode">
+      <button class="zen-toggle" id="zenToggle" onclick="playUIClick();toggleZenMode()" role="switch" aria-checked="false" aria-label="Zen Mode">
         <span aria-hidden="true">🧘</span> Zen Mode
         <div class="toggle-knob"></div>
       </button>
@@ -102,9 +102,9 @@ import gameData from '../../data/games/bir-glider.json';
       </div>
       <div class="pause-goals" id="pauseGoals"></div>
       <div class="pause-buttons">
-        <button class="play-btn" onclick="resumeGame()">Resume</button>
-        <button class="menu-btn-go" onclick="startGame()">Restart</button>
-        <button class="menu-btn-go" onclick="quitToMenu()">Quit to Menu</button>
+        <button class="play-btn" onclick="playUIClick();resumeGame()">Resume</button>
+        <button class="menu-btn-go" onclick="playUIClick();startGame()">Restart</button>
+        <button class="menu-btn-go" onclick="playUIClick();quitToMenu()">Quit to Menu</button>
       </div>
       <div class="pause-hint">Press Escape or tap to resume</div>
     </div>

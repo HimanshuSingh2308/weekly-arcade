@@ -282,6 +282,129 @@ function startZenDrone() {
   } catch(e) {}
 }
 
+// ---- Ambient Sounds ----
+let ambientInterval = null;
+
+function startAmbientSounds() {
+  stopAmbientSounds();
+  if (muted) return;
+  // Schedule random bird chirps / ambient sounds based on biome
+  ambientInterval = setInterval(() => {
+    if (gameState !== 'playing' || muted || !audioCtx) return;
+    const bi = Math.min(biomeIndex, 3);
+    if (bi <= 1) {
+      // Bir Valley & Pine Forest — bird chirps
+      if (Math.random() < 0.4) playBirdChirp(bi);
+    } else if (bi === 2) {
+      // Snow Peaks — wind howl + occasional distant eagle cry
+      if (Math.random() < 0.2) playEagleCry();
+    }
+    // Biome 3 (Above Clouds) — silence, only wind
+  }, 2500 + Math.random() * 2000);
+}
+
+function stopAmbientSounds() {
+  if (ambientInterval) { clearInterval(ambientInterval); ambientInterval = null; }
+}
+
+function playBirdChirp(bi) {
+  if (!audioCtx || muted) return;
+  try {
+    const t = audioCtx.currentTime;
+    // 2-3 quick chirp notes — higher pitch in valley, lower in forest
+    const baseFreq = bi === 0 ? 1800 + Math.random() * 1200 : 1200 + Math.random() * 800;
+    const chirpCount = 2 + Math.floor(Math.random() * 2);
+    const vol = 0.03 + Math.random() * 0.02;
+    for (let c = 0; c < chirpCount; c++) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      const f = baseFreq + (Math.random() - 0.5) * 400;
+      const start = t + c * (0.08 + Math.random() * 0.06);
+      const dur = 0.05 + Math.random() * 0.06;
+      osc.frequency.setValueAtTime(f, start);
+      osc.frequency.linearRampToValueAtTime(f * (0.85 + Math.random() * 0.3), start + dur);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(vol, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(start); osc.stop(start + dur + 0.01);
+    }
+  } catch(e) {}
+}
+
+function playEagleCry() {
+  if (!audioCtx || muted) return;
+  try {
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(900, t);
+    osc.frequency.exponentialRampToValueAtTime(500, t + 0.4);
+    osc.frequency.exponentialRampToValueAtTime(700, t + 0.6);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.03, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + 0.8);
+  } catch(e) {}
+}
+
+// ---- UI Audio Feedback ----
+function ensureAudio() {
+  if (!audioCtx && !muted) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playUIClick() {
+  ensureAudio();
+  if (!audioCtx || muted) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 800;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+function playUISelect() {
+  ensureAudio();
+  if (!audioCtx || muted) return;
+  try {
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, t);
+    osc.frequency.linearRampToValueAtTime(900, t + 0.1);
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + 0.2);
+  } catch(e) {}
+}
+
+function playLevelComplete() {
+  if (!audioCtx || muted) return;
+  // Ascending arpeggio — C5 E5 G5 C6
+  const notes = [523.25, 659.25, 783.99, 1046.5];
+  notes.forEach((f, i) => {
+    setTimeout(() => playNote(f, 0.3, 0.1), i * 120);
+  });
+}
+
+function playStarReveal() {
+  if (!audioCtx || muted) return;
+  playNote(880, 0.15, 0.08); // A5 sparkle
+}
+
 // ---- Perlin noise (simple 1D) ----
 function fade(t) { return t*t*t*(t*(t*6-15)+10); }
 function lerp(a,b,t) { return a+t*(b-a); }
@@ -2134,6 +2257,7 @@ function launchFlight() {
   runStartTime = Date.now();
   resize();
   startWind();
+  startAmbientSounds();
   stopZenDrone();
   if (zenMode) startZenDrone();
   // Zen mode indicator
@@ -2164,6 +2288,8 @@ function completeLevelAction() {
   showHeader();
   stopWind();
   stopZenDrone();
+  stopAmbientSounds();
+  playLevelComplete();
 
   // Calculate stars: 3★ if score >= starScores[0], 2★ if >= starScores[1], else 1★
   const earned = currentLevel.starScores[0] <= totalScore ? 3
@@ -2237,9 +2363,9 @@ function showLevelCompleteScreen(stars) {
     const nextId = currentLevel.id + 1;
     const hasNext = nextId <= LEVELS.length;
     btns.innerHTML = `
-      ${hasNext ? `<button class="retry-btn" onclick="startGame(${nextId})">Next Level</button>` : ''}
-      <button class="menu-btn-go" onclick="startGame(${currentLevel.id})">Retry</button>
-      <button class="menu-btn-go" onclick="showLevelSelect()">Level Select</button>
+      ${hasNext ? `<button class="retry-btn" onclick="playUISelect();startGame(${nextId})">Next Level</button>` : ''}
+      <button class="menu-btn-go" onclick="playUIClick();startGame(${currentLevel.id})">Retry</button>
+      <button class="menu-btn-go" onclick="playUIClick();showLevelSelect()">Level Select</button>
     `;
   }
 
@@ -2256,6 +2382,7 @@ function endGame(reason) {
   showHeader();
   stopWind();
   stopZenDrone();
+  stopAmbientSounds();
   playCrashSound();
 
   // Check personal best
@@ -2370,7 +2497,7 @@ function renderLevelGrid() {
       const starStr = unlocked && stars > 0
         ? '★'.repeat(stars) + '☆'.repeat(3 - stars)
         : unlocked ? '☆☆☆' : '🔒';
-      html += `<button class="level-card ${unlocked ? '' : 'locked'}" ${unlocked ? `onclick="startGame(${lvl.id})"` : 'disabled'}
+      html += `<button class="level-card ${unlocked ? '' : 'locked'}" ${unlocked ? `onclick="playUISelect();startGame(${lvl.id})"` : 'disabled'}
         style="border-color:${biomeColors[b]}30">
         <div class="level-card-num">${lvl.id}</div>
         <div class="level-card-name">${lvl.name}</div>
@@ -2381,7 +2508,7 @@ function renderLevelGrid() {
   }
   // Endless mode card
   html += `<div class="level-biome-label">Endless Mode</div>`;
-  html += `<button class="level-card endless-card ${endlessUnlocked ? '' : 'locked'}" ${endlessUnlocked ? `onclick="startGame('endless')"` : 'disabled'}>
+  html += `<button class="level-card endless-card ${endlessUnlocked ? '' : 'locked'}" ${endlessUnlocked ? `onclick="playUISelect();startGame('endless')"` : 'disabled'}>
     <div class="level-card-num">∞</div>
     <div class="level-card-name">${endlessUnlocked ? 'Fly Forever' : 'Complete all levels'}</div>
     <div class="level-card-stars">${endlessUnlocked ? '🏆' : '🔒'}</div>
@@ -2390,6 +2517,7 @@ function renderLevelGrid() {
 }
 
 function onMenuFly() {
+  playUIClick();
   if (zenMode) {
     startGame(); // zen mode bypasses level select
   } else {
@@ -2458,13 +2586,13 @@ function showGameOver() {
   if (btns) {
     if (gameMode === 'levels' && currentLevel) {
       btns.innerHTML = `
-        <button class="retry-btn" onclick="startGame(${currentLevel.id})">Retry Level</button>
-        <button class="menu-btn-go" onclick="showLevelSelect()">Level Select</button>
+        <button class="retry-btn" onclick="playUIClick();startGame(${currentLevel.id})">Retry Level</button>
+        <button class="menu-btn-go" onclick="playUIClick();showLevelSelect()">Level Select</button>
       `;
     } else {
       btns.innerHTML = `
-        <button class="retry-btn" onclick="startGame('${gameMode === 'endless' ? 'endless' : ''}')">Fly Again</button>
-        <button class="menu-btn-go" onclick="showMenu()">Menu</button>
+        <button class="retry-btn" onclick="playUIClick();startGame('${gameMode === 'endless' ? 'endless' : ''}')">Fly Again</button>
+        <button class="menu-btn-go" onclick="playUIClick();showMenu()">Menu</button>
       `;
     }
   }
