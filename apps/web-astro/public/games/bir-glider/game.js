@@ -1954,6 +1954,9 @@ function updateGroundSilhouettes() {
 function draw() {
   ctx.clearRect(0, 0, W, H);
 
+  // Draw sky BEFORE zoom so it always fills the full canvas — no white edges
+  drawSky();
+
   // Stunt zoom — smooth zoom toward glider during stunts
   if (stuntZoom > 0.01) stuntZoom *= 0.96; else stuntZoom = 0;
   const zoom = 1 + stuntZoom * 0.35; // max 1.35x zoom
@@ -1964,7 +1967,6 @@ function draw() {
     ctx.translate(-gliderX, -gliderY);
   }
 
-  drawSky();
   drawFarSkyDecorations();
   drawBackMountains();
   drawClouds();
