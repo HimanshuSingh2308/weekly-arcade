@@ -72,6 +72,14 @@ let eagles = [];
 let thermals = [];
 let particles = [];
 
+// Environment decoration
+let groundSilhouettes = [];
+let skyDecorations = [];
+let ambientParticles = [];
+let bestDistanceMarker = null;
+let terrainPatches = [];
+let lastBiomeForAmbient = -1;
+
 // Zen
 let zenRecovering = false;
 let zenTimer = 0;
@@ -321,16 +329,30 @@ function generateBackMountains() {
   // Layer 2 (mid): main visible forested hills
   backMountains = generateRidgePoints(20, 0.0008, 200, H * 0.40, H * 0.12);
 
-  // Pre-generate soft clouds (large blurred ellipses)
-  const cloudCount = 3 + Math.floor(Math.random() * 2);
+  // Pre-generate clouds with multi-lobe cumulus shapes — 10-12 at varied depths
+  clouds = [];
+  const cloudCount = 10 + Math.floor(Math.random() * 3);
   for (let i = 0; i < cloudCount; i++) {
+    const lobeCount = 3 + Math.floor(Math.random() * 3); // 3-5 lobes
+    const lobes = [];
+    const baseW = 60 + Math.random() * 140;
+    for (let l = 0; l < lobeCount; l++) {
+      const t = l / (lobeCount - 1); // 0 to 1 across cloud width
+      lobes.push({
+        offsetX: (t - 0.5) * baseW * 0.8 + (Math.random() - 0.5) * baseW * 0.15,
+        offsetY: -(Math.random() * 8 + 4) * (1 - Math.abs(t - 0.5) * 1.5), // taller in center
+        rx: 20 + Math.random() * 25 + (l === Math.floor(lobeCount / 2) ? 15 : 0), // center lobe biggest
+        ry: 8 + Math.random() * 10,
+      });
+    }
     clouds.push({
       x: Math.random() * W * 2.5,
-      y: H * 0.06 + Math.random() * H * 0.16,
-      w: 120 + Math.random() * 180,
-      h: 14 + Math.random() * 18,
-      speed: 0.04 + Math.random() * 0.08,
-      alpha: 0.06 + Math.random() * 0.10,
+      y: H * 0.05 + Math.random() * H * 0.35,
+      w: baseW,
+      h: 14 + Math.random() * 16,
+      speed: 0.02 + Math.random() * 0.08,
+      alpha: 0.04 + Math.random() * 0.10,
+      lobes,
     });
   }
 }
@@ -386,14 +408,112 @@ function generateMidTrees() {
   }
 }
 
+// ---- Environment Generation ----
+
+function generateGroundSilhouettes() {
+  groundSilhouettes = [];
+  const totalW = W * 3;
+  // Clustered placement: 8-12 clusters of 2-5 objects
+  const clusterCount = 8 + Math.floor(Math.random() * 5);
+  for (let c = 0; c < clusterCount; c++) {
+    const clusterX = (c / clusterCount) * totalW + Math.random() * (totalW / clusterCount) * 0.6;
+    const objectsInCluster = 2 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < objectsInCluster; i++) {
+      const types0 = ['deodar','deodar','stupa','bush','house','bush'];
+      const types1 = ['tallpine','tallpine','tallpine','tallpine','deodar','rock','cabin'];
+      const types2 = ['rock','rock','rock','boulder','ice'];
+      const types3 = ['spire','spire','crystal'];
+      const typePool = [types0, types1, types2, types3][Math.min(biomeIndex, 3)];
+      const type = typePool[Math.floor(Math.random() * typePool.length)];
+      const baseH = { deodar: 25, tallpine: 50, stupa: 20, bush: 8, house: 18, rock: 14, cabin: 16, boulder: 12, ice: 22, spire: 30, crystal: 18 }[type] || 15;
+      groundSilhouettes.push({
+        xWorld: clusterX + i * (15 + Math.random() * 25),
+        type,
+        h: baseH + Math.random() * baseH * 0.6,
+        w: baseH * (0.4 + Math.random() * 0.4),
+        seed: Math.random() * 1000,
+        forBiome: Math.min(biomeIndex, 3),
+      });
+    }
+  }
+}
+
+function generateSkyDecorations() {
+  skyDecorations = [];
+  // Bird flocks
+  for (let i = 0; i < 3; i++) {
+    skyDecorations.push({
+      type: 'birdFlock',
+      x: Math.random() * W * 2,
+      y: H * 0.08 + Math.random() * H * 0.18,
+      count: 4 + Math.floor(Math.random() * 4),
+      spacing: 8 + Math.random() * 5,
+      wingPhase: Math.random() * Math.PI * 2,
+      speed: 0.15 + Math.random() * 0.2,
+    });
+  }
+  // Hot air balloons (biomes 0-1)
+  for (let i = 0; i < 2; i++) {
+    skyDecorations.push({
+      type: 'balloon',
+      x: W * 0.3 + Math.random() * W * 1.5,
+      y: H * 0.12 + Math.random() * H * 0.2,
+      size: 18 + Math.random() * 12,
+      color1: ['#C05050','#D08040','#5070B0','#A06090'][Math.floor(Math.random() * 4)],
+      color2: ['#F0D080','#F0F0E0','#80B0D0','#E0C0A0'][Math.floor(Math.random() * 4)],
+      bobPhase: Math.random() * Math.PI * 2,
+      speed: 0.02 + Math.random() * 0.02,
+    });
+  }
+}
+
+function generateAmbientParticles() {
+  ambientParticles = [];
+  const count = 40;
+  for (let i = 0; i < count; i++) {
+    ambientParticles.push(createAmbientParticle(Math.random() * W, Math.random() * H));
+  }
+  lastBiomeForAmbient = biomeIndex;
+}
+
+function createAmbientParticle(x, y) {
+  const bi = Math.min(biomeIndex, 3);
+  if (bi === 2) { // snowflakes
+    return { x, y, vx: (Math.random() - 0.5) * 0.3, vy: 0.2 + Math.random() * 0.4, size: 2 + Math.random() * 2, alpha: 0.2 + Math.random() * 0.3, type: 'snow', phase: Math.random() * Math.PI * 2 };
+  } else if (bi === 3) { // star sparkles
+    return { x, y, vx: (Math.random() - 0.5) * 0.1, vy: (Math.random() - 0.5) * 0.1, size: 1 + Math.random() * 1.5, alpha: 0.15 + Math.random() * 0.25, type: 'star', phase: Math.random() * Math.PI * 2 };
+  } else if (bi === 1) { // forest mist + fireflies
+    if (Math.random() < 0.3) {
+      // Occasional firefly — brighter, greenish, twinkles
+      return { x, y, vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.1, size: 1.5 + Math.random() * 1, alpha: 0.2 + Math.random() * 0.3, type: 'star', phase: Math.random() * Math.PI * 2 };
+    }
+    // Forest mist particles — slow, faint
+    return { x, y, vx: (Math.random() - 0.5) * 0.1, vy: -0.02 + Math.random() * 0.06, size: 2 + Math.random() * 2, alpha: 0.06 + Math.random() * 0.08, type: 'mist', phase: Math.random() * Math.PI * 2 };
+  } else { // golden pollen
+    return { x, y, vx: (Math.random() - 0.5) * 0.25, vy: -0.05 + Math.random() * 0.15, size: 1 + Math.random() * 2, alpha: 0.15 + Math.random() * 0.2, type: 'pollen', phase: Math.random() * Math.PI * 2 };
+  }
+}
+
+function generateTerrainPatches() {
+  terrainPatches = [];
+  for (let i = 0; i < 6; i++) {
+    terrainPatches.push({
+      xWorld: Math.random() * W * 3,
+      w: 40 + Math.random() * 80,
+      shade: (Math.random() - 0.5) * 0.08, // slight brightness variation
+    });
+  }
+}
+
 // ---- Object spawning ----
 function spawnObjects() {
-  // Prayer flags — max 4 on screen at once, spawn every ~3-5 seconds
+  // Prayer flags — max 6 on screen, spawn frequently so player always has something to chase
   const activeFlags = prayerFlags.filter(f => !f.collected).length;
-  if (activeFlags < 4 && Math.random() < 0.003) {
-    const flagY = H * 0.25 + Math.random() * H * 0.4;
+  if (activeFlags < 6 && Math.random() < 0.015) {
+    // Spawn flags near the glider's typical altitude range for better collectibility
+    const flagY = H * 0.2 + Math.random() * H * 0.45;
     prayerFlags.push({
-      x: W + 50 + Math.random() * 100,
+      x: W + 30 + Math.random() * 80,
       y: flagY,
       collected: false,
       phase: Math.random() * Math.PI * 2,
@@ -401,28 +521,28 @@ function spawnObjects() {
     });
   }
 
-  // Eagles — max 3 on screen, appear after 200m
-  if (distance > 200 && eagles.length < 3 && Math.random() < 0.002 + biomeIndex * 0.001) {
+  // Eagles — max 3 on screen, appear after 100m, more frequent in later biomes
+  if (distance > 100 && eagles.length < 3 && Math.random() < 0.006 + biomeIndex * 0.003) {
     eagles.push({
       x: W + 60,
       y: H * 0.15 + Math.random() * H * 0.45,
-      vy: (Math.random() - 0.5) * 0.3,
-      speed: 1.5 + Math.random() * biomeIndex * 0.5,
+      vy: (Math.random() - 0.5) * 0.4,
+      speed: 1.5 + Math.random() * (1 + biomeIndex * 0.5),
       nearMissed: false,
       radius: 18,
       wingPhase: 0,
     });
   }
 
-  // Thermals — max 2 on screen
-  if (thermals.length < 2 && Math.random() < 0.002) {
+  // Thermals — max 3 on screen, spawn more often so player can use them
+  if (thermals.length < 3 && Math.random() < 0.008) {
     const xWorld = terrainOffset + W + 80;
     const groundY = getTerrainY(xWorld, biomeIndex);
     thermals.push({
       x: W + 80 + Math.random() * 80,
       y: groundY - 200,
-      height: 150 + Math.random() * 100,
-      width: 40 + Math.random() * 30,
+      height: 180 + Math.random() * 120,
+      width: 50 + Math.random() * 40,
       phase: Math.random() * Math.PI * 2,
       active: true,
     });
@@ -533,296 +653,177 @@ function getTerrainColor(biome) {
 
 // ---- Drawing (Alto's Adventure-style smooth silhouette layers) ----
 
-function drawSky() {
-  const phase = ((distance % 600) / 600);
-  const bi = Math.min(biomeIndex, 3);
-  const isSunset = bi === 0 && phase > 0.7;
-  const isDawn = bi === 0 && phase < 0.3;
 
-  // --- Rich 10-stop sky gradient with smooth atmospheric transitions ---
+// ============================================================
+// DRAWING — clean, minimal, Alto's Adventure inspired
+// 3 principles: gradients only, smooth curves, atmospheric depth
+// ============================================================
+
+function drawSky() {
+  // Simple clean gradient — no overlaid shapes
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  if (bi === 0) {
-    if (isDawn) {
-      grad.addColorStop(0.00, '#1E3A6E');
-      grad.addColorStop(0.08, '#2A5A8E');
-      grad.addColorStop(0.18, '#4A80B8');
-      grad.addColorStop(0.30, '#6AA0D0');
-      grad.addColorStop(0.42, '#8AC0E0');
-      grad.addColorStop(0.55, '#C0D8E8');
-      grad.addColorStop(0.68, '#E8D0A8');
-      grad.addColorStop(0.78, '#F0C080');
-      grad.addColorStop(0.90, '#F5B060');
-      grad.addColorStop(1.00, '#E89838');
-    } else if (isSunset) {
-      grad.addColorStop(0.00, '#1A1040');
-      grad.addColorStop(0.08, '#2A1858');
-      grad.addColorStop(0.18, '#5A2878');
-      grad.addColorStop(0.28, '#8A3870');
-      grad.addColorStop(0.40, '#C04868');
-      grad.addColorStop(0.52, '#D86058');
-      grad.addColorStop(0.64, '#E88048');
-      grad.addColorStop(0.76, '#F0A040');
-      grad.addColorStop(0.88, '#F5B838');
-      grad.addColorStop(1.00, '#E8A030');
-    } else {
-      grad.addColorStop(0.00, '#1A4A8A');
-      grad.addColorStop(0.08, '#2260A8');
-      grad.addColorStop(0.18, '#2E72BE');
-      grad.addColorStop(0.30, '#3A88D0');
-      grad.addColorStop(0.42, '#4A98DA');
-      grad.addColorStop(0.55, '#60A8E0');
-      grad.addColorStop(0.68, '#80BBE5');
-      grad.addColorStop(0.80, '#A0CCE8');
-      grad.addColorStop(0.90, '#BCD8E8');
-      grad.addColorStop(1.00, '#D0E0EC');
+  if (biomeIndex === 0) {
+    const phase = ((distance % 600) / 600);
+    if (phase < 0.3) { // dawn
+      grad.addColorStop(0, '#1A3A6E');
+      grad.addColorStop(0.3, '#4A7AB0');
+      grad.addColorStop(0.6, '#7AAECC');
+      grad.addColorStop(0.85, '#E8B870');
+      grad.addColorStop(1, '#F5C87A');
+    } else if (phase < 0.7) { // midday
+      grad.addColorStop(0, '#1A4A8E');
+      grad.addColorStop(0.25, '#2B72BF');
+      grad.addColorStop(0.5, '#4A90D9');
+      grad.addColorStop(0.75, '#7AB8E8');
+      grad.addColorStop(1, '#A8D4F0');
+    } else { // sunset
+      grad.addColorStop(0, '#2A1A5E');
+      grad.addColorStop(0.2, '#6A3A8E');
+      grad.addColorStop(0.4, '#C05878');
+      grad.addColorStop(0.65, '#E88050');
+      grad.addColorStop(0.85, '#F0A840');
+      grad.addColorStop(1, '#E8C060');
     }
-  } else if (bi === 1) {
-    grad.addColorStop(0.00, '#0E2248');
-    grad.addColorStop(0.10, '#142E5A');
-    grad.addColorStop(0.22, '#1A3A6E');
-    grad.addColorStop(0.36, '#224880');
-    grad.addColorStop(0.50, '#2A5A92');
-    grad.addColorStop(0.64, '#3570A6');
-    grad.addColorStop(0.76, '#4088B8');
-    grad.addColorStop(0.86, '#5098C4');
-    grad.addColorStop(0.94, '#68AAD0');
-    grad.addColorStop(1.00, '#80BACC');
-  } else if (bi === 2) {
-    grad.addColorStop(0.00, '#1858A0');
-    grad.addColorStop(0.10, '#2868B0');
-    grad.addColorStop(0.22, '#3A7CC0');
-    grad.addColorStop(0.36, '#5090D0');
-    grad.addColorStop(0.50, '#68A4DA');
-    grad.addColorStop(0.64, '#80B8E2');
-    grad.addColorStop(0.76, '#98CCE8');
-    grad.addColorStop(0.86, '#B0DAEE');
-    grad.addColorStop(0.94, '#C8E4F2');
-    grad.addColorStop(1.00, '#DCEEF6');
+  } else if (biomeIndex === 1) {
+    // Pine Forest — deep twilight, cool greens and teals, moody
+    const phase1 = ((distance % 800) / 800);
+    if (phase1 < 0.5) { // dusky blue-green
+      grad.addColorStop(0, '#0A1A2A');
+      grad.addColorStop(0.2, '#122838');
+      grad.addColorStop(0.45, '#1A4050');
+      grad.addColorStop(0.7, '#2A6060');
+      grad.addColorStop(1, '#3A7868');
+    } else { // misty grey-green
+      grad.addColorStop(0, '#101820');
+      grad.addColorStop(0.25, '#1A2838');
+      grad.addColorStop(0.5, '#284048');
+      grad.addColorStop(0.75, '#385858');
+      grad.addColorStop(1, '#4A7068');
+    }
+  } else if (biomeIndex === 2) {
+    grad.addColorStop(0, '#2060A0');
+    grad.addColorStop(0.3, '#5090C8');
+    grad.addColorStop(0.6, '#88B8E0');
+    grad.addColorStop(1, '#C0D8F0');
   } else {
-    grad.addColorStop(0.00, '#020208');
-    grad.addColorStop(0.10, '#060612');
-    grad.addColorStop(0.22, '#0A0A1E');
-    grad.addColorStop(0.36, '#10082E');
-    grad.addColorStop(0.50, '#180440');
-    grad.addColorStop(0.64, '#200050');
-    grad.addColorStop(0.76, '#2A0060');
-    grad.addColorStop(0.86, '#340870');
-    grad.addColorStop(0.94, '#3C1080');
-    grad.addColorStop(1.00, '#481890');
+    grad.addColorStop(0, '#080818');
+    grad.addColorStop(0.3, '#10002b');
+    grad.addColorStop(0.6, '#1A0840');
+    grad.addColorStop(1, '#2A1858');
   }
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  // --- Sun glow: 3 radial gradient layers for soft bloom ---
-  if (bi < 3) {
-    const sunX = W * 0.62 + phase * W * 0.18;
-    const sunY = H * 0.08 + Math.sin(phase * Math.PI) * H * 0.06;
-
-    // Layer 1: wide atmospheric bloom
-    const bloom1R = isSunset ? 380 : isDawn ? 300 : 260;
-    const bloom1A = isSunset ? 0.14 : isDawn ? 0.10 : 0.06;
-    const bloom1 = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, bloom1R);
-    bloom1.addColorStop(0.0, `rgba(255,250,230,${bloom1A})`);
-    bloom1.addColorStop(0.15, `rgba(255,245,210,${bloom1A * 0.7})`);
-    bloom1.addColorStop(0.35, `rgba(255,235,180,${bloom1A * 0.35})`);
-    bloom1.addColorStop(0.6, `rgba(255,220,150,${bloom1A * 0.12})`);
-    bloom1.addColorStop(1.0, 'rgba(255,200,100,0)');
-    ctx.fillStyle = bloom1;
-    ctx.fillRect(0, 0, W, H);
-
-    // Layer 2: mid halo
-    const bloom2R = isSunset ? 160 : isDawn ? 120 : 100;
-    const bloom2A = isSunset ? 0.30 : isDawn ? 0.22 : 0.14;
-    const bloom2 = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, bloom2R);
-    bloom2.addColorStop(0.0, `rgba(255,252,240,${bloom2A})`);
-    bloom2.addColorStop(0.3, `rgba(255,248,220,${bloom2A * 0.5})`);
-    bloom2.addColorStop(0.7, `rgba(255,240,190,${bloom2A * 0.15})`);
-    bloom2.addColorStop(1.0, 'rgba(255,230,170,0)');
-    ctx.fillStyle = bloom2;
-    ctx.fillRect(0, 0, W, H);
-
-    // Layer 3: bright core disc
-    const coreR = isSunset ? 45 : isDawn ? 30 : 20;
-    const coreA = isSunset ? 0.65 : isDawn ? 0.50 : 0.40;
-    const core = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, coreR);
-    core.addColorStop(0.0, `rgba(255,255,248,${coreA})`);
-    core.addColorStop(0.25, `rgba(255,252,235,${coreA * 0.7})`);
-    core.addColorStop(0.55, `rgba(255,248,215,${coreA * 0.3})`);
-    core.addColorStop(1.0, 'rgba(255,245,200,0)');
-    ctx.fillStyle = core;
+  // Sun with visible disc + glow + lens flare
+  if (biomeIndex < 3) {
+    const phase = ((distance % 600) / 600);
+    const sunX = W * (0.6 + phase * 0.25);
+    const sunY = H * 0.12;
+    // Dim sun in Pine Forest (canopy blocks light)
+    const sunBrightness = biomeIndex === 1 ? 0.3 : 1.0;
+    // Outer glow
+    const sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, H * 0.3);
+    sg.addColorStop(0, `rgba(255,255,240,${0.4 * sunBrightness})`);
+    sg.addColorStop(0.2, `rgba(255,240,200,${0.15 * sunBrightness})`);
+    sg.addColorStop(0.5, `rgba(255,220,180,${0.04 * sunBrightness})`);
+    sg.addColorStop(1, 'rgba(255,220,180,0)');
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, 0, W, H * 0.5);
+    // Bright disc
+    ctx.save();
+    ctx.globalAlpha = 0.6 * sunBrightness;
+    ctx.fillStyle = biomeIndex === 1 ? 'rgba(200,220,210,1)' : 'rgba(255,252,240,1)';
     ctx.beginPath();
-    ctx.arc(sunX, sunY, coreR * 1.2, 0, Math.PI * 2);
+    ctx.arc(sunX, sunY, biomeIndex === 1 ? 7 : 10, 0, Math.PI * 2);
     ctx.fill();
-  }
-
-  // --- Soft clouds: large blurred multi-lobe ellipses ---
-  if (bi < 3 && clouds.length > 0) {
-    ctx.save();
-    for (const c of clouds) {
-      c.x += c.speed;
-      if (c.x > W * 3) c.x = -c.w * 2;
-      const cx = ((c.x - distance * 0.015) % (W * 2.5) + W * 2.5) % (W * 2.5) - W * 0.25;
-      if (cx < -c.w * 2 || cx > W + c.w * 2) continue;
-
-      const tint = isSunset ? [255,180,140] : isDawn ? [255,220,190] : [255,255,255];
-      ctx.globalAlpha = c.alpha * 0.7;
-
-      // Soft outer glow
-      const cGrad = ctx.createRadialGradient(cx, c.y, 0, cx, c.y, c.w);
-      cGrad.addColorStop(0, `rgba(${tint[0]},${tint[1]},${tint[2]},0.35)`);
-      cGrad.addColorStop(0.4, `rgba(${tint[0]},${tint[1]},${tint[2]},0.18)`);
-      cGrad.addColorStop(0.7, `rgba(${tint[0]},${tint[1]},${tint[2]},0.06)`);
-      cGrad.addColorStop(1, `rgba(${tint[0]},${tint[1]},${tint[2]},0)`);
-      ctx.fillStyle = cGrad;
+    ctx.globalAlpha = 0.3 * sunBrightness;
+    ctx.fillStyle = biomeIndex === 1 ? 'rgba(200,220,210,1)' : 'rgba(255,250,230,1)';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, biomeIndex === 1 ? 12 : 16, 0, Math.PI * 2);
+    ctx.fill();
+    // Subtle lens flare dots
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = '#FFF8E0';
+    const cx = W * 0.5, cy = H * 0.5;
+    for (let f = 1; f <= 3; f++) {
+      const fx = sunX + (cx - sunX) * f * 0.25;
+      const fy = sunY + (cy - sunY) * f * 0.25;
       ctx.beginPath();
-      ctx.ellipse(cx, c.y, c.w * 1.3, c.h * 2.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Main body
-      ctx.globalAlpha = c.alpha;
-      ctx.fillStyle = `rgba(${tint[0]},${tint[1]},${tint[2]},0.40)`;
-      ctx.beginPath();
-      ctx.ellipse(cx, c.y, c.w, c.h, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Secondary lobe
-      ctx.fillStyle = `rgba(${tint[0]},${tint[1]},${tint[2]},0.30)`;
-      ctx.beginPath();
-      ctx.ellipse(cx - c.w * 0.35, c.y - c.h * 0.3, c.w * 0.6, c.h * 0.9, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Tertiary lobe
-      ctx.fillStyle = `rgba(${tint[0]},${tint[1]},${tint[2]},0.25)`;
-      ctx.beginPath();
-      ctx.ellipse(cx + c.w * 0.4, c.y - c.h * 0.15, c.w * 0.5, c.h * 0.7, 0, 0, Math.PI * 2);
+      ctx.arc(fx, fy, 4 + f * 2, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
   }
 
-  // --- Warm horizon haze band ---
-  if (bi < 3) {
-    ctx.save();
-    const hazeY = H * 0.55;
-    const hazeH = H * 0.35;
-    const haze = ctx.createLinearGradient(0, hazeY, 0, hazeY + hazeH);
-    if (isSunset) {
-      haze.addColorStop(0.0, 'rgba(255,140,60,0)');
-      haze.addColorStop(0.3, 'rgba(255,150,70,0.06)');
-      haze.addColorStop(0.6, 'rgba(255,170,90,0.09)');
-      haze.addColorStop(0.85, 'rgba(255,180,100,0.05)');
-      haze.addColorStop(1.0, 'rgba(255,160,80,0)');
-    } else if (isDawn) {
-      haze.addColorStop(0.0, 'rgba(255,200,130,0)');
-      haze.addColorStop(0.3, 'rgba(255,210,140,0.05)');
-      haze.addColorStop(0.6, 'rgba(255,215,150,0.07)');
-      haze.addColorStop(0.85, 'rgba(255,200,130,0.04)');
-      haze.addColorStop(1.0, 'rgba(255,190,120,0)');
-    } else {
-      haze.addColorStop(0.0, 'rgba(200,220,240,0)');
-      haze.addColorStop(0.3, 'rgba(200,220,240,0.04)');
-      haze.addColorStop(0.6, 'rgba(200,220,240,0.08)');
-      haze.addColorStop(0.85, 'rgba(200,220,240,0.10)');
-      haze.addColorStop(1.0, 'rgba(200,220,240,0.06)');
-    }
-    ctx.fillStyle = haze;
-    ctx.fillRect(0, hazeY, W, hazeH);
-    ctx.restore();
-  }
-
-  // --- Stars (above clouds biome) ---
-  if (bi === 3) {
-    for (let i = 0; i < 180; i++) {
-      const sx = ((i * 137.5 + distance * 0.008) % W);
-      const sy = (i * 97.3) % (H * 0.55);
-      const twinkle = 0.20 + 0.80 * Math.abs(Math.sin(distance * 0.002 + i * 2.3));
-      const size = 0.3 + (i % 5) * 0.35;
-      ctx.fillStyle = `rgba(255,255,255,${twinkle * 0.9})`;
+  // Stars for above-clouds biome only
+  if (biomeIndex === 3) {
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    for (let i = 0; i < 80; i++) {
+      const sx = ((i * 137.5 + distance * 0.01) % W);
+      const sy = (i * 97.3) % (H * 0.4);
       ctx.beginPath();
-      ctx.arc(sx, sy, size, 0, Math.PI * 2);
+      ctx.arc(sx, sy, 0.5 + (i % 3) * 0.4, 0, Math.PI * 2);
       ctx.fill();
-      if (i % 6 === 0) {
-        const glowGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 6);
-        glowGrad.addColorStop(0, `rgba(200,220,255,${twinkle * 0.12})`);
-        glowGrad.addColorStop(1, 'rgba(200,220,255,0)');
-        ctx.fillStyle = glowGrad;
-        ctx.beginPath();
-        ctx.arc(sx, sy, size * 6, 0, Math.PI * 2);
-        ctx.fill();
-      }
     }
   }
 }
 
 function drawBackMountains() {
   const bi = Math.min(biomeIndex, 3);
-  const totalW = W * 3;
+  const segW = 4;
+  const totalW = farMountains.length * segW;
 
-  // Helper: draw smooth mountain silhouette
-  function drawLayer(points, scroll, baseY, topColor, botColor, alpha) {
-    if (!points || points.length < 2) return;
+  // Helper: draw a smooth ridge from noise points
+  function drawRidge(points, scroll, baseY, topCol, botCol, alpha) {
     ctx.save();
     ctx.globalAlpha = alpha;
-    const minY = Math.min(...points.map(p => p.y));
-    const grad = ctx.createLinearGradient(0, minY, 0, baseY);
-    grad.addColorStop(0, topColor);
-    grad.addColorStop(1, botColor);
-    ctx.fillStyle = grad;
+    const g = ctx.createLinearGradient(0, H * 0.15, 0, baseY);
+    g.addColorStop(0, topCol);
+    g.addColorStop(1, botCol);
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.moveTo(-20, baseY);
-    for (let i = 0; i < points.length; i++) {
-      const p = points[i];
-      const sx = ((p.x - scroll) % totalW + totalW) % totalW - totalW * 0.2;
-      if (i === 0) ctx.lineTo(sx, p.y);
-      else {
-        const pp = points[i-1];
-        const psx = ((pp.x - scroll) % totalW + totalW) % totalW - totalW * 0.2;
-        ctx.quadraticCurveTo((psx + sx)/2, (pp.y + p.y)/2 - 8, sx, p.y);
-      }
+    ctx.moveTo(0, baseY);
+    for (let x = 0; x <= W; x += segW) {
+      const wi = (Math.floor((x + scroll) / segW) % points.length + points.length) % points.length;
+      ctx.lineTo(x, points[wi]);
     }
-    ctx.lineTo(W + 20, baseY);
+    ctx.lineTo(W, baseY);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
   }
 
-  // 3 clean layers — NO haze rectangles, just gradient-filled silhouettes
-  const colors = [
-    // Biome 0: Bir Valley
-    { far: ['#8090A8','#A0AABB'], mid: ['#3A6B45','#4A8A58'], near: ['#1E4A25','#2D6A35'] },
-    // Biome 1: Pine Forest
-    { far: ['#506878','#708898'], mid: ['#1E3E22','#2E5530'], near: ['#0E2A12','#1E3E1E'] },
-    // Biome 2: Snow Peaks
-    { far: ['#8898B0','#A8B8CC'], mid: ['#6878A0','#8898B8'], near: ['#506888','#6880A0'] },
-    // Biome 3: Above Clouds
-    { far: ['#1A1535','#2A2048'], mid: ['#221A42','#2E2455'], near: ['#181030','#221840'] },
+  // Colors per biome: [far, mid, near]
+  const palettes = [
+    { far: ['#7888A0','#90A0B8'], mid: ['#3A6B48','#4A8858'], near: ['#1A4025','#286838'] },
+    { far: ['#2A3840','#384848'], mid: ['#0E2818','#183828'], near: ['#081A10','#102818'] }, // Pine Forest — much darker, cooler
+    { far: ['#7888A8','#A0B0C8'], mid: ['#5868A0','#7888B8'], near: ['#4060A0','#608AB8'] },
+    { far: ['#181030','#201840'], mid: ['#201838','#281E48'], near: ['#140C28','#1C1238'] },
   ][bi];
 
-  // Layer 1 — FAR: faint, hazy peaks (Dhauladhar in distance)
-  drawLayer(farMountains, distance * 0.02, H * 0.55, colors.far[0], colors.far[1], 0.45);
+  // Layer 1: Far peaks — faint, hazy
+  drawRidge(farMountains, distance * 0.02, H * 0.55, palettes.far[0], palettes.far[1], 0.5);
 
-  // Layer 2 — MID: main mountain range
-  drawLayer(backMountains, distance * 0.07, H * 0.65, colors.mid[0], colors.mid[1], 0.85);
+  // Layer 2: Mid range — the main mountains
+  drawRidge(backMountains, distance * 0.07, H * 0.68, palettes.mid[0], palettes.mid[1], 0.9);
 
-  // Layer 3 — NEAR: dark forested hills (treeline silhouette)
+  // Layer 3: Near treeline (biomes 0-1 only)
   if (bi <= 1) {
-    // Draw treeline as a noise-based wavy edge filled solid dark
     ctx.save();
-    ctx.globalAlpha = 0.92;
-    const treeGrad = ctx.createLinearGradient(0, H * 0.50, 0, H * 0.70);
-    treeGrad.addColorStop(0, colors.near[0]);
-    treeGrad.addColorStop(1, colors.near[1]);
-    ctx.fillStyle = treeGrad;
-    const treeScroll = distance * 0.14;
+    ctx.globalAlpha = 0.95;
+    const tg = ctx.createLinearGradient(0, H * 0.52, 0, H * 0.72);
+    tg.addColorStop(0, palettes.near[0]);
+    tg.addColorStop(1, palettes.near[1]);
+    ctx.fillStyle = tg;
+    const ts = distance * 0.14;
     ctx.beginPath();
-    ctx.moveTo(-20, H * 0.70);
-    for (let x = -20; x <= W + 20; x += 5) {
-      const wx = x + treeScroll;
-      const base = H * 0.55 + fbm(wx * 0.002 + 350, 3, 0.5) * H * 0.08;
-      const tips = fbm(wx * 0.012 + 700, 2, 0.4) * 5;
-      ctx.lineTo(x, base - tips);
+    ctx.moveTo(0, H * 0.72);
+    for (let x = 0; x <= W; x += 4) {
+      const n = fbm((x + ts) * 0.002 + 350, 3, 0.5) * H * 0.06;
+      const tip = fbm((x + ts) * 0.01 + 700, 2, 0.4) * 4;
+      ctx.lineTo(x, H * 0.58 + n - tip);
     }
-    ctx.lineTo(W + 20, H * 0.70);
+    ctx.lineTo(W, H * 0.72);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
@@ -830,211 +831,203 @@ function drawBackMountains() {
 }
 
 function drawMidLayer() {
-  const scrollMid = distance * 0.22;
-  ctx.save();
-
-  // Biomes 0-1: treeline is handled by drawBackMountains Layer 3
-  if (false && (biomeIndex === 0 || biomeIndex === 1)) {
-    // --- Treeline silhouette: one continuous wavy curve, gradient-filled ---
-    // This replaces individual tree drawing with an Alto's Adventure style canopy silhouette
-    const baseY = H * 0.66;
-    const canopyTopBase = H * 0.56;
-    const canopyAmplitude = H * 0.06;
-
-    // Main canopy silhouette — smooth noise curve
-    ctx.globalAlpha = 0.92;
-    const canopyGrad = ctx.createLinearGradient(0, canopyTopBase - canopyAmplitude, 0, baseY);
-    if (biomeIndex === 0) {
-      canopyGrad.addColorStop(0.0, 'rgba(18,48,22,1)');
-      canopyGrad.addColorStop(0.25, 'rgba(22,55,26,1)');
-      canopyGrad.addColorStop(0.50, 'rgba(26,62,30,1)');
-      canopyGrad.addColorStop(0.75, 'rgba(30,68,34,1)');
-      canopyGrad.addColorStop(1.0, 'rgba(35,75,38,1)');
-    } else {
-      canopyGrad.addColorStop(0.0, 'rgba(10,30,12,1)');
-      canopyGrad.addColorStop(0.25, 'rgba(14,36,16,1)');
-      canopyGrad.addColorStop(0.50, 'rgba(17,42,20,1)');
-      canopyGrad.addColorStop(0.75, 'rgba(20,48,24,1)');
-      canopyGrad.addColorStop(1.0, 'rgba(24,54,28,1)');
-    }
-    ctx.fillStyle = canopyGrad;
-
-    ctx.beginPath();
-    ctx.moveTo(-20, baseY);
-    for (let x = -20; x <= W + 20; x += 4) {
-      const worldX = x + scrollMid;
-      // Low-freq noise for overall canopy shape
-      const n1 = fbm(worldX * 0.0025 + 600, 3, 0.45);
-      // Higher-freq noise for small bumps (tree tops)
-      const n2 = fbm(worldX * 0.012 + 800, 2, 0.4);
-      const canopyY = canopyTopBase + n1 * canopyAmplitude + n2 * 5;
-      ctx.lineTo(x, canopyY);
-    }
-    ctx.lineTo(W + 20, baseY);
-    ctx.closePath();
-    ctx.fill();
-
-    // A few individual tree-tip silhouettes poking above the canopy for interest
-    ctx.globalAlpha = 0.85;
-    const tipGrad = ctx.createLinearGradient(0, canopyTopBase - canopyAmplitude - 15, 0, canopyTopBase);
-    if (biomeIndex === 0) {
-      tipGrad.addColorStop(0, 'rgba(15,42,18,1)');
-      tipGrad.addColorStop(1, 'rgba(20,50,24,1)');
-    } else {
-      tipGrad.addColorStop(0, 'rgba(8,26,10,1)');
-      tipGrad.addColorStop(1, 'rgba(14,35,16,1)');
-    }
-    ctx.fillStyle = tipGrad;
-
-    // Draw pointed tree tips at intervals using the control points
-    for (const pt of midTrees) {
-      if (pt.tip <= 0) continue;
-      const tx = ((pt.x - scrollMid) % (W * 3) + W * 3) % (W * 3);
-      if (tx < -30 || tx > W + 30) continue;
-      const worldX = tx + scrollMid;
-      const n1 = fbm(worldX * 0.0025 + 600, 3, 0.45);
-      const canopyY = canopyTopBase + n1 * canopyAmplitude;
-      const tipH = 8 + pt.tip * 18;
+  // Biome 2/3 get rocky outcrops or cloud floor
+  if (biomeIndex === 2) {
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#5A6878';
+    const s = distance * 0.15;
+    for (let i = 0; i < 8; i++) {
+      const rx = ((i * W * 0.3 - s) % (W * 2.5) + W * 2.5) % (W * 2.5);
+      const rh = 8 + (i % 3) * 6;
       ctx.beginPath();
-      ctx.moveTo(tx, canopyY - tipH);
-      ctx.bezierCurveTo(tx - 2, canopyY - tipH * 0.5, tx - 5, canopyY - 2, tx - 4, canopyY + 2);
-      ctx.lineTo(tx + 4, canopyY + 2);
-      ctx.bezierCurveTo(tx + 5, canopyY - 2, tx + 2, canopyY - tipH * 0.5, tx, canopyY - tipH);
+      ctx.moveTo(rx - 12, H * 0.74);
+      ctx.quadraticCurveTo(rx, H * 0.74 - rh, rx + 14, H * 0.74);
       ctx.closePath();
       ctx.fill();
     }
-
-    // Building silhouettes (simple dark shapes, kept minimal)
-    ctx.globalAlpha = 0.70;
-    for (const b of midBuildings) {
-      const bx = ((b.x - scrollMid * 0.95) % (W * 3) + W * 3) % (W * 3);
-      if (bx > W + 30 || bx < -30) continue;
-      const bGrad = ctx.createLinearGradient(0, baseY - b.h - 5, 0, baseY);
-      bGrad.addColorStop(0, biomeIndex === 0 ? 'rgba(180,165,140,1)' : 'rgba(150,140,125,1)');
-      bGrad.addColorStop(1, biomeIndex === 0 ? 'rgba(160,145,120,1)' : 'rgba(130,120,108,1)');
-      ctx.fillStyle = bGrad;
-      ctx.fillRect(bx - b.w / 2, baseY - b.h, b.w, b.h);
-      // Simple roof silhouette
-      const roofGrad = ctx.createLinearGradient(0, baseY - b.h - 5, 0, baseY - b.h);
-      roofGrad.addColorStop(0, 'rgba(100,20,10,1)');
-      roofGrad.addColorStop(1, 'rgba(120,30,15,1)');
-      ctx.fillStyle = roofGrad;
+    ctx.restore();
+  } else if (biomeIndex === 3) {
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = 'rgba(180,160,210,0.3)';
+    for (let i = 0; i < 6; i++) {
+      const cx = ((i * W * 0.35 - distance * 0.05) % (W * 2) + W * 2) % (W * 2);
       ctx.beginPath();
-      ctx.moveTo(bx - b.w / 2 - 3, baseY - b.h);
-      ctx.lineTo(bx, baseY - b.h - 5);
-      ctx.lineTo(bx + b.w / 2 + 3, baseY - b.h);
-      ctx.closePath();
+      ctx.ellipse(cx, H * 0.78, 70, 10, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-
-  } else if (biomeIndex === 2) {
-    // Snow peaks: rocky ridge silhouette with gradient fill
-    ctx.globalAlpha = 0.55;
-    const rockGrad = ctx.createLinearGradient(0, H * 0.68, 0, H * 0.76);
-    rockGrad.addColorStop(0, 'rgba(80,90,105,1)');
-    rockGrad.addColorStop(0.5, 'rgba(95,105,118,1)');
-    rockGrad.addColorStop(1, 'rgba(110,118,130,1)');
-    ctx.fillStyle = rockGrad;
-    ctx.beginPath();
-    ctx.moveTo(-20, H * 0.76);
-    for (let x = -20; x <= W + 20; x += 8) {
-      const worldX = x + scrollMid * 0.5;
-      const n = fbm(worldX * 0.003 + 900, 3, 0.5);
-      ctx.lineTo(x, H * 0.70 + n * H * 0.04);
-    }
-    ctx.lineTo(W + 20, H * 0.76);
-    ctx.closePath();
-    ctx.fill();
-
-    // Snow dusting gradient on top
-    ctx.globalAlpha = 0.25;
-    const snowGrad = ctx.createLinearGradient(0, H * 0.68, 0, H * 0.73);
-    snowGrad.addColorStop(0, 'rgba(240,245,255,0.5)');
-    snowGrad.addColorStop(1, 'rgba(240,245,255,0)');
-    ctx.fillStyle = snowGrad;
-    ctx.fillRect(0, H * 0.68, W, H * 0.05);
-
-  } else {
-    // Above clouds: ethereal cloud floor with gradient wisps
-    for (let i = 0; i < 10; i++) {
-      const cx = ((i * W * 0.28 - distance * 0.05) % (W * 3) + W * 3) % (W * 3);
-      if (cx > W + 150 || cx < -150) continue;
-      const cloudGrad = ctx.createRadialGradient(cx, H * 0.76, 0, cx, H * 0.76, 120);
-      cloudGrad.addColorStop(0, 'rgba(210,195,240,0.25)');
-      cloudGrad.addColorStop(0.4, 'rgba(200,185,230,0.15)');
-      cloudGrad.addColorStop(0.7, 'rgba(190,175,220,0.06)');
-      cloudGrad.addColorStop(1, 'rgba(180,165,210,0)');
-      ctx.fillStyle = cloudGrad;
-      ctx.beginPath();
-      ctx.ellipse(cx, H * 0.76, 130, 20, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.restore();
   }
-  ctx.restore();
+  // Ground-level mist — soft ellipses near terrain (biomes 0-1)
+  if (biomeIndex <= 1) {
+    ctx.save();
+    const mistColor = biomeIndex === 0 ? 'rgba(220,230,240,' : 'rgba(140,170,150,';
+    const mistCount = biomeIndex === 1 ? 7 : 4; // More mist in pine forest
+    const mistAlphaBase = biomeIndex === 1 ? 0.06 : 0.04;
+    const ms = distance * 0.12;
+    for (let i = 0; i < mistCount; i++) {
+      const mx = ((i * W * 0.45 + 80 - ms) % (W * 2.5) + W * 2.8) % (W * 2.5) - W * 0.15;
+      ctx.globalAlpha = mistAlphaBase + (i % 2) * 0.03;
+      ctx.fillStyle = mistColor + '0.5)';
+      ctx.beginPath();
+      ctx.ellipse(mx, H * 0.74 - (biomeIndex === 1 ? i * 5 : 0), 80 + i * 20, 10 + i * 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
 }
 
 function drawTerrain() {
-  const bi = Math.min(biomeIndex, 3);
-
-  // --- Main terrain shape ---
+  // ── Main terrain fill ── (apply terrainOffset for sub-pixel smooth scrolling)
+  const tOff = terrainOffset;
   ctx.beginPath();
   ctx.moveTo(-10, H);
   for (let i = 0; i < terrainPoints.length; i++) {
-    ctx.lineTo(i * TERRAIN_SEGMENT_W, terrainPoints[i]);
+    ctx.lineTo(i * TERRAIN_SEGMENT_W + tOff, terrainPoints[i]);
   }
   ctx.lineTo(W + 20, H);
   ctx.closePath();
 
-  // Rich multi-stop gradient: saturated color at ridgeline fading to warm earth tones
-  const tGrad = ctx.createLinearGradient(0, H * 0.58, 0, H);
+  const bi = Math.min(biomeIndex, 3);
+  const g = ctx.createLinearGradient(0, H * 0.6, 0, H);
   if (bi === 0) {
-    // Bir Valley: lush green ridgeline -> warm golden-brown fields -> deep ochre
-    tGrad.addColorStop(0.00, '#2A7A30');
-    tGrad.addColorStop(0.08, '#358838');
-    tGrad.addColorStop(0.18, '#429440');
-    tGrad.addColorStop(0.30, '#559A48');
-    tGrad.addColorStop(0.42, '#6AA050');
-    tGrad.addColorStop(0.55, '#88A048');
-    tGrad.addColorStop(0.68, '#A89838');
-    tGrad.addColorStop(0.80, '#C09028');
-    tGrad.addColorStop(0.90, '#D08820');
-    tGrad.addColorStop(1.00, '#C07818');
+    g.addColorStop(0, '#2A7A30');
+    g.addColorStop(0.3, '#4A9A48');
+    g.addColorStop(0.6, '#88A048');
+    g.addColorStop(1, '#C09028');
   } else if (bi === 1) {
-    // Pine Forest: deep forest floor
-    tGrad.addColorStop(0.00, '#1A4A1C');
-    tGrad.addColorStop(0.15, '#1E5220');
-    tGrad.addColorStop(0.35, '#224A1E');
-    tGrad.addColorStop(0.55, '#1E3E18');
-    tGrad.addColorStop(0.75, '#1A3616');
-    tGrad.addColorStop(1.00, '#163014');
+    // Pine Forest — very dark forest floor with earthy browns
+    g.addColorStop(0, '#0E2A12');
+    g.addColorStop(0.3, '#142A14');
+    g.addColorStop(0.6, '#1A2810');
+    g.addColorStop(1, '#2A2818');
   } else if (bi === 2) {
-    // Snow Peaks: rock and snow
-    tGrad.addColorStop(0.00, '#A0B0C0');
-    tGrad.addColorStop(0.15, '#B0BCC8');
-    tGrad.addColorStop(0.35, '#C0CCD8');
-    tGrad.addColorStop(0.55, '#D0D8E0');
-    tGrad.addColorStop(0.75, '#DDE4EA');
-    tGrad.addColorStop(1.00, '#E8EEF5');
+    g.addColorStop(0, '#A0B0C0');
+    g.addColorStop(0.5, '#C8D4E0');
+    g.addColorStop(1, '#E8EEF5');
   } else {
-    // Above Clouds: ethereal purple
-    tGrad.addColorStop(0.00, '#A090C0');
-    tGrad.addColorStop(0.20, '#B0A0C8');
-    tGrad.addColorStop(0.45, '#9888B8');
-    tGrad.addColorStop(0.70, '#8878A8');
-    tGrad.addColorStop(1.00, '#7868A0');
+    g.addColorStop(0, '#9080B0');
+    g.addColorStop(0.5, '#8070A0');
+    g.addColorStop(1, '#706090');
   }
-  ctx.fillStyle = tGrad;
+  ctx.fillStyle = g;
   ctx.fill();
 
-  // Ridgeline highlight
-  ctx.strokeStyle = bi === 2 ? 'rgba(255,255,255,0.2)' : 'rgba(200,240,160,0.1)';
-  ctx.lineWidth = 1.5;
+  // ── Subtle ground color variation — soft organic patches below the ridge ──
+  if (bi <= 1) {
+    ctx.save();
+    const scroll = distance;
+    for (const cp of cropPatches) {
+      const sx = ((cp.x - scroll * 0.95) % (W * 2.5) + W * 3) % (W * 2.5) - W * 0.25;
+      if (sx < -100 || sx > W + 100) continue;
+      const ty = getTerrainYAtX(sx + cp.w) + 10;
+      const pw = cp.w * 2;
+      const ph = cp.h * 2;
+      ctx.globalAlpha = cp.isMustard ? 0.12 : 0.08;
+      ctx.fillStyle = cp.isMustard
+        ? (bi === 0 ? '#B89828' : '#607030')
+        : (bi === 0 ? '#1A5A20' : '#0E3810');
+      // Soft ellipse — no hard edges
+      ctx.beginPath();
+      ctx.ellipse(sx + pw * 0.5, ty + ph * 0.5, pw * 0.5, ph * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  } else if (bi === 2) {
+    // Snow: subtle rocky color patches
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = '#8898B0';
+    for (let i = 0; i < 5; i++) {
+      const px = ((i * W * 0.5 - distance * 0.3) % (W * 2.5) + W * 3) % (W * 2.5) - W * 0.25;
+      const py = getTerrainYAtX(px) + 20 + i * 8;
+      ctx.beginPath();
+      ctx.ellipse(px, py, 50 + i * 15, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ── Grass texture strokes along ridgeline (biomes 0-1) ──
+  if (bi <= 1) {
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = bi === 0 ? '#1A5A20' : '#0E3510';
+    ctx.lineWidth = 1.2;
+    ctx.lineCap = 'round';
+    const step = 8;
+    for (let x = 0; x < W; x += step) {
+      const idx = Math.floor((x - tOff) / TERRAIN_SEGMENT_W);
+      if (idx < 0 || idx >= terrainPoints.length) continue;
+      const ty = terrainPoints[idx];
+      const sx = idx * TERRAIN_SEGMENT_W + tOff;
+      for (let b = 0; b < 3; b++) {
+        const bx = sx + b * 3 - 3;
+        const worldX = Math.floor(bx + distance);
+        const bh = 5 + ((worldX * 31) % 6);
+        const lean = ((worldX * 17) % 7 - 3) * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(bx, ty);
+        ctx.lineTo(bx + lean, ty - bh);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  // ── Snow texture (biome 2) ──
+  if (bi === 2) {
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#FFFFFF';
+    for (let i = 0; i < terrainPoints.length; i++) {
+      const sx = i * TERRAIN_SEGMENT_W + tOff;
+      if (sx < -10 || sx > W + 10 || i % 2 !== 0) continue;
+      const ty = terrainPoints[i];
+      ctx.beginPath();
+      ctx.ellipse(sx, ty - 1, 8 + ((i * 13) % 6), 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Scattered rocks
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = '#5A6878';
+    for (let i = 0; i < terrainPoints.length; i += 8) {
+      const sx = i * TERRAIN_SEGMENT_W + tOff;
+      if (sx < -10 || sx > W + 10) continue;
+      const ty = terrainPoints[i];
+      const rw = 4 + ((i * 7) % 6);
+      ctx.beginPath();
+      ctx.ellipse(sx + 10, ty + 15 + ((i * 11) % 10), rw, rw * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ── Ridgeline highlight ──
+  ctx.strokeStyle = bi === 2 ? 'rgba(255,255,255,0.25)' : bi === 3 ? 'rgba(160,140,200,0.1)' : 'rgba(180,230,140,0.18)';
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   for (let i = 0; i < terrainPoints.length; i++) {
-    if (i === 0) ctx.moveTo(0, terrainPoints[0]);
-    else ctx.lineTo(i * TERRAIN_SEGMENT_W, terrainPoints[i]);
+    const sx = i * TERRAIN_SEGMENT_W + tOff;
+    if (i === 0) ctx.moveTo(sx, terrainPoints[0]);
+    else ctx.lineTo(sx, terrainPoints[i]);
   }
   ctx.stroke();
+
+  // ── Dark shadow just below the ridge (creates depth/contour) ──
+  ctx.save();
+  ctx.globalAlpha = 0.1;
+  ctx.strokeStyle = bi <= 1 ? '#0A2010' : bi === 2 ? '#4060A0' : '#201040';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  for (let i = 0; i < terrainPoints.length; i++) {
+    const sx = i * TERRAIN_SEGMENT_W + tOff;
+    if (i === 0) ctx.moveTo(sx, terrainPoints[0] + 5);
+    else ctx.lineTo(sx, terrainPoints[i] + 5);
+  }
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawThermals() {
@@ -1365,17 +1358,367 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 }
 
+// ---- Environment Drawing ----
+
+function drawFarSkyDecorations() {
+  const bi = Math.min(biomeIndex, 3);
+  for (const d of skyDecorations) {
+    if (d.type === 'balloon' && bi <= 1) {
+      const screenX = ((d.x - distance * 0.04) % (W * 2) + W * 2.5) % (W * 2.5) - W * 0.25;
+      const bobY = d.y + Math.sin(d.bobPhase + gameTime * 0.02) * 4;
+      const s = d.size;
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      // Envelope
+      ctx.beginPath();
+      ctx.moveTo(screenX, bobY - s);
+      ctx.bezierCurveTo(screenX - s * 0.6, bobY - s * 0.6, screenX - s * 0.5, bobY + s * 0.2, screenX, bobY + s * 0.4);
+      ctx.bezierCurveTo(screenX + s * 0.5, bobY + s * 0.2, screenX + s * 0.6, bobY - s * 0.6, screenX, bobY - s);
+      ctx.fillStyle = d.color1;
+      ctx.fill();
+      // Stripe
+      ctx.beginPath();
+      ctx.ellipse(screenX, bobY - s * 0.1, s * 0.35, s * 0.15, 0, 0, Math.PI * 2);
+      ctx.fillStyle = d.color2;
+      ctx.fill();
+      // Basket
+      ctx.fillStyle = 'rgba(80,60,40,0.6)';
+      ctx.fillRect(screenX - 3, bobY + s * 0.5, 6, 4);
+      // Lines
+      ctx.strokeStyle = 'rgba(80,60,40,0.3)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(screenX - 2, bobY + s * 0.4); ctx.lineTo(screenX - 3, bobY + s * 0.5);
+      ctx.moveTo(screenX + 2, bobY + s * 0.4); ctx.lineTo(screenX + 3, bobY + s * 0.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (d.type === 'birdFlock') {
+      const screenX = ((d.x - distance * 0.03) % (W * 2) + W * 2.5) % (W * 2.5) - W * 0.25;
+      d.wingPhase += 0.04;
+      ctx.save();
+      ctx.globalAlpha = bi >= 3 ? 0.3 : 0.35;
+      ctx.strokeStyle = bi >= 2 ? 'rgba(200,210,230,0.6)' : 'rgba(40,30,20,0.5)';
+      ctx.lineWidth = 1;
+      for (let b = 0; b < d.count; b++) {
+        // V-formation offset
+        const row = Math.floor(b / 2) + 1;
+        const side = b % 2 === 0 ? -1 : 1;
+        const bx = screenX + (b === 0 ? 0 : side * row * d.spacing);
+        const by = d.y + (b === 0 ? 0 : row * d.spacing * 0.4);
+        const wing = Math.sin(d.wingPhase + b * 0.3) * 3;
+        ctx.beginPath();
+        ctx.moveTo(bx - 4, by + wing);
+        ctx.quadraticCurveTo(bx, by - 1, bx + 4, by + wing);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+}
+
+function drawClouds() {
+  const bi = Math.min(biomeIndex, 3);
+  const fillColor = bi === 3 ? 'rgba(140,120,180,' : 'rgba(255,255,255,';
+  for (const c of clouds) {
+    const screenX = ((c.x - distance * c.speed) % (W * 2.5) + W * 3) % (W * 2.5) - W * 0.25;
+    if (screenX < -c.w - 50 || screenX > W + c.w + 50) continue;
+    ctx.save();
+    ctx.globalAlpha = c.alpha;
+    if (c.lobes) {
+      // Multi-lobe cumulus shape
+      // Flat bottom base
+      ctx.fillStyle = fillColor + '0.25)';
+      ctx.beginPath();
+      ctx.ellipse(screenX, c.y + 2, c.w * 0.5, c.h * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Individual lobes — overlapping circles for bumpy top
+      ctx.fillStyle = fillColor + '0.35)';
+      for (const lobe of c.lobes) {
+        ctx.beginPath();
+        ctx.ellipse(screenX + lobe.offsetX, c.y + lobe.offsetY, lobe.rx, lobe.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Bright highlight on top-center lobe
+      const centerLobe = c.lobes[Math.floor(c.lobes.length / 2)];
+      ctx.fillStyle = fillColor + '0.15)';
+      ctx.beginPath();
+      ctx.ellipse(screenX + centerLobe.offsetX, c.y + centerLobe.offsetY - 3, centerLobe.rx * 0.6, centerLobe.ry * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Fallback: simple ellipse
+      ctx.fillStyle = fillColor + '0.4)';
+      ctx.beginPath();
+      ctx.ellipse(screenX, c.y, c.w * 0.5, c.h, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawGroundSilhouettes() {
+  const bi = Math.min(biomeIndex, 3);
+  const colors = [
+    'rgba(20,50,25,0.7)',   // biome 0 — dark green
+    'rgba(15,35,15,0.8)',   // biome 1 — darker forest
+    'rgba(60,70,85,0.6)',   // biome 2 — grey-blue rock
+    'rgba(40,20,60,0.5)',   // biome 3 — dark purple
+  ];
+
+  for (const s of groundSilhouettes) {
+    const screenX = s.xWorld - distance + W * 0.5;
+    if (screenX < -60 || screenX > W + 60) continue;
+    const baseY = getTerrainYAtX(screenX);
+    ctx.save();
+    ctx.fillStyle = colors[s.forBiome] || colors[bi];
+
+    switch (s.type) {
+      case 'deodar': { // Triangle with concave sides + branch tiers
+        const h = s.h, w = s.w;
+        ctx.beginPath();
+        ctx.moveTo(screenX, baseY - h);
+        ctx.quadraticCurveTo(screenX + w * 0.15, baseY - h * 0.6, screenX + w * 0.5, baseY);
+        ctx.lineTo(screenX - w * 0.5, baseY);
+        ctx.quadraticCurveTo(screenX - w * 0.15, baseY - h * 0.6, screenX, baseY - h);
+        ctx.fill();
+        // Trunk
+        ctx.fillRect(screenX - 1.5, baseY - 3, 3, 3);
+        break;
+      }
+      case 'tallpine': { // Tall layered pine — 3-5 branch tiers, visible trunk
+        const h = s.h, w = s.w;
+        // Trunk
+        ctx.fillRect(screenX - 2, baseY - h * 0.3, 4, h * 0.3);
+        // Branch tiers — widest at bottom, narrowing to top
+        const tiers = 3 + Math.floor(s.seed % 3); // 3-5 tiers
+        for (let t = 0; t < tiers; t++) {
+          const tierFrac = t / tiers;
+          const tierY = baseY - h * 0.25 - tierFrac * h * 0.75;
+          const tierW = w * (1 - tierFrac * 0.6) * 0.5;
+          const tierH = h * 0.22;
+          ctx.beginPath();
+          ctx.moveTo(screenX, tierY - tierH);
+          ctx.lineTo(screenX + tierW, tierY);
+          ctx.lineTo(screenX - tierW, tierY);
+          ctx.closePath();
+          ctx.fill();
+        }
+        // Pointed tip
+        ctx.beginPath();
+        ctx.moveTo(screenX, baseY - h);
+        ctx.lineTo(screenX + w * 0.08, baseY - h * 0.85);
+        ctx.lineTo(screenX - w * 0.08, baseY - h * 0.85);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
+      case 'stupa': { // Narrow base + dome + spire
+        const h = s.h, w = s.w;
+        ctx.beginPath();
+        // Base
+        ctx.fillRect(screenX - w * 0.4, baseY - h * 0.35, w * 0.8, h * 0.35);
+        // Dome
+        ctx.beginPath();
+        ctx.arc(screenX, baseY - h * 0.35, w * 0.4, Math.PI, 0);
+        ctx.fill();
+        // Spire
+        ctx.fillRect(screenX - 0.8, baseY - h, 1.6, h * 0.55);
+        break;
+      }
+      case 'house': { // Rectangle + triangular roof
+        const h = s.h, w = s.w * 1.4;
+        ctx.fillRect(screenX - w * 0.5, baseY - h * 0.6, w, h * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(screenX - w * 0.55, baseY - h * 0.6);
+        ctx.lineTo(screenX, baseY - h);
+        ctx.lineTo(screenX + w * 0.55, baseY - h * 0.6);
+        ctx.fill();
+        break;
+      }
+      case 'cabin': { // Smaller house
+        const h = s.h, w = s.w * 1.2;
+        ctx.fillRect(screenX - w * 0.5, baseY - h * 0.55, w, h * 0.55);
+        ctx.beginPath();
+        ctx.moveTo(screenX - w * 0.55, baseY - h * 0.55);
+        ctx.lineTo(screenX, baseY - h);
+        ctx.lineTo(screenX + w * 0.55, baseY - h * 0.55);
+        ctx.fill();
+        break;
+      }
+      case 'bush': { // Bumpy arc
+        const h = s.h, w = s.w * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(screenX - w * 0.5, baseY);
+        ctx.quadraticCurveTo(screenX - w * 0.25, baseY - h * 1.2, screenX, baseY - h);
+        ctx.quadraticCurveTo(screenX + w * 0.25, baseY - h * 1.2, screenX + w * 0.5, baseY);
+        ctx.fill();
+        break;
+      }
+      case 'rock': case 'boulder': { // Irregular polygon
+        const h = s.h, w = s.w;
+        const seed = s.seed;
+        ctx.beginPath();
+        ctx.moveTo(screenX - w * 0.4, baseY);
+        ctx.lineTo(screenX - w * 0.5, baseY - h * 0.4);
+        ctx.lineTo(screenX - w * 0.1 + (seed % 5), baseY - h);
+        ctx.lineTo(screenX + w * 0.3 - (seed % 3), baseY - h * 0.7);
+        ctx.lineTo(screenX + w * 0.5, baseY - h * 0.2);
+        ctx.lineTo(screenX + w * 0.35, baseY);
+        ctx.fill();
+        break;
+      }
+      case 'ice': { // Angular ice pillar
+        const h = s.h, w = s.w * 0.6;
+        ctx.fillStyle = 'rgba(160,190,220,0.5)';
+        ctx.beginPath();
+        ctx.moveTo(screenX - w * 0.3, baseY);
+        ctx.lineTo(screenX - w * 0.15, baseY - h);
+        ctx.lineTo(screenX + w * 0.2, baseY - h * 0.85);
+        ctx.lineTo(screenX + w * 0.35, baseY);
+        ctx.fill();
+        break;
+      }
+      case 'spire': case 'crystal': { // Ethereal crystalline
+        const h = s.h, w = s.w * 0.5;
+        ctx.fillStyle = 'rgba(100,70,140,0.4)';
+        ctx.beginPath();
+        ctx.moveTo(screenX - w * 0.2, baseY);
+        ctx.lineTo(screenX, baseY - h);
+        ctx.lineTo(screenX + w * 0.25, baseY);
+        ctx.fill();
+        // Secondary crystal
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.moveTo(screenX + w * 0.3, baseY);
+        ctx.lineTo(screenX + w * 0.2, baseY - h * 0.6);
+        ctx.lineTo(screenX + w * 0.5, baseY);
+        ctx.fill();
+        break;
+      }
+    }
+    ctx.restore();
+  }
+
+  // Best distance marker
+  if (bestDistanceMarker && personalBest > 0) {
+    const markerScreenX = bestDistanceMarker.worldX - distance + W * 0.5;
+    if (markerScreenX > -20 && markerScreenX < W + 20) {
+      const markerBaseY = getTerrainYAtX(markerScreenX);
+      ctx.save();
+      // Pole
+      ctx.strokeStyle = 'rgba(180,150,60,0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(markerScreenX, markerBaseY);
+      ctx.lineTo(markerScreenX, markerBaseY - 28);
+      ctx.stroke();
+      // Flag pennant
+      ctx.fillStyle = 'rgba(220,180,50,0.85)';
+      ctx.beginPath();
+      ctx.moveTo(markerScreenX, markerBaseY - 28);
+      ctx.lineTo(markerScreenX + 14, markerBaseY - 24);
+      ctx.lineTo(markerScreenX, markerBaseY - 20);
+      ctx.fill();
+      // Subtle glow
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(markerScreenX, markerBaseY - 24, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Check if player just passed it
+      if (!bestDistanceMarker.passed && distance > bestDistanceMarker.worldX) {
+        bestDistanceMarker.passed = true;
+        flashScreen('rgba(255,215,0,0.15)');
+      }
+    }
+  }
+}
+
+function drawAmbientParticles() {
+  const bi = Math.min(biomeIndex, 3);
+  const t = gameTime;
+  for (const p of ambientParticles) {
+    ctx.save();
+    let a = p.alpha;
+    if (p.type === 'star') {
+      a *= 0.5 + 0.5 * Math.sin(t * 0.08 + p.phase); // twinkle
+    }
+    ctx.globalAlpha = a;
+    if (p.type === 'pollen') {
+      ctx.fillStyle = 'rgba(210,190,120,1)';
+    } else if (p.type === 'dust') {
+      ctx.fillStyle = 'rgba(120,160,90,1)';
+    } else if (p.type === 'mist') {
+      ctx.fillStyle = 'rgba(160,190,170,1)';
+    } else if (p.type === 'snow') {
+      ctx.fillStyle = 'rgba(240,245,255,1)';
+    } else { // star / firefly
+      ctx.fillStyle = 'rgba(220,210,255,1)';
+    }
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function updateAmbientParticles() {
+  // Regenerate if biome changed
+  if (biomeIndex !== lastBiomeForAmbient) {
+    generateAmbientParticles();
+  }
+  for (const p of ambientParticles) {
+    p.x += p.vx - scrollSpeed * 0.08;
+    p.y += p.vy;
+    p.phase += 0.03;
+    // Wrap around
+    if (p.x < -10) p.x = W + 10;
+    if (p.x > W + 10) p.x = -10;
+    if (p.y < -10) p.y = H + 10;
+    if (p.y > H + 10) p.y = -10;
+  }
+}
+
+function updateGroundSilhouettes() {
+  const bi = Math.min(biomeIndex, 3);
+  for (const s of groundSilhouettes) {
+    const screenX = s.xWorld - distance + W * 0.5;
+    if (screenX < -100) {
+      // Recycle: respawn at right with current biome type
+      s.xWorld = distance + W + 50 + Math.random() * 200;
+      const types = [
+        ['deodar','deodar','stupa','bush','house','bush'],
+        ['tallpine','tallpine','tallpine','tallpine','deodar','rock','cabin'],
+        ['rock','rock','rock','boulder','ice'],
+        ['spire','spire','crystal'],
+      ][bi];
+      s.type = types[Math.floor(Math.random() * types.length)];
+      const baseH = { deodar: 25, tallpine: 50, stupa: 20, bush: 8, house: 18, rock: 14, cabin: 16, boulder: 12, ice: 22, spire: 30, crystal: 18 }[s.type] || 15;
+      s.h = baseH + Math.random() * baseH * 0.6;
+      s.w = baseH * (0.4 + Math.random() * 0.4);
+      s.seed = Math.random() * 1000;
+      s.forBiome = bi;
+    }
+  }
+}
+
 function draw() {
   ctx.clearRect(0, 0, W, H);
   drawSky();
+  drawFarSkyDecorations();
   drawBackMountains();
+  drawClouds();
   drawMidLayer();
   drawThermals();
   drawPrayerFlags();
   drawEagles();
   drawTerrain();
+  drawGroundSilhouettes();
   drawGlider();
   drawParticles();
+  drawAmbientParticles();
 }
 
 // ---- Collisions ----
@@ -1388,7 +1731,7 @@ function checkCollisions() {
   for (let i = prayerFlags.length - 1; i >= 0; i--) {
     const f = prayerFlags[i];
     if (f.collected) continue;
-    if (Math.abs(gliderX - f.x) < 30 && Math.abs(gliderY - f.y) < 30) {
+    if (Math.abs(gliderX - f.x) < 45 && Math.abs(gliderY - f.y) < 40) {
       f.collected = true; prayerFlagsCollected++; flagCombo++;
       flagComboTimer = 180; maxCombo = Math.max(maxCombo, flagCombo);
       const mult = flagCombo <= 2 ? 1 : flagCombo <= 4 ? 2 : flagCombo <= 7 ? 3 : 5;
@@ -1470,7 +1813,9 @@ function gameLoop(ts) {
   for (let i = BIOMES.length - 1; i >= 0; i--) { if (distance >= BIOMES[i].minDist) { newBiome = i; break; } }
   if (newBiome !== biomeIndex) { biomeIndex = newBiome; if (!visitedBiomes.has(biomeIndex)) { visitedBiomes.add(biomeIndex); showBiomeCard(BIOMES[biomeIndex]); } }
 
-  altitudeM = Math.max(0, Math.floor((1 - gliderY / H) * 4000));
+  // Altitude relative to terrain — 0m at ground, scales so top of screen ≈ 5000m
+  const groundY = getTerrainYAtX(gliderX);
+  altitudeM = Math.max(0, Math.floor((groundY - gliderY) / H * 6000));
   maxAltitudeM = Math.max(maxAltitudeM, altitudeM);
   [1000, 2000, 3000, 4000].forEach(m => {
     if (altitudeM >= m && !altitudeMilestonesHit.has(m)) {
@@ -1492,6 +1837,8 @@ function gameLoop(ts) {
   eagles = eagles.filter(e => e.x > -60);
   thermals = thermals.filter(t => t.x > -100);
   spawnObjects();
+  updateGroundSilhouettes();
+  updateAmbientParticles();
 
   // Stunt cooldown
   if (stuntCooldown > 0) stuntCooldown -= dt;
@@ -1511,6 +1858,7 @@ function gameLoop(ts) {
 // ---- HUD ----
 function updateHUD() {
   document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' <span>m</span>';
+  document.getElementById('hudScore').textContent = totalScore.toLocaleString();
   if (personalBest > 0) {
     document.getElementById('hudBest').textContent = 'Best: ' + personalBest + 'm';
   }
@@ -1553,12 +1901,17 @@ function checkGoals() {
 }
 
 function renderGoals() {
-  const panel = document.getElementById('goalsPanel');
-  if (!panel) return;
-  panel.innerHTML = goals.map(g => {
-    const done = goalProgress[g.id];
-    return `<div class="goal-item"><div class="goal-dot ${done?'done':''}"></div>${g.text}</div>`;
-  }).join('');
+  // Pinned goal — show first incomplete goal, or last completed
+  const pinned = document.getElementById('goalsPinned');
+  if (!pinned) return;
+  const nextGoal = goals.find(g => !goalProgress[g.id]);
+  if (nextGoal) {
+    pinned.textContent = '★ ' + nextGoal.text;
+  } else if (goals.length > 0) {
+    pinned.textContent = '✓ All goals complete!';
+  } else {
+    pinned.textContent = '';
+  }
 }
 
 // ---- Biome card ----
@@ -1638,6 +1991,11 @@ function startGame() {
   generateTerrain();
   generateBackMountains();
   generateMidTrees();
+  generateGroundSilhouettes();
+  generateSkyDecorations();
+  generateAmbientParticles();
+  generateTerrainPatches();
+  bestDistanceMarker = personalBest > 0 ? { worldX: personalBest, passed: false } : null;
 
   pickGoals();
 
@@ -1674,6 +2032,9 @@ function launchFlight() {
   startWind();
   stopZenDrone();
   if (zenMode) startZenDrone();
+  // Zen mode indicator
+  const zenBadge = document.getElementById('hudZenBadge');
+  if (zenBadge) zenBadge.classList.toggle('hidden', !zenMode);
 }
 
 function hideHeader() {
@@ -1726,6 +2087,12 @@ function showMenu() {
   document.getElementById('pauseBtn').style.display = 'none';
   updateMenuBest();
   window.scrollTo(0, 0);
+  // Resize menu canvas before drawing (it was hidden, so dimensions may be 0)
+  const mb = document.getElementById('menuBgCanvas');
+  if (mb && mb.parentElement) {
+    mb.width = mb.parentElement.offsetWidth;
+    mb.height = mb.parentElement.offsetHeight;
+  }
   // Restart menu background animation
   animateMenuBg();
 }
@@ -1734,47 +2101,53 @@ function showGameOver() {
   const screen = document.getElementById('gameoverScreen');
   screen.classList.remove('hidden');
 
-  document.getElementById('statDistance').textContent = Math.floor(distance) + 'm';
-  document.getElementById('statAltitude').textContent = maxAltitudeM + 'm';
-  document.getElementById('statFlags').textContent = prayerFlagsCollected;
-  document.getElementById('statThermals').textContent = thermalsCount;
-  document.getElementById('statStunts').textContent = stuntsPerformed || 0;
-
   const titleEl = document.getElementById('gameoverTitle');
   const subEl = document.getElementById('gameoverSubtitle');
   const iconEl = document.getElementById('gameoverIcon');
 
   if (isNewBest) {
-    document.getElementById('statDistance').classList.add('new-best');
     titleEl.textContent = 'New Record!';
     subEl.textContent = 'You soared further than ever before.';
     if (iconEl) iconEl.textContent = '🏆';
   } else if (crashReason === 'crashed') {
-    document.getElementById('statDistance').classList.remove('new-best');
     titleEl.textContent = 'Crashed!';
     subEl.textContent = 'An eagle clipped your wing. Try again!';
     if (iconEl) iconEl.textContent = '🦅';
-    const gap = personalBest - Math.floor(distance);
-    if (gap > 0) {
-      document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
-    } else {
-      document.getElementById('gapToBest').textContent = '';
-    }
   } else {
-    document.getElementById('statDistance').classList.remove('new-best');
     titleEl.textContent = 'Landed';
     subEl.textContent = 'The mountain is patient. Fly again.';
     if (iconEl) iconEl.textContent = '🏔️';
-    const gap = personalBest - Math.floor(distance);
-    if (gap > 0) {
-      document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
-    } else {
-      document.getElementById('gapToBest').textContent = '';
-    }
   }
 
+  // Itemized score breakdown
+  const distPts = Math.floor(distance);
+  document.getElementById('sbDistance').textContent = distPts.toLocaleString();
+  document.getElementById('sbFlags').textContent = totalFlagScore > 0 ? '+' + totalFlagScore.toLocaleString() : '+0';
+  document.getElementById('sbNearMiss').textContent = totalNearMissBonus > 0 ? '+' + totalNearMissBonus.toLocaleString() : '+0';
+  document.getElementById('sbAltBonus').textContent = altitudeMilestoneBonus > 0 ? '+' + altitudeMilestoneBonus.toLocaleString() : '+0';
+  document.getElementById('sbTotal').textContent = totalScore.toLocaleString();
+
+  // Hide zero-value bonus rows
+  document.getElementById('sbFlagsRow').className = totalFlagScore > 0 ? 'score-row' : 'score-row hidden-row';
+  document.getElementById('sbNearMissRow').className = totalNearMissBonus > 0 ? 'score-row' : 'score-row hidden-row';
+  document.getElementById('sbAltRow').className = altitudeMilestoneBonus > 0 ? 'score-row' : 'score-row hidden-row';
+
+  // Details line
   const biomeName = BIOMES[biomeIndex].name;
-  document.getElementById('biomeReached').textContent = 'Reached: ' + biomeName;
+  const detailDist = document.getElementById('statDistanceDetail');
+  const detailAlt = document.getElementById('statAltDetail');
+  const detailBiome = document.getElementById('statBiomeDetail');
+  if (detailDist) detailDist.textContent = Math.floor(distance) + 'm';
+  if (detailAlt) detailAlt.textContent = maxAltitudeM + 'm alt';
+  if (detailBiome) detailBiome.textContent = biomeName;
+
+  // Gap to best
+  const gap = personalBest - Math.floor(distance);
+  if (!isNewBest && gap > 0) {
+    document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
+  } else {
+    document.getElementById('gapToBest').textContent = '';
+  }
 
   // Auto-submit score + unlock achievements (gameCloud handles auth nudge)
   autoSubmitScore();
@@ -1857,6 +2230,7 @@ async function autoSubmitScore() {
 function onHoldStart(e) {
   e.preventDefault();
   if (gameState === 'waiting') { launchFlight(); return; }
+  if (gameState === 'paused') { resumeGame(); return; }
   if (gameState !== 'playing') return;
   isHolding = true;
 }
@@ -1912,6 +2286,15 @@ function pauseGame() {
   document.getElementById('pauseBtn').style.display = 'none';
   document.getElementById('pauseDistance').textContent = Math.floor(distance) + 'm';
   document.getElementById('pauseAltitude').textContent = altitudeM + 'm alt';
+  document.getElementById('pauseScore').textContent = totalScore.toLocaleString() + ' pts';
+  // Show goals in pause
+  const pauseGoalsEl = document.getElementById('pauseGoals');
+  if (pauseGoalsEl) {
+    pauseGoalsEl.innerHTML = goals.map(g => {
+      const done = goalProgress[g.id];
+      return `<div class="pause-goal-item ${done ? 'pause-goal-done' : 'pause-goal-pending'}">${done ? '✓' : '○'} ${g.text}</div>`;
+    }).join('');
+  }
 }
 
 function resumeGame() {

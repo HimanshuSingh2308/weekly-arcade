@@ -32,16 +32,20 @@ import gameData from '../../data/games/bir-glider.json';
   <!-- Pause button (visible during play) -->
   <button class="pause-btn-inline" id="pauseBtn" onclick="pauseGame()" aria-label="Pause game">&#9646;&#9646;</button>
 
-  <!-- HUD (visible during play) -->
+  <!-- HUD (visible during play) — Alto-style: distance+score top-right, single goal bottom-center -->
   <div class="hud" id="hud" style="display:none;">
     <div class="altitude-bar" id="altBar">
       <div class="altitude-fill" id="altFill" style="height:10%"></div>
     </div>
     <div class="altitude-label" id="altLabel">0m</div>
-    <div class="hud-distance" id="hudDistance" role="status" aria-live="polite" aria-atomic="true">0 <span>m</span></div>
-    <div class="hud-best" id="hudBest"></div>
+    <div class="hud-top-right">
+      <div class="hud-distance" id="hudDistance" role="status" aria-live="polite" aria-atomic="true">0 <span>m</span></div>
+      <div class="hud-score" id="hudScore">0</div>
+      <div class="hud-best" id="hudBest"></div>
+    </div>
     <div class="hud-combo" id="hudCombo"></div>
-    <div class="goals-panel" id="goalsPanel"></div>
+    <div class="hud-zen-badge hidden" id="hudZenBadge">ZEN</div>
+    <div class="hud-goal-pinned" id="goalsPinned"></div>
   </div>
 
   <!-- Menu Screen -->
@@ -61,34 +65,21 @@ import gameData from '../../data/games/bir-glider.json';
     </div>
   </div>
 
-  <!-- Game Over Screen -->
+  <!-- Game Over Screen — Alto-style itemized score breakdown -->
   <div class="gameover-screen hidden" id="gameoverScreen">
     <div class="gameover-icon" id="gameoverIcon">🏔️</div>
     <div class="gameover-title" id="gameoverTitle" role="alert" aria-live="assertive">Landed</div>
     <div class="gameover-subtitle" id="gameoverSubtitle">The mountain is patient. Fly again.</div>
-    <div class="gameover-stats">
-      <div class="gameover-stat">
-        <div class="stat-value" id="statDistance">0</div>
-        <div class="stat-label">&#x1F4CF; Distance</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="stat-value" id="statAltitude">0</div>
-        <div class="stat-label">&#x26F0;&#xFE0F; Max Alt.</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="stat-value" id="statFlags">0</div>
-        <div class="stat-label">&#x1F3F3;&#xFE0F; Flags</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="stat-value" id="statThermals">0</div>
-        <div class="stat-label">&#x1F32C;&#xFE0F; Thermals</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="stat-value" id="statStunts">0</div>
-        <div class="stat-label">&#x1F300; Stunts</div>
-      </div>
+    <div class="score-breakdown" id="scoreBreakdown">
+      <div class="score-row"><span class="score-row-label">Distance</span><span class="score-row-value" id="sbDistance">0</span></div>
+      <div class="score-row" id="sbFlagsRow"><span class="score-row-label">Flag bonus</span><span class="score-row-value" id="sbFlags">+0</span></div>
+      <div class="score-row" id="sbNearMissRow"><span class="score-row-label">Near-miss bonus</span><span class="score-row-value" id="sbNearMiss">+0</span></div>
+      <div class="score-row" id="sbAltRow"><span class="score-row-label">Altitude bonus</span><span class="score-row-value" id="sbAltBonus">+0</span></div>
+      <div class="score-row score-total"><span class="score-row-label">Total</span><span class="score-row-value" id="sbTotal">0</span></div>
     </div>
-    <div class="biome-reached" id="biomeReached"></div>
+    <div class="gameover-details">
+      <span id="statDistanceDetail"></span> · <span id="statAltDetail"></span> · <span id="statBiomeDetail"></span>
+    </div>
     <div class="gap-to-best" id="gapToBest"></div>
     <div class="gameover-buttons">
       <button class="retry-btn" onclick="startGame()">Fly Again</button>
@@ -96,16 +87,18 @@ import gameData from '../../data/games/bir-glider.json';
     </div>
   </div>
 
-  <!-- Pause Screen -->
+  <!-- Pause Screen — with goals and restart -->
   <div class="pause-screen hidden" id="pauseScreen">
     <div class="pause-content">
       <div class="pause-icon">⏸️</div>
       <div class="pause-title">Paused</div>
       <div class="pause-stats">
-        <span id="pauseDistance">0m</span> · <span id="pauseAltitude">0m alt</span>
+        <span id="pauseDistance">0m</span> · <span id="pauseAltitude">0m alt</span> · <span id="pauseScore">0 pts</span>
       </div>
+      <div class="pause-goals" id="pauseGoals"></div>
       <div class="pause-buttons">
         <button class="play-btn" onclick="resumeGame()">Resume</button>
+        <button class="menu-btn-go" onclick="startGame()">Restart</button>
         <button class="menu-btn-go" onclick="quitToMenu()">Quit to Menu</button>
       </div>
       <div class="pause-hint">Press Escape or tap to resume</div>
