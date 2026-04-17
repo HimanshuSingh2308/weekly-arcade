@@ -23,6 +23,10 @@ let windGustCooldown = 0;
 let canopyWobble = 0; // 0-1 intensity, decays over time
 // Birds-mark-thermals
 let birdThermalHints = []; // { x, y, thermalRef }
+// Dive mechanic
+let isDiving = false;
+let diveSpeed = 0; // accumulated dive velocity
+let swoopBonus = 0; // bonus scored from swoop pull-out
 let muted = false;
 let animFrameId = null;
 let menuBgAnimId = null;
@@ -1949,6 +1953,17 @@ function updateGroundSilhouettes() {
 
 function draw() {
   ctx.clearRect(0, 0, W, H);
+
+  // Stunt zoom — smooth zoom toward glider during stunts
+  if (stuntZoom > 0.01) stuntZoom *= 0.96; else stuntZoom = 0;
+  const zoom = 1 + stuntZoom * 0.35; // max 1.35x zoom
+  if (zoom > 1.01) {
+    ctx.save();
+    ctx.translate(gliderX, gliderY);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-gliderX, -gliderY);
+  }
+
   drawSky();
   drawFarSkyDecorations();
   drawBackMountains();
@@ -1963,7 +1978,12 @@ function draw() {
   drawParticles();
   drawAmbientParticles();
   drawComboChain();
+
+  if (zoom > 1.01) ctx.restore();
+
+  // Post-zoom overlays (don't zoom these)
   drawWindGust();
+  drawDiveEffect();
   drawCanopyWobble();
 }
 
@@ -2036,6 +2056,32 @@ function drawWindGust() {
   ctx.globalAlpha = alpha * 0.3;
   ctx.fillStyle = windGust.direction > 0 ? 'rgba(100,150,200,1)' : 'rgba(80,100,120,1)';
   ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+function drawDiveEffect() {
+  if (!isDiving || diveSpeed < 0.5) return;
+  ctx.save();
+  const intensity = Math.min(1, diveSpeed / 4);
+  // Speed lines — vertical streaks around the glider
+  ctx.strokeStyle = `rgba(255,255,255,${intensity * 0.2})`;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 12; i++) {
+    const sx = gliderX - 40 + Math.random() * 80;
+    const sy = gliderY - 30 + Math.random() * 20;
+    const len = 15 + diveSpeed * 8;
+    ctx.globalAlpha = intensity * (0.3 + Math.random() * 0.4);
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + (Math.random() - 0.5) * 4, sy + len);
+    ctx.stroke();
+  }
+  // Blue tint at high dive speed
+  if (intensity > 0.5) {
+    ctx.globalAlpha = (intensity - 0.5) * 0.08;
+    ctx.fillStyle = '#4080C0';
+    ctx.fillRect(0, 0, W, H);
+  }
   ctx.restore();
 }
 
@@ -2126,14 +2172,37 @@ const MAX_RISE = 3;            // max upward speed (can't rocket up)
 const MAX_FALL = -3;           // max downward speed (gentle terminal velocity)
 
 function updatePhysics(dt) {
-  if (isHolding) {
+  if (isDiving) {
+    // Diving — accelerate downward, build dive speed for swoop
+    velocity -= 0.2 * dt; // strong downward force
+    diveSpeed = Math.min(5, diveSpeed + 0.15 * dt); // accumulate dive energy
+    // Increase scroll speed while diving — glider moves faster through the world
+    scrollSpeed = Math.min(1.2, scrollSpeed + 0.003 * dt);
+  } else if (isHolding) {
     // Holding — pull up, climb gradually
     velocity += RISE_FORCE * dt;
+    // Swoop bonus — if pulling out of a dive, convert dive energy to points + speed
+    if (diveSpeed > 1.5) {
+      const terrainY = getTerrainYAtX(gliderX);
+      const heightAboveGround = terrainY - gliderY;
+      if (heightAboveGround < 60) {
+        // Close swoop! Bonus scales with dive speed and proximity to ground
+        const proximityBonus = Math.max(0, (60 - heightAboveGround) / 60);
+        swoopBonus = Math.floor(diveSpeed * 100 * (1 + proximityBonus));
+        totalFlagScore += swoopBonus; totalScore += swoopBonus;
+        showToast('🦅', '+' + swoopBonus + ' Swoop!');
+        playNote(659.25, 0.2, 0.1); setTimeout(() => playNote(783.99, 0.15, 0.08), 80);
+        flashScreen('rgba(100,200,255,0.12)');
+      }
+      diveSpeed = 0;
+    }
   } else {
     // Released — velocity decays smoothly toward gentle sink
     velocity *= RELEASE_DRAG;
     // Constant gentle downward pull (gravity on a glider)
     velocity -= GLIDE_SINK * dt;
+    // Dive speed decays when not diving or holding
+    diveSpeed = Math.max(0, diveSpeed - 0.05 * dt);
   }
 
   if (inThermal) {
@@ -2454,6 +2523,9 @@ function startGame(levelId) {
   windGust = null;
   windGustCooldown = 300; // no gust in first 5s
   canopyWobble = 0;
+  isDiving = false;
+  diveSpeed = 0;
+  swoopBonus = 0;
 
   // Set starting biome from level
   biomeIndex = (gameMode === 'levels' && currentLevel) ? currentLevel.biome : 0;
@@ -2964,10 +3036,43 @@ function setupControls() {
   canvas.addEventListener('mousedown', onHoldStart);
   canvas.addEventListener('mouseup', onHoldEnd);
   canvas.addEventListener('mouseleave', onHoldEnd);
-  canvas.addEventListener('touchstart', onHoldStart, { passive: false });
-  canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
-  canvas.addEventListener('touchend', onHoldEnd);
-  canvas.addEventListener('touchcancel', onHoldEnd);
+  // Mobile touch — track start Y for swipe-down detection
+  let touchStartY = 0;
+  let touchIsDive = false;
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    touchStartY = e.touches[0].clientY;
+    touchIsDive = false;
+    onHoldStart(e);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (gameState !== 'playing') return;
+    const dy = e.touches[0].clientY - touchStartY;
+    // Swipe down > 30px = dive
+    if (dy > 30 && !touchIsDive) {
+      touchIsDive = true;
+      isDiving = true;
+      isHolding = false; // can't hold and dive at same time
+    }
+    // Swipe up > 30px while diving = pull out (swoop)
+    if (dy < -20 && touchIsDive) {
+      isDiving = false;
+      isHolding = true;
+      touchIsDive = false;
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchend', (e) => {
+    if (touchIsDive && diveSpeed < 0.5) triggerStunt(); // short swipe = stunt
+    isDiving = false;
+    touchIsDive = false;
+    onHoldEnd(e);
+  });
+  canvas.addEventListener('touchcancel', (e) => {
+    isDiving = false;
+    touchIsDive = false;
+    onHoldEnd(e);
+  });
   // Tap overlay also triggers launch
   const tapOverlay = document.getElementById('tapOverlay');
   if (tapOverlay) {
@@ -2981,14 +3086,19 @@ function setupControls() {
       if (gameState === 'playing') pauseGame();
       else if (gameState === 'paused') resumeGame();
     }
-    // Stunt: ArrowDown to perform a maneuver
+    // ArrowDown: hold to dive, tap for stunt
     if (e.code === 'ArrowDown' && gameState === 'playing') {
       e.preventDefault();
-      triggerStunt();
+      isDiving = true;
     }
   });
   document.addEventListener('keyup', e => {
     if (e.code === 'Space' || e.code === 'ArrowUp') onHoldEnd(e);
+    if (e.code === 'ArrowDown' && gameState === 'playing') {
+      // Short press = stunt, long press was a dive (swoop handled in physics)
+      if (diveSpeed < 0.5) triggerStunt(); // tap — not enough dive to be a dive
+      isDiving = false;
+    }
   });
   window.addEventListener('blur', () => {
     isHolding = false;
@@ -3041,6 +3151,7 @@ let stuntType = '';
 let stuntTimer = 0;
 let stuntScore = 0;
 let stuntsPerformed = 0;
+let stuntZoom = 0; // 0-1 zoom intensity during stunt
 
 function triggerStunt() {
   if (stuntCooldown > 0 || stuntActive) return;
@@ -3070,16 +3181,35 @@ function triggerStunt() {
   stuntTimer = 60; // ~1 second
   stuntCooldown = 180; // ~3 second cooldown
   totalFlagScore += stuntScore;
+  stuntZoom = 1; // trigger zoom-in
+  goldenSlowMo = Math.max(goldenSlowMo, 30); // 30 frames of slow-mo during stunt
 
   // Show stunt name
   showToast('🌀', stuntType.charAt(0).toUpperCase() + stuntType.slice(1) + '! +' + stuntScore);
 
-  // Particles burst
-  for (let i = 0; i < 8; i++) {
+  // Stunt sound — rising whoosh
+  if (!muted && audioCtx) {
+    try {
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, t);
+      osc.frequency.exponentialRampToValueAtTime(800, t + 0.3);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + 0.5);
+    } catch(e) {}
+  }
+
+  // Particles burst — more dramatic
+  for (let i = 0; i < 16; i++) {
+    const angle = (Math.PI * 2 * i) / 16;
     particles.push({
       x: gliderX, y: gliderY,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
+      vx: Math.cos(angle) * (2 + Math.random() * 3),
+      vy: Math.sin(angle) * (2 + Math.random() * 3),
       life: 1, decay: 0.02,
       r: 2 + Math.random() * 3,
       color: 'rgba(255,200,80,',
