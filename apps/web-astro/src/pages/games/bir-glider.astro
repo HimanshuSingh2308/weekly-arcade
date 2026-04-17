@@ -110,13 +110,16 @@ import gameData from '../../data/games/bir-glider.json';
     </div>
   </div>
 
-  <!-- Level Select Screen -->
+  <!-- Level Select Screen — shares menu canvas background -->
   <div class="level-select-screen hidden" id="levelSelectScreen">
-    <div class="level-select-header">
-      <button class="level-back-btn" onclick="hideLevelSelect(); showMenu();">&#8592; Back</button>
-      <div class="level-select-title">Select Level</div>
+    <canvas class="menu-bg-canvas" id="levelBgCanvas"></canvas>
+    <div class="level-select-content">
+      <div class="level-select-header">
+        <button class="level-back-btn" onclick="hideLevelSelect(); showMenu();">&#8592;</button>
+        <div class="level-select-title">Select Level</div>
+      </div>
+      <div class="level-grid" id="levelGrid"></div>
     </div>
-    <div class="level-grid" id="levelGrid"></div>
   </div>
 
   <!-- Tap to start overlay (hidden by default, shown after clicking Fly) -->

@@ -2294,10 +2294,57 @@ function showMenu() {
 function showLevelSelect() {
   const screen = document.getElementById('levelSelectScreen');
   if (!screen) return;
+  showHeader();
+  gameState = 'menu';
   document.getElementById('menuScreen').classList.add('hidden');
   document.getElementById('gameoverScreen').classList.add('hidden');
+  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('pauseBtn').style.display = 'none';
   screen.classList.remove('hidden');
+  // Draw background canvas
+  const bg = document.getElementById('levelBgCanvas');
+  if (bg && bg.parentElement) {
+    bg.width = bg.parentElement.offsetWidth;
+    bg.height = bg.parentElement.offsetHeight;
+    drawLevelSelectBg(bg);
+  }
   renderLevelGrid();
+}
+
+function drawLevelSelectBg(cvs) {
+  const mc = cvs.getContext('2d');
+  const mw = cvs.width, mh = cvs.height;
+  // Same sunset gradient as menu
+  const grad = mc.createLinearGradient(0, 0, 0, mh);
+  grad.addColorStop(0, '#7A4A9E');
+  grad.addColorStop(0.25, '#D4608A');
+  grad.addColorStop(0.5, '#F5813A');
+  grad.addColorStop(0.75, '#E8A845');
+  grad.addColorStop(1, '#A8C4D8');
+  mc.fillStyle = grad;
+  mc.fillRect(0, 0, mw, mh);
+  // Sun glow
+  const sg = mc.createRadialGradient(mw * 0.7, mh * 0.45, 20, mw * 0.7, mh * 0.45, mw * 0.3);
+  sg.addColorStop(0, 'rgba(245,200,100,0.4)');
+  sg.addColorStop(1, 'rgba(245,130,58,0)');
+  mc.fillStyle = sg;
+  mc.fillRect(0, 0, mw, mh);
+  // Simple mountain silhouettes
+  mc.fillStyle = 'rgba(58,62,72,0.4)';
+  for (let i = 0; i < 5; i++) {
+    const px = mw * (0.1 + i * 0.22);
+    const py = mh * (0.55 + Math.sin(i * 2.1) * 0.08);
+    const w = mw * 0.15;
+    mc.beginPath();
+    mc.moveTo(px - w, mh * 0.85);
+    mc.lineTo(px, py);
+    mc.lineTo(px + w, mh * 0.85);
+    mc.fill();
+  }
+  // Foreground valley
+  mc.fillStyle = 'rgba(40,80,50,0.5)';
+  mc.fillRect(0, mh * 0.82, mw, mh * 0.18);
 }
 
 function hideLevelSelect() {
