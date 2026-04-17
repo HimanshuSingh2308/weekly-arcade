@@ -19,9 +19,9 @@
   --saffron: #e8821a;
 }
 
-/* Header — ensure it stays above menu/level-select overlays */
+/* Header — above menu (z:200) but below overlays (z:350) */
 #gameHeader {
-  z-index: 300 !important;
+  z-index: 250 !important;
   position: relative;
 }
 
@@ -297,18 +297,18 @@
   margin-top: 0.5rem;
 }
 
-/* Game Over Screen — covers full viewport (header shows on top via z-index) */
+/* Game Over Screen — covers full viewport including header */
 .gameover-screen {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(5, 15, 30, 0.65);
+  background: rgba(5, 15, 30, 0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 200;
+  z-index: 350;
   padding: clamp(0.5rem, 2dvh, 1.5rem) clamp(0.75rem, 3vw, 2rem);
   text-align: center;
   gap: clamp(0.2rem, 1dvh, 0.5rem);
@@ -324,7 +324,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 250;
+  z-index: 350;
 }
 .pause-screen.hidden { display: none; }
 
@@ -338,7 +338,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 300;
+  z-index: 350;
   cursor: pointer;
   animation: tapFadeIn 0.4s ease-out;
 }
@@ -578,8 +578,8 @@
 /* Level Select Screen — matches menu visual language */
 .level-select-screen {
   position: fixed;
-  top: var(--header-h); left: 0; right: 0; bottom: 0;
-  z-index: 200;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 350;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
@@ -632,8 +632,20 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(0.4rem, 1.2vw, 0.75rem);
-  max-width: 480px;
+  max-width: 600px;
   width: 100%;
+}
+@media (orientation: landscape) {
+  .level-grid {
+    max-width: 90vw;
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .level-biome-label {
+    grid-column: 1 / -1;
+  }
+  .endless-card {
+    grid-column: 3 / 5;
+  }
 }
 
 .level-biome-label {
