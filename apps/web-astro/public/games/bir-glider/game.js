@@ -340,7 +340,7 @@ function playBirdChirp(bi) {
     // 2-3 quick chirp notes — higher pitch in valley, lower in forest
     const baseFreq = bi === 0 ? 1800 + Math.random() * 1200 : 1200 + Math.random() * 800;
     const chirpCount = 2 + Math.floor(Math.random() * 2);
-    const vol = 0.03 + Math.random() * 0.02;
+    const vol = 0.012 + Math.random() * 0.008; // subtle, not distracting
     for (let c = 0; c < chirpCount; c++) {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -370,7 +370,7 @@ function playEagleCry() {
     osc.frequency.exponentialRampToValueAtTime(500, t + 0.4);
     osc.frequency.exponentialRampToValueAtTime(700, t + 0.6);
     gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.03, t + 0.05);
+    gain.gain.linearRampToValueAtTime(0.015, t + 0.05); // quieter eagle
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(t); osc.stop(t + 0.8);
@@ -450,8 +450,8 @@ function playWindGustSound() {
     bp.Q.value = 1.5;
     const gain = audioCtx.createGain();
     gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.06, t + 0.1);
-    gain.gain.setValueAtTime(0.06, t + 0.4);
+    gain.gain.linearRampToValueAtTime(0.03, t + 0.1);
+    gain.gain.setValueAtTime(0.03, t + 0.4);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
     src.connect(bp); bp.connect(gain); gain.connect(audioCtx.destination);
     src.start(t); src.stop(t + 1.1);
@@ -509,44 +509,97 @@ function startBGM() {
   if (!audioCtx) return;
   bgmPlaying = true;
 
-  // Base drone — low sine pad (C2 + G2)
   try {
+    // Master gain — very quiet, soulful background
     bgmGain = audioCtx.createGain();
     bgmGain.gain.value = 0;
-    bgmGain.gain.setTargetAtTime(0.025, audioCtx.currentTime, 3); // slow fade in
+    bgmGain.gain.setTargetAtTime(0.018, audioCtx.currentTime, 4); // slow 4s fade in
     bgmGain.connect(audioCtx.destination);
 
-    [65.41, 98.00, 130.81].forEach((f, i) => { // C2, G2, C3
+    // Layer 1: Deep drone — C2 + G2 (warm sine, foundation)
+    [65.41, 98.00].forEach((f, i) => {
       const osc = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       osc.type = 'sine';
       osc.frequency.value = f;
-      g.gain.value = 0.8 - i * 0.2;
+      g.gain.value = 0.6 - i * 0.15;
       osc.connect(g); g.connect(bgmGain);
       osc.start();
       bgmNodes.push({ osc, gain: g });
     });
+
+    // Layer 2: Warm pad — C3 + Eb3 (triangle, adds harmony)
+    [130.81, 155.56].forEach((f, i) => {
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = f;
+      g.gain.value = 0.25;
+      // Slow LFO on gain for breathing effect
+      const lfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.08 + i * 0.03; // very slow pulse
+      lfoGain.gain.value = 0.1; // subtle modulation
+      lfo.connect(lfoGain); lfoGain.connect(g.gain);
+      lfo.start();
+      osc.connect(g); g.connect(bgmGain);
+      osc.start();
+      bgmNodes.push({ osc, gain: g }, { osc: lfo, gain: lfoGain });
+    });
+
+    // Layer 3: High shimmer — G4 (very quiet sine, ethereal overtone)
+    const shimmer = audioCtx.createOscillator();
+    const shimGain = audioCtx.createGain();
+    shimmer.type = 'sine';
+    shimmer.frequency.value = 392.00; // G4
+    shimGain.gain.value = 0.08;
+    shimmer.connect(shimGain); shimGain.connect(bgmGain);
+    shimmer.start();
+    bgmNodes.push({ osc: shimmer, gain: shimGain });
   } catch(e) {}
 
-  // Melodic notes — play one note from the scale every 3-5s
+  // Melodic notes — one note every 4-7s, biome-responsive
   bgmInterval = setInterval(() => {
     if (muted || !audioCtx || gameState !== 'playing') return;
-    const note = BGM_SCALE[Math.floor(Math.random() * BGM_SCALE.length)];
     try {
       const t = audioCtx.currentTime;
+      const bi = Math.min(biomeIndex, 3);
+      // Pick notes based on biome mood
+      const scale = bi <= 1 ? BGM_SCALE : // minor pentatonic for valley/forest
+        bi === 2 ? [196.00, 246.94, 293.66, 392.00, 493.88] : // G major pentatonic for snow
+        [130.81, 155.56, 196.00, 261.63, 311.13]; // ethereal for above clouds
+      const note = scale[Math.floor(Math.random() * scale.length)];
+      const octave = Math.random() < 0.25 ? 2 : 1; // occasionally octave up
+
+      // Main note — long, soft
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = Math.random() < 0.5 ? 'sine' : 'triangle';
-      osc.frequency.value = note * (Math.random() < 0.3 ? 2 : 1); // occasionally octave up
-      const dur = 1.5 + Math.random() * 2;
+      osc.type = 'sine';
+      osc.frequency.value = note * octave;
+      const dur = 2.5 + Math.random() * 3;
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.025, t + 0.3); // soft attack
-      gain.gain.setValueAtTime(0.025, t + dur * 0.6);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur); // long release
+      gain.gain.linearRampToValueAtTime(0.015, t + 0.5); // very soft attack
+      gain.gain.setValueAtTime(0.015, t + dur * 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
       osc.connect(gain); gain.connect(audioCtx.destination);
       osc.start(t); osc.stop(t + dur + 0.1);
+
+      // Echo — delayed repeat at lower volume (reverb-like)
+      if (Math.random() < 0.5) {
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.value = note * octave;
+        const delay = 0.4 + Math.random() * 0.3;
+        gain2.gain.setValueAtTime(0, t + delay);
+        gain2.gain.linearRampToValueAtTime(0.008, t + delay + 0.3);
+        gain2.gain.exponentialRampToValueAtTime(0.001, t + delay + dur * 0.6);
+        osc2.connect(gain2); gain2.connect(audioCtx.destination);
+        osc2.start(t + delay); osc2.stop(t + delay + dur * 0.6 + 0.1);
+      }
     } catch(e) {}
-  }, 3000 + Math.random() * 2000);
+  }, 4000 + Math.random() * 3000);
 }
 
 function stopBGM() {
