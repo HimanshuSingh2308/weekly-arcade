@@ -6,8 +6,13 @@
 
 // ---- State ----
 let currentUser = null;
-let gameState = 'menu'; // menu | waiting | playing | paused | gameover
+let gameState = 'menu'; // menu | waiting | playing | paused | gameover | levelcomplete
 let zenMode = false;
+let gameMode = 'levels'; // 'levels' | 'endless' | 'zen'
+let currentLevel = null;
+let levelProgress = {};
+let endlessUnlocked = false;
+let levelCompleteShown = false;
 let muted = false;
 let animFrameId = null;
 let menuBgAnimId = null;
@@ -92,6 +97,58 @@ const BIOMES = [
   { name: 'Snow Peaks',  sub: 'Through the high passes',   minDist: 2500, color1: '#caf0f8', color2: '#90e0ef' },
   { name: 'Above Clouds', sub: 'Only sky, only silence',  minDist: 3500, color1: '#10002b', color2: '#3c096c' },
 ];
+
+// ---- Levels ----
+const LEVELS = [
+  // Bir Valley — learn to fly
+  { id: 1,  name: 'First Flight',  distGoal: 200,  biome: 0, eagles: false, thermals: false, stunts: false,
+    starScores: [400, 250, 0], goal: { text: 'Fly 200m', check: () => distance >= 200 } },
+  { id: 2,  name: 'Rising Wind',   distGoal: 400,  biome: 0, eagles: false, thermals: true,  stunts: false,
+    starScores: [700, 450, 0], goal: { text: 'Catch a thermal', check: () => thermalsCount >= 1 } },
+  { id: 3,  name: 'Prayer Flags',  distGoal: 600,  biome: 0, eagles: false, thermals: true,  stunts: false,
+    starScores: [1200, 700, 0], goal: { text: 'Collect 5 flags', check: () => prayerFlagsCollected >= 5 } },
+  // Pine Forest — eagles introduced
+  { id: 4,  name: 'Into the Pines', distGoal: 900, biome: 1, eagles: true,  thermals: true,  stunts: false,
+    starScores: [1800, 1100, 0], goal: { text: 'Near-miss an eagle', check: () => eagleNearMisses >= 1 } },
+  { id: 5,  name: 'Eagle Country', distGoal: 1200, biome: 1, eagles: true,  thermals: true,  stunts: false,
+    starScores: [2500, 1500, 0], goal: { text: 'Collect 10 flags', check: () => prayerFlagsCollected >= 10 } },
+  { id: 6,  name: 'Wingover',      distGoal: 1500, biome: 1, eagles: true,  thermals: true,  stunts: true,
+    starScores: [3200, 2000, 0], goal: { text: 'Perform a stunt', check: () => stuntsPerformed >= 1 } },
+  // Snow Peaks — full mechanics
+  { id: 7,  name: 'High Passes',   distGoal: 2000, biome: 2, eagles: true,  thermals: true,  stunts: true,
+    starScores: [4500, 2800, 0], goal: { text: 'Catch 5 thermals', check: () => thermalsCount >= 5 } },
+  { id: 8,  name: 'Thin Air',      distGoal: 2500, biome: 2, eagles: true,  thermals: true,  stunts: true,
+    starScores: [5500, 3500, 0], goal: { text: 'Reach 500m altitude', check: () => maxAltitudeM >= 500 } },
+  { id: 9,  name: 'Storm Front',   distGoal: 3000, biome: 2, eagles: true,  thermals: true,  stunts: true,
+    starScores: [7000, 4500, 0], goal: { text: 'Get a x2 combo', check: () => maxCombo >= 3 } },
+  // Above Clouds — mastery
+  { id: 10, name: 'Cloud Break',   distGoal: 3500, biome: 3, eagles: true,  thermals: true,  stunts: true,
+    starScores: [8500, 5500, 0], goal: { text: 'Reach 1000m altitude', check: () => maxAltitudeM >= 1000 } },
+  { id: 11, name: 'Sky Temple',    distGoal: 4000, biome: 3, eagles: true,  thermals: true,  stunts: true,
+    starScores: [10000, 7000, 0], goal: { text: 'Near-miss 5 eagles', check: () => eagleNearMisses >= 5 } },
+  { id: 12, name: 'Only Silence',  distGoal: 5000, biome: 3, eagles: true,  thermals: true,  stunts: true,
+    starScores: [13000, 9000, 0], goal: { text: 'Score 5000 points', check: () => totalScore >= 5000 } },
+];
+
+function loadLevelProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('bir-glider-progress') || 'null');
+    if (saved) {
+      levelProgress = saved.levels || { 1: 0 };
+      endlessUnlocked = saved.endlessUnlocked || false;
+    } else {
+      levelProgress = { 1: 0 };
+      endlessUnlocked = false;
+    }
+  } catch(e) { levelProgress = { 1: 0 }; endlessUnlocked = false; }
+}
+
+function saveLevelProgress() {
+  localStorage.setItem('bir-glider-progress', JSON.stringify({
+    levels: levelProgress,
+    endlessUnlocked,
+  }));
+}
 
 // ---- Audio ----
 let audioCtx = null;
@@ -521,8 +578,9 @@ function spawnObjects() {
     });
   }
 
-  // Eagles — max 3 on screen, appear after 100m, more frequent in later biomes
-  if (distance > 100 && eagles.length < 3 && Math.random() < 0.006 + biomeIndex * 0.003) {
+  // Eagles — max 3 on screen, gated by level
+  const eaglesEnabled = gameMode !== 'levels' || !currentLevel || currentLevel.eagles;
+  if (eaglesEnabled && distance > 100 && eagles.length < 3 && Math.random() < 0.006 + biomeIndex * 0.003) {
     eagles.push({
       x: W + 60,
       y: H * 0.15 + Math.random() * H * 0.45,
@@ -534,8 +592,9 @@ function spawnObjects() {
     });
   }
 
-  // Thermals — max 3 on screen, spawn more often so player can use them
-  if (thermals.length < 3 && Math.random() < 0.008) {
+  // Thermals — max 3 on screen, gated by level
+  const thermalsEnabled = gameMode !== 'levels' || !currentLevel || currentLevel.thermals;
+  if (thermalsEnabled && thermals.length < 3 && Math.random() < 0.008) {
     const xWorld = terrainOffset + W + 80;
     const groundY = getTerrainY(xWorld, biomeIndex);
     thermals.push({
@@ -1802,7 +1861,7 @@ function gameLoop(ts) {
   const dt = Math.min((ts - lastTime) / 16.67, 3);
   lastTime = ts;
   if (gameState !== 'playing') {
-    if (gameState === 'paused' || gameState === 'waiting') { draw(); }
+    if (gameState === 'paused' || gameState === 'waiting' || gameState === 'levelcomplete') { draw(); }
     return;
   }
   gameTime += dt;
@@ -1847,6 +1906,12 @@ function gameLoop(ts) {
   updatePhysics(dt);
   checkCollisions();
   checkGoals();
+  // Level completion check
+  if (gameMode === 'levels' && currentLevel && !levelCompleteShown && distance >= currentLevel.distGoal) {
+    levelCompleteShown = true;
+    completeLevelAction();
+    return;
+  }
   updateWindPitch();
   draw();
   updateHUD();
@@ -1857,11 +1922,16 @@ function gameLoop(ts) {
 
 // ---- HUD ----
 function updateHUD() {
-  document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' <span>m</span>';
-  document.getElementById('hudScore').textContent = totalScore.toLocaleString();
-  if (personalBest > 0) {
-    document.getElementById('hudBest').textContent = 'Best: ' + personalBest + 'm';
+  if (gameMode === 'levels' && currentLevel) {
+    document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' / ' + currentLevel.distGoal + ' <span>m</span>';
+    document.getElementById('hudBest').textContent = currentLevel.name;
+  } else {
+    document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' <span>m</span>';
+    if (personalBest > 0) {
+      document.getElementById('hudBest').textContent = 'Best: ' + personalBest + 'm';
+    }
   }
+  document.getElementById('hudScore').textContent = totalScore.toLocaleString();
   const altPct = Math.min(100, (altitudeM / 4000) * 100);
   document.getElementById('altFill').style.height = altPct + '%';
   document.getElementById('altLabel').textContent = altitudeM + 'm';
@@ -1886,7 +1956,12 @@ const GOAL_POOL_ACTIVE = [
 ];
 
 function pickGoals() {
-  goals = GOAL_POOL_ACTIVE.slice(0, 3);
+  if (gameMode === 'levels' && currentLevel) {
+    goals = [currentLevel.goal];
+  } else {
+    goals = GOAL_POOL_ACTIVE.slice(0, 3);
+  }
+  goalProgress = {};
   renderGoals();
 }
 
@@ -1945,7 +2020,26 @@ function showToast(icon, text) {
 }
 
 // ---- Game Flow ----
-function startGame() {
+function startGame(levelId) {
+  // Determine game mode
+  if (zenMode) {
+    gameMode = 'zen';
+    currentLevel = null;
+  } else if (levelId === 'endless') {
+    gameMode = 'endless';
+    currentLevel = null;
+  } else if (typeof levelId === 'number') {
+    gameMode = 'levels';
+    currentLevel = LEVELS.find(l => l.id === levelId) || LEVELS[0];
+  } else {
+    // Default: level mode, pick first unlocked incomplete level
+    gameMode = 'levels';
+    const nextId = Object.keys(levelProgress).map(Number).sort((a,b) => a-b)
+      .find(id => (levelProgress[id] || 0) === 0) || 1;
+    currentLevel = LEVELS.find(l => l.id === nextId) || LEVELS[0];
+  }
+  levelCompleteShown = false;
+
   // Reset state
   distance = 0;
   score = 0;
@@ -1954,7 +2048,7 @@ function startGame() {
   totalNearMissBonus = 0;
   altitudeMilestoneBonus = 0;
   altitude = 200;
-  velocity = 0; // starts in neutral glide — player must hold to rise
+  velocity = 0;
   gliderX = W * 0.3;
   gliderY = H * 0.45;
   scrollSpeed = 0.25;
@@ -1966,7 +2060,6 @@ function startGame() {
   thermalsCount = 0;
   inThermal = false;
   thermalTimer = 0;
-  biomeIndex = 0;
   altitudeM = 0;
   maxAltitudeM = 0;
   visitedBiomes = new Set([0]);
@@ -1978,6 +2071,10 @@ function startGame() {
   stuntCooldown = 0;
   stuntActive = false;
   zenDroneStarted = false;
+
+  // Set starting biome from level
+  biomeIndex = (gameMode === 'levels' && currentLevel) ? currentLevel.biome : 0;
+  if (biomeIndex > 0) visitedBiomes.add(biomeIndex);
 
   prayerFlags = [];
   eagles = [];
@@ -1995,9 +2092,13 @@ function startGame() {
   generateSkyDecorations();
   generateAmbientParticles();
   generateTerrainPatches();
-  bestDistanceMarker = personalBest > 0 ? { worldX: personalBest, passed: false } : null;
+  bestDistanceMarker = (gameMode !== 'levels' && personalBest > 0) ? { worldX: personalBest, passed: false } : null;
 
   pickGoals();
+
+  // Hide level select if open
+  const lsEl = document.getElementById('levelSelectScreen');
+  if (lsEl) lsEl.classList.add('hidden');
 
   runStartTime = Date.now();
   gameTime = 0;
@@ -2054,6 +2155,95 @@ function showHeader() {
   resize();
 }
 
+// ---- Level Completion ----
+function completeLevelAction() {
+  gameState = 'levelcomplete';
+  showHeader();
+  stopWind();
+  stopZenDrone();
+
+  // Calculate stars: 3★ if score >= starScores[0], 2★ if >= starScores[1], else 1★
+  const earned = currentLevel.starScores[0] <= totalScore ? 3
+    : currentLevel.starScores[1] <= totalScore ? 2 : 1;
+
+  // Update progress
+  const prev = levelProgress[currentLevel.id] || 0;
+  levelProgress[currentLevel.id] = Math.max(prev, earned);
+
+  // Unlock next level
+  const nextId = currentLevel.id + 1;
+  if (nextId <= LEVELS.length && !(nextId in levelProgress)) {
+    levelProgress[nextId] = 0; // 0 = unlocked, not completed
+  }
+
+  // Check endless unlock
+  if (!endlessUnlocked) {
+    endlessUnlocked = LEVELS.every(l => (levelProgress[l.id] || 0) >= 1);
+  }
+
+  saveLevelProgress();
+  showLevelCompleteScreen(earned);
+}
+
+function showLevelCompleteScreen(stars) {
+  const screen = document.getElementById('gameoverScreen');
+  screen.classList.remove('hidden');
+  document.getElementById('hud').style.display = 'none';
+
+  const titleEl = document.getElementById('gameoverTitle');
+  const subEl = document.getElementById('gameoverSubtitle');
+  const iconEl = document.getElementById('gameoverIcon');
+
+  titleEl.textContent = 'Level Complete!';
+  subEl.textContent = currentLevel.name;
+  if (iconEl) iconEl.textContent = stars === 3 ? '⭐' : stars === 2 ? '🌟' : '✨';
+
+  // Score breakdown
+  document.getElementById('sbDistance').textContent = Math.floor(distance).toLocaleString();
+  document.getElementById('sbFlags').textContent = totalFlagScore > 0 ? '+' + totalFlagScore.toLocaleString() : '+0';
+  document.getElementById('sbNearMiss').textContent = totalNearMissBonus > 0 ? '+' + totalNearMissBonus.toLocaleString() : '+0';
+  document.getElementById('sbAltBonus').textContent = altitudeMilestoneBonus > 0 ? '+' + altitudeMilestoneBonus.toLocaleString() : '+0';
+  document.getElementById('sbTotal').textContent = totalScore.toLocaleString();
+  document.getElementById('sbFlagsRow').className = totalFlagScore > 0 ? 'score-row' : 'score-row hidden-row';
+  document.getElementById('sbNearMissRow').className = totalNearMissBonus > 0 ? 'score-row' : 'score-row hidden-row';
+  document.getElementById('sbAltRow').className = altitudeMilestoneBonus > 0 ? 'score-row' : 'score-row hidden-row';
+
+  // Stars display
+  const starsEl = document.getElementById('levelStars');
+  if (starsEl) {
+    starsEl.classList.remove('hidden');
+    for (let i = 1; i <= 3; i++) {
+      const s = document.getElementById('star' + i);
+      if (s) { s.textContent = i <= stars ? '★' : '☆'; s.className = i <= stars ? 'star filled' : 'star empty'; }
+    }
+  }
+
+  // Details
+  const detailDist = document.getElementById('statDistanceDetail');
+  const detailAlt = document.getElementById('statAltDetail');
+  const detailBiome = document.getElementById('statBiomeDetail');
+  if (detailDist) detailDist.textContent = Math.floor(distance) + 'm';
+  if (detailAlt) detailAlt.textContent = maxAltitudeM + 'm alt';
+  if (detailBiome) detailBiome.textContent = BIOMES[biomeIndex].name;
+
+  document.getElementById('gapToBest').textContent = '';
+
+  // Buttons: Next Level / Retry / Level Select
+  const btns = document.querySelector('.gameover-buttons');
+  if (btns) {
+    const nextId = currentLevel.id + 1;
+    const hasNext = nextId <= LEVELS.length;
+    btns.innerHTML = `
+      ${hasNext ? `<button class="retry-btn" onclick="startGame(${nextId})">Next Level</button>` : ''}
+      <button class="menu-btn-go" onclick="startGame(${currentLevel.id})">Retry</button>
+      <button class="menu-btn-go" onclick="showLevelSelect()">Level Select</button>
+    `;
+  }
+
+  autoSubmitScore();
+  checkAndUnlockAchievements();
+}
+
 let crashReason = 'landed';
 function endGame(reason) {
   if (gameState !== 'playing') return;
@@ -2093,13 +2283,77 @@ function showMenu() {
     mb.width = mb.parentElement.offsetWidth;
     mb.height = mb.parentElement.offsetHeight;
   }
+  // Hide level select if open
+  const lsEl = document.getElementById('levelSelectScreen');
+  if (lsEl) lsEl.classList.add('hidden');
   // Restart menu background animation
   animateMenuBg();
+}
+
+// ---- Level Select ----
+function showLevelSelect() {
+  const screen = document.getElementById('levelSelectScreen');
+  if (!screen) return;
+  document.getElementById('menuScreen').classList.add('hidden');
+  document.getElementById('gameoverScreen').classList.add('hidden');
+  screen.classList.remove('hidden');
+  renderLevelGrid();
+}
+
+function hideLevelSelect() {
+  const screen = document.getElementById('levelSelectScreen');
+  if (screen) screen.classList.add('hidden');
+}
+
+function renderLevelGrid() {
+  const grid = document.getElementById('levelGrid');
+  if (!grid) return;
+  const biomeNames = ['Bir Valley', 'Pine Forest', 'Snow Peaks', 'Above Clouds'];
+  const biomeColors = ['#3A8838', '#1A4050', '#6080A0', '#3c096c'];
+  let html = '';
+  for (let b = 0; b < 4; b++) {
+    html += `<div class="level-biome-label" style="color:${biomeColors[b]}">${biomeNames[b]}</div>`;
+    const biomeLevels = LEVELS.filter(l => l.biome === b);
+    for (const lvl of biomeLevels) {
+      const stars = levelProgress[lvl.id];
+      const unlocked = lvl.id in levelProgress;
+      const starStr = unlocked && stars > 0
+        ? '★'.repeat(stars) + '☆'.repeat(3 - stars)
+        : unlocked ? '☆☆☆' : '🔒';
+      html += `<button class="level-card ${unlocked ? '' : 'locked'}" ${unlocked ? `onclick="startGame(${lvl.id})"` : 'disabled'}
+        style="border-color:${biomeColors[b]}30">
+        <div class="level-card-num">${lvl.id}</div>
+        <div class="level-card-name">${lvl.name}</div>
+        <div class="level-card-stars">${starStr}</div>
+        <div class="level-card-goal">${lvl.goal.text}</div>
+      </button>`;
+    }
+  }
+  // Endless mode card
+  html += `<div class="level-biome-label" style="color:#F0C040">Endless Mode</div>`;
+  html += `<button class="level-card endless-card ${endlessUnlocked ? '' : 'locked'}" ${endlessUnlocked ? `onclick="startGame('endless')"` : 'disabled'}>
+    <div class="level-card-num">∞</div>
+    <div class="level-card-name">${endlessUnlocked ? 'Fly Forever' : 'Complete all levels'}</div>
+    <div class="level-card-stars">${endlessUnlocked ? '🏆' : '🔒'}</div>
+  </button>`;
+  grid.innerHTML = html;
+}
+
+function onMenuFly() {
+  if (zenMode) {
+    startGame(); // zen mode bypasses level select
+  } else {
+    showLevelSelect();
+  }
 }
 
 function showGameOver() {
   const screen = document.getElementById('gameoverScreen');
   screen.classList.remove('hidden');
+
+  // Hide level stars for non-level game overs
+  const starsEl = document.getElementById('levelStars');
+  if (starsEl) starsEl.classList.add('hidden');
 
   const titleEl = document.getElementById('gameoverTitle');
   const subEl = document.getElementById('gameoverSubtitle');
@@ -2147,6 +2401,22 @@ function showGameOver() {
     document.getElementById('gapToBest').innerHTML = `You were <strong>${gap}m</strong> from your record`;
   } else {
     document.getElementById('gapToBest').textContent = '';
+  }
+
+  // Restore default buttons for non-level game overs
+  const btns = document.querySelector('.gameover-buttons');
+  if (btns) {
+    if (gameMode === 'levels' && currentLevel) {
+      btns.innerHTML = `
+        <button class="retry-btn" onclick="startGame(${currentLevel.id})">Retry Level</button>
+        <button class="menu-btn-go" onclick="showLevelSelect()">Level Select</button>
+      `;
+    } else {
+      btns.innerHTML = `
+        <button class="retry-btn" onclick="startGame('${gameMode === 'endless' ? 'endless' : ''}')">Fly Again</button>
+        <button class="menu-btn-go" onclick="showMenu()">Menu</button>
+      `;
+    }
   }
 
   // Auto-submit score + unlock achievements (gameCloud handles auth nudge)
@@ -2322,6 +2592,9 @@ let stuntsPerformed = 0;
 
 function triggerStunt() {
   if (stuntCooldown > 0 || stuntActive) return;
+  // Gated by level
+  const stuntsEnabled = gameMode !== 'levels' || !currentLevel || currentLevel.stunts;
+  if (!stuntsEnabled) return;
   // Can only stunt when airborne (not near ground)
   if (gliderY > H * 0.75) return;
 
@@ -2533,6 +2806,7 @@ function init() {
   } catch(e) {
     personalBest = 0; zenMode = false; muted = false;
   }
+  loadLevelProgress();
 
   if (zenMode) {
     document.getElementById('zenToggle').classList.add('active');

@@ -559,6 +559,107 @@
 }
 .menu-btn-go:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
 
+/* Level Select Screen */
+.level-select-screen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-primary);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: clamp(0.5rem, 2dvh, 1.5rem) clamp(0.5rem, 2vw, 2rem);
+}
+.level-select-screen.hidden { display: none; }
+
+.level-select-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-top: 50px; /* below game header */
+}
+.level-back-btn {
+  background: none; border: none; color: rgba(255,255,255,0.6);
+  font-size: 1.2rem; cursor: pointer; padding: 0.3rem 0.5rem;
+}
+.level-back-btn:hover { color: white; }
+.level-select-title {
+  font-size: 1.3rem; font-weight: 700; color: white;
+}
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(0.4rem, 1vw, 0.75rem);
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.level-biome-label {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 0.5rem;
+  opacity: 0.7;
+}
+
+.level-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: clamp(0.4rem, 1.5dvh, 0.75rem);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.level-card:hover:not(.locked) { transform: translateY(-2px); border-color: var(--accent); }
+.level-card.locked {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.level-card-num {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 0.15rem;
+}
+.level-card-name {
+  font-size: clamp(0.65rem, 1.5dvh, 0.85rem);
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 0.2rem;
+}
+.level-card-stars {
+  font-size: clamp(0.8rem, 2dvh, 1.1rem);
+  color: #F0C040;
+  margin-bottom: 0.15rem;
+}
+.level-card-goal {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.35);
+}
+
+.endless-card {
+  grid-column: 1 / -1;
+  max-width: 200px;
+  justify-self: center;
+}
+
+/* Star rating in game over */
+.level-stars {
+  font-size: clamp(1.5rem, 5dvh, 2.5rem);
+  display: flex;
+  gap: 0.3rem;
+  justify-content: center;
+}
+.level-stars.hidden { display: none; }
+.star.filled { color: #F0C040; }
+.star.empty { color: rgba(255,255,255,0.2); }
+
 /* Biome title card */
 .biome-card {
   position: fixed;

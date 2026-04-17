@@ -56,7 +56,7 @@ import gameData from '../../data/games/bir-glider.json';
       <div class="menu-title">Bir Glider</div>
       <div class="menu-tagline">"Rise on the wind. Find your calm."</div>
       <div class="menu-best" id="menuBest"></div>
-      <button class="play-btn" id="playBtn" onclick="startGame()">Fly</button>
+      <button class="play-btn" id="playBtn" onclick="onMenuFly()">Fly</button>
       <button class="zen-toggle" id="zenToggle" onclick="toggleZenMode()" role="switch" aria-checked="false" aria-label="Zen Mode">
         <span aria-hidden="true">🧘</span> Zen Mode
         <div class="toggle-knob"></div>
@@ -70,6 +70,11 @@ import gameData from '../../data/games/bir-glider.json';
     <div class="gameover-icon" id="gameoverIcon">🏔️</div>
     <div class="gameover-title" id="gameoverTitle" role="alert" aria-live="assertive">Landed</div>
     <div class="gameover-subtitle" id="gameoverSubtitle">The mountain is patient. Fly again.</div>
+    <div class="level-stars hidden" id="levelStars">
+      <span class="star empty" id="star1">☆</span>
+      <span class="star empty" id="star2">☆</span>
+      <span class="star empty" id="star3">☆</span>
+    </div>
     <div class="score-breakdown" id="scoreBreakdown">
       <div class="score-row"><span class="score-row-label">Distance</span><span class="score-row-value" id="sbDistance">0</span></div>
       <div class="score-row" id="sbFlagsRow"><span class="score-row-label">Flag bonus</span><span class="score-row-value" id="sbFlags">+0</span></div>
@@ -103,6 +108,15 @@ import gameData from '../../data/games/bir-glider.json';
       </div>
       <div class="pause-hint">Press Escape or tap to resume</div>
     </div>
+  </div>
+
+  <!-- Level Select Screen -->
+  <div class="level-select-screen hidden" id="levelSelectScreen">
+    <div class="level-select-header">
+      <button class="level-back-btn" onclick="hideLevelSelect(); showMenu();">&#8592; Back</button>
+      <div class="level-select-title">Select Level</div>
+    </div>
+    <div class="level-grid" id="levelGrid"></div>
   </div>
 
   <!-- Tap to start overlay (hidden by default, shown after clicking Fly) -->
