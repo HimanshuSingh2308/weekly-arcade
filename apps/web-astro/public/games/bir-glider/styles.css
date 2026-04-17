@@ -19,6 +19,12 @@
   --saffron: #e8821a;
 }
 
+/* Header — ensure it stays above menu/level-select overlays */
+#gameHeader {
+  z-index: 300 !important;
+  position: relative;
+}
+
 /* Canvas */
 #gameCanvas {
   display: block;
