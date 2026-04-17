@@ -1957,10 +1957,21 @@ function draw() {
   // Draw sky BEFORE zoom so it always fills the full canvas — no white edges
   drawSky();
 
-  // Stunt zoom — smooth zoom toward glider during stunts
-  if (stuntZoom > 0.01) stuntZoom *= 0.96; else stuntZoom = 0;
-  const zoom = 1 + stuntZoom * 0.35; // max 1.35x zoom
-  if (zoom > 1.01) {
+  // Stunt zoom — gradual zoom in (first half), gradual zoom out (second half)
+  let zoom = 1;
+  if (stuntActive && stuntTimer > 0) {
+    const progress = 1 - (stuntTimer / 60); // 0 → 1 over stunt duration
+    // Smooth bell curve: peaks at progress=0.5
+    const bellCurve = Math.sin(progress * Math.PI);
+    zoom = 1 + bellCurve * 0.3; // max 1.3x at peak
+  } else if (stuntZoom > 0.01) {
+    // Fade out any remaining zoom after stunt ends
+    stuntZoom *= 0.9;
+    zoom = 1 + stuntZoom * 0.15;
+  } else {
+    stuntZoom = 0;
+  }
+  if (zoom > 1.005) {
     ctx.save();
     ctx.translate(gliderX, gliderY);
     ctx.scale(zoom, zoom);
@@ -1981,7 +1992,7 @@ function draw() {
   drawAmbientParticles();
   drawComboChain();
 
-  if (zoom > 1.01) ctx.restore();
+  if (zoom > 1.005) ctx.restore();
 
   // Post-zoom overlays (don't zoom these)
   drawWindGust();
@@ -3191,8 +3202,8 @@ function triggerStunt() {
   stuntTimer = 60; // ~1 second
   stuntCooldown = 180; // ~3 second cooldown
   totalFlagScore += stuntScore;
-  stuntZoom = 1; // trigger zoom-in
-  goldenSlowMo = Math.max(goldenSlowMo, 30); // 30 frames of slow-mo during stunt
+  stuntZoom = 0.01; // start from 0 — will ramp up gradually
+  goldenSlowMo = Math.max(goldenSlowMo, 60); // full stunt duration at 40% speed
 
   // Show stunt name
   showToast('🌀', stuntType.charAt(0).toUpperCase() + stuntType.slice(1) + '! +' + stuntScore);
