@@ -170,7 +170,12 @@ let windGain = null;
 let windFilter = null;
 let zenDroneGain = null;
 let zenDroneNodes = [];
+let bgmNodes = [];
+let bgmGain = null;
+let bgmPlaying = false;
 const PENTATONIC = [261.63, 293.66, 329.63, 392.00, 440.00]; // C4 D4 E4 G4 A4
+// Himalayan-inspired scale: C D Eb G Ab (minor pentatonic — soulful, meditative)
+const BGM_SCALE = [130.81, 146.83, 155.56, 196.00, 207.65, 261.63, 293.66, 311.13, 392.00, 415.30];
 
 function initAudio() {
   if (muted) return;
@@ -307,6 +312,7 @@ let ambientInterval = null;
 
 function startAmbientSounds() {
   stopAmbientSounds();
+  stopBGM();
   if (muted) return;
   // Schedule random bird chirps / ambient sounds based on biome
   ambientInterval = setInterval(() => {
@@ -423,6 +429,139 @@ function playLevelComplete() {
 function playStarReveal() {
   if (!audioCtx || muted) return;
   playNote(880, 0.15, 0.08); // A5 sparkle
+}
+
+// ---- Wind Gust Sound — breathy filtered noise burst ----
+function playWindGustSound() {
+  if (!audioCtx || muted) return;
+  try {
+    const t = audioCtx.currentTime;
+    // Noise burst through bandpass = wind
+    const bufLen = audioCtx.sampleRate;
+    const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    const bp = audioCtx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(300, t);
+    bp.frequency.linearRampToValueAtTime(150, t + 0.8);
+    bp.Q.value = 1.5;
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.06, t + 0.1);
+    gain.gain.setValueAtTime(0.06, t + 0.4);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+    src.connect(bp); bp.connect(gain); gain.connect(audioCtx.destination);
+    src.start(t); src.stop(t + 1.1);
+  } catch(e) {}
+}
+
+// ---- Near-Miss Effect — dramatic swoosh + time hiccup + particles ----
+function playNearMissEffect(ex, ey) {
+  // Visual: radial burst from eagle position + brief slow-mo
+  goldenSlowMo = Math.max(goldenSlowMo, 8); // tiny 8-frame hiccup
+  // Particles: white streaks radiating from near-miss point
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI * 2 * i) / 10;
+    particles.push({
+      x: (ex + gliderX) / 2, y: (ey + gliderY) / 2,
+      vx: Math.cos(angle) * (4 + Math.random() * 3),
+      vy: Math.sin(angle) * (4 + Math.random() * 3),
+      life: 1, decay: 0.04, r: 1.5 + Math.random() * 1.5,
+      color: 'rgba(255,255,255,', alpha: true,
+    });
+  }
+  showToast('🦅', '+250 Near miss!');
+  // Sound: sharp swoosh (high→low frequency sweep)
+  if (!audioCtx || muted) return;
+  try {
+    const t = audioCtx.currentTime;
+    // Swoosh
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1200, t);
+    osc.frequency.exponentialRampToValueAtTime(200, t + 0.25);
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + 0.35);
+    // Heartbeat thump after
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.value = 60;
+    gain2.gain.setValueAtTime(0, t + 0.15);
+    gain2.gain.linearRampToValueAtTime(0.12, t + 0.2);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    osc2.connect(gain2); gain2.connect(audioCtx.destination);
+    osc2.start(t + 0.15); osc2.stop(t + 0.5);
+  } catch(e) {}
+}
+
+// ---- Background Music — soothing procedural Himalayan drone + melody ----
+let bgmInterval = null;
+
+function startBGM() {
+  if (muted || bgmPlaying) return;
+  if (!audioCtx) return;
+  bgmPlaying = true;
+
+  // Base drone — low sine pad (C2 + G2)
+  try {
+    bgmGain = audioCtx.createGain();
+    bgmGain.gain.value = 0;
+    bgmGain.gain.setTargetAtTime(0.025, audioCtx.currentTime, 3); // slow fade in
+    bgmGain.connect(audioCtx.destination);
+
+    [65.41, 98.00, 130.81].forEach((f, i) => { // C2, G2, C3
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      g.gain.value = 0.8 - i * 0.2;
+      osc.connect(g); g.connect(bgmGain);
+      osc.start();
+      bgmNodes.push({ osc, gain: g });
+    });
+  } catch(e) {}
+
+  // Melodic notes — play one note from the scale every 3-5s
+  bgmInterval = setInterval(() => {
+    if (muted || !audioCtx || gameState !== 'playing') return;
+    const note = BGM_SCALE[Math.floor(Math.random() * BGM_SCALE.length)];
+    try {
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = Math.random() < 0.5 ? 'sine' : 'triangle';
+      osc.frequency.value = note * (Math.random() < 0.3 ? 2 : 1); // occasionally octave up
+      const dur = 1.5 + Math.random() * 2;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.025, t + 0.3); // soft attack
+      gain.gain.setValueAtTime(0.025, t + dur * 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur); // long release
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + dur + 0.1);
+    } catch(e) {}
+  }, 3000 + Math.random() * 2000);
+}
+
+function stopBGM() {
+  bgmPlaying = false;
+  if (bgmGain) {
+    try { bgmGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5); } catch(e) {}
+  }
+  setTimeout(() => {
+    bgmNodes.forEach(({ osc, gain }) => {
+      try { osc.stop(); osc.disconnect(); gain.disconnect(); } catch(e) {}
+    });
+    bgmNodes = [];
+    bgmGain = null;
+  }, 2000);
+  if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
 }
 
 // ---- Perlin noise (simple 1D) ----
@@ -2146,7 +2285,7 @@ function checkCollisions() {
     const dx = gliderX - e.x, dy = gliderY - e.y, dist2 = dx*dx + dy*dy;
     if (!e.nearMissed && dist2 < 60*60 && dist2 > 20*20) {
       e.nearMissed = true; eagleNearMisses++; totalNearMissBonus += 250; totalScore += 250;
-      flashScreen('rgba(255,200,100,0.08)');
+      playNearMissEffect(e.x, e.y);
     }
     if (!zenMode && dist2 < 22*22) { endGame('crashed'); return; }
   }
@@ -2212,11 +2351,17 @@ function updatePhysics(dt) {
     velocity += THERMAL_BOOST * dt;
   }
 
-  // Wind gust — pushes glider vertically
+  // Wind gust — pushes glider but player can fight it by holding
   if (windGust && windGust.timer > 0) {
-    velocity += windGust.strength * windGust.direction * dt * 0.5;
+    // Reduced force if player is actively holding (fighting the gust)
+    const gustForce = isHolding ? 0.12 : 0.3;
+    velocity += windGust.strength * windGust.direction * dt * gustForce;
     windGust.timer -= dt;
-    if (windGust.timer <= 0) windGust = null;
+    if (windGust.timer <= 0) {
+      // Recovery boost — brief upward push after gust ends so player doesn't crash
+      velocity = Math.max(velocity, 0.5);
+      windGust = null;
+    }
   }
 
   // Canopy wobble — triggered by rapid climb or turbulence
@@ -2247,7 +2392,7 @@ function updateWindGusts(dt) {
   // Random gust — more frequent in later biomes
   const gustChance = 0.001 + biomeIndex * 0.0008;
   if (Math.random() < gustChance) {
-    const strength = 0.3 + Math.random() * 0.4 + biomeIndex * 0.15;
+    const strength = 0.15 + Math.random() * 0.2 + biomeIndex * 0.08;
     windGust = {
       timer: 90 + Math.random() * 60, // ~1.5-2.5 seconds at 60fps
       duration: 90 + Math.random() * 60,
@@ -2257,20 +2402,7 @@ function updateWindGusts(dt) {
     windGustCooldown = 300 + Math.random() * 200; // 5-8s between gusts
     // Visual + audio cue
     showToast('💨', 'Wind gust!');
-    if (!muted && audioCtx) {
-      try {
-        // Whoosh sound
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.5);
-        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.7);
-      } catch(e) {}
-    }
+    playWindGustSound();
   }
 }
 
@@ -2382,6 +2514,7 @@ function updateHUD() {
     }
   }
   document.getElementById('hudScore').textContent = totalScore.toLocaleString();
+  document.getElementById('hudFlags').textContent = '🏳️ ' + prayerFlagsCollected;
   const altPct = Math.min(100, (altitudeM / 4000) * 100);
   document.getElementById('altFill').style.height = altPct + '%';
   document.getElementById('altLabel').textContent = altitudeM + 'm';
@@ -2590,6 +2723,7 @@ function launchFlight() {
   resize();
   startWind();
   startAmbientSounds();
+  startBGM();
   stopZenDrone();
   if (zenMode) startZenDrone();
   // Zen mode indicator
@@ -2621,6 +2755,7 @@ function completeLevelAction() {
   stopWind();
   stopZenDrone();
   stopAmbientSounds();
+  stopBGM();
   playLevelComplete();
 
   // Calculate stars: 3★ if score >= starScores[0], 2★ if >= starScores[1], else 1★
@@ -2715,6 +2850,7 @@ function endGame(reason) {
   stopWind();
   stopZenDrone();
   stopAmbientSounds();
+  stopBGM();
   playCrashSound();
 
   // Check personal best

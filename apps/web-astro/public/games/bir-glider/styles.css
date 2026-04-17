@@ -145,6 +145,16 @@
   color: rgba(255,255,255,0.5);
 }
 
+/* Flag counter — top left */
+.hud-flags {
+  position: absolute;
+  top: 10px; left: 40px;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  font-weight: 600;
+}
+
 /* Goals panel (legacy — now using pinned goal) */
 .goals-panel {
   display: none;
