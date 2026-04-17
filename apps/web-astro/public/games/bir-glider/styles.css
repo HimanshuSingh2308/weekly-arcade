@@ -579,14 +579,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: rgba(5, 15, 30, 0.55);
 }
 
 .level-select-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
   margin-bottom: clamp(0.5rem, 2dvh, 1.2rem);
-  align-self: flex-start;
+  width: 100%;
+  max-width: 480px;
+}
+.level-select-header .level-select-title {
+  margin-left: auto;
 }
 .level-back-btn {
   background: rgba(255,255,255,0.08);
@@ -601,10 +605,11 @@
 }
 .level-back-btn:hover { background: rgba(255,255,255,0.15); color: white; }
 .level-select-title {
-  font-size: clamp(1rem, 3dvh, 1.4rem);
-  font-weight: 800;
-  color: white;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  font-size: clamp(0.85rem, 2.5dvh, 1.1rem);
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .level-grid {
@@ -621,15 +626,16 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  margin-top: clamp(0.4rem, 1dvh, 0.8rem);
-  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  margin-top: clamp(0.5rem, 1.5dvh, 1rem);
+  color: var(--accent-bright) !important;
+  opacity: 0.85 !important;
 }
 
 .level-card {
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(10, 22, 40, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 14px;
   padding: clamp(0.5rem, 1.5dvh, 0.8rem) clamp(0.3rem, 1vw, 0.6rem);
   text-align: center;
@@ -639,25 +645,23 @@
 .level-card:hover:not(.locked) {
   transform: translateY(-3px);
   border-color: var(--accent);
-  background: rgba(255,255,255,0.1);
+  background: rgba(10, 22, 40, 0.85);
 }
 .level-card.locked {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: default;
-  backdrop-filter: none;
 }
 
 .level-card-num {
   font-size: 0.6rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.5);
   margin-bottom: 0.1rem;
 }
 .level-card-name {
   font-size: clamp(0.65rem, 1.5dvh, 0.8rem);
   font-weight: 700;
-  color: rgba(255,255,255,0.9);
+  color: white;
   margin-bottom: 0.15rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .level-card-stars {
   font-size: clamp(0.85rem, 2dvh, 1.1rem);
@@ -666,7 +670,7 @@
 }
 .level-card-goal {
   font-size: 0.55rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.5);
   line-height: 1.3;
 }
 

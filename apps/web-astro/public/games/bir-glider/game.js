@@ -2359,7 +2359,7 @@ function renderLevelGrid() {
   const biomeColors = ['#3A8838', '#1A4050', '#6080A0', '#3c096c'];
   let html = '';
   for (let b = 0; b < 4; b++) {
-    html += `<div class="level-biome-label" style="color:${biomeColors[b]}">${biomeNames[b]}</div>`;
+    html += `<div class="level-biome-label">${biomeNames[b]}</div>`;
     const biomeLevels = LEVELS.filter(l => l.biome === b);
     for (const lvl of biomeLevels) {
       const stars = levelProgress[lvl.id];
@@ -2377,7 +2377,7 @@ function renderLevelGrid() {
     }
   }
   // Endless mode card
-  html += `<div class="level-biome-label" style="color:#F0C040">Endless Mode</div>`;
+  html += `<div class="level-biome-label">Endless Mode</div>`;
   html += `<button class="level-card endless-card ${endlessUnlocked ? '' : 'locked'}" ${endlessUnlocked ? `onclick="startGame('endless')"` : 'disabled'}>
     <div class="level-card-num">∞</div>
     <div class="level-card-name">${endlessUnlocked ? 'Fly Forever' : 'Complete all levels'}</div>
