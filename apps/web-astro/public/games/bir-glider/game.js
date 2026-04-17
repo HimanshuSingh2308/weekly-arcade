@@ -173,27 +173,33 @@ let zenDroneNodes = [];
 const PENTATONIC = [261.63, 293.66, 329.63, 392.00, 440.00]; // C4 D4 E4 G4 A4
 
 function initAudio() {
-  if (audioCtx || muted) return;
+  if (muted) return;
   try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // Wind layer
-    const bufferSize = audioCtx.sampleRate * 2;
-    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-    const noiseSource = audioCtx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    noiseSource.loop = true;
-    windFilter = audioCtx.createBiquadFilter();
-    windFilter.type = 'bandpass';
-    windFilter.frequency.value = 800;
-    windFilter.Q.value = 0.5;
-    windGain = audioCtx.createGain();
-    windGain.gain.value = 0;
-    noiseSource.connect(windFilter);
-    windFilter.connect(windGain);
-    windGain.connect(audioCtx.destination);
-    noiseSource.start();
+    // Create AudioContext if not already created by ensureAudio()
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    // Create wind layer if not already created
+    if (!windGain) {
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noiseSource = audioCtx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+      noiseSource.loop = true;
+      windFilter = audioCtx.createBiquadFilter();
+      windFilter.type = 'bandpass';
+      windFilter.frequency.value = 800;
+      windFilter.Q.value = 0.5;
+      windGain = audioCtx.createGain();
+      windGain.gain.value = 0;
+      noiseSource.connect(windFilter);
+      windFilter.connect(windGain);
+      windGain.connect(audioCtx.destination);
+      noiseSource.start();
+    }
   } catch(e) {}
 }
 
