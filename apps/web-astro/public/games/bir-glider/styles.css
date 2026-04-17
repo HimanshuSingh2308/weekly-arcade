@@ -632,19 +632,19 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(0.4rem, 1.2vw, 0.75rem);
-  max-width: 600px;
+  max-width: min(500px, 90vw);
   width: 100%;
 }
 @media (orientation: landscape) {
   .level-grid {
-    max-width: 90vw;
-    grid-template-columns: repeat(6, 1fr);
+    max-width: min(85vw, 900px);
+    gap: clamp(0.3rem, 1vw, 0.6rem);
   }
-  .level-biome-label {
-    grid-column: 1 / -1;
+  .level-select-header {
+    max-width: min(85vw, 900px);
   }
-  .endless-card {
-    grid-column: 3 / 5;
+  .level-card {
+    padding: clamp(0.3rem, 1dvh, 0.5rem) clamp(0.3rem, 1vw, 0.5rem);
   }
 }
 
