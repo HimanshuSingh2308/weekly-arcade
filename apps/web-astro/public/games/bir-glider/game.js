@@ -2143,7 +2143,7 @@ function checkCollisions() {
     const dx = gliderX - e.x, dy = gliderY - e.y, dist2 = dx*dx + dy*dy;
     if (!e.nearMissed && dist2 < 60*60 && dist2 > 20*20) {
       e.nearMissed = true; eagleNearMisses++; totalNearMissBonus += 250; totalScore += 250;
-      flashScreen('rgba(255,255,255,0.25)');
+      flashScreen('rgba(255,200,100,0.08)');
     }
     if (!zenMode && dist2 < 22*22) { endGame('crashed'); return; }
   }
@@ -2325,7 +2325,7 @@ function gameLoop(ts) {
     if (altitudeM >= m && !altitudeMilestonesHit.has(m)) {
       altitudeMilestonesHit.add(m);
       altitudeMilestoneBonus += {1000:500,2000:1500,3000:3000,4000:5000}[m];
-      flashScreen('rgba(255,255,255,0.15)');
+      flashScreen('rgba(100,200,255,0.06)');
     }
   });
   if (flagComboTimer > 0) { flagComboTimer -= dt; if (flagComboTimer <= 0) { flagCombo = 0; updateComboDisplay(); } }
