@@ -3088,18 +3088,26 @@ function setupControls() {
       if (gameState === 'playing') pauseGame();
       else if (gameState === 'paused') resumeGame();
     }
-    // ArrowDown: hold to dive, tap for stunt
-    if (e.code === 'ArrowDown' && gameState === 'playing') {
+    // ArrowDown: hold 150ms+ to dive, tap for stunt
+    if (e.code === 'ArrowDown' && gameState === 'playing' && !e.repeat) {
       e.preventDefault();
-      isDiving = true;
+      window._arrowDownTime = Date.now();
+      window._arrowDiveTimer = setTimeout(() => { isDiving = true; }, 150);
     }
   });
   document.addEventListener('keyup', e => {
     if (e.code === 'Space' || e.code === 'ArrowUp') onHoldEnd(e);
     if (e.code === 'ArrowDown' && gameState === 'playing') {
-      // Short press = stunt, long press was a dive (swoop handled in physics)
-      if (diveSpeed < 0.5) triggerStunt(); // tap — not enough dive to be a dive
-      isDiving = false;
+      clearTimeout(window._arrowDiveTimer);
+      const held = Date.now() - (window._arrowDownTime || 0);
+      if (held < 150 || diveSpeed < 0.3) {
+        // Quick tap — stunt
+        isDiving = false;
+        triggerStunt();
+      } else {
+        // Was diving — stop dive
+        isDiving = false;
+      }
     }
   });
   window.addEventListener('blur', () => {
