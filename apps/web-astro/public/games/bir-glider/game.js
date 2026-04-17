@@ -2071,10 +2071,6 @@ function drawWindGust() {
     ctx.stroke();
   }
 
-  // Subtle screen tint
-  ctx.globalAlpha = alpha * 0.3;
-  ctx.fillStyle = windGust.direction > 0 ? 'rgba(100,150,200,1)' : 'rgba(80,100,120,1)';
-  ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
 
@@ -2095,12 +2091,6 @@ function drawDiveEffect() {
     ctx.lineTo(sx + (Math.random() - 0.5) * 4, sy + len);
     ctx.stroke();
   }
-  // Blue tint at high dive speed
-  if (intensity > 0.5) {
-    ctx.globalAlpha = (intensity - 0.5) * 0.08;
-    ctx.fillStyle = '#4080C0';
-    ctx.fillRect(0, 0, W, H);
-  }
   ctx.restore();
 }
 
@@ -2113,12 +2103,6 @@ function drawCanopyWobble() {
   ctx.fillStyle = '#FF4040';
   // Top edge warning
   ctx.fillRect(0, 0, W, 3);
-  // Vignette corners
-  const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.7);
-  g.addColorStop(0, 'rgba(255,60,40,0)');
-  g.addColorStop(1, `rgba(255,60,40,${intensity * 0.06})`);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
 
