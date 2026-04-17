@@ -15,6 +15,14 @@ let endlessUnlocked = false;
 let levelCompleteShown = false;
 let goldenSlowMo = 0; // frames of slow motion after golden prayer wheel
 let comboChainPoints = []; // screen positions of recent flag collections for chain viz
+
+// Wind gust system
+let windGust = null; // { timer, duration, strength, direction } or null
+let windGustCooldown = 0;
+// Canopy wobble
+let canopyWobble = 0; // 0-1 intensity, decays over time
+// Birds-mark-thermals
+let birdThermalHints = []; // { x, y, thermalRef }
 let muted = false;
 let animFrameId = null;
 let menuBgAnimId = null;
@@ -1332,7 +1340,15 @@ function drawGlider() {
   ctx.save();
   ctx.translate(gliderX, gliderY);
   // Tilt based on velocity — nose up when rising, nose down when sinking
-  const tilt = Math.max(-0.2, Math.min(0.2, -velocity * 0.04));
+  let tilt = Math.max(-0.2, Math.min(0.2, -velocity * 0.04));
+  // Canopy wobble adds jitter
+  if (canopyWobble > 0.3) {
+    tilt += (Math.random() - 0.5) * canopyWobble * 0.08;
+  }
+  // Wind gust tilts glider
+  if (windGust && windGust.timer > 0) {
+    tilt += windGust.direction * windGust.strength * 0.06;
+  }
   ctx.rotate(tilt);
 
   const t = Date.now() * 0.001;
@@ -1947,6 +1963,8 @@ function draw() {
   drawParticles();
   drawAmbientParticles();
   drawComboChain();
+  drawWindGust();
+  drawCanopyWobble();
 }
 
 function drawComboChain() {
@@ -1990,6 +2008,52 @@ function drawComboChain() {
     ctx.fillStyle = g2;
     ctx.fillRect(W - 20, 0, 20, H);
   }
+  ctx.restore();
+}
+
+function drawWindGust() {
+  if (!windGust || windGust.timer <= 0) return;
+  ctx.save();
+  const progress = 1 - (windGust.timer / windGust.duration);
+  const alpha = Math.sin(progress * Math.PI) * 0.15; // fade in then out
+
+  // Horizontal wind streaks rushing across screen
+  ctx.strokeStyle = `rgba(200,220,240,${alpha})`;
+  ctx.lineWidth = 1;
+  const streakCount = 15;
+  for (let i = 0; i < streakCount; i++) {
+    const y = (i / streakCount) * H + ((gameTime * 3 + i * 97) % H);
+    const x = ((gameTime * 8 + i * 137) % (W + 100)) - 50;
+    const len = 30 + windGust.strength * 40;
+    ctx.globalAlpha = alpha * (0.5 + Math.random() * 0.5);
+    ctx.beginPath();
+    ctx.moveTo(x, y % H);
+    ctx.lineTo(x - len, (y + windGust.direction * 5) % H);
+    ctx.stroke();
+  }
+
+  // Subtle screen tint
+  ctx.globalAlpha = alpha * 0.3;
+  ctx.fillStyle = windGust.direction > 0 ? 'rgba(100,150,200,1)' : 'rgba(80,100,120,1)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+function drawCanopyWobble() {
+  if (canopyWobble < 0.3) return;
+  // Warning indicator — canopy edge flickers red-orange
+  ctx.save();
+  const intensity = (canopyWobble - 0.3) / 0.7; // 0-1
+  ctx.globalAlpha = intensity * 0.08;
+  ctx.fillStyle = '#FF4040';
+  // Top edge warning
+  ctx.fillRect(0, 0, W, 3);
+  // Vignette corners
+  const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.7);
+  g.addColorStop(0, 'rgba(255,60,40,0)');
+  g.addColorStop(1, `rgba(255,60,40,${intensity * 0.06})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
 
@@ -2076,12 +2140,89 @@ function updatePhysics(dt) {
     velocity += THERMAL_BOOST * dt;
   }
 
+  // Wind gust — pushes glider vertically
+  if (windGust && windGust.timer > 0) {
+    velocity += windGust.strength * windGust.direction * dt * 0.5;
+    windGust.timer -= dt;
+    if (windGust.timer <= 0) windGust = null;
+  }
+
+  // Canopy wobble — triggered by rapid climb or turbulence
+  if (isHolding && velocity > MAX_RISE * 0.8) {
+    canopyWobble = Math.min(1, canopyWobble + 0.02 * dt);
+  } else {
+    canopyWobble = Math.max(0, canopyWobble - 0.015 * dt);
+  }
+  // Wobble adds slight instability
+  if (canopyWobble > 0.5) {
+    velocity += (Math.random() - 0.5) * canopyWobble * 0.3 * dt;
+  }
+
   velocity = Math.max(MAX_FALL, Math.min(MAX_RISE, velocity));
   gliderY -= velocity * dt;
 
   // Ceiling clamp
   if (gliderY < 60) { gliderY = 60; velocity = Math.min(velocity, 0); }
   // Floor clamp (don't go below screen — collision handles death)
+}
+
+// ---- Wind Gust System ----
+function updateWindGusts(dt) {
+  if (windGust) return; // already active
+  windGustCooldown -= dt;
+  if (windGustCooldown > 0) return;
+
+  // Random gust — more frequent in later biomes
+  const gustChance = 0.001 + biomeIndex * 0.0008;
+  if (Math.random() < gustChance) {
+    const strength = 0.3 + Math.random() * 0.4 + biomeIndex * 0.15;
+    windGust = {
+      timer: 90 + Math.random() * 60, // ~1.5-2.5 seconds at 60fps
+      duration: 90 + Math.random() * 60,
+      strength,
+      direction: Math.random() < 0.5 ? 1 : -1, // push up or down
+    };
+    windGustCooldown = 300 + Math.random() * 200; // 5-8s between gusts
+    // Visual + audio cue
+    showToast('💨', 'Wind gust!');
+    if (!muted && audioCtx) {
+      try {
+        // Whoosh sound
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.7);
+      } catch(e) {}
+    }
+  }
+}
+
+// ---- Bird-Thermal Hints ----
+function updateBirdThermalHints() {
+  // Make decorative bird flocks circle near active thermals
+  for (const d of skyDecorations) {
+    if (d.type !== 'birdFlock') continue;
+    // Find nearest thermal on screen
+    let nearest = null, nearDist = Infinity;
+    for (const t of thermals) {
+      if (!t.active) continue;
+      const dx = d.x - t.x, dy = d.y - t.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < nearDist && dist < W * 0.4) { nearDist = dist; nearest = t; }
+    }
+    if (nearest) {
+      // Drift bird flock toward thermal
+      d.x += (nearest.x - d.x) * 0.002;
+      d.y += (nearest.y - 50 - d.y) * 0.001;
+      // Tighten circling when close
+      if (nearDist < 100) d.wingPhase += 0.02; // faster flapping = circling
+    }
+  }
 }
 
 // ---- Game Loop ----
@@ -2148,6 +2289,8 @@ function gameLoop(ts) {
     return;
   }
   updateWindPitch();
+  updateWindGusts(dt);
+  updateBirdThermalHints();
   draw();
   updateHUD();
 
@@ -2308,6 +2451,9 @@ function startGame(levelId) {
   zenDroneStarted = false;
   goldenSlowMo = 0;
   comboChainPoints = [];
+  windGust = null;
+  windGustCooldown = 300; // no gust in first 5s
+  canopyWobble = 0;
 
   // Set starting biome from level
   biomeIndex = (gameMode === 'levels' && currentLevel) ? currentLevel.biome : 0;
