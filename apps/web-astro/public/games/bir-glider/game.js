@@ -426,6 +426,73 @@ function playLevelComplete() {
   });
 }
 
+function playStuntSound(type) {
+  if (!audioCtx || muted) return;
+  try {
+    const t = audioCtx.currentTime;
+    if (type === 'spiral') {
+      // Spiral — ascending warble (sine with vibrato)
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const lfo = audioCtx.createOscillator();
+      const lfoG = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, t);
+      osc.frequency.linearRampToValueAtTime(900, t + 0.5);
+      lfo.frequency.value = 12; lfoG.gain.value = 30;
+      lfo.connect(lfoG); lfoG.connect(osc.frequency);
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + 0.7); lfo.start(t); lfo.stop(t + 0.7);
+    } else if (type === 'wingover') {
+      // Wingover — quick up-down swoop
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(500, t);
+      osc.frequency.linearRampToValueAtTime(1000, t + 0.15);
+      osc.frequency.linearRampToValueAtTime(400, t + 0.35);
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + 0.45);
+    } else if (type === 'sat') {
+      // SAT — deep descending whomp
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, t);
+      osc.frequency.exponentialRampToValueAtTime(120, t + 0.4);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + 0.55);
+    } else {
+      // Spin — bright ascending chime
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(500, t);
+      osc.frequency.exponentialRampToValueAtTime(1200, t + 0.3);
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + 0.4);
+      // Second harmonic
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(750, t + 0.1);
+      osc2.frequency.exponentialRampToValueAtTime(1500, t + 0.35);
+      gain2.gain.setValueAtTime(0.06, t + 0.1);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc2.connect(gain2); gain2.connect(audioCtx.destination);
+      osc2.start(t + 0.1); osc2.stop(t + 0.45);
+    }
+  } catch(e) {}
+}
+
 function playStarReveal() {
   if (!audioCtx || muted) return;
   playNote(880, 0.15, 0.08); // A5 sparkle
@@ -3379,29 +3446,17 @@ function triggerStunt() {
   stuntActive = true;
   stuntsPerformed++;
   stuntTimer = 60; // ~1 second
-  stuntCooldown = 180; // ~3 second cooldown
+  stuntCooldown = 90; // ~1.5 second cooldown (was 3s — too punishing)
   totalFlagScore += stuntScore;
-  stuntZoom = 0.01; // start from 0 — will ramp up gradually
-  goldenSlowMo = Math.max(goldenSlowMo, 60); // full stunt duration at 40% speed
+  stuntZoom = 0.01;
+  goldenSlowMo = Math.max(goldenSlowMo, 60);
 
   // Show stunt name
-  showToast('🌀', stuntType.charAt(0).toUpperCase() + stuntType.slice(1) + '! +' + stuntScore);
+  const stuntNames = { spiral: 'Spiral', wingover: 'Wingover', sat: 'SAT', spin: 'Spin' };
+  showToast('🌀', (stuntNames[stuntType] || 'Stunt') + '! +' + stuntScore);
 
-  // Stunt sound — rising whoosh
-  if (!muted && audioCtx) {
-    try {
-      const t = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(300, t);
-      osc.frequency.exponentialRampToValueAtTime(800, t + 0.3);
-      gain.gain.setValueAtTime(0.08, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(t); osc.stop(t + 0.5);
-    } catch(e) {}
-  }
+  // Distinct stunt sound — each type has a unique character
+  playStuntSound(stuntType);
 
   // Particles burst — more dramatic
   for (let i = 0; i < 16; i++) {

@@ -141,16 +141,16 @@
 .altitude-label {
   position: absolute;
   left: 24px; top: 8px;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
 }
 
-/* Flag counter — top left */
+/* Flag counter — below altitude on left */
 .hud-flags {
   position: absolute;
-  top: 10px; left: 40px;
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.7);
+  top: 28px; left: 24px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.6);
   text-shadow: 0 1px 4px rgba(0,0,0,0.5);
   font-weight: 600;
 }
@@ -436,13 +436,13 @@
 }
 .pause-btn-inline {
   position: fixed;
-  top: 58px; right: 12px;
+  top: calc(var(--header-h, 0px) + 80px); right: 12px;
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.15);
   color: #fff;
   border-radius: 50%;
-  width: 44px; height: 44px;
-  font-size: 1.2rem;
+  width: 36px; height: 36px;
+  font-size: 1rem;
   cursor: pointer;
   z-index: 150;
   display: none;
