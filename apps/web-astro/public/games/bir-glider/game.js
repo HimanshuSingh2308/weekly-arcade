@@ -1868,9 +1868,12 @@ function gameLoop(ts) {
   distance += scrollSpeed * dt;
   totalScore = Math.floor(distance) + totalFlagScore + totalNearMissBonus + altitudeMilestoneBonus;
 
-  let newBiome = 0;
-  for (let i = BIOMES.length - 1; i >= 0; i--) { if (distance >= BIOMES[i].minDist) { newBiome = i; break; } }
-  if (newBiome !== biomeIndex) { biomeIndex = newBiome; if (!visitedBiomes.has(biomeIndex)) { visitedBiomes.add(biomeIndex); showBiomeCard(BIOMES[biomeIndex]); } }
+  // Biome transitions — in level mode, biome is locked to the level's biome
+  if (gameMode !== 'levels') {
+    let newBiome = 0;
+    for (let i = BIOMES.length - 1; i >= 0; i--) { if (distance >= BIOMES[i].minDist) { newBiome = i; break; } }
+    if (newBiome !== biomeIndex) { biomeIndex = newBiome; if (!visitedBiomes.has(biomeIndex)) { visitedBiomes.add(biomeIndex); showBiomeCard(BIOMES[biomeIndex]); } }
+  }
 
   // Altitude relative to terrain — 0m at ground, scales so top of screen ≈ 5000m
   const groundY = getTerrainYAtX(gliderX);
