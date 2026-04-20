@@ -506,12 +506,84 @@
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
-  function getOptimalColumns(tubeCount) {
-    var colMap = { 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 4 };
-    var cols = colMap[tubeCount] || Math.min(tubeCount, 5);
-    var tubeWidthWithGap = 72;
-    var maxCols = Math.floor(window.innerWidth / tubeWidthWithGap);
-    return Math.min(cols, Math.max(maxCols, 2));
+  // ============================================
+  // DYNAMIC GRID LAYOUT — scales tubes/balls to fit any screen
+  // ============================================
+
+  function computeGridLayout(tubeCount) {
+    // Available space
+    var appEl = document.getElementById('chroma-sort-app');
+    var containerW = appEl ? appEl.clientWidth : window.innerWidth;
+    // Reserve height for top bar (~44px), action bar (~72px), tip bar (~40px), padding (~24px)
+    var containerH = window.innerHeight - 60 - 44 - 72 - 40 - 24;
+    containerH = Math.max(containerH, 200);
+
+    // Preferred columns by tube count (aesthetic balance)
+    var preferredCols = { 3: 3, 4: 4, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 4 };
+    var cols = preferredCols[tubeCount] || Math.min(tubeCount, 5);
+    var rows = Math.ceil(tubeCount / cols);
+
+    // Minimum gap
+    var gap = 10;
+
+    // Calculate max tube width that fits horizontally
+    var maxTubeW = Math.floor((containerW - gap * (cols + 1)) / cols);
+
+    // Ball size = tube width * 0.82 (ball is slightly smaller than tube)
+    // Tube height = ball * 4 + padding(~20px)
+    // Total grid height = rows * tubeH + (rows-1)*gap
+    // Solve for max ball size that fits vertically
+    var maxBallFromH = Math.floor((containerH - gap * (rows - 1) - rows * 20) / (rows * 4));
+
+    // Ball size from width constraint
+    var maxBallFromW = Math.floor(maxTubeW * 0.82);
+
+    // Pick the smaller constraint, clamp to reasonable range
+    var ballSize = Math.min(maxBallFromW, maxBallFromH);
+    ballSize = Math.max(24, Math.min(ballSize, 52)); // min 24, max 52
+
+    var tubeWidth = Math.round(ballSize / 0.82);
+    tubeWidth = Math.max(30, Math.min(tubeWidth, 64));
+
+    // Recheck: does it actually fit? If not, reduce columns
+    var totalW = cols * tubeWidth + (cols - 1) * gap;
+    while (totalW > containerW && cols > 2) {
+      cols--;
+      rows = Math.ceil(tubeCount / cols);
+      maxBallFromH = Math.floor((containerH - gap * (rows - 1) - rows * 20) / (rows * 4));
+      ballSize = Math.min(maxBallFromW, maxBallFromH);
+      ballSize = Math.max(24, Math.min(ballSize, 52));
+      tubeWidth = Math.round(ballSize / 0.82);
+      tubeWidth = Math.max(30, Math.min(tubeWidth, 64));
+      totalW = cols * tubeWidth + (cols - 1) * gap;
+    }
+
+    // Scale gap proportionally to tube size
+    gap = Math.max(4, Math.min(14, Math.round(tubeWidth * 0.18)));
+
+    // Border radius scales with tube width
+    var borderRadius = Math.max(12, Math.round(tubeWidth * 0.45));
+
+    return { cols: cols, tubeWidth: tubeWidth, ballSize: ballSize, gap: gap, borderRadius: borderRadius };
+  }
+
+  function applyGridLayout(tubeCount) {
+    var layout = computeGridLayout(tubeCount);
+    var grid = document.getElementById('cs-tube-grid');
+    if (!grid) return layout;
+
+    grid.style.setProperty('--cs-grid-cols', layout.cols);
+    grid.style.setProperty('--cs-tube-width', layout.tubeWidth + 'px');
+    grid.style.setProperty('--cs-ball-size', layout.ballSize + 'px');
+    grid.style.setProperty('--cs-tube-gap', layout.gap + 'px');
+
+    // Update tube border radius
+    var tubes = grid.querySelectorAll('.cs-tube');
+    tubes.forEach(function (t) {
+      t.style.borderRadius = '0 0 ' + layout.borderRadius + 'px ' + layout.borderRadius + 'px';
+    });
+
+    return layout;
   }
 
   // ============================================
@@ -835,9 +907,8 @@
     html += '</div>';
     app.innerHTML = html;
 
-    // Set grid columns for responsive layout
-    var grid = document.getElementById('cs-tube-grid');
-    if (grid) grid.style.setProperty('--cs-grid-cols', getOptimalColumns(state.tubes.length));
+    // Dynamic responsive layout — compute tube/ball sizes for current screen
+    applyGridLayout(state.tubes.length);
 
     if (state.colorBlindMode) {
       app.classList.add('color-blind-mode');
@@ -910,8 +981,8 @@
   function updateTubeGrid() {
     var grid = document.getElementById('cs-tube-grid');
     if (grid) {
-      grid.style.setProperty('--cs-grid-cols', getOptimalColumns(state.tubes.length));
       grid.innerHTML = renderTubes();
+      applyGridLayout(state.tubes.length);
       bindTubeClicks();
     }
   }
@@ -2003,8 +2074,7 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
         if (state.screen === 'puzzle') {
-          var grid = document.getElementById('cs-tube-grid');
-          if (grid) grid.style.setProperty('--cs-grid-cols', getOptimalColumns(state.tubes.length));
+          applyGridLayout(state.tubes.length);
         }
       }, 150);
     });

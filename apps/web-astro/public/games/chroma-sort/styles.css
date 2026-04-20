@@ -459,8 +459,8 @@
   content: '';
   position: absolute;
   top: 0;
-  left: 3px;
-  width: 6px;
+  left: 5%;
+  width: 10%;
   height: 100%;
   background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 100%);
   border-radius: 0 0 0 24px;
@@ -527,10 +527,10 @@
 .cs-ball::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 8px;
-  width: 16px;
-  height: 12px;
+  top: 14%;
+  left: 18%;
+  width: 36%;
+  height: 28%;
   background: radial-gradient(ellipse, rgba(255,255,255,0.55) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
@@ -908,10 +908,10 @@
 .cs-flying-ball::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 8px;
-  width: 16px;
-  height: 12px;
+  top: 14%;
+  left: 18%;
+  width: 36%;
+  height: 28%;
   background: radial-gradient(ellipse, rgba(255,255,255,0.55) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
@@ -973,40 +973,11 @@
 }
 
 /* ---- Responsive ---- */
+/* Tube/ball sizes are computed dynamically by JS (applyGridLayout) */
+/* and set as CSS variables on #cs-tube-grid. Fallback values in :root. */
 @media (min-width: 768px) {
   #chroma-sort-app {
     max-width: 700px;
-  }
-
-  :root {
-    --cs-tube-width: 62px;
-    --cs-ball-size: 48px;
-    --cs-tube-gap: 14px;
-  }
-}
-
-@media (max-width: 380px) {
-  :root {
-    --cs-tube-width: 46px;
-    --cs-ball-size: 44px;
-    --cs-tube-gap: 6px;
-  }
-}
-
-/* Small + short screens: prevent Hard mode (11 tubes) from overflowing */
-@media (max-width: 380px) and (max-height: 700px) {
-  :root {
-    --cs-tube-width: 38px;
-    --cs-ball-size: 36px;
-    --cs-tube-gap: 4px;
-  }
-  .cs-tube {
-    min-height: calc(var(--cs-ball-size) * 4 + 16px);
-    border-radius: 0 0 16px 16px;
-  }
-  .cs-action-bar {
-    gap: 8px;
-    padding: 6px 0;
   }
 }
 
