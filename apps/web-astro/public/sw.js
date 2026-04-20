@@ -58,7 +58,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 114;
+const CACHE_VERSION = 118;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
@@ -124,6 +124,12 @@ const ASSETS = [
   '/games/chroma-sort/index.html',
   '/games/chroma-sort/game.js',
   '/games/chroma-sort/styles.css',
+
+  // Bir Glider
+  '/games/bir-glider/',
+  '/games/bir-glider/index.html',
+  '/games/bir-glider/game.js',
+  '/games/bir-glider/styles.css',
 
   // Drift Legends
   '/games/drift-legends/',

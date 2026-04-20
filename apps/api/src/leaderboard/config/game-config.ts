@@ -393,6 +393,21 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     },
   },
 
+  // Bir Glider: endless paragliding — score is distance + flag combos + bonuses
+  'bir-glider': {
+    maxScore: 100000,
+    maxScorePerSecond: 500,
+    minTimeMs: 2000,
+    maxLevel: 3,
+    allowedMetadataKeys: ['distance', 'maxAltitude', 'prayerFlags', 'maxCombo', 'eagleNearMisses', 'biome', 'goalsCompleted', 'zenMode'],
+    customValidation: (dto) => {
+      if (dto.metadata?.distance && dto.score < (dto.metadata.distance as number)) {
+        return { valid: false, reason: 'Score below distance value' };
+      }
+      return { valid: true };
+    },
+  },
+
   // Drift Legends: 3D kart racing (score = race time in ms; lower = better)
   'drift-legends': {
     maxScore: 600000,        // Max 10 minutes per race

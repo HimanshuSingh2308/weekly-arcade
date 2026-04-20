@@ -1,0 +1,166 @@
+---
+import GameLayout from '../../layouts/GameLayout.astro';
+import gameData from '../../data/games/bir-glider.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+  tips={gameData.tips}
+  howToPlay={gameData.howToPlay}
+  similarTo={gameData.similarTo}
+  aboutGame={gameData.aboutGame}
+  faq={gameData.faq}
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/games/bir-glider/styles.css">
+  </Fragment>
+
+  <!-- Main canvas -->
+  <canvas id="gameCanvas" role="application" aria-label="Bir Glider — paragliding game. Use Space or Arrow Up to rise, release to glide."></canvas>
+
+  <!-- Pause button (visible during play) -->
+  <button class="pause-btn-inline" id="pauseBtn" onclick="pauseGame()" aria-label="Pause game">&#9646;&#9646;</button>
+
+  <!-- HUD (visible during play) — Alto-style: distance+score top-right, single goal bottom-center -->
+  <div class="hud" id="hud" style="display:none;">
+    <div class="altitude-bar" id="altBar">
+      <div class="altitude-fill" id="altFill" style="height:10%"></div>
+    </div>
+    <div class="altitude-label" id="altLabel">0m</div>
+    <div class="hud-flags" id="hudFlags">&#x1F3F3;&#xFE0F; 0</div>
+    <div class="hud-top-right">
+      <div class="hud-distance" id="hudDistance" role="status" aria-live="polite" aria-atomic="true">0 <span>m</span></div>
+      <div class="hud-score" id="hudScore">0</div>
+      <div class="hud-best" id="hudBest"></div>
+    </div>
+    <div class="hud-combo" id="hudCombo"></div>
+    <div class="hud-zen-badge hidden" id="hudZenBadge">ZEN</div>
+    <div class="hud-goal-pinned" id="goalsPinned"></div>
+  </div>
+
+  <!-- Menu Screen -->
+  <div class="menu-screen" id="menuScreen">
+    <canvas class="menu-bg-canvas" id="menuBgCanvas"></canvas>
+    <div class="menu-content">
+      <div class="menu-icon">🪂</div>
+      <div class="menu-title">Bir Glider</div>
+      <div class="menu-tagline">"Rise on the wind. Find your calm."</div>
+      <div class="menu-best" id="menuBest"></div>
+      <button class="play-btn" id="playBtn" onclick="onMenuFly()">Fly</button>
+      <button class="zen-toggle" id="zenToggle" onclick="playUIClick();toggleZenMode()" role="switch" aria-checked="false" aria-label="Zen Mode">
+        <span aria-hidden="true">🧘</span> Zen Mode
+        <div class="toggle-knob"></div>
+      </button>
+      <div class="controls-hint">Hold anywhere to rise &bull; Release to glide</div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen — Alto-style itemized score breakdown -->
+  <div class="gameover-screen hidden" id="gameoverScreen">
+    <div class="gameover-icon" id="gameoverIcon">🏔️</div>
+    <div class="gameover-title" id="gameoverTitle" role="alert" aria-live="assertive">Landed</div>
+    <div class="gameover-subtitle" id="gameoverSubtitle">The mountain is patient. Fly again.</div>
+    <div class="level-stars hidden" id="levelStars">
+      <span class="star empty" id="star1">☆</span>
+      <span class="star empty" id="star2">☆</span>
+      <span class="star empty" id="star3">☆</span>
+    </div>
+    <div class="score-breakdown" id="scoreBreakdown">
+      <div class="score-row"><span class="score-row-label">Distance</span><span class="score-row-value" id="sbDistance">0</span></div>
+      <div class="score-row" id="sbFlagsRow"><span class="score-row-label">Flag bonus</span><span class="score-row-value" id="sbFlags">+0</span></div>
+      <div class="score-row" id="sbNearMissRow"><span class="score-row-label">Near-miss bonus</span><span class="score-row-value" id="sbNearMiss">+0</span></div>
+      <div class="score-row" id="sbAltRow"><span class="score-row-label">Altitude bonus</span><span class="score-row-value" id="sbAltBonus">+0</span></div>
+      <div class="score-row score-total"><span class="score-row-label">Total</span><span class="score-row-value" id="sbTotal">0</span></div>
+    </div>
+    <div class="gameover-details">
+      <span id="statDistanceDetail"></span> · <span id="statAltDetail"></span> · <span id="statBiomeDetail"></span>
+    </div>
+    <div class="gap-to-best" id="gapToBest"></div>
+    <div class="gameover-buttons">
+      <button class="retry-btn" onclick="startGame()">Fly Again</button>
+      <button class="menu-btn-go" onclick="showMenu()">Menu</button>
+    </div>
+  </div>
+
+  <!-- Pause Screen — with goals and restart -->
+  <div class="pause-screen hidden" id="pauseScreen">
+    <div class="pause-content">
+      <div class="pause-icon">⏸️</div>
+      <div class="pause-title">Paused</div>
+      <div class="pause-stats">
+        <span id="pauseDistance">0m</span> · <span id="pauseAltitude">0m alt</span> · <span id="pauseScore">0 pts</span>
+      </div>
+      <div class="pause-goals" id="pauseGoals"></div>
+      <div class="pause-buttons">
+        <button class="play-btn" onclick="playUIClick();resumeGame()">Resume</button>
+        <button class="menu-btn-go" onclick="playUIClick();startGame()">Restart</button>
+        <button class="menu-btn-go" onclick="playUIClick();quitToMenu()">Quit to Menu</button>
+      </div>
+      <div class="pause-hint">Press Escape or tap to resume</div>
+    </div>
+  </div>
+
+  <!-- Level Select Screen — shares menu canvas background -->
+  <div class="level-select-screen hidden" id="levelSelectScreen">
+    <canvas class="menu-bg-canvas" id="levelBgCanvas"></canvas>
+    <div class="level-select-content">
+      <div class="level-select-header">
+        <button class="level-back-btn" onclick="hideLevelSelect(); showMenu();">&#8592;</button>
+        <div class="level-select-title">Select Level</div>
+      </div>
+      <div class="level-grid" id="levelGrid"></div>
+    </div>
+  </div>
+
+  <!-- Tap to start overlay (hidden by default, shown after clicking Fly) -->
+  <div class="tap-overlay hidden" id="tapOverlay">
+    <div class="tap-content">
+      <div class="tap-icon">🪂</div>
+      <div class="tap-title">Ready to Soar</div>
+      <!-- Desktop controls -->
+      <div class="tap-hint tap-desktop">Press Space or Click to launch</div>
+      <div class="tap-controls tap-desktop">
+        <div class="tap-control"><span class="tap-key">Hold Click</span> Rise on thermals</div>
+        <div class="tap-control"><span class="tap-key">Release</span> Glide gently</div>
+        <div class="tap-control"><span class="tap-key">Hold ↓</span> Dive &amp; swoop</div>
+        <div class="tap-control"><span class="tap-key">Tap ↓</span> Perform stunts</div>
+        <div class="tap-control"><span class="tap-key">Esc</span> Pause</div>
+      </div>
+      <!-- Mobile controls -->
+      <div class="tap-hint tap-mobile">Tap anywhere to launch</div>
+      <div class="tap-controls tap-mobile">
+        <div class="tap-control"><span class="tap-key">Hold</span> Rise on thermals</div>
+        <div class="tap-control"><span class="tap-key">Lift</span> Glide gently</div>
+        <div class="tap-control"><span class="tap-key">Swipe ↓</span> Dive &amp; swoop</div>
+        <div class="tap-control"><span class="tap-key">Quick ↓</span> Perform stunts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biome card -->
+  <div class="biome-card" id="biomeCard">
+    <div class="biome-card-name" id="biomeCardName"></div>
+    <div class="biome-card-sub" id="biomeCardSub"></div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Screen flash -->
+  <div class="screen-flash" id="screenFlash"></div>
+
+  <Fragment slot="scripts">
+    <script is:inline src="/games/bir-glider/game.js"></script>
+  </Fragment>
+</GameLayout>

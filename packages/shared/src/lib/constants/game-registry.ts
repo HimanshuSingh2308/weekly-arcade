@@ -28,6 +28,7 @@ export interface GameInfo {
 }
 
 export const GAME_REGISTRY: GameInfo[] = [
+  { id: 'bir-glider',         name: 'Bir Glider',          icon: '🪂', description: 'Himalayan paragliding',  genres: ['endless', 'zen', 'adventure'] },
   { id: 'stack-tower',        name: 'Stack Tower',         icon: '🏗️', description: 'Timing arcade',         genres: ['arcade', 'casual'] },
   { id: 'voidbreak',          name: 'Voidbreak',           icon: '☄️', description: 'Asteroid roguelite',     genres: ['action', 'arcade'] },
   { id: 'wordle',             name: 'Wordle',              icon: '🔤', description: 'Word puzzle',            genres: ['puzzle'] },

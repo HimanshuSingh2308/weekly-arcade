@@ -20,7 +20,8 @@ export type AchievementCategory =
   | 'cricket-blitz'
   | 'chess-3d'
   | 'drift-legends'
-  | 'chroma-sort';
+  | 'chroma-sort'
+  | 'bir-glider';
 
 export interface AchievementRequirement {
   type: 'first_game' | 'attempts' | 'streak' | 'level' | 'time' | 'hints' | 'wins' | 'wave' | 'score' | 'combo' | 'special' | 'first_boundary' | 'first_six' | 'sixes' | 'checkmate' | 'elo';

@@ -668,6 +668,16 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   'cs-no-undo-easy':     { id: 'cs-no-undo-easy',      name: 'Clean Solve',        description: 'Complete Easy without using undo',                    icon: '🧹', xpReward: 75,  category: 'chroma-sort', requirement: { type: 'special', gameId: 'chroma-sort' } },
   'cs-speed-demon':      { id: 'cs-speed-demon',       name: 'Speed Sorter',       description: 'Complete a daily puzzle in under 60 seconds',         icon: '⚡', xpReward: 150, category: 'chroma-sort', requirement: { type: 'time', value: 60, gameId: 'chroma-sort' } },
   'cs-daily-streak-3':   { id: 'cs-daily-streak-3',    name: 'Getting Started',    description: 'Maintain a 3-day daily streak',                       icon: '🔥', xpReward: 100, category: 'chroma-sort', requirement: { type: 'streak', value: 3, gameId: 'chroma-sort' } },
+
+  // ============ BIR GLIDER ACHIEVEMENTS ============
+  bir_first_flight:       { id: 'bir_first_flight',       name: 'First Flight',        description: 'Complete your first run in Bir Glider',                    icon: '🪂', xpReward: 100, category: 'bir-glider', requirement: { type: 'first_game',  gameId: 'bir-glider' } },
+  bir_flag_collector:     { id: 'bir_flag_collector',     name: 'Flag Collector',      description: 'Collect 10 prayer flags in a single run',                   icon: '🏳️', xpReward: 150, category: 'bir-glider', requirement: { type: 'special',     gameId: 'bir-glider' } },
+  bir_altitude_1000:      { id: 'bir_altitude_1000',      name: 'High Altitude',       description: 'Reach 1000m altitude in a single run',                      icon: '⛰️', xpReward: 200, category: 'bir-glider', requirement: { type: 'special',     gameId: 'bir-glider' } },
+  bir_zen_master:         { id: 'bir_zen_master',         name: 'Zen Master',          description: 'Fly for 5 minutes in Zen Mode',                             icon: '🧘', xpReward: 300, category: 'bir-glider', requirement: { type: 'special',     gameId: 'bir-glider' } },
+  bir_eagle_dodger:       { id: 'bir_eagle_dodger',       name: 'Eagle Dodger',        description: 'Achieve 10 eagle near-misses in a single run',              icon: '🦅', xpReward: 250, category: 'bir-glider', requirement: { type: 'special',     gameId: 'bir-glider' } },
+  bir_himalayan_explorer: { id: 'bir_himalayan_explorer', name: 'Himalayan Explorer',  description: 'Fly 2500m to reach the Snow Peaks biome',                   icon: '🏔️', xpReward: 300, category: 'bir-glider', requirement: { type: 'special',     gameId: 'bir-glider' } },
+  bir_thermal_rider:      { id: 'bir_thermal_rider',      name: 'Thermal Rider',       description: 'Catch 20 thermals in a single run',                         icon: '🌡️', xpReward: 200, category: 'bir-glider', requirement: { type: 'special',     gameId: 'bir-glider' } },
+  bir_legend:             { id: 'bir_legend',             name: 'Legend of Bir',       description: 'Score 10,000 points in a single run',                       icon: '👑', xpReward: 500, category: 'bir-glider', requirement: { type: 'score', value: 10000, gameId: 'bir-glider' } },
 };
 
 export const ACHIEVEMENT_LIST = Object.values(ACHIEVEMENTS);
