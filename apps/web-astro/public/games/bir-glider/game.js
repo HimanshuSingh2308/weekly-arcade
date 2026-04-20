@@ -2606,8 +2606,10 @@ function gameLoop(ts) {
   updatePhysics(dt);
   checkCollisions();
   checkGoals();
-  // Level completion check
-  if (gameMode === 'levels' && currentLevel && !levelCompleteShown && distance >= currentLevel.distGoal) {
+  // Level completion check — require BOTH distance goal AND task goal
+  if (gameMode === 'levels' && currentLevel && !levelCompleteShown
+      && distance >= currentLevel.distGoal
+      && (!currentLevel.goal || currentLevel.goal.check())) {
     levelCompleteShown = true;
     completeLevelAction();
     return;
@@ -2625,7 +2627,14 @@ function gameLoop(ts) {
 // ---- HUD ----
 function updateHUD() {
   if (gameMode === 'levels' && currentLevel) {
-    document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' / ' + currentLevel.distGoal + ' <span>m</span>';
+    const distMet = distance >= currentLevel.distGoal;
+    const goalMet = !currentLevel.goal || currentLevel.goal.check();
+    if (distMet && !goalMet) {
+      // Distance done but task pending — show checkmark on distance + highlight goal
+      document.getElementById('hudDistance').innerHTML = '✓ ' + currentLevel.distGoal + ' <span>m</span>';
+    } else {
+      document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' / ' + currentLevel.distGoal + ' <span>m</span>';
+    }
     document.getElementById('hudBest').textContent = currentLevel.name;
   } else {
     document.getElementById('hudDistance').innerHTML = Math.floor(distance) + ' <span>m</span>';
@@ -2685,10 +2694,15 @@ function renderGoals() {
   const nextGoal = goals.find(g => !goalProgress[g.id]);
   if (nextGoal) {
     pinned.textContent = '★ ' + nextGoal.text;
+    // Pulse when distance is done but goal is pending — draw player's attention
+    const distMet = gameMode === 'levels' && currentLevel && distance >= currentLevel.distGoal;
+    pinned.classList.toggle('goal-urgent', !!distMet);
   } else if (goals.length > 0) {
     pinned.textContent = '✓ All goals complete!';
+    pinned.classList.remove('goal-urgent');
   } else {
     pinned.textContent = '';
+    pinned.classList.remove('goal-urgent');
   }
 }
 
