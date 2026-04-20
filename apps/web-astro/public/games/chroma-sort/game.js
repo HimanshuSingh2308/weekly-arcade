@@ -500,6 +500,19 @@
   var timerInterval = null;
   var hintTimeout = null;
   var currentUser = null;
+  var animating = false;
+
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function getOptimalColumns(tubeCount) {
+    var colMap = { 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 4 };
+    var cols = colMap[tubeCount] || Math.min(tubeCount, 5);
+    var tubeWidthWithGap = 72;
+    var maxCols = Math.floor(window.innerWidth / tubeWidthWithGap);
+    return Math.min(cols, Math.max(maxCols, 2));
+  }
 
   // ============================================
   // APP ROOT
@@ -573,6 +586,7 @@
   function renderHome() {
     hideTutorialOverlay();
     audio.bgm.stop();
+    animating = false;
     state.screen = 'home';
     state.selectedTube = null;
     clearInterval(timerInterval);
@@ -821,6 +835,10 @@
     html += '</div>';
     app.innerHTML = html;
 
+    // Set grid columns for responsive layout
+    var grid = document.getElementById('cs-tube-grid');
+    if (grid) grid.style.setProperty('--cs-grid-cols', getOptimalColumns(state.tubes.length));
+
     if (state.colorBlindMode) {
       app.classList.add('color-blind-mode');
     } else {
@@ -833,10 +851,27 @@
     // Start BGM when puzzle begins
     audio.bgm.start();
 
+    // Animate balls filling tubes
+    animateTubeFill();
+
     // Show tutorial overlay for first-ever puzzle
     if (!state.tutorialComplete && state.mode === 'endless' && state.endlessLevel === 1 && state.moveCount === 0) {
       showTutorialStep(0);
     }
+  }
+
+  function animateTubeFill() {
+    if (prefersReducedMotion()) return;
+    var balls = document.querySelectorAll('#cs-tube-grid .cs-ball');
+    if (balls.length === 0) return;
+    animating = true;
+    var delayStep = Math.min(50, 1200 / balls.length);
+    balls.forEach(function (ball, i) {
+      ball.classList.add('cs-ball-entering');
+      ball.style.setProperty('--cs-enter-delay', (i * delayStep) + 'ms');
+    });
+    var totalDuration = balls.length * delayStep + 400;
+    setTimeout(function () { animating = false; }, totalDuration);
   }
 
   function renderTubes() {
@@ -875,6 +910,7 @@
   function updateTubeGrid() {
     var grid = document.getElementById('cs-tube-grid');
     if (grid) {
+      grid.style.setProperty('--cs-grid-cols', getOptimalColumns(state.tubes.length));
       grid.innerHTML = renderTubes();
       bindTubeClicks();
     }
@@ -949,7 +985,7 @@
   // ============================================
 
   function handleTubeClick(tubeIndex) {
-    if (state.solved) return;
+    if (state.solved || animating) return;
 
     // Start timer on first interaction
     if (!state.startTime) {
@@ -978,6 +1014,91 @@
       // ATTEMPT MOVE
       attemptMove(state.selectedTube, tubeIndex);
     }
+  }
+
+  function animateBallMove(srcIdx, destIdx, transferCount, onComplete) {
+    if (prefersReducedMotion()) { onComplete(); return; }
+
+    animating = true;
+
+    var srcTubeEl = app.querySelectorAll('.cs-tube')[srcIdx];
+    var destTubeEl = app.querySelectorAll('.cs-tube')[destIdx];
+    if (!srcTubeEl || !destTubeEl) { animating = false; onComplete(); return; }
+
+    // In column-reverse, top ball is last child
+    var srcBalls = srcTubeEl.querySelectorAll('.cs-ball');
+    var destBalls = destTubeEl.querySelectorAll('.cs-ball');
+
+    // Get balls to transfer (from top)
+    var ballEls = [];
+    for (var bi = 0; bi < transferCount; bi++) {
+      var idx = srcBalls.length - 1 - bi;
+      if (idx >= 0) ballEls.push(srcBalls[idx]);
+    }
+    if (ballEls.length === 0) { animating = false; onComplete(); return; }
+
+    var destRect = destTubeEl.getBoundingClientRect();
+    var completed = 0;
+
+    ballEls.forEach(function (srcBall, i) {
+      var srcRect = srcBall.getBoundingClientRect();
+
+      // Calculate landing position
+      var ballH = srcRect.height;
+      var gap = 2;
+      var destCount = destBalls.length + i; // stacked from previous in-flight
+      var landY = destRect.bottom - 6 - (destCount + 1) * (ballH + gap);
+      var landX = destRect.left + (destRect.width - srcRect.width) / 2;
+
+      // Hide the source ball
+      srcBall.style.visibility = 'hidden';
+
+      // Create flying ball
+      var flyBall = document.createElement('div');
+      flyBall.className = 'cs-flying-ball';
+      flyBall.dataset.color = srcBall.getAttribute('data-color');
+      flyBall.style.width = srcRect.width + 'px';
+      flyBall.style.height = srcRect.height + 'px';
+      flyBall.style.left = srcRect.left + 'px';
+      flyBall.style.top = srcRect.top + 'px';
+      document.body.appendChild(flyBall);
+
+      // Arc animation
+      var startX = srcRect.left;
+      var startY = srcRect.top;
+      var midX = (startX + landX) / 2;
+      var arcPeakY = Math.min(startY, landY) - 60;
+      var duration = 320;
+      var delay = i * 70;
+
+      setTimeout(function () {
+        var start = performance.now();
+        function step(now) {
+          var elapsed = now - start;
+          var t = Math.min(elapsed / duration, 1);
+          var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+          // Quadratic bezier
+          var x = (1 - ease) * (1 - ease) * startX + 2 * (1 - ease) * ease * midX + ease * ease * landX;
+          var y = (1 - ease) * (1 - ease) * startY + 2 * (1 - ease) * ease * arcPeakY + ease * ease * landY;
+
+          flyBall.style.left = x + 'px';
+          flyBall.style.top = y + 'px';
+
+          if (t < 1) {
+            requestAnimationFrame(step);
+          } else {
+            flyBall.remove();
+            completed++;
+            if (completed === ballEls.length) {
+              animating = false;
+              onComplete();
+            }
+          }
+        }
+        requestAnimationFrame(step);
+      }, delay);
+    });
   }
 
   function attemptMove(srcIdx, destIdx) {
@@ -1030,48 +1151,77 @@
       return;
     }
 
-    // Save history for undo
-    state.history.push(cloneTubes(state.tubes));
-
-    // Execute move
-    var movedBalls = [];
-    for (var m = 0; m < transferCount; m++) {
-      movedBalls.push(src.pop());
-    }
-    for (var m = movedBalls.length - 1; m >= 0; m--) {
-      dest.push(movedBalls[m]);
-    }
-
-    state.moveCount++;
+    // Remove selected state before animation (avoids rect issues)
     state.selectedTube = null;
-
-    // Audio
-    if (transferCount > 1) {
-      audio.stackTransfer(transferCount);
-    } else {
-      audio.place();
-    }
-
     updateTubeGrid();
-    updateMoveDisplay();
-    updateUndoButton();
 
-    // Check for newly completed tube
-    if (isTubeComplete(dest)) {
-      audio.tubeComplete();
-    }
+    // Animate the ball(s) moving, then commit state
+    var capturedTransferCount = transferCount;
+    var capturedSrcIdx = srcIdx;
+    var capturedDestIdx = destIdx;
 
-    // Check win
-    if (isSolved(state.tubes)) {
-      onWin();
-    }
+    animateBallMove(srcIdx, destIdx, transferCount, function () {
+      // Save history for undo
+      state.history.push(cloneTubes(state.tubes));
 
-    // Tutorial: mark complete after a few moves
-    if (!state.tutorialComplete && state.moveCount >= 2) {
-      state.tutorialComplete = true;
-      saveLocal({ tutorialComplete: true });
-      hideTutorialOverlay();
-    }
+      // Execute move
+      var movedBalls = [];
+      for (var m = 0; m < capturedTransferCount; m++) {
+        movedBalls.push(src.pop());
+      }
+      for (var m = movedBalls.length - 1; m >= 0; m--) {
+        dest.push(movedBalls[m]);
+      }
+
+      state.moveCount++;
+
+      // Audio
+      if (capturedTransferCount > 1) {
+        audio.stackTransfer(capturedTransferCount);
+      } else {
+        audio.place();
+      }
+
+      updateTubeGrid();
+      updateMoveDisplay();
+      updateUndoButton();
+
+      // Landing bounce on destination ball
+      var destTubeEl = app.querySelectorAll('.cs-tube')[capturedDestIdx];
+      if (destTubeEl) {
+        var allBalls = destTubeEl.querySelectorAll('.cs-ball');
+        var topBall = allBalls[allBalls.length - 1];
+        if (topBall) {
+          topBall.classList.add('cs-ball-landed');
+          topBall.addEventListener('animationend', function () {
+            topBall.classList.remove('cs-ball-landed');
+          }, { once: true });
+        }
+      }
+
+      // Check for newly completed tube — sparkle
+      if (isTubeComplete(dest)) {
+        audio.tubeComplete();
+        if (destTubeEl) {
+          destTubeEl.classList.add('cs-tube-sparkle');
+          destTubeEl.addEventListener('animationend', function () {
+            destTubeEl.classList.remove('cs-tube-sparkle');
+          }, { once: true });
+        }
+      }
+
+      // Check win
+      if (isSolved(state.tubes)) {
+        onWin();
+      }
+
+      // Tutorial: mark complete after a few moves
+      if (!state.tutorialComplete && state.moveCount >= 2) {
+        state.tutorialComplete = true;
+        saveLocal({ tutorialComplete: true });
+        hideTutorialOverlay();
+      }
+    });
   }
 
   function cloneTubes(tubes) {
@@ -1846,6 +1996,18 @@
     app.addEventListener('touchmove', function (e) {
       if (state.screen === 'puzzle') e.preventDefault();
     }, { passive: false });
+
+    // Responsive grid recalculation on resize
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        if (state.screen === 'puzzle') {
+          var grid = document.getElementById('cs-tube-grid');
+          if (grid) grid.style.setProperty('--cs-grid-cols', getOptimalColumns(state.tubes.length));
+        }
+      }, 150);
+    });
 
     // Always start at home screen per PRD flow
     // Tutorial triggers when user taps Endless Mode for the first time
