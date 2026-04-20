@@ -500,6 +500,91 @@
   var timerInterval = null;
   var hintTimeout = null;
   var currentUser = null;
+  var animating = false;
+
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  // ============================================
+  // DYNAMIC GRID LAYOUT — scales tubes/balls to fit any screen
+  // ============================================
+
+  function computeGridLayout(tubeCount) {
+    // Available space
+    var appEl = document.getElementById('chroma-sort-app');
+    var containerW = appEl ? appEl.clientWidth : window.innerWidth;
+    // Reserve height for top bar (~44px), action bar (~72px), tip bar (~40px), padding (~24px)
+    var containerH = window.innerHeight - 60 - 44 - 72 - 40 - 24;
+    containerH = Math.max(containerH, 200);
+
+    // Preferred columns by tube count (aesthetic balance)
+    var preferredCols = { 3: 3, 4: 4, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 4 };
+    var cols = preferredCols[tubeCount] || Math.min(tubeCount, 5);
+    var rows = Math.ceil(tubeCount / cols);
+
+    // Minimum gap
+    var gap = 10;
+
+    // Calculate max tube width that fits horizontally
+    var maxTubeW = Math.floor((containerW - gap * (cols + 1)) / cols);
+
+    // Ball size = tube width * 0.82 (ball is slightly smaller than tube)
+    // Tube height = ball * 4 + padding(~20px)
+    // Total grid height = rows * tubeH + (rows-1)*gap
+    // Solve for max ball size that fits vertically
+    var maxBallFromH = Math.floor((containerH - gap * (rows - 1) - rows * 20) / (rows * 4));
+
+    // Ball size from width constraint
+    var maxBallFromW = Math.floor(maxTubeW * 0.82);
+
+    // Pick the smaller constraint, clamp to reasonable range
+    var ballSize = Math.min(maxBallFromW, maxBallFromH);
+    ballSize = Math.max(24, Math.min(ballSize, 52)); // min 24, max 52
+
+    var tubeWidth = Math.round(ballSize / 0.82);
+    tubeWidth = Math.max(30, Math.min(tubeWidth, 64));
+
+    // Recheck: does it actually fit? If not, reduce columns
+    var totalW = cols * tubeWidth + (cols - 1) * gap;
+    while (totalW > containerW && cols > 2) {
+      cols--;
+      rows = Math.ceil(tubeCount / cols);
+      maxBallFromH = Math.floor((containerH - gap * (rows - 1) - rows * 20) / (rows * 4));
+      ballSize = Math.min(maxBallFromW, maxBallFromH);
+      ballSize = Math.max(24, Math.min(ballSize, 52));
+      tubeWidth = Math.round(ballSize / 0.82);
+      tubeWidth = Math.max(30, Math.min(tubeWidth, 64));
+      totalW = cols * tubeWidth + (cols - 1) * gap;
+    }
+
+    // Scale gap proportionally to tube size
+    gap = Math.max(4, Math.min(14, Math.round(tubeWidth * 0.18)));
+
+    // Border radius scales with tube width
+    var borderRadius = Math.max(12, Math.round(tubeWidth * 0.45));
+
+    return { cols: cols, tubeWidth: tubeWidth, ballSize: ballSize, gap: gap, borderRadius: borderRadius };
+  }
+
+  function applyGridLayout(tubeCount) {
+    var layout = computeGridLayout(tubeCount);
+    var grid = document.getElementById('cs-tube-grid');
+    if (!grid) return layout;
+
+    grid.style.setProperty('--cs-grid-cols', layout.cols);
+    grid.style.setProperty('--cs-tube-width', layout.tubeWidth + 'px');
+    grid.style.setProperty('--cs-ball-size', layout.ballSize + 'px');
+    grid.style.setProperty('--cs-tube-gap', layout.gap + 'px');
+
+    // Update tube border radius
+    var tubes = grid.querySelectorAll('.cs-tube');
+    tubes.forEach(function (t) {
+      t.style.borderRadius = '0 0 ' + layout.borderRadius + 'px ' + layout.borderRadius + 'px';
+    });
+
+    return layout;
+  }
 
   // ============================================
   // APP ROOT
@@ -573,6 +658,7 @@
   function renderHome() {
     hideTutorialOverlay();
     audio.bgm.stop();
+    animating = false;
     state.screen = 'home';
     state.selectedTube = null;
     clearInterval(timerInterval);
@@ -821,6 +907,9 @@
     html += '</div>';
     app.innerHTML = html;
 
+    // Dynamic responsive layout — compute tube/ball sizes for current screen
+    applyGridLayout(state.tubes.length);
+
     if (state.colorBlindMode) {
       app.classList.add('color-blind-mode');
     } else {
@@ -833,10 +922,27 @@
     // Start BGM when puzzle begins
     audio.bgm.start();
 
+    // Animate balls filling tubes
+    animateTubeFill();
+
     // Show tutorial overlay for first-ever puzzle
     if (!state.tutorialComplete && state.mode === 'endless' && state.endlessLevel === 1 && state.moveCount === 0) {
       showTutorialStep(0);
     }
+  }
+
+  function animateTubeFill() {
+    if (prefersReducedMotion()) return;
+    var balls = document.querySelectorAll('#cs-tube-grid .cs-ball');
+    if (balls.length === 0) return;
+    animating = true;
+    var delayStep = Math.min(50, 1200 / balls.length);
+    balls.forEach(function (ball, i) {
+      ball.classList.add('cs-ball-entering');
+      ball.style.setProperty('--cs-enter-delay', (i * delayStep) + 'ms');
+    });
+    var totalDuration = balls.length * delayStep + 400;
+    setTimeout(function () { animating = false; }, totalDuration);
   }
 
   function renderTubes() {
@@ -876,6 +982,7 @@
     var grid = document.getElementById('cs-tube-grid');
     if (grid) {
       grid.innerHTML = renderTubes();
+      applyGridLayout(state.tubes.length);
       bindTubeClicks();
     }
   }
@@ -949,7 +1056,7 @@
   // ============================================
 
   function handleTubeClick(tubeIndex) {
-    if (state.solved) return;
+    if (state.solved || animating) return;
 
     // Start timer on first interaction
     if (!state.startTime) {
@@ -978,6 +1085,91 @@
       // ATTEMPT MOVE
       attemptMove(state.selectedTube, tubeIndex);
     }
+  }
+
+  function animateBallMove(srcIdx, destIdx, transferCount, onComplete) {
+    if (prefersReducedMotion()) { onComplete(); return; }
+
+    animating = true;
+
+    var srcTubeEl = app.querySelectorAll('.cs-tube')[srcIdx];
+    var destTubeEl = app.querySelectorAll('.cs-tube')[destIdx];
+    if (!srcTubeEl || !destTubeEl) { animating = false; onComplete(); return; }
+
+    // In column-reverse, top ball is last child
+    var srcBalls = srcTubeEl.querySelectorAll('.cs-ball');
+    var destBalls = destTubeEl.querySelectorAll('.cs-ball');
+
+    // Get balls to transfer (from top)
+    var ballEls = [];
+    for (var bi = 0; bi < transferCount; bi++) {
+      var idx = srcBalls.length - 1 - bi;
+      if (idx >= 0) ballEls.push(srcBalls[idx]);
+    }
+    if (ballEls.length === 0) { animating = false; onComplete(); return; }
+
+    var destRect = destTubeEl.getBoundingClientRect();
+    var completed = 0;
+
+    ballEls.forEach(function (srcBall, i) {
+      var srcRect = srcBall.getBoundingClientRect();
+
+      // Calculate landing position
+      var ballH = srcRect.height;
+      var gap = 2;
+      var destCount = destBalls.length + i; // stacked from previous in-flight
+      var landY = destRect.bottom - 6 - (destCount + 1) * (ballH + gap);
+      var landX = destRect.left + (destRect.width - srcRect.width) / 2;
+
+      // Hide the source ball
+      srcBall.style.visibility = 'hidden';
+
+      // Create flying ball
+      var flyBall = document.createElement('div');
+      flyBall.className = 'cs-flying-ball';
+      flyBall.dataset.color = srcBall.getAttribute('data-color');
+      flyBall.style.width = srcRect.width + 'px';
+      flyBall.style.height = srcRect.height + 'px';
+      flyBall.style.left = srcRect.left + 'px';
+      flyBall.style.top = srcRect.top + 'px';
+      document.body.appendChild(flyBall);
+
+      // Arc animation
+      var startX = srcRect.left;
+      var startY = srcRect.top;
+      var midX = (startX + landX) / 2;
+      var arcPeakY = Math.min(startY, landY) - 60;
+      var duration = 320;
+      var delay = i * 70;
+
+      setTimeout(function () {
+        var start = performance.now();
+        function step(now) {
+          var elapsed = now - start;
+          var t = Math.min(elapsed / duration, 1);
+          var ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+          // Quadratic bezier
+          var x = (1 - ease) * (1 - ease) * startX + 2 * (1 - ease) * ease * midX + ease * ease * landX;
+          var y = (1 - ease) * (1 - ease) * startY + 2 * (1 - ease) * ease * arcPeakY + ease * ease * landY;
+
+          flyBall.style.left = x + 'px';
+          flyBall.style.top = y + 'px';
+
+          if (t < 1) {
+            requestAnimationFrame(step);
+          } else {
+            flyBall.remove();
+            completed++;
+            if (completed === ballEls.length) {
+              animating = false;
+              onComplete();
+            }
+          }
+        }
+        requestAnimationFrame(step);
+      }, delay);
+    });
   }
 
   function attemptMove(srcIdx, destIdx) {
@@ -1030,48 +1222,77 @@
       return;
     }
 
-    // Save history for undo
-    state.history.push(cloneTubes(state.tubes));
-
-    // Execute move
-    var movedBalls = [];
-    for (var m = 0; m < transferCount; m++) {
-      movedBalls.push(src.pop());
-    }
-    for (var m = movedBalls.length - 1; m >= 0; m--) {
-      dest.push(movedBalls[m]);
-    }
-
-    state.moveCount++;
+    // Remove selected state before animation (avoids rect issues)
     state.selectedTube = null;
-
-    // Audio
-    if (transferCount > 1) {
-      audio.stackTransfer(transferCount);
-    } else {
-      audio.place();
-    }
-
     updateTubeGrid();
-    updateMoveDisplay();
-    updateUndoButton();
 
-    // Check for newly completed tube
-    if (isTubeComplete(dest)) {
-      audio.tubeComplete();
-    }
+    // Animate the ball(s) moving, then commit state
+    var capturedTransferCount = transferCount;
+    var capturedSrcIdx = srcIdx;
+    var capturedDestIdx = destIdx;
 
-    // Check win
-    if (isSolved(state.tubes)) {
-      onWin();
-    }
+    animateBallMove(srcIdx, destIdx, transferCount, function () {
+      // Save history for undo
+      state.history.push(cloneTubes(state.tubes));
 
-    // Tutorial: mark complete after a few moves
-    if (!state.tutorialComplete && state.moveCount >= 2) {
-      state.tutorialComplete = true;
-      saveLocal({ tutorialComplete: true });
-      hideTutorialOverlay();
-    }
+      // Execute move
+      var movedBalls = [];
+      for (var m = 0; m < capturedTransferCount; m++) {
+        movedBalls.push(src.pop());
+      }
+      for (var m = movedBalls.length - 1; m >= 0; m--) {
+        dest.push(movedBalls[m]);
+      }
+
+      state.moveCount++;
+
+      // Audio
+      if (capturedTransferCount > 1) {
+        audio.stackTransfer(capturedTransferCount);
+      } else {
+        audio.place();
+      }
+
+      updateTubeGrid();
+      updateMoveDisplay();
+      updateUndoButton();
+
+      // Landing bounce on destination ball
+      var destTubeEl = app.querySelectorAll('.cs-tube')[capturedDestIdx];
+      if (destTubeEl) {
+        var allBalls = destTubeEl.querySelectorAll('.cs-ball');
+        var topBall = allBalls[allBalls.length - 1];
+        if (topBall) {
+          topBall.classList.add('cs-ball-landed');
+          topBall.addEventListener('animationend', function () {
+            topBall.classList.remove('cs-ball-landed');
+          }, { once: true });
+        }
+      }
+
+      // Check for newly completed tube — sparkle
+      if (isTubeComplete(dest)) {
+        audio.tubeComplete();
+        if (destTubeEl) {
+          destTubeEl.classList.add('cs-tube-sparkle');
+          destTubeEl.addEventListener('animationend', function () {
+            destTubeEl.classList.remove('cs-tube-sparkle');
+          }, { once: true });
+        }
+      }
+
+      // Check win
+      if (isSolved(state.tubes)) {
+        onWin();
+      }
+
+      // Tutorial: mark complete after a few moves
+      if (!state.tutorialComplete && state.moveCount >= 2) {
+        state.tutorialComplete = true;
+        saveLocal({ tutorialComplete: true });
+        hideTutorialOverlay();
+      }
+    });
   }
 
   function cloneTubes(tubes) {
@@ -1846,6 +2067,17 @@
     app.addEventListener('touchmove', function (e) {
       if (state.screen === 'puzzle') e.preventDefault();
     }, { passive: false });
+
+    // Responsive grid recalculation on resize
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        if (state.screen === 'puzzle') {
+          applyGridLayout(state.tubes.length);
+        }
+      }, 150);
+    });
 
     // Always start at home screen per PRD flow
     // Tutorial triggers when user taps Endless Mode for the first time
