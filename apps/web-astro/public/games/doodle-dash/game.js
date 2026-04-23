@@ -127,9 +127,16 @@
   var elNotifs        = $id('ddNotifs');
 
   // ─── Helpers ────────────────────────────────────────────────────
+  // Track intervals for cleanup on screen transition
+  var _revealCountInterval = null;
+  var _nextRoundCountInterval = null;
+
   function showScreen(name) {
     var screens = [elLobby, elRoomLobby, elGame, elReveal, elRoundResult, elGameOver, elLoadingScreen];
     screens.forEach(function (el) { if (el) el.style.display = 'none'; });
+    // Clear stale intervals on screen transition
+    if (_revealCountInterval) { clearInterval(_revealCountInterval); _revealCountInterval = null; }
+    if (_nextRoundCountInterval) { clearInterval(_nextRoundCountInterval); _nextRoundCountInterval = null; }
     var target = {
       lobby:      elLobby,
       room:       elRoomLobby,
@@ -875,10 +882,10 @@
     var countdown = NEXT_ROUND_T;
     var nextEl = $id('nextRoundCountdown');
     if (nextEl) nextEl.textContent = 'Next round in ' + countdown + 's...';
-    var countInterval = setInterval(function () {
+    _nextRoundCountInterval = setInterval(function () {
       countdown--;
       if (nextEl) nextEl.textContent = 'Next round in ' + countdown + 's...';
-      if (countdown <= 0) clearInterval(countInterval);
+      if (countdown <= 0) { clearInterval(_nextRoundCountInterval); _nextRoundCountInterval = null; }
     }, 1000);
   }
 
@@ -1292,7 +1299,8 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   // ─── Init ────────────────────────────────────────────────────────

@@ -151,7 +151,7 @@ function fuzzyMatch(guess: string, target: string): 'correct' | 'close' | 'wrong
   if (levenshtein(g, t) === 1) return 'close';
 
   // Close: contains the full word as substring (useful for plural/suffix)
-  if (g.includes(t) || t.includes(g)) return 'close';
+  if (g.length >= 3 && (g.includes(t) || t.includes(g))) return 'close';
 
   return 'wrong';
 }
