@@ -88,7 +88,9 @@
   }
 
   function unlockAudio() {
-    if (audioUnlocked || !audioCtx) return;
+    if (audioUnlocked) return;
+    if (!audioCtx) initAudio();
+    if (!audioCtx) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
     audioUnlocked = true;
   }
@@ -186,6 +188,8 @@
   }
 
   // ─── Canvas Setup ───────────────────────────────────────────────
+  var canvasInitialized = false;
+
   function initCanvas() {
     canvas = $id('ddCanvas');
     if (!canvas) return;
@@ -193,9 +197,12 @@
     canvas.width  = CANVAS_W;
     canvas.height = CANVAS_H;
     clearCanvas();
-    buildColorPalette();
-    bindDrawingTools();
-    bindCanvasPointerEvents();
+    if (!canvasInitialized) {
+      buildColorPalette();
+      bindDrawingTools();
+      bindCanvasPointerEvents();
+      canvasInitialized = true;
+    }
   }
 
   function clearCanvas() {
@@ -1306,7 +1313,6 @@
   // ─── Init ────────────────────────────────────────────────────────
   function init() {
     getUserInfo();
-    initAudio();
     bindLobbyActions();
     bindMultiplayerEvents();
     showScreen('lobby');

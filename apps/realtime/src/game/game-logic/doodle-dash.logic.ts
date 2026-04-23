@@ -33,7 +33,6 @@ interface PlayerState {
   starsReceived: number;
   hasGuessedThisRound: boolean;
   sdSubmitted: boolean;    // Speed Draw: submitted canvas
-  sdCanvasData: string;    // Speed Draw: base64 jpeg data URL
   votedFor: string | null; // Speed Draw: who they voted for
 }
 
@@ -205,7 +204,6 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         starsReceived: 0,
         hasGuessedThisRound: false,
         sdSubmitted: false,
-        sdCanvasData: '',
         votedFor: null,
       };
     });
@@ -298,7 +296,6 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       if (s.playerStates[uid]) {
         s.playerStates[uid].hasGuessedThisRound = false;
         s.playerStates[uid].sdSubmitted         = false;
-        s.playerStates[uid].sdCanvasData        = '';
         s.playerStates[uid].votedFor            = null;
       }
     });
