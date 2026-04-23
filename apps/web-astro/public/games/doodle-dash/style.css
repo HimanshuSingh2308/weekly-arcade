@@ -136,6 +136,29 @@
   justify-content: center;
 }
 
+/* ── Focus visible (a11y HIGH-1) ────────────────────────────────── */
+.dd-tool-btn:focus-visible,
+.dd-mode-btn:focus-visible,
+.dd-btn-primary:focus-visible,
+.dd-btn-secondary:focus-visible,
+.dd-word-choice-btn:focus-visible,
+.dd-chat-send:focus-visible,
+.dd-star-btn:focus-visible,
+.dd-size-btn:focus-visible,
+.dd-color-swatch:focus-visible {
+  outline: 3px solid #f5a623;
+  outline-offset: 2px;
+}
+
+/* ── Tool button touch targets (a11y HIGH-4) ───────────────────── */
+.dd-tool-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+.dd-chat-send {
+  min-height: 44px;
+}
+
 /* ── Reduced motion (MED-8) ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

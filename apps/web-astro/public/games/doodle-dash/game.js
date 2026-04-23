@@ -303,6 +303,10 @@
 
     if (currentTool === 'fill') {
       doFill(Math.round(pos.x), Math.round(pos.y), currentColor);
+      // Record fill in stroke history for undo
+      strokeHistory.push([{ x0: pos.x, y0: pos.y, x1: pos.x, y1: pos.y, color: currentColor, width: 0, tool: 'fill' }]);
+      if (strokeHistory.length > MAX_UNDO) strokeHistory.shift();
+      isPointerDown = false;
       return;
     }
     // Start a new dot
@@ -496,8 +500,10 @@
     if (!ctx) return;
     var tool = data.tool;
     if (tool === 'undo') {
-      // Remote undo: replay all strokes from server's stroke history
-      // The server will send updated stroke-history after undo
+      // Remote undo: server sends updated stroke history — replay it
+      if (data.__strokeHistory) {
+        replayStrokes(data.__strokeHistory);
+      }
       return;
     }
     if (tool === 'clear') {

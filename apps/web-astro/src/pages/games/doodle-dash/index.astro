@@ -30,7 +30,7 @@ import gameData from '../../../data/games/doodle-dash.json';
   faq={gameData.faq}
 >
   <Fragment slot="head">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <style is:global>
       body {
         background: #1a1a2e;
@@ -649,7 +649,7 @@ import gameData from '../../../data/games/doodle-dash.json';
       <div class="dd-top-bar">
         <div class="dd-round-info">Round <span id="roundNum">1</span>/<span id="roundTotal">6</span></div>
         <div class="dd-word-display" id="wordDisplay">_ _ _ _ _</div>
-        <div class="dd-timer" id="gameTimer">80</div>
+        <div class="dd-timer" id="gameTimer" role="status" aria-live="polite" aria-atomic="true">80</div>
       </div>
 
       <!-- Main: canvas + sidebar -->
@@ -676,10 +676,10 @@ import gameData from '../../../data/games/doodle-dash.json';
             <div class="dd-divider"></div>
             <!-- Brush sizes -->
             <div class="dd-brush-size">
-              <button class="dd-size-btn sz-s active" data-size="3" style="background:#fff"></button>
-              <button class="dd-size-btn sz-m" data-size="7" style="background:#fff"></button>
-              <button class="dd-size-btn sz-l" data-size="14" style="background:#fff"></button>
-              <button class="dd-size-btn sz-xl" data-size="24" style="background:#fff"></button>
+              <button class="dd-size-btn sz-s active" data-size="3" style="background:#fff" aria-label="Brush size: small"></button>
+              <button class="dd-size-btn sz-m" data-size="7" style="background:#fff" aria-label="Brush size: medium"></button>
+              <button class="dd-size-btn sz-l" data-size="14" style="background:#fff" aria-label="Brush size: large"></button>
+              <button class="dd-size-btn sz-xl" data-size="24" style="background:#fff" aria-label="Brush size: extra large"></button>
             </div>
             <div class="dd-divider"></div>
             <!-- Color palette -->
@@ -695,7 +695,7 @@ import gameData from '../../../data/games/doodle-dash.json';
           </div>
           <div class="dd-chat-panel">
             <div class="dd-panel-header">Chat / Guesses</div>
-            <div class="dd-chat-messages" id="chatMessages"></div>
+            <div class="dd-chat-messages" id="chatMessages" aria-live="polite"></div>
             <div class="dd-chat-input-row">
               <input
                 class="dd-chat-input"
@@ -755,7 +755,7 @@ import gameData from '../../../data/games/doodle-dash.json';
   </div>
 
   <!-- Notifications -->
-  <div id="ddNotifs"></div>
+  <div id="ddNotifs" aria-live="assertive" role="log"></div>
 
   <Fragment slot="scripts">
     <script is:inline src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>

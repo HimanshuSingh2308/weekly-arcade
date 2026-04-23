@@ -360,6 +360,18 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       if (!s.playerStates[uid]) return s as unknown as Record<string, unknown>;
       s.playerStates[uid].sdSubmitted  = true;
       // Canvas data is relayed via moveData broadcast, NOT stored in game state
+
+      // Check if all players have submitted — transition to vote phase
+      const allSubmitted = s.players.every(
+        p => s.playerStates[p]?.sdSubmitted,
+      );
+      if (allSubmitted) {
+        s.phase = 'sd-vote';
+        // Signal the transition via moveData so framework can emit sd-reveal
+        (moveData as Record<string, unknown>).__sdReveal = true;
+        (moveData as Record<string, unknown>).__word = s.currentWord;
+      }
+
       return s as unknown as Record<string, unknown>;
     }
 
@@ -388,6 +400,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
           removed++;
         }
       }
+      // Attach updated history so clients can replay (fixes remote undo sync)
+      (moveData as Record<string, unknown>).__strokeHistory = s.strokeHistory;
       return s as unknown as Record<string, unknown>;
     }
 
