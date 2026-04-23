@@ -15,6 +15,7 @@ type RoundPhase =
   | 'round-end';
 
 interface DrawStroke {
+  uid: string;
   x0: number;
   y0: number;
   x1: number;
@@ -39,6 +40,7 @@ interface PlayerState {
 interface DoodleDashState {
   players: string[];
   playerStates: Record<string, PlayerState>;
+  hostUid: string;                     // Only the host can start rounds
   mode: GameMode;
   phase: RoundPhase;
   round: number;
@@ -83,7 +85,7 @@ const WORD_BANK: string[] = [
   'pirate', 'astronaut', 'superhero', 'wizard', 'mermaid', 'dragon',
   'robot', 'ghost', 'vampire', 'ninja',
   // Misc
-  'rainbow', 'fireworks', 'treasure', 'compass', 'magnifying glass',
+  'fireworks', 'treasure', 'compass', 'magnifying glass',
   'spaceship', 'submarine', 'hot air balloon', 'ferris wheel',
 ];
 
@@ -105,8 +107,13 @@ const SD_STAR_VOTES_PER_PLAYER = 1; // max votes per player in SD mode
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 function pickWords(count: number): string[] {
-  const shuffled = [...WORD_BANK].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  const arr = [...WORD_BANK];
+  // Fisher-Yates shuffle
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.slice(0, count);
 }
 
 function buildHint(word: string, revealCount: number): string {
@@ -206,6 +213,7 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     const state: DoodleDashState = {
       players,
       playerStates,
+      hostUid: players[0],
       mode,
       phase: 'idle',
       round: 0,
@@ -261,8 +269,11 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
 
   private handleStartRound(
     s: DoodleDashState,
-    _uid: string,
+    uid: string,
   ): Record<string, unknown> {
+    if (uid !== s.hostUid) {
+      throw new Error('Only the host can start a round');
+    }
     if (s.gameOver) {
       throw new Error('Game is already over');
     }
@@ -346,12 +357,12 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
   ): Record<string, unknown> {
     const tool = moveData.tool as string;
 
-    // Speed Draw: handle canvas submission
+    // Speed Draw: handle canvas submission (only store flag, NOT image data — keep state small)
     if (tool === 'sd-submit') {
       if (s.mode !== 'speed-draw') return s as unknown as Record<string, unknown>;
       if (!s.playerStates[uid]) return s as unknown as Record<string, unknown>;
       s.playerStates[uid].sdSubmitted  = true;
-      s.playerStates[uid].sdCanvasData = (moveData.color as string) || ''; // color field holds data URL
+      // Canvas data is relayed via moveData broadcast, NOT stored in game state
       return s as unknown as Record<string, unknown>;
     }
 
@@ -371,13 +382,15 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       }
     }
 
-    // Handle undo: remove last stroke group
+    // Handle undo: remove last 10 strokes from THIS player only
     if (tool === 'undo') {
-      // Remove strokes from this player since last 'end-segment' marker
-      // Simplified: remove last 10 strokes from this player
-      const playerStrokes = s.strokeHistory.filter((st) => st.color !== '__undo__');
-      // For simplicity, drop last stroke segment (server just stores relay data)
-      s.strokeHistory = playerStrokes.slice(0, Math.max(0, playerStrokes.length - 10));
+      let removed = 0;
+      for (let i = s.strokeHistory.length - 1; i >= 0 && removed < 10; i--) {
+        if (s.strokeHistory[i].uid === uid) {
+          s.strokeHistory.splice(i, 1);
+          removed++;
+        }
+      }
       return s as unknown as Record<string, unknown>;
     }
 
@@ -389,6 +402,7 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
 
     // Normal stroke: relay and store for late joiners
     const stroke: DrawStroke = {
+      uid,
       x0:    (moveData.x0 as number) || 0,
       y0:    (moveData.y0 as number) || 0,
       x1:    (moveData.x1 as number) || 0,
@@ -553,6 +567,6 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       }
     }
 
-    return { players, reason: 'game-complete' };
+    return { players, reason: 'completed' };
   }
 }

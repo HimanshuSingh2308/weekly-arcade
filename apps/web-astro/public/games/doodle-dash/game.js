@@ -75,6 +75,45 @@
   var myVotedFor     = null;        // uid I voted for
   var revealTimer    = null;
 
+  // Timing
+  var gameStartedAt  = 0;           // epoch ms when first round started (for score timeMs)
+
+  // ─── Audio (Web Audio API) ──────────────────────────────────────
+  var audioCtx = null;
+  var audioUnlocked = false;
+
+  function initAudio() {
+    if (audioCtx) return;
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+
+  function unlockAudio() {
+    if (audioUnlocked || !audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audioUnlocked = true;
+  }
+
+  function playTone(freq, duration, type) {
+    if (!audioCtx) initAudio();
+    if (!audioCtx) return;
+    unlockAudio();
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.2));
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + (duration || 0.2));
+  }
+
+  function sfxCorrectGuess() { playTone(880, 0.15, 'sine'); setTimeout(function () { playTone(1100, 0.2, 'sine'); }, 100); }
+  function sfxWrongGuess() { playTone(200, 0.15, 'square'); }
+  function sfxTimerWarning() { playTone(440, 0.1, 'square'); }
+  function sfxRoundEnd() { playTone(660, 0.1, 'sine'); setTimeout(function () { playTone(880, 0.1, 'sine'); }, 80); setTimeout(function () { playTone(1100, 0.2, 'sine'); }, 160); }
+
   // ─── DOM refs ───────────────────────────────────────────────────
   function $id(id) { return document.getElementById(id); }
 
@@ -219,10 +258,6 @@
     var scaleY = CANVAS_H / rect.height;
     var clientX = e.clientX;
     var clientY = e.clientY;
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    }
     return {
       x: (clientX - rect.left) * scaleX,
       y: (clientY - rect.top)  * scaleY,
@@ -306,6 +341,8 @@
     ctx.lineJoin    = 'round';
     if (tool === 'eraser') {
       ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = '#ffffff';
+      ctx.fillStyle   = '#ffffff';
     } else {
       ctx.globalCompositeOperation = 'source-over';
     }
@@ -348,37 +385,7 @@
   }
 
   function doFill(startX, startY, fillColorHex) {
-    if (!ctx) return;
-    var imgData   = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
-    var data      = imgData.data;
-    var fillColor = hexToRgba(fillColorHex);
-    var idx       = (startY * CANVAS_W + startX) * 4;
-    var targetColor = [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
-
-    // Don't fill if already the same color
-    if (colorMatch(data, idx, fillColor)) return;
-
-    var stack = [[startX, startY]];
-    var visited = new Uint8Array(CANVAS_W * CANVAS_H);
-
-    while (stack.length > 0) {
-      var point = stack.pop();
-      var x = point[0]; var y = point[1];
-      if (x < 0 || x >= CANVAS_W || y < 0 || y >= CANVAS_H) continue;
-      var i = y * CANVAS_W + x;
-      if (visited[i]) continue;
-      var pIdx = i * 4;
-      if (!colorMatch(data, pIdx, targetColor)) continue;
-      visited[i] = 1;
-      data[pIdx]     = fillColor[0];
-      data[pIdx + 1] = fillColor[1];
-      data[pIdx + 2] = fillColor[2];
-      data[pIdx + 3] = fillColor[3];
-      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-
+    doFillRender(startX, startY, fillColorHex);
     // Emit fill as a special move
     if (window.multiplayerClient) {
       window.multiplayerClient.submitMove('draw-stroke', {
@@ -424,37 +431,73 @@
 
   // Local fill (no network emit) for redo/replay
   function doFillLocal(startX, startY, fillColorHex) {
-    doFill(startX, startY, fillColorHex);
-    // Remove the stroke that doFill added to currentStroke (it was already in history)
+    doFillRender(startX, startY, fillColorHex);
     currentStroke = [];
   }
 
+  // Pure canvas fill without network emit — scanline algorithm for performance
+  function doFillRender(startX, startY, fillColorHex) {
+    if (!ctx) return;
+    var imgData   = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+    var data      = imgData.data;
+    var fillColor = hexToRgba(fillColorHex);
+    var idx       = (startY * CANVAS_W + startX) * 4;
+    var targetColor = [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
+    if (colorMatch(data, idx, fillColor)) return;
+    var stack = [[startX, startY]];
+    while (stack.length > 0) {
+      var pt = stack.pop();
+      var x = pt[0]; var y = pt[1];
+      if (y < 0 || y >= CANVAS_H) continue;
+      // Scan left
+      var x1 = x;
+      while (x1 >= 0 && colorMatch(data, (y * CANVAS_W + x1) * 4, targetColor)) x1--;
+      x1++;
+      // Scan right and fill
+      var spanAbove = false; var spanBelow = false;
+      while (x1 < CANVAS_W && colorMatch(data, (y * CANVAS_W + x1) * 4, targetColor)) {
+        var i4 = (y * CANVAS_W + x1) * 4;
+        data[i4] = fillColor[0]; data[i4 + 1] = fillColor[1];
+        data[i4 + 2] = fillColor[2]; data[i4 + 3] = fillColor[3];
+        if (!spanAbove && y > 0 && colorMatch(data, ((y - 1) * CANVAS_W + x1) * 4, targetColor)) {
+          stack.push([x1, y - 1]); spanAbove = true;
+        } else if (spanAbove && y > 0 && !colorMatch(data, ((y - 1) * CANVAS_W + x1) * 4, targetColor)) {
+          spanAbove = false;
+        }
+        if (!spanBelow && y < CANVAS_H - 1 && colorMatch(data, ((y + 1) * CANVAS_W + x1) * 4, targetColor)) {
+          stack.push([x1, y + 1]); spanBelow = true;
+        } else if (spanBelow && y < CANVAS_H - 1 && !colorMatch(data, ((y + 1) * CANVAS_W + x1) * 4, targetColor)) {
+          spanBelow = false;
+        }
+        x1++;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
   // ─── Apply incoming strokes (from server broadcast) ─────────────
+  var remoteStrokeBuffer = []; // flat list of remote strokes for undo replay
+
   function applyRemoteStroke(data) {
     if (!ctx) return;
     var tool = data.tool;
     if (tool === 'undo') {
-      // For remote undo, we need the stroke history from server (just clear and replay from server state)
-      // Simplified: we redraw when server sends full state replay on reconnect
+      // Remote undo: replay all strokes from server's stroke history
+      // The server will send updated stroke-history after undo
       return;
     }
     if (tool === 'clear') {
       clearCanvas();
-      strokeHistory = [];
+      remoteStrokeBuffer = [];
       return;
     }
     if (tool === 'fill') {
       doFillLocal(Math.round(data.x0), Math.round(data.y0), data.color);
+      remoteStrokeBuffer.push({ tool: 'fill', x0: data.x0, y0: data.y0, color: data.color });
       return;
     }
     drawSegment(data.x0, data.y0, data.x1, data.y1, data.color, data.width, tool);
-    // Add to history so remote strokes are part of the replay
-    if (strokeHistory.length === 0 || strokeHistory[strokeHistory.length - 1]._remote) {
-      if (!strokeHistory.length || !strokeHistory[strokeHistory.length - 1]._remote) {
-        strokeHistory.push([]);
-        strokeHistory[strokeHistory.length - 1]._remote = true;
-      }
-    }
+    remoteStrokeBuffer.push(data);
   }
 
   // Replay full stroke history (late-join)
@@ -489,6 +532,7 @@
     if (!el) return;
     el.textContent = val;
     el.classList.toggle('warning', val <= 10);
+    if (val <= 5 && val > 0) sfxTimerWarning();
   }
 
   // ─── Score & Players UI ─────────────────────────────────────────
@@ -656,8 +700,13 @@
       amIDrawing = false;
       var toolbar = $id('drawToolbar');
       if (toolbar) toolbar.classList.add('hidden');
-      // Export canvas as data URL and submit
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      // Export canvas as data URL at reduced size for network efficiency
+      // Scale down to 400x300 to cap payload at ~15-20KB per player
+      var exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 400; exportCanvas.height = 300;
+      var exportCtx = exportCanvas.getContext('2d');
+      exportCtx.drawImage(canvas, 0, 0, 400, 300);
+      var dataUrl = exportCanvas.toDataURL('image/jpeg', 0.4);
       if (window.multiplayerClient) {
         window.multiplayerClient.submitMove('draw-stroke', { tool: 'sd-submit', x0: 0, y0: 0, x1: 0, y1: 0, color: dataUrl, width: 0 });
       }
@@ -877,10 +926,12 @@
       if (xpBar) xpBar.style.width = Math.min(100, (xpEarned / 5)) + '%';
     }, 400);
 
-    // Submit score
+    // Submit score — use server-authoritative score from sessionScores, not local myScore
+    var serverScore = (myUid && sessionScores[myUid]) ? sessionScores[myUid] : myScore;
     if (window.apiClient && typeof window.apiClient.submitScore === 'function') {
       window.apiClient.submitScore(GAME_ID, {
-        score: myScore,
+        score: serverScore,
+        timeMs: Date.now() - gameStartedAt,
         metadata: {
           mode: gameMode,
           roundsPlayed: currentRound,
@@ -938,6 +989,7 @@
       currentRound = data.round || currentRound + 1;
       totalRounds  = data.totalRounds || totalRounds;
       roundScores  = {};
+      if (currentRound === 1) gameStartedAt = Date.now();
 
       var roundEl = $id('roundNum');
       if (roundEl) roundEl.textContent = currentRound;
@@ -1012,7 +1064,7 @@
     });
 
     mc.on('game:guess-result', function (data) {
-      // data: { uid, name, correct, closeGuess, text }
+      // data: { uid, name, correct, closeGuess, text, drawerDelta }
       if (data.correct) {
         var delta = data.scoreAwarded || 0;
         sessionScores[data.uid] = (sessionScores[data.uid] || 0) + delta;
@@ -1025,6 +1077,15 @@
           if (chatInput) chatInput.disabled = true; // already guessed
         }
 
+        // Track drawer score (drawer earns 50 per correct guesser in classic)
+        if (amIDrawing && data.uid !== myUid) {
+          var drawerDelta = 50; // SCORE_DRAWER_PER_CORRECT
+          myScore += drawerDelta;
+          sessionScores[myUid] = (sessionScores[myUid] || 0) + drawerDelta;
+          roundScores[myUid]   = (roundScores[myUid]   || 0) + drawerDelta;
+        }
+
+        sfxCorrectGuess();
         addChatMessage(data.name, data.text, 'correct');
         addChatMessage('', data.name + ' guessed correctly! (+' + delta + ')', 'system');
 
@@ -1237,9 +1298,14 @@
   // ─── Init ────────────────────────────────────────────────────────
   function init() {
     getUserInfo();
+    initAudio();
     bindLobbyActions();
     bindMultiplayerEvents();
     showScreen('lobby');
+
+    // Unlock audio on first user interaction
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
 
     // Warm-up canvas (it might not exist yet — init when entering playing screen)
     if ($id('ddCanvas')) initCanvas();

@@ -119,3 +119,28 @@
   border-color: #4caf50;
   color: #4caf50;
 }
+
+/* ── Touch target minimum sizes (MED-2, MED-9) ─────────────────── */
+.dd-color-swatch {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dd-size-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Reduced motion (MED-8) ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
