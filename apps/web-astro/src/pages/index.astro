@@ -7,19 +7,20 @@ const gameModules = import.meta.glob('../data/games/*.json', { eager: true });
 const gameCount = Object.keys(gameModules).length;
 ---
 
-<BaseLayout title="Weekly Arcade | New Free Browser Games Every Week">
+<BaseLayout title="Free Browser Games — New Originals Every Week | Weekly Arcade">
   <Fragment slot="head">
     <!-- Preconnect -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 
     <!-- SEO -->
-    <meta name="description" content={`Play ${gameCount}+ free browser games — no downloads, no ads, no signup. 100% original puzzle, arcade, strategy, and 3D games added weekly.`}>
+    <meta name="description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no ads, no signup. 100% original puzzle, arcade, strategy & 3D games added weekly. Play now on any device.`}>
+    <meta name="robots" content="index, follow">
     <meta name="keywords" content="free browser games, online games, no download games, free games, browser games 2026, arcade games, puzzle games, play online free, browser games no ads, free games no ads, browser games with leaderboards, original browser games">
     <link rel="canonical" href="https://weeklyarcade.games/">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Weekly Arcade | New Free Browser Games Every Week">
+    <meta property="og:title" content="Free Browser Games — New Originals Every Week | Weekly Arcade">
     <meta property="og:description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. New games added every week.`}>
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://weeklyarcade.games/">
@@ -32,7 +33,7 @@ const gameCount = Object.keys(gameModules).length;
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Weekly Arcade | New Free Browser Games Every Week">
+    <meta name="twitter:title" content="Free Browser Games — New Originals Every Week | Weekly Arcade">
     <meta name="twitter:description" content={`Play ${gameCount}+ free browser games instantly — no downloads, no signup. New games added every week.`}>
     <meta name="twitter:image" content="https://weeklyarcade.games/og-image.png">
     <meta name="twitter:image:alt" content="Weekly Arcade — free browser games, no downloads required">
@@ -160,16 +161,23 @@ const gameCount = Object.keys(gameModules).length;
       "description": `${gameCount}+ free browser games playable instantly — no downloads, no signup required.`,
       "numberOfItems": gameCount,
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Chroma Sort", "url": "https://weeklyarcade.games/games/chroma-sort/" },
-        { "@type": "ListItem", "position": 2, "name": "Drift Legends", "url": "https://weeklyarcade.games/games/drift-legends/" },
-        { "@type": "ListItem", "position": 3, "name": "Cricket Blitz", "url": "https://weeklyarcade.games/games/cricket-blitz/" },
+        { "@type": "ListItem", "position": 1, "name": "Bir Glider", "url": "https://weeklyarcade.games/games/bir-glider/" },
+        { "@type": "ListItem", "position": 2, "name": "Chroma Sort", "url": "https://weeklyarcade.games/games/chroma-sort/" },
+        { "@type": "ListItem", "position": 3, "name": "Drift Legends", "url": "https://weeklyarcade.games/games/drift-legends/" },
         { "@type": "ListItem", "position": 4, "name": "Chess 3D", "url": "https://weeklyarcade.games/games/chess-3d/" },
-        { "@type": "ListItem", "position": 5, "name": "Coin Cascade", "url": "https://weeklyarcade.games/games/coin-cascade/" },
-        { "@type": "ListItem", "position": 6, "name": "Solitaire Roguelite", "url": "https://weeklyarcade.games/games/solitaire-roguelite/" },
-        { "@type": "ListItem", "position": 7, "name": "Wordle", "url": "https://weeklyarcade.games/games/wordle/" },
-        { "@type": "ListItem", "position": 8, "name": "Snake", "url": "https://weeklyarcade.games/games/snake/" },
-        { "@type": "ListItem", "position": 9, "name": "2048", "url": "https://weeklyarcade.games/games/2048/" },
-        { "@type": "ListItem", "position": 10, "name": "Fieldstone", "url": "https://weeklyarcade.games/games/fieldstone/" }
+        { "@type": "ListItem", "position": 5, "name": "Cricket Blitz", "url": "https://weeklyarcade.games/games/cricket-blitz/" },
+        { "@type": "ListItem", "position": 6, "name": "Tiny Tycoon", "url": "https://weeklyarcade.games/games/tiny-tycoon/" },
+        { "@type": "ListItem", "position": 7, "name": "Lumble", "url": "https://weeklyarcade.games/games/lumble/" },
+        { "@type": "ListItem", "position": 8, "name": "Voidbreak", "url": "https://weeklyarcade.games/games/voidbreak/" },
+        { "@type": "ListItem", "position": 9, "name": "Fieldstone", "url": "https://weeklyarcade.games/games/fieldstone/" },
+        { "@type": "ListItem", "position": 10, "name": "Chaos Kitchen", "url": "https://weeklyarcade.games/games/chaos-kitchen/" },
+        { "@type": "ListItem", "position": 11, "name": "Memory Match", "url": "https://weeklyarcade.games/games/memory-match/" },
+        { "@type": "ListItem", "position": 12, "name": "Wordle", "url": "https://weeklyarcade.games/games/wordle/" },
+        { "@type": "ListItem", "position": 13, "name": "Solitaire Roguelite", "url": "https://weeklyarcade.games/games/solitaire-roguelite/" },
+        { "@type": "ListItem", "position": 14, "name": "Coin Cascade", "url": "https://weeklyarcade.games/games/coin-cascade/" },
+        { "@type": "ListItem", "position": 15, "name": "Stack Tower", "url": "https://weeklyarcade.games/games/stack-tower/" },
+        { "@type": "ListItem", "position": 16, "name": "2048", "url": "https://weeklyarcade.games/games/2048/" },
+        { "@type": "ListItem", "position": 17, "name": "Snake", "url": "https://weeklyarcade.games/games/snake/" }
       ]
     })} />
 
@@ -192,7 +200,7 @@ const gameCount = Object.keys(gameModules).length;
         <p class="hero-desc">Play {gameCount}+ games instantly in your browser - no downloads, no signup, no ads. 100% original games added weekly.</p>
         <div class="hero-featured">
           <div class="hero-badge">NEW THIS WEEK</div>
-          <h2 class="hero-game-name">Bir Glider</h2>
+          <h3 class="hero-game-name">Bir Glider</h3>
           <p class="hero-game-desc">Soar through the Himalayas in this zen paragliding game. Catch thermals, collect prayer flags, dodge eagles, and drift through 4 stunning biomes. Includes Zen Mode for infinite relaxed flight.</p>
           <div class="hero-tags">
             <span class="hero-tag">Endless</span>
@@ -271,7 +279,7 @@ const gameCount = Object.keys(gameModules).length;
           <img src="/images/thumbnails/bir-glider.svg" alt="Bir Glider - Himalayan paragliding endless runner game" loading="lazy">
         </div>
         <div class="game-info">
-          <div class="game-title">Bir Glider</div>
+          <h3 class="game-title">Bir Glider</h3>
           <div class="game-desc">Soar through the Himalayas! One-tap paragliding with prayer flags, thermals, and stunning mountain biomes.</div>
           <div class="game-tags"><span class="tag">Endless</span><span class="tag">Zen</span></div>
         </div>
@@ -283,7 +291,7 @@ const gameCount = Object.keys(gameModules).length;
           <img src="/images/thumbnails/chroma-sort.svg" alt="Chroma Sort - daily color sorting puzzle game" loading="lazy">
         </div>
         <div class="game-info">
-          <div class="game-title">Chroma Sort</div>
+          <h3 class="game-title">Chroma Sort</h3>
           <div class="game-desc">Sort colored balls into matching tubes in this satisfying, ad-free puzzle game. Daily challenge, leaderboard, and 100+ endless levels!</div>
           <div class="game-tags"><span class="tag">Puzzle</span><span class="tag">Daily</span></div>
         </div>
@@ -295,7 +303,7 @@ const gameCount = Object.keys(gameModules).length;
           <img src="/images/thumbnails/drift-legends.svg" alt="Drift Legends - 3D arcade racing game with drift mechanics" loading="lazy">
         </div>
         <div class="game-info">
-          <div class="game-title">Drift Legends</div>
+          <h3 class="game-title">Drift Legends</h3>
           <div class="game-desc">3D arcade racing with story mode, drift mechanics, and multiplayer. 15 tracks across 5 chapters!</div>
           <div class="game-tags"><span class="tag">Racing</span><span class="tag">3D</span></div>
         </div>
@@ -305,7 +313,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/chess-3d/" class="game-card" data-genres="strategy,board,3d,multiplayer">
         <div class="game-thumb"><img src="/images/thumbnails/chess-3d.svg" alt="Chess 3D - free 3D chess game vs AI" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Chess 3D</div>
+          <h3 class="game-title">Chess 3D</h3>
           <div class="game-desc">3D chess with smart AI! 4 difficulty levels, ELO rating, rotatable board.</div>
           <div class="game-tags"><span class="tag">Strategy</span><span class="tag">3D</span><span class="tag">Multiplayer</span></div>
         </div>
@@ -315,7 +323,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/cricket-blitz/" class="game-card" data-genres="arcade,sports">
         <div class="game-thumb"><img src="/images/thumbnails/cricket-blitz.svg" alt="Cricket Blitz - free IPL-style 3D cricket game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Cricket Blitz</div>
+          <h3 class="game-title">Cricket Blitz</h3>
           <div class="game-desc">3D IPL-style cricket! Bat, bowl, win the match. Toss, powerplay, super over!</div>
           <div class="game-tags"><span class="tag">Sports</span><span class="tag">3D</span></div>
         </div>
@@ -325,7 +333,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/tiny-tycoon/" class="game-card" data-genres="simulation,casual">
         <div class="game-thumb"><img src="/images/thumbnails/tiny-tycoon.svg" alt="Tiny Tycoon - free boba tea shop simulator game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Tiny Tycoon</div>
+          <h3 class="game-title">Tiny Tycoon</h3>
           <div class="game-desc">Run a boba tea shop in 60-second days. Serve customers, earn coins, upgrade!</div>
           <div class="game-tags"><span class="tag">Simulation</span><span class="tag">Idle</span></div>
         </div>
@@ -334,7 +342,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/lumble/" class="game-card" data-genres="3d,action">
         <div class="game-thumb"><img src="/images/thumbnails/lumble.svg" alt="Lumble - free 3D platformer browser game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Lumble</div>
+          <h3 class="game-title">Lumble</h3>
           <div class="game-desc">3D platformer! Latch, swing, and collect 50 Sparks!</div>
           <div class="game-tags"><span class="tag">3D</span><span class="tag">Platformer</span></div>
         </div>
@@ -343,7 +351,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/voidbreak/" class="game-card" data-genres="action,arcade">
         <div class="game-thumb"><img src="/images/thumbnails/voidbreak.svg" alt="Voidbreak - free asteroid shooter roguelite game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Voidbreak</div>
+          <h3 class="game-title">Voidbreak</h3>
           <div class="game-desc">Smash asteroids, upgrade your ship, go deeper. How far can you get?</div>
           <div class="game-tags"><span class="tag">Action</span><span class="tag">Roguelite</span></div>
         </div>
@@ -352,7 +360,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/fieldstone/" class="game-card" data-genres="strategy,puzzle">
         <div class="game-thumb"><img src="/images/thumbnails/fieldstone.svg" alt="Fieldstone - free Tetris kingdom builder strategy game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Fieldstone</div>
+          <h3 class="game-title">Fieldstone</h3>
           <div class="game-desc">Tetris meets kingdom builder! Place terrain, harvest rows, defend your realm!</div>
           <div class="game-tags"><span class="tag">Strategy</span><span class="tag">Puzzle</span></div>
         </div>
@@ -361,7 +369,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/chaos-kitchen/" class="game-card" data-genres="action,casual">
         <div class="game-thumb"><img src="/images/thumbnails/chaos-kitchen.svg" alt="Chaos Kitchen - free cooking time management game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Chaos Kitchen</div>
+          <h3 class="game-title">Chaos Kitchen</h3>
           <div class="game-desc">Run a chaotic kitchen! Fulfill orders and survive chaos events!</div>
           <div class="game-tags"><span class="tag">Action</span><span class="tag">Time Management</span></div>
         </div>
@@ -370,7 +378,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/memory-match/" class="game-card" data-genres="casual,puzzle">
         <div class="game-thumb"><img src="/images/thumbnails/memory-match.svg" alt="Memory Match - free card matching puzzle game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Memory Match</div>
+          <h3 class="game-title">Memory Match</h3>
           <div class="game-desc">Flip cards and find matching pairs. Test your memory!</div>
           <div class="game-tags"><span class="tag">Casual</span><span class="tag">Memory</span></div>
         </div>
@@ -379,7 +387,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/wordle/" class="game-card" data-genres="puzzle">
         <div class="game-thumb"><img src="/images/thumbnails/wordle.svg" alt="Wordle - free daily word puzzle game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Wordle</div>
+          <h3 class="game-title">Wordle</h3>
           <div class="game-desc">Guess the 5-letter word in 6 tries. A new word every day!</div>
           <div class="game-tags"><span class="tag">Puzzle</span><span class="tag">Daily</span></div>
         </div>
@@ -388,7 +396,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/solitaire-roguelite/" class="game-card" data-genres="card,puzzle">
         <div class="game-thumb"><img src="/images/thumbnails/solitaire-roguelite.svg" alt="Solitaire Roguelite - free card game with Joker powers" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Solitaire Roguelite</div>
+          <h3 class="game-title">Solitaire Roguelite</h3>
           <div class="game-desc">Classic Solitaire with rule-breaking Joker cards. How high can you score?</div>
           <div class="game-tags"><span class="tag">Card</span><span class="tag">Roguelite</span></div>
         </div>
@@ -397,7 +405,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/coin-cascade/" class="game-card" data-genres="arcade,casual">
         <div class="game-thumb"><img src="/images/thumbnails/coin-cascade.svg" alt="Coin Cascade - free physics coin pusher arcade game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Coin Cascade</div>
+          <h3 class="game-title">Coin Cascade</h3>
           <div class="game-desc">Drop coins onto a physics pusher to cascade prizes off the edge!</div>
           <div class="game-tags"><span class="tag">Arcade</span><span class="tag">Physics</span></div>
         </div>
@@ -406,7 +414,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/stack-tower/" class="game-card" data-genres="arcade,casual">
         <div class="game-thumb"><img src="/images/thumbnails/stack-tower.svg" alt="Stack Tower - free block stacking arcade game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Stack Tower</div>
+          <h3 class="game-title">Stack Tower</h3>
           <div class="game-desc">Stack blocks with perfect timing to build the tallest tower!</div>
           <div class="game-tags"><span class="tag">Arcade</span><span class="tag">Timing</span></div>
         </div>
@@ -416,7 +424,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/2048/" class="game-card" data-genres="puzzle,strategy">
         <div class="game-thumb"><img src="/images/thumbnails/2048.svg" alt="2048 - free number merge puzzle game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">2048</div>
+          <h3 class="game-title">2048</h3>
           <div class="game-desc">Slide tiles and merge numbers to reach 2048.</div>
           <div class="game-tags"><span class="tag">Puzzle</span><span class="tag">Strategy</span></div>
         </div>
@@ -425,7 +433,7 @@ const gameCount = Object.keys(gameModules).length;
       <a href="/games/snake/" class="game-card" data-genres="arcade">
         <div class="game-thumb"><img src="/images/thumbnails/snake.svg" alt="Snake - free classic arcade game" loading="lazy"></div>
         <div class="game-info">
-          <div class="game-title">Snake</div>
+          <h3 class="game-title">Snake</h3>
           <div class="game-desc">Classic snake game. Eat, grow, don't hit the walls!</div>
           <div class="game-tags"><span class="tag">Arcade</span><span class="tag">Classic</span></div>
         </div>
@@ -568,7 +576,7 @@ const gameCount = Object.keys(gameModules).length;
   <div class="auth-modal-overlay" id="authModal">
     <div class="auth-modal">
       <button class="auth-modal-close" onclick="hideAuthModal()">&times;</button>
-      <h2>Welcome to Weekly Arcade</h2>
+      <div class="auth-modal-title">Welcome to Weekly Arcade</div>
       <p>Sign in to unlock all features</p>
       <ul class="auth-benefits">
         <li>Save your progress across devices</li>
@@ -1535,8 +1543,9 @@ const gameCount = Object.keys(gameModules).length;
       transform: scale(1) translateY(0);
     }
 
-    .auth-modal h2 {
+    .auth-modal-title {
       font-size: 1.5rem;
+      font-weight: 700;
       margin-bottom: 0.5rem;
     }
 
