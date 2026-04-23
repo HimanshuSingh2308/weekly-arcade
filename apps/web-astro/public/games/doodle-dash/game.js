@@ -664,8 +664,9 @@
     });
     overlay.classList.add('visible');
 
-    // Auto-pick on timeout
-    setTimeout(function () {
+    // Auto-pick on timeout (cancellable)
+    wordChoiceTimer = setTimeout(function () {
+      wordChoiceTimer = null;
       if (overlay.classList.contains('visible')) {
         var first = words[0];
         if (window.multiplayerClient) {
@@ -676,7 +677,10 @@
     }, WORD_CHOICE_T * 1000);
   }
 
+  var wordChoiceTimer = null;
+
   function hideOverlay() {
+    if (wordChoiceTimer) { clearTimeout(wordChoiceTimer); wordChoiceTimer = null; }
     var overlay = $id('canvasOverlay');
     if (overlay) overlay.classList.remove('visible');
   }
@@ -830,10 +834,10 @@
     var countdown = REVEAL_VOTE_T;
     var countEl = $id('revealCountdown');
     if (countEl) countEl.textContent = 'Next round in ' + countdown + 's';
-    var revealCountInterval = setInterval(function () {
+    _revealCountInterval = setInterval(function () {
       countdown--;
       if (countEl) countEl.textContent = 'Next round in ' + countdown + 's';
-      if (countdown <= 0) clearInterval(revealCountInterval);
+      if (countdown <= 0) { clearInterval(_revealCountInterval); _revealCountInterval = null; }
     }, 1000);
   }
 
@@ -932,7 +936,7 @@
     }
 
     // XP bar animation
-    var xpEarned = data && data.xpEarned ? data.xpEarned : (myScore || 0);
+    var xpEarned = (data && data.xpEarned != null) ? data.xpEarned : 0;
     var xpLabel  = $id('xpLabel');
     if (xpLabel) xpLabel.textContent = '+' + xpEarned + ' XP earned';
     setTimeout(function () {
@@ -1091,13 +1095,8 @@
           if (chatInput) chatInput.disabled = true; // already guessed
         }
 
-        // Track drawer score (drawer earns 50 per correct guesser in classic)
-        if (amIDrawing && data.uid !== myUid) {
-          var drawerDelta = 50; // SCORE_DRAWER_PER_CORRECT
-          myScore += drawerDelta;
-          sessionScores[myUid] = (sessionScores[myUid] || 0) + drawerDelta;
-          roundScores[myUid]   = (roundScores[myUid]   || 0) + drawerDelta;
-        }
+        // Drawer score is tracked server-side and synced at round-end
+        // Do NOT accumulate locally to prevent double-counting
 
         sfxCorrectGuess();
         addChatMessage(data.name, data.text, 'correct');

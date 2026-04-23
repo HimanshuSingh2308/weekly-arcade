@@ -427,6 +427,11 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       return s as unknown as Record<string, unknown>; // no word yet
     }
 
+    // Speed Draw: guessing is only allowed during round-end/vote phase, not drawing
+    if (s.mode === 'speed-draw' && s.phase !== 'sd-vote' && s.phase !== 'round-end') {
+      return s as unknown as Record<string, unknown>;
+    }
+
     // Drawer cannot guess their own word in classic
     if (s.mode === 'classic' && uid === s.currentDrawerUid) {
       return s as unknown as Record<string, unknown>;
@@ -452,11 +457,19 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
 
       ps.score += score;
 
-      // Drawer also earns points per correct guesser in classic
+      // Drawer also earns points per correct guesser in classic (capped at 500/round)
       if (s.mode === 'classic' && s.currentDrawerUid) {
         const drawerPs = s.playerStates[s.currentDrawerUid];
         if (drawerPs) {
-          drawerPs.score += SCORE_DRAWER_PER_CORRECT;
+          // Count how many have guessed this round
+          const guessedCount = s.players.filter(
+            p => p !== s.currentDrawerUid && s.playerStates[p]?.hasGuessedThisRound,
+          ).length;
+          // Cap total drawer earnings this round at SCORE_GUESSER_MAX (500)
+          const drawerRoundTotal = guessedCount * SCORE_DRAWER_PER_CORRECT;
+          if (drawerRoundTotal < SCORE_GUESSER_MAX) {
+            drawerPs.score += SCORE_DRAWER_PER_CORRECT;
+          }
         }
       }
 
@@ -555,13 +568,14 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       };
     });
 
-    // Handle draw (tied top score)
+    // Handle N-way tie at the top score
     if (ranked.length >= 2) {
       const topScore = players[ranked[0]].score;
-      if (players[ranked[1]].score === topScore) {
-        players[ranked[0]].outcome = 'draw';
-        players[ranked[1]].outcome = 'draw';
-      }
+      ranked.forEach((uid) => {
+        if (players[uid].score === topScore) {
+          players[uid].outcome = 'draw';
+        }
+      });
     }
 
     return { players, reason: 'completed' };
