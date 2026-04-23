@@ -105,6 +105,7 @@ const itemListSchema = JSON.stringify({
       <button class="filter-chip" data-filter="3d">3D</button>
       <button class="filter-chip" data-filter="sports">Sports</button>
       <button class="filter-chip" data-filter="multiplayer">Multiplayer</button>
+      <button class="filter-chip" data-filter="party">Party</button>
     </div>
   </div>
 
@@ -115,10 +116,25 @@ const itemListSchema = JSON.stringify({
     </div>
 
     <div class="games-grid" id="gamesGrid">
+      <!-- Doodle Dash -->
+      <a href="/games/doodle-dash/" class="game-card" data-genres="party,drawing,multiplayer,casual">
+        <div class="game-thumb">
+          <span class="thumb-badge">NEW</span>
+          <img src="/images/thumbnails/doodle-dash.svg" alt="Doodle Dash - free multiplayer drawing and guessing party game" loading="lazy">
+        </div>
+        <div class="game-info">
+          <div class="game-title">Doodle Dash</div>
+          <div class="game-desc">Draw fast, guess faster! Multiplayer party game with Speed Draw mode — everyone draws at once. Up to 30 players!</div>
+          <div class="game-tags">
+            <span class="tag">Party</span>
+            <span class="tag">Multiplayer</span>
+          </div>
+        </div>
+      </a>
+
       <!-- Bir Glider -->
       <a href="/games/bir-glider/" class="game-card" data-genres="endless,zen,adventure">
         <div class="game-thumb">
-          <span class="thumb-badge">NEW</span>
           <img src="/images/thumbnails/bir-glider.svg" alt="Bir Glider - Himalayan paragliding endless runner game" loading="lazy">
         </div>
         <div class="game-info">

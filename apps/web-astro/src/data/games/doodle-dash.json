@@ -1,0 +1,48 @@
+{
+  "id": "doodle-dash",
+  "name": "Doodle Dash",
+  "icon": "✏️",
+  "title": "Doodle Dash | Free Multiplayer Drawing & Guessing Party Game | Weekly Arcade",
+  "description": "Play Doodle Dash free online — the multiplayer drawing and guessing party game with simultaneous Speed Draw mode, up to 30 players per room, mobile-first touch drawing, and XP progression. No download required.",
+  "keywords": "doodle dash, drawing game online, multiplayer drawing game, skribbl alternative, pictionary online, draw and guess game, free drawing game browser, party game online, drawing guessing game, weekly arcade",
+  "url": "/games/doodle-dash/",
+  "themeColor": "#1a1a2e",
+  "accentColor": "#f5a623",
+  "genres": ["Party", "Drawing", "Multiplayer", "Casual"],
+  "ratingValue": "4.9",
+  "ratingCount": "320",
+  "category": "party",
+  "rendering": "canvas2d",
+  "tips": [
+    "In Classic mode, start with the most recognizable part of your drawing — the single detail that makes the object unmistakable",
+    "Speed Draw mode rewards speed and clarity over artistry — bold outlines beat detailed shading every time",
+    "Guess early and keep refining: partial guesses won't count, but you'll learn from what's marked as incorrect",
+    "As drawer, use the hint system to your advantage — revealing one letter at 25 seconds costs you nothing",
+    "Star votes reward creativity, not just accuracy — a funny wrong drawing can still win the crowd"
+  ],
+  "similarTo": ["Skribbl.io", "Gartic Phone", "Pictionary", "Drawasaurus"],
+  "howToPlay": "In Classic mode, one player draws a chosen word while others race to guess it in the chat. In Speed Draw mode, every player draws the same word simultaneously — after time expires, all drawings are revealed and players vote for the best. Earn XP for correct guesses, helping others guess, and receiving star votes.",
+  "aboutGame": "Doodle Dash is Weekly Arcade's first party game — a multiplayer drawing and guessing experience built for up to 30 players per room. Unlike competitors such as Skribbl.io, Doodle Dash adds Speed Draw mode where every player draws at the same time, eliminating waiting. Touch drawing with the Pointer Events API works perfectly on mobile. XP progression unlocks new brush styles and color palettes, giving returning players a reason to come back. Positive-only star votes keep the social energy fun and toxicity-free.",
+  "faq": [
+    {
+      "q": "Is Doodle Dash free?",
+      "a": "Yes. Doodle Dash is 100% free on Weekly Arcade with no ads, no in-app purchases, and no downloads. All game modes and features are free."
+    },
+    {
+      "q": "How many players can join a Doodle Dash room?",
+      "a": "Up to 30 players can join a single room. Public rooms auto-start when minimum player counts are reached (4 for Classic, 6 for Speed Draw). Private rooms start when the host is ready."
+    },
+    {
+      "q": "What is Speed Draw mode?",
+      "a": "Speed Draw mode has every player draw the same word simultaneously for 60 seconds. When time is up, all canvases are revealed at once. Players vote with stars for the best drawing. This mode eliminates waiting — everyone is drawing every round."
+    },
+    {
+      "q": "Does Doodle Dash work on mobile?",
+      "a": "Yes. Doodle Dash is designed mobile-first. The drawing canvas uses the Pointer Events API for smooth finger drawing on any touchscreen. All UI elements meet minimum touch target sizes."
+    },
+    {
+      "q": "Can I play without signing in?",
+      "a": "Yes. Guest play is fully supported. Sign in with Google to save XP progress, unlock achievements, and appear on leaderboards."
+    }
+  ]
+}
