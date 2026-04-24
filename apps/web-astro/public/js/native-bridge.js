@@ -80,6 +80,10 @@ window.nativeBridge = {
         if (url.hostname === 'weeklyarcade.games') {
           var path = url.pathname + url.search + url.hash;
           if (path && path !== window.location.pathname) {
+            // Ensure home is in history so back gesture works
+            if (window.history.length <= 1) {
+              window.history.replaceState(null, '', '/');
+            }
             window.location.href = path;
           }
         }
