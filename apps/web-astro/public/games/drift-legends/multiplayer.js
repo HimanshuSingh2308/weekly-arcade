@@ -205,6 +205,13 @@
             await window.multiplayerClient?.startGame(currentSessionId);
           }
           window.multiplayerClient?.signalReady();
+          // Retry signalReady in case of race with REST startGame
+          let retries = 0;
+          const retryInterval = setInterval(() => {
+            if (raceStartFired || retries >= 5) { clearInterval(retryInterval); return; }
+            retries++;
+            window.multiplayerClient?.signalReady();
+          }, 2000);
         } catch (e) {
           // Already started (quick-match) — just signal ready
           window.multiplayerClient?.signalReady();
