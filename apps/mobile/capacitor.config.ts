@@ -20,6 +20,10 @@ const config: CapacitorConfig = {
       showSpinner: false,
       useDialog: false,
     },
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ['google.com'],
+    },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
