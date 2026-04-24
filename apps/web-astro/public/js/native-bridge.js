@@ -71,6 +71,7 @@ window.nativeBridge = {
   /** Initialize all native features */
   init: function() {
     if (!this.isNative()) return;
+    document.documentElement.classList.add('capacitor');
     this.applySafeArea();
     this.hideSplash();
   },
