@@ -38,6 +38,7 @@
   // ─── State ──────────────────────────────────────────────────────
   var gameMode       = 'classic';   // 'classic' | 'speed-draw'
   var roomCode       = null;
+  var currentSessionId = null;
   var isHost         = false;
   var myUid          = null;
   var myName         = 'Guest';
@@ -160,7 +161,35 @@
     setTimeout(function () { el.remove(); }, duration || 2500);
   }
 
+  function showRoomLobby() {
+    var codeEl = $id('roomCodeDisplay');
+    if (codeEl) codeEl.textContent = roomCode || '------';
+    var modeEl = $id('roomModeLabel');
+    if (modeEl) modeEl.textContent = gameMode === 'speed-draw' ? 'Speed Draw' : 'Classic';
+    var startBtn = $id('btnStartGame');
+    if (startBtn) startBtn.style.display = isHost ? 'block' : 'none';
+    var waitMsg = $id('waitingMsg');
+    if (waitMsg) {
+      waitMsg.textContent = isHost
+        ? 'Share the room code with friends. Click "Start Game" when ready.'
+        : 'Waiting for host to start the game...';
+    }
+    showScreen('room');
+  }
+
+  var loadingTimeout = null;
+
   function setLoadingMsg(msg) {
+    // Auto-cancel after 15s if still on loading screen
+    if (loadingTimeout) clearTimeout(loadingTimeout);
+    loadingTimeout = setTimeout(function () {
+      if (gameState === 'loading') {
+        showNotif('Connection timed out. Try again.', 4000);
+        if (window.multiplayerClient) window.multiplayerClient.disconnect();
+        currentSessionId = null;
+        showScreen('lobby');
+      }
+    }, 15000);
     var el = $id('loadingMsg');
     if (el) el.textContent = msg;
     showScreen('loading');
@@ -974,39 +1003,29 @@
     }
     var mc = window.multiplayerClient;
 
-    mc.on('room:joined', function (data) {
-      roomCode = data.roomCode || data.code;
-      isHost   = data.isHost || false;
-      players  = data.players || [];
-      gameMode = data.mode || gameMode;
-
-      // Init session scores
-      players.forEach(function (p) { sessionScores[p.uid] = 0; });
-
-      var codeEl = $id('roomCodeDisplay');
-      if (codeEl) codeEl.textContent = roomCode || '------';
-      var modeEl = $id('roomModeLabel');
-      if (modeEl) modeEl.textContent = gameMode === 'speed-draw' ? 'Speed Draw' : 'Classic';
-      var startBtn = $id('btnStartGame');
-      if (startBtn) startBtn.style.display = isHost ? 'block' : 'none';
-      var waitMsg = $id('waitingMsg');
-      if (waitMsg) {
-        waitMsg.textContent = isHost
-          ? 'Waiting for players. Click "Start Game" when ready.'
-          : 'Waiting for host to start the game...';
+    // Player joined the session via WebSocket
+    mc.onPlayerJoined(function (data) {
+      var newPlayer = { uid: data.uid, name: data.displayName || data.uid, score: 0, guessed: false };
+      // Avoid duplicates
+      if (!players.find(function (p) { return p.uid === data.uid; })) {
+        players.push(newPlayer);
       }
-
-      renderRoomPlayers();
-      showScreen('room');
-    });
-
-    mc.on('room:players-updated', function (data) {
-      players = data.players || players;
-      players.forEach(function (p) {
-        if (sessionScores[p.uid] === undefined) sessionScores[p.uid] = 0;
-      });
+      if (sessionScores[data.uid] === undefined) sessionScores[data.uid] = 0;
       renderRoomPlayers();
       if (gameState === 'playing') renderScores();
+      showNotif(newPlayer.name + ' joined', 2000);
+    });
+
+    // Player left
+    mc.onPlayerLeft(function (data) {
+      players = players.filter(function (p) { return p.uid !== data.uid; });
+      renderRoomPlayers();
+      if (gameState === 'playing') renderScores();
+    });
+
+    // Player reconnected
+    mc.on('session:player-reconnected', function (data) {
+      showNotif((data.displayName || 'Player') + ' reconnected', 2000);
     });
 
     mc.on('game:round-start', function (data) {
@@ -1179,15 +1198,13 @@
       showGameOver(data);
     });
 
-    mc.on('room:error', function (data) {
+    mc.onError(function (data) {
       showNotif(data.message || 'Something went wrong', 4000);
-      showScreen('lobby');
+      if (gameState === 'loading') showScreen('lobby');
     });
 
-    mc.on('disconnect', function () {
-      stopTimer();
-      showNotif('Disconnected from server', 4000);
-      showScreen('lobby');
+    mc.on('reconnected', function () {
+      showNotif('Reconnected!', 2000);
     });
   }
 
@@ -1207,12 +1224,28 @@
     var btnPublic = $id('btnCreatePublic');
     if (btnPublic) btnPublic.addEventListener('click', function () {
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
+      if (!window.authManager || !window.apiClient?.token) {
+        showNotif('Sign in to play multiplayer', 3000); return;
+      }
       setLoadingMsg('Finding a room...');
-      window.multiplayerClient.createRoom(GAME_ID, {
-        mode: gameMode,
-        isPublic: true,
+      window.multiplayerClient.createSession(GAME_ID, {
+        mode: 'quick-match',
         maxPlayers: 30,
-        playerName: myName,
+        minPlayers: 2,
+        spectatorAllowed: true,
+        gameConfig: { mode: gameMode, playerName: myName },
+      }).then(function (session) {
+        if (session && session.sessionId) {
+          currentSessionId = session.sessionId;
+          roomCode = session.joinCode || session.sessionId.slice(0, 6).toUpperCase();
+          isHost = true;
+          return window.multiplayerClient.connect(session.sessionId);
+        }
+      }).then(function () {
+        showRoomLobby();
+      }).catch(function (err) {
+        showNotif('Failed to create room: ' + (err.message || 'Unknown error'), 4000);
+        showScreen('lobby');
       });
     });
 
@@ -1220,12 +1253,28 @@
     var btnPrivate = $id('btnCreatePrivate');
     if (btnPrivate) btnPrivate.addEventListener('click', function () {
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
+      if (!window.authManager || !window.apiClient?.token) {
+        showNotif('Sign in to play multiplayer', 3000); return;
+      }
       setLoadingMsg('Creating room...');
-      window.multiplayerClient.createRoom(GAME_ID, {
-        mode: gameMode,
-        isPublic: false,
+      window.multiplayerClient.createSession(GAME_ID, {
+        mode: 'private',
         maxPlayers: 30,
-        playerName: myName,
+        minPlayers: 2,
+        spectatorAllowed: true,
+        gameConfig: { mode: gameMode, playerName: myName },
+      }).then(function (session) {
+        if (session && session.sessionId) {
+          currentSessionId = session.sessionId;
+          roomCode = session.joinCode || session.sessionId.slice(0, 6).toUpperCase();
+          isHost = true;
+          return window.multiplayerClient.connect(session.sessionId);
+        }
+      }).then(function () {
+        showRoomLobby();
+      }).catch(function (err) {
+        showNotif('Failed to create room: ' + (err.message || 'Unknown error'), 4000);
+        showScreen('lobby');
       });
     });
 
@@ -1235,8 +1284,23 @@
       var code = ($id('joinCodeInput').value || '').trim().toUpperCase();
       if (code.length < 4) { showNotif('Enter a valid room code', 2500); return; }
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
+      if (!window.authManager || !window.apiClient?.token) {
+        showNotif('Sign in to play multiplayer', 3000); return;
+      }
       setLoadingMsg('Joining room...');
-      window.multiplayerClient.joinRoom(code, { playerName: myName });
+      window.multiplayerClient.joinByCode(code).then(function (session) {
+        if (session && session.sessionId) {
+          currentSessionId = session.sessionId;
+          roomCode = code;
+          isHost = false;
+          return window.multiplayerClient.connect(session.sessionId);
+        }
+      }).then(function () {
+        showRoomLobby();
+      }).catch(function (err) {
+        showNotif('Failed to join room: ' + (err.message || 'Invalid code'), 4000);
+        showScreen('lobby');
+      });
     });
 
     // Enter key on join input
@@ -1249,13 +1313,21 @@
     var btnStart = $id('btnStartGame');
     if (btnStart) btnStart.addEventListener('click', function () {
       if (!window.multiplayerClient) return;
-      window.multiplayerClient.submitMove('start-round', { ready: true });
+      // First start the session (REST), then submit start-round move (WebSocket)
+      window.multiplayerClient.startGame(currentSessionId).then(function () {
+        window.multiplayerClient.submitMove('start-round', { ready: true });
+      }).catch(function (err) {
+        showNotif('Failed to start: ' + (err.message || 'Try again'), 3000);
+      });
     });
 
     // Leave Room
     var btnLeave = $id('btnLeaveRoom');
     if (btnLeave) btnLeave.addEventListener('click', function () {
-      if (window.multiplayerClient) window.multiplayerClient.leaveRoom();
+      if (window.multiplayerClient && currentSessionId) {
+        window.multiplayerClient.leaveSession(currentSessionId);
+      }
+      currentSessionId = null;
       showScreen('lobby');
     });
 
@@ -1283,13 +1355,27 @@
 
     var btnBackLobby = $id('btnBackLobby');
     if (btnBackLobby) btnBackLobby.addEventListener('click', function () {
-      if (window.multiplayerClient) window.multiplayerClient.leaveRoom();
+      if (window.multiplayerClient && currentSessionId) window.multiplayerClient.leaveSession(currentSessionId);
+      currentSessionId = null;
       // Reset state
       players = [];
       sessionScores = {};
       roundScores   = {};
       currentRound  = 0;
       myScore       = 0;
+      showScreen('lobby');
+    });
+
+    // Cancel loading
+    var btnCancel = $id('btnCancelLoading');
+    if (btnCancel) btnCancel.addEventListener('click', function () {
+      if (window.multiplayerClient) {
+        window.multiplayerClient.disconnect();
+      }
+      if (currentSessionId) {
+        window.multiplayerClient.leaveSession(currentSessionId).catch(function () {});
+      }
+      currentSessionId = null;
       showScreen('lobby');
     });
 
