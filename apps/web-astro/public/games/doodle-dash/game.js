@@ -1,13 +1,13 @@
 'use strict';
 /**
- * Doodle Dash — Game Client
+ * Doodle Dash - Game Client
  *
  * Architecture:
  *  - Multiplayer via window.multiplayerClient (Socket.IO + REST, loaded before this script)
  *  - window.apiClient for score submission
  *  - window.authManager for current user info
  *  - Canvas 2D drawing with Pointer Events API (mouse + touch unified)
- *  - Stroke format: { x0, y0, x1, y1, color, width, tool } — delta events, NOT pixel data
+ *  - Stroke format: { x0, y0, x1, y1, color, width, tool } - delta events, NOT pixel data
  *  - Flood-fill for bucket tool (client-side only, then serialized as fill move)
  */
 (function () {
@@ -15,8 +15,8 @@
   var GAME_ID       = 'doodle-dash';
   var CANVAS_W      = 800;   // logical canvas size
   var CANVAS_H      = 600;
-  var TURN_TIMEOUT  = 80;    // seconds — Classic mode drawing time
-  var SD_TIMEOUT    = 60;    // seconds — Speed Draw mode
+  var TURN_TIMEOUT  = 80;    // seconds - Classic mode drawing time
+  var SD_TIMEOUT    = 60;    // seconds - Speed Draw mode
   var WORD_CHOICE_T = 15;    // seconds to pick a word
   var HINT_1_SEC    = 25;    // reveal 1st letter after N seconds elapsed
   var HINT_2_SEC    = 50;    // reveal 2nd letter after N seconds elapsed
@@ -482,7 +482,7 @@
     currentStroke = [];
   }
 
-  // Pure canvas fill without network emit — scanline algorithm for performance
+  // Pure canvas fill without network emit - scanline algorithm for performance
   function doFillRender(startX, startY, fillColorHex) {
     if (!ctx) return;
     var imgData   = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
@@ -529,7 +529,7 @@
     if (!ctx) return;
     var tool = data.tool;
     if (tool === 'undo') {
-      // Remote undo: server sends updated stroke history — replay it
+      // Remote undo: server sends updated stroke history - replay it
       if (data.__strokeHistory) {
         replayStrokes(data.__strokeHistory);
       }
@@ -662,7 +662,7 @@
       display.textContent = word;
       return;
     }
-    // Guesser sees hint — underscore mask with revealed positions
+    // Guesser sees hint - underscore mask with revealed positions
     display.textContent = wordHint || '_ _ _ _ _';
   }
 
@@ -743,13 +743,13 @@
     hideOverlay();
 
     // Lock all other players' canvases (blur)
-    // This is handled locally — canvas is always accessible to the drawer
+    // This is handled locally - canvas is always accessible to the drawer
     clearCanvas();
     strokeHistory = [];
     startTimer(SD_TIMEOUT, function (remaining) {
       // Hints not applicable in Speed Draw
     }, function () {
-      // Time's up — canvas locked, send state to server
+      // Time's up - canvas locked, send state to server
       amIDrawing = false;
       var toolbar = $id('drawToolbar');
       if (toolbar) toolbar.classList.add('hidden');
@@ -791,7 +791,7 @@
         hintRevealed[1] = true;
       }
     }, function () {
-      // Time expired — server will end round
+      // Time expired - server will end round
       amIDrawing = false;
       var toolbar = $id('drawToolbar');
       if (toolbar) toolbar.classList.add('hidden');
@@ -979,7 +979,7 @@
       if (xpBar) xpBar.style.width = Math.min(100, (xpEarned / 5)) + '%';
     }, 400);
 
-    // Submit score — use server-authoritative score from sessionScores, not local myScore
+    // Submit score - use server-authoritative score from sessionScores, not local myScore
     var serverScore = (myUid && sessionScores[myUid]) ? sessionScores[myUid] : myScore;
     if (window.apiClient && typeof window.apiClient.submitScore === 'function') {
       window.apiClient.submitScore(GAME_ID, {
@@ -1079,7 +1079,7 @@
         updateWordDisplay(null, null);
         addChatMessage('', getPlayerName(currentDrawer) + ' is now drawing!', 'system');
       } else {
-        // I'm drawing — was already started by showWordChoice handler
+        // I'm drawing - was already started by showWordChoice handler
       }
       renderScores();
     });
@@ -1405,7 +1405,7 @@
   function init() {
     getUserInfo();
 
-    // Auth integration — poll until authManager is ready
+    // Auth integration - poll until authManager is ready
     var authCheck = setInterval(function () {
       if (window.authManager && window.authManager.isInitialized) {
         clearInterval(authCheck);
@@ -1446,7 +1446,7 @@
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('touchstart', unlockAudio, { once: true });
 
-    // Warm-up canvas (it might not exist yet — init when entering playing screen)
+    // Warm-up canvas (it might not exist yet - init when entering playing screen)
     if ($id('ddCanvas')) initCanvas();
   }
 
