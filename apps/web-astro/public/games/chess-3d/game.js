@@ -3177,12 +3177,41 @@
   let mpErrorTimer = null;
 
   function mpShowError(message) {
-    const el = $('mpErrorMsg');
-    if (el) {
-      el.textContent = message;
-      el.style.display = 'block';
+    // Show in whichever overlay is currently visible
+    const lobbyError = $('mpErrorMsg');
+    const joiningStatus = $('mpJoiningStatus');
+    const waitingOverlay = $('mpWaitingOverlay');
+
+    if (lobbyError && lobbyError.offsetParent !== null) {
+      // Lobby overlay is visible — use its error element
+      lobbyError.textContent = message;
+      lobbyError.style.display = 'block';
       if (mpErrorTimer) clearTimeout(mpErrorTimer);
-      mpErrorTimer = setTimeout(() => { el.style.display = 'none'; }, 15000);
+      mpErrorTimer = setTimeout(() => { lobbyError.style.display = 'none'; }, 15000);
+    } else if (joiningStatus && joiningStatus.offsetParent !== null) {
+      // Joining overlay is visible — update its status text
+      joiningStatus.textContent = message;
+      joiningStatus.style.color = 'var(--c3d-red)';
+      const icon = $('mpJoiningIcon');
+      if (icon) { icon.textContent = '⚠'; icon.style.color = 'var(--c3d-red)'; }
+    } else if (waitingOverlay?.classList.contains('chess3d-visible')) {
+      // Waiting room visible — inject a temporary error banner
+      let banner = waitingOverlay.querySelector('.mp-error-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.className = 'mp-error-banner';
+        banner.style.cssText = 'background:rgba(212,80,74,0.15);border:1px solid var(--c3d-red);color:var(--c3d-red);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:0.85rem;';
+        waitingOverlay.querySelector('.chess3d-modal')?.appendChild(banner);
+      }
+      banner.textContent = message;
+      if (mpErrorTimer) clearTimeout(mpErrorTimer);
+      mpErrorTimer = setTimeout(() => banner.remove(), 15000);
+    } else if (lobbyError) {
+      // Fallback — lobby not visible but element exists, show anyway for when overlay appears
+      lobbyError.textContent = message;
+      lobbyError.style.display = 'block';
+      if (mpErrorTimer) clearTimeout(mpErrorTimer);
+      mpErrorTimer = setTimeout(() => { lobbyError.style.display = 'none'; }, 15000);
     } else {
       alert(message);
     }
