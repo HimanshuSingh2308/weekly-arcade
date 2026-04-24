@@ -194,18 +194,29 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Check remaining connected players
       const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
       if (connectedPlayers.length === 0) {
-        // No players left — abandon immediately
-        this.logger.log(`All players left session ${sessionId} — abandoning`);
-        this.clearTurnTimer(sessionId);
-        try {
-          await this.firebase.doc(`sessions/${sessionId}`).update({
-            status: 'abandoned',
-            finishedAt: new Date(),
-          });
-          this.stateManager.evictSession(sessionId);
+        // Check session status before abandoning — 'waiting' sessions should
+        // survive disconnects (host may have backgrounded to share invite link)
+        const sessionDoc = await this.firebase.doc(`sessions/${sessionId}`).get();
+        const sessionStatus = sessionDoc.exists ? (sessionDoc.data() as Session).status : null;
+
+        if (sessionStatus === 'waiting' || sessionStatus === 'starting') {
+          // Don't abandon — host likely backgrounded to share invite link.
+          // The session cleanup cron will expire it if nobody reconnects.
+          this.logger.log(`All players disconnected from ${sessionStatus} session ${sessionId} — keeping alive for invite joins`);
+        } else {
+          // Active/playing game with no players — abandon immediately
+          this.logger.log(`All players left session ${sessionId} — abandoning`);
+          this.clearTurnTimer(sessionId);
+          try {
+            await this.firebase.doc(`sessions/${sessionId}`).update({
+              status: 'abandoned',
+              finishedAt: new Date(),
+            });
+            this.stateManager.evictSession(sessionId);
             this.lastActivityWrite.delete(sessionId);
-        } catch {
-          // Already cleaned up
+          } catch {
+            // Already cleaned up
+          }
         }
       } else if (connectedPlayers.length === 1) {
         // One player left during an active game — give 2 min reconnect window
