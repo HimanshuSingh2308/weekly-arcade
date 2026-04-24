@@ -107,13 +107,13 @@ class AuthManager {
 
       // Initialize app
       const { initializeApp } = appModule;
-      const { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect,
-              getRedirectResult, signInWithEmailAndPassword,
+      const { getAuth, onAuthStateChanged, signInWithPopup, signInWithCredential,
+              signInWithEmailAndPassword,
               createUserWithEmailAndPassword, updateProfile, signOut: fbSignOut,
               GoogleAuthProvider, getIdToken } = authModule;
 
       // Store for use in methods
-      this._fbModules = { signInWithPopup, signInWithRedirect, getRedirectResult,
+      this._fbModules = { signInWithPopup, signInWithCredential,
         signInWithEmailAndPassword,
         createUserWithEmailAndPassword, updateProfile, fbSignOut,
         GoogleAuthProvider, getIdToken };
@@ -138,13 +138,6 @@ class AuthManager {
 
       // Token refresh guard
       let _tokenRefreshInProgress = false;
-
-      // Handle redirect result (Capacitor sign-in flow)
-      if (window.Capacitor?.isNativePlatform?.()) {
-        getRedirectResult(this._auth).then((result) => {
-          if (result?.user) console.log('[Auth] Redirect sign-in completed:', result.user.displayName);
-        }).catch((e) => console.warn('[Auth] Redirect result error:', e.message));
-      }
 
       // onAuthStateChanged still needed: confirms user, refreshes expired tokens, handles sign-out
       console.log('[Auth] Registering onAuthStateChanged at', Math.round(performance.now() - _t0), 'ms');
@@ -227,14 +220,20 @@ class AuthManager {
       return null;
     }
     try {
-      const { signInWithPopup, signInWithRedirect, GoogleAuthProvider } = this._fbModules;
-      const provider = new GoogleAuthProvider();
-      // Capacitor WebView: popups open in external browser and can't return.
-      // Use redirect flow instead — result is picked up on page reload.
-      if (window.Capacitor?.isNativePlatform?.()) {
-        await signInWithRedirect(this._auth, provider);
-        return null; // page will reload, getRedirectResult handles it
+      const { signInWithPopup, signInWithCredential, GoogleAuthProvider } = this._fbModules;
+
+      // Capacitor: use native Google Sign-In (bottom sheet picker, no browser)
+      if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.FirebaseAuthentication) {
+        const nativeAuth = window.Capacitor.Plugins.FirebaseAuthentication;
+        const nativeResult = await nativeAuth.signInWithGoogle();
+        // Use the credential to sign in with Firebase JS SDK
+        const credential = GoogleAuthProvider.credential(nativeResult.credential?.idToken);
+        const result = await signInWithCredential(this._auth, credential);
+        return result.user;
       }
+
+      // Web: use popup (works in regular browsers)
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(this._auth, provider);
       return result.user;
     } catch (error) {
