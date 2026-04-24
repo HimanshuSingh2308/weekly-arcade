@@ -37,24 +37,8 @@ window.nativeBridge = {
     } catch (e) { /* ignore */ }
   },
 
-  /** Set status bar style and expose height as CSS variable */
-  setStatusBar: function() {
-    if (!this.isNative() || !window.Capacitor?.Plugins?.StatusBar) return;
-    try {
-      var SB = window.Capacitor.Plugins.StatusBar;
-      SB.setStyle({ style: 'DARK' });
-      SB.setBackgroundColor({ color: '#00000000' });
-      SB.setOverlaysWebView({ overlay: true });
-
-      // Expose status bar height as CSS variable so headers can use it
-      SB.getInfo().then(function(info) {
-        var h = (info && info.height) ? info.height : 48;
-        document.documentElement.style.setProperty('--safe-area-top', h + 'px');
-      }).catch(function() {
-        document.documentElement.style.setProperty('--safe-area-top', '48px');
-      });
-    } catch (e) { /* ignore */ }
-  },
+  /** Status bar styling handled by @capacitor-community/safe-area plugin.
+   *  It makes env(safe-area-inset-*) work correctly on Android. */
 
   /** Register for push notifications */
   registerPush: function(onToken) {
@@ -74,7 +58,6 @@ window.nativeBridge = {
   /** Initialize all native features */
   init: function() {
     if (!this.isNative()) return;
-    this.setStatusBar();
     this.hideSplash();
   },
 };
