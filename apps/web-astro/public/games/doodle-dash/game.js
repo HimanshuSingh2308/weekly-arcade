@@ -1225,7 +1225,7 @@
     if (btnPublic) btnPublic.addEventListener('click', function () {
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
       if (!window.authManager || !window.apiClient?.token) {
-        if (window.authNudge) window.authNudge.show(true); return;
+        if (window.authNudge) window.authNudge.show({ force: true, icon: '✏️', title: 'Sign in to draw with friends', desc: 'Create rooms, save your XP, earn achievements, and climb the leaderboard.' }); return;
       }
       setLoadingMsg('Finding a room...');
       window.multiplayerClient.createSession(GAME_ID, {
@@ -1254,7 +1254,7 @@
     if (btnPrivate) btnPrivate.addEventListener('click', function () {
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
       if (!window.authManager || !window.apiClient?.token) {
-        if (window.authNudge) window.authNudge.show(true); return;
+        if (window.authNudge) window.authNudge.show({ force: true, icon: '✏️', title: 'Sign in to draw with friends', desc: 'Create rooms, save your XP, earn achievements, and climb the leaderboard.' }); return;
       }
       setLoadingMsg('Creating room...');
       window.multiplayerClient.createSession(GAME_ID, {
@@ -1285,7 +1285,7 @@
       if (code.length < 4) { showNotif('Enter a valid room code', 2500); return; }
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
       if (!window.authManager || !window.apiClient?.token) {
-        if (window.authNudge) window.authNudge.show(true); return;
+        if (window.authNudge) window.authNudge.show({ force: true, icon: '✏️', title: 'Sign in to draw with friends', desc: 'Create rooms, save your XP, earn achievements, and climb the leaderboard.' }); return;
       }
       setLoadingMsg('Joining room...');
       window.multiplayerClient.joinByCode(code).then(function (session) {
