@@ -1225,7 +1225,7 @@
     if (btnPublic) btnPublic.addEventListener('click', function () {
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
       if (!window.authManager || !window.apiClient?.token) {
-        showNotif('Sign in to play multiplayer', 3000); return;
+        if (window.authNudge) window.authNudge.show(true); return;
       }
       setLoadingMsg('Finding a room...');
       window.multiplayerClient.createSession(GAME_ID, {
@@ -1254,7 +1254,7 @@
     if (btnPrivate) btnPrivate.addEventListener('click', function () {
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
       if (!window.authManager || !window.apiClient?.token) {
-        showNotif('Sign in to play multiplayer', 3000); return;
+        if (window.authNudge) window.authNudge.show(true); return;
       }
       setLoadingMsg('Creating room...');
       window.multiplayerClient.createSession(GAME_ID, {
@@ -1285,7 +1285,7 @@
       if (code.length < 4) { showNotif('Enter a valid room code', 2500); return; }
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
       if (!window.authManager || !window.apiClient?.token) {
-        showNotif('Sign in to play multiplayer', 3000); return;
+        if (window.authNudge) window.authNudge.show(true); return;
       }
       setLoadingMsg('Joining room...');
       window.multiplayerClient.joinByCode(code).then(function (session) {
