@@ -137,9 +137,12 @@
         }
       });
 
-      // Register all event forwarders
+      // Register all event forwarders (auto-ack if server requests it)
       for (const event of Object.keys(listeners)) {
-        socket.on(event, (data) => _emit(event, data));
+        socket.on(event, (data, ack) => {
+          _emit(event, data);
+          if (typeof ack === 'function') ack();
+        });
       }
 
       // Track server state version
