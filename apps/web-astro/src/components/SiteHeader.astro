@@ -240,7 +240,10 @@ const { activePage = 'games', showAuth = true } = Astro.props;
 
   /* Mobile responsive */
   @media (max-width: 768px) {
-    .site-header { padding: 0.7rem 1rem; }
+    .site-header {
+      padding: 0.7rem 1rem;
+      padding-top: max(3.2rem, env(safe-area-inset-top), var(--safe-area-inset-top, 0px));
+    }
 
     .site-header .mobile-menu-btn {
       display: block;
