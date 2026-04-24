@@ -2378,14 +2378,17 @@
               await mpJoinAndPlay(sessionId);
             }
           } catch (err) {
-            hideOverlay('mpJoiningOverlay');
-            showOverlay('mainMenuOverlay');
+            // Show error in the joining overlay, then auto-close after 5s
             const m = mpParseError(err, 'join');
-            if (m) {
-              mpShowError(m);
-              // Auto-dismiss after 5s for deep link errors (expired/invalid code)
-              setTimeout(() => { const el = $('mpErrorMsg'); if (el) el.style.display = 'none'; }, 5000);
-            }
+            $('mpJoiningIcon').textContent = '\u26a0';
+            $('mpJoiningIcon').style.color = 'var(--c3d-red)';
+            $('mpJoiningStatus').textContent = m || 'Failed to join game';
+            $('mpJoiningStatus').style.color = 'var(--c3d-red)';
+            sound.play('error');
+            setTimeout(() => {
+              hideOverlay('mpJoiningOverlay');
+              showOverlay('mainMenuOverlay');
+            }, 5000);
           }
 
           // Clean URL without reloading
