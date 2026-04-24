@@ -524,11 +524,11 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     ps.votedFor = targetUid;
     s.sdStarVotes[targetUid] = (s.sdStarVotes[targetUid] || 0) + 1;
 
-    // Award XP to voted player
+    // Star votes contribute to XP only, NOT leaderboard score (per PRD §9.2)
     const targetPs = s.playerStates[targetUid];
     if (targetPs) {
-      targetPs.score          += XP_STAR_VOTE_RECEIVED;
       targetPs.starsReceived  += 1;
+      // XP is handled separately at game-over; do NOT add to score
     }
 
     (moveData as Record<string, unknown>).__stars = s.sdStarVotes[targetUid];
