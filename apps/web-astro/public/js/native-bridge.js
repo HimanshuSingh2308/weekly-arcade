@@ -37,29 +37,21 @@ window.nativeBridge = {
     } catch (e) { /* ignore */ }
   },
 
-  /** Set status bar style and apply safe-area padding */
+  /** Set status bar style and expose height as CSS variable */
   setStatusBar: function() {
     if (!this.isNative() || !window.Capacitor?.Plugins?.StatusBar) return;
     try {
       var SB = window.Capacitor.Plugins.StatusBar;
       SB.setStyle({ style: 'DARK' });
-      SB.setBackgroundColor({ color: '#00000000' }); // transparent — CSS handles it
+      SB.setBackgroundColor({ color: '#00000000' });
       SB.setOverlaysWebView({ overlay: true });
 
-      // Get actual status bar height and inject CSS padding
+      // Expose status bar height as CSS variable so headers can use it
       SB.getInfo().then(function(info) {
-        var h = (info && info.height) ? info.height : 0;
-        if (!h) h = 48; // fallback for notch devices
-        document.documentElement.style.setProperty('--native-status-bar-h', h + 'px');
-        document.body.style.paddingTop = h + 'px';
-        document.body.style.boxSizing = 'border-box';
-        // Color the area behind the status bar
-        document.body.style.backgroundPositionY = '0';
+        var h = (info && info.height) ? info.height : 48;
+        document.documentElement.style.setProperty('--safe-area-top', h + 'px');
       }).catch(function() {
-        // Fallback: use a reasonable default
-        document.documentElement.style.setProperty('--native-status-bar-h', '48px');
-        document.body.style.paddingTop = '48px';
-        document.body.style.boxSizing = 'border-box';
+        document.documentElement.style.setProperty('--safe-area-top', '48px');
       });
     } catch (e) { /* ignore */ }
   },
