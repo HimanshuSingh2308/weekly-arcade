@@ -123,12 +123,20 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           lastActivityAt: new Date(),
         });
 
-        // Broadcast to room that player joined/reconnected
+        // Notify other players that this player joined/reconnected.
+        // For the host, use ack+retry so the event isn't silently lost
+        // (e.g., host's socket recovering from a background suspension on mobile).
         const wasDisconnected = player?.status === 'disconnected';
-        client.to(roomName).emit(
-          wasDisconnected ? 'session:player-reconnected' : 'session:player-joined',
-          { uid, displayName: player?.displayName || '', avatarUrl: player?.avatarUrl || null },
-        );
+        const eventName = wasDisconnected ? 'session:player-reconnected' : 'session:player-joined';
+        const eventData = { uid, displayName: player?.displayName || '', avatarUrl: player?.avatarUrl || null };
+
+        // Broadcast to non-host players (spectators, etc.)
+        client.to(roomName).emit(eventName, eventData);
+
+        // Ack+retry for the host — if host missed the broadcast, deliver directly
+        if (!wasDisconnected && session.hostUid && session.hostUid !== uid) {
+          this.emitWithAck(sessionId, session.hostUid, eventName, eventData);
+        }
       }
 
       // Send current game state to the connecting client (if game already started)
@@ -293,8 +301,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   /**
-   * Check if all connected players are ready and the session is in starting/playing state.
-   * If so, initialize the game state and broadcast to all clients.
+   * Check if all connected players are ready and start the game.
+   * Auto-transitions 'waiting' → 'starting' → 'playing' when all players are in,
+   * so the game starts even if the host client missed the player-joined event
+   * (common on mobile when the host backgrounds the app to share an invite link).
    */
   private async tryStartGame(sessionId: string, roomName: string): Promise<void> {
     const activeSession = this.stateManager.getSession(sessionId);
@@ -309,13 +319,25 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
     if (connectedPlayers.length < session.minPlayers) return;
 
-    // Session must be starting or playing
-    if (session.status !== 'starting' && session.status !== 'playing') return;
+    // Session must not be finished or abandoned
+    if (session.status === 'finished' || session.status === 'abandoned') return;
 
     // All connected players must be ready
     const readyPlayers = this.roomManager.getReadyPlayers(sessionId);
     const allReady = connectedPlayers.every(uid => readyPlayers.includes(uid));
     if (!allReady) return;
+
+    // Auto-transition from 'waiting' to 'starting' when all players are connected
+    // and ready. This handles the case where the host's WebSocket disconnected
+    // (e.g., Android backgrounding the app to share an invite link) and missed
+    // the player-joined event, so no client ever called the REST startGame endpoint.
+    if (session.status === 'waiting') {
+      this.logger.log(`Auto-starting session ${sessionId}: all ${connectedPlayers.length} players connected and ready`);
+      await this.firebase.doc(`sessions/${sessionId}`).update({
+        status: 'starting',
+        lastActivityAt: new Date(),
+      });
+    }
 
     // Initialize game state
     try {
@@ -326,8 +348,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         sessionId, playerUids, session.gameConfig || {}
       );
 
-      // Update Firestore to playing if still starting
-      if (session.status === 'starting') {
+      // Update Firestore to playing
+      if (session.status !== 'playing') {
         await this.firebase.doc(`sessions/${sessionId}`).update({
           status: 'playing',
           startedAt: new Date(),
@@ -488,6 +510,51 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       clearTimeout(timer);
       this.turnTimers.delete(sessionId);
     }
+  }
+
+  // ─── Reliable delivery ─────────────────────────────────────────
+
+  /**
+   * Emit an event to a specific player's socket with ack. If no ack within
+   * timeout, retry up to maxRetries times. Handles the case where a player's
+   * socket is technically connected but recovering from a background suspension
+   * (common on Android/iOS) and may silently drop the first delivery.
+   */
+  private emitWithAck(
+    sessionId: string,
+    targetUid: string,
+    event: string,
+    data: unknown,
+    maxRetries = 2,
+    timeoutMs = 3000,
+  ): void {
+    const socketIds = this.roomManager.getSocketIdsForUid(sessionId, targetUid);
+    if (socketIds.length === 0) return;
+
+    let attempt = 0;
+    const tryEmit = () => {
+      // Re-fetch socket IDs in case the player reconnected with a new socket
+      const currentIds = this.roomManager.getSocketIdsForUid(sessionId, targetUid);
+      if (currentIds.length === 0) return;
+
+      for (const socketId of currentIds) {
+        const socket = this.server.sockets.sockets.get(socketId);
+        if (!socket) continue;
+
+        socket.timeout(timeoutMs).emit(event, data, (err: Error | null) => {
+          if (err && attempt < maxRetries) {
+            attempt++;
+            this.logger.debug(`No ack for ${event} to uid=${targetUid}, retry ${attempt}/${maxRetries}`);
+            setTimeout(tryEmit, 1000);
+          } else if (err) {
+            this.logger.warn(`${event} delivery to uid=${targetUid} failed after ${maxRetries} retries`);
+          }
+        });
+        return; // Only need to emit to one socket per player
+      }
+    };
+
+    tryEmit();
   }
 
   // ─── Activity tracking ──────────────────────────────────────────

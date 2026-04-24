@@ -109,6 +109,20 @@ export class GameRoomManager {
     return this.rooms.get(sessionId)?.clients.size ?? 0;
   }
 
+  /** Get socket IDs for a specific player UID (non-spectator) */
+  getSocketIdsForUid(sessionId: string, uid: string): string[] {
+    const room = this.rooms.get(sessionId);
+    if (!room) return [];
+
+    const ids: string[] = [];
+    for (const [socketId, client] of room.clients.entries()) {
+      if (client.uid === uid && !client.isSpectator) {
+        ids.push(socketId);
+      }
+    }
+    return ids;
+  }
+
   /** Get total rooms count */
   getRoomCount(): number {
     return this.rooms.size;
