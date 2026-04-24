@@ -19,6 +19,7 @@ import { Session, WsGameStatePayload, WsMovePayload } from '@weekly-arcade/share
 const ALLOWED_ORIGINS = [
   'http://localhost:4200',
   'http://localhost:4201',
+  'http://localhost:4321',
   'http://localhost:5000',
   'https://weeklyarcade.games',
   'https://www.weeklyarcade.games',

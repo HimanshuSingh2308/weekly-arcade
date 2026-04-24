@@ -2,7 +2,8 @@
 import CategoryPage from '../../../components/CategoryPage.astro';
 
 const games = [
-  { slug: 'drift-legends', title: 'Drift Legends', description: '3D arcade racing with story mode, drift mechanics, and real-time multiplayer. 15 tracks across 5 chapters!', thumbnail: 'drift-legends.svg', alt: 'Drift Legends - free multiplayer 3D racing browser game', tags: [{ label: 'Racing' }, { label: '3D' }, { label: 'Multiplayer' }], isNew: true },
+  { slug: 'doodle-dash', title: 'Doodle Dash', description: 'Multiplayer drawing and guessing party game! Speed Draw mode has everyone drawing simultaneously. Up to 30 players per room!', thumbnail: 'doodle-dash.svg', alt: 'Doodle Dash - free multiplayer drawing and guessing party game', tags: [{ label: 'Party' }, { label: 'Drawing' }, { label: 'Multiplayer' }], isNew: true },
+  { slug: 'drift-legends', title: 'Drift Legends', description: '3D arcade racing with story mode, drift mechanics, and real-time multiplayer. 15 tracks across 5 chapters!', thumbnail: 'drift-legends.svg', alt: 'Drift Legends - free multiplayer 3D racing browser game', tags: [{ label: 'Racing' }, { label: '3D' }, { label: 'Multiplayer' }] },
   { slug: 'chess-3d', title: 'Chess 3D', description: '3D chess with smart AI and online multiplayer! 4 difficulty levels, ELO rating, rotatable board.', thumbnail: 'chess-3d.svg', alt: 'Chess 3D - free multiplayer chess browser game', tags: [{ label: 'Strategy' }, { label: '3D' }, { label: 'Multiplayer' }] },
   { slug: 'cricket-blitz', title: 'Cricket Blitz', description: '3D IPL-style cricket! Bat, bowl, win the match. Toss, powerplay, super over!', thumbnail: 'cricket-blitz.svg', alt: 'Cricket Blitz - free multiplayer cricket browser game', tags: [{ label: 'Sports' }, { label: '3D' }] },
 ];
@@ -12,18 +13,18 @@ const games = [
   category="Multiplayer"
   categorySlug="multiplayer"
   title="Free Multiplayer Browser Games — Play Online With Friends | Weekly Arcade"
-  metaDescription="Play free multiplayer browser games online with friends — no downloads, no signup. Racing, chess, and sports games with real-time competition and global leaderboards."
-  keywords="free multiplayer browser games, multiplayer games online, play with friends online free, online multiplayer games no download, browser multiplayer games, free online games with friends"
+  metaDescription="Play free multiplayer browser games online with friends — no downloads, no signup. Drawing party games, racing, chess, and sports with real-time competition and global leaderboards."
+  keywords="free multiplayer browser games, multiplayer games online, play with friends online free, online multiplayer games no download, browser multiplayer games, free online games with friends, drawing game multiplayer"
   h1="Free Multiplayer Browser Games"
-  introText="Play <strong>free multiplayer browser games</strong> with friends or compete against players worldwide. Real-time racing, strategic chess, and competitive sports — all running in your browser with no downloads and no signup required."
+  introText="Play <strong>free multiplayer browser games</strong> with friends or compete against players worldwide. Drawing party games, real-time racing, strategic chess, and competitive sports — all running in your browser with no downloads and no signup required."
   seoHeading="Play Free Multiplayer Games Online"
-  seoText="Weekly Arcade's multiplayer games connect you with players worldwide through real-time WebSocket competition and global leaderboards. According to Mordor Intelligence, the browser gaming market is projected to reach $35.1 billion by 2027, with multiplayer driving engagement — our data shows signed-in players who compete on leaderboards play 3x more sessions than guests. Every multiplayer game loads in under 1.5 seconds and supports both casual and ranked play."
+  seoText="Weekly Arcade's multiplayer games connect you with players worldwide through real-time WebSocket competition and global leaderboards. From party drawing games to competitive racing, every multiplayer game supports up to 30 players per room, loads in under 1.5 seconds, and works on any device including mobile. Signed-in players who compete on leaderboards play 3x more sessions than guests."
   seoBullets={[
+    '<strong>Party drawing game</strong> — Draw fast, guess faster in <a href="/games/doodle-dash/">Doodle Dash</a> with Speed Draw mode — up to 30 players drawing simultaneously',
     '<strong>3D racing multiplayer</strong> — Drift and compete on 15 tracks in <a href="/games/drift-legends/">Drift Legends</a> with real-time opponents via WebSocket',
     '<strong>Online chess</strong> — Challenge friends or AI across 4 difficulty levels with ELO rating in <a href="/games/chess-3d/">Chess 3D</a>',
     '<strong>Competitive sports</strong> — Play IPL-style 3D cricket with full match mechanics in <a href="/games/cricket-blitz/">Cricket Blitz</a>',
     '<strong>Global leaderboards</strong> — Daily, weekly, and monthly rankings across all multiplayer games with cloud-synced scores',
-    '<strong>No account needed</strong> — Play as a guest instantly, or sign in via Google for leaderboards and cloud saves',
     '<strong>Cross-device play</strong> — Compete on desktop, tablet, or phone with responsive touch controls (44x44px minimum targets)',
   ]}
   games={games}

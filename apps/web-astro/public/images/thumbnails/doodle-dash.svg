@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#1a1a2e"/>
+
+  <!-- Canvas (drawing surface) -->
+  <rect x="30" y="30" width="220" height="165" rx="10" fill="#ffffff" stroke="#f5a623" stroke-width="3"/>
+
+  <!-- Doodle drawings on canvas -->
+  <!-- House shape -->
+  <polygon points="80,140 80,105 120,80 160,105 160,140" fill="none" stroke="#333" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="100" y="118" width="20" height="22" fill="#333" rx="2"/>
+  <!-- Sun -->
+  <circle cx="58" cy="60" r="14" fill="#f5a623" opacity="0.9"/>
+  <line x1="58" y1="40" x2="58" y2="36" stroke="#f5a623" stroke-width="2"/>
+  <line x1="58" y1="80" x2="58" y2="76" stroke="#f5a623" stroke-width="2"/>
+  <line x1="38" y1="60" x2="34" y2="60" stroke="#f5a623" stroke-width="2"/>
+  <line x1="78" y1="60" x2="74" y2="60" stroke="#f5a623" stroke-width="2"/>
+  <!-- Tree -->
+  <rect x="185" y="118" width="6" height="22" fill="#8B4513"/>
+  <ellipse cx="188" cy="105" rx="16" ry="18" fill="#2d8a4e"/>
+  <!-- Pencil drawing line (active stroke) -->
+  <path d="M60,155 Q100,148 140,160 Q165,165 195,155" fill="none" stroke="#e94560" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Pencil cursor -->
+  <g transform="translate(200,150) rotate(-45)">
+    <rect x="-4" y="-18" width="8" height="22" rx="1" fill="#f5a623"/>
+    <polygon points="-4,4 4,4 0,14" fill="#f0e0b0"/>
+    <line x1="-4" y1="2" x2="4" y2="2" stroke="#1a1a2e" stroke-width="1"/>
+  </g>
+
+  <!-- Right side: chat / guess panel -->
+  <rect x="265" y="30" width="105" height="165" rx="10" fill="#16213e"/>
+  <rect x="275" y="42" width="85" height="12" rx="3" fill="#f5a623" opacity="0.8"/>
+  <!-- Chat messages -->
+  <rect x="275" y="62" width="70" height="8" rx="2" fill="#333"/>
+  <rect x="275" y="76" width="85" height="8" rx="2" fill="#333"/>
+  <rect x="275" y="90" width="55" height="8" rx="2" fill="#333"/>
+  <!-- Correct guess highlight -->
+  <rect x="275" y="106" width="85" height="10" rx="2" fill="#2d8a4e" opacity="0.7"/>
+  <rect x="275" y="120" width="65" height="8" rx="2" fill="#333"/>
+  <rect x="275" y="134" width="75" height="8" rx="2" fill="#333"/>
+  <!-- Input box -->
+  <rect x="275" y="158" width="85" height="28" rx="5" fill="#0f3460"/>
+  <rect x="285" y="166" width="48" height="8" rx="2" fill="#555"/>
+  <rect x="341" y="158" width="19" height="28" rx="5" fill="#f5a623"/>
+
+  <!-- Bottom: toolbar -->
+  <rect x="30" y="210" width="340" height="55" rx="10" fill="#16213e"/>
+  <!-- Tool icons -->
+  <text x="52" y="242" font-size="22" text-anchor="middle">✏️</text>
+  <text x="92" y="242" font-size="22" text-anchor="middle">🧹</text>
+  <text x="132" y="242" font-size="22" text-anchor="middle">🪣</text>
+  <text x="172" y="242" font-size="22" text-anchor="middle">↩️</text>
+  <!-- Divider -->
+  <line x1="200" y1="218" x2="200" y2="257" stroke="#333" stroke-width="1"/>
+  <!-- Color swatches -->
+  <circle cx="220" cy="238" r="8" fill="#000000"/>
+  <circle cx="238" cy="238" r="8" fill="#ff0000"/>
+  <circle cx="256" cy="238" r="8" fill="#0099ff"/>
+  <circle cx="274" cy="238" r="8" fill="#00cc00"/>
+  <circle cx="292" cy="238" r="8" fill="#ffcc00"/>
+  <circle cx="310" cy="238" r="8" fill="#cc00cc"/>
+  <circle cx="220" cy="238" r="8" fill="none" stroke="#f5a623" stroke-width="2"/>
+
+  <!-- Title / branding -->
+  <text x="200" y="286" font-family="system-ui,sans-serif" font-size="16" font-weight="700" fill="#f5a623" text-anchor="middle">Doodle Dash</text>
+  <text x="200" y="298" font-family="system-ui,sans-serif" font-size="9" fill="#888" text-anchor="middle">Multiplayer Drawing &amp; Guessing</text>
+</svg>

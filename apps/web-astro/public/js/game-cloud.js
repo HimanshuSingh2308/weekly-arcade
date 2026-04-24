@@ -177,6 +177,8 @@
 
     try {
       const result = await window.apiClient.submitScore(gameId, scoreData);
+      // Haptic feedback on successful score submission (native only)
+      if (window.nativeBridge) window.nativeBridge.haptic('Medium');
       // Prompt for push notifications after first successful score submit
       _promptNotifications();
       return result;
@@ -191,6 +193,7 @@
     if (currentUser && window.apiClient) {
       try {
         const result = await window.apiClient.submitScore(gameId, scoreData);
+        if (window.nativeBridge) window.nativeBridge.haptic('Medium');
         return result;
       } catch (error) {
         console.error(`[${gameId}] Score submit failed, saving locally:`, error);
@@ -297,6 +300,8 @@
     if (!currentUser || !window.apiClient) return;
     try {
       await window.apiClient.unlockAchievement(achievementId, gameId);
+      // Strong haptic on achievement unlock (celebratory moment)
+      if (window.nativeBridge) window.nativeBridge.haptic('Heavy');
     } catch (error) {
       // Silent fail for achievements
     }

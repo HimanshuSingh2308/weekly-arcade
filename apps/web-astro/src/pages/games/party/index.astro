@@ -1,0 +1,28 @@
+---
+import CategoryPage from '../../../components/CategoryPage.astro';
+
+const games = [
+  { slug: 'doodle-dash', title: 'Doodle Dash', description: 'The multiplayer drawing and guessing party game with Speed Draw mode — everyone draws at once! Up to 30 players per room, mobile-first touch canvas, XP progression.', thumbnail: 'doodle-dash.svg', alt: 'Doodle Dash - free multiplayer drawing and guessing party game', tags: [{ label: 'Drawing' }, { label: 'Multiplayer' }, { label: 'Party' }], isNew: true },
+];
+---
+
+<CategoryPage
+  category="Party"
+  categorySlug="party"
+  title="Free Party Browser Games — Play Online With Friends | Weekly Arcade"
+  metaDescription="Play free party browser games online — no downloads, no signup. Multiplayer drawing, guessing, and social games for groups of friends. Doodle Dash supports up to 30 players."
+  keywords="free party games online, party browser games, multiplayer party games, drawing party game, free games for groups, doodle dash, online party game no download, pictionary online free"
+  h1="Free Party Browser Games"
+  introText="Play <strong>free party games</strong> with friends right in your browser. No downloads, no app stores, no hassle. Our party games are designed for groups of 2 to 30 players with real-time multiplayer, mobile-first touch controls, and sessions that run in under 30 minutes."
+  seoHeading="Play Free Party Games Online With Friends"
+  seoText="Weekly Arcade's party game collection is built for social sessions — friend groups, Discord servers, classrooms, and family game nights. Games like Doodle Dash eliminate the biggest frustration of party games (waiting your turn) with Speed Draw mode, where every player draws the same word simultaneously. XP progression and star votes keep every session engaging without competitive toxicity."
+  seoBullets={[
+    '<strong>Drawing & guessing party game</strong> — <a href="/games/doodle-dash/">Doodle Dash</a> supports up to 30 players with Classic turn-based mode and simultaneous Speed Draw mode',
+    '<strong>Zero waiting</strong> — Speed Draw mode keeps every player active every second of every round — no one sits idle',
+    '<strong>Mobile-first</strong> — All party games use touch-optimized controls so phones and tablets feel like first-class devices',
+    '<strong>No signup required</strong> — Jump straight into a room as a guest; sign in with Google to save XP progress and achievements',
+    '<strong>Positive-only social design</strong> — Star votes reward creativity without any dislike or toxicity mechanics',
+    '<strong>Instant room sharing</strong> — Share a 6-character room code with friends to start a private game in seconds',
+  ]}
+  games={games}
+/>

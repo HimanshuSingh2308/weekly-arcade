@@ -1,0 +1,169 @@
+/*
+ * Doodle Dash — supplemental styles (game-specific, beyond what's in the Astro page)
+ * The main styles live inline in doodle-dash/index.astro via <style is:global>.
+ * This file is loaded as a separate stylesheet for cache-ability.
+ */
+
+/* ── Drawer indicator ────────────────────────────────────────────── */
+.dd-drawer-badge {
+  display: inline-block;
+  background: #f5a623;
+  color: #1a1a2e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ── Close-guess feedback ────────────────────────────────────────── */
+.dd-close-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(245, 166, 35, 0.9);
+  color: #1a1a2e;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: dd-close-in 0.3s ease, dd-close-out 0.5s ease 2s forwards;
+}
+
+@keyframes dd-close-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes dd-close-out {
+  to { opacity: 0; }
+}
+
+/* ── Hint letter reveal ──────────────────────────────────────────── */
+.dd-hint-letter.revealed {
+  color: #f5a623;
+  animation: dd-flip 0.4s ease;
+}
+
+@keyframes dd-flip {
+  0%   { transform: rotateX(90deg); opacity: 0; }
+  100% { transform: rotateX(0deg);  opacity: 1; }
+}
+
+/* ── Correct-guess celebration ───────────────────────────────────── */
+.dd-correct-flash {
+  animation: dd-correct-bg 0.6s ease;
+}
+
+@keyframes dd-correct-bg {
+  0%   { background: #4caf50; }
+  100% { background: transparent; }
+}
+
+/* ── Star vote animation ─────────────────────────────────────────── */
+.dd-star-pop {
+  animation: dd-star-pop 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes dd-star-pop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.4); }
+  60%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* ── Score delta fly-up ──────────────────────────────────────────── */
+.dd-score-delta {
+  position: absolute;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #4caf50;
+  pointer-events: none;
+  animation: dd-delta-up 1.2s ease forwards;
+}
+
+@keyframes dd-delta-up {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-60px); }
+}
+
+/* ── Leaderboard highlight (winner) ─────────────────────────────── */
+.dd-score-row:first-child .dd-score-rank::before {
+  content: '👑 ';
+}
+
+/* ── Speed draw: canvas hidden during draw phase ─────────────────── */
+.sd-hidden-during-draw {
+  filter: blur(12px);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Mobile: full-width chat on small screens ────────────────────── */
+@media (max-width: 480px) {
+  .dd-toolbar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .dd-color-palette {
+    max-width: 160px;
+  }
+}
+
+/* ── Room code copy feedback ─────────────────────────────────────── */
+.dd-room-code.copied {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+/* ── Touch target minimum sizes (MED-2, MED-9) ─────────────────── */
+.dd-color-swatch {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dd-size-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Focus visible (a11y HIGH-1) ────────────────────────────────── */
+.dd-tool-btn:focus-visible,
+.dd-mode-btn:focus-visible,
+.dd-btn-primary:focus-visible,
+.dd-btn-secondary:focus-visible,
+.dd-word-choice-btn:focus-visible,
+.dd-chat-send:focus-visible,
+.dd-star-btn:focus-visible,
+.dd-size-btn:focus-visible,
+.dd-color-swatch:focus-visible {
+  outline: 3px solid #f5a623;
+  outline-offset: 2px;
+}
+
+/* ── Tool button touch targets (a11y HIGH-4) ───────────────────── */
+.dd-tool-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+.dd-chat-send {
+  min-height: 44px;
+}
+
+/* ── Reduced motion (MED-8) ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

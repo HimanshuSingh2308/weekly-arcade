@@ -408,6 +408,29 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
     },
   },
 
+  // Doodle Dash: multiplayer drawing & guessing party game
+  // Score = cumulative points earned (correct guesses + star votes) over all rounds
+  // Max: 6 rounds × 500 max/round = 3000 per guesser + star vote bonuses
+  'doodle-dash': {
+    maxScore: 5000,           // Drawer capped at 500/round, guesser max 500/round, 6 rounds typical
+    maxScorePerSecond: 20,    // Social party game — scoring is episodic, 5000/300s = ~17/s
+    minTimeMs: 300000,        // At least 5 minutes for a real game session (6 rounds × ~80s)
+    allowedMetadataKeys: ['mode', 'roundsPlayed', 'correctGuesses', 'starsReceived'],
+    customValidation: (dto) => {
+      if (dto.metadata) {
+        const rounds = dto.metadata.roundsPlayed as number;
+        if (rounds !== undefined && rounds > 12) {
+          return { valid: false, reason: 'Too many rounds played' };
+        }
+        const validModes = ['classic', 'speed-draw'];
+        if (dto.metadata.mode && !validModes.includes(dto.metadata.mode as string)) {
+          return { valid: false, reason: 'Invalid game mode' };
+        }
+      }
+      return { valid: true };
+    },
+  },
+
   // Drift Legends: 3D kart racing (score = race time in ms; lower = better)
   'drift-legends': {
     maxScore: 600000,        // Max 10 minutes per race

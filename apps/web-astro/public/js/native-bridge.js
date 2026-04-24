@@ -37,12 +37,30 @@ window.nativeBridge = {
     } catch (e) { /* ignore */ }
   },
 
-  /** Set status bar style */
+  /** Set status bar style and apply safe-area padding */
   setStatusBar: function() {
     if (!this.isNative() || !window.Capacitor?.Plugins?.StatusBar) return;
     try {
-      window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
-      window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#0f0f1a' });
+      var SB = window.Capacitor.Plugins.StatusBar;
+      SB.setStyle({ style: 'DARK' });
+      SB.setBackgroundColor({ color: '#00000000' }); // transparent — CSS handles it
+      SB.setOverlaysWebView({ overlay: true });
+
+      // Get actual status bar height and inject CSS padding
+      SB.getInfo().then(function(info) {
+        var h = (info && info.height) ? info.height : 0;
+        if (!h) h = 48; // fallback for notch devices
+        document.documentElement.style.setProperty('--native-status-bar-h', h + 'px');
+        document.body.style.paddingTop = h + 'px';
+        document.body.style.boxSizing = 'border-box';
+        // Color the area behind the status bar
+        document.body.style.backgroundPositionY = '0';
+      }).catch(function() {
+        // Fallback: use a reasonable default
+        document.documentElement.style.setProperty('--native-status-bar-h', '48px');
+        document.body.style.paddingTop = '48px';
+        document.body.style.boxSizing = 'border-box';
+      });
     } catch (e) { /* ignore */ }
   },
 
