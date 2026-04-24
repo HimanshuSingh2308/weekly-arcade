@@ -20,10 +20,11 @@ const config: CapacitorConfig = {
       showSpinner: false,
       useDialog: false,
     },
-    StatusBar: {
-      style: 'DARK',
-      backgroundColor: '#1a1a2e',
-      overlaysWebView: false,
+    SafeArea: {
+      statusBarStyle: 'DARK',
+      navigationBarStyle: 'DEFAULT',
+      initialViewportFitCover: true,
+      detectViewportFitCoverChanges: true,
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
