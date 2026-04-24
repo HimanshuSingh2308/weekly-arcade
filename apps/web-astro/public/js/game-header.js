@@ -27,7 +27,7 @@
       background: var(--bg-secondary, #1a1a2e);
       border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
       padding: 0.55rem 0.75rem;
-      padding-top: max(0.55rem, env(safe-area-inset-top));
+      padding-top: max(0.55rem, env(safe-area-inset-top), var(--safe-area-top, 0px));
       padding-left: max(0.75rem, env(safe-area-inset-left));
       padding-right: max(0.75rem, env(safe-area-inset-right));
       display: flex;
