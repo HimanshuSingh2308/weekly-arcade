@@ -99,7 +99,6 @@
       socket.on('connect_error', async (err) => {
         console.error('[MP] Connection error:', err.message);
         reconnectAttempts++;
-        _emit('error', { code: 'CONNECT_ERROR', message: 'Connection attempt ' + reconnectAttempts + '/' + MAX_RECONNECT_ATTEMPTS + ' failed: ' + (err.message || 'unknown') });
 
         // On auth error, force-refresh the token via authManager (not just read the cached value)
         if (err.message?.includes('auth') || err.message?.includes('token') || err.message?.includes('unauthorized') || err.message?.includes('Authentication')) {
@@ -115,6 +114,8 @@
         }
 
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          // Only emit error on final failure — interim retries are normal (e.g., Android resume)
+          _emit('error', { code: 'CONNECT_FAILED', message: 'Could not reconnect after ' + MAX_RECONNECT_ATTEMPTS + ' attempts' });
           reject(new Error('Failed to connect to multiplayer service'));
         }
       });
