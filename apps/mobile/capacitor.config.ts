@@ -7,7 +7,6 @@ const config: CapacitorConfig = {
   webDir: '../../dist/apps/web-astro',
   server: {
     // Live URL for smooth navigation + instant web updates.
-    // Splash GIF loads from CDN (small delay but navigation works perfectly).
     url: 'https://weeklyarcade.games',
     androidScheme: 'https',
   },
@@ -23,7 +22,8 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: 'DARK',
-      backgroundColor: '#1e2a5e',
+      backgroundColor: '#1a1a2e',
+      overlaysWebView: false,
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
