@@ -5,6 +5,7 @@ import { GameRoomManager } from './game-room.manager';
 import { GameLogicRegistry } from './game-logic.registry';
 import { Chess3dLogic } from './game-logic/chess-3d.logic';
 import { DriftLegendsLogic } from './game-logic/drift-legends.logic';
+import { DoodleDashLogic } from './game-logic/doodle-dash.logic';
 
 @Module({
   providers: [
@@ -14,6 +15,7 @@ import { DriftLegendsLogic } from './game-logic/drift-legends.logic';
     GameLogicRegistry,
     Chess3dLogic,
     DriftLegendsLogic,
+    DoodleDashLogic,
   ],
   exports: [GameLogicRegistry, GameStateManager, GameRoomManager],
 })
