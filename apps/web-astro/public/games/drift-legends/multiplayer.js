@@ -224,10 +224,13 @@
       if (onRaceEnd) onRaceEnd(results);
     });
 
-    // Disconnection
-    client.onError(({ code }) => {
+    // Disconnection and server errors
+    client.onError(({ code, message }) => {
       if (code === 'DISCONNECTED' && onDisconnect) {
         onDisconnect();
+      } else if (code !== 'DISCONNECTED') {
+        console.error('[DL-MP] Server error:', code, message);
+        window.DriftLegends._gui?.showToast(message || 'Error: ' + code, 5000);
       }
     });
 

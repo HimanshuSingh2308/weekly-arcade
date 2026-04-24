@@ -2387,7 +2387,14 @@
         }, 500);
 
         // Timeout after 15s if auth never resolves
-        setTimeout(() => clearInterval(deepLinkCheck), 15000);
+        setTimeout(() => {
+          if (!currentUser) {
+            clearInterval(deepLinkCheck);
+            hideOverlay('mpJoiningOverlay');
+            showOverlay('mainMenuOverlay');
+            mpShowError('Sign in required to join via invite link. Please sign in and try again.');
+          }
+        }, 15000);
       }
     }
   }
@@ -3406,7 +3413,8 @@
       hideOverlay('mpJoiningOverlay');
       showOverlay('mpLobbyOverlay');
       sound.play('error');
-      mpShowError('Could not connect to the game server.');
+      const detail = err?.message ? ' (' + err.message.slice(0, 80) + ')' : '';
+      mpShowError('Could not connect to the game server.' + detail);
     }
   }
 
@@ -3734,10 +3742,13 @@
       isAnimating = false; // Re-enable input
     });
 
-    window.multiplayerClient.onError(({ code }) => {
+    window.multiplayerClient.onError(({ code, message }) => {
       if (code === 'DISCONNECTED' && gameMode === 'multiplayer' && gameActive) {
         window.multiplayerUI?.showDisconnectOverlay();
         mpPauseTimers();
+      } else if (code !== 'DISCONNECTED' && gameMode === 'multiplayer') {
+        console.error('[Chess3D] Server error:', code, message);
+        mpShowError(message || 'Connection error: ' + code);
       }
     });
 

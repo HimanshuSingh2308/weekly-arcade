@@ -99,6 +99,7 @@
       socket.on('connect_error', async (err) => {
         console.error('[MP] Connection error:', err.message);
         reconnectAttempts++;
+        _emit('error', { code: 'CONNECT_ERROR', message: 'Connection attempt ' + reconnectAttempts + '/' + MAX_RECONNECT_ATTEMPTS + ' failed: ' + (err.message || 'unknown') });
 
         // On auth error, force-refresh the token via authManager (not just read the cached value)
         if (err.message?.includes('auth') || err.message?.includes('token') || err.message?.includes('unauthorized') || err.message?.includes('Authentication')) {
