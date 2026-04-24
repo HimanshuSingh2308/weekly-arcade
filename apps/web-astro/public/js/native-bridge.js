@@ -37,8 +37,21 @@ window.nativeBridge = {
     } catch (e) { /* ignore */ }
   },
 
-  /** Status bar styling handled by @capacitor-community/safe-area plugin.
-   *  It makes env(safe-area-inset-*) work correctly on Android. */
+  /** Query native safe-area insets and set CSS variables on :root.
+   *  Uses capacitor-plugin-safe-area which exposes getSafeAreaInsets(). */
+  applySafeArea: function() {
+    if (!this.isNative()) return;
+    var SA = window.Capacitor?.Plugins?.SafeArea;
+    if (!SA || !SA.getSafeAreaInsets) return;
+    SA.getSafeAreaInsets().then(function(result) {
+      var insets = result.insets;
+      var root = document.documentElement.style;
+      root.setProperty('--safe-area-inset-top', insets.top + 'px');
+      root.setProperty('--safe-area-inset-right', insets.right + 'px');
+      root.setProperty('--safe-area-inset-bottom', insets.bottom + 'px');
+      root.setProperty('--safe-area-inset-left', insets.left + 'px');
+    }).catch(function() { /* ignore */ });
+  },
 
   /** Register for push notifications */
   registerPush: function(onToken) {
@@ -58,6 +71,7 @@ window.nativeBridge = {
   /** Initialize all native features */
   init: function() {
     if (!this.isNative()) return;
+    this.applySafeArea();
     this.hideSplash();
   },
 };
