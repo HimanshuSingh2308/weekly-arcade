@@ -20,12 +20,6 @@ const config: CapacitorConfig = {
       showSpinner: false,
       useDialog: false,
     },
-    SafeArea: {
-      statusBarStyle: 'DARK',
-      navigationBarStyle: 'DEFAULT',
-      initialViewportFitCover: true,
-      detectViewportFitCoverChanges: true,
-    },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
