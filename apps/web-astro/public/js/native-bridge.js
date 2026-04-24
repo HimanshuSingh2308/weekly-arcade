@@ -68,12 +68,32 @@ window.nativeBridge = {
     });
   },
 
+  /** Handle deep links — navigate WebView to the opened URL */
+  setupDeepLinks: function() {
+    if (!this.isNative() || !window.Capacitor?.Plugins?.App) return;
+    var AppPlugin = window.Capacitor.Plugins.App;
+    AppPlugin.addListener('appUrlOpen', function(event) {
+      if (!event.url) return;
+      try {
+        var url = new URL(event.url);
+        // Only handle our own domain
+        if (url.hostname === 'weeklyarcade.games') {
+          var path = url.pathname + url.search + url.hash;
+          if (path && path !== window.location.pathname) {
+            window.location.href = path;
+          }
+        }
+      } catch (e) { /* ignore malformed URLs */ }
+    });
+  },
+
   /** Initialize all native features */
   init: function() {
     if (!this.isNative()) return;
     document.documentElement.classList.add('capacitor');
     this.applySafeArea();
     this.hideSplash();
+    this.setupDeepLinks();
   },
 };
 

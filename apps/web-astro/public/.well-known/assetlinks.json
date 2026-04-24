@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "games.weeklyarcade.app",
+      "sha256_cert_fingerprints": [
+        "61:2F:E6:8B:B2:39:B8:EA:05:E3:0D:CB:29:A9:D9:62:02:33:DE:94:27:46:6E:EC:F9:0A:04:49:74:B6:BB:C3"
+      ]
+    }
+  }
+]
