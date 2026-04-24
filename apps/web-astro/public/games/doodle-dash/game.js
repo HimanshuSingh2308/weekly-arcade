@@ -1318,6 +1318,40 @@
   // ─── Init ────────────────────────────────────────────────────────
   function init() {
     getUserInfo();
+
+    // Auth integration — poll until authManager is ready
+    var authCheck = setInterval(function () {
+      if (window.authManager && window.authManager.isInitialized) {
+        clearInterval(authCheck);
+        window.authManager.onAuthStateChanged(function (user) {
+          if (user) {
+            myUid = user.uid;
+            myName = user.displayName || user.email || 'Player';
+          } else {
+            getUserInfo(); // fallback to guest
+          }
+        });
+      }
+    }, 100);
+
+    // Initialize global game header (sound, leaderboard, auth buttons)
+    if (window.gameHeader) {
+      window.gameHeader.init({
+        title: 'Doodle Dash',
+        icon: '✏️',
+        gameId: GAME_ID,
+        buttons: ['sound', 'leaderboard', 'auth'],
+        onSound: function () { return true; },
+        onSignIn: function (user) {
+          myUid = user.uid;
+          myName = user.displayName || user.email || 'Player';
+        },
+        onSignOut: function () {
+          getUserInfo(); // reset to guest
+        },
+      });
+    }
+
     bindLobbyActions();
     bindMultiplayerEvents();
     showScreen('lobby');
