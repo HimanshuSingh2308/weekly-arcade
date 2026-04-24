@@ -198,10 +198,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         const sessionDoc = await this.firebase.doc(`sessions/${sessionId}`).get();
         const sessionStatus = sessionDoc.exists ? (sessionDoc.data() as Session).status : null;
 
-        if (sessionStatus === 'waiting') {
-          // Don't abandon — host likely backgrounded to share invite link.
-          // The session cleanup cron will expire it if nobody reconnects.
-          this.logger.log(`All players disconnected from waiting session ${sessionId} — keeping alive for invite joins`);
+        if (sessionStatus === 'waiting' || sessionStatus === 'starting') {
+          // Don't abandon — 'waiting' means host may have backgrounded to share
+          // invite link; 'starting' is a brief init window where a network blip
+          // could disconnect both. Cleanup cron will expire if nobody reconnects.
+          this.logger.log(`All players disconnected from ${sessionStatus} session ${sessionId} — keeping alive for reconnect`);
         } else {
           // Active/playing game with no players — abandon immediately
           this.logger.log(`All players left session ${sessionId} — abandoning`);
