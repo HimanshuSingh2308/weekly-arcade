@@ -2378,8 +2378,14 @@
               await mpJoinAndPlay(sessionId);
             }
           } catch (err) {
+            hideOverlay('mpJoiningOverlay');
             showOverlay('mainMenuOverlay');
-            { const m = mpParseError(err, 'join'); if (m) mpShowError(m); }
+            const m = mpParseError(err, 'join');
+            if (m) {
+              mpShowError(m);
+              // Auto-dismiss after 5s for deep link errors (expired/invalid code)
+              setTimeout(() => { const el = $('mpErrorMsg'); if (el) el.style.display = 'none'; }, 5000);
+            }
           }
 
           // Clean URL without reloading
