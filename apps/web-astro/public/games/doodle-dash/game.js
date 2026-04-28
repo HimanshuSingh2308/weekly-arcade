@@ -550,7 +550,10 @@
   var remoteStrokeBuffer = []; // flat list of remote strokes for undo replay
 
   function applyRemoteStroke(data) {
-    if (!ctx) return;
+    if (!ctx) { console.warn('[DD] applyRemoteStroke: no ctx'); return; }
+    if (data.tool !== 'fill' && data.tool !== 'undo' && data.tool !== 'clear') {
+      console.log('[DD] stroke:', data.x0, data.y0, '->', data.x1, data.y1, 'w:', data.width, 't:', data.tool);
+    }
     var tool = data.tool;
     if (tool === 'undo') {
       // Remote undo: server sends updated stroke history - replay it
