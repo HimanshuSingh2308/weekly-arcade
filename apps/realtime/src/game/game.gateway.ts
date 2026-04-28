@@ -328,6 +328,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!sessionDoc.exists) return;
     const session = sessionDoc.data() as Session;
 
+    // Skip auto-start for party/lobby games (maxPlayers > 2) — host controls when to start
+    if (session.maxPlayers > 2) return;
+
     // Need at least minPlayers connected
     const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
     if (connectedPlayers.length < session.minPlayers) return;
