@@ -461,11 +461,26 @@ const AuthNudge = (() => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
   }
 
-  function show(force) {
+  /**
+   * Show the auth nudge overlay.
+   * @param {boolean|object} forceOrOpts — `true` to force show, or an options object:
+   *   { force?: boolean, icon?: string, title?: string, desc?: string }
+   *   Omitted fields keep the default values.
+   */
+  function show(forceOrOpts) {
+    var opts = typeof forceOrOpts === 'object' && forceOrOpts !== null ? forceOrOpts : {};
+    var force = opts.force || forceOrOpts === true;
     if (!force && !shouldShow()) return;
     inject();
     shown++;
-    document.getElementById('authNudgeOverlay')?.classList.add('visible');
+    // Update content if custom values provided (otherwise keep defaults)
+    var overlay = document.getElementById('authNudgeOverlay');
+    if (overlay) {
+      if (opts.icon) { var iconEl = overlay.querySelector('.auth-nudge-icon'); if (iconEl) iconEl.textContent = opts.icon; }
+      if (opts.title) { var titleEl = overlay.querySelector('.auth-nudge h3'); if (titleEl) titleEl.textContent = opts.title; }
+      if (opts.desc) { var descEl = overlay.querySelector('.auth-nudge p'); if (descEl) descEl.textContent = opts.desc; }
+      overlay.classList.add('visible');
+    }
   }
 
   function hide() {

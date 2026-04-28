@@ -1,0 +1,1021 @@
+---
+/**
+ * Doodle Dash - Multiplayer Drawing & Guessing Party Game.
+ *
+ * GameLayout handles: meta, SEO, structured data, header, shared modules, fallback, more-games.
+ * Multiplayer: Socket.IO + multiplayer-client.js + multiplayer-ui.js loaded in scripts slot.
+ * Drawing canvas uses Pointer Events API (mouse + touch unified).
+ */
+import GameLayout from '../../../layouts/GameLayout.astro';
+import gameData from '../../../data/games/doodle-dash.json';
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+  tips={gameData.tips}
+  howToPlay={gameData.howToPlay}
+  similarTo={gameData.similarTo}
+  aboutGame={gameData.aboutGame}
+  faq={gameData.faq}
+>
+  <Fragment slot="head">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <style is:global>
+      body {
+        background: #1a1a2e;
+        color: #ffffff;
+        touch-action: manipulation;
+      }
+      /* ── Layout ─────────────────────────────────────────────────── */
+      .dd-wrap {
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 8px 12px 24px;
+        box-sizing: border-box;
+      }
+      /* ── Hide SEO content when game is active ────────────────────── */
+      body:has(#ddGame[style*="flex"]) .game-seo-content,
+      body:has(#ddRoomLobby[style*="flex"]) .game-seo-content,
+      body:has(#ddRoomLobby:not([style*="none"])) .game-seo-content {
+        display: none !important;
+      }
+      /* ── Lobby ──────────────────────────────────────────────────── */
+      #ddLobby {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+        padding: 40px 16px 48px;
+        min-height: 500px;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Animated floating doodle elements */
+      .dd-lobby-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 0;
+      }
+      .dd-float {
+        position: absolute;
+        font-size: 2.2rem;
+        opacity: 0.12;
+        animation: dd-float-up 12s linear infinite;
+        will-change: transform;
+      }
+      .dd-float:nth-child(1) { left: 5%; animation-delay: 0s; font-size: 2.5rem; }
+      .dd-float:nth-child(2) { left: 15%; animation-delay: 2s; font-size: 1.8rem; }
+      .dd-float:nth-child(3) { left: 28%; animation-delay: 4s; }
+      .dd-float:nth-child(4) { left: 42%; animation-delay: 1s; font-size: 2.8rem; }
+      .dd-float:nth-child(5) { left: 58%; animation-delay: 3s; font-size: 1.6rem; }
+      .dd-float:nth-child(6) { left: 72%; animation-delay: 5s; }
+      .dd-float:nth-child(7) { left: 85%; animation-delay: 7s; font-size: 2rem; }
+      .dd-float:nth-child(8) { left: 92%; animation-delay: 9s; font-size: 1.5rem; }
+      @keyframes dd-float-up {
+        0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.12; }
+        90% { opacity: 0.12; }
+        100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+      }
+      /* Hero section */
+      .dd-lobby-hero {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+      }
+      .dd-lobby-title {
+        font-size: clamp(2.2rem, 6vw, 3.5rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #f5a623, #ff6b6b, #f5a623);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: dd-shimmer 3s ease-in-out infinite;
+        margin: 0;
+        line-height: 1.1;
+      }
+      .dd-lobby-emoji {
+        font-size: clamp(2.8rem, 7vw, 4.5rem);
+        display: block;
+        margin-bottom: 8px;
+        -webkit-text-fill-color: initial;
+        animation: dd-wiggle 2s ease-in-out infinite;
+      }
+      @keyframes dd-shimmer {
+        0%, 100% { background-position: 0% center; }
+        50% { background-position: 200% center; }
+      }
+      @keyframes dd-wiggle {
+        0%, 100% { transform: rotate(-5deg); }
+        50% { transform: rotate(5deg); }
+      }
+      .dd-lobby-subtitle {
+        color: #b0b0b0;
+        text-align: center;
+        margin: 4px 0 0;
+        font-size: 1.05rem;
+        letter-spacing: 0.02em;
+      }
+      .dd-lobby-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(245,166,35,0.12);
+        border: 1px solid rgba(245,166,35,0.3);
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        color: #f5a623;
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      /* Mode cards - glass effect */
+      .dd-mode-select {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+      }
+      .dd-mode-btn {
+        background: linear-gradient(145deg, rgba(22,33,62,0.9), rgba(26,26,46,0.95));
+        backdrop-filter: blur(8px);
+        border: 2px solid rgba(255,255,255,0.08);
+        color: #fff;
+        padding: 20px 28px;
+        border-radius: 16px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.25s ease;
+        min-width: 180px;
+        position: relative;
+        overflow: hidden;
+      }
+      .dd-mode-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 0%, rgba(245,166,35,0.15), transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .dd-mode-btn:hover::before, .dd-mode-btn.active::before { opacity: 1; }
+      .dd-mode-btn:hover, .dd-mode-btn.active {
+        border-color: #f5a623;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(245,166,35,0.2), 0 0 0 1px rgba(245,166,35,0.1);
+      }
+      .dd-mode-btn .mode-icon { font-size: 2.4rem; display: block; margin-bottom: 8px; }
+      .dd-mode-btn .mode-name { font-weight: 800; font-size: 1.15rem; }
+      .dd-mode-btn .mode-desc { font-size: 0.8rem; color: #999; margin-top: 6px; line-height: 1.3; }
+      /* Action buttons - larger, punchier */
+      .dd-lobby-actions {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+      }
+      .dd-btn-primary {
+        background: linear-gradient(135deg, #f5a623, #e6951a);
+        color: #1a1a2e;
+        border: none;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 150px;
+        box-shadow: 0 4px 16px rgba(245,166,35,0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .dd-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(245,166,35,0.4); }
+      .dd-btn-primary:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(245,166,35,0.2); }
+      .dd-btn-secondary {
+        background: rgba(245,166,35,0.08);
+        color: #f5a623;
+        border: 2px solid rgba(245,166,35,0.4);
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 150px;
+      }
+      .dd-btn-secondary:hover { background: rgba(245,166,35,0.15); border-color: #f5a623; transform: translateY(-1px); }
+      /* Join room - inline with glow */
+      .dd-join-section {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .dd-join-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #555;
+        font-size: 0.85rem;
+        width: 280px;
+      }
+      .dd-join-divider::before, .dd-join-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #333, transparent);
+      }
+      .dd-join-input {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .dd-join-input input {
+        background: rgba(22,33,62,0.8);
+        border: 2px solid rgba(255,255,255,0.1);
+        color: #fff;
+        padding: 14px 18px;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        width: 170px;
+        text-align: center;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .dd-join-input input:focus { border-color: #f5a623; outline: none; box-shadow: 0 0 16px rgba(245,166,35,0.15); }
+      /* Features strip */
+      .dd-features {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        padding-top: 8px;
+      }
+      .dd-feature {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #888;
+        font-size: 0.82rem;
+      }
+      .dd-feature-icon {
+        font-size: 1.1rem;
+        opacity: 0.8;
+      }
+      /* ── Room Lobby (waiting) ───────────────────────────────────── */
+      #ddRoomLobby {
+        display: none;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px 0;
+      }
+      .dd-room-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .dd-room-code {
+        background: #16213e;
+        border: 2px solid #f5a623;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        color: #f5a623;
+        cursor: pointer;
+        title: "Click to copy";
+      }
+      .dd-players-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .dd-player-chip {
+        background: #16213e;
+        border: 1px solid #333;
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dd-player-chip.is-host { border-color: #f5a623; }
+      .dd-player-chip .avatar { font-size: 1.2rem; }
+      /* ── Game Screen ────────────────────────────────────────────── */
+      #ddGame {
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+      }
+      /* Top bar */
+      .dd-top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #16213e;
+        border-radius: 10px;
+        padding: 8px 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .dd-round-info { font-weight: 700; color: #f5a623; }
+      .dd-timer {
+        font-size: 1.6rem;
+        font-weight: 900;
+        min-width: 48px;
+        text-align: center;
+        color: #fff;
+      }
+      .dd-timer.warning { color: #ff4444; animation: dd-pulse 0.5s infinite alternate; }
+      @keyframes dd-pulse { from { opacity: 1; } to { opacity: 0.5; } }
+      .dd-word-display {
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 0.25em;
+        color: #fff;
+        min-width: 120px;
+        text-align: center;
+      }
+      /* Main layout: canvas + sidebar */
+      .dd-main {
+        display: grid;
+        grid-template-columns: 1fr 240px;
+        gap: 8px;
+      }
+      @media (max-width: 700px) {
+        .dd-main { grid-template-columns: 1fr; }
+        .dd-sidebar { display: flex; flex-direction: row; gap: 8px; }
+        .dd-chat-panel { flex: 1; }
+        .dd-scores-panel { width: 160px; flex-shrink: 0; }
+      }
+      /* Canvas area */
+      .dd-canvas-area {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .dd-canvas-wrap {
+        position: relative;
+        background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        aspect-ratio: 4/3;
+        width: 100%;
+      }
+      #ddCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        cursor: crosshair;
+      }
+      #ddCanvas.dd-guessing { cursor: default; }
+      /* Canvas overlay - shown during word choice / phase transitions */
+      .dd-canvas-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(26,26,46,0.88);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        border-radius: 10px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .dd-canvas-overlay.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .dd-overlay-title { font-size: 1.4rem; font-weight: 700; color: #f5a623; }
+      .dd-word-choices { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+      .dd-word-choice-btn {
+        background: #16213e;
+        border: 2px solid #f5a623;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .dd-word-choice-btn:hover { background: rgba(245,166,35,0.15); }
+      /* Drawing toolbar */
+      .dd-toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 8px 10px;
+        background: #16213e;
+        border-radius: 10px;
+      }
+      .dd-toolbar.hidden { display: none; }
+      .dd-tool-btn {
+        background: transparent;
+        border: 2px solid transparent;
+        color: #fff;
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .dd-tool-btn:hover { background: rgba(245,166,35,0.12); }
+      .dd-tool-btn.active { border-color: #f5a623; }
+      .dd-divider { width: 1px; height: 32px; background: #333; margin: 0 4px; }
+      .dd-color-palette {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        max-width: 200px;
+      }
+      .dd-color-swatch {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s, border-color 0.1s;
+      }
+      .dd-color-swatch:hover { transform: scale(1.15); }
+      .dd-color-swatch.active { border-color: #fff; transform: scale(1.15); }
+      .dd-brush-size {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .dd-size-btn {
+        background: transparent;
+        border: 2px solid #333;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: border-color 0.15s;
+        flex-shrink: 0;
+      }
+      .dd-size-btn:hover, .dd-size-btn.active { border-color: #f5a623; }
+      .dd-size-btn.sz-s { width: 20px; height: 20px; }
+      .dd-size-btn.sz-m { width: 28px; height: 28px; }
+      .dd-size-btn.sz-l { width: 36px; height: 36px; }
+      .dd-size-btn.sz-xl { width: 42px; height: 42px; }
+      /* Sidebar */
+      .dd-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .dd-scores-panel, .dd-chat-panel {
+        background: #16213e;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .dd-panel-header {
+        padding: 8px 12px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #f5a623;
+        border-bottom: 1px solid #333;
+      }
+      .dd-scores-list {
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .dd-score-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 6px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      .dd-score-row.is-me { background: rgba(245,166,35,0.1); }
+      .dd-score-row.guessed { color: #4caf50; }
+      .dd-score-rank { font-weight: 700; color: #aaa; width: 18px; }
+      .dd-score-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .dd-score-pts { font-weight: 700; color: #f5a623; }
+      /* Chat */
+      .dd-chat-messages {
+        height: 220px;
+        overflow-y: auto;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 0.85rem;
+      }
+      @media (max-width: 700px) {
+        .dd-chat-messages { height: 140px; }
+      }
+      .dd-chat-msg { word-break: break-word; }
+      .dd-chat-msg .msg-sender { font-weight: 700; color: #f5a623; }
+      .dd-chat-msg.system { color: #aaa; font-style: italic; }
+      .dd-chat-msg.correct { color: #4caf50; font-weight: 700; }
+      .dd-chat-input-row {
+        display: flex;
+        gap: 6px;
+        padding: 8px;
+        border-top: 1px solid #333;
+      }
+      .dd-chat-input {
+        flex: 1;
+        background: #0f3460;
+        border: 1px solid #333;
+        color: #fff;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        min-width: 0;
+      }
+      .dd-chat-input:focus { outline: none; border-color: #f5a623; }
+      .dd-chat-send {
+        background: #f5a623;
+        color: #1a1a2e;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      /* ── Speed Draw reveal ──────────────────────────────────────── */
+      #ddReveal {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 0;
+      }
+      .dd-reveal-title {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #f5a623;
+      }
+      .dd-reveal-word {
+        text-align: center;
+        font-size: 1.1rem;
+        color: #aaa;
+      }
+      .dd-reveal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .dd-reveal-card {
+        background: #16213e;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid transparent;
+        transition: border-color 0.2s;
+      }
+      .dd-reveal-card .reveal-canvas-wrap {
+        position: relative;
+        aspect-ratio: 4/3;
+        background: #fff;
+      }
+      .dd-reveal-card canvas { width: 100%; height: 100%; display: block; }
+      .dd-reveal-card .reveal-footer {
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .dd-reveal-card .reveal-player { font-weight: 700; font-size: 0.9rem; }
+      .dd-star-btn {
+        background: transparent;
+        border: 2px solid #555;
+        color: #fff;
+        border-radius: 20px;
+        padding: 4px 12px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .dd-star-btn:hover { border-color: #f5a623; }
+      .dd-star-btn.voted { background: #f5a623; color: #1a1a2e; border-color: #f5a623; font-weight: 700; }
+      .dd-star-count { font-size: 0.85rem; color: #aaa; }
+      /* ── Round Results ──────────────────────────────────────────── */
+      #ddRoundResult {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 32px 16px;
+        text-align: center;
+      }
+      .dd-result-title { font-size: 1.6rem; font-weight: 800; color: #f5a623; }
+      .dd-result-scores {
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .dd-result-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #16213e;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+      }
+      .dd-result-row.winner { border: 2px solid #f5a623; }
+      .dd-result-delta { color: #4caf50; font-weight: 700; }
+      /* ── Game Over ──────────────────────────────────────────────── */
+      #ddGameOver {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 32px 16px;
+        text-align: center;
+      }
+      .dd-gameover-title { font-size: 2rem; font-weight: 900; color: #f5a623; }
+      .dd-gameover-sub { color: #aaa; }
+      .dd-xp-bar-wrap {
+        width: 100%;
+        max-width: 360px;
+        background: #16213e;
+        border-radius: 8px;
+        height: 20px;
+        overflow: hidden;
+      }
+      .dd-xp-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #f5a623, #ff8c00);
+        border-radius: 8px;
+        transition: width 1.2s ease;
+      }
+      /* ── Notifications ──────────────────────────────────────────── */
+      #ddNotifs {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 999;
+        pointer-events: none;
+        align-items: center;
+      }
+      .dd-notif {
+        background: rgba(245,166,35,0.92);
+        color: #1a1a2e;
+        font-weight: 700;
+        padding: 10px 24px;
+        border-radius: 20px;
+        animation: dd-notif-in 0.3s ease;
+        white-space: nowrap;
+        font-size: 0.95rem;
+      }
+      @keyframes dd-notif-in {
+        from { opacity: 0; transform: translateY(12px) scale(0.9); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      /* ── Loading / error states ─────────────────────────────────── */
+      .dd-loading-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+        gap: 16px;
+        color: #aaa;
+      }
+      .dd-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #333;
+        border-top-color: #f5a623;
+        border-radius: 50%;
+        animation: dd-spin 0.8s linear infinite;
+      }
+      @keyframes dd-spin { to { transform: rotate(360deg); } }
+
+      /* ── Mobile Lobby Optimizations ──────────────────────────────── */
+      @media (max-width: 480px) {
+        #ddLobby {
+          padding: 24px 12px 36px;
+          gap: 20px;
+        }
+        .dd-lobby-emoji { font-size: 2.8rem; }
+        .dd-lobby-title { font-size: 2rem; }
+        .dd-lobby-subtitle { font-size: 0.92rem; }
+        .dd-lobby-badge { font-size: 0.75rem; padding: 5px 10px; }
+        /* Mode cards: full width, stacked */
+        .dd-mode-select {
+          flex-direction: column;
+          width: 100%;
+          gap: 10px;
+          padding: 0 4px;
+        }
+        .dd-mode-btn {
+          min-width: unset;
+          width: 100%;
+          padding: 16px 20px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          text-align: left;
+        }
+        .dd-mode-btn .mode-icon {
+          font-size: 2rem;
+          margin-bottom: 0;
+          flex-shrink: 0;
+        }
+        .dd-mode-btn .mode-name { font-size: 1.05rem; }
+        .dd-mode-btn .mode-desc { margin-top: 2px; }
+        /* Action buttons: full width, stacked */
+        .dd-lobby-actions {
+          flex-direction: column;
+          width: 100%;
+          padding: 0 4px;
+          gap: 10px;
+        }
+        .dd-btn-primary, .dd-btn-secondary {
+          width: 100%;
+          min-width: unset;
+          text-align: center;
+        }
+        /* Join section: full width */
+        .dd-join-section { width: 100%; padding: 0 4px; }
+        .dd-join-divider { width: 100%; }
+        .dd-join-input {
+          width: 100%;
+          flex-wrap: nowrap;
+        }
+        .dd-join-input input { flex: 1; width: auto; }
+        .dd-join-input .dd-btn-primary { width: auto; min-width: 80px; flex-shrink: 0; }
+        /* Feature strip: 2x2 grid */
+        .dd-features {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px 16px;
+          width: 100%;
+          padding: 4px 8px 0;
+        }
+        .dd-feature { font-size: 0.78rem; justify-content: center; }
+        /* Tone down floating emojis on small screens */
+        .dd-float { font-size: 1.4rem !important; opacity: 0.06; }
+        /* Game playing screen: tighter spacing */
+        .dd-top-bar { padding: 6px 10px; gap: 8px; }
+        .dd-timer { font-size: 1.3rem; }
+        .dd-word-display { font-size: 1.1rem; letter-spacing: 0.15em; }
+      }
+      /* Small phones (iPhone SE, 320px) */
+      @media (max-width: 375px) {
+        .dd-lobby-title { font-size: 1.7rem; }
+        .dd-lobby-emoji { font-size: 2.2rem; }
+        .dd-mode-btn { padding: 14px 16px; }
+        .dd-btn-primary { padding: 14px 20px; font-size: 0.95rem; }
+        .dd-features { gap: 8px 12px; }
+        .dd-feature { font-size: 0.72rem; }
+      }
+    </style>
+  </Fragment>
+
+  <!-- Game Container -->
+  <div class="dd-wrap">
+
+    <!-- Lobby screen -->
+    <div id="ddLobby">
+      <!-- Floating doodle background -->
+      <div class="dd-lobby-bg" aria-hidden="true">
+        <span class="dd-float">✏️</span>
+        <span class="dd-float">🎨</span>
+        <span class="dd-float">⭐</span>
+        <span class="dd-float">🖌️</span>
+        <span class="dd-float">💡</span>
+        <span class="dd-float">🎉</span>
+        <span class="dd-float">🏆</span>
+        <span class="dd-float">🫧</span>
+      </div>
+
+      <!-- Hero -->
+      <div class="dd-lobby-hero">
+        <h2 class="dd-lobby-title">
+          <span class="dd-lobby-emoji">✏️</span>
+          Doodle Dash
+        </h2>
+        <p class="dd-lobby-subtitle">Draw fast, guess faster - up to 30 players, zero downloads.</p>
+      </div>
+
+      <!-- Mode selection -->
+      <div class="dd-mode-select">
+        <button class="dd-mode-btn active" id="modeClassic" data-mode="classic">
+          <span class="mode-icon">🎨</span>
+          <span class="mode-name">Classic</span>
+          <span class="mode-desc">One player draws, everyone guesses</span>
+        </button>
+        <button class="dd-mode-btn" id="modeSpeedDraw" data-mode="speed-draw">
+          <span class="mode-icon">⚡</span>
+          <span class="mode-name">Speed Draw</span>
+          <span class="mode-desc">Everyone draws at once - race to guess!</span>
+        </button>
+      </div>
+
+      <div class="dd-lobby-actions">
+        <button class="dd-btn-primary" id="btnCreatePublic">⚡ Quick Play</button>
+        <button class="dd-btn-secondary" id="btnCreatePrivate">🔒 Create Private Room</button>
+      </div>
+
+      <div class="dd-join-section">
+        <div class="dd-join-divider">or join a friend</div>
+        <div class="dd-join-input">
+          <input type="text" id="joinCodeInput" placeholder="ROOM CODE" maxlength="6" autocomplete="off" spellcheck="false">
+          <button class="dd-btn-primary" id="btnJoinRoom">Join</button>
+        </div>
+      </div>
+
+      <!-- Feature strip -->
+      <div class="dd-features">
+        <div class="dd-feature"><span class="dd-feature-icon">👥</span> 2–30 Players</div>
+        <div class="dd-feature"><span class="dd-feature-icon">📱</span> Mobile Friendly</div>
+        <div class="dd-feature"><span class="dd-feature-icon">🆓</span> Free, No Ads</div>
+        <div class="dd-feature"><span class="dd-feature-icon">⭐</span> XP & Achievements</div>
+      </div>
+    </div>
+
+    <!-- Room lobby (waiting for players) -->
+    <div id="ddRoomLobby" style="display:none">
+      <div class="dd-room-header">
+        <div>
+          <div style="font-size:0.85rem;color:#aaa;margin-bottom:2px">Room Code (click to copy)</div>
+          <div class="dd-room-code" id="roomCodeDisplay" title="Click to copy">------</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="roomModeLabel" style="color:#aaa;font-size:0.9rem"></span>
+          <button class="dd-btn-primary" id="btnStartGame" style="display:none">Start Game</button>
+          <button class="dd-btn-secondary" id="btnLeaveRoom">Leave</button>
+        </div>
+      </div>
+      <div style="color:#aaa;font-size:0.85rem">Players (<span id="playerCountLabel">0</span>/30)</div>
+      <div class="dd-players-list" id="playersList"></div>
+      <div id="waitingMsg" style="color:#aaa;font-size:0.9rem;text-align:center;padding:16px"></div>
+    </div>
+
+    <!-- Game screen -->
+    <div id="ddGame" style="display:none;flex-direction:column;gap:8px">
+      <!-- Top bar -->
+      <div class="dd-top-bar">
+        <div class="dd-round-info">Round <span id="roundNum">1</span>/<span id="roundTotal">6</span></div>
+        <div class="dd-word-display" id="wordDisplay">_ _ _ _ _</div>
+        <div class="dd-timer" id="gameTimer" role="status" aria-live="polite" aria-atomic="true">80</div>
+      </div>
+
+      <!-- Main: canvas + sidebar -->
+      <div class="dd-main">
+        <!-- Canvas area -->
+        <div class="dd-canvas-area">
+          <div class="dd-canvas-wrap">
+            <canvas id="ddCanvas"></canvas>
+            <!-- Phase overlay (word choice, phase transitions, speed-draw lock) -->
+            <div class="dd-canvas-overlay" id="canvasOverlay">
+              <div class="dd-overlay-title" id="overlayTitle">Choose a word to draw</div>
+              <div class="dd-word-choices" id="wordChoices"></div>
+              <div id="overlaySubtext" style="color:#aaa;font-size:0.9rem"></div>
+            </div>
+          </div>
+          <!-- Drawing toolbar (hidden for guessers) -->
+          <div class="dd-toolbar" id="drawToolbar">
+            <!-- Tools -->
+            <button class="dd-tool-btn active" id="toolPen" title="Pen" data-tool="pen">✏️</button>
+            <button class="dd-tool-btn" id="toolEraser" title="Eraser" data-tool="eraser">🧹</button>
+            <button class="dd-tool-btn" id="toolFill" title="Fill" data-tool="fill">🪣</button>
+            <button class="dd-tool-btn" id="toolUndo" title="Undo" data-tool="undo">↩️</button>
+            <button class="dd-tool-btn" id="toolClear" title="Clear" data-tool="clear">🗑️</button>
+            <div class="dd-divider"></div>
+            <!-- Brush sizes -->
+            <div class="dd-brush-size">
+              <button class="dd-size-btn sz-s active" data-size="3" style="background:#fff" aria-label="Brush size: small"></button>
+              <button class="dd-size-btn sz-m" data-size="7" style="background:#fff" aria-label="Brush size: medium"></button>
+              <button class="dd-size-btn sz-l" data-size="14" style="background:#fff" aria-label="Brush size: large"></button>
+              <button class="dd-size-btn sz-xl" data-size="24" style="background:#fff" aria-label="Brush size: extra large"></button>
+            </div>
+            <div class="dd-divider"></div>
+            <!-- Color palette -->
+            <div class="dd-color-palette" id="colorPalette"></div>
+          </div>
+        </div>
+
+        <!-- Sidebar: scores + chat -->
+        <div class="dd-sidebar">
+          <div class="dd-scores-panel">
+            <div class="dd-panel-header">Scores</div>
+            <div class="dd-scores-list" id="scoresList"></div>
+          </div>
+          <div class="dd-chat-panel">
+            <div class="dd-panel-header">Chat / Guesses</div>
+            <div class="dd-chat-messages" id="chatMessages" aria-live="polite"></div>
+            <div class="dd-chat-input-row">
+              <input
+                class="dd-chat-input"
+                id="chatInput"
+                type="text"
+                placeholder="Type your guess..."
+                maxlength="100"
+                autocomplete="off"
+                spellcheck="false"
+              >
+              <button class="dd-chat-send" id="chatSend">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Speed Draw reveal screen -->
+    <div id="ddReveal" style="display:none;flex-direction:column;gap:12px;padding:16px 0">
+      <div class="dd-reveal-title">Time's Up! Vote for the best drawing!</div>
+      <div class="dd-reveal-word" id="revealWordLabel"></div>
+      <div class="dd-reveal-grid" id="revealGrid"></div>
+      <div style="text-align:center;color:#aaa;font-size:0.85rem" id="revealCountdown"></div>
+    </div>
+
+    <!-- Round result screen -->
+    <div id="ddRoundResult" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;text-align:center">
+      <div class="dd-result-title" id="roundResultTitle">Round Over!</div>
+      <div class="dd-result-word" style="color:#aaa;font-size:0.9rem" id="roundResultWord"></div>
+      <div class="dd-result-scores" id="roundResultScores"></div>
+      <div style="color:#aaa;font-size:0.85rem" id="nextRoundCountdown"></div>
+    </div>
+
+    <!-- Game over screen -->
+    <div id="ddGameOver" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 16px;text-align:center">
+      <div class="dd-gameover-title">Game Over!</div>
+      <div class="dd-gameover-sub" id="gameoverSub"></div>
+      <div class="dd-result-scores" id="gameoverScores"></div>
+      <div style="font-size:0.9rem;color:#aaa">XP Earned</div>
+      <div class="dd-xp-bar-wrap">
+        <div class="dd-xp-bar" id="xpBar" style="width:0%"></div>
+      </div>
+      <div style="font-size:0.85rem;color:#f5a623" id="xpLabel"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+        <button class="dd-btn-primary" id="btnPlayAgain">Play Again</button>
+        <button class="dd-btn-secondary" id="btnBackLobby">Back to Lobby</button>
+      </div>
+    </div>
+
+    <!-- Loading screen -->
+    <div id="ddLoadingScreen" style="display:none">
+      <div class="dd-loading-screen">
+        <div class="dd-spinner"></div>
+        <div id="loadingMsg">Connecting...</div>
+        <button class="dd-btn-secondary" id="btnCancelLoading" style="margin-top:16px">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div id="ddNotifs" aria-live="assertive" role="log"></div>
+
+  <Fragment slot="scripts">
+    <script is:inline src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script is:inline src="/js/multiplayer-client.js"></script>
+    <script is:inline src="/js/multiplayer-ui.js"></script>
+    <link rel="stylesheet" href="/games/doodle-dash/style.css">
+    <script is:inline src="/games/doodle-dash/game.js"></script>
+  </Fragment>
+</GameLayout>
