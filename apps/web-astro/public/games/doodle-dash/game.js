@@ -246,7 +246,7 @@
   function initCanvas() {
     canvas = $id('ddCanvas');
     if (!canvas) return;
-    ctx = canvas.getContext('2d');
+    ctx = canvas.getContext('2d', { willReadFrequently: true });
     canvas.width  = CANVAS_W;
     canvas.height = CANVAS_H;
     clearCanvas();
@@ -366,22 +366,39 @@
     drawSegment(lastX, lastY, lastX, lastY, currentTool === 'eraser' ? '#ffffff' : currentColor, currentSize, currentTool);
   }
 
+  // Stroke batching: collect segments and flush as one message
+  var strokeBatch = [];
+  var batchTimer = null;
+  var BATCH_INTERVAL = 100; // ms — flush every 100ms
+
+  function flushStrokeBatch() {
+    if (strokeBatch.length === 0) return;
+    if (!window.multiplayerClient) return;
+    window.multiplayerClient.submitMove('draw-stroke-batch', { strokes: strokeBatch });
+    strokeBatch = [];
+  }
+
+  function queueStroke(x0, y0, x1, y1, color, width, tool) {
+    strokeBatch.push({
+      x0: Math.round(x0), y0: Math.round(y0),
+      x1: Math.round(x1), y1: Math.round(y1),
+      color: color, width: width, tool: tool,
+    });
+    if (!batchTimer) {
+      batchTimer = setTimeout(function () {
+        batchTimer = null;
+        flushStrokeBatch();
+      }, BATCH_INTERVAL);
+    }
+  }
+
   function onPointerMove(e) {
     if (!amIDrawing || !isPointerDown) return;
     var pos = getCanvasPos(e);
     var x1 = pos.x;
     var y1 = pos.y;
     drawSegment(lastX, lastY, x1, y1, currentTool === 'eraser' ? '#ffffff' : currentColor, currentSize, currentTool);
-
-    // Rate-limited emit
-    var now = Date.now();
-    if (now - lastEmitTime >= EMIT_INTERVAL) {
-      emitStroke(lastX, lastY, x1, y1, currentTool === 'eraser' ? '#ffffff' : currentColor, currentSize, currentTool);
-      lastEmitTime = now;
-    } else {
-      pendingStroke = { x0: lastX, y0: lastY, x1: x1, y1: y1, color: currentTool === 'eraser' ? '#ffffff' : currentColor, width: currentSize, tool: currentTool };
-    }
-
+    queueStroke(lastX, lastY, x1, y1, currentTool === 'eraser' ? '#ffffff' : currentColor, currentSize, currentTool);
     lastX = x1;
     lastY = y1;
   }
@@ -389,11 +406,9 @@
   function onPointerUp(e) {
     if (!isPointerDown) return;
     isPointerDown = false;
-    // Flush any pending stroke
-    if (pendingStroke) {
-      emitStroke(pendingStroke.x0, pendingStroke.y0, pendingStroke.x1, pendingStroke.y1, pendingStroke.color, pendingStroke.width, pendingStroke.tool);
-      pendingStroke = null;
-    }
+    // Flush any remaining batched strokes immediately
+    if (batchTimer) { clearTimeout(batchTimer); batchTimer = null; }
+    flushStrokeBatch();
     // Save stroke group for undo
     if (currentStroke.length > 0) {
       strokeHistory.push(currentStroke.slice());
@@ -1081,6 +1096,15 @@
       if (!amIDrawing && data.uid !== myUid) {
         hideOverlay();
         applyRemoteStroke(data);
+      }
+    });
+
+    mc.on('game:stroke-batch', function (data) {
+      if (!amIDrawing && data.uid !== myUid && data.strokes) {
+        hideOverlay();
+        for (var i = 0; i < data.strokes.length; i++) {
+          applyRemoteStroke(data.strokes[i]);
+        }
       }
     });
 

@@ -254,6 +254,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         return this.handleWordChoice(s, uid, moveData);
       case 'draw-stroke':
         return this.handleDrawStroke(s, uid, moveData);
+      case 'draw-stroke-batch':
+        return this.handleDrawStrokeBatch(s, uid, moveData);
       case 'guess':
         return this.handleGuess(s, uid, moveData);
       case 'star-vote':
@@ -347,6 +349,45 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     s.wordHint        = buildHint(s.currentWord, 0);
     s.phase           = 'drawing';
     s.roundStartedAt  = Date.now();
+
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private handleDrawStrokeBatch(
+    s: DoodleDashState,
+    uid: string,
+    moveData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const strokes = moveData.strokes as Array<Record<string, unknown>>;
+    if (!strokes || !Array.isArray(strokes)) return s as unknown as Record<string, unknown>;
+
+    // Validate phase
+    if (s.mode === 'classic') {
+      if (uid !== s.currentDrawerUid || s.phase !== 'drawing') {
+        return s as unknown as Record<string, unknown>;
+      }
+    } else if (s.phase !== 'sd-drawing') {
+      return s as unknown as Record<string, unknown>;
+    }
+
+    for (const seg of strokes) {
+      const stroke: DrawStroke = {
+        uid,
+        x0: (seg.x0 as number) || 0,
+        y0: (seg.y0 as number) || 0,
+        x1: (seg.x1 as number) || 0,
+        y1: (seg.y1 as number) || 0,
+        color: (seg.color as string) || '#000000',
+        width: (seg.width as number) || 3,
+        tool: (seg.tool as string) || 'pen',
+      };
+      s.strokeHistory.push(stroke);
+    }
+
+    // Cap history
+    if (s.strokeHistory.length > 2000) {
+      s.strokeHistory = s.strokeHistory.slice(-2000);
+    }
 
     return s as unknown as Record<string, unknown>;
   }

@@ -279,12 +279,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       const roomName = `session:${sessionId}`;
 
-      // For draw-stroke moves: broadcast lightweight event instead of full state
-      // Full game:state is too heavy for high-frequency drawing (causes dropped messages)
+      // For drawing moves: broadcast lightweight events instead of full state
       if (payload.moveType === 'draw-stroke') {
-        client.to(roomName).emit('game:stroke', {
+        client.to(roomName).emit('game:stroke', { uid, ...payload.moveData });
+        return;
+      }
+      if (payload.moveType === 'draw-stroke-batch') {
+        client.to(roomName).emit('game:stroke-batch', {
           uid,
-          ...payload.moveData,
+          strokes: payload.moveData.strokes,
         });
         return;
       }
