@@ -161,19 +161,22 @@
     setTimeout(function () { el.remove(); }, duration || 2500);
   }
 
+  var PLAYER_COLORS = ['#f5a623','#4ecdc4','#ff6b6b','#a78bfa','#34d399','#f472b6','#60a5fa','#fbbf24','#fb923c','#c084fc'];
+
   function showRoomLobby() {
     var codeEl = $id('roomCodeDisplay');
     if (codeEl) codeEl.textContent = roomCode || '------';
     var modeEl = $id('roomModeLabel');
-    if (modeEl) modeEl.textContent = gameMode === 'speed-draw' ? 'Speed Draw' : 'Classic';
+    if (modeEl) modeEl.textContent = (gameMode === 'speed-draw' ? '⚡ Speed Draw' : '🎨 Classic');
     var startBtn = $id('btnStartGame');
-    if (startBtn) startBtn.style.display = isHost ? 'block' : 'none';
+    if (startBtn) startBtn.style.display = isHost ? 'inline-block' : 'none';
     var waitMsg = $id('waitingMsg');
     if (waitMsg) {
       waitMsg.textContent = isHost
-        ? 'Share the room code with friends. Click "Start Game" when ready.'
+        ? 'Press "Start Game" when everyone is in!'
         : 'Waiting for host to start the game...';
     }
+    renderRoomPlayers();
     showScreen('room');
   }
 
@@ -606,16 +609,26 @@
   function renderRoomPlayers() {
     var list = $id('playersList');
     if (!list) return;
-    list.innerHTML = players.map(function (p) {
+    list.innerHTML = players.map(function (p, i) {
       var isMe = p.uid === myUid;
-      var hostMark = p.isHost ? ' is-host' : '';
-      return '<div class="dd-player-chip' + hostMark + '">' +
-        '<span class="avatar">🎨</span>' +
-        '<span>' + escapeHtml(p.name) + (p.isHost ? ' 👑' : '') + (isMe ? ' (you)' : '') + '</span>' +
+      var cls = 'dd-player-chip' + (p.isHost ? ' is-host' : '') + (isMe ? ' is-me' : '');
+      var color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+      var initial = (p.name || '?').charAt(0).toUpperCase();
+      var role = p.isHost ? '<span class="player-role">HOST</span>' : '';
+      var youTag = isMe ? ' (you)' : '';
+      return '<div class="' + cls + '">' +
+        '<span class="avatar" style="background:' + color + '">' + initial + '</span>' +
+        '<span class="player-info"><span class="player-name">' + escapeHtml(p.name) + youTag + '</span>' + role + '</span>' +
+        '<span class="ready-dot" title="Connected"></span>' +
         '</div>';
     }).join('');
     var countEl = $id('playerCountLabel');
     if (countEl) countEl.textContent = players.length;
+    var slotsEl = $id('emptySlotsMsg');
+    if (slotsEl) {
+      var remaining = 30 - players.length;
+      slotsEl.textContent = remaining > 0 ? remaining + ' slot' + (remaining !== 1 ? 's' : '') + ' available' : 'Room is full!';
+    }
   }
 
   // ─── Chat / Guess System ────────────────────────────────────────
@@ -1331,17 +1344,20 @@
       showScreen('lobby');
     });
 
-    // Room code copy
-    var codeDisplay = $id('roomCodeDisplay');
-    if (codeDisplay) codeDisplay.addEventListener('click', function () {
+    // Room code copy (both code display and copy button)
+    function copyRoomCode() {
       if (roomCode && navigator.clipboard) {
         navigator.clipboard.writeText(roomCode).then(function () {
-          codeDisplay.classList.add('copied');
-          setTimeout(function () { codeDisplay.classList.remove('copied'); }, 1500);
           showNotif('Room code copied!', 1500);
+          var btn = $id('btnCopyCode');
+          if (btn) { btn.textContent = '✅'; setTimeout(function () { btn.textContent = '📋'; }, 1500); }
         });
       }
-    });
+    }
+    var codeDisplay = $id('roomCodeDisplay');
+    if (codeDisplay) codeDisplay.addEventListener('click', copyRoomCode);
+    var btnCopy = $id('btnCopyCode');
+    if (btnCopy) btnCopy.addEventListener('click', copyRoomCode);
 
     // Game over buttons
     var btnPlayAgain = $id('btnPlayAgain');
