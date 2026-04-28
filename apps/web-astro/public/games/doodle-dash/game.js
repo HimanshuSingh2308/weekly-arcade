@@ -1115,6 +1115,7 @@
     var _prevRound = 0;
     var _prevHint  = null;
     var _appliedStrokes = 0;
+    var _gameOverShown = false;
 
     mc.onGameState(function (data) {
       if (!data || !data.state) return;
@@ -1247,10 +1248,21 @@
         });
       }
 
-      // ── Round end ──
-      if (phase === 'round-end' && _prevPhase !== 'round-end') {
+      // ── Game over (server set gameOver=true on start-round after final round) ──
+      if (s.gameOver && !_gameOverShown) {
+        _gameOverShown = true;
+        // Sync final scores
+        if (s.playerStates) {
+          Object.keys(s.playerStates).forEach(function (uid) {
+            sessionScores[uid] = s.playerStates[uid].score;
+          });
+        }
+        showGameOver({ scores: sessionScores, playerStates: s.playerStates });
+      }
+
+      // ── Round end (not game over) ──
+      if (phase === 'round-end' && _prevPhase !== 'round-end' && !s.gameOver) {
         stopTimer();
-        // Sync scores from server state
         if (s.playerStates) {
           Object.keys(s.playerStates).forEach(function (uid) {
             sessionScores[uid] = s.playerStates[uid].score;
@@ -1261,13 +1273,8 @@
           word: s.currentWord,
           roundNum: s.round,
           scores: sessionScores,
-          nextRound: !s.gameOver,
+          nextRound: true,
         });
-      }
-
-      // ── Game over ──
-      if (s.gameOver && phase === 'round-end' && _prevPhase !== 'round-end') {
-        showGameOver({ scores: sessionScores, playerStates: s.playerStates });
       }
 
       _prevPhase = phase;
