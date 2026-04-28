@@ -335,7 +335,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       const activeSession = this.stateManager.getSession(sessionId);
       if (activeSession && activeSession.version > 0) {
-        const { state, version } = this.stateManager.processMove(sessionId, uid, 'start-round', {});
+        const { state, version } = this.stateManager.applyMove(sessionId, uid, 'start-round', {});
         const turnUid = this.stateManager.getNextTurn(sessionId);
         this.server.to(roomName).emit('game:state', { state, version, turnUid });
       }
