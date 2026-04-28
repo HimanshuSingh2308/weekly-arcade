@@ -125,12 +125,11 @@ export class GameStateManager {
     if (session.version === 0) throw new Error('Game not initialized yet');
 
     // Level 2 anti-cheat: timing validation
-    // Real-time games skip timing check — position updates are high-frequency
-    // and rate-limited client-side (67ms). Server-side timing breaks due to
-    // network batching where multiple messages arrive in the same ms.
+    // Skip for real-time games and drawing moves (always high-frequency)
     const now = Date.now();
+    const isDrawing = moveType === 'draw-stroke' || moveType === 'draw-stroke-batch';
     const isRealtime = session.logic.getNextTurn(session.state) === null;
-    if (!isRealtime) {
+    if (!isRealtime && !isDrawing) {
       const lastMove = session.lastMoveTime.get(uid);
       if (lastMove && (now - lastMove) < MIN_MOVE_INTERVAL_TURN_MS) {
         throw new Error(`Move too fast: minimum ${MIN_MOVE_INTERVAL_TURN_MS}ms between moves`);
