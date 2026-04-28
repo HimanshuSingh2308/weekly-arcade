@@ -1041,174 +1041,160 @@
       showNotif((data.displayName || 'Player') + ' reconnected', 2000);
     });
 
-    mc.on('game:round-start', function (data) {
-      currentRound = data.round || currentRound + 1;
-      totalRounds  = data.totalRounds || totalRounds;
-      roundScores  = {};
-      if (currentRound === 1) gameStartedAt = Date.now();
+    // ── State-driven event handler ─────────────────────────────────
+    // The server broadcasts game:state with the full DoodleDash state.
+    // We track the previous phase/round and derive UI events from transitions.
+    var _prevPhase = null;
+    var _prevRound = 0;
+    var _prevHint  = null;
 
-      var roundEl = $id('roundNum');
-      if (roundEl) roundEl.textContent = currentRound;
-      var totalEl = $id('roundTotal');
-      if (totalEl) totalEl.textContent = totalRounds;
+    mc.onGameState(function (data) {
+      if (!data || !data.state) return;
+      var s = data.state;
+      var phase = s.phase;
+      var round = s.round || 0;
 
-      hintRevealed = [false, false];
+      // ── Round start: new round detected ──
+      if (round > _prevRound && (phase === 'word-choice' || phase === 'sd-drawing')) {
+        currentRound = round;
+        totalRounds  = s.totalRounds || totalRounds;
+        roundScores  = {};
+        if (currentRound === 1) gameStartedAt = Date.now();
 
-      showScreen('playing');
-      initCanvas();
+        var roundEl = $id('roundNum');
+        if (roundEl) roundEl.textContent = currentRound;
+        var totalEl = $id('roundTotal');
+        if (totalEl) totalEl.textContent = totalRounds;
 
-      if (gameMode === 'speed-draw') {
-        // Server sends word to all
-        var word = data.word;
-        if (!word) {
-          showWaitingOverlay('Starting Speed Draw...');
-          return;
-        }
-        startSpeedDrawPhase(word);
-      } else {
-        // Classic: determine drawer
-        currentDrawer = data.drawerUid;
-        var drawerName = getPlayerName(currentDrawer);
-        if (currentDrawer === myUid) {
-          showWordChoice(data.words || ['cat', 'house', 'tree']);
+        hintRevealed = [false, false];
+        showScreen('playing');
+        initCanvas();
+
+        if (s.mode === 'speed-draw') {
+          var word = s.currentWord;
+          if (!word) { showWaitingOverlay('Starting Speed Draw...'); }
+          else { startSpeedDrawPhase(word); }
         } else {
-          startClassicGuessingPhase(data.hint || '_ _ _ _ _', drawerName);
-        }
-      }
-
-      renderScores();
-    });
-
-    mc.on('game:drawing-started', function (data) {
-      // Classic: drawer chose word, drawing phase begins
-      currentDrawer = data.drawerUid;
-      var hintText  = data.hint || '_ _ _ _ _';
-      wordHint      = hintText;
-
-      if (currentDrawer !== myUid) {
-        // I'm guessing
-        hideOverlay();
-        startTimer(TURN_TIMEOUT, null, null);
-        updateWordDisplay(null, null);
-        addChatMessage('', getPlayerName(currentDrawer) + ' is now drawing!', 'system');
-      } else {
-        // I'm drawing - was already started by showWordChoice handler
-      }
-      renderScores();
-    });
-
-    mc.on('game:stroke', function (data) {
-      // Incoming stroke from drawer (broadcast to guessers)
-      if (!amIDrawing) {
-        // Hide "waiting" overlay once first stroke arrives
-        hideOverlay();
-        applyRemoteStroke(data);
-      }
-    });
-
-    mc.on('game:stroke-history', function (data) {
-      // Late-join: replay full stroke history
-      if (!amIDrawing && data.strokes) {
-        replayStrokes(data.strokes);
-      }
-    });
-
-    mc.on('game:hint', function (data) {
-      wordHint = data.hint;
-      updateWordDisplay(null, null);
-      addChatMessage('', 'Hint: ' + data.hint, 'system');
-    });
-
-    mc.on('game:guess-result', function (data) {
-      // data: { uid, name, correct, closeGuess, text, drawerDelta }
-      if (data.correct) {
-        var delta = data.scoreAwarded || 0;
-        sessionScores[data.uid] = (sessionScores[data.uid] || 0) + delta;
-        roundScores[data.uid]   = (roundScores[data.uid]   || 0) + delta;
-
-        if (data.uid === myUid) {
-          myScore += delta;
-          showNotif('Correct! +' + delta + ' points!');
-          var chatInput = $id('chatInput');
-          if (chatInput) chatInput.disabled = true; // already guessed
-        }
-
-        // Drawer score is tracked server-side and synced at round-end
-        // Do NOT accumulate locally to prevent double-counting
-
-        sfxCorrectGuess();
-        addChatMessage(data.name, data.text, 'correct');
-        addChatMessage('', data.name + ' guessed correctly! (+' + delta + ')', 'system');
-
-        // Mark player as guessed
-        var p = players.find(function (pl) { return pl.uid === data.uid; });
-        if (p) p.guessed = true;
-      } else if (data.closeGuess) {
-        addChatMessage(data.name, data.text, '');
-        if (data.uid === myUid) {
-          // Show close-hint overlay
-          var wrap = document.querySelector('.dd-canvas-wrap');
-          if (wrap) {
-            var hint = document.createElement('div');
-            hint.className = 'dd-close-hint';
-            hint.textContent = 'So close!';
-            wrap.appendChild(hint);
-            setTimeout(function () { hint.remove(); }, 2600);
+          currentDrawer = s.currentDrawerUid;
+          var drawerName = getPlayerName(currentDrawer);
+          if (currentDrawer === myUid) {
+            showWordChoice(s.wordOptions || ['cat', 'house', 'tree']);
+          } else {
+            var hint = s.wordHint || '_ _ _ _ _';
+            startClassicGuessingPhase(hint, drawerName);
           }
         }
-      } else {
-        addChatMessage(data.name, data.text, '');
+        renderScores();
       }
-      renderScores();
-    });
 
-    mc.on('game:sd-reveal', function (data) {
-      // Speed Draw: all canvases revealed
-      stopTimer();
-      showRevealScreen(data.canvases || {}, data.word || '');
-    });
+      // ── Drawing started: phase changed to 'drawing' (Classic: drawer chose word) ──
+      if (phase === 'drawing' && _prevPhase === 'word-choice') {
+        currentDrawer = s.currentDrawerUid;
+        wordHint = s.wordHint || '_ _ _ _ _';
 
-    mc.on('game:star-vote-update', function (data) {
-      // data: { uid, stars }
-      var card = document.querySelector('.dd-reveal-card[data-uid="' + data.uid + '"]');
-      if (!card) return;
-      var existing = card.querySelector('.dd-star-count');
-      if (existing) {
-        existing.textContent = data.stars + ' ⭐';
-      } else {
-        var footer = card.querySelector('.reveal-footer');
-        if (footer) {
-          var span = document.createElement('span');
-          span.className = 'dd-star-count';
-          span.textContent = data.stars + ' ⭐';
-          footer.appendChild(span);
+        if (currentDrawer !== myUid) {
+          hideOverlay();
+          startTimer(TURN_TIMEOUT, null, null);
+          updateWordDisplay(null, null);
+          addChatMessage('', getPlayerName(currentDrawer) + ' is now drawing!', 'system');
+        }
+        renderScores();
+      }
+
+      // ── Stroke data: check for new strokes in history ──
+      if (s.strokeHistory && s.strokeHistory.length > 0 && !amIDrawing) {
+        // Only apply the last stroke (incremental) — full replay handled below
+        var lastStroke = s.strokeHistory[s.strokeHistory.length - 1];
+        if (lastStroke && lastStroke.uid !== myUid) {
+          hideOverlay();
+          applyRemoteStroke(lastStroke);
         }
       }
-      // Award score to the voted player
-      var delta = 20; // XP_STAR_VOTE_RECEIVED
-      sessionScores[data.uid] = (sessionScores[data.uid] || 0) + delta;
-      roundScores[data.uid]   = (roundScores[data.uid]   || 0) + delta;
-    });
 
-    mc.on('game:round-end', function (data) {
-      // data: { word, roundNum, scores, nextRound }
-      stopTimer();
+      // ── Hint reveal ──
+      if (s.wordHint && s.wordHint !== _prevHint && phase === 'drawing') {
+        wordHint = s.wordHint;
+        updateWordDisplay(null, null);
+        addChatMessage('', 'Hint: ' + s.wordHint, 'system');
+      }
 
-      // Update cumulative scores
-      if (data.scores) {
-        Object.keys(data.scores).forEach(function (uid) {
-          sessionScores[uid] = data.scores[uid];
+      // ── Guess results: check playerStates for new correct guesses ──
+      if (s.playerStates) {
+        Object.keys(s.playerStates).forEach(function (uid) {
+          var ps = s.playerStates[uid];
+          var p = players.find(function (pl) { return pl.uid === uid; });
+          if (p && ps.hasGuessedThisRound && !p.guessed) {
+            p.guessed = true;
+            var delta = ps.score - (sessionScores[uid] || 0);
+            if (delta > 0) {
+              sessionScores[uid] = ps.score;
+              roundScores[uid]   = (roundScores[uid] || 0) + delta;
+              if (uid === myUid) {
+                myScore += delta;
+                showNotif('Correct! +' + delta + ' points!');
+                var chatInput = $id('chatInput');
+                if (chatInput) chatInput.disabled = true;
+              }
+              sfxCorrectGuess();
+              addChatMessage('', ps.name + ' guessed correctly! (+' + delta + ')', 'system');
+            }
+          }
+        });
+        renderScores();
+      }
+
+      // ── Speed Draw reveal ──
+      if (phase === 'sd-vote' && _prevPhase === 'sd-drawing') {
+        stopTimer();
+        showRevealScreen({}, s.currentWord || '');
+      }
+
+      // ── Star votes ──
+      if (s.sdStarVotes && phase === 'sd-vote') {
+        Object.keys(s.sdStarVotes).forEach(function (uid) {
+          var stars = s.sdStarVotes[uid];
+          var card = document.querySelector('.dd-reveal-card[data-uid="' + uid + '"]');
+          if (!card) return;
+          var existing = card.querySelector('.dd-star-count');
+          if (existing) { existing.textContent = stars + ' ⭐'; }
+          else {
+            var footer = card.querySelector('.reveal-footer');
+            if (footer) {
+              var span = document.createElement('span');
+              span.className = 'dd-star-count';
+              span.textContent = stars + ' ⭐';
+              footer.appendChild(span);
+            }
+          }
         });
       }
 
-      // Clear guessed flags for next round
-      players.forEach(function (p) { p.guessed = false; });
+      // ── Round end ──
+      if (phase === 'round-end' && _prevPhase !== 'round-end') {
+        stopTimer();
+        // Sync scores from server state
+        if (s.playerStates) {
+          Object.keys(s.playerStates).forEach(function (uid) {
+            sessionScores[uid] = s.playerStates[uid].score;
+          });
+        }
+        players.forEach(function (p) { p.guessed = false; });
+        showRoundResult({
+          word: s.currentWord,
+          roundNum: s.round,
+          scores: sessionScores,
+          nextRound: !s.gameOver,
+        });
+      }
 
-      showRoundResult(data);
-    });
+      // ── Game over ──
+      if (s.gameOver && phase === 'round-end' && _prevPhase !== 'round-end') {
+        showGameOver({ scores: sessionScores, playerStates: s.playerStates });
+      }
 
-    mc.on('game:over', function (data) {
-      showGameOver(data);
+      _prevPhase = phase;
+      _prevRound = round;
+      _prevHint  = s.wordHint;
     });
 
     mc.onError(function (data) {
@@ -1326,11 +1312,16 @@
     var btnStart = $id('btnStartGame');
     if (btnStart) btnStart.addEventListener('click', function () {
       if (!window.multiplayerClient) return;
-      // First start the session (REST), then submit start-round move (WebSocket)
+      btnStart.disabled = true;
+      btnStart.textContent = 'Starting...';
+
+      // REST: set session to 'starting', then tell realtime server to initialize the game
       window.multiplayerClient.startGame(currentSessionId).then(function () {
-        window.multiplayerClient.submitMove('start-round', { ready: true });
+        window.multiplayerClient.hostStart();
       }).catch(function (err) {
         showNotif('Failed to start: ' + (err.message || 'Try again'), 3000);
+        btnStart.disabled = false;
+        btnStart.textContent = 'Start Game';
       });
     });
 

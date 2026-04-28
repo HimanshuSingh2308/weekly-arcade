@@ -313,13 +313,45 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     await this.tryStartGame(sessionId, roomName);
   }
 
+  @SubscribeMessage('game:host-start')
+  async handleHostStart(@ConnectedSocket() client: AuthenticatedSocket) {
+    const { uid } = client.data.user;
+    const { sessionId } = client.data;
+    const roomName = `session:${sessionId}`;
+
+    // Verify this is the host
+    const sessionDoc = await this.firebase.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) return;
+    const session = sessionDoc.data() as Session;
+    if (session.hostUid !== uid) {
+      client.emit('error', { code: 'NOT_HOST', message: 'Only the host can start the game' });
+      return;
+    }
+
+    this.logger.log(`Host manually starting session ${sessionId}`);
+    await this.tryStartGame(sessionId, roomName, true);
+
+    // Auto-apply the first move (e.g. 'start-round' for doodle-dash) so the game begins
+    try {
+      const activeSession = this.stateManager.getSession(sessionId);
+      if (activeSession && activeSession.version > 0) {
+        const { state, version } = this.stateManager.processMove(sessionId, uid, 'start-round', {});
+        const turnUid = this.stateManager.getNextTurn(sessionId);
+        this.server.to(roomName).emit('game:state', { state, version, turnUid });
+      }
+    } catch (e) {
+      // Not all games need a start-round move — ignore if not applicable
+      this.logger.debug(`Auto start-round skipped: ${(e as Error).message}`);
+    }
+  }
+
   /**
    * Check if all connected players are ready and start the game.
    * Auto-transitions 'waiting' → 'starting' → 'playing' when all players are in,
    * so the game starts even if the host client missed the player-joined event
    * (common on mobile when the host backgrounds the app to share an invite link).
    */
-  private async tryStartGame(sessionId: string, roomName: string): Promise<void> {
+  private async tryStartGame(sessionId: string, roomName: string, manualTrigger = false): Promise<void> {
     const activeSession = this.stateManager.getSession(sessionId);
     if (!activeSession || activeSession.version > 0) return; // Already initialized
 
@@ -328,10 +360,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!sessionDoc.exists) return;
     const session = sessionDoc.data() as Session;
 
-    // Skip auto-start if the game config says manual start (e.g. party games)
-    const gameInfo = getGameInfo(session.gameId);
-    if (gameInfo?.multiplayer?.autoStart === false) return;
-
     // Need at least minPlayers connected
     const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
     if (connectedPlayers.length < session.minPlayers) return;
@@ -339,17 +367,22 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Session must not be finished or abandoned
     if (session.status === 'finished' || session.status === 'abandoned') return;
 
-    // All connected players must be ready
-    const readyPlayers = this.roomManager.getReadyPlayers(sessionId);
-    const allReady = connectedPlayers.every(uid => readyPlayers.includes(uid));
-    if (!allReady) return;
+    // For autoStart games: auto-transition waiting → starting when all players ready
+    // For manual-start games (manualTrigger=false): skip. Host triggers via game:host-start (manualTrigger=true)
+    const gameInfo = getGameInfo(session.gameId);
+    const isAutoStart = gameInfo?.multiplayer?.autoStart !== false;
 
-    // Auto-transition from 'waiting' to 'starting' when all players are connected
-    // and ready. This handles the case where the host's WebSocket disconnected
-    // (e.g., Android backgrounding the app to share an invite link) and missed
-    // the player-joined event, so no client ever called the REST startGame endpoint.
     if (session.status === 'waiting') {
-      this.logger.log(`Auto-starting session ${sessionId}: all ${connectedPlayers.length} players connected and ready`);
+      if (!isAutoStart && !manualTrigger) return;
+
+      if (isAutoStart) {
+        // All connected players must be ready for auto-start
+        const readyPlayers = this.roomManager.getReadyPlayers(sessionId);
+        const allReady = connectedPlayers.every(uid => readyPlayers.includes(uid));
+        if (!allReady) return;
+      }
+
+      this.logger.log(`${manualTrigger ? 'Manual' : 'Auto'}-starting session ${sessionId}: ${connectedPlayers.length} players connected`);
       await this.firebase.doc(`sessions/${sessionId}`).update({
         status: 'starting',
         lastActivityAt: new Date(),

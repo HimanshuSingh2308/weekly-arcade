@@ -259,6 +259,10 @@
     if (socket) socket.emit('game:ready', {});
   }
 
+  function hostStart() {
+    if (socket) socket.emit('game:host-start', {});
+  }
+
   function forfeit() {
     if (socket) socket.emit('game:forfeit', {});
   }
@@ -579,6 +583,7 @@
     // Game actions (WebSocket)
     submitMove,
     signalReady,
+    hostStart,
     forfeit,
     predictMove,
 
