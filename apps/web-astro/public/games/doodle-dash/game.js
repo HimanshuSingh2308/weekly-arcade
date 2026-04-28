@@ -1149,7 +1149,12 @@
         renderScores();
       }
 
-      // Strokes are delivered via lightweight game:stroke events (not game:state)
+      // Strokes are delivered via lightweight game:stroke events (not game:state).
+      // But on reconnect/late-join, replay strokeHistory from the full state.
+      if (s.strokeHistory && s.strokeHistory.length > 0 && !amIDrawing && _appliedStrokes === 0) {
+        replayStrokes(s.strokeHistory);
+        _appliedStrokes = s.strokeHistory.length;
+      }
 
       // ── Hint reveal ──
       if (s.wordHint && s.wordHint !== _prevHint && phase === 'drawing') {
@@ -1244,6 +1249,8 @@
 
     mc.on('reconnected', function () {
       showNotif('Reconnected!', 2000);
+      // Reset stroke counter so next game:state replays all strokes
+      _appliedStrokes = 0;
     });
   }
 
