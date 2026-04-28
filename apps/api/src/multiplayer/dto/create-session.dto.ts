@@ -9,12 +9,12 @@ export class CreateSessionDto {
 
   @IsInt()
   @Min(2)
-  @Max(20)
+  @Max(30)
   maxPlayers: number;
 
   @IsInt()
   @Min(2)
-  @Max(20)
+  @Max(30)
   @IsOptional()
   minPlayers?: number;
 
