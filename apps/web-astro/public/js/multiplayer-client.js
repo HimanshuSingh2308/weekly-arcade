@@ -44,9 +44,15 @@
   // ─── WebSocket Connection ──────────────────────────────────────────
 
   async function connect(sessionId) {
+    // If already connected to a different session, disconnect first
     if (socket && socket.connected) {
-      console.warn('[MP] Already connected');
-      return;
+      if (currentSessionId === sessionId) {
+        console.warn('[MP] Already connected to this session');
+        return;
+      }
+      console.log('[MP] Disconnecting from previous session before connecting to new one');
+      socket.disconnect();
+      socket = null;
     }
 
     const token = window.apiClient?.token;

@@ -122,6 +122,7 @@ export class GameStateManager {
   ): { state: Record<string, unknown>; version: number; gameResult: GameResult | null } {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error(`Session not loaded: ${sessionId}`);
+    if (session.version === 0) throw new Error('Game not initialized yet');
 
     // Level 2 anti-cheat: timing validation
     // Real-time games skip timing check — position updates are high-frequency
