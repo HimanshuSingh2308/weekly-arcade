@@ -260,6 +260,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         return this.handleStarVote(s, uid, moveData);
       case 'reveal-hint':
         return this.handleRevealHint(s, uid);
+      case 'end-round':
+        return this.handleEndRound(s, uid);
       default:
         throw new Error(`Unknown move type: ${moveType}`);
     }
@@ -489,6 +491,16 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         }
       }
 
+      // Check if all guessers have guessed — auto-end round
+      if (s.mode === 'classic') {
+        const guessers = s.players.filter(p => p !== s.currentDrawerUid);
+        const allGuessed = guessers.every(p => s.playerStates[p]?.hasGuessedThisRound);
+        if (allGuessed) {
+          s.phase = 'round-end';
+          s.roundEndReason = 'all-guessed';
+        }
+      }
+
       // Attach result to move data so server can broadcast it
       (moveData as Record<string, unknown>).__result     = 'correct';
       (moveData as Record<string, unknown>).__score      = score;
@@ -535,6 +547,22 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
 
     (moveData as Record<string, unknown>).__stars = s.sdStarVotes[targetUid];
 
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private handleEndRound(
+    s: DoodleDashState,
+    uid: string,
+  ): Record<string, unknown> {
+    if (s.phase !== 'drawing' && s.phase !== 'sd-drawing') {
+      return s as unknown as Record<string, unknown>; // Already ended or wrong phase
+    }
+    // Only drawer (classic) or host (speed-draw) can end the round
+    if (s.mode === 'classic' && uid !== s.currentDrawerUid && uid !== s.hostUid) {
+      return s as unknown as Record<string, unknown>;
+    }
+    s.phase = 'round-end';
+    s.roundEndReason = 'timeout';
     return s as unknown as Record<string, unknown>;
   }
 

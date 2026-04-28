@@ -830,10 +830,13 @@
         }
       }
     }, function () {
-      // Time expired - server will end round
+      // Time expired — tell server to end the round
       amIDrawing = false;
       var toolbar = $id('drawToolbar');
       if (toolbar) toolbar.classList.add('hidden');
+      if (window.multiplayerClient) {
+        window.multiplayerClient.submitMove('end-round', {});
+      }
     });
   }
 
@@ -963,14 +966,20 @@
       }).join('');
     }
 
-    // Auto advance
+    // Auto advance — host kicks off next round after countdown
     var countdown = NEXT_ROUND_T;
     var nextEl = $id('nextRoundCountdown');
     if (nextEl) nextEl.textContent = 'Next round in ' + countdown + 's...';
     _nextRoundCountInterval = setInterval(function () {
       countdown--;
       if (nextEl) nextEl.textContent = 'Next round in ' + countdown + 's...';
-      if (countdown <= 0) { clearInterval(_nextRoundCountInterval); _nextRoundCountInterval = null; }
+      if (countdown <= 0) {
+        clearInterval(_nextRoundCountInterval);
+        _nextRoundCountInterval = null;
+        if (isHost && window.multiplayerClient) {
+          window.multiplayerClient.submitMove('start-round', { ready: true });
+        }
+      }
     }, 1000);
   }
 
