@@ -588,7 +588,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       if (currentIds.length === 0) return;
 
       for (const socketId of currentIds) {
-        const socket = this.server.sockets.sockets.get(socketId);
+        // With namespaced gateways, this.server is the Namespace — .sockets is Map<string, Socket>
+        const socket = this.server.sockets.get(socketId);
         if (!socket) continue;
 
         socket.timeout(timeoutMs).emit(event, data, (err: Error | null) => {
