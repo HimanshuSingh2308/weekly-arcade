@@ -643,8 +643,9 @@ export class Chess3dLogic implements MultiplayerGameLogic, OnModuleInit {
       throw new Error('Player not in this game');
     }
 
-    // Validate it's this player's turn
-    if (engine.turn !== playerColor) {
+    // Validate it's this player's turn (skip for draw/resign meta-actions)
+    const isMetaAction = moveType === 'draw-offer' || moveType === 'draw-accept' || moveType === 'draw-decline';
+    if (!isMetaAction && engine.turn !== playerColor) {
       throw new Error('Not your turn');
     }
 
