@@ -14,7 +14,7 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { GameStateManager } from './game-state.manager';
 import { GameRoomManager } from './game-room.manager';
 import { AuthenticatedSocket, createWsAuthMiddleware } from '../auth/ws-auth.middleware';
-import { Session, WsGameStatePayload, WsMovePayload } from '@weekly-arcade/shared';
+import { Session, WsGameStatePayload, WsMovePayload, getGameInfo } from '@weekly-arcade/shared';
 
 const ALLOWED_ORIGINS = [
   'http://localhost:4200',
@@ -328,8 +328,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!sessionDoc.exists) return;
     const session = sessionDoc.data() as Session;
 
-    // Skip auto-start for party/lobby games (maxPlayers > 2) — host controls when to start
-    if (session.maxPlayers > 2) return;
+    // Skip auto-start if the game config says manual start (e.g. party games)
+    const gameInfo = getGameInfo(session.gameId);
+    if (gameInfo?.multiplayer?.autoStart === false) return;
 
     // Need at least minPlayers connected
     const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);

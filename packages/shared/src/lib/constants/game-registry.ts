@@ -15,6 +15,8 @@ export interface MultiplayerConfig {
   /** Maximum session duration in minutes */
   sessionTimeoutMin?: number;
   spectatorAllowed: boolean;
+  /** If true, game auto-starts when all connected players are ready. If false, host must manually start. */
+  autoStart?: boolean;
 }
 
 export interface GameInfo {
@@ -43,12 +45,12 @@ export const GAME_REGISTRY: GameInfo[] = [
   { id: 'tiny-tycoon',        name: 'Tiny Tycoon',         icon: '🧋', description: 'Boba shop simulator',    genres: ['simulation', 'casual'] },
   { id: 'cricket-blitz',    name: 'Cricket Blitz',       icon: '🏏', description: '3D IPL-style cricket',  genres: ['sports', '3d'] },
   { id: 'chess-3d',          name: 'Chess 3D',            icon: '♟️', description: '3D chess vs AI & friends', genres: ['strategy', 'board', '3d', 'multiplayer'],
-    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'turn-based', turnTimeoutSec: 120, sessionTimeoutMin: 90, spectatorAllowed: true } },
+    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'turn-based', turnTimeoutSec: 120, sessionTimeoutMin: 90, spectatorAllowed: true, autoStart: true } },
   { id: 'drift-legends',     name: 'Drift Legends',        icon: '🏎️', description: '3D kart racing with story mode & multiplayer', genres: ['racing', '3d', 'story', 'multiplayer'],
-    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'real-time', sessionTimeoutMin: 15, spectatorAllowed: false } },
+    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 2, mode: 'real-time', sessionTimeoutMin: 15, spectatorAllowed: false, autoStart: true } },
   { id: 'chroma-sort',       name: 'Chroma Sort',          icon: '🍡', description: 'Daily color sorting puzzle', genres: ['puzzle', 'logic', 'daily'] },
   { id: 'doodle-dash',      name: 'Doodle Dash',          icon: '✏️', description: 'Multiplayer drawing & guessing party game', genres: ['party', 'drawing', 'multiplayer', 'casual'],
-    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 30, mode: 'real-time', sessionTimeoutMin: 45, spectatorAllowed: true } },
+    multiplayer: { enabled: true, minPlayers: 2, maxPlayers: 30, mode: 'real-time', sessionTimeoutMin: 45, spectatorAllowed: true, autoStart: false } },
 ];
 
 /** Lookup a game by ID */
