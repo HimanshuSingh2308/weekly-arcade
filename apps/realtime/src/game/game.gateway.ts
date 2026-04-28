@@ -330,19 +330,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     this.logger.log(`Host manually starting session ${sessionId}`);
     await this.tryStartGame(sessionId, roomName, true);
-
-    // Auto-apply the first move (e.g. 'start-round' for doodle-dash) so the game begins
-    try {
-      const activeSession = this.stateManager.getSession(sessionId);
-      if (activeSession && activeSession.version > 0) {
-        const { state, version } = this.stateManager.applyMove(sessionId, uid, 'start-round', {});
-        const turnUid = this.stateManager.getNextTurn(sessionId);
-        this.server.to(roomName).emit('game:state', { state, version, turnUid });
-      }
-    } catch (e) {
-      // Not all games need a start-round move — ignore if not applicable
-      this.logger.debug(`Auto start-round skipped: ${(e as Error).message}`);
-    }
   }
 
   /**

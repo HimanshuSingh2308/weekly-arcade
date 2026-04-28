@@ -176,6 +176,27 @@
         ? 'Press "Start Game" when everyone is in!'
         : 'Waiting for host to start the game...';
     }
+
+    // Fetch existing players from session (joiner won't get player-joined events for players already in)
+    if (window.multiplayerClient && currentSessionId) {
+      window.multiplayerClient.getSession(currentSessionId).then(function (session) {
+        if (!session || !session.players) return;
+        Object.keys(session.players).forEach(function (uid) {
+          var p = session.players[uid];
+          if (p.status === 'left') return;
+          if (players.find(function (existing) { return existing.uid === uid; })) return;
+          players.push({
+            uid: uid,
+            name: p.displayName || uid,
+            score: 0,
+            guessed: false,
+            isHost: uid === session.hostUid,
+          });
+        });
+        renderRoomPlayers();
+      }).catch(function () {});
+    }
+
     renderRoomPlayers();
     showScreen('room');
   }
@@ -1053,6 +1074,14 @@
       var s = data.state;
       var phase = s.phase;
       var round = s.round || 0;
+
+      // ── Game initialized but idle: host auto-kicks off first round ──
+      if (phase === 'idle' && round === 0 && isHost && _prevPhase !== 'idle') {
+        window.multiplayerClient.submitMove('start-round', { ready: true });
+        _prevPhase = phase;
+        _prevRound = round;
+        return; // Wait for the next game:state with word-choice/sd-drawing
+      }
 
       // ── Round start: new round detected ──
       if (round > _prevRound && (phase === 'word-choice' || phase === 'sd-drawing')) {
