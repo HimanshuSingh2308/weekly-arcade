@@ -819,10 +819,15 @@
       var elapsed = TURN_TIMEOUT - remaining;
       if (elapsed >= HINT_1_SEC && !hintRevealed[0]) {
         hintRevealed[0] = true;
-        // Server handles hint broadcast; client just updates display when server sends it
+        if (window.multiplayerClient) {
+          window.multiplayerClient.submitMove('reveal-hint', {});
+        }
       }
       if (elapsed >= HINT_2_SEC && !hintRevealed[1]) {
         hintRevealed[1] = true;
+        if (window.multiplayerClient) {
+          window.multiplayerClient.submitMove('reveal-hint', {});
+        }
       }
     }, function () {
       // Time expired - server will end round

@@ -258,6 +258,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         return this.handleGuess(s, uid, moveData);
       case 'star-vote':
         return this.handleStarVote(s, uid, moveData);
+      case 'reveal-hint':
+        return this.handleRevealHint(s, uid);
       default:
         throw new Error(`Unknown move type: ${moveType}`);
     }
@@ -532,6 +534,22 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     }
 
     (moveData as Record<string, unknown>).__stars = s.sdStarVotes[targetUid];
+
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private handleRevealHint(
+    s: DoodleDashState,
+    uid: string,
+  ): Record<string, unknown> {
+    if (s.mode !== 'classic') throw new Error('Hints only in Classic mode');
+    if (s.phase !== 'drawing') throw new Error('Not in drawing phase');
+    if (uid !== s.currentDrawerUid) throw new Error('Only the drawer can reveal hints');
+    if (!s.currentWord) return s as unknown as Record<string, unknown>;
+    if (s.hintRevealedCount >= 2) return s as unknown as Record<string, unknown>; // Max 2 hints
+
+    s.hintRevealedCount++;
+    s.wordHint = buildHint(s.currentWord, s.hintRevealedCount);
 
     return s as unknown as Record<string, unknown>;
   }
