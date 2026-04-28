@@ -277,10 +277,21 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Update session activity + player heartbeat (throttled)
       this._updateSessionActivity(sessionId, uid);
 
+      const roomName = `session:${sessionId}`;
+
+      // For draw-stroke moves: broadcast lightweight event instead of full state
+      // Full game:state is too heavy for high-frequency drawing (causes dropped messages)
+      if (payload.moveType === 'draw-stroke') {
+        client.to(roomName).emit('game:stroke', {
+          uid,
+          ...payload.moveData,
+        });
+        return;
+      }
+
       const turnUid = gameResult ? null : this.stateManager.getNextTurn(sessionId);
 
-      // Broadcast new state to all clients in the room
-      const roomName = `session:${sessionId}`;
+      // Broadcast full state for non-drawing moves
       const statePayload: WsGameStatePayload = { state, version, turnUid };
       this.server.to(roomName).emit('game:state', statePayload);
 

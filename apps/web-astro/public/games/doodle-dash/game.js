@@ -550,10 +550,7 @@
   var remoteStrokeBuffer = []; // flat list of remote strokes for undo replay
 
   function applyRemoteStroke(data) {
-    if (!ctx) { console.warn('[DD] applyRemoteStroke: no ctx'); return; }
-    if (data.tool !== 'fill' && data.tool !== 'undo' && data.tool !== 'clear') {
-      console.log('[DD] stroke:', data.x0, data.y0, '->', data.x1, data.y1, 'w:', data.width, 't:', data.tool);
-    }
+    if (!ctx) return;
     var tool = data.tool;
     if (tool === 'undo') {
       // Remote undo: server sends updated stroke history - replay it
@@ -1070,6 +1067,14 @@
       showNotif((data.displayName || 'Player') + ' reconnected', 2000);
     });
 
+    // ── Direct stroke events (lightweight, not via game:state) ────
+    mc.on('game:stroke', function (data) {
+      if (!amIDrawing && data.uid !== myUid) {
+        hideOverlay();
+        applyRemoteStroke(data);
+      }
+    });
+
     // ── State-driven event handler ─────────────────────────────────
     // The server broadcasts game:state with the full DoodleDash state.
     // We track the previous phase/round and derive UI events from transitions.
@@ -1144,17 +1149,7 @@
         renderScores();
       }
 
-      // ── Stroke data: apply only NEW strokes since last update ──
-      if (s.strokeHistory && s.strokeHistory.length > _appliedStrokes && !amIDrawing) {
-        for (var si = _appliedStrokes; si < s.strokeHistory.length; si++) {
-          var stroke = s.strokeHistory[si];
-          if (stroke && stroke.uid !== myUid) {
-            hideOverlay();
-            applyRemoteStroke(stroke);
-          }
-        }
-        _appliedStrokes = s.strokeHistory.length;
-      }
+      // Strokes are delivered via lightweight game:stroke events (not game:state)
 
       // ── Hint reveal ──
       if (s.wordHint && s.wordHint !== _prevHint && phase === 'drawing') {
