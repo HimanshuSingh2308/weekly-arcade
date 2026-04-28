@@ -234,13 +234,13 @@ export class MultiplayerService {
       throw new ForbiddenException('Only the host can start the game');
     }
 
-    if (session.status !== 'waiting' && session.status !== 'starting') {
-      throw new BadRequestException('Session is not in waiting state');
+    // If already starting/playing (auto-started by realtime server), no-op
+    if (session.status === 'starting' || session.status === 'playing') {
+      return;
     }
 
-    // If already starting (e.g. auto-started by realtime server), skip the update
-    if (session.status === 'starting') {
-      return;
+    if (session.status !== 'waiting') {
+      throw new BadRequestException('Session is not in waiting state');
     }
 
     if (session.playerCount < session.minPlayers) {
