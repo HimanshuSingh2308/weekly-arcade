@@ -1068,6 +1068,7 @@
     var _prevPhase = null;
     var _prevRound = 0;
     var _prevHint  = null;
+    var _appliedStrokes = 0;
 
     mc.onGameState(function (data) {
       if (!data || !data.state) return;
@@ -1096,6 +1097,7 @@
         if (totalEl) totalEl.textContent = totalRounds;
 
         hintRevealed = [false, false];
+        _appliedStrokes = 0;
         showScreen('playing');
         initCanvas();
 
@@ -1121,7 +1123,11 @@
         currentDrawer = s.currentDrawerUid;
         wordHint = s.wordHint || '_ _ _ _ _';
 
-        if (currentDrawer !== myUid) {
+        if (currentDrawer === myUid) {
+          // I'm the drawer — enable drawing tools
+          startClassicDrawingPhase(s.currentWord || '???');
+        } else {
+          // I'm guessing
           hideOverlay();
           startTimer(TURN_TIMEOUT, null, null);
           updateWordDisplay(null, null);
@@ -1130,14 +1136,16 @@
         renderScores();
       }
 
-      // ── Stroke data: check for new strokes in history ──
-      if (s.strokeHistory && s.strokeHistory.length > 0 && !amIDrawing) {
-        // Only apply the last stroke (incremental) — full replay handled below
-        var lastStroke = s.strokeHistory[s.strokeHistory.length - 1];
-        if (lastStroke && lastStroke.uid !== myUid) {
-          hideOverlay();
-          applyRemoteStroke(lastStroke);
+      // ── Stroke data: apply only NEW strokes since last update ──
+      if (s.strokeHistory && s.strokeHistory.length > _appliedStrokes && !amIDrawing) {
+        for (var si = _appliedStrokes; si < s.strokeHistory.length; si++) {
+          var stroke = s.strokeHistory[si];
+          if (stroke && stroke.uid !== myUid) {
+            hideOverlay();
+            applyRemoteStroke(stroke);
+          }
         }
+        _appliedStrokes = s.strokeHistory.length;
       }
 
       // ── Hint reveal ──
