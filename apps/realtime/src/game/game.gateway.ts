@@ -160,7 +160,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         await this.tryStartGame(sessionId, roomName);
       }
     } catch (error) {
-      this.logger.error(`Connection error: ${(error as Error).message}`);
+      this.logger.error(`Connection error: ${(error as Error).message}\n${(error as Error).stack}`);
       client.emit('error', { code: 'CONNECTION_ERROR', message: (error as Error).message });
       client.disconnect();
     }
