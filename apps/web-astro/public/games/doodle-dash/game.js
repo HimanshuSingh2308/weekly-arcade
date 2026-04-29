@@ -1606,9 +1606,10 @@
       if (xpBar) xpBar.style.width = Math.min(100, (xpEarned / 300) * 100) + '%';
     }, 400);
 
-    // Submit score - use server-authoritative score from sessionScores, not local myScore
+    // Submit score with retry (rate limiter may reject on first try)
     var serverScore = (myUid && sessionScores[myUid]) ? sessionScores[myUid] : myScore;
-    if (window.apiClient && typeof window.apiClient.submitScore === 'function') {
+    function submitWithRetry(attempt) {
+      if (!window.apiClient || typeof window.apiClient.submitScore !== 'function') return;
       window.apiClient.submitScore(GAME_ID, {
         score: serverScore,
         timeMs: Date.now() - gameStartedAt,
@@ -1618,8 +1619,14 @@
           correctGuesses: data ? (data.correctGuesses || 0) : 0,
           starsReceived: data ? (data.starsReceived || 0) : 0,
         },
-      }).catch(function () {});
+      }).catch(function () {
+        if (attempt < 3) {
+          setTimeout(function () { submitWithRetry(attempt + 1); }, 3000 * attempt);
+        }
+      });
     }
+    // Delay first attempt to avoid burst with other game-over API calls
+    setTimeout(function () { submitWithRetry(1); }, 2000);
   }
 
   // ─── Multiplayer Event Handlers ─────────────────────────────────

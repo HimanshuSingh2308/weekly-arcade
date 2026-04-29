@@ -29,9 +29,9 @@ export class LeaderboardController {
   @Post(':gameId/submit')
   @HttpCode(HttpStatus.OK)
   @Throttle({
-    short: { limit: 1, ttl: 5000 }, // 1 per 5 seconds
-    medium: { limit: 3, ttl: 60000 }, // 3 per minute
-    long: { limit: 30, ttl: 3600000 }, // 30 per hour
+    short: { limit: 3, ttl: 5000 }, // 3 per 5 seconds
+    medium: { limit: 10, ttl: 60000 }, // 10 per minute
+    long: { limit: 60, ttl: 3600000 }, // 60 per hour
   })
   async submitScore(
     @CurrentUser() authUser: AuthUser,
