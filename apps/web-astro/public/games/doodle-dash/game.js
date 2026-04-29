@@ -466,11 +466,8 @@
       }
       if (seg.tool === 'undo') return; // skip undos in replay
       if (seg.tool === 'fill') {
-        // Simplified fill for replay — draw a colored circle as indicator
-        rCtx.fillStyle = seg.color || '#000';
-        rCtx.beginPath();
-        rCtx.arc(seg.x0, seg.y0, 20, 0, Math.PI * 2);
-        rCtx.fill();
+        // Perform actual flood fill on replay canvas
+        doFillOnCanvas(rCtx, CANVAS_W, CANVAS_H, Math.round(seg.x0), Math.round(seg.y0), seg.color || '#000');
         return;
       }
       rCtx.save();
@@ -729,6 +726,45 @@
   function doFillLocal(startX, startY, fillColorHex) {
     doFillRender(startX, startY, fillColorHex);
     currentStroke = [];
+  }
+
+  // Generic flood fill on any canvas context (used by replay + main canvas)
+  function doFillOnCanvas(targetCtx, w, h, startX, startY, fillColorHex) {
+    if (!targetCtx) return;
+    var imgData   = targetCtx.getImageData(0, 0, w, h);
+    var data      = imgData.data;
+    var fillColor = hexToRgba(fillColorHex);
+    var idx       = (startY * w + startX) * 4;
+    if (idx < 0 || idx >= data.length) return;
+    var targetColor = [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
+    if (colorMatch(data, idx, fillColor)) return;
+    var stack = [[startX, startY]];
+    while (stack.length > 0) {
+      var pt = stack.pop();
+      var x = pt[0]; var y = pt[1];
+      if (y < 0 || y >= h) continue;
+      var x1 = x;
+      while (x1 >= 0 && colorMatch(data, (y * w + x1) * 4, targetColor)) x1--;
+      x1++;
+      var spanAbove = false; var spanBelow = false;
+      while (x1 < w && colorMatch(data, (y * w + x1) * 4, targetColor)) {
+        var i4 = (y * w + x1) * 4;
+        data[i4] = fillColor[0]; data[i4 + 1] = fillColor[1];
+        data[i4 + 2] = fillColor[2]; data[i4 + 3] = fillColor[3];
+        if (!spanAbove && y > 0 && colorMatch(data, ((y - 1) * w + x1) * 4, targetColor)) {
+          stack.push([x1, y - 1]); spanAbove = true;
+        } else if (spanAbove && y > 0 && !colorMatch(data, ((y - 1) * w + x1) * 4, targetColor)) {
+          spanAbove = false;
+        }
+        if (!spanBelow && y < h - 1 && colorMatch(data, ((y + 1) * w + x1) * 4, targetColor)) {
+          stack.push([x1, y + 1]); spanBelow = true;
+        } else if (spanBelow && y < h - 1 && !colorMatch(data, ((y + 1) * w + x1) * 4, targetColor)) {
+          spanBelow = false;
+        }
+        x1++;
+      }
+    }
+    targetCtx.putImageData(imgData, 0, 0);
   }
 
   // Pure canvas fill without network emit - scanline algorithm for performance
