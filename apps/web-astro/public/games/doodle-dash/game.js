@@ -1032,7 +1032,7 @@
     if (!text) return;
     input.value = '';
 
-    // Don't send guesses if I'm the drawer
+    // Don't send guesses if I'm the drawer (just show as chat)
     if (amIDrawing) {
       addChatMessage(myName, text, '');
       return;
@@ -1041,7 +1041,8 @@
     if (window.multiplayerClient) {
       window.multiplayerClient.submitMove('guess', { text: text });
     }
-    addChatMessage(myName, text, '');
+    // Don't show guess text in chat — prevents correct answers from leaking
+    // to other players on shared screens. Server feedback handles result display.
   }
 
   // ─── Word display (hint masking) ────────────────────────────────
@@ -1693,7 +1694,7 @@
                 if (chatInput) chatInput.disabled = true;
               }
               sfxCorrectGuess();
-              addChatMessage('', '✅ ' + (getPlayerName(uid) || ps.name || uid) + ' guessed correctly! (+' + delta + ')', 'system correct');
+              addChatMessage('', '✅ ' + (getPlayerName(uid) || ps.name || uid) + ' guessed correctly!', 'system correct');
             }
           }
         });

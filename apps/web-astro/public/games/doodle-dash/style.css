@@ -109,20 +109,13 @@
   color: #4caf50;
 }
 
-/* ── Touch target minimum sizes (desktop only — mobile uses compact sizes) ── */
+/* ── Touch target minimum sizes (desktop — relaxed for toolbar density) ── */
 @media (min-width: 701px) {
-  .dd-color-swatch {
-    min-width: 44px;
-    min-height: 44px;
-  }
-  .dd-size-btn {
-    min-width: 44px;
-    min-height: 44px;
-  }
   .dd-tool-btn {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 38px;
+    min-height: 38px;
   }
+  /* Color swatches and size buttons use their declared sizes on desktop */
 }
 .dd-color-swatch {
   display: flex;
