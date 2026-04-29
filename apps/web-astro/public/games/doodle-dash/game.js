@@ -232,19 +232,36 @@
     if (codeEl) codeEl.textContent = roomCode || '------';
     var modeEl = $id('roomModeLabel');
     if (modeEl) modeEl.textContent = gameMode === 'speed-draw' ? '⚡ Speed Draw' : gameMode === 'sabotage' ? '🕵️ Sabotage' : '🎨 Classic';
-    var startBtn = $id('btnStartGame');
-    if (startBtn) startBtn.style.display = isHost ? 'inline-block' : 'none';
-    var waitMsg = $id('waitingMsg');
-    if (waitMsg) {
-      waitMsg.textContent = isHost
-        ? 'Press "Start Game" when everyone is in!'
-        : 'Waiting for host to start the game...';
+    // Hide room code + share for quick match (not needed — players auto-join)
+    var roomTop = document.querySelector('.dd-room-top');
+    if (roomTop) {
+      var codeArea = roomTop.querySelector('.dd-room-code-area');
+      var shareHint = roomTop.querySelector('.dd-room-share-hint');
+      if (codeArea) codeArea.style.display = isQuickMatch ? 'none' : 'flex';
+      if (shareHint) shareHint.style.display = isQuickMatch ? 'none' : 'block';
+      // Update title for quick match
+      var titleEl = roomTop.querySelector('.dd-room-title');
+      if (titleEl) titleEl.textContent = isQuickMatch ? 'Finding Players...' : 'Waiting for Players';
     }
 
-    // Word pack selection (host only)
+    // Hide manual start button for quick match (auto-starts on 2+ players)
+    var startBtn = $id('btnStartGame');
+    if (startBtn) startBtn.style.display = (isHost && !isQuickMatch) ? 'inline-block' : 'none';
+    var waitMsg = $id('waitingMsg');
+    if (waitMsg) {
+      if (isQuickMatch) {
+        waitMsg.textContent = 'Game will start automatically when players join...';
+      } else {
+        waitMsg.textContent = isHost
+          ? 'Press "Start Game" when everyone is in!'
+          : 'Waiting for host to start the game...';
+      }
+    }
+
+    // Word pack selection (host only, not for quick match)
     var packSection = $id('wordPackSection');
-    if (packSection) packSection.style.display = isHost ? 'block' : 'none';
-    if (isHost) renderWordPacks();
+    if (packSection) packSection.style.display = (isHost && !isQuickMatch) ? 'block' : 'none';
+    if (isHost && !isQuickMatch) renderWordPacks();
 
     // Rounds selector (private rooms, host only)
     var roundsSection = $id('roundsSection');
@@ -897,6 +914,55 @@
     }).join('');
   }
 
+  // ─── Auto-start timer ────────────────────────────────────────────
+  var _autoStartTimer = null;
+  var _autoStartCount = 0;
+
+  function checkAutoStart() {
+    if (gameState !== 'room') return;
+    var waitMsg = $id('waitingMsg');
+
+    if (players.length >= 2) {
+      // Start countdown if not already running
+      if (!_autoStartTimer) {
+        _autoStartCount = 10;
+        if (waitMsg) waitMsg.textContent = 'Game starting in ' + _autoStartCount + 's...';
+        _autoStartTimer = setInterval(function () {
+          _autoStartCount--;
+          if (waitMsg) waitMsg.textContent = 'Game starting in ' + _autoStartCount + 's...';
+          if (_autoStartCount <= 0) {
+            clearInterval(_autoStartTimer);
+            _autoStartTimer = null;
+            // Host triggers game start
+            if (isHost && window.multiplayerClient && currentSessionId) {
+              window.multiplayerClient.startGame(currentSessionId).then(function () {
+                window.multiplayerClient.hostStart();
+              }).catch(function () {});
+            }
+          }
+        }, 1000);
+      }
+    } else {
+      // Not enough players — cancel timer
+      if (_autoStartTimer) {
+        clearInterval(_autoStartTimer);
+        _autoStartTimer = null;
+      }
+      if (waitMsg) {
+        waitMsg.textContent = isHost
+          ? 'Waiting for more players to join...'
+          : 'Waiting for more players...';
+      }
+    }
+  }
+
+  function cancelAutoStart() {
+    if (_autoStartTimer) {
+      clearInterval(_autoStartTimer);
+      _autoStartTimer = null;
+    }
+  }
+
   function renderRoomPlayers() {
     var list = $id('playersList');
     if (!list) return;
@@ -920,6 +986,7 @@
       var remaining = 30 - players.length;
       slotsEl.textContent = remaining > 0 ? remaining + ' slot' + (remaining !== 1 ? 's' : '') + ' available' : 'Room is full!';
     }
+    checkAutoStart();
   }
 
   // ─── Confetti ────────────────────────────────────────────────────
@@ -2070,10 +2137,11 @@
       if (e.key === 'Enter') btnJoin && btnJoin.click();
     });
 
-    // Start Game (host only)
+    // Start Game (host only — manual start cancels auto-start)
     var btnStart = $id('btnStartGame');
     if (btnStart) btnStart.addEventListener('click', function () {
       if (!window.multiplayerClient) return;
+      cancelAutoStart();
       btnStart.disabled = true;
       btnStart.textContent = 'Starting...';
 
@@ -2090,6 +2158,7 @@
     // Leave Room
     var btnLeave = $id('btnLeaveRoom');
     if (btnLeave) btnLeave.addEventListener('click', function () {
+      cancelAutoStart();
       if (window.multiplayerClient && currentSessionId) {
         window.multiplayerClient.leaveSession(currentSessionId);
       }
