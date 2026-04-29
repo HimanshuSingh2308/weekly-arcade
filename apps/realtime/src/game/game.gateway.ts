@@ -280,9 +280,18 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const roomName = `session:${sessionId}`;
 
       // For drawing moves: broadcast lightweight events instead of full state
-      if (payload.moveType === 'draw-stroke') {
+      // Exception: sd-submit needs full state broadcast (phase transition to sd-vote)
+      if (payload.moveType === 'draw-stroke' && payload.moveData.tool !== 'sd-submit') {
         client.to(roomName).emit('game:stroke', { uid, ...payload.moveData });
         return;
+      }
+      // Speed Draw submission: broadcast the canvas data URL to all players for the reveal grid
+      if (payload.moveType === 'draw-stroke' && payload.moveData.tool === 'sd-submit') {
+        this.server.to(roomName).emit('game:sd-canvas', {
+          uid,
+          dataUrl: payload.moveData.color, // canvas data URL is stored in the color field
+        });
+        // Fall through to full state broadcast (handles sd-vote phase transition)
       }
       if (payload.moveType === 'draw-stroke-batch') {
         client.to(roomName).emit('game:stroke-batch', {

@@ -849,6 +849,27 @@
     }
   }
 
+  // ─── Confetti ────────────────────────────────────────────────────
+  function showConfetti() {
+    var wrap = document.createElement('div');
+    wrap.className = 'dd-confetti-wrap';
+    document.body.appendChild(wrap);
+    var colors = ['#f5a623', '#ff6b6b', '#4ecdc4', '#a78bfa', '#34d399', '#f472b6', '#60a5fa', '#fbbf24'];
+    for (var i = 0; i < 60; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'dd-confetti';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDuration = (2 + Math.random() * 3) + 's';
+      piece.style.animationDelay = Math.random() * 1.5 + 's';
+      piece.style.width = (5 + Math.random() * 8) + 'px';
+      piece.style.height = (5 + Math.random() * 8) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      wrap.appendChild(piece);
+    }
+    setTimeout(function () { wrap.remove(); }, 6000);
+  }
+
   // ─── Word Pack Selection ─────────────────────────────────────────
   function renderWordPacks() {
     var list = $id('wordPackList');
@@ -1327,31 +1348,62 @@
     stopTimer();
     showScreen('gameover');
 
-    // Find winner
-    var winner = players.slice().sort(function (a, b) {
+    // Find top 3
+    var sorted = players.slice().sort(function (a, b) {
       return (sessionScores[b.uid] || 0) - (sessionScores[a.uid] || 0);
-    })[0];
+    });
+    var winner = sorted[0];
     var isWinner = winner && winner.uid === myUid;
 
     var title  = $id('gameoverSub');
     if (title) {
       if (isWinner) {
-        title.textContent = 'You won! Final Scores:';
+        title.textContent = 'You won!';
       } else if (winner) {
-        title.textContent = winner.name + ' wins! Final Scores:';
+        title.textContent = winner.name + ' wins!';
       } else {
         title.textContent = 'Final Scores:';
       }
     }
 
+    // Render podium (2nd, 1st, 3rd order for visual layout)
+    var podium = $id('podiumWrap');
+    if (podium && sorted.length >= 2) {
+      var PODIUM_COLORS = ['#f5a623', '#9ca3af', '#b87333'];
+      var MEDAL_EMOJI = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+      var podiumOrder = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2]] : [null, sorted[0], sorted[1]];
+      var podiumClasses = sorted.length >= 3 ? ['dd-podium-2nd', 'dd-podium-1st', 'dd-podium-3rd'] : [null, 'dd-podium-1st', 'dd-podium-2nd'];
+      var podiumRanks = sorted.length >= 3 ? [1, 0, 2] : [null, 0, 1];
+
+      podium.innerHTML = podiumOrder.map(function (p, i) {
+        if (!p) return '';
+        var rank = podiumRanks[i];
+        var color = PODIUM_COLORS[rank];
+        var medal = MEDAL_EMOJI[rank];
+        var initial = (p.name || '?').charAt(0).toUpperCase();
+        return '<div class="dd-podium-slot ' + podiumClasses[i] + '">' +
+          '<div class="dd-podium-avatar" style="background:' + color + '">' + initial + '</div>' +
+          '<div class="dd-podium-name">' + escapeHtml(p.name) + '</div>' +
+          '<div class="dd-podium-score">' + (sessionScores[p.uid] || 0) + ' pts</div>' +
+          '<div class="dd-podium-bar">' + medal + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // Confetti!
+    if (isWinner) {
+      showConfetti();
+    }
+    sfxRoundEnd();
+
     var scoresEl = $id('gameoverScores');
     if (scoresEl) {
-      var sorted = players.slice().sort(function (a, b) {
-        return (sessionScores[b.uid] || 0) - (sessionScores[a.uid] || 0);
-      });
-      scoresEl.innerHTML = sorted.map(function (p, i) {
-        return '<div class="dd-result-row' + (i === 0 ? ' winner' : '') + '">' +
-          '<span>' + (i + 1) + '. ' + escapeHtml(p.name) + '</span>' +
+      // Show remaining players (4th+) below podium
+      var remaining = sorted.slice(Math.min(3, sorted.length));
+      scoresEl.innerHTML = remaining.map(function (p, i) {
+        var rank = i + 4;
+        return '<div class="dd-result-row">' +
+          '<span>' + rank + '. ' + escapeHtml(p.name) + '</span>' +
           '<strong>' + (sessionScores[p.uid] || 0) + '</strong>' +
           '</div>';
       }).join('');
@@ -1445,6 +1497,13 @@
       showFloatingReaction(data.emoji);
     });
 
+    // ── Speed Draw canvas submissions ────────────────────────────
+    mc.on('game:sd-canvas', function (data) {
+      if (data.uid && data.dataUrl) {
+        sdCanvases[data.uid] = data.dataUrl;
+      }
+    });
+
     // ── State-driven event handler ─────────────────────────────────
     // The server broadcasts game:state with the full DoodleDash state.
     // We track the previous phase/round and derive UI events from transitions.
@@ -1482,6 +1541,7 @@
 
         hintRevealed = [false, false];
         _appliedStrokes = 0;
+        sdCanvases = {};
         showScreen('playing');
         initCanvas();
 
@@ -1576,7 +1636,7 @@
       // ── Speed Draw reveal ──
       if (phase === 'sd-vote' && _prevPhase === 'sd-drawing') {
         stopTimer();
-        showRevealScreen({}, s.currentWord || '');
+        showRevealScreen(sdCanvases, s.currentWord || '');
       }
 
       // ── Star votes ──
@@ -1752,6 +1812,40 @@
 
   // ─── Lobby Actions ──────────────────────────────────────────────
   function bindLobbyActions() {
+    // Mode tutorials
+    var MODE_TUTORIALS = {
+      'classic': [
+        { icon: '🎨', text: 'One player draws a secret word' },
+        { icon: '💬', text: 'Everyone else types guesses in chat' },
+        { icon: '⏱️', text: 'Faster guesses = more points' },
+        { icon: '💡', text: 'Hints reveal letters over time' },
+        { icon: '🔥', text: 'Build streaks for bonus multipliers!' },
+      ],
+      'speed-draw': [
+        { icon: '⚡', text: 'Everyone gets the same word' },
+        { icon: '✏️', text: 'All players draw simultaneously (60s)' },
+        { icon: '👀', text: 'Drawings are revealed side by side' },
+        { icon: '⭐', text: 'Vote for the best drawing!' },
+        { icon: '🏆', text: 'Stars earn bonus XP' },
+      ],
+      'sabotage': [
+        { icon: '🕵️', text: 'One drawer per round (like Classic)' },
+        { icon: '🎲', text: '50% chance the drawer is a saboteur' },
+        { icon: '🚨', text: 'Saboteurs draw misleadingly on purpose' },
+        { icon: '🗳️', text: 'After drawing, vote: saboteur or honest?' },
+        { icon: '💰', text: 'Bonus points for correct votes!' },
+      ],
+    };
+
+    function updateTutorial(mode) {
+      var steps = $id('tutorialSteps');
+      if (!steps) return;
+      var tutorial = MODE_TUTORIALS[mode] || MODE_TUTORIALS['classic'];
+      steps.innerHTML = tutorial.map(function (step) {
+        return '<div class="dd-tutorial-step"><span class="dd-tutorial-icon">' + step.icon + '</span><span>' + step.text + '</span></div>';
+      }).join('');
+    }
+
     // Mode selection
     document.querySelectorAll('.dd-mode-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -1759,8 +1853,10 @@
         document.querySelectorAll('.dd-mode-btn').forEach(function (b) {
           b.classList.toggle('active', b === btn);
         });
+        updateTutorial(gameMode);
       });
     });
+    updateTutorial('classic'); // show default tutorial on load
 
     // Quick Play (public room)
     var btnPublic = $id('btnCreatePublic');

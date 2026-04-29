@@ -1078,6 +1078,12 @@ import gameData from '../../../data/games/doodle-dash.json';
         </button>
       </div>
 
+      <!-- Mode tutorial -->
+      <div class="dd-mode-tutorial" id="modeTutorial">
+        <div class="dd-tutorial-title">How to Play</div>
+        <div class="dd-tutorial-steps" id="tutorialSteps"></div>
+      </div>
+
       <div class="dd-lobby-actions">
         <button class="dd-btn-primary" id="btnCreatePublic">⚡ Quick Play</button>
         <button class="dd-btn-secondary" id="btnCreatePrivate">🔒 Create Private Room</button>
@@ -1278,6 +1284,8 @@ import gameData from '../../../data/games/doodle-dash.json';
     <div id="ddGameOver" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 16px;text-align:center">
       <div class="dd-gameover-title">Game Over!</div>
       <div class="dd-gameover-sub" id="gameoverSub"></div>
+      <!-- Podium -->
+      <div class="dd-podium-wrap" id="podiumWrap"></div>
       <div class="dd-result-scores" id="gameoverScores"></div>
       <div style="font-size:0.9rem;color:#aaa">XP Earned</div>
       <div class="dd-xp-bar-wrap">
