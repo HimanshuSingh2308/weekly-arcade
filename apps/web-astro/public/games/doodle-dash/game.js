@@ -2230,10 +2230,44 @@
     // Game over buttons
     var btnPlayAgain = $id('btnPlayAgain');
     if (btnPlayAgain) btnPlayAgain.addEventListener('click', function () {
-      if (window.multiplayerClient && isHost) {
-        window.multiplayerClient.submitMove('start-round', { ready: true });
+      // Leave the finished session and start fresh
+      if (window.multiplayerClient && currentSessionId) {
+        window.multiplayerClient.leaveSession(currentSessionId).catch(function () {});
+      }
+      // Reset state
+      currentSessionId = null;
+      players = [];
+      sessionScores = {};
+      roundScores   = {};
+      latestPlayerStates = {};
+      currentRound  = 0;
+      myScore       = 0;
+
+      if (isQuickMatch) {
+        // Quick match: auto-find a new room
+        setLoadingMsg('Finding a new room...');
+        window.multiplayerClient.quickJoin(GAME_ID, {
+          mode: gameMode,
+          playerName: myName,
+        }).then(function (session) {
+          if (session && session.sessionId) {
+            currentSessionId = session.sessionId;
+            roomCode = session.joinCode || session.sessionId.slice(0, 6).toUpperCase();
+            isHost = session.hostUid === myUid;
+            if (session.gameConfig) {
+              if (session.gameConfig.mode) gameMode = session.gameConfig.mode;
+            }
+            return window.multiplayerClient.connect(session.sessionId);
+          }
+        }).then(function () {
+          showRoomLobby();
+        }).catch(function (err) {
+          showNotif('Failed to find room: ' + (err.message || 'Try again'), 3000);
+          showScreen('lobby');
+        });
       } else {
-        showScreen('room');
+        // Private: go back to main lobby to create/join again
+        showScreen('lobby');
       }
     });
 
