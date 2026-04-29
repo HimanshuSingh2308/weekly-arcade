@@ -134,6 +134,52 @@ export class MatchmakingCron {
         }
       }
 
+      // Cleanup playing sessions with no activity for 10 minutes (stuck/abandoned)
+      const playingSessions = await this.firebase
+        .collection('sessions')
+        .where('status', '==', 'playing')
+        .limit(50)
+        .get();
+
+      for (const doc of playingSessions.docs) {
+        const session = doc.data() as Session;
+        const lastActivity = session.lastActivityAt
+          ? new Date(session.lastActivityAt as unknown as string).getTime()
+          : 0;
+        const idleMs = now - lastActivity;
+        // Abandon playing sessions idle for more than 10 minutes
+        if (idleMs > 10 * 60 * 1000) {
+          batch.update(doc.ref, {
+            status: 'abandoned',
+            finishedAt: new Date(),
+          });
+          cleaned++;
+          this.logger.log(`Abandoning stuck playing session ${doc.id} (idle ${Math.round(idleMs / 1000)}s)`);
+        }
+      }
+
+      // Cleanup 'starting' sessions stuck for more than 2 minutes
+      const startingSessions = await this.firebase
+        .collection('sessions')
+        .where('status', '==', 'starting')
+        .limit(20)
+        .get();
+
+      for (const doc of startingSessions.docs) {
+        const session = doc.data() as Session;
+        const lastActivity = session.lastActivityAt
+          ? new Date(session.lastActivityAt as unknown as string).getTime()
+          : 0;
+        const idleMs = now - lastActivity;
+        if (idleMs > 2 * 60 * 1000) {
+          batch.update(doc.ref, {
+            status: 'abandoned',
+            finishedAt: new Date(),
+          });
+          cleaned++;
+        }
+      }
+
       // Also clean up stuck 'claiming' queue entries (older than 30s)
       const claimingEntries = await this.firebase
         .collection('matchmakingQueue')
