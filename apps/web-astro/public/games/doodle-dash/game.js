@@ -1477,13 +1477,14 @@
       }).join('');
     }
 
-    // XP bar animation
-    var xpEarned = (data && data.xpEarned != null) ? data.xpEarned : 0;
+    // XP bar animation — derive XP from final score
+    var myFinalScore = (myUid && sessionScores[myUid]) ? sessionScores[myUid] : 0;
+    var xpEarned = Math.round(myFinalScore * 0.5); // 50% of score becomes XP
     var xpLabel  = $id('xpLabel');
     if (xpLabel) xpLabel.textContent = '+' + xpEarned + ' XP earned';
     setTimeout(function () {
       var xpBar = $id('xpBar');
-      if (xpBar) xpBar.style.width = Math.min(100, (xpEarned / 5)) + '%';
+      if (xpBar) xpBar.style.width = Math.min(100, (xpEarned / 300) * 100) + '%';
     }, 400);
 
     // Submit score - use server-authoritative score from sessionScores, not local myScore
