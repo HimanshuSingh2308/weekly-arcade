@@ -510,30 +510,7 @@ import gameData from '../../../data/games/doodle-dash.json';
       @media (max-width: 700px) {
         .dd-main { grid-template-columns: 1fr; gap: 6px; }
         .dd-canvas-wrap { border-radius: 8px; }
-        /* Toolbar: 2-row grid — tools+sizes on top, palette below */
-        .dd-toolbar {
-          display: grid;
-          grid-template-columns: auto auto;
-          gap: 6px;
-          padding: 8px;
-          border-radius: 8px;
-          justify-content: center;
-          align-items: center;
-        }
-        .dd-tool-group { display: flex; gap: 4px; align-items: center; }
-        .dd-divider { display: none; }
-        .dd-color-palette {
-          grid-column: 1 / -1;
-          max-width: none;
-          gap: 4px;
-          justify-content: center;
-        }
-        .dd-tool-btn { width: 36px; height: 36px; font-size: 0.95rem; }
-        .dd-size-btn.sz-s { width: 16px; height: 16px; }
-        .dd-size-btn.sz-m { width: 22px; height: 22px; }
-        .dd-size-btn.sz-l { width: 28px; height: 28px; }
-        .dd-size-btn.sz-xl { width: 34px; height: 34px; }
-        .dd-color-swatch { width: 26px; height: 26px; }
+        /* Toolbar layout handled in style.css — only non-toolbar overrides here */
         /* Sidebar: horizontal below canvas */
         .dd-sidebar {
           display: flex;
@@ -989,14 +966,7 @@ import gameData from '../../../data/games/doodle-dash.json';
         .dd-scores-panel { width: 100%; }
         .dd-chat-messages { height: 100px; }
         .dd-scores-list { max-height: 80px; }
-        /* Toolbar: compact grid */
-        .dd-toolbar { gap: 4px; padding: 6px; }
-        .dd-tool-btn { width: 30px; height: 30px; font-size: 0.85rem; border-radius: 6px; }
-        .dd-color-swatch { width: 22px; height: 22px; }
-        .dd-size-btn.sz-s { width: 14px; height: 14px; }
-        .dd-size-btn.sz-m { width: 18px; height: 18px; }
-        .dd-size-btn.sz-l { width: 24px; height: 24px; }
-        .dd-size-btn.sz-xl { width: 30px; height: 30px; }
+        /* Toolbar sizing handled in style.css */
       }
       /* Small phones (iPhone SE, 320px) */
       @media (max-width: 375px) {
@@ -1012,9 +982,7 @@ import gameData from '../../../data/games/doodle-dash.json';
         .dd-round-info { font-size: 0.75rem; }
         .dd-timer { font-size: 1.1rem; min-width: 30px; }
         .dd-word-display { font-size: 0.85rem; min-width: 60px; }
-        .dd-toolbar { padding: 4px; gap: 3px; }
-        .dd-tool-btn { width: 26px; height: 26px; font-size: 0.8rem; }
-        .dd-color-swatch { width: 20px; height: 20px; }
+        /* Toolbar sizing handled in style.css */
       }
     </style>
   </Fragment>

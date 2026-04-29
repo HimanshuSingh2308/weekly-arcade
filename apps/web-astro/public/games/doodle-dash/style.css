@@ -103,77 +103,39 @@
   user-select: none;
 }
 
-/* ── Mobile: toolbar fits screen without scrolling ───────────────── */
-@media (max-width: 700px) {
-  .dd-toolbar {
-    display: grid;
-    grid-template-columns: auto auto auto;
-    gap: 6px;
-    padding: 8px;
-    align-items: center;
-  }
-  /* Row 1: tools + sizes grouped */
-  .dd-toolbar .dd-tool-group {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-  }
-  /* Row 2: full-width color palette */
-  .dd-color-palette {
-    grid-column: 1 / -1;
-    max-width: none;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-  }
-  /* Hide dividers on mobile — grid handles spacing */
-  .dd-divider { display: none; }
-  /* Compact touch targets for mobile toolbar */
-  .dd-tool-btn { min-width: 36px; min-height: 36px; width: 36px; height: 36px; font-size: 0.95rem; }
-  .dd-size-btn { min-width: 36px; min-height: 36px; }
-  .dd-size-btn.sz-s { width: 16px; height: 16px; }
-  .dd-size-btn.sz-m { width: 22px; height: 22px; }
-  .dd-size-btn.sz-l { width: 28px; height: 28px; }
-  .dd-size-btn.sz-xl { width: 34px; height: 34px; }
-  .dd-color-swatch { min-width: 28px; min-height: 28px; width: 28px; height: 28px; }
-}
-@media (max-width: 480px) {
-  .dd-tool-btn { min-width: 32px; min-height: 32px; width: 32px; height: 32px; font-size: 0.85rem; }
-  .dd-size-btn { min-width: 32px; min-height: 32px; }
-  .dd-size-btn.sz-s { width: 14px; height: 14px; }
-  .dd-size-btn.sz-m { width: 18px; height: 18px; }
-  .dd-size-btn.sz-l { width: 24px; height: 24px; }
-  .dd-size-btn.sz-xl { width: 30px; height: 30px; }
-  .dd-color-swatch { min-width: 24px; min-height: 24px; width: 24px; height: 24px; }
-}
-@media (max-width: 375px) {
-  .dd-toolbar { padding: 6px; gap: 4px; }
-  .dd-tool-btn { min-width: 28px; min-height: 28px; width: 28px; height: 28px; font-size: 0.8rem; }
-  .dd-size-btn { min-width: 28px; min-height: 28px; }
-  .dd-color-swatch { min-width: 22px; min-height: 22px; width: 22px; height: 22px; }
-}
-
 /* ── Room code copy feedback ─────────────────────────────────────── */
 .dd-room-code.copied {
   border-color: #4caf50;
   color: #4caf50;
 }
 
-/* ── Touch target minimum sizes (MED-2, MED-9) ─────────────────── */
+/* ── Touch target minimum sizes (desktop only — mobile uses compact sizes) ── */
+@media (min-width: 701px) {
+  .dd-color-swatch {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .dd-size-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .dd-tool-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
 .dd-color-swatch {
-  min-width: 44px;
-  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .dd-size-btn {
-  min-width: 44px;
-  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.dd-chat-send {
+  min-height: 44px;
 }
 
 /* ── Focus visible (a11y HIGH-1) ────────────────────────────────── */
@@ -190,13 +152,38 @@
   outline-offset: 2px;
 }
 
-/* ── Tool button touch targets (a11y HIGH-4) ───────────────────── */
-.dd-tool-btn {
-  min-width: 44px;
-  min-height: 44px;
+/* ── Mobile: compact toolbar that fits without scrolling ─────────── */
+@media (max-width: 700px) {
+  .dd-toolbar {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 4px;
+    padding: 6px 8px;
+    align-items: center;
+  }
+  .dd-toolbar .dd-tool-group { display: flex; gap: 3px; align-items: center; }
+  .dd-toolbar .dd-brush-size { gap: 3px; }
+  .dd-color-palette {
+    grid-column: 1 / -1;
+    max-width: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+  }
+  .dd-divider { display: none; }
+  .dd-tool-btn { min-width: 32px; min-height: 32px; width: 32px; height: 32px; font-size: 0.9rem; }
+  .dd-size-btn { min-width: unset; min-height: unset; }
+  .dd-size-btn.sz-s { width: 12px; height: 12px; }
+  .dd-size-btn.sz-m { width: 18px; height: 18px; }
+  .dd-size-btn.sz-l { width: 24px; height: 24px; }
+  .dd-size-btn.sz-xl { width: 30px; height: 30px; }
+  .dd-color-swatch { min-width: unset; min-height: unset; width: 20px; height: 20px; }
 }
-.dd-chat-send {
-  min-height: 44px;
+@media (max-width: 375px) {
+  .dd-toolbar { padding: 4px 6px; gap: 3px; }
+  .dd-tool-btn { min-width: 28px; min-height: 28px; width: 28px; height: 28px; font-size: 0.8rem; }
+  .dd-color-swatch { width: 18px; height: 18px; }
 }
 
 /* ── Reduced motion (MED-8) ─────────────────────────────────────── */
