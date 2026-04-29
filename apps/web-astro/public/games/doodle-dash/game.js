@@ -146,6 +146,8 @@
   var elRoundResult   = $id('ddRoundResult');
   var elGameOver      = $id('ddGameOver');
   var elLoadingScreen = $id('ddLoadingScreen');
+  var elSabotageVote  = $id('ddSabotageVote');
+  var elSabotageReveal = $id('ddSabotageReveal');
   var elNotifs        = $id('ddNotifs');
 
   // ─── Helpers ────────────────────────────────────────────────────
@@ -154,7 +156,7 @@
   var _nextRoundCountInterval = null;
 
   function showScreen(name) {
-    var screens = [elLobby, elRoomLobby, elGame, elReveal, elRoundResult, elGameOver, elLoadingScreen];
+    var screens = [elLobby, elRoomLobby, elGame, elReveal, elRoundResult, elGameOver, elLoadingScreen, elSabotageVote, elSabotageReveal];
     screens.forEach(function (el) { if (el) el.style.display = 'none'; });
     // Clear stale intervals on screen transition
     if (_revealCountInterval) { clearInterval(_revealCountInterval); _revealCountInterval = null; }
@@ -165,8 +167,10 @@
       playing:    elGame,
       reveal:     elReveal,
       result:     elRoundResult,
-      gameover:   elGameOver,
-      loading:    elLoadingScreen,
+      gameover:       elGameOver,
+      loading:        elLoadingScreen,
+      'sabotage-vote':   elSabotageVote,
+      'sabotage-reveal': elSabotageReveal,
     }[name];
     if (target) target.style.display = 'flex';
     gameState = name;
@@ -225,7 +229,7 @@
     var codeEl = $id('roomCodeDisplay');
     if (codeEl) codeEl.textContent = roomCode || '------';
     var modeEl = $id('roomModeLabel');
-    if (modeEl) modeEl.textContent = (gameMode === 'speed-draw' ? '⚡ Speed Draw' : '🎨 Classic');
+    if (modeEl) modeEl.textContent = gameMode === 'speed-draw' ? '⚡ Speed Draw' : gameMode === 'sabotage' ? '🕵️ Sabotage' : '🎨 Classic';
     var startBtn = $id('btnStartGame');
     if (startBtn) startBtn.style.display = isHost ? 'inline-block' : 'none';
     var waitMsg = $id('waitingMsg');
@@ -1595,6 +1599,107 @@
         });
       }
 
+      // ── Sabotage: show saboteur banner during drawing phase ──
+      if (s.mode === 'sabotage' && phase === 'drawing' && s.isSabotageRound && s.currentDrawerUid === myUid) {
+        // I'm the saboteur! Show banner on canvas
+        if (!document.getElementById('saboteurBanner')) {
+          var banner = document.createElement('div');
+          banner.id = 'saboteurBanner';
+          banner.className = 'dd-saboteur-banner';
+          banner.textContent = '🕵️ SABOTEUR! Draw misleadingly!';
+          var canvasWrap = document.querySelector('.dd-canvas-wrap');
+          if (canvasWrap) canvasWrap.appendChild(banner);
+        }
+      } else {
+        var existingBanner = document.getElementById('saboteurBanner');
+        if (existingBanner) existingBanner.remove();
+      }
+
+      // ── Sabotage vote phase ──
+      if (phase === 'sabotage-vote' && _prevPhase !== 'sabotage-vote') {
+        stopTimer();
+        showReactionBar(false);
+        showScreen('sabotage-vote');
+        var voteTitle = $id('sabotageVoteTitle');
+        if (voteTitle) voteTitle.textContent = 'Was ' + getPlayerName(s.currentDrawerUid) + ' sabotaging?';
+        var voteWord = $id('sabotageVoteWord');
+        if (voteWord) voteWord.textContent = 'The word was: "' + (s.currentWord || '') + '"';
+        var voteStatus = $id('sabotageVoteStatus');
+        // Drawer sees waiting message, guessers see vote buttons
+        if (s.currentDrawerUid === myUid) {
+          $id('btnSabotageYes').style.display = 'none';
+          $id('btnSabotageNo').style.display = 'none';
+          if (voteStatus) voteStatus.textContent = 'Waiting for players to vote...';
+        } else {
+          $id('btnSabotageYes').style.display = '';
+          $id('btnSabotageNo').style.display = '';
+          $id('btnSabotageYes').disabled = false;
+          $id('btnSabotageNo').disabled = false;
+          if (voteStatus) voteStatus.textContent = '';
+        }
+        // Countdown
+        var sabVoteCount = 15;
+        var sabVoteEl = $id('sabotageVoteCountdown');
+        if (sabVoteEl) sabVoteEl.textContent = sabVoteCount + 's remaining';
+        var _sabVoteInterval = setInterval(function () {
+          sabVoteCount--;
+          if (sabVoteEl) sabVoteEl.textContent = sabVoteCount + 's remaining';
+          if (sabVoteCount <= 0) {
+            clearInterval(_sabVoteInterval);
+            // Host sends end-sabotage-vote
+            if (isHost && window.multiplayerClient) {
+              window.multiplayerClient.submitMove('end-sabotage-vote', {});
+            }
+          }
+        }, 1000);
+      }
+
+      // ── Sabotage reveal phase ──
+      if (phase === 'sabotage-reveal' && _prevPhase !== 'sabotage-reveal') {
+        showScreen('sabotage-reveal');
+        var wasSaboteur = s.wasSaboteur;
+        var revealIcon = $id('sabotageRevealIcon');
+        var revealText = $id('sabotageRevealText');
+        var revealDetail = $id('sabotageRevealDetail');
+        if (revealIcon) revealIcon.textContent = wasSaboteur ? '🚨' : '✅';
+        if (revealText) {
+          revealText.textContent = wasSaboteur ? 'SABOTEUR!' : 'HONEST DRAWER!';
+          revealText.className = 'dd-sabotage-reveal-text ' + (wasSaboteur ? 'saboteur' : 'honest');
+        }
+        if (revealDetail) {
+          var drawerName = getPlayerName(s.currentDrawerUid);
+          if (wasSaboteur) {
+            var votes = s.sabotageVotes || {};
+            var yesCount = Object.values(votes).filter(function (v) { return v === 'yes'; }).length;
+            var totalVotes = Object.values(votes).length;
+            revealDetail.textContent = drawerName + ' was sabotaging! ' + yesCount + '/' + totalVotes + ' caught them.';
+          } else {
+            revealDetail.textContent = drawerName + ' was drawing honestly!';
+          }
+        }
+        // Sync scores
+        if (s.playerStates) {
+          Object.keys(s.playerStates).forEach(function (uid) {
+            sessionScores[uid] = s.playerStates[uid].score;
+          });
+        }
+        sfxRoundEnd();
+        // Auto-advance after 5s
+        var sabRevealCount = 5;
+        var sabRevealEl = $id('sabotageRevealCountdown');
+        if (sabRevealEl) sabRevealEl.textContent = 'Next round in ' + sabRevealCount + 's...';
+        var _sabRevealInterval = setInterval(function () {
+          sabRevealCount--;
+          if (sabRevealEl) sabRevealEl.textContent = 'Next round in ' + sabRevealCount + 's...';
+          if (sabRevealCount <= 0) {
+            clearInterval(_sabRevealInterval);
+            if (isHost && window.multiplayerClient) {
+              window.multiplayerClient.submitMove('start-round', { ready: true });
+            }
+          }
+        }, 1000);
+      }
+
       // ── Game over (server set gameOver=true on start-round after final round) ──
       if (s.gameOver && !_gameOverShown) {
         _gameOverShown = true;
@@ -1738,6 +1843,28 @@
         showNotif('Failed to join room: ' + (err.message || 'Invalid code'), 4000);
         showScreen('lobby');
       });
+    });
+
+    // Sabotage vote buttons
+    var btnSabYes = $id('btnSabotageYes');
+    if (btnSabYes) btnSabYes.addEventListener('click', function () {
+      if (window.multiplayerClient) {
+        window.multiplayerClient.submitMove('sabotage-vote', { vote: 'yes' });
+      }
+      btnSabYes.disabled = true;
+      $id('btnSabotageNo').disabled = true;
+      var status = $id('sabotageVoteStatus');
+      if (status) status.textContent = 'Vote submitted!';
+    });
+    var btnSabNo = $id('btnSabotageNo');
+    if (btnSabNo) btnSabNo.addEventListener('click', function () {
+      if (window.multiplayerClient) {
+        window.multiplayerClient.submitMove('sabotage-vote', { vote: 'no' });
+      }
+      btnSabYes.disabled = true;
+      btnSabNo.disabled = true;
+      var status = $id('sabotageVoteStatus');
+      if (status) status.textContent = 'Vote submitted!';
     });
 
     // Custom words textarea

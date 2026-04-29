@@ -362,6 +362,51 @@
   border-radius: 0 0 10px 10px;
 }
 
+/* ── Sabotage mode ──────────────────────────────────────────────── */
+.dd-saboteur-banner {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(239,68,68,0.95), rgba(185,28,28,0.95));
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 6px 16px;
+  border-radius: 20px;
+  z-index: 20;
+  animation: dd-saboteur-pulse 2s ease-in-out infinite;
+  white-space: nowrap;
+  pointer-events: none;
+}
+@keyframes dd-saboteur-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 24px rgba(239,68,68,0.7); }
+}
+
+.dd-vote-yes, .dd-vote-no {
+  min-width: 140px;
+  font-size: 1.05rem;
+  padding: 14px 28px;
+}
+
+.dd-sabotage-reveal-icon {
+  font-size: 4rem;
+  animation: dd-reveal-pop 0.6s cubic-bezier(0.36,0.07,0.19,0.97);
+}
+@keyframes dd-reveal-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.dd-sabotage-reveal-text {
+  font-size: 1.8rem;
+  font-weight: 900;
+  animation: dd-reveal-pop 0.6s cubic-bezier(0.36,0.07,0.19,0.97) 0.2s backwards;
+}
+.dd-sabotage-reveal-text.saboteur { color: #ef4444; }
+.dd-sabotage-reveal-text.honest { color: #22c55e; }
+
 /* ── Reduced motion (MED-8) ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

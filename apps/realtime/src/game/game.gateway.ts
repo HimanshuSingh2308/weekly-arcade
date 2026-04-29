@@ -312,8 +312,27 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const turnUid = gameResult ? null : this.stateManager.getNextTurn(sessionId);
 
       // Broadcast full state for non-drawing moves
-      const statePayload: WsGameStatePayload = { state, version, turnUid };
-      this.server.to(roomName).emit('game:state', statePayload);
+      // Sabotage privacy: strip isSabotageRound for non-drawer players before reveal
+      const s = state as Record<string, unknown>;
+      if (s.mode === 'sabotage' && s.phase !== 'sabotage-reveal' && s.phase !== 'round-end') {
+        // Send to drawer with full state (they need to know their role)
+        const drawerUid = s.currentDrawerUid as string;
+        const drawerSockets = this.roomManager.getSocketIdsForUid(sessionId, drawerUid);
+        const drawerPayload: WsGameStatePayload = { state, version, turnUid };
+        drawerSockets.forEach((sid) => {
+          this.server.to(sid).emit('game:state', drawerPayload);
+        });
+        // Send sanitized state to everyone else (hide sabotage role)
+        const sanitized = { ...state, isSabotageRound: null };
+        const sanitizedPayload: WsGameStatePayload = { state: sanitized, version, turnUid };
+        client.to(roomName).emit('game:state', sanitizedPayload);
+        // Note: client.to() excludes the sender, and we already sent to drawer above.
+        // But if the move sender is NOT the drawer, the drawer gets it twice. This is fine —
+        // the client handles duplicate states via version checking.
+      } else {
+        const statePayload: WsGameStatePayload = { state, version, turnUid };
+        this.server.to(roomName).emit('game:state', statePayload);
+      }
 
       // If game is over, handle finish
       if (gameResult) {

@@ -4,7 +4,7 @@ import { GameLogicRegistry } from '../game-logic.registry';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-type GameMode = 'classic' | 'speed-draw';
+type GameMode = 'classic' | 'speed-draw' | 'sabotage';
 type RoundPhase =
   | 'idle'
   | 'word-choice'
@@ -12,6 +12,8 @@ type RoundPhase =
   | 'guessing'
   | 'sd-drawing'   // Speed Draw simultaneous drawing
   | 'sd-vote'      // Speed Draw voting after reveal
+  | 'sabotage-vote'   // Sabotage: players vote if drawer was sabotaging
+  | 'sabotage-reveal' // Sabotage: reveal saboteur identity + bonus scores
   | 'round-end';
 
 interface DrawStroke {
@@ -35,6 +37,7 @@ interface PlayerState {
   guessStreak: number;     // Consecutive rounds with correct guess
   sdSubmitted: boolean;    // Speed Draw: submitted canvas
   votedFor: string | null; // Speed Draw: who they voted for
+  sabotageVote: string | null; // Sabotage: 'yes' | 'no' | null
 }
 
 interface DoodleDashState {
@@ -59,6 +62,10 @@ interface DoodleDashState {
   wordPackId: string;                       // Active word pack ID
   wordList: string[];                       // Active word list for this game
   lastReactionTime: Record<string, number>; // uid -> last reaction epoch ms
+  // Sabotage mode fields
+  isSabotageRound: boolean;                // Is this round a sabotage round?
+  wasSaboteur: boolean | null;             // Revealed after voting (null until reveal)
+  sabotageVotes: Record<string, string>;   // uid -> 'yes' | 'no'
   gameOver: boolean;
 }
 
@@ -107,6 +114,14 @@ const HINT_2_SEC               = 50;
 const WORD_CHOICE_COUNT        = 3;
 const DEFAULT_ROUNDS           = 6;
 const SD_STAR_VOTES_PER_PLAYER = 1; // max votes per player in SD mode
+
+// Sabotage mode constants
+const SABOTAGE_CHANCE            = 0.5;   // 50% chance each round is sabotage
+const SABOTAGE_VOTE_TIMEOUT_SEC  = 15;
+const SCORE_SABOTAGE_CAUGHT      = 100;   // Bonus per correct voter when saboteur caught
+const SCORE_SABOTAGE_UNCAUGHT    = 150;   // Bonus for saboteur if not caught
+const SCORE_FALSE_ACCUSATION     = 100;   // Bonus for drawer if falsely accused
+const SCORE_HONEST_CORRECT       = 50;    // Bonus per correct voter on honest round
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -212,6 +227,7 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         guessStreak: 0,
         sdSubmitted: false,
         votedFor: null,
+        sabotageVote: null,
       };
     });
 
@@ -237,6 +253,9 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       wordPackId: packId,
       wordList: words,
       lastReactionTime: {},
+      isSabotageRound: false,
+      wasSaboteur: null,
+      sabotageVotes: {},
       gameOver: false,
     };
 
@@ -276,6 +295,10 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         return this.handleEndRound(s, uid);
       case 'reaction':
         return this.handleReaction(s, uid, moveData);
+      case 'sabotage-vote':
+        return this.handleSabotageVote(s, uid, moveData);
+      case 'end-sabotage-vote':
+        return this.handleEndSabotageVote(s, uid);
       default:
         throw new Error(`Unknown move type: ${moveType}`);
     }
@@ -319,23 +342,34 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         s.playerStates[uid].hasGuessedThisRound = false;
         s.playerStates[uid].sdSubmitted         = false;
         s.playerStates[uid].votedFor            = null;
+        s.playerStates[uid].sabotageVote        = null;
       }
     });
-    s.sdStarVotes = {};
+    s.sdStarVotes    = {};
+    s.sabotageVotes  = {};
+    s.wasSaboteur    = null;
 
-    if (s.mode === 'classic') {
+    if (s.mode === 'classic' || s.mode === 'sabotage') {
       // Assign drawer (round-robin)
       s.drawerIndex       = (s.round - 1) % s.players.length;
       s.currentDrawerUid  = s.players[s.drawerIndex];
       s.phase             = 'word-choice';
       s.wordOptions       = pickWords(WORD_CHOICE_COUNT, s.wordList);
       s.roundStartedAt    = Date.now();
+
+      // Sabotage: randomly determine if this is a sabotage round
+      if (s.mode === 'sabotage') {
+        s.isSabotageRound = Math.random() < SABOTAGE_CHANCE;
+      } else {
+        s.isSabotageRound = false;
+      }
     } else {
       // Speed Draw: everyone draws simultaneously
       s.currentDrawerUid = null;
       s.phase            = 'sd-drawing';
       s.currentWord      = pickWords(1, s.wordList)[0];
       s.roundStartedAt   = Date.now();
+      s.isSabotageRound  = false;
     }
 
     return s as unknown as Record<string, unknown>;
@@ -507,8 +541,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       return s as unknown as Record<string, unknown>;
     }
 
-    // Drawer cannot guess their own word in classic
-    if (s.mode === 'classic' && uid === s.currentDrawerUid) {
+    // Drawer cannot guess their own word in classic/sabotage
+    if ((s.mode === 'classic' || s.mode === 'sabotage') && uid === s.currentDrawerUid) {
       return s as unknown as Record<string, unknown>;
     }
 
@@ -541,8 +575,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       (moveData as Record<string, unknown>).__streak = ps.guessStreak;
       (moveData as Record<string, unknown>).__multiplier = multiplier;
 
-      // Drawer also earns points per correct guesser in classic (capped at 500/round)
-      if (s.mode === 'classic' && s.currentDrawerUid) {
+      // Drawer also earns points per correct guesser in classic/sabotage (capped at 500/round)
+      if ((s.mode === 'classic' || s.mode === 'sabotage') && s.currentDrawerUid) {
         const drawerPs = s.playerStates[s.currentDrawerUid];
         if (drawerPs) {
           // Count how many have guessed this round
@@ -558,11 +592,12 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       }
 
       // Check if all guessers have guessed — auto-end round
-      if (s.mode === 'classic') {
+      if (s.mode === 'classic' || s.mode === 'sabotage') {
         const guessers = s.players.filter(p => p !== s.currentDrawerUid);
         const allGuessed = guessers.every(p => s.playerStates[p]?.hasGuessedThisRound);
         if (allGuessed) {
-          s.phase = 'round-end';
+          // Sabotage: go to vote phase; Classic: end round directly
+          s.phase = s.mode === 'sabotage' ? 'sabotage-vote' : 'round-end';
           s.roundEndReason = 'all-guessed';
         }
       }
@@ -623,10 +658,18 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     if (s.phase !== 'drawing' && s.phase !== 'sd-drawing') {
       return s as unknown as Record<string, unknown>; // Already ended or wrong phase
     }
-    // Only drawer (classic) or host (speed-draw) can end the round
-    if (s.mode === 'classic' && uid !== s.currentDrawerUid && uid !== s.hostUid) {
+    // Only drawer (classic/sabotage) or host (speed-draw) can end the round
+    if ((s.mode === 'classic' || s.mode === 'sabotage') && uid !== s.currentDrawerUid && uid !== s.hostUid) {
       return s as unknown as Record<string, unknown>;
     }
+
+    // In sabotage mode: go to sabotage-vote phase instead of round-end
+    if (s.mode === 'sabotage') {
+      s.phase = 'sabotage-vote';
+      s.roundEndReason = 'timeout';
+      return s as unknown as Record<string, unknown>;
+    }
+
     s.phase = 'round-end';
     s.roundEndReason = 'timeout';
     return s as unknown as Record<string, unknown>;
@@ -636,7 +679,7 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     s: DoodleDashState,
     uid: string,
   ): Record<string, unknown> {
-    if (s.mode !== 'classic') throw new Error('Hints only in Classic mode');
+    if (s.mode !== 'classic' && s.mode !== 'sabotage') throw new Error('Hints only in Classic/Sabotage mode');
     if (s.phase !== 'drawing') throw new Error('Not in drawing phase');
     if (uid !== s.currentDrawerUid) throw new Error('Only the drawer can reveal hints');
     if (!s.currentWord) return s as unknown as Record<string, unknown>;
@@ -647,6 +690,102 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
 
     return s as unknown as Record<string, unknown>;
   }
+
+  // ─── Sabotage Mode Handlers ─────────────────────────────────────
+
+  private handleSabotageVote(
+    s: DoodleDashState,
+    uid: string,
+    moveData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    if (s.mode !== 'sabotage') throw new Error('sabotage-vote only valid in Sabotage mode');
+    if (s.phase !== 'sabotage-vote') throw new Error('Not in sabotage vote phase');
+
+    const ps = s.playerStates[uid];
+    if (!ps) return s as unknown as Record<string, unknown>;
+
+    // Drawer can't vote on themselves
+    if (uid === s.currentDrawerUid) return s as unknown as Record<string, unknown>;
+
+    // Already voted
+    if (ps.sabotageVote !== null) return s as unknown as Record<string, unknown>;
+
+    const vote = moveData.vote as string;
+    if (vote !== 'yes' && vote !== 'no') throw new Error('Invalid vote');
+
+    ps.sabotageVote = vote;
+    s.sabotageVotes[uid] = vote;
+
+    // Check if all non-drawer players have voted
+    const voters = s.players.filter(p => p !== s.currentDrawerUid);
+    const allVoted = voters.every(p => s.playerStates[p]?.sabotageVote !== null);
+
+    if (allVoted) {
+      this.resolveSabotageVote(s);
+    }
+
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private handleEndSabotageVote(
+    s: DoodleDashState,
+    uid: string,
+  ): Record<string, unknown> {
+    if (s.mode !== 'sabotage') return s as unknown as Record<string, unknown>;
+    if (s.phase !== 'sabotage-vote') return s as unknown as Record<string, unknown>;
+    // Only host can force-end the vote
+    if (uid !== s.hostUid) return s as unknown as Record<string, unknown>;
+
+    this.resolveSabotageVote(s);
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private resolveSabotageVote(s: DoodleDashState): void {
+    // Count yes/no votes
+    const votes = Object.values(s.sabotageVotes);
+    const yesCount = votes.filter(v => v === 'yes').length;
+    const noCount = votes.filter(v => v === 'no').length;
+    const majorityYes = yesCount > noCount;
+
+    // Reveal the truth
+    s.wasSaboteur = s.isSabotageRound;
+    s.phase = 'sabotage-reveal';
+
+    const drawerPs = s.currentDrawerUid ? s.playerStates[s.currentDrawerUid] : null;
+
+    if (s.isSabotageRound) {
+      if (majorityYes) {
+        // Caught! Voters who voted YES get bonus
+        Object.keys(s.sabotageVotes).forEach(uid => {
+          if (s.sabotageVotes[uid] === 'yes' && s.playerStates[uid]) {
+            s.playerStates[uid].score += SCORE_SABOTAGE_CAUGHT;
+          }
+        });
+      } else {
+        // Not caught! Saboteur gets bonus
+        if (drawerPs) drawerPs.score += SCORE_SABOTAGE_UNCAUGHT;
+      }
+    } else {
+      // Honest round
+      if (majorityYes) {
+        // False accusation — drawer gets bonus
+        if (drawerPs) drawerPs.score += SCORE_FALSE_ACCUSATION;
+      } else {
+        // Correctly identified honest drawer — voters who voted NO get bonus
+        Object.keys(s.sabotageVotes).forEach(uid => {
+          if (s.sabotageVotes[uid] === 'no' && s.playerStates[uid]) {
+            s.playerStates[uid].score += SCORE_HONEST_CORRECT;
+          }
+        });
+      }
+    }
+
+    // After a brief reveal, the client host will send start-round to advance.
+    // Transition to round-end after reveal so the standard flow picks up.
+    // We use sabotage-reveal phase; the client host sends start-round after showing it.
+  }
+
+  // ─── Reaction Handler ─────────────────────────────────────────────
 
   private handleReaction(
     s: DoodleDashState,
