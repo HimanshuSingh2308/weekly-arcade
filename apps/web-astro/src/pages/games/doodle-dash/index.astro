@@ -508,10 +508,42 @@ import gameData from '../../../data/games/doodle-dash.json';
         gap: 8px;
       }
       @media (max-width: 700px) {
-        .dd-main { grid-template-columns: 1fr; }
-        .dd-sidebar { display: flex; flex-direction: row; gap: 8px; }
-        .dd-chat-panel { flex: 1; }
-        .dd-scores-panel { width: 160px; flex-shrink: 0; }
+        .dd-main { grid-template-columns: 1fr; gap: 6px; }
+        .dd-canvas-wrap { border-radius: 8px; }
+        /* Toolbar: compact, single row */
+        .dd-toolbar {
+          padding: 6px 8px;
+          gap: 4px;
+          border-radius: 8px;
+          justify-content: center;
+        }
+        .dd-tool-btn { width: 34px; height: 34px; font-size: 0.95rem; }
+        .dd-divider { height: 24px; margin: 0 2px; }
+        .dd-size-btn.sz-s { width: 16px; height: 16px; }
+        .dd-size-btn.sz-m { width: 22px; height: 22px; }
+        .dd-size-btn.sz-l { width: 28px; height: 28px; }
+        .dd-size-btn.sz-xl { width: 34px; height: 34px; }
+        .dd-color-palette { max-width: none; gap: 4px; }
+        .dd-color-swatch { width: 22px; height: 22px; }
+        /* Sidebar: horizontal below canvas */
+        .dd-sidebar {
+          display: flex;
+          flex-direction: row;
+          gap: 6px;
+          max-height: 200px;
+        }
+        .dd-chat-panel { flex: 1; min-width: 0; }
+        .dd-scores-panel { width: 140px; flex-shrink: 0; }
+        .dd-chat-messages { height: 120px; }
+        .dd-scores-list { max-height: 120px; }
+        .dd-panel-header { padding: 6px 10px; font-size: 0.8rem; }
+        .dd-chat-input-row { padding: 6px; }
+        .dd-chat-input { padding: 6px 8px; font-size: 0.82rem; }
+        .dd-chat-send { padding: 6px 10px; font-size: 0.82rem; }
+        .dd-score-row { font-size: 0.78rem; padding: 3px 4px; }
+        /* Canvas overlay: smaller text */
+        .dd-overlay-title { font-size: 1.1rem; }
+        .dd-word-choice-btn { padding: 8px 14px; font-size: 0.9rem; }
       }
       /* Canvas area */
       .dd-canvas-area {
@@ -938,10 +970,24 @@ import gameData from '../../../data/games/doodle-dash.json';
         .dd-feature { font-size: 0.78rem; justify-content: center; }
         /* Tone down floating emojis on small screens */
         .dd-float { font-size: 1.4rem !important; opacity: 0.06; }
-        /* Game playing screen: tighter spacing */
-        .dd-top-bar { padding: 6px 10px; gap: 8px; }
-        .dd-timer { font-size: 1.3rem; }
-        .dd-word-display { font-size: 1.1rem; letter-spacing: 0.15em; }
+        /* Game playing screen: compact for small phones */
+        .dd-top-bar { padding: 5px 8px; gap: 6px; border-radius: 8px; }
+        .dd-round-info { font-size: 0.8rem; }
+        .dd-timer { font-size: 1.2rem; min-width: 36px; }
+        .dd-word-display { font-size: 0.95rem; letter-spacing: 0.12em; min-width: 80px; }
+        /* Stack sidebar vertically on very small screens */
+        .dd-sidebar { flex-direction: column; max-height: none; }
+        .dd-scores-panel { width: 100%; }
+        .dd-chat-messages { height: 100px; }
+        .dd-scores-list { max-height: 80px; }
+        /* Toolbar: wrap to 2 rows */
+        .dd-toolbar { gap: 3px; padding: 5px 6px; }
+        .dd-tool-btn { width: 30px; height: 30px; font-size: 0.85rem; border-radius: 6px; }
+        .dd-color-swatch { width: 20px; height: 20px; }
+        .dd-size-btn.sz-s { width: 14px; height: 14px; }
+        .dd-size-btn.sz-m { width: 20px; height: 20px; }
+        .dd-size-btn.sz-l { width: 26px; height: 26px; }
+        .dd-size-btn.sz-xl { width: 30px; height: 30px; }
       }
       /* Small phones (iPhone SE, 320px) */
       @media (max-width: 375px) {
@@ -951,6 +997,16 @@ import gameData from '../../../data/games/doodle-dash.json';
         .dd-btn-primary { padding: 14px 20px; font-size: 0.95rem; }
         .dd-features { gap: 8px 12px; }
         .dd-feature { font-size: 0.72rem; }
+        /* Game screen: ultra-compact */
+        .dd-wrap { padding: 4px 6px 16px; }
+        .dd-top-bar { padding: 4px 6px; }
+        .dd-round-info { font-size: 0.75rem; }
+        .dd-timer { font-size: 1.1rem; min-width: 30px; }
+        .dd-word-display { font-size: 0.85rem; min-width: 60px; }
+        .dd-toolbar { padding: 4px; }
+        .dd-tool-btn { width: 28px; height: 28px; font-size: 0.8rem; }
+        .dd-divider { display: none; }
+        .dd-color-swatch { width: 18px; height: 18px; }
       }
     </style>
   </Fragment>
