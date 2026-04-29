@@ -1144,6 +1144,8 @@ import gameData from '../../../data/games/doodle-dash.json';
         <div class="dd-canvas-area">
           <div class="dd-canvas-wrap">
             <canvas id="ddCanvas"></canvas>
+            <!-- Reaction overlay (floating emojis) -->
+            <div id="reactionOverlay" class="dd-reaction-overlay"></div>
             <!-- Phase overlay (word choice, phase transitions, speed-draw lock) -->
             <div class="dd-canvas-overlay" id="canvasOverlay">
               <div class="dd-overlay-title" id="overlayTitle">Choose a word to draw</div>
@@ -1172,6 +1174,15 @@ import gameData from '../../../data/games/doodle-dash.json';
             <div class="dd-divider"></div>
             <!-- Color palette -->
             <div class="dd-color-palette" id="colorPalette"></div>
+          </div>
+          <!-- Reaction bar (visible to guessers during drawing) -->
+          <div id="reactionBar" class="dd-reaction-bar hidden">
+            <button class="dd-reaction-btn" data-emoji="🔥">🔥</button>
+            <button class="dd-reaction-btn" data-emoji="😂">😂</button>
+            <button class="dd-reaction-btn" data-emoji="😮">😮</button>
+            <button class="dd-reaction-btn" data-emoji="😕">😕</button>
+            <button class="dd-reaction-btn" data-emoji="👏">👏</button>
+            <button class="dd-reaction-btn" data-emoji="❤️">❤️</button>
           </div>
         </div>
 
@@ -1213,6 +1224,11 @@ import gameData from '../../../data/games/doodle-dash.json';
     <div id="ddRoundResult" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;text-align:center">
       <div class="dd-result-title" id="roundResultTitle">Round Over!</div>
       <div class="dd-result-word" style="color:#aaa;font-size:0.9rem" id="roundResultWord"></div>
+      <!-- Drawing replay -->
+      <div class="dd-replay-wrap" id="replayWrap" style="display:none">
+        <canvas id="ddReplayCanvas" width="800" height="600"></canvas>
+        <div class="dd-replay-progress" id="replayProgress" style="width:0%"></div>
+      </div>
       <div class="dd-result-scores" id="roundResultScores"></div>
       <div style="color:#aaa;font-size:0.85rem" id="nextRoundCountdown"></div>
     </div>

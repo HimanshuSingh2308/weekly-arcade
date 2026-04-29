@@ -32,6 +32,7 @@ interface PlayerState {
   correctGuesses: number;
   starsReceived: number;
   hasGuessedThisRound: boolean;
+  guessStreak: number;     // Consecutive rounds with correct guess
   sdSubmitted: boolean;    // Speed Draw: submitted canvas
   votedFor: string | null; // Speed Draw: who they voted for
 }
@@ -55,6 +56,7 @@ interface DoodleDashState {
   gameStartedAt: number;               // Epoch ms when game started
   roundEndReason: string | null;
   sdStarVotes: Record<string, number>; // Speed Draw: uid -> star count
+  lastReactionTime: Record<string, number>; // uid -> last reaction epoch ms
   gameOver: boolean;
 }
 
@@ -203,6 +205,7 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         correctGuesses: 0,
         starsReceived: 0,
         hasGuessedThisRound: false,
+        guessStreak: 0,
         sdSubmitted: false,
         votedFor: null,
       };
@@ -227,6 +230,7 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       gameStartedAt: Date.now(),
       roundEndReason: null,
       sdStarVotes: {},
+      lastReactionTime: {},
       gameOver: false,
     };
 
@@ -264,6 +268,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
         return this.handleRevealHint(s, uid);
       case 'end-round':
         return this.handleEndRound(s, uid);
+      case 'reaction':
+        return this.handleReaction(s, uid, moveData);
       default:
         throw new Error(`Unknown move type: ${moveType}`);
     }
@@ -297,9 +303,13 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     s.hintRevealedCount = 0;
     s.roundEndReason    = null;
 
-    // Reset player round state
+    // Reset player round state + break streaks for players who didn't guess
     s.players.forEach((uid) => {
       if (s.playerStates[uid]) {
+        // Break streak for non-drawers who didn't guess last round (skip round 1)
+        if (s.round > 1 && uid !== s.currentDrawerUid && !s.playerStates[uid].hasGuessedThisRound) {
+          s.playerStates[uid].guessStreak = 0;
+        }
         s.playerStates[uid].hasGuessedThisRound = false;
         s.playerStates[uid].sdSubmitted         = false;
         s.playerStates[uid].votedFor            = null;
@@ -509,12 +519,21 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     if (result === 'correct') {
       ps.hasGuessedThisRound = true;
       ps.correctGuesses++;
+      ps.guessStreak++;
 
       const elapsed = (Date.now() - s.roundStartedAt) / 1000;
       const totalTime = s.mode === 'classic' ? TURN_TIMEOUT_SEC : SPEED_DRAW_TIMEOUT_SEC;
-      const score = calculateGuesserScore(elapsed, totalTime);
+      const baseScore = calculateGuesserScore(elapsed, totalTime);
+
+      // Streak multiplier
+      const multiplier = ps.guessStreak >= 5 ? 1.5 : ps.guessStreak >= 3 ? 1.2 : 1.0;
+      const score = Math.min(Math.round(baseScore * multiplier), SCORE_GUESSER_MAX);
 
       ps.score += score;
+
+      // Annotate streak info for client
+      (moveData as Record<string, unknown>).__streak = ps.guessStreak;
+      (moveData as Record<string, unknown>).__multiplier = multiplier;
 
       // Drawer also earns points per correct guesser in classic (capped at 500/round)
       if (s.mode === 'classic' && s.currentDrawerUid) {
@@ -620,6 +639,33 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
     s.hintRevealedCount++;
     s.wordHint = buildHint(s.currentWord, s.hintRevealedCount);
 
+    return s as unknown as Record<string, unknown>;
+  }
+
+  private handleReaction(
+    s: DoodleDashState,
+    uid: string,
+    moveData: Record<string, unknown>,
+  ): Record<string, unknown> {
+    // Only allow during drawing phase
+    if (s.phase !== 'drawing' && s.phase !== 'sd-drawing') {
+      return s as unknown as Record<string, unknown>;
+    }
+    // Drawer cannot react
+    if (s.mode === 'classic' && uid === s.currentDrawerUid) {
+      return s as unknown as Record<string, unknown>;
+    }
+    // Validate emoji
+    const ALLOWED = ['🔥', '😂', '😮', '😕', '👏', '❤️'];
+    const emoji = moveData.emoji as string;
+    if (!ALLOWED.includes(emoji)) return s as unknown as Record<string, unknown>;
+    // Rate limit: 2s per player
+    const now = Date.now();
+    if (s.lastReactionTime[uid] && now - s.lastReactionTime[uid] < 2000) {
+      return s as unknown as Record<string, unknown>;
+    }
+    s.lastReactionTime[uid] = now;
+    // Reactions are cosmetic — no state changes
     return s as unknown as Record<string, unknown>;
   }
 

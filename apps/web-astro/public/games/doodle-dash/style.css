@@ -186,6 +186,125 @@
   .dd-color-swatch { width: 18px; height: 18px; }
 }
 
+/* ── Close guess toast ──────────────────────────────────────────── */
+.dd-close-notif {
+  background: rgba(251, 146, 60, 0.95) !important;
+  color: #1a1a2e !important;
+}
+
+@keyframes dd-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.dd-shake {
+  animation: dd-shake 0.4s ease;
+}
+
+/* ── Drawing reactions ──────────────────────────────────────────── */
+.dd-reaction-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.dd-reaction-float {
+  position: absolute;
+  bottom: 0;
+  font-size: 2rem;
+  animation: dd-react-up 2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes dd-react-up {
+  0%   { transform: translateY(0) scale(0.5); opacity: 1; }
+  50%  { transform: translateY(-50%) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-100%) scale(1); opacity: 0; }
+}
+
+.dd-reaction-bar {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 6px 8px;
+  background: #16213e;
+  border-radius: 10px;
+}
+.dd-reaction-bar.hidden { display: none; }
+
+.dd-reaction-btn {
+  background: transparent;
+  border: 2px solid transparent;
+  font-size: 1.4rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dd-reaction-btn:hover { transform: scale(1.15); background: rgba(245,166,35,0.1); }
+.dd-reaction-btn:active { transform: scale(0.95); }
+.dd-reaction-btn.cooldown { opacity: 0.4; pointer-events: none; }
+
+@media (max-width: 700px) {
+  .dd-reaction-btn { width: 34px; height: 34px; font-size: 1.2rem; }
+  .dd-reaction-bar { gap: 4px; padding: 4px 6px; }
+}
+
+/* ── Streak badge ───────────────────────────────────────────────── */
+.dd-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(251, 146, 60, 0.2);
+  color: #fb923c;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 4px;
+}
+
+/* ── Drawing replay ─────────────────────────────────────────────── */
+.dd-replay-wrap {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  aspect-ratio: 4/3;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #333;
+  position: relative;
+}
+.dd-replay-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.dd-replay-label {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+.dd-replay-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f5a623, #ff6b6b);
+  transition: width 0.1s linear;
+  border-radius: 0 0 10px 10px;
+}
+
 /* ── Reduced motion (MED-8) ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

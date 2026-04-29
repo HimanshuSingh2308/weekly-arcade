@@ -292,6 +292,23 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         return;
       }
 
+      // For reactions: broadcast lightweight event, don't send full state
+      if (payload.moveType === 'reaction') {
+        client.to(roomName).emit('game:reaction', {
+          uid,
+          emoji: payload.moveData.emoji,
+        });
+        return;
+      }
+
+      // For guess moves: send result feedback directly to the guessing player
+      if (payload.moveType === 'guess' && payload.moveData.__result) {
+        client.emit('game:guess-result', {
+          result: payload.moveData.__result,
+          playerName: payload.moveData.__playerName,
+        });
+      }
+
       const turnUid = gameResult ? null : this.stateManager.getNextTurn(sessionId);
 
       // Broadcast full state for non-drawing moves

@@ -56,6 +56,7 @@
   var myScore        = 0;
   var sessionScores  = {};          // uid -> cumulative score
   var roundScores    = {};          // uid -> score delta this round
+  var latestPlayerStates = {};      // uid -> server playerState (for streaks etc.)
 
   // Canvas state
   var canvas         = null;
@@ -114,6 +115,7 @@
 
   function sfxCorrectGuess() { playTone(880, 0.15, 'sine'); setTimeout(function () { playTone(1100, 0.2, 'sine'); }, 100); }
   function sfxWrongGuess() { playTone(200, 0.15, 'square'); }
+  function sfxCloseGuess() { playTone(520, 0.12, 'sine'); setTimeout(function () { playTone(660, 0.15, 'sine'); }, 100); }
   function sfxTimerWarning() { playTone(440, 0.1, 'square'); }
   function sfxRoundEnd() { playTone(660, 0.1, 'sine'); setTimeout(function () { playTone(880, 0.1, 'sine'); }, 80); setTimeout(function () { playTone(1100, 0.2, 'sine'); }, 160); }
 
@@ -159,6 +161,45 @@
     el.textContent = msg;
     elNotifs.appendChild(el);
     setTimeout(function () { el.remove(); }, duration || 2500);
+  }
+
+  function showCloseToast() {
+    // Orange "close!" notification
+    var el = document.createElement('div');
+    el.className = 'dd-notif dd-close-notif';
+    el.textContent = '🔥 Almost! You\'re close!';
+    elNotifs.appendChild(el);
+    setTimeout(function () { el.remove(); }, 2500);
+    // Shake the chat input
+    var input = $id('chatInput');
+    if (input) {
+      input.classList.add('dd-shake');
+      setTimeout(function () { input.classList.remove('dd-shake'); }, 500);
+    }
+  }
+
+  // ─── Drawing Reactions ──────────────────────────────────────────
+  var REACTION_EMOJIS = ['🔥', '😂', '😮', '😕', '👏', '❤️'];
+  var lastReactionSent = 0;
+
+  function showFloatingReaction(emoji) {
+    var overlay = $id('reactionOverlay');
+    if (!overlay) return;
+    var el = document.createElement('div');
+    el.className = 'dd-reaction-float';
+    el.textContent = emoji;
+    el.style.left = (10 + Math.random() * 80) + '%';
+    overlay.appendChild(el);
+    setTimeout(function () { el.remove(); }, 2000);
+  }
+
+  function sendReaction(emoji) {
+    var now = Date.now();
+    if (now - lastReactionSent < 2000) return; // rate limit
+    lastReactionSent = now;
+    if (window.multiplayerClient) {
+      window.multiplayerClient.submitMove('reaction', { emoji: emoji });
+    }
   }
 
   var PLAYER_COLORS = ['#f5a623','#4ecdc4','#ff6b6b','#a78bfa','#34d399','#f472b6','#60a5fa','#fbbf24','#fb923c','#c084fc'];
@@ -316,6 +357,118 @@
         });
       });
     });
+
+    // Reaction bar buttons
+    document.querySelectorAll('.dd-reaction-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var emoji = btn.getAttribute('data-emoji');
+        sendReaction(emoji);
+        // Visual cooldown
+        document.querySelectorAll('.dd-reaction-btn').forEach(function (b) { b.classList.add('cooldown'); });
+        setTimeout(function () {
+          document.querySelectorAll('.dd-reaction-btn').forEach(function (b) { b.classList.remove('cooldown'); });
+        }, 2000);
+      });
+    });
+  }
+
+  function showReactionBar(visible) {
+    var bar = $id('reactionBar');
+    if (bar) bar.classList.toggle('hidden', !visible);
+  }
+
+  // ─── Drawing Replay ─────────────────────────────────────────────
+  var _replayAnim = null;
+  var _lastRoundStrokes = null;
+
+  function showDrawingReplay(strokes, onComplete) {
+    var wrap = $id('replayWrap');
+    var replayCanvas = $id('ddReplayCanvas');
+    var progress = $id('replayProgress');
+    if (!wrap || !replayCanvas || !strokes || strokes.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+    wrap.style.display = 'block';
+    var rCtx = replayCanvas.getContext('2d');
+    replayCanvas.width = CANVAS_W;
+    replayCanvas.height = CANVAS_H;
+    rCtx.fillStyle = '#ffffff';
+    rCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    var DURATION = 3500; // ms
+    var total = strokes.length;
+    var startTime = null;
+    var drawn = 0;
+
+    function drawStrokeOnReplay(seg) {
+      if (seg.tool === 'clear') {
+        rCtx.fillStyle = '#ffffff';
+        rCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        return;
+      }
+      if (seg.tool === 'undo') return; // skip undos in replay
+      if (seg.tool === 'fill') {
+        // Simplified fill for replay — draw a colored circle as indicator
+        rCtx.fillStyle = seg.color || '#000';
+        rCtx.beginPath();
+        rCtx.arc(seg.x0, seg.y0, 20, 0, Math.PI * 2);
+        rCtx.fill();
+        return;
+      }
+      rCtx.save();
+      rCtx.strokeStyle = seg.color || '#000';
+      rCtx.fillStyle = seg.color || '#000';
+      rCtx.lineWidth = seg.width || 3;
+      rCtx.lineCap = 'round';
+      rCtx.lineJoin = 'round';
+      if (seg.tool === 'eraser') {
+        rCtx.strokeStyle = '#ffffff';
+        rCtx.fillStyle = '#ffffff';
+      }
+      rCtx.beginPath();
+      rCtx.moveTo(seg.x0, seg.y0);
+      rCtx.lineTo(seg.x1, seg.y1);
+      rCtx.stroke();
+      rCtx.beginPath();
+      rCtx.arc(seg.x0, seg.y0, (seg.width || 3) / 2, 0, Math.PI * 2);
+      rCtx.fill();
+      rCtx.restore();
+    }
+
+    function animate(ts) {
+      if (!startTime) startTime = ts;
+      var elapsed = ts - startTime;
+      var pct = Math.min(elapsed / DURATION, 1);
+      var target = Math.floor(pct * total);
+      // Draw strokes up to target
+      while (drawn < target && drawn < total) {
+        drawStrokeOnReplay(strokes[drawn]);
+        drawn++;
+      }
+      if (progress) progress.style.width = (pct * 100) + '%';
+      if (pct < 1) {
+        _replayAnim = requestAnimationFrame(animate);
+      } else {
+        // Draw remaining
+        while (drawn < total) {
+          drawStrokeOnReplay(strokes[drawn]);
+          drawn++;
+        }
+        if (progress) progress.style.width = '100%';
+        setTimeout(function () {
+          if (onComplete) onComplete();
+        }, 500);
+      }
+    }
+    if (_replayAnim) cancelAnimationFrame(_replayAnim);
+    _replayAnim = requestAnimationFrame(animate);
+  }
+
+  function hideReplay() {
+    var wrap = $id('replayWrap');
+    if (wrap) wrap.style.display = 'none';
+    if (_replayAnim) { cancelAnimationFrame(_replayAnim); _replayAnim = null; }
   }
 
   // ─── Drawing (Pointer Events API) ───────────────────────────────
@@ -634,9 +787,12 @@
       var me = p.uid === myUid;
       var guessed = p.guessed;
       var isDrawer = p.uid === currentDrawer;
+      var ps = latestPlayerStates[p.uid];
+      var streak = ps ? ps.guessStreak : 0;
+      var streakBadge = streak >= 2 ? '<span class="dd-streak">\uD83D\uDD25' + streak + '</span>' : '';
       return '<div class="dd-score-row' + (me ? ' is-me' : '') + (guessed ? ' guessed' : '') + '">' +
         '<span class="dd-score-rank">' + (i + 1) + '</span>' +
-        '<span class="dd-score-name">' + escapeHtml(p.name) + (isDrawer ? '<span class="dd-drawer-badge">Drawing</span>' : '') + '</span>' +
+        '<span class="dd-score-name">' + escapeHtml(p.name) + streakBadge + (isDrawer ? '<span class="dd-drawer-badge">Drawing</span>' : '') + '</span>' +
         '<span class="dd-score-pts">' + (sessionScores[p.uid] || 0) + '</span>' +
         '</div>';
     }).join('');
@@ -888,6 +1044,7 @@
     }
     var toolbar = $id('drawToolbar');
     if (toolbar) toolbar.classList.remove('hidden');
+    showReactionBar(false); // drawer doesn't see reactions
     var chatInput = $id('chatInput');
     if (chatInput) chatInput.disabled = true; // drawer can't type guesses
     hideOverlay();
@@ -1022,12 +1179,20 @@
   function showRoundResult(data) {
     stopTimer();
     showScreen('result');
+    hideReplay();
 
     var title = $id('roundResultTitle');
     if (title) title.textContent = data.roundNum ? 'Round ' + data.roundNum + ' Complete!' : 'Round Complete!';
 
     var wordEl = $id('roundResultWord');
     if (wordEl && data.word) wordEl.textContent = 'The word was: "' + data.word + '"';
+
+    // Show drawing replay if we have stroke history
+    if (data.strokeHistory && data.strokeHistory.length > 0) {
+      showDrawingReplay(data.strokeHistory, function () {
+        // Replay done — scores are already visible below
+      });
+    }
 
     var scoresEl = $id('roundResultScores');
     if (scoresEl) {
@@ -1047,8 +1212,9 @@
       }).join('');
     }
 
-    // Auto advance — host kicks off next round after countdown
-    var countdown = NEXT_ROUND_T;
+    // Auto advance — host kicks off next round after countdown (longer to allow replay)
+    var replayExtra = (data.strokeHistory && data.strokeHistory.length > 0) ? 4 : 0;
+    var countdown = NEXT_ROUND_T + replayExtra;
     var nextEl = $id('nextRoundCountdown');
     if (nextEl) nextEl.textContent = 'Next round in ' + countdown + 's...';
     _nextRoundCountInterval = setInterval(function () {
@@ -1057,6 +1223,7 @@
       if (countdown <= 0) {
         clearInterval(_nextRoundCountInterval);
         _nextRoundCountInterval = null;
+        hideReplay();
         if (isHost && window.multiplayerClient) {
           window.multiplayerClient.submitMove('start-round', { ready: true });
         }
@@ -1174,6 +1341,19 @@
       }
     });
 
+    // ── Guess result feedback (close guess toast) ──────────────────
+    mc.on('game:guess-result', function (data) {
+      if (data.result === 'close') {
+        sfxCloseGuess();
+        showCloseToast();
+      }
+    });
+
+    // ── Drawing reactions (floating emojis) ──────────────────────
+    mc.on('game:reaction', function (data) {
+      showFloatingReaction(data.emoji);
+    });
+
     // ── State-driven event handler ─────────────────────────────────
     // The server broadcasts game:state with the full DoodleDash state.
     // We track the previous phase/round and derive UI events from transitions.
@@ -1252,6 +1432,7 @@
           hideOverlay();
           wordHint = s.wordHint || '_ _ _ _ _';
           updateWordDisplay(null, null);
+          showReactionBar(true); // guessers can react
           startTimer(TURN_TIMEOUT, null, null);
           addChatMessage('', '🎨 ' + getPlayerName(currentDrawer) + ' is now drawing!', 'system drawing');
         }
@@ -1276,6 +1457,7 @@
 
       // ── Guess results: check playerStates for new correct guesses ──
       if (s.playerStates) {
+        latestPlayerStates = s.playerStates;
         Object.keys(s.playerStates).forEach(function (uid) {
           var ps = s.playerStates[uid];
           var p = players.find(function (pl) { return pl.uid === uid; });
@@ -1287,7 +1469,8 @@
               roundScores[uid]   = (roundScores[uid] || 0) + delta;
               if (uid === myUid) {
                 myScore += delta;
-                showNotif('Correct! +' + delta + ' points!');
+                var streakMsg = ps.guessStreak >= 3 ? ' (\uD83D\uDD25' + ps.guessStreak + ' streak!)' : '';
+                showNotif('Correct! +' + delta + ' points!' + streakMsg);
                 var chatInput = $id('chatInput');
                 if (chatInput) chatInput.disabled = true;
               }
@@ -1340,6 +1523,9 @@
       // ── Round end (not game over) ──
       if (phase === 'round-end' && _prevPhase !== 'round-end' && !s.gameOver) {
         stopTimer();
+        showReactionBar(false);
+        // Capture stroke history for replay before state resets
+        _lastRoundStrokes = s.strokeHistory ? s.strokeHistory.slice() : null;
         if (s.playerStates) {
           Object.keys(s.playerStates).forEach(function (uid) {
             sessionScores[uid] = s.playerStates[uid].score;
@@ -1351,6 +1537,7 @@
           roundNum: s.round,
           scores: sessionScores,
           nextRound: true,
+          strokeHistory: _lastRoundStrokes,
         });
       }
 
