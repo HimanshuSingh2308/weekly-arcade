@@ -874,7 +874,17 @@ import gameData from '../../../data/games/doodle-dash.json';
         padding: 32px 16px;
         text-align: center;
       }
-      .dd-gameover-title { font-size: 2rem; font-weight: 900; color: #f5a623; }
+      .dd-gameover-title {
+        font-size: clamp(2rem, 6vw, 3rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #f5a623, #ff6b6b, #f5a623);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: dd-shimmer 2s ease-in-out infinite;
+        text-shadow: none;
+      }
       .dd-gameover-sub { color: #aaa; }
       .dd-xp-bar-wrap {
         width: 100%;

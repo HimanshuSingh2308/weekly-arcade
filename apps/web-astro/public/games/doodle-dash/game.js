@@ -994,20 +994,30 @@
     var wrap = document.createElement('div');
     wrap.className = 'dd-confetti-wrap';
     document.body.appendChild(wrap);
-    var colors = ['#f5a623', '#ff6b6b', '#4ecdc4', '#a78bfa', '#34d399', '#f472b6', '#60a5fa', '#fbbf24'];
-    for (var i = 0; i < 60; i++) {
+    var colors = ['#f5a623', '#ff6b6b', '#4ecdc4', '#a78bfa', '#34d399', '#f472b6', '#60a5fa', '#fbbf24', '#ff4444', '#22c55e'];
+    var shapes = ['50%', '2px', '0']; // circle, square, diamond-ish
+    var emojis = ['\u2B50', '\u2728', '\uD83C\uDF89', '\uD83C\uDF8A', '\u2764\uFE0F', '\uD83D\uDD25', '\uD83C\uDFC6'];
+    for (var i = 0; i < 80; i++) {
       var piece = document.createElement('div');
       piece.className = 'dd-confetti';
       piece.style.left = Math.random() * 100 + '%';
-      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      // Mix confetti pieces and emoji
+      if (i < 10) {
+        piece.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        piece.style.fontSize = (0.8 + Math.random() * 0.8) + 'rem';
+        piece.style.lineHeight = '1';
+      } else {
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.width = (4 + Math.random() * 10) + 'px';
+        piece.style.height = (4 + Math.random() * 10) + 'px';
+        piece.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)];
+        if (Math.random() > 0.7) piece.style.transform = 'rotate(45deg)';
+      }
       piece.style.animationDuration = (2 + Math.random() * 3) + 's';
-      piece.style.animationDelay = Math.random() * 1.5 + 's';
-      piece.style.width = (5 + Math.random() * 8) + 'px';
-      piece.style.height = (5 + Math.random() * 8) + 'px';
-      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.animationDelay = Math.random() * 2 + 's';
       wrap.appendChild(piece);
     }
-    setTimeout(function () { wrap.remove(); }, 6000);
+    setTimeout(function () { wrap.remove(); }, 7000);
   }
 
   // ─── Word Pack Selection ─────────────────────────────────────────
@@ -1485,6 +1495,15 @@
   }
 
   // ─── Game Over ──────────────────────────────────────────────────
+  var WIN_MESSAGES = [
+    'Absolute legend! \uD83D\uDD25', 'You crushed it! \uD83D\uDCAA', 'Doodle master! \u2728',
+    'Unstoppable! \uD83D\uDE80', 'GG EZ! \uD83C\uDFC6', 'What a performance! \uD83C\uDF1F',
+  ];
+  var LOSE_MESSAGES = [
+    'So close! Try again? \uD83D\uDCAB', 'Next time for sure! \uD83D\uDCAA',
+    'Good game! \uD83C\uDF1F', 'Not bad at all! \uD83D\uDC4F',
+  ];
+
   function showGameOver(data) {
     stopTimer();
     showScreen('gameover');
@@ -1496,22 +1515,38 @@
     var winner = sorted[0];
     var isWinner = winner && winner.uid === myUid;
 
-    var title  = $id('gameoverSub');
+    // Animated title
+    var gameoverTitle = document.querySelector('.dd-gameover-title');
+    if (gameoverTitle) {
+      gameoverTitle.innerHTML = isWinner
+        ? '\uD83C\uDFC6 Champion! \uD83C\uDFC6'
+        : '\u2728 Game Over! \u2728';
+      gameoverTitle.classList.add('dd-title-entrance');
+    }
+
+    var title = $id('gameoverSub');
     if (title) {
       if (isWinner) {
-        title.textContent = 'You won!';
+        title.innerHTML = WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)];
       } else if (winner) {
-        title.textContent = winner.name + ' wins!';
+        title.innerHTML = '<span style="color:#f5a623;font-weight:800">' + escapeHtml(winner.name) + '</span> wins! ' +
+          LOSE_MESSAGES[Math.floor(Math.random() * LOSE_MESSAGES.length)];
       } else {
         title.textContent = 'Final Scores:';
       }
     }
 
-    // Render podium (2nd, 1st, 3rd order for visual layout)
+    // Render podium (2nd, 1st, 3rd order)
     var podium = $id('podiumWrap');
     if (podium && sorted.length >= 2) {
       var PODIUM_COLORS = ['#f5a623', '#9ca3af', '#b87333'];
-      var MEDAL_EMOJI = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+      var PODIUM_GRADIENTS = [
+        'linear-gradient(180deg, #fbbf24, #f59e0b, #d97706)',
+        'linear-gradient(180deg, #d1d5db, #9ca3af, #6b7280)',
+        'linear-gradient(180deg, #d4a574, #b87333, #92622a)',
+      ];
+      var RANK_LABELS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+      var CROWN_HTML = '<div class="dd-crown">\uD83D\uDC51</div>';
       var podiumOrder = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2]] : [null, sorted[0], sorted[1]];
       var podiumClasses = sorted.length >= 3 ? ['dd-podium-2nd', 'dd-podium-1st', 'dd-podium-3rd'] : [null, 'dd-podium-1st', 'dd-podium-2nd'];
       var podiumRanks = sorted.length >= 3 ? [1, 0, 2] : [null, 0, 1];
@@ -1520,22 +1555,33 @@
         if (!p) return '';
         var rank = podiumRanks[i];
         var color = PODIUM_COLORS[rank];
-        var medal = MEDAL_EMOJI[rank];
+        var gradient = PODIUM_GRADIENTS[rank];
+        var medal = RANK_LABELS[rank];
+        var isMe = p.uid === myUid;
         var initial = (p.name || '?').charAt(0).toUpperCase();
-        return '<div class="dd-podium-slot ' + podiumClasses[i] + '">' +
-          '<div class="dd-podium-avatar" style="background:' + color + '">' + initial + '</div>' +
-          '<div class="dd-podium-name">' + escapeHtml(p.name) + '</div>' +
+        var crown = rank === 0 ? CROWN_HTML : '';
+        var sparkle = rank === 0 ? '<div class="dd-sparkle-ring"></div>' : '';
+        var meTag = isMe ? '<span class="dd-podium-you">YOU</span>' : '';
+        return '<div class="dd-podium-slot ' + podiumClasses[i] + '" style="animation-delay:' + (i * 0.15) + 's">' +
+          crown +
+          '<div class="dd-podium-avatar-wrap">' +
+            sparkle +
+            '<div class="dd-podium-avatar" style="background:' + color + '">' + initial + '</div>' +
+          '</div>' +
+          '<div class="dd-podium-name">' + escapeHtml(p.name) + meTag + '</div>' +
           '<div class="dd-podium-score">' + (sessionScores[p.uid] || 0) + ' pts</div>' +
-          '<div class="dd-podium-bar">' + medal + '</div>' +
+          '<div class="dd-podium-bar" style="background:' + gradient + '">' + medal + '</div>' +
           '</div>';
       }).join('');
     }
 
-    // Confetti!
-    if (isWinner) {
-      showConfetti();
-    }
+    // Confetti + sound
+    showConfetti();
     sfxRoundEnd();
+    if (isWinner) {
+      // Extra celebration for winner — burst of stars
+      setTimeout(function () { showConfetti(); }, 800);
+    }
 
     var scoresEl = $id('gameoverScores');
     if (scoresEl) {
