@@ -2184,11 +2184,18 @@
       customInput.addEventListener('input', parseCustomWords);
     }
 
-    // Enter key on join input
+    // Enter key on join input + scroll into view on focus (mobile keyboard)
     var joinInput = $id('joinCodeInput');
-    if (joinInput) joinInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') btnJoin && btnJoin.click();
-    });
+    if (joinInput) {
+      joinInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') btnJoin && btnJoin.click();
+      });
+      joinInput.addEventListener('focus', function () {
+        setTimeout(function () {
+          joinInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      });
+    }
 
     // Start Game (host only — manual start cancels auto-start)
     var btnStart = $id('btnStartGame');
@@ -2363,6 +2370,11 @@
     if (chatInput) {
       chatInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') submitGuess();
+      });
+      chatInput.addEventListener('focus', function () {
+        setTimeout(function () {
+          chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
       });
     }
     var chatSend = $id('chatSend');
