@@ -191,6 +191,29 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const roomName = `session:${sessionId}`;
       client.to(roomName).emit('session:player-left', { uid, reason: 'disconnected' });
 
+      // If the disconnected player was the current drawer, auto-end the round
+      const activeSession = this.stateManager.getSession(sessionId);
+      if (activeSession && activeSession.version > 0) {
+        const gameState = activeSession.state as Record<string, unknown>;
+        const phase = gameState.phase as string;
+        const currentDrawer = gameState.currentDrawerUid as string;
+        const mode = gameState.mode as string;
+
+        if (currentDrawer === uid && (phase === 'drawing' || phase === 'word-choice')) {
+          this.logger.log(`Drawer ${uid} disconnected during ${phase} — auto-ending round`);
+          try {
+            // Host (or any remaining player) force-ends the round
+            const hostUid = gameState.hostUid as string;
+            const endUid = this.roomManager.getConnectedPlayers(sessionId)[0] || hostUid;
+            const { state, version } = this.stateManager.applyMove(sessionId, endUid, 'end-round', {});
+            const turnUid = this.stateManager.getNextTurn(sessionId);
+            this.server.to(roomName).emit('game:state', { state, version, turnUid });
+          } catch (e) {
+            this.logger.warn(`Auto-end round failed: ${(e as Error).message}`);
+          }
+        }
+      }
+
       // Check remaining connected players
       const connectedPlayers = this.roomManager.getConnectedPlayers(sessionId);
       if (connectedPlayers.length === 0) {

@@ -358,7 +358,11 @@
 
   function getPlayerName(uid) {
     var p = players.find(function (p) { return p.uid === uid; });
-    return p ? p.name : uid;
+    if (p) return p.name;
+    // Fallback: check server playerStates for name
+    var ps = latestPlayerStates[uid];
+    if (ps && ps.name && ps.name !== uid) return ps.name;
+    return 'Player';
   }
 
   // ─── Canvas Setup ───────────────────────────────────────────────
@@ -1652,9 +1656,20 @@
 
     // Player left
     mc.onPlayerLeft(function (data) {
+      var leftName = getPlayerName(data.uid);
       players = players.filter(function (p) { return p.uid !== data.uid; });
       renderRoomPlayers();
-      if (gameState === 'playing') renderScores();
+      if (gameState === 'playing') {
+        renderScores();
+        showNotif(leftName + ' left the game', 2000);
+        // If the drawer disconnected, the server auto-ends the round.
+        // Hide any stale overlay immediately so UI doesn't feel stuck.
+        if (data.uid === currentDrawer) {
+          hideOverlay();
+          stopChoosingOverlay();
+          showNotif('Drawer left — skipping round...', 3000);
+        }
+      }
     });
 
     // Player reconnected
