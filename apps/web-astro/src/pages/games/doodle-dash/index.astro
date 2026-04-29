@@ -700,10 +700,35 @@ import gameData from '../../../data/games/doodle-dash.json';
       @media (max-width: 700px) {
         .dd-chat-messages { height: 140px; }
       }
-      .dd-chat-msg { word-break: break-word; }
-      .dd-chat-msg .msg-sender { font-weight: 700; color: #f5a623; }
-      .dd-chat-msg.system { color: #aaa; font-style: italic; }
-      .dd-chat-msg.correct { color: #4caf50; font-weight: 700; }
+      .dd-chat-msg {
+        word-break: break-word;
+        padding: 3px 6px;
+        border-radius: 4px;
+        line-height: 1.4;
+      }
+      .dd-chat-msg .msg-sender { font-weight: 700; }
+      .dd-chat-msg.system { font-style: italic; color: #9ca3af; }
+      .dd-chat-msg.system.hint {
+        color: #fbbf24;
+        font-style: normal;
+        font-weight: 600;
+        background: rgba(251,191,36,0.08);
+        border-left: 2px solid #fbbf24;
+      }
+      .dd-chat-msg.system.correct {
+        color: #4ade80;
+        font-weight: 700;
+        font-style: normal;
+        background: rgba(74,222,128,0.08);
+        border-left: 2px solid #4ade80;
+      }
+      .dd-chat-msg.system.drawing {
+        color: #60a5fa;
+        font-style: normal;
+        font-weight: 600;
+        background: rgba(96,165,250,0.08);
+        border-left: 2px solid #60a5fa;
+      }
       .dd-chat-input-row {
         display: flex;
         gap: 6px;

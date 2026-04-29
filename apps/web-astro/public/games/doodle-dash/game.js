@@ -668,15 +668,23 @@
   }
 
   // ─── Chat / Guess System ────────────────────────────────────────
+  function getPlayerColor(name) {
+    if (!name) return PLAYER_COLORS[0];
+    var hash = 0;
+    for (var i = 0; i < name.length; i++) hash = ((hash << 5) - hash) + name.charCodeAt(i);
+    return PLAYER_COLORS[Math.abs(hash) % PLAYER_COLORS.length];
+  }
+
   function addChatMessage(senderName, msg, type) {
     var messages = $id('chatMessages');
     if (!messages) return;
     var div = document.createElement('div');
     div.className = 'dd-chat-msg' + (type ? ' ' + type : '');
     if (type === 'system') {
-      div.textContent = msg;
+      div.innerHTML = escapeHtml(msg);
     } else {
-      div.innerHTML = '<span class="msg-sender">' + escapeHtml(senderName) + ':</span> ' + escapeHtml(msg);
+      var color = getPlayerColor(senderName);
+      div.innerHTML = '<span class="msg-sender" style="color:' + color + '">' + escapeHtml(senderName) + ':</span> ' + escapeHtml(msg);
     }
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
@@ -1206,7 +1214,7 @@
           hideOverlay();
           startTimer(TURN_TIMEOUT, null, null);
           updateWordDisplay(null, null);
-          addChatMessage('', getPlayerName(currentDrawer) + ' is now drawing!', 'system');
+          addChatMessage('', '🎨 ' + getPlayerName(currentDrawer) + ' is now drawing!', 'system drawing');
         }
         renderScores();
       }
@@ -1224,7 +1232,7 @@
         if (!amIDrawing) {
           updateWordDisplay(null, null);
         }
-        addChatMessage('', 'Hint: ' + s.wordHint, 'system');
+        addChatMessage('', '💡 Hint: ' + s.wordHint, 'system hint');
       }
 
       // ── Guess results: check playerStates for new correct guesses ──
@@ -1245,7 +1253,7 @@
                 if (chatInput) chatInput.disabled = true;
               }
               sfxCorrectGuess();
-              addChatMessage('', (getPlayerName(uid) || ps.name || uid) + ' guessed correctly! (+' + delta + ')', 'system');
+              addChatMessage('', '✅ ' + (getPlayerName(uid) || ps.name || uid) + ' guessed correctly! (+' + delta + ')', 'system correct');
             }
           }
         });
