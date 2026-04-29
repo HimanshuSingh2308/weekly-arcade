@@ -940,68 +940,72 @@ import gameData from '../../../data/games/doodle-dash.json';
       /* ── Mobile Lobby Optimizations ──────────────────────────────── */
       @media (max-width: 480px) {
         #ddLobby {
-          padding: 24px 12px 36px;
-          gap: 20px;
+          padding: 16px 10px 24px;
+          gap: 12px;
+          min-height: auto;
         }
-        .dd-lobby-emoji { font-size: 2.8rem; }
-        .dd-lobby-title { font-size: 2rem; }
-        .dd-lobby-subtitle { font-size: 0.92rem; }
-        .dd-lobby-badge { font-size: 0.75rem; padding: 5px 10px; }
-        /* Mode cards: full width, stacked */
+        /* Compact hero */
+        .dd-lobby-hero { gap: 0; }
+        .dd-lobby-emoji { font-size: 2rem; margin-bottom: 2px; }
+        .dd-lobby-title { font-size: 1.6rem; }
+        .dd-lobby-subtitle { font-size: 0.8rem; margin-top: 2px; }
+        .dd-lobby-badge { display: none; }
+        /* Hide floating background on mobile */
+        .dd-lobby-bg { display: none; }
+        /* Mode cards: compact horizontal pills */
         .dd-mode-select {
-          flex-direction: column;
+          flex-direction: row;
           width: 100%;
-          gap: 10px;
-          padding: 0 4px;
+          gap: 6px;
+          padding: 0;
+          justify-content: center;
         }
         .dd-mode-btn {
           min-width: unset;
-          width: 100%;
-          padding: 16px 20px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          text-align: left;
+          flex: 1;
+          padding: 10px 6px;
+          text-align: center;
+          border-radius: 10px;
         }
         .dd-mode-btn .mode-icon {
-          font-size: 2rem;
-          margin-bottom: 0;
-          flex-shrink: 0;
+          font-size: 1.4rem;
+          margin-bottom: 2px;
         }
-        .dd-mode-btn .mode-name { font-size: 1.05rem; }
-        .dd-mode-btn .mode-desc { margin-top: 2px; }
+        .dd-mode-btn .mode-name { font-size: 0.78rem; }
+        .dd-mode-btn .mode-desc { display: none; }
+        /* Tutorial: compact */
+        .dd-mode-tutorial {
+          padding: 8px 12px;
+          max-width: none;
+        }
+        .dd-tutorial-title { font-size: 0.7rem; margin-bottom: 4px; }
+        .dd-tutorial-step { font-size: 0.75rem; gap: 6px; }
+        .dd-tutorial-icon { font-size: 0.85rem; width: 20px; }
         /* Action buttons: full width, stacked */
         .dd-lobby-actions {
           flex-direction: column;
           width: 100%;
-          padding: 0 4px;
-          gap: 10px;
+          padding: 0;
+          gap: 8px;
         }
         .dd-btn-primary, .dd-btn-secondary {
           width: 100%;
           min-width: unset;
           text-align: center;
+          padding: 12px 20px;
+          font-size: 0.95rem;
         }
-        /* Join section: full width */
-        .dd-join-section { width: 100%; padding: 0 4px; }
-        .dd-join-divider { width: 100%; }
+        /* Join section: full width, compact */
+        .dd-join-section { width: 100%; padding: 0; }
+        .dd-join-divider { width: 100%; font-size: 0.75rem; }
         .dd-join-input {
           width: 100%;
           flex-wrap: nowrap;
         }
-        .dd-join-input input { flex: 1; width: auto; max-width: none; min-width: 0; padding: 12px 10px; font-size: 1rem; }
-        .dd-join-input .dd-btn-primary { width: auto; min-width: 70px; flex-shrink: 0; padding: 12px 14px; font-size: 0.9rem; }
-        /* Feature strip: 2x2 grid */
-        .dd-features {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px 16px;
-          width: 100%;
-          padding: 4px 8px 0;
-        }
-        .dd-feature { font-size: 0.78rem; justify-content: center; }
-        /* Tone down floating emojis on small screens */
-        .dd-float { font-size: 1.4rem !important; opacity: 0.06; }
+        .dd-join-input input { flex: 1; width: auto; max-width: none; min-width: 0; padding: 10px 10px; font-size: 0.95rem; }
+        .dd-join-input .dd-btn-primary { width: auto; min-width: 60px; flex-shrink: 0; padding: 10px 12px; font-size: 0.85rem; }
+        /* Feature strip: hidden on mobile — tutorial covers this */
+        .dd-features { display: none; }
         /* Game playing screen: compact for small phones */
         .dd-top-bar { padding: 5px 8px; gap: 6px; border-radius: 8px; }
         .dd-round-info { font-size: 0.8rem; }
@@ -1012,23 +1016,26 @@ import gameData from '../../../data/games/doodle-dash.json';
         .dd-scores-panel { width: 100%; }
         .dd-chat-messages { height: 100px; }
         .dd-scores-list { max-height: 80px; }
-        /* Toolbar sizing handled in style.css */
       }
       /* Small phones (iPhone SE, 320px) */
       @media (max-width: 375px) {
-        .dd-lobby-title { font-size: 1.7rem; }
-        .dd-lobby-emoji { font-size: 2.2rem; }
-        .dd-mode-btn { padding: 14px 16px; }
-        .dd-btn-primary { padding: 14px 20px; font-size: 0.95rem; }
-        .dd-features { gap: 8px 12px; }
-        .dd-feature { font-size: 0.72rem; }
+        #ddLobby { padding: 12px 8px 20px; gap: 10px; }
+        .dd-lobby-emoji { font-size: 1.6rem; }
+        .dd-lobby-title { font-size: 1.4rem; }
+        .dd-lobby-subtitle { display: none; }
+        .dd-mode-btn { padding: 8px 4px; }
+        .dd-mode-btn .mode-icon { font-size: 1.2rem; }
+        .dd-mode-btn .mode-name { font-size: 0.72rem; }
+        .dd-mode-tutorial { padding: 6px 10px; }
+        .dd-tutorial-step { font-size: 0.7rem; }
+        .dd-btn-primary { padding: 10px 16px; font-size: 0.88rem; }
+        .dd-btn-secondary { padding: 8px 14px; font-size: 0.85rem; }
         /* Game screen: ultra-compact */
         .dd-wrap { padding: 4px 6px 16px; }
         .dd-top-bar { padding: 4px 6px; }
         .dd-round-info { font-size: 0.75rem; }
         .dd-timer { font-size: 1.1rem; min-width: 30px; }
         .dd-word-display { font-size: 0.85rem; min-width: 60px; }
-        /* Toolbar sizing handled in style.css */
       }
     </style>
   </Fragment>
