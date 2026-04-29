@@ -23,6 +23,13 @@ export class MultiplayerController {
     return this.multiplayerService.createSession(uid, displayName || 'Player', avatarUrl || null, dto);
   }
 
+  @Post('quick-join')
+  @HttpCode(200)
+  async quickJoin(@Req() req: any, @Body() body: { gameId: string; gameConfig?: Record<string, unknown> }) {
+    const { uid, displayName, avatarUrl } = req.user;
+    return this.multiplayerService.quickJoin(uid, displayName || 'Player', avatarUrl || null, body.gameId, body.gameConfig || {});
+  }
+
   @Get('active')
   async getActiveSessions(@Req() req: any) {
     return this.multiplayerService.getActiveSessionsForUser(req.user.uid);

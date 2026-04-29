@@ -322,6 +322,36 @@
 .dd-custom-word-count.valid { color: #4ade80; }
 .dd-custom-word-count.invalid { color: #ff4444; }
 
+/* ── Rounds selector ─────────────────────────────────────────────── */
+.dd-rounds-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+.dd-rounds-select {
+  display: flex;
+  gap: 6px;
+}
+.dd-round-opt {
+  background: rgba(13,21,38,0.8);
+  border: 2px solid #333;
+  color: #fff;
+  width: 40px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+.dd-round-opt:hover { border-color: #555; }
+.dd-round-opt.active {
+  border-color: #f5a623;
+  background: rgba(245,166,35,0.1);
+  color: #f5a623;
+}
+
 /* ── Drawing replay ─────────────────────────────────────────────── */
 .dd-replay-wrap {
   width: 100%;

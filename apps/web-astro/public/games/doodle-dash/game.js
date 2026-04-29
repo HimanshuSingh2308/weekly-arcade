@@ -53,7 +53,9 @@
   // ─── State ──────────────────────────────────────────────────────
   var gameMode       = 'classic';   // 'classic' | 'speed-draw'
   var selectedWordPack = 'default';
+  var selectedRounds = 6;
   var customWords    = [];
+  var isQuickMatch   = false;
   var roomCode       = null;
   var currentSessionId = null;
   var isHost         = false;
@@ -243,6 +245,10 @@
     var packSection = $id('wordPackSection');
     if (packSection) packSection.style.display = isHost ? 'block' : 'none';
     if (isHost) renderWordPacks();
+
+    // Rounds selector (private rooms, host only)
+    var roundsSection = $id('roundsSection');
+    if (roundsSection) roundsSection.style.display = (isHost && !isQuickMatch) ? 'flex' : 'none';
 
     // Fetch existing players and room settings from session
     if (window.multiplayerClient && currentSessionId) {
@@ -1927,7 +1933,7 @@
     });
     updateTutorial('classic'); // show default tutorial on load
 
-    // Quick Play (public room)
+    // Quick Play — find an existing open room or create a new one
     var btnPublic = $id('btnCreatePublic');
     if (btnPublic) btnPublic.addEventListener('click', function () {
       if (!window.multiplayerClient) { showNotif('Multiplayer client not loaded', 3000); return; }
@@ -1935,23 +1941,27 @@
         if (window.authNudge) window.authNudge.show({ force: true, icon: '✏️', title: 'Sign in to draw with friends', desc: 'Create rooms, save your XP, earn achievements, and climb the leaderboard.' }); return;
       }
       setLoadingMsg('Finding a room...');
-      window.multiplayerClient.createSession(GAME_ID, {
-        mode: 'quick-match',
-        maxPlayers: 30,
-        minPlayers: 2,
-        spectatorAllowed: true,
-        gameConfig: { mode: gameMode, playerName: myName, wordPack: selectedWordPack, customWords: selectedWordPack === 'custom' ? customWords : undefined },
+      isQuickMatch = true;
+      window.multiplayerClient.quickJoin(GAME_ID, {
+        mode: gameMode,
+        playerName: myName,
       }).then(function (session) {
         if (session && session.sessionId) {
           currentSessionId = session.sessionId;
           roomCode = session.joinCode || session.sessionId.slice(0, 6).toUpperCase();
-          isHost = true;
+          // Determine if we're the host
+          isHost = session.hostUid === myUid;
+          // Sync game settings from session
+          if (session.gameConfig) {
+            if (session.gameConfig.mode) gameMode = session.gameConfig.mode;
+            if (session.gameConfig.wordPack) selectedWordPack = session.gameConfig.wordPack;
+          }
           return window.multiplayerClient.connect(session.sessionId);
         }
       }).then(function () {
         showRoomLobby();
       }).catch(function (err) {
-        showNotif('Failed to create room: ' + (err.message || 'Unknown error'), 4000);
+        showNotif('Failed to find room: ' + (err.message || 'Unknown error'), 4000);
         showScreen('lobby');
       });
     });
@@ -1964,12 +1974,13 @@
         if (window.authNudge) window.authNudge.show({ force: true, icon: '✏️', title: 'Sign in to draw with friends', desc: 'Create rooms, save your XP, earn achievements, and climb the leaderboard.' }); return;
       }
       setLoadingMsg('Creating room...');
+      isQuickMatch = false;
       window.multiplayerClient.createSession(GAME_ID, {
         mode: 'private',
         maxPlayers: 30,
         minPlayers: 2,
         spectatorAllowed: true,
-        gameConfig: { mode: gameMode, playerName: myName, wordPack: selectedWordPack, customWords: selectedWordPack === 'custom' ? customWords : undefined },
+        gameConfig: { mode: gameMode, playerName: myName, rounds: selectedRounds, wordPack: selectedWordPack, customWords: selectedWordPack === 'custom' ? customWords : undefined },
       }).then(function (session) {
         if (session && session.sessionId) {
           currentSessionId = session.sessionId;
@@ -2012,6 +2023,16 @@
       }).catch(function (err) {
         showNotif('Failed to join room: ' + (err.message || 'Invalid code'), 4000);
         showScreen('lobby');
+      });
+    });
+
+    // Rounds selector
+    document.querySelectorAll('.dd-round-opt').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectedRounds = parseInt(btn.getAttribute('data-rounds'), 10);
+        document.querySelectorAll('.dd-round-opt').forEach(function (b) {
+          b.classList.toggle('active', b === btn);
+        });
       });
     });
 

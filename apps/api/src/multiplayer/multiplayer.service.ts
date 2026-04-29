@@ -139,10 +139,13 @@ export class MultiplayerService {
     return doc.data() as Session;
   }
 
-  async joinSession(sessionId: string, uid: string, displayName: string, avatarUrl: string | null): Promise<Session> {
+  async joinSession(sessionId: string, uid: string, displayName: string, avatarUrl: string | null, allowMidGame = false): Promise<Session> {
     const session = await this.getSession(sessionId);
 
-    if (session.status !== 'waiting') {
+    const acceptableStatuses = allowMidGame
+      ? ['waiting', 'starting', 'playing']
+      : ['waiting'];
+    if (!acceptableStatuses.includes(session.status)) {
       throw new BadRequestException('Session is not accepting players');
     }
 
@@ -187,6 +190,59 @@ export class MultiplayerService {
 
     const sessionId = snapshot.docs[0].id;
     return this.joinSession(sessionId, uid, displayName, avatarUrl);
+  }
+
+  /**
+   * Quick Join for party games (doodle-dash etc.): find an open session or create one.
+   * Supports joining mid-game sessions that aren't full.
+   */
+  async quickJoin(
+    uid: string,
+    displayName: string,
+    avatarUrl: string | null,
+    gameId: string,
+    gameConfig: Record<string, unknown>,
+  ): Promise<Session> {
+    // Find open quick-match sessions for this game (waiting or playing, not full)
+    const snapshot = await this.firebase
+      .collection('sessions')
+      .where('gameId', '==', gameId)
+      .where('mode', '==', 'quick-match')
+      .where('status', 'in', ['waiting', 'starting', 'playing'])
+      .orderBy('createdAt', 'desc')
+      .limit(10)
+      .get();
+
+    for (const doc of snapshot.docs) {
+      const session = doc.data() as Session;
+      // Skip full sessions
+      if (session.playerCount >= session.maxPlayers) continue;
+      // Skip sessions where this player is already in
+      if (session.players[uid] && session.players[uid].status !== 'left') continue;
+      // Skip finished/abandoned
+      if (session.status === 'finished' || session.status === 'abandoned') continue;
+
+      // Try to join this session (allow mid-game join)
+      try {
+        this.logger.log(`quickJoin: ${uid} joining existing session ${doc.id} (${session.playerCount}/${session.maxPlayers} players, status=${session.status})`);
+        return await this.joinSession(doc.id, uid, displayName, avatarUrl, true);
+      } catch (e) {
+        this.logger.warn(`quickJoin: failed to join ${doc.id}: ${(e as Error).message}`);
+        continue; // Try next session
+      }
+    }
+
+    // No open sessions — create a new one
+    this.logger.log(`quickJoin: no open sessions for ${gameId}, creating new one`);
+    const session = await this.createSession(uid, displayName, avatarUrl, {
+      gameId,
+      mode: 'quick-match',
+      maxPlayers: 30,
+      minPlayers: 2,
+      spectatorAllowed: true,
+      gameConfig: { ...gameConfig, rounds: 3 }, // Quick match: 3 rounds
+    });
+    return session;
   }
 
   async leaveSession(sessionId: string, uid: string): Promise<void> {

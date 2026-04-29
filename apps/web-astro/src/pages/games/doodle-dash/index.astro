@@ -1147,6 +1147,17 @@ import gameData from '../../../data/games/doodle-dash.json';
         </div>
       </div>
 
+      <!-- Rounds selector (private rooms, host only) -->
+      <div class="dd-rounds-section" id="roundsSection" style="display:none">
+        <span style="color:#ccc;font-size:0.85rem;font-weight:600">Rounds:</span>
+        <div class="dd-rounds-select" id="roundsSelect">
+          <button class="dd-round-opt" data-rounds="3">3</button>
+          <button class="dd-round-opt active" data-rounds="6">6</button>
+          <button class="dd-round-opt" data-rounds="9">9</button>
+          <button class="dd-round-opt" data-rounds="12">12</button>
+        </div>
+      </div>
+
       <!-- Actions -->
       <div class="dd-room-actions">
         <button class="dd-btn-primary" id="btnStartGame" style="display:none">Start Game</button>

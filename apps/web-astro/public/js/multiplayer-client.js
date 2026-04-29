@@ -346,6 +346,13 @@
     });
   }
 
+  async function quickJoin(gameId, gameConfig) {
+    return window.apiClient?.request('/multiplayer/sessions/quick-join', {
+      method: 'POST',
+      body: JSON.stringify({ gameId, gameConfig }),
+    });
+  }
+
   async function joinSession(sessionId) {
     return window.apiClient?.request(`/multiplayer/sessions/${sessionId}/join`, { method: 'POST' });
   }
@@ -607,6 +614,7 @@
 
     // Session management (REST)
     createSession,
+    quickJoin,
     joinSession,
     joinByCode,
     leaveSession,
