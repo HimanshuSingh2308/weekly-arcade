@@ -586,6 +586,27 @@ import gameData from '../../../data/games/doodle-dash.json';
         transition: background 0.15s;
       }
       .dd-word-choice-btn:hover { background: rgba(245,166,35,0.15); }
+      /* Choosing word overlay — guesser waiting screen */
+      .dd-canvas-overlay.dd-choosing .dd-overlay-title {
+        font-size: 3rem;
+        animation: dd-thinking 1.5s ease-in-out infinite;
+      }
+      @keyframes dd-thinking {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        25% { transform: scale(1.1) rotate(-5deg); }
+        75% { transform: scale(1.1) rotate(5deg); }
+      }
+      .dd-choosing-name {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #60a5fa;
+        text-align: center;
+      }
+      .dd-canvas-overlay.dd-choosing #overlaySubtext {
+        color: #9ca3af;
+        font-size: 1rem;
+        letter-spacing: 0.03em;
+      }
       /* Drawing toolbar */
       .dd-toolbar {
         display: flex;

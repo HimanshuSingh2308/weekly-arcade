@@ -809,7 +809,37 @@
     title.textContent   = msg || 'Waiting...';
     choices.innerHTML   = '';
     subtext.textContent = '';
+    overlay.classList.remove('dd-choosing');
     overlay.classList.add('visible');
+  }
+
+  var _choosingDots = null;
+
+  function showChoosingWordOverlay(drawerName) {
+    var overlay  = $id('canvasOverlay');
+    var title    = $id('overlayTitle');
+    var choices  = $id('wordChoices');
+    var subtext  = $id('overlaySubtext');
+    if (!overlay) return;
+    title.innerHTML = '🤔';
+    choices.innerHTML = '<div class="dd-choosing-name">' + escapeHtml(drawerName) + '</div>';
+    subtext.textContent = 'is choosing a word...';
+    overlay.classList.add('visible', 'dd-choosing');
+    // Animate dots
+    var dotCount = 0;
+    if (_choosingDots) clearInterval(_choosingDots);
+    _choosingDots = setInterval(function () {
+      dotCount = (dotCount + 1) % 4;
+      var dots = '';
+      for (var i = 0; i < dotCount; i++) dots += '.';
+      subtext.textContent = 'is choosing a word' + dots;
+    }, 500);
+  }
+
+  function stopChoosingOverlay() {
+    if (_choosingDots) { clearInterval(_choosingDots); _choosingDots = null; }
+    var overlay = $id('canvasOverlay');
+    if (overlay) overlay.classList.remove('dd-choosing');
   }
 
   // ─── Phase: Speed Draw ──────────────────────────────────────────
@@ -1194,8 +1224,15 @@
           if (currentDrawer === myUid) {
             showWordChoice(s.wordOptions || ['cat', 'house', 'tree']);
           } else {
-            var hint = s.wordHint || '_ _ _ _ _';
-            startClassicGuessingPhase(hint, drawerName);
+            // Show "choosing a word" screen while drawer picks
+            amIDrawing = false;
+            var toolbar = $id('drawToolbar');
+            if (toolbar) toolbar.classList.add('hidden');
+            var chatInput = $id('chatInput');
+            if (chatInput) chatInput.disabled = false;
+            clearCanvas();
+            strokeHistory = [];
+            showChoosingWordOverlay(drawerName);
           }
         }
         renderScores();
@@ -1210,10 +1247,12 @@
           // I'm the drawer — enable drawing tools
           startClassicDrawingPhase(s.currentWord || '???');
         } else {
-          // I'm guessing
+          // I'm guessing — transition from choosing overlay to drawing
+          stopChoosingOverlay();
           hideOverlay();
-          startTimer(TURN_TIMEOUT, null, null);
+          wordHint = s.wordHint || '_ _ _ _ _';
           updateWordDisplay(null, null);
+          startTimer(TURN_TIMEOUT, null, null);
           addChatMessage('', '🎨 ' + getPlayerName(currentDrawer) + ' is now drawing!', 'system drawing');
         }
         renderScores();
