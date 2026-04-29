@@ -58,7 +58,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache version - increment this on each deployment
-const CACHE_VERSION = 169;
+const CACHE_VERSION = 170;
 const CACHE_NAME = `weekly-arcade-v${CACHE_VERSION}`;
 
 // Core assets to pre-cache
