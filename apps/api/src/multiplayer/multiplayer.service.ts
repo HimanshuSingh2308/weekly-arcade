@@ -204,32 +204,44 @@ export class MultiplayerService {
     gameConfig: Record<string, unknown>,
   ): Promise<Session> {
     // Find open quick-match sessions for this game (waiting or playing, not full)
-    const snapshot = await this.firebase
-      .collection('sessions')
-      .where('gameId', '==', gameId)
-      .where('mode', '==', 'quick-match')
-      .where('status', 'in', ['waiting', 'starting', 'playing'])
-      .orderBy('createdAt', 'desc')
-      .limit(10)
-      .get();
+    // Use minimal Firestore filters to avoid composite index requirements;
+    // filter status/capacity in memory.
+    try {
+      const snapshot = await this.firebase
+        .collection('sessions')
+        .where('gameId', '==', gameId)
+        .where('mode', '==', 'quick-match')
+        .limit(20)
+        .get();
 
-    for (const doc of snapshot.docs) {
-      const session = doc.data() as Session;
-      // Skip full sessions
-      if (session.playerCount >= session.maxPlayers) continue;
-      // Skip sessions where this player is already in
-      if (session.players[uid] && session.players[uid].status !== 'left') continue;
-      // Skip finished/abandoned
-      if (session.status === 'finished' || session.status === 'abandoned') continue;
+      // Sort by newest first (client-side to avoid composite index)
+      const sorted = snapshot.docs.sort((a, b) => {
+        const aTime = a.data().createdAt?.toDate?.()?.getTime?.() || a.data().createdAt?._seconds * 1000 || 0;
+        const bTime = b.data().createdAt?.toDate?.()?.getTime?.() || b.data().createdAt?._seconds * 1000 || 0;
+        return bTime - aTime;
+      });
 
-      // Try to join this session (allow mid-game join)
-      try {
-        this.logger.log(`quickJoin: ${uid} joining existing session ${doc.id} (${session.playerCount}/${session.maxPlayers} players, status=${session.status})`);
-        return await this.joinSession(doc.id, uid, displayName, avatarUrl, true);
-      } catch (e) {
-        this.logger.warn(`quickJoin: failed to join ${doc.id}: ${(e as Error).message}`);
-        continue; // Try next session
+      for (const doc of sorted) {
+        const session = doc.data() as Session;
+        // Skip non-active sessions
+        if (!['waiting', 'starting', 'playing'].includes(session.status)) continue;
+        // Skip full sessions
+        if (session.playerCount >= session.maxPlayers) continue;
+        // Skip sessions where this player is already in
+        if (session.players[uid] && session.players[uid].status !== 'left') continue;
+
+        // Try to join this session (allow mid-game join)
+        try {
+          this.logger.log(`quickJoin: ${uid} joining existing session ${doc.id} (${session.playerCount}/${session.maxPlayers} players, status=${session.status})`);
+          return await this.joinSession(doc.id, uid, displayName, avatarUrl, true);
+        } catch (e) {
+          this.logger.warn(`quickJoin: failed to join ${doc.id}: ${(e as Error).message}`);
+          continue; // Try next session
+        }
       }
+    } catch (queryErr) {
+      this.logger.error(`quickJoin: Firestore query failed: ${(queryErr as Error).message}`);
+      // Fall through to create new session
     }
 
     // No open sessions — create a new one
