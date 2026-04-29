@@ -244,10 +244,41 @@
     if (packSection) packSection.style.display = isHost ? 'block' : 'none';
     if (isHost) renderWordPacks();
 
-    // Fetch existing players from session (joiner won't get player-joined events for players already in)
+    // Fetch existing players and room settings from session
     if (window.multiplayerClient && currentSessionId) {
       window.multiplayerClient.getSession(currentSessionId).then(function (session) {
-        if (!session || !session.players) return;
+        if (!session) return;
+
+        // Sync room settings from session (host's gameConfig is authoritative)
+        if (session.gameConfig) {
+          var cfg = session.gameConfig;
+          if (cfg.mode) {
+            gameMode = cfg.mode;
+            var modeEl2 = $id('roomModeLabel');
+            if (modeEl2) modeEl2.textContent = gameMode === 'speed-draw' ? '⚡ Speed Draw' : gameMode === 'sabotage' ? '🕵️ Sabotage' : '🎨 Classic';
+          }
+          if (cfg.wordPack) {
+            selectedWordPack = cfg.wordPack;
+            var packMeta = PACK_METAS.find(function (p) { return p.id === selectedWordPack; });
+            var packLabel = $id('packWordCount');
+            if (packLabel && packMeta) packLabel.textContent = packMeta.icon + ' ' + packMeta.name;
+          }
+        }
+
+        // Show room settings for non-host joiners (read-only)
+        if (!isHost) {
+          var packSection2 = $id('wordPackSection');
+          if (packSection2) {
+            packSection2.style.display = 'block';
+            // Hide the pack cards and custom area — just show the label
+            var packList = $id('wordPackList');
+            if (packList) packList.style.display = 'none';
+            var customArea = $id('customWordsArea');
+            if (customArea) customArea.style.display = 'none';
+          }
+        }
+
+        if (!session.players) return;
         Object.keys(session.players).forEach(function (uid) {
           var p = session.players[uid];
           if (p.status === 'left') return;
@@ -1931,6 +1962,11 @@
           currentSessionId = session.sessionId;
           roomCode = code;
           isHost = false;
+          // Apply room settings from session immediately
+          if (session.gameConfig) {
+            if (session.gameConfig.mode) gameMode = session.gameConfig.mode;
+            if (session.gameConfig.wordPack) selectedWordPack = session.gameConfig.wordPack;
+          }
           return window.multiplayerClient.connect(session.sessionId);
         }
       }).then(function () {
