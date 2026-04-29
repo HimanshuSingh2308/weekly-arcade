@@ -48,7 +48,13 @@ import gameData from '../../../data/games/doodle-dash.json';
       /* ── Hide SEO content when game is active ────────────────────── */
       body:has(#ddGame[style*="flex"]) .game-seo-content,
       body:has(#ddRoomLobby[style*="flex"]) .game-seo-content,
-      body:has(#ddRoomLobby:not([style*="none"])) .game-seo-content {
+      body:has(#ddRoomLobby:not([style*="none"])) .game-seo-content,
+      body:has(#ddGameOver[style*="flex"]) .game-seo-content,
+      body:has(#ddRoundResult[style*="flex"]) .game-seo-content,
+      body:has(#ddSabotageVote[style*="flex"]) .game-seo-content,
+      body:has(#ddSabotageReveal[style*="flex"]) .game-seo-content,
+      body:has(#ddReveal[style*="flex"]) .game-seo-content,
+      body:has(#ddLoadingScreen[style*="flex"]) .game-seo-content {
         display: none !important;
       }
       /* ── Lobby ──────────────────────────────────────────────────── */
@@ -58,7 +64,6 @@ import gameData from '../../../data/games/doodle-dash.json';
         align-items: center;
         gap: 28px;
         padding: 40px 16px 48px;
-        min-height: 500px;
         position: relative;
         overflow: hidden;
       }
@@ -300,7 +305,6 @@ import gameData from '../../../data/games/doodle-dash.json';
         flex-direction: column;
         gap: 20px;
         padding: 24px 0;
-        min-height: 60vh;
       }
       .dd-room-top {
         text-align: center;
@@ -931,7 +935,7 @@ import gameData from '../../../data/games/doodle-dash.json';
       #ddLoadingScreen {
         align-items: center;
         justify-content: center;
-        min-height: 60vh;
+        min-height: 300px;
       }
       .dd-loading-screen {
         display: flex;
