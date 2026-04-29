@@ -1218,10 +1218,12 @@
         _appliedStrokes = s.strokeHistory.length;
       }
 
-      // ── Hint reveal ──
+      // ── Hint reveal (guessers only — drawer keeps seeing the full word) ──
       if (s.wordHint && s.wordHint !== _prevHint && phase === 'drawing') {
         wordHint = s.wordHint;
-        updateWordDisplay(null, null);
+        if (!amIDrawing) {
+          updateWordDisplay(null, null);
+        }
         addChatMessage('', 'Hint: ' + s.wordHint, 'system');
       }
 
@@ -1243,7 +1245,7 @@
                 if (chatInput) chatInput.disabled = true;
               }
               sfxCorrectGuess();
-              addChatMessage('', ps.name + ' guessed correctly! (+' + delta + ')', 'system');
+              addChatMessage('', (getPlayerName(uid) || ps.name || uid) + ' guessed correctly! (+' + delta + ')', 'system');
             }
           }
         });
