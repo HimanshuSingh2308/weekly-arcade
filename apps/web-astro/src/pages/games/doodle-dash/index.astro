@@ -1118,6 +1118,20 @@ import gameData from '../../../data/games/doodle-dash.json';
         <div class="dd-empty-slots" id="emptySlotsMsg"></div>
       </div>
 
+      <!-- Word Packs (host only) -->
+      <div class="dd-pack-section" id="wordPackSection" style="display:none">
+        <div class="dd-players-header">
+          <span class="dd-players-title">Word Pack</span>
+          <span class="dd-players-count" id="packWordCount"></span>
+        </div>
+        <div class="dd-pack-list" id="wordPackList"></div>
+        <!-- Custom words area -->
+        <div id="customWordsArea" style="display:none">
+          <textarea id="customWordsInput" class="dd-custom-textarea" placeholder="Enter words separated by commas or new lines (minimum 10 words)..." rows="3"></textarea>
+          <div class="dd-custom-word-count" id="customWordCount">0 words</div>
+        </div>
+      </div>
+
       <!-- Actions -->
       <div class="dd-room-actions">
         <button class="dd-btn-primary" id="btnStartGame" style="display:none">Start Game</button>

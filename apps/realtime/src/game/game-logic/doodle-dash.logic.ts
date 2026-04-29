@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { MultiplayerGameLogic, GameResult } from '@weekly-arcade/shared';
+import { MultiplayerGameLogic, GameResult, getWordPack } from '@weekly-arcade/shared';
 import { GameLogicRegistry } from '../game-logic.registry';
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -56,39 +56,42 @@ interface DoodleDashState {
   gameStartedAt: number;               // Epoch ms when game started
   roundEndReason: string | null;
   sdStarVotes: Record<string, number>; // Speed Draw: uid -> star count
+  wordPackId: string;                       // Active word pack ID
+  wordList: string[];                       // Active word list for this game
   lastReactionTime: Record<string, number>; // uid -> last reaction epoch ms
   gameOver: boolean;
 }
 
 // ─── Word Bank ───────────────────────────────────────────────────────
+// Default word bank is loaded from the shared 'default' word pack.
+// Custom packs override this via gameConfig.wordPack / gameConfig.customWords.
 
-const WORD_BANK: string[] = [
-  // Animals
-  'cat', 'dog', 'fish', 'bird', 'elephant', 'giraffe', 'penguin', 'dolphin',
-  'octopus', 'butterfly', 'snake', 'turtle', 'lion', 'tiger', 'bear',
-  // Food
-  'pizza', 'hamburger', 'sushi', 'taco', 'apple', 'banana', 'watermelon',
-  'ice cream', 'cake', 'donut', 'coffee', 'hotdog', 'sandwich', 'pasta',
-  // Objects
-  'house', 'car', 'bicycle', 'phone', 'laptop', 'umbrella', 'clock', 'camera',
-  'guitar', 'piano', 'chair', 'table', 'lamp', 'book', 'pencil', 'key',
-  'rocket', 'airplane', 'boat', 'train', 'helicopter',
-  // Nature
-  'sun', 'moon', 'star', 'cloud', 'rainbow', 'mountain', 'tree', 'flower',
-  'beach', 'volcano', 'island', 'desert', 'forest', 'ocean',
-  // Actions
-  'swimming', 'dancing', 'sleeping', 'running', 'jumping', 'climbing',
-  'cooking', 'painting', 'reading',
-  // Places
-  'castle', 'lighthouse', 'bridge', 'windmill', 'pyramid', 'igloo',
-  'skyscraper', 'hospital', 'library', 'stadium',
-  // Characters
-  'pirate', 'astronaut', 'superhero', 'wizard', 'mermaid', 'dragon',
-  'robot', 'ghost', 'vampire', 'ninja',
-  // Misc
-  'fireworks', 'treasure', 'compass', 'magnifying glass',
-  'spaceship', 'submarine', 'hot air balloon', 'ferris wheel',
-];
+function resolveWordList(config: Record<string, unknown>): { packId: string; words: string[] } {
+  const packId = (config.wordPack as string) || 'default';
+
+  // Custom user words
+  if (packId === 'custom') {
+    const raw = config.customWords;
+    if (Array.isArray(raw)) {
+      const words = (raw as string[])
+        .map((w) => String(w).trim().slice(0, 50))
+        .filter((w) => w.length > 0);
+      const unique = [...new Set(words)];
+      if (unique.length >= 10) {
+        return { packId: 'custom', words: unique };
+      }
+    }
+    // Fall back to default if custom pack is invalid
+  }
+
+  // Look up pre-built pack
+  const pack = getWordPack(packId);
+  if (pack) return { packId: pack.id, words: pack.words };
+
+  // Final fallback
+  const defaultPack = getWordPack('default');
+  return { packId: 'default', words: defaultPack?.words || [] };
+}
 
 // ─── Constants ───────────────────────────────────────────────────────
 
@@ -107,8 +110,8 @@ const SD_STAR_VOTES_PER_PLAYER = 1; // max votes per player in SD mode
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function pickWords(count: number): string[] {
-  const arr = [...WORD_BANK];
+function pickWords(count: number, wordList: string[]): string[] {
+  const arr = [...wordList];
   // Fisher-Yates shuffle
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -195,6 +198,7 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
   ): Record<string, unknown> {
     const mode: GameMode = (config.mode as GameMode) || 'classic';
     const totalRounds     = (config.rounds as number) || DEFAULT_ROUNDS;
+    const { packId, words } = resolveWordList(config);
 
     const playerStates: Record<string, PlayerState> = {};
     players.forEach((uid) => {
@@ -230,6 +234,8 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       gameStartedAt: Date.now(),
       roundEndReason: null,
       sdStarVotes: {},
+      wordPackId: packId,
+      wordList: words,
       lastReactionTime: {},
       gameOver: false,
     };
@@ -322,13 +328,13 @@ export class DoodleDashLogic implements MultiplayerGameLogic, OnModuleInit {
       s.drawerIndex       = (s.round - 1) % s.players.length;
       s.currentDrawerUid  = s.players[s.drawerIndex];
       s.phase             = 'word-choice';
-      s.wordOptions       = pickWords(WORD_CHOICE_COUNT);
+      s.wordOptions       = pickWords(WORD_CHOICE_COUNT, s.wordList);
       s.roundStartedAt    = Date.now();
     } else {
       // Speed Draw: everyone draws simultaneously
       s.currentDrawerUid = null;
       s.phase            = 'sd-drawing';
-      s.currentWord      = pickWords(1)[0];
+      s.currentWord      = pickWords(1, s.wordList)[0];
       s.roundStartedAt   = Date.now();
     }
 

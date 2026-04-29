@@ -272,6 +272,63 @@
   margin-left: 4px;
 }
 
+/* ── Word pack selection ─────────────────────────────────────────── */
+.dd-pack-section {
+  background: rgba(22,33,62,0.5);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 12px;
+}
+.dd-pack-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.dd-pack-card {
+  flex-shrink: 0;
+  width: 90px;
+  padding: 10px 8px;
+  background: rgba(13,21,38,0.8);
+  border: 2px solid #333;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.15s, background 0.2s;
+}
+.dd-pack-card:hover { transform: translateY(-2px); border-color: #555; }
+.dd-pack-card.active {
+  border-color: #f5a623;
+  background: rgba(245,166,35,0.08);
+}
+.dd-pack-icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+.dd-pack-name { font-size: 0.72rem; font-weight: 700; color: #fff; line-height: 1.2; }
+.dd-pack-count { font-size: 0.6rem; color: #888; margin-top: 2px; }
+
+.dd-custom-textarea {
+  width: 100%;
+  background: rgba(13,21,38,0.8);
+  border: 1px solid #333;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  resize: vertical;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+.dd-custom-textarea:focus { border-color: #f5a623; outline: none; }
+.dd-custom-word-count {
+  font-size: 0.75rem;
+  color: #888;
+  text-align: right;
+  margin-top: 4px;
+}
+.dd-custom-word-count.valid { color: #4ade80; }
+.dd-custom-word-count.invalid { color: #ff4444; }
+
 /* ── Drawing replay ─────────────────────────────────────────────── */
 .dd-replay-wrap {
   width: 100%;

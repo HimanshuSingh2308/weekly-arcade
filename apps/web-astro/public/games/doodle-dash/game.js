@@ -35,8 +35,25 @@
     '#ff99cc', '#ff6699', '#cc6633', '#663300',
   ];
 
+  // ─── Word Pack Metadata (client-side, no word lists) ─────────────
+  var PACK_METAS = [
+    { id: 'default', name: 'Classic', icon: '🎨', description: 'The original mix', wordCount: 89 },
+    { id: 'movies', name: 'Movies & TV', icon: '🎬', description: 'Film & television', wordCount: 40 },
+    { id: 'animals', name: 'Animals', icon: '🐾', description: 'Creatures from everywhere', wordCount: 40 },
+    { id: 'food', name: 'Food & Drinks', icon: '🍕', description: 'Delicious dishes', wordCount: 40 },
+    { id: 'tech', name: 'Tech & Science', icon: '💻', description: 'Gadgets & inventions', wordCount: 40 },
+    { id: 'sports', name: 'Sports', icon: '⚽', description: 'Games & athletes', wordCount: 40 },
+    { id: 'geography', name: 'Geography', icon: '🌍', description: 'Landmarks & wonders', wordCount: 40 },
+    { id: 'music', name: 'Music', icon: '🎵', description: 'Instruments & genres', wordCount: 40 },
+    { id: 'anime', name: 'Anime & Manga', icon: '⛩️', description: 'Characters & items', wordCount: 40 },
+    { id: 'holiday', name: 'Holiday', icon: '🎄', description: 'Festive celebrations', wordCount: 40 },
+    { id: 'custom', name: 'Custom', icon: '✏️', description: 'Your own words', wordCount: 0 },
+  ];
+
   // ─── State ──────────────────────────────────────────────────────
   var gameMode       = 'classic';   // 'classic' | 'speed-draw'
+  var selectedWordPack = 'default';
+  var customWords    = [];
   var roomCode       = null;
   var currentSessionId = null;
   var isHost         = false;
@@ -217,6 +234,11 @@
         ? 'Press "Start Game" when everyone is in!'
         : 'Waiting for host to start the game...';
     }
+
+    // Word pack selection (host only)
+    var packSection = $id('wordPackSection');
+    if (packSection) packSection.style.display = isHost ? 'block' : 'none';
+    if (isHost) renderWordPacks();
 
     // Fetch existing players from session (joiner won't get player-joined events for players already in)
     if (window.multiplayerClient && currentSessionId) {
@@ -820,6 +842,71 @@
     if (slotsEl) {
       var remaining = 30 - players.length;
       slotsEl.textContent = remaining > 0 ? remaining + ' slot' + (remaining !== 1 ? 's' : '') + ' available' : 'Room is full!';
+    }
+  }
+
+  // ─── Word Pack Selection ─────────────────────────────────────────
+  function renderWordPacks() {
+    var list = $id('wordPackList');
+    if (!list) return;
+    list.innerHTML = '';
+    PACK_METAS.forEach(function (pack) {
+      var card = document.createElement('div');
+      card.className = 'dd-pack-card' + (pack.id === selectedWordPack ? ' active' : '');
+      card.setAttribute('data-pack', pack.id);
+      card.innerHTML =
+        '<span class="dd-pack-icon">' + pack.icon + '</span>' +
+        '<span class="dd-pack-name">' + escapeHtml(pack.name) + '</span>' +
+        (pack.id !== 'custom' ? '<span class="dd-pack-count">' + pack.wordCount + ' words</span>' : '');
+      card.addEventListener('click', function () {
+        selectWordPack(pack.id);
+      });
+      list.appendChild(card);
+    });
+    updatePackCountLabel();
+    // Load saved custom words
+    try {
+      var saved = localStorage.getItem('dd-custom-words');
+      if (saved) {
+        var input = $id('customWordsInput');
+        if (input) input.value = saved;
+        parseCustomWords();
+      }
+    } catch (e) {}
+  }
+
+  function selectWordPack(packId) {
+    selectedWordPack = packId;
+    document.querySelectorAll('.dd-pack-card').forEach(function (c) {
+      c.classList.toggle('active', c.getAttribute('data-pack') === packId);
+    });
+    var customArea = $id('customWordsArea');
+    if (customArea) customArea.style.display = packId === 'custom' ? 'block' : 'none';
+    updatePackCountLabel();
+  }
+
+  function parseCustomWords() {
+    var input = $id('customWordsInput');
+    if (!input) return;
+    var text = input.value;
+    customWords = text.split(/[,\n]+/).map(function (w) { return w.trim(); }).filter(function (w) { return w.length > 0; });
+    var countEl = $id('customWordCount');
+    if (countEl) {
+      countEl.textContent = customWords.length + ' word' + (customWords.length !== 1 ? 's' : '');
+      countEl.className = 'dd-custom-word-count ' + (customWords.length >= 10 ? 'valid' : 'invalid');
+    }
+    // Save to localStorage
+    try { localStorage.setItem('dd-custom-words', text); } catch (e) {}
+  }
+
+  function updatePackCountLabel() {
+    var el = $id('packWordCount');
+    if (!el) return;
+    var pack = PACK_METAS.find(function (p) { return p.id === selectedWordPack; });
+    if (selectedWordPack === 'custom') {
+      el.textContent = customWords.length + ' custom words';
+    } else if (pack) {
+      el.textContent = pack.wordCount + ' words';
     }
   }
 
@@ -1583,7 +1670,7 @@
         maxPlayers: 30,
         minPlayers: 2,
         spectatorAllowed: true,
-        gameConfig: { mode: gameMode, playerName: myName },
+        gameConfig: { mode: gameMode, playerName: myName, wordPack: selectedWordPack, customWords: selectedWordPack === 'custom' ? customWords : undefined },
       }).then(function (session) {
         if (session && session.sessionId) {
           currentSessionId = session.sessionId;
@@ -1612,7 +1699,7 @@
         maxPlayers: 30,
         minPlayers: 2,
         spectatorAllowed: true,
-        gameConfig: { mode: gameMode, playerName: myName },
+        gameConfig: { mode: gameMode, playerName: myName, wordPack: selectedWordPack, customWords: selectedWordPack === 'custom' ? customWords : undefined },
       }).then(function (session) {
         if (session && session.sessionId) {
           currentSessionId = session.sessionId;
@@ -1652,6 +1739,12 @@
         showScreen('lobby');
       });
     });
+
+    // Custom words textarea
+    var customInput = $id('customWordsInput');
+    if (customInput) {
+      customInput.addEventListener('input', parseCustomWords);
+    }
 
     // Enter key on join input
     var joinInput = $id('joinCodeInput');
