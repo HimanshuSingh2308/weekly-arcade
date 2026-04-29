@@ -2234,6 +2234,34 @@
     var btnCopy = $id('btnCopyCode');
     if (btnCopy) btnCopy.addEventListener('click', copyRoomCode);
 
+    // Share button — uses Web Share API on mobile, falls back to copy
+    var btnShare = $id('btnShareRoom');
+    if (btnShare) btnShare.addEventListener('click', function () {
+      var shareUrl = 'https://weeklyarcade.games/games/doodle-dash/?join=' + (roomCode || '');
+      var shareText = 'Join my Doodle Dash game! Room code: ' + (roomCode || '') + '\n' + shareUrl;
+
+      if (navigator.share) {
+        navigator.share({
+          title: 'Doodle Dash — Join My Room!',
+          text: 'Join my Doodle Dash drawing game! Room code: ' + (roomCode || ''),
+          url: shareUrl,
+        }).then(function () {
+          showNotif('Shared!', 1500);
+        }).catch(function () {
+          // User cancelled or share failed — silent
+        });
+      } else {
+        // Fallback: copy share link
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareText).then(function () {
+            showNotif('Link copied!', 1500);
+            btnShare.textContent = '✅';
+            setTimeout(function () { btnShare.textContent = '📤'; }, 1500);
+          });
+        }
+      }
+    });
+
     // Game over buttons
     var btnPlayAgain = $id('btnPlayAgain');
     if (btnPlayAgain) btnPlayAgain.addEventListener('click', function () {
@@ -2275,6 +2303,32 @@
       } else {
         // Private: go back to main lobby to create/join again
         showScreen('lobby');
+      }
+    });
+
+    // Share score
+    var btnShareScore = $id('btnShareScore');
+    if (btnShareScore) btnShareScore.addEventListener('click', function () {
+      var myFinalScore = (myUid && sessionScores[myUid]) ? sessionScores[myUid] : 0;
+      var rank = 1;
+      players.slice().sort(function (a, b) {
+        return (sessionScores[b.uid] || 0) - (sessionScores[a.uid] || 0);
+      }).forEach(function (p, i) { if (p.uid === myUid) rank = i + 1; });
+      var modeLabel = gameMode === 'speed-draw' ? 'Speed Draw' : gameMode === 'sabotage' ? 'Sabotage' : 'Classic';
+      var shareText = '✏️ Doodle Dash — ' + modeLabel + '\n' +
+        '🏆 #' + rank + ' with ' + myFinalScore + ' points!\n' +
+        '🎮 Play now: https://weeklyarcade.games/games/doodle-dash/';
+
+      if (navigator.share) {
+        navigator.share({
+          title: 'Doodle Dash Score',
+          text: shareText,
+          url: 'https://weeklyarcade.games/games/doodle-dash/',
+        }).catch(function () {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareText).then(function () {
+          showNotif('Score copied to clipboard!', 2000);
+        });
       }
     });
 
@@ -2373,6 +2427,51 @@
 
     // Warm-up canvas (it might not exist yet - init when entering playing screen)
     if ($id('ddCanvas')) initCanvas();
+
+    // Auto-join from URL: ?join=ROOMCODE
+    var urlParams = new URLSearchParams(window.location.search);
+    var joinCode = urlParams.get('join');
+    if (joinCode && joinCode.length >= 4) {
+      // Wait for auth to be ready, then auto-join
+      var joinAttempted = false;
+      var tryAutoJoin = function () {
+        if (joinAttempted) return;
+        if (!window.multiplayerClient || !window.apiClient?.token) return;
+        joinAttempted = true;
+        setLoadingMsg('Joining room ' + joinCode.toUpperCase() + '...');
+        window.multiplayerClient.joinByCode(joinCode.toUpperCase()).then(function (session) {
+          if (session && session.sessionId) {
+            currentSessionId = session.sessionId;
+            roomCode = joinCode.toUpperCase();
+            isHost = false;
+            isQuickMatch = false;
+            if (session.gameConfig) {
+              if (session.gameConfig.mode) gameMode = session.gameConfig.mode;
+              if (session.gameConfig.wordPack) selectedWordPack = session.gameConfig.wordPack;
+            }
+            return window.multiplayerClient.connect(session.sessionId);
+          }
+        }).then(function () {
+          // Clean the URL
+          window.history.replaceState({}, '', window.location.pathname);
+          showRoomLobby();
+        }).catch(function (err) {
+          showNotif('Could not join room: ' + (err.message || 'Invalid code'), 4000);
+          window.history.replaceState({}, '', window.location.pathname);
+          showScreen('lobby');
+        });
+      };
+      // Try immediately if auth ready, otherwise wait
+      var autoJoinCheck = setInterval(function () {
+        if (window.authManager && window.authManager.isInitialized && window.apiClient?.token) {
+          clearInterval(autoJoinCheck);
+          getUserInfo();
+          tryAutoJoin();
+        }
+      }, 200);
+      // Timeout after 10s
+      setTimeout(function () { clearInterval(autoJoinCheck); if (!joinAttempted) showScreen('lobby'); }, 10000);
+    }
   }
 
   // Wait for DOM ready
