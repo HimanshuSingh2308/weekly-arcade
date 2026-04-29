@@ -725,6 +725,8 @@
   }
 
   // ─── Phase: Word Choice (Classic) ───────────────────────────────
+  var wordChoiceCountdown = null;
+
   function showWordChoice(words) {
     var overlay  = $id('canvasOverlay');
     var title    = $id('overlayTitle');
@@ -732,13 +734,30 @@
     var subtext  = $id('overlaySubtext');
     if (!overlay) return;
     title.textContent   = 'Choose a word to draw!';
-    subtext.textContent = 'You have ' + WORD_CHOICE_T + ' seconds';
     choices.innerHTML   = '';
+
+    // Live countdown
+    var remaining = WORD_CHOICE_T;
+    subtext.textContent = remaining + 's to choose...';
+    if (wordChoiceCountdown) clearInterval(wordChoiceCountdown);
+    wordChoiceCountdown = setInterval(function () {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(wordChoiceCountdown);
+        wordChoiceCountdown = null;
+        subtext.textContent = 'Auto-picking...';
+      } else {
+        subtext.textContent = remaining + 's to choose...';
+        if (remaining <= 5) subtext.style.color = '#ff4444';
+      }
+    }, 1000);
+
     words.forEach(function (word) {
       var btn = document.createElement('button');
       btn.className = 'dd-word-choice-btn';
       btn.textContent = word;
       btn.addEventListener('click', function () {
+        if (wordChoiceCountdown) { clearInterval(wordChoiceCountdown); wordChoiceCountdown = null; }
         if (window.multiplayerClient) {
           window.multiplayerClient.submitMove('word-choice', { word: word });
         }
@@ -751,6 +770,7 @@
     // Auto-pick on timeout (cancellable)
     wordChoiceTimer = setTimeout(function () {
       wordChoiceTimer = null;
+      if (wordChoiceCountdown) { clearInterval(wordChoiceCountdown); wordChoiceCountdown = null; }
       if (overlay.classList.contains('visible')) {
         var first = words[0];
         if (window.multiplayerClient) {
@@ -765,8 +785,11 @@
 
   function hideOverlay() {
     if (wordChoiceTimer) { clearTimeout(wordChoiceTimer); wordChoiceTimer = null; }
+    if (wordChoiceCountdown) { clearInterval(wordChoiceCountdown); wordChoiceCountdown = null; }
     var overlay = $id('canvasOverlay');
     if (overlay) overlay.classList.remove('visible');
+    var subtext = $id('overlaySubtext');
+    if (subtext) subtext.style.color = '';
   }
 
   function showWaitingOverlay(msg) {
@@ -821,7 +844,10 @@
     amIDrawing = true;
     wordForDrawer = word;
     var display = $id('wordDisplay');
-    if (display) display.textContent = word;
+    if (display) {
+      display.textContent = 'Draw: ' + word;
+      display.style.color = '#4ecdc4';
+    }
     var toolbar = $id('drawToolbar');
     if (toolbar) toolbar.classList.remove('hidden');
     var chatInput = $id('chatInput');
@@ -861,6 +887,8 @@
     if (toolbar) toolbar.classList.add('hidden');
     var chatInput = $id('chatInput');
     if (chatInput) chatInput.disabled = false;
+    var display = $id('wordDisplay');
+    if (display) display.style.color = '';
     wordHint = hintText;
     updateWordDisplay(null, null);
     clearCanvas();
