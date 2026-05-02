@@ -64,9 +64,16 @@
   let lastNoteTime = 0; // AudioContext time of last scheduled note
   let scheduledBeats = []; // { lane, hitTime (AudioContext seconds) }
   let animId = null;
+  let idleAnimId = null;
   let lastFrameTime = 0;
   let countdownValue = 3;
   let countdownTimer = null;
+
+  // Idle animation state (menu/gameover ambient visuals)
+  let idleNotes = []; // { lane, y, speed, alpha }
+  let idleParticles = []; // { x, y, vx, vy, alpha, color, size }
+  let idleBeatPhase = 0; // 0-1 pulse phase
+  let laneFlash = [0, 0, 0, 0]; // per-lane flash intensity (0-1)
   let mercyUntil = 0; // AudioContext time until which misses don't drain HP
   let pausedAtAudioTime = 0; // AudioContext time when paused
   let pausedAtPerfTime = 0; // performance.now() when paused
@@ -301,6 +308,7 @@
     const earned = addScore(quality);
     playHit(quality);
     spawnHitParticles(lane);
+    laneFlash[lane] = quality === 'perfect' ? 1.0 : quality === 'great' ? 0.7 : 0.4;
     spawnFloater(lane, quality, '+' + earned + (getMultiplier() > 1 ? ' x' + getMultiplier() : ''));
     updateHUD();
     checkAchievements();
@@ -324,6 +332,7 @@
           changeHealth(HEALTH_MISS);
           mercyUntil = audioCtx.currentTime + 0.8; // 800ms mercy window
         }
+        laneFlash[note.lane] = 0.5; // red-ish via miss color
         spawnFloater(note.lane, 'miss', 'MISS');
         playHit('miss');
         updateHUD();
@@ -428,13 +437,20 @@
   function draw(dt) {
     ctx.clearRect(0, 0, canvasW, canvasH);
 
-    // Background
-    ctx.fillStyle = '#0a0010';
+    // Background with dynamic radial gradient (brighter with combo)
+    const comboIntensity = Math.min(combo / 50, 1);
+    const bgGrd = ctx.createRadialGradient(canvasW / 2, hitZoneY, 0, canvasW / 2, hitZoneY, canvasH * 0.9);
+    const r = Math.round(26 + comboIntensity * 15);
+    const g = Math.round(0);
+    const b = Math.round(48 + comboIntensity * 20);
+    bgGrd.addColorStop(0, `rgb(${r}, ${g}, ${b})`);
+    bgGrd.addColorStop(1, '#0a0010');
+    ctx.fillStyle = bgGrd;
     ctx.fillRect(0, 0, canvasW, canvasH);
 
     // Lane dividers
     for (let i = 1; i < LANES; i++) {
-      ctx.strokeStyle = '#ffffff0d';
+      ctx.strokeStyle = '#ffffff12';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(i * laneW, 0);
@@ -442,22 +458,43 @@
       ctx.stroke();
     }
 
-    // Lane glow columns (subtle)
+    // Lane glow columns — intensity scales with combo
+    const glowStr = 0x11 + Math.round(comboIntensity * 0x15);
     for (let l = 0; l < LANES; l++) {
       const grd = ctx.createLinearGradient(laneX(l), 0, laneX(l) + laneW, 0);
+      const hex = glowStr.toString(16).padStart(2, '0');
       grd.addColorStop(0, 'transparent');
-      grd.addColorStop(0.5, LANE_GLOW[l].replace('88', '11'));
+      grd.addColorStop(0.5, LANE_COLORS[l] + hex);
       grd.addColorStop(1, 'transparent');
       ctx.fillStyle = grd;
       ctx.fillRect(laneX(l), 0, laneW, canvasH);
     }
 
-    // Hit zone line
+    // Lane flash on hit (decays each frame)
+    if (!prefersReducedMotion) {
+      for (let l = 0; l < LANES; l++) {
+        if (laneFlash[l] > 0.01) {
+          ctx.save();
+          ctx.globalAlpha = laneFlash[l] * 0.35;
+          const flashGrd = ctx.createLinearGradient(laneX(l), hitZoneY - 100, laneX(l), hitZoneY + 20);
+          flashGrd.addColorStop(0, 'transparent');
+          flashGrd.addColorStop(0.7, LANE_COLORS[l]);
+          flashGrd.addColorStop(1, LANE_COLORS[l] + '88');
+          ctx.fillStyle = flashGrd;
+          ctx.fillRect(laneX(l), 0, laneW, canvasH);
+          ctx.restore();
+          laneFlash[l] *= 0.88; // decay
+        }
+      }
+    }
+
+    // Hit zone line (thicker, more neon)
     for (let l = 0; l < LANES; l++) {
-      ctx.strokeStyle = LANE_COLORS[l] + '88';
-      ctx.lineWidth = 2;
+      const flashBoost = laneFlash[l] > 0.1 ? 1 : 0;
+      ctx.strokeStyle = LANE_COLORS[l] + (flashBoost ? 'dd' : '88');
+      ctx.lineWidth = flashBoost ? 3 : 2;
       ctx.shadowColor = LANE_COLORS[l];
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 10 + flashBoost * 12;
       ctx.beginPath();
       ctx.moveTo(laneX(l) + 4, hitZoneY);
       ctx.lineTo(laneX(l) + laneW - 4, hitZoneY);
@@ -562,6 +599,172 @@
     animId = requestAnimationFrame(loop);
   }
 
+  // ── IDLE ANIMATION (menu / gameover ambient visuals) ──────
+  function startIdleLoop() {
+    if (idleAnimId) return;
+    idleNotes = [];
+    idleParticles = [];
+    idleBeatPhase = 0;
+    function idleFrame(ts) {
+      drawIdle(ts);
+      idleAnimId = requestAnimationFrame(idleFrame);
+    }
+    idleAnimId = requestAnimationFrame(idleFrame);
+  }
+
+  function stopIdleLoop() {
+    if (idleAnimId) { cancelAnimationFrame(idleAnimId); idleAnimId = null; }
+  }
+
+  function drawIdle(ts) {
+    ctx.clearRect(0, 0, canvasW, canvasH);
+
+    // Background with subtle gradient
+    const bgGrd = ctx.createRadialGradient(canvasW / 2, canvasH * 0.3, 0, canvasW / 2, canvasH * 0.3, canvasH * 0.8);
+    bgGrd.addColorStop(0, '#1a0030');
+    bgGrd.addColorStop(1, '#0a0010');
+    ctx.fillStyle = bgGrd;
+    ctx.fillRect(0, 0, canvasW, canvasH);
+
+    // Perspective grid floor
+    if (!prefersReducedMotion) {
+      const gridY = canvasH * 0.55;
+      const scroll = (ts * 0.03) % 40;
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.strokeStyle = '#ff00ff';
+      ctx.lineWidth = 1;
+      // Horizontal lines (scrolling downward)
+      for (let y = gridY; y < canvasH; y += 40) {
+        const adjustedY = y + scroll;
+        if (adjustedY > canvasH) continue;
+        const progress = (adjustedY - gridY) / (canvasH - gridY);
+        ctx.globalAlpha = 0.04 + progress * 0.12;
+        ctx.beginPath();
+        ctx.moveTo(0, adjustedY);
+        ctx.lineTo(canvasW, adjustedY);
+        ctx.stroke();
+      }
+      // Vertical lines (converging to vanishing point)
+      ctx.globalAlpha = 0.08;
+      const cx = canvasW / 2;
+      for (let i = -6; i <= 6; i++) {
+        const x = cx + i * (canvasW / 8);
+        ctx.beginPath();
+        ctx.moveTo(cx + i * 10, gridY);
+        ctx.lineTo(x, canvasH);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Lane column glows (stronger than gameplay)
+    for (let l = 0; l < LANES; l++) {
+      const grd = ctx.createLinearGradient(laneX(l), 0, laneX(l) + laneW, 0);
+      grd.addColorStop(0, 'transparent');
+      grd.addColorStop(0.5, LANE_GLOW[l].replace('88', '18'));
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.fillRect(laneX(l), 0, laneW, canvasH);
+    }
+
+    // Lane dividers with glow
+    for (let i = 1; i < LANES; i++) {
+      ctx.strokeStyle = '#ffffff12';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(i * laneW, 0);
+      ctx.lineTo(i * laneW, canvasH);
+      ctx.stroke();
+    }
+
+    // Hit zone line (glowing)
+    for (let l = 0; l < LANES; l++) {
+      ctx.strokeStyle = LANE_COLORS[l] + '66';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = LANE_COLORS[l];
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(laneX(l) + 4, hitZoneY);
+      ctx.lineTo(laneX(l) + laneW - 4, hitZoneY);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    if (!prefersReducedMotion) {
+      // Spawn drifting idle notes
+      if (Math.random() < 0.03) {
+        const lane = Math.floor(Math.random() * LANES);
+        idleNotes.push({
+          lane, y: -30,
+          speed: 0.6 + Math.random() * 0.8,
+          alpha: 0.15 + Math.random() * 0.25,
+        });
+      }
+
+      // Update and draw idle notes
+      for (let i = idleNotes.length - 1; i >= 0; i--) {
+        const n = idleNotes[i];
+        n.y += n.speed;
+        if (n.y > canvasH + 30) { idleNotes.splice(i, 1); continue; }
+        ctx.globalAlpha = n.alpha;
+        drawNote(n.lane, n.y, false);
+        ctx.globalAlpha = 1;
+      }
+
+      // Spawn idle ambient particles (floating upward)
+      if (Math.random() < 0.06) {
+        const lane = Math.floor(Math.random() * LANES);
+        idleParticles.push({
+          x: laneX(lane) + Math.random() * laneW,
+          y: canvasH + 10,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: -(0.3 + Math.random() * 0.5),
+          alpha: 0.5 + Math.random() * 0.3,
+          color: LANE_COLORS[lane],
+          size: 1.5 + Math.random() * 2,
+        });
+      }
+
+      // Update and draw idle particles
+      for (let i = idleParticles.length - 1; i >= 0; i--) {
+        const p = idleParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.003;
+        if (p.alpha <= 0 || p.y < -20) { idleParticles.splice(i, 1); continue; }
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = 1;
+
+      // Pulsing beat ring at center (subtle ambient rhythm feel)
+      idleBeatPhase = (idleBeatPhase + 0.008) % 1;
+      const ringAlpha = Math.sin(idleBeatPhase * Math.PI * 2) * 0.08 + 0.04;
+      const ringR = 30 + idleBeatPhase * 60;
+      ctx.beginPath();
+      ctx.arc(canvasW / 2, canvasH * 0.42, ringR, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 0, 255, ${ringAlpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Lane key labels at bottom
+    const keyLabels = ['D', 'F', 'J', 'K'];
+    for (let l = 0; l < LANES; l++) {
+      ctx.font = 'bold ' + Math.round(laneW * 0.22) + 'px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = LANE_COLORS[l] + '33';
+      ctx.fillText(keyLabels[l], laneX(l) + laneW / 2, hitZoneY + HIT_ZONE_HEIGHT + 18);
+    }
+  }
+
   function pauseGame() {
     if (state !== 'playing') return;
     state = 'paused';
@@ -643,6 +846,8 @@
     gameStartTime = audioCtx ? audioCtx.currentTime * 1000 : performance.now();
     lastBpmRampTime = gameStartTime;
 
+    stopIdleLoop();
+    laneFlash = [0, 0, 0, 0];
     showScreen('playing-overlay');
     document.getElementById('nb-hud').className = 'nb-hud visible';
     updateHUD();
@@ -680,6 +885,7 @@
     showScreen('gameover');
 
     submitScore();
+    startIdleLoop();
   }
 
   function submitScore() {
@@ -956,7 +1162,7 @@
       const menuBest = document.getElementById('nb-menu-best');
       if (menuBest) menuBest.textContent = bestScore.toLocaleString();
       showScreen('menu');
-      draw(0);
+      startIdleLoop();
     });
 
     // Keyboard
@@ -997,8 +1203,8 @@
 
     initSettings();
 
-    // Draw initial frame
-    draw(0);
+    // Start idle ambient animation
+    startIdleLoop();
   }
 
   // ── ENTRY POINT ───────────────────────────────────────────
