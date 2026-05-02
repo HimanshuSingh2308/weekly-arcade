@@ -256,6 +256,8 @@
     const pct = (health / HEALTH_MAX) * 100;
     bar.style.width = pct + '%';
     bar.className = 'nb-health-bar' + (health < 30 ? ' danger' : '');
+    const wrap = document.getElementById('nb-health-wrap');
+    if (wrap) wrap.setAttribute('aria-valuenow', Math.round(health));
   }
 
   // ── INPUT HANDLING ────────────────────────────────────────
@@ -373,7 +375,11 @@
     el.style.width = '60px';
     el.style.textAlign = 'center';
     wrap.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
+    if (prefersReducedMotion) {
+      setTimeout(() => el.remove(), 700);
+    } else {
+      el.addEventListener('animationend', () => el.remove());
+    }
   }
 
   // ── HUD ───────────────────────────────────────────────────
@@ -591,7 +597,10 @@
       wrap.appendChild(overlay);
       document.getElementById('nb-btn-resume').addEventListener('click', resumeGame);
     }
-    if (overlay) overlay.style.display = show ? 'flex' : 'none';
+    if (overlay) {
+      overlay.style.display = show ? 'flex' : 'none';
+      if (show) document.getElementById('nb-btn-resume')?.focus();
+    }
   }
 
   // ── GAME FLOW ─────────────────────────────────────────────
@@ -815,6 +824,7 @@
     const app = document.getElementById('neon-beats-app');
     if (!app) return false;
 
+    app.setAttribute('role', 'main');
     app.innerHTML = `
 <div id="nb-canvas-wrap">
   <canvas id="nb-canvas" role="img" aria-label="Neon Beats rhythm game"></canvas>
@@ -828,7 +838,7 @@
     <div class="nb-hud-combo" id="nb-combo-val"></div>
     <div class="nb-hud-health">
       <div class="nb-hud-label" style="text-align:right">Health</div>
-      <div class="nb-health-bar-wrap"><div class="nb-health-bar" id="nb-health-fill" style="width:${(HEALTH_START/HEALTH_MAX)*100}%"></div></div>
+      <div class="nb-health-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${HEALTH_START}" aria-label="Health" id="nb-health-wrap"><div class="nb-health-bar" id="nb-health-fill" style="width:${(HEALTH_START/HEALTH_MAX)*100}%"></div></div>
     </div>
   </div>
 
@@ -850,7 +860,7 @@
       <div class="nb-score-pill"><span class="val" id="nb-menu-best">0</span><span class="lbl">Best Score</span></div>
     </div>
     <button class="nb-btn nb-btn-primary" id="nb-btn-play">&#9654; Play</button>
-    <div style="font-size:12px;color:#ffffff44;margin-top:8px">D &nbsp; F &nbsp; J &nbsp; K &nbsp; or tap lanes</div>
+    <div style="font-size:13px;color:#ffffff88;margin-top:8px">D &nbsp; F &nbsp; J &nbsp; K &nbsp; or tap lanes</div>
   </div>
 
   <!-- Screen: Countdown -->
@@ -864,7 +874,7 @@
   </div>
 
   <!-- Screen: Game Over -->
-  <div id="nb-screen-gameover" class="nb-screen">
+  <div id="nb-screen-gameover" class="nb-screen" role="alert">
     <div class="nb-logo" style="font-size:clamp(24px,6vw,36px)">Game Over</div>
     <div class="nb-accuracy-badge" id="nb-final-accuracy">0%</div>
     <div class="nb-scores-row">

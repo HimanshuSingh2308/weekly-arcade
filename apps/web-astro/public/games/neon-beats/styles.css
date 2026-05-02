@@ -53,7 +53,7 @@
 }
 .nb-hud-label {
   font-size: 10px;
-  color: #ffffff66;
+  color: #ffffffaa;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 2px;
@@ -128,10 +128,14 @@
   border: none;
   border-radius: 50px;
   font-size: clamp(14px, 3.5vw, 18px);
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
   -webkit-tap-highlight-color: transparent;
+}
+.nb-btn:focus-visible, .nb-settings-btn:focus-visible {
+  outline: 2px solid #00ffff;
+  outline-offset: 3px;
 }
 .nb-btn:active { transform: scale(0.96); }
 .nb-btn-primary {
@@ -169,7 +173,7 @@
 }
 .nb-score-pill .lbl {
   font-size: 11px;
-  color: #ffffff66;
+  color: #ffffffaa;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
