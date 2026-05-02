@@ -31,8 +31,8 @@
   const NOTE_SPEED_BASE = 200; // px/sec at 90 BPM — scales with BPM
   const HIT_ZONE_RATIO = 0.88; // fraction of canvas height
   const HIT_ZONE_HEIGHT = 40;
-  const NOTE_HEIGHT = 28;
-  const NOTE_RADIUS = 8;
+  const NOTE_HEIGHT = 44;
+  const NOTE_RADIUS = 12;
 
   const NOTE_APPROACH_BEATS = 2; // notes appear 2 beats before hit zone
 
@@ -182,11 +182,24 @@
   }
 
   function scheduleOneBeat(beatTime) {
-    // Pick 1-2 random lanes per beat, no duplicates
+    // Pick 1-3 random lanes per beat, no duplicates
     const elapsed = audioCtx ? (audioCtx.currentTime * 1000 - gameStartTime) / 1000 : 0;
     // Note density escalation: more multi-note beats as time progresses
-    const multiProb = elapsed < 90 ? 0.15 : elapsed < 180 ? 0.3 : elapsed < 300 ? 0.45 : 0.55;
-    const numNotes = Math.random() < multiProb ? 2 : 1;
+    const roll = Math.random();
+    let numNotes;
+    if (elapsed < 60) {
+      // Early: mostly singles, 30% doubles
+      numNotes = roll < 0.30 ? 2 : 1;
+    } else if (elapsed < 120) {
+      // Mid: 40% doubles, 10% triples
+      numNotes = roll < 0.10 ? 3 : roll < 0.50 ? 2 : 1;
+    } else if (elapsed < 240) {
+      // Late: 45% doubles, 20% triples
+      numNotes = roll < 0.20 ? 3 : roll < 0.65 ? 2 : 1;
+    } else {
+      // Endgame: 35% doubles, 30% triples
+      numNotes = roll < 0.30 ? 3 : roll < 0.65 ? 2 : 1;
+    }
     const lanePool = [0, 1, 2, 3];
     for (let i = 0; i < numNotes; i++) {
       const idx = Math.floor(Math.random() * lanePool.length);
@@ -574,8 +587,8 @@
   function drawNoteTrail(lane, y) {
     const cx = laneX(lane) + laneW / 2;
     const color = LANE_COLORS[lane];
-    const trailH = 50;
-    const trailW = laneW * 0.15;
+    const trailH = 70;
+    const trailW = laneW * 0.25;
     const grd = ctx.createLinearGradient(cx, y - trailH, cx, y);
     grd.addColorStop(0, 'transparent');
     grd.addColorStop(1, color + '30');
@@ -586,9 +599,9 @@
   }
 
   function drawNote(lane, y, missed, proximity) {
-    const x = laneX(lane) + 4;
-    const w = laneW - 8;
-    const h = NOTE_HEIGHT + 2;
+    const x = laneX(lane) + 3;
+    const w = laneW - 6;
+    const h = NOTE_HEIGHT;
     const r = h / 2; // pill shape (fully rounded ends)
     const color = LANE_COLORS[lane];
     const prox = proximity || 0;
