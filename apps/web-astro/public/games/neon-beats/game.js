@@ -34,7 +34,7 @@
   const NOTE_HEIGHT = 44;
   const NOTE_RADIUS = 12;
 
-  const NOTE_APPROACH_BEATS = 2; // notes appear 2 beats before hit zone
+  const NOTE_APPROACH_BEATS = 5; // notes appear 5 beats before hit zone — fills the screen
 
   // ── STATE ─────────────────────────────────────────────────
   let canvas, ctx, wrap;
@@ -175,10 +175,26 @@
   function scheduleTick() {
     if (!audioCtx || state !== 'playing') return;
     const lookAhead = audioCtx.currentTime + LOOKAHEAD_SEC;
+    const elapsed = audioCtx ? (audioCtx.currentTime * 1000 - gameStartTime) / 1000 : 0;
     while (nextBeatTime < lookAhead) {
+      // Main beat note(s)
       scheduleOneBeat(nextBeatTime);
+      // 8th-note subdivision: spawn an extra note halfway between beats
+      // Probability increases with time — creates dense streams in same lane
+      const subdivProb = elapsed < 30 ? 0.15 : elapsed < 90 ? 0.35 : elapsed < 180 ? 0.50 : 0.65;
+      if (Math.random() < subdivProb) {
+        const halfBeat = nextBeatTime + beatInterval() * 0.5;
+        scheduleSubdivision(halfBeat);
+      }
       nextBeatTime += beatInterval();
     }
+  }
+
+  function scheduleSubdivision(hitTime) {
+    // Subdivision: always a single note in a random lane (lighter than main beat)
+    const lane = Math.floor(Math.random() * LANES);
+    playBeat(lane, hitTime);
+    scheduledBeats.push({ lane, hitTime });
   }
 
   function scheduleOneBeat(beatTime) {
