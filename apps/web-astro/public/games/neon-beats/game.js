@@ -611,6 +611,8 @@
   }
 
   function startCountdown() {
+    if (state !== 'menu' && state !== 'gameover') return;
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
     state = 'countdown';
     showScreen('countdown');
     countdownValue = 3;
@@ -655,6 +657,10 @@
     state = 'gameover';
     stopScheduler();
     if (animId) { cancelAnimationFrame(animId); animId = null; }
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+    clearTimeout(bpmBannerTimeout);
+    const pauseOv = document.getElementById('nb-pause-overlay');
+    if (pauseOv) pauseOv.style.display = 'none';
 
     accuracy = totalNotes > 0 ? Math.round((hitNotes / totalNotes) * 100) : 0;
     checkAchievements(true);
@@ -944,6 +950,8 @@
       state = 'menu';
       stopScheduler();
       if (animId) { cancelAnimationFrame(animId); animId = null; }
+      const pauseOv = document.getElementById('nb-pause-overlay');
+      if (pauseOv) pauseOv.style.display = 'none';
       document.getElementById('nb-hud').className = 'nb-hud';
       const menuBest = document.getElementById('nb-menu-best');
       if (menuBest) menuBest.textContent = bestScore.toLocaleString();
