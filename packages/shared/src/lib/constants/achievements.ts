@@ -741,7 +741,7 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
     name: 'Survivor',
     description: 'Last for 3 minutes in a single run',
     icon: '⏱️',
-    xpReward: 75,
+    xpReward: 100,
     category: 'neon-beats',
     requirement: { type: 'time', value: 180, gameId: 'neon-beats' },
   },

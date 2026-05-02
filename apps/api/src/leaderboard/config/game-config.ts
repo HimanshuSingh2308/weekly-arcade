@@ -462,8 +462,8 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
 
   // Neon Beats: Rhythm game — score scales with combo multiplier and BPM
   'neon-beats': {
-    maxScore: 500000,
-    maxScorePerSecond: 1000,
+    maxScore: 2000000,
+    maxScorePerSecond: 4000,
     minTimeMs: 15000,
     allowedMetadataKeys: ['accuracy', 'maxCombo', 'totalNotes', 'perfectCount', 'greatCount', 'goodCount', 'missCount', 'maxBpm', 'finalMultiplier'],
     customValidation: (dto) => {

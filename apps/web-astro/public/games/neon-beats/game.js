@@ -21,7 +21,7 @@
   const HEALTH_MAX = 100;
   const HEALTH_START = 70;
   const HEALTH_PERFECT = 2;
-  const HEALTH_MISS = -10;
+  const HEALTH_MISS = -7;
 
   const BPM_START = 90;
   const BPM_MAX   = 160;
