@@ -698,6 +698,62 @@ export const ACHIEVEMENTS: Record<string, Achievement> = {
   'dd-night-doodler':    { id: 'dd-night-doodler',    name: 'Night Doodler',       description: 'Play Doodle Dash between 11 PM and 3 AM local time',       icon: '🌙', xpReward: 75,  category: 'doodle-dash', requirement: { type: 'special',     gameId: 'doodle-dash' } },
   'dd-no-hints':         { id: 'dd-no-hints',         name: 'No Hints Needed',     description: 'Correctly guess a word before any hint letters are revealed', icon: '🎯', xpReward: 150, category: 'doodle-dash', requirement: { type: 'special',     gameId: 'doodle-dash' } },
   'dd-leaderboard-top':  { id: 'dd-leaderboard-top',  name: 'Chart Topper',        description: 'Reach the top 10 on the Doodle Dash leaderboard',          icon: '📈', xpReward: 300, category: 'doodle-dash', requirement: { type: 'special',     gameId: 'doodle-dash' } },
+
+  // ============ NEON BEATS ACHIEVEMENTS ============
+  nb_first_drop: {
+    id: 'nb_first_drop',
+    name: 'First Drop',
+    description: 'Hit your first Perfect note',
+    icon: '🎯',
+    xpReward: 10,
+    category: 'neon-beats',
+    requirement: { type: 'special', gameId: 'neon-beats' },
+  },
+  nb_in_the_zone: {
+    id: 'nb_in_the_zone',
+    name: 'In The Zone',
+    description: 'Reach a 25 combo',
+    icon: '🔥',
+    xpReward: 25,
+    category: 'neon-beats',
+    requirement: { type: 'combo', value: 25, gameId: 'neon-beats' },
+  },
+  nb_neon_streak: {
+    id: 'nb_neon_streak',
+    name: 'Neon Streak',
+    description: 'Reach a 50 combo',
+    icon: '💜',
+    xpReward: 50,
+    category: 'neon-beats',
+    requirement: { type: 'combo', value: 50, gameId: 'neon-beats' },
+  },
+  nb_accuracy_freak: {
+    id: 'nb_accuracy_freak',
+    name: 'Accuracy Freak',
+    description: 'Finish with 90%+ accuracy and 50+ notes',
+    icon: '🎵',
+    xpReward: 75,
+    category: 'neon-beats',
+    requirement: { type: 'special', gameId: 'neon-beats' },
+  },
+  nb_survivor: {
+    id: 'nb_survivor',
+    name: 'Survivor',
+    description: 'Last for 3 minutes in a single run',
+    icon: '⏱️',
+    xpReward: 75,
+    category: 'neon-beats',
+    requirement: { type: 'time', value: 180, gameId: 'neon-beats' },
+  },
+  nb_neon_god: {
+    id: 'nb_neon_god',
+    name: 'Neon God',
+    description: 'Score 50,000 points in a single run',
+    icon: '👑',
+    xpReward: 100,
+    category: 'neon-beats',
+    requirement: { type: 'score', value: 50000, gameId: 'neon-beats' },
+  },
 };
 
 export const ACHIEVEMENT_LIST = Object.values(ACHIEVEMENTS);

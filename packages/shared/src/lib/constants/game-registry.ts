@@ -30,6 +30,7 @@ export interface GameInfo {
 }
 
 export const GAME_REGISTRY: GameInfo[] = [
+  { id: 'neon-beats',          name: 'Neon Beats',          icon: '🎵', description: 'Neon rhythm tap game',  genres: ['rhythm', 'arcade', 'music'] },
   { id: 'bir-glider',         name: 'Bir Glider',          icon: '🪂', description: 'Himalayan paragliding',  genres: ['endless', 'zen', 'adventure'] },
   { id: 'stack-tower',        name: 'Stack Tower',         icon: '🏗️', description: 'Timing arcade',         genres: ['arcade', 'casual'] },
   { id: 'voidbreak',          name: 'Voidbreak',           icon: '☄️', description: 'Asteroid roguelite',     genres: ['action', 'arcade'] },

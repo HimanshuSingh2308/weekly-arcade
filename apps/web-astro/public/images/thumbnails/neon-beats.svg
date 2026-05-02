@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0010"/>
+      <stop offset="100%" stop-color="#1a0030"/>
+    </linearGradient>
+    <linearGradient id="lane0" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00ffff00"/>
+      <stop offset="100%" stop-color="#00ffff22"/>
+    </linearGradient>
+    <linearGradient id="lane1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff00ff00"/>
+      <stop offset="100%" stop-color="#ff00ff22"/>
+    </linearGradient>
+    <linearGradient id="lane2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffff0000"/>
+      <stop offset="100%" stop-color="#ffff0022"/>
+    </linearGradient>
+    <linearGradient id="lane3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00ff8800"/>
+      <stop offset="100%" stop-color="#00ff8822"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#bg)"/>
+
+  <!-- Lane columns -->
+  <rect x="0"   y="0" width="100" height="300" fill="url(#lane0)"/>
+  <rect x="100" y="0" width="100" height="300" fill="url(#lane1)"/>
+  <rect x="200" y="0" width="100" height="300" fill="url(#lane2)"/>
+  <rect x="300" y="0" width="100" height="300" fill="url(#lane3)"/>
+
+  <!-- Lane dividers -->
+  <line x1="100" y1="0" x2="100" y2="300" stroke="#ffffff11" stroke-width="1"/>
+  <line x1="200" y1="0" x2="200" y2="300" stroke="#ffffff11" stroke-width="1"/>
+  <line x1="300" y1="0" x2="300" y2="300" stroke="#ffffff11" stroke-width="1"/>
+
+  <!-- Hit zone line -->
+  <line x1="10"  y1="248" x2="90"  y2="248" stroke="#00ffff" stroke-width="2" opacity="0.7" filter="url(#glow)"/>
+  <line x1="110" y1="248" x2="190" y2="248" stroke="#ff00ff" stroke-width="2" opacity="0.7" filter="url(#glow)"/>
+  <line x1="210" y1="248" x2="290" y2="248" stroke="#ffff00" stroke-width="2" opacity="0.7" filter="url(#glow)"/>
+  <line x1="310" y1="248" x2="390" y2="248" stroke="#00ff88" stroke-width="2" opacity="0.7" filter="url(#glow)"/>
+
+  <!-- Falling notes — lane 0 (cyan) -->
+  <rect x="10"  y="200" width="80" height="26" rx="7" fill="#00ffff" opacity="0.85" filter="url(#glow)"/>
+  <rect x="10"  y="120" width="80" height="26" rx="7" fill="#00ffff" opacity="0.55"/>
+  <rect x="10"  y="50"  width="80" height="26" rx="7" fill="#00ffff" opacity="0.3"/>
+
+  <!-- Falling notes — lane 1 (magenta) -->
+  <rect x="110" y="160" width="80" height="26" rx="7" fill="#ff00ff" opacity="0.85" filter="url(#glow)"/>
+  <rect x="110" y="80"  width="80" height="26" rx="7" fill="#ff00ff" opacity="0.45"/>
+
+  <!-- Falling notes — lane 2 (yellow) -->
+  <rect x="210" y="180" width="80" height="26" rx="7" fill="#ffff00" opacity="0.85" filter="url(#glow)"/>
+  <rect x="210" y="100" width="80" height="26" rx="7" fill="#ffff00" opacity="0.45"/>
+  <rect x="210" y="30"  width="80" height="26" rx="7" fill="#ffff00" opacity="0.25"/>
+
+  <!-- Falling notes — lane 3 (green) -->
+  <rect x="310" y="140" width="80" height="26" rx="7" fill="#00ff88" opacity="0.85" filter="url(#glow)"/>
+  <rect x="310" y="60"  width="80" height="26" rx="7" fill="#00ff88" opacity="0.4"/>
+
+  <!-- Title -->
+  <text x="200" y="285" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="18" fill="#ff00ff" filter="url(#glow)" opacity="0.9">NEON BEATS</text>
+
+  <!-- Combo indicator top-right -->
+  <rect x="310" y="6" width="84" height="22" rx="11" fill="#ff00ff22"/>
+  <text x="352" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="11" fill="#ff00ff">8x COMBO</text>
+</svg>

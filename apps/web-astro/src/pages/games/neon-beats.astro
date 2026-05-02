@@ -1,0 +1,57 @@
+---
+import GameLayout from '../../layouts/GameLayout.astro';
+import GameLanding from '../../components/GameLanding.astro';
+import gameData from '../../data/games/neon-beats.json';
+
+const features = [
+  { icon: '🎵', title: 'Procedural Beats', desc: 'Web Audio API synthwave beats — no files to download' },
+  { icon: '⚡', title: 'Combo Multiplier', desc: '8x score multiplier at 50-note combos' },
+  { icon: '🏆', title: 'Global Leaderboard', desc: 'Chase high scores and climb the worldwide rankings' },
+];
+---
+
+<GameLayout
+  title={gameData.title}
+  gameName={gameData.name}
+  gameId={gameData.id}
+  icon={gameData.icon}
+  description={gameData.description}
+  keywords={gameData.keywords}
+  url={gameData.url}
+  themeColor={gameData.themeColor}
+  accentColor={gameData.accentColor}
+  genres={gameData.genres}
+  ratingValue={gameData.ratingValue}
+  ratingCount={gameData.ratingCount}
+  tips={gameData.tips}
+  howToPlay={gameData.howToPlay}
+  similarTo={gameData.similarTo}
+  aboutGame={gameData.aboutGame}
+  faq={gameData.faq}
+>
+  <Fragment slot="head">
+    <link rel="stylesheet" href="/games/neon-beats/styles.css">
+  </Fragment>
+
+  <Fragment slot="landing">
+    <GameLanding
+      gameName={gameData.name}
+      icon={gameData.icon}
+      tagline="Neon rhythm tap game. Free. No ads."
+      description="Tap to the beat in this neon-lit rhythm game. Hit falling notes with perfect timing, build combos, and chase high scores as the tempo rises."
+      themeColor={gameData.themeColor}
+      features={features}
+      howToPlay={gameData.howToPlay}
+      screenshotSrc="/images/thumbnails/neon-beats.svg"
+      screenshots={[
+        "/images/thumbnails/neon-beats.svg",
+      ]}
+    />
+  </Fragment>
+
+  <div id="neon-beats-app"></div>
+
+  <Fragment slot="scripts">
+    <script is:inline src="/games/neon-beats/game.js"></script>
+  </Fragment>
+</GameLayout>

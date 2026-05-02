@@ -459,6 +459,14 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
       return { valid: true };
     },
   },
+
+  // Neon Beats: Rhythm game — score scales with combo multiplier and BPM
+  'neon-beats': {
+    maxScore: 500000,
+    maxScorePerSecond: 1000,
+    minTimeMs: 5000,
+    allowedMetadataKeys: ['accuracy', 'maxCombo', 'totalNotes', 'perfectCount', 'greatCount', 'goodCount', 'missCount', 'maxBpm', 'finalMultiplier'],
+  },
 };
 
 /**
