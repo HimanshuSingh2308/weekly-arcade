@@ -31,7 +31,7 @@
   const NOTE_SPEED_BASE = 200; // px/sec at 90 BPM — scales with BPM
   const HIT_ZONE_RATIO = 0.88; // fraction of canvas height
   const HIT_ZONE_HEIGHT = 40;
-  const NOTE_HEIGHT = 44;
+  const NOTE_HEIGHT = 132;
   const NOTE_RADIUS = 12;
 
   const NOTE_APPROACH_BEATS = 5; // notes appear 5 beats before hit zone — fills the screen
@@ -603,7 +603,7 @@
   function drawNoteTrail(lane, y) {
     const cx = laneX(lane) + laneW / 2;
     const color = LANE_COLORS[lane];
-    const trailH = 70;
+    const trailH = 160;
     const trailW = laneW * 0.25;
     const grd = ctx.createLinearGradient(cx, y - trailH, cx, y);
     grd.addColorStop(0, 'transparent');
