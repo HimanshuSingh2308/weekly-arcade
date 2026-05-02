@@ -10,7 +10,7 @@
   const LANE_GLOW   = ['#00ffff88', '#ff00ff88', '#ffff0088', '#00ff8888'];
 
   const TIMING = { perfect: 50, great: 100, good: 150 }; // ms half-windows
-  const SCORE_BASE = { perfect: 300, great: 150, good: 75 };
+  const SCORE_BASE = { perfect: 100, great: 75, good: 50 };
   const COMBO_MULT = [
     { at: 0,  mult: 1 },
     { at: 10, mult: 2 },
@@ -42,7 +42,7 @@
   let laneW = 0;
   let hitZoneY = 0;
 
-  let state = 'menu'; // menu | countdown | playing | gameover
+  let state = 'menu'; // menu | countdown | playing | paused | gameover
   let score = 0;
   let bestScore = 0;
   let combo = 0;
@@ -67,6 +67,9 @@
   let lastFrameTime = 0;
   let countdownValue = 3;
   let countdownTimer = null;
+  let mercyUntil = 0; // AudioContext time until which misses don't drain HP
+  let pausedAtAudioTime = 0; // AudioContext time when paused
+  let pausedAtPerfTime = 0; // performance.now() when paused
 
   // Settings
   let volumeMaster = 0.7;
@@ -172,11 +175,16 @@
   }
 
   function scheduleOneBeat(beatTime) {
-    // Pick 1-2 random lanes per beat, bias away from consecutive same lane
-    const numNotes = Math.random() < 0.3 ? 2 : 1;
+    // Pick 1-2 random lanes per beat, no duplicates
+    const elapsed = audioCtx ? (audioCtx.currentTime * 1000 - gameStartTime) / 1000 : 0;
+    // Note density escalation: more multi-note beats as time progresses
+    const multiProb = elapsed < 90 ? 0.15 : elapsed < 180 ? 0.3 : elapsed < 300 ? 0.45 : 0.55;
+    const numNotes = Math.random() < multiProb ? 2 : 1;
     const lanePool = [0, 1, 2, 3];
     for (let i = 0; i < numNotes; i++) {
-      const lane = lanePool[Math.floor(Math.random() * lanePool.length)];
+      const idx = Math.floor(Math.random() * lanePool.length);
+      const lane = lanePool[idx];
+      lanePool.splice(idx, 1); // prevent duplicate lane selection
       playBeat(lane, beatTime);
       scheduledBeats.push({ lane, hitTime: beatTime });
     }
@@ -300,6 +308,7 @@
   function processMisses() {
     if (!audioCtx) return;
     const now = audioCtx.currentTime - (latencyOffsetMs / 1000);
+    const inMercy = audioCtx.currentTime < mercyUntil;
     for (const note of notes) {
       if (note.hit || note.missed) continue;
       const overdue = (now - note.hitTime) * 1000; // ms past hit time
@@ -308,7 +317,11 @@
         totalNotes++;
         missCount++;
         combo = 0;
-        changeHealth(HEALTH_MISS);
+        // Mercy invincibility: misses within 800ms of last miss don't drain HP
+        if (!inMercy) {
+          changeHealth(HEALTH_MISS);
+          mercyUntil = audioCtx.currentTime + 0.8; // 800ms mercy window
+        }
         spawnFloater(note.lane, 'miss', 'MISS');
         playHit('miss');
         updateHUD();
@@ -352,14 +365,14 @@
     el.textContent = text;
     const x = laneX(lane) + laneW / 2;
     const rect = canvas.getBoundingClientRect();
-    const canvasEl = canvas;
+    const wrapRect = wrap.getBoundingClientRect();
     const scaleX = rect.width / canvasW;
     const scaleY = rect.height / canvasH;
-    el.style.left = (rect.left + x * scaleX - 30) + 'px';
-    el.style.top  = (rect.top + hitZoneY * scaleY - 60) + 'px';
+    el.style.left = (rect.left - wrapRect.left + x * scaleX - 30) + 'px';
+    el.style.top  = (rect.top - wrapRect.top + hitZoneY * scaleY - 60) + 'px';
     el.style.width = '60px';
     el.style.textAlign = 'center';
-    document.body.appendChild(el);
+    wrap.appendChild(el);
     el.addEventListener('animationend', () => el.remove());
   }
 
@@ -378,8 +391,8 @@
 
   // ── BPM RAMP ──────────────────────────────────────────────
   function maybeBumpBpm() {
-    if (state !== 'playing') return;
-    const now = performance.now();
+    if (state !== 'playing' || !audioCtx) return;
+    const now = audioCtx.currentTime * 1000;
     if (now - lastBpmRampTime >= BPM_INTERVAL_MS) {
       lastBpmRampTime = now;
       if (currentBpm < BPM_MAX) {
@@ -543,6 +556,44 @@
     animId = requestAnimationFrame(loop);
   }
 
+  function pauseGame() {
+    if (state !== 'playing') return;
+    state = 'paused';
+    pausedAtAudioTime = audioCtx ? audioCtx.currentTime : 0;
+    pausedAtPerfTime = performance.now();
+    stopScheduler();
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+    if (audioCtx) audioCtx.suspend();
+    showPauseOverlay(true);
+  }
+
+  function resumeGame() {
+    if (state !== 'paused') return;
+    state = 'playing';
+    if (audioCtx) audioCtx.resume();
+    // Adjust timing references for pause duration
+    const pauseDurationMs = performance.now() - pausedAtPerfTime;
+    gameStartTime += pauseDurationMs;
+    lastBpmRampTime += pauseDurationMs;
+    startScheduler();
+    lastFrameTime = performance.now();
+    animId = requestAnimationFrame(loop);
+    showPauseOverlay(false);
+  }
+
+  function showPauseOverlay(show) {
+    let overlay = document.getElementById('nb-pause-overlay');
+    if (!overlay && show) {
+      overlay = document.createElement('div');
+      overlay.id = 'nb-pause-overlay';
+      overlay.style.cssText = 'position:absolute;inset:0;background:rgba(10,0,16,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;';
+      overlay.innerHTML = '<div style="color:#ff00ff;font-size:32px;font-weight:700;margin-bottom:16px">PAUSED</div><button class="nb-btn nb-btn-primary" id="nb-btn-resume">&#9654; Resume</button>';
+      wrap.appendChild(overlay);
+      document.getElementById('nb-btn-resume').addEventListener('click', resumeGame);
+    }
+    if (overlay) overlay.style.display = show ? 'flex' : 'none';
+  }
+
   // ── GAME FLOW ─────────────────────────────────────────────
   function showScreen(name) {
     document.querySelectorAll('.nb-screen').forEach(s => s.classList.remove('active'));
@@ -577,8 +628,9 @@
     goodCount = 0; missCount = 0; accuracy = 0;
     currentBpm = BPM_START; maxBpmReached = BPM_START;
     notes = []; particles = []; scheduledBeats = [];
-    gameStartTime = performance.now();
-    lastBpmRampTime = performance.now();
+    mercyUntil = 0;
+    gameStartTime = audioCtx ? audioCtx.currentTime * 1000 : performance.now();
+    lastBpmRampTime = gameStartTime;
 
     showScreen('playing-overlay');
     document.getElementById('nb-hud').className = 'nb-hud visible';
@@ -596,6 +648,7 @@
     if (animId) { cancelAnimationFrame(animId); animId = null; }
 
     accuracy = totalNotes > 0 ? Math.round((hitNotes / totalNotes) * 100) : 0;
+    checkAchievements(true);
 
     if (score > bestScore) bestScore = score;
     try { localStorage.setItem('neon-beats-best', bestScore); } catch(e) {}
@@ -616,7 +669,7 @@
 
   function submitScore() {
     if (!window.apiClient) return;
-    const timeMs = Math.round(performance.now() - gameStartTime);
+    const timeMs = Math.round(audioCtx ? audioCtx.currentTime * 1000 - gameStartTime : 0);
     window.apiClient.submitScore(GAME_ID, {
       score,
       timeMs,
@@ -635,23 +688,31 @@
   }
 
   // ── ACHIEVEMENTS ──────────────────────────────────────────
-  const ACHIEVEMENT_DEFS = {
+  // Achievements checked during play (combo/score based)
+  const ACHIEVEMENT_DEFS_LIVE = {
     nb_first_drop:    { check: () => perfectCount >= 1 },
     nb_in_the_zone:   { check: () => maxCombo >= 25 },
     nb_neon_streak:   { check: () => maxCombo >= 50 },
-    nb_accuracy_freak:{ check: () => accuracy >= 90 && totalNotes >= 50 },
-    nb_survivor:      { check: () => performance.now() - gameStartTime >= 180000 },
+    nb_survivor:      { check: () => audioCtx && (audioCtx.currentTime * 1000 - gameStartTime) >= 180000 },
     nb_neon_god:      { check: () => score >= 50000 },
   };
+  // Achievements checked at game over (need final stats)
+  const ACHIEVEMENT_DEFS_END = {
+    nb_accuracy_freak:{ check: () => accuracy >= 90 && totalNotes >= 50 },
+  };
 
-  function checkAchievements() {
+  function checkAchievements(endOfGame = false) {
     if (!window.apiClient) return;
-    for (const [id, def] of Object.entries(ACHIEVEMENT_DEFS)) {
+    const defs = endOfGame
+      ? { ...ACHIEVEMENT_DEFS_LIVE, ...ACHIEVEMENT_DEFS_END }
+      : ACHIEVEMENT_DEFS_LIVE;
+    const elapsed = audioCtx ? (audioCtx.currentTime * 1000 - gameStartTime) / 1000 : 0;
+    for (const [id, def] of Object.entries(defs)) {
       if (unlockedAchievements.has(id)) continue;
       if (def.check()) {
         unlockedAchievements.add(id);
         window.apiClient.unlockAchievement(id, GAME_ID, {
-          score, combo: maxCombo, timeSeconds: Math.round((performance.now() - gameStartTime) / 1000),
+          score, combo: maxCombo, timeSeconds: Math.round(elapsed),
         }).catch(() => {});
         showAchievementToast(id);
       }
@@ -705,7 +766,9 @@
 
     btn.addEventListener('click', e => {
       e.stopPropagation();
+      const opening = !panel.classList.contains('open');
       panel.classList.toggle('open');
+      if (opening && state === 'playing') pauseGame();
     });
     document.addEventListener('click', e => {
       if (!panel.contains(e.target) && e.target !== btn) panel.classList.remove('open');
@@ -889,6 +952,12 @@
         e.preventDefault();
         ensureAudio();
         startCountdown();
+      }
+      // Pause/Resume
+      if ((e.code === 'Escape' || e.code === 'KeyP') && (state === 'playing' || state === 'paused')) {
+        e.preventDefault();
+        if (state === 'playing') pauseGame();
+        else resumeGame();
       }
     });
 
