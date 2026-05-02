@@ -742,7 +742,9 @@
   // ── RESIZE ────────────────────────────────────────────────
   function resize() {
     const maxW = Math.min(window.innerWidth, 480);
-    const maxH = window.innerHeight;
+    const headerEl = document.querySelector('header');
+    const headerH = headerEl ? headerEl.getBoundingClientRect().height : 0;
+    const maxH = window.innerHeight - headerH;
     const aspect = 9 / 16; // portrait
     let w = maxW;
     let h = Math.round(w / aspect);
