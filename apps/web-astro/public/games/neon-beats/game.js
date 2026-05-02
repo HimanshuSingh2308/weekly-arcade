@@ -502,12 +502,24 @@
       ctx.shadowBlur = 0;
     }
 
+    // Note trails (drawn before notes so they appear behind)
+    if (!prefersReducedMotion) {
+      for (const note of notes) {
+        if (note.hit || note.missed) continue;
+        const y = noteY(note.hitTime);
+        if (y < -NOTE_HEIGHT * 2 || y > canvasH + NOTE_HEIGHT) continue;
+        drawNoteTrail(note.lane, y);
+      }
+    }
+
     // Notes
     for (const note of notes) {
       if (note.hit) continue;
       const y = noteY(note.hitTime);
       if (y < -NOTE_HEIGHT || y > canvasH + NOTE_HEIGHT) continue;
-      drawNote(note.lane, y, note.missed);
+      // Proximity boost: notes glow brighter near hit zone
+      const proximity = 1 - Math.abs(y - hitZoneY) / (canvasH * 0.5);
+      drawNote(note.lane, y, note.missed, Math.max(0, proximity));
     }
 
     // Particles
@@ -543,45 +555,111 @@
     }
   }
 
-  function drawNote(lane, y, missed) {
-    const x = laneX(lane) + 6;
-    const w = laneW - 12;
-    const h = NOTE_HEIGHT;
-    const r = NOTE_RADIUS;
+  // Helper: draw a rounded rect path
+  function roundedRect(cx, rx, ry, rw, rh, rr) {
+    cx.beginPath();
+    cx.moveTo(rx + rr, ry);
+    cx.lineTo(rx + rw - rr, ry);
+    cx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+    cx.lineTo(rx + rw, ry + rh - rr);
+    cx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+    cx.lineTo(rx + rr, ry + rh);
+    cx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+    cx.lineTo(rx, ry + rr);
+    cx.quadraticCurveTo(rx, ry, rx + rr, ry);
+    cx.closePath();
+  }
+
+  // Motion trail behind falling note
+  function drawNoteTrail(lane, y) {
+    const cx = laneX(lane) + laneW / 2;
     const color = LANE_COLORS[lane];
+    const trailH = 50;
+    const trailW = laneW * 0.15;
+    const grd = ctx.createLinearGradient(cx, y - trailH, cx, y);
+    grd.addColorStop(0, 'transparent');
+    grd.addColorStop(1, color + '30');
+    ctx.save();
+    ctx.fillStyle = grd;
+    ctx.fillRect(cx - trailW / 2, y - trailH, trailW, trailH);
+    ctx.restore();
+  }
+
+  function drawNote(lane, y, missed, proximity) {
+    const x = laneX(lane) + 4;
+    const w = laneW - 8;
+    const h = NOTE_HEIGHT + 2;
+    const r = h / 2; // pill shape (fully rounded ends)
+    const color = LANE_COLORS[lane];
+    const prox = proximity || 0;
 
     ctx.save();
-    ctx.globalAlpha = missed ? 0.25 : 1;
 
-    // Glow
-    if (!missed && !prefersReducedMotion) {
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 14;
+    if (missed) {
+      // Missed note: dim and desaturated
+      ctx.globalAlpha = 0.2;
+      roundedRect(ctx, x, y, w, h, r);
+      ctx.fillStyle = color + '44';
+      ctx.fill();
+      ctx.restore();
+      return;
     }
 
-    // Rounded rect
-    ctx.fillStyle = color + (missed ? '44' : 'cc');
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-    ctx.fill();
+    // ── Outer glow halo (layered, proximity-boosted) ──
+    if (!prefersReducedMotion) {
+      const glowSize = 16 + prox * 12;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = glowSize;
+    }
 
-    // Inner highlight
-    const grd = ctx.createLinearGradient(x, y, x, y + h);
-    grd.addColorStop(0, '#ffffff44');
-    grd.addColorStop(1, 'transparent');
-    ctx.fillStyle = grd;
+    // ── Base body (darker shade of lane color) ──
+    roundedRect(ctx, x, y, w, h, r);
+    ctx.fillStyle = color + 'aa';
     ctx.fill();
-
     ctx.shadowBlur = 0;
+
+    // ── Top bevel (lighter) — gives 3D raised look ──
+    const topGrd = ctx.createLinearGradient(x, y, x, y + h);
+    topGrd.addColorStop(0, '#ffffff55');
+    topGrd.addColorStop(0.3, '#ffffff18');
+    topGrd.addColorStop(0.7, 'transparent');
+    topGrd.addColorStop(1, '#00000033');
+    roundedRect(ctx, x, y, w, h, r);
+    ctx.fillStyle = topGrd;
+    ctx.fill();
+
+    // ── Inner neon core stripe (bright center line) ──
+    const coreH = Math.max(4, h * 0.28);
+    const coreY = y + (h - coreH) / 2;
+    const coreR = coreH / 2;
+    roundedRect(ctx, x + 4, coreY, w - 8, coreH, coreR);
+    const coreGrd = ctx.createLinearGradient(x + 4, coreY, x + w - 4, coreY);
+    coreGrd.addColorStop(0, color + '44');
+    coreGrd.addColorStop(0.3, '#ffffff' + (prox > 0.5 ? 'cc' : '88'));
+    coreGrd.addColorStop(0.7, '#ffffff' + (prox > 0.5 ? 'cc' : '88'));
+    coreGrd.addColorStop(1, color + '44');
+    ctx.fillStyle = coreGrd;
+    ctx.fill();
+
+    // ── Edge highlight (1px bright border on top half) ──
+    roundedRect(ctx, x, y, w, h, r);
+    ctx.strokeStyle = color + '66';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // ── Proximity pulse: scale-like brightness near hit zone ──
+    if (prox > 0.6 && !prefersReducedMotion) {
+      ctx.globalAlpha = (prox - 0.6) * 0.6;
+      roundedRect(ctx, x - 2, y - 1, w + 4, h + 2, r + 1);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 18;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+
     ctx.restore();
   }
 
