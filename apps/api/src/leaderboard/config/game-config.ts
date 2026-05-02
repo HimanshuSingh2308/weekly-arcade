@@ -464,8 +464,49 @@ export const GAME_CONFIG: Record<string, GameValidationConfig> = {
   'neon-beats': {
     maxScore: 500000,
     maxScorePerSecond: 1000,
-    minTimeMs: 5000,
+    minTimeMs: 15000,
     allowedMetadataKeys: ['accuracy', 'maxCombo', 'totalNotes', 'perfectCount', 'greatCount', 'goodCount', 'missCount', 'maxBpm', 'finalMultiplier'],
+    customValidation: (dto) => {
+      const m = dto.metadata;
+      if (!m) return { valid: true };
+
+      const perfect = (m.perfectCount as number) ?? 0;
+      const great   = (m.greatCount   as number) ?? 0;
+      const good    = (m.goodCount    as number) ?? 0;
+      const miss    = (m.missCount    as number) ?? 0;
+      const total   = (m.totalNotes   as number) ?? 0;
+      const combo   = (m.maxCombo     as number) ?? 0;
+
+      // Note counts must add up
+      if (total > 0 && (perfect + great + good + miss) !== total) {
+        return { valid: false, reason: 'Note counts do not sum to totalNotes' };
+      }
+      // maxCombo cannot exceed hit notes
+      const hitNotes = perfect + great + good;
+      if (combo > hitNotes) {
+        return { valid: false, reason: 'maxCombo exceeds hit note count' };
+      }
+      // Accuracy must match note counts (±1 rounding)
+      if (total > 0) {
+        const expectedAccuracy = Math.round((hitNotes / total) * 100);
+        const reportedAccuracy = m.accuracy as number;
+        if (reportedAccuracy !== undefined && Math.abs(reportedAccuracy - expectedAccuracy) > 1) {
+          return { valid: false, reason: 'Reported accuracy does not match note counts' };
+        }
+      }
+      // Note density cap: max ~250 notes/min at peak BPM+density
+      if (dto.timeMs && total > 0) {
+        const maxPossibleNotes = Math.ceil((dto.timeMs / 60000) * 250);
+        if (total > maxPossibleNotes) {
+          return { valid: false, reason: 'totalNotes exceeds possible count for session length' };
+        }
+      }
+      // Non-zero score requires at least one hit
+      if (total > 0 && dto.score > 0 && hitNotes === 0) {
+        return { valid: false, reason: 'Non-zero score with zero hit notes' };
+      }
+      return { valid: true };
+    },
   },
 };
 
