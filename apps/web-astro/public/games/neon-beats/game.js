@@ -34,7 +34,7 @@
   const NOTE_HEIGHT = 132;
   const NOTE_RADIUS = 12;
 
-  const NOTE_APPROACH_BEATS = 5; // notes appear 5 beats before hit zone — fills the screen
+  const NOTE_APPROACH_BEATS = 8; // notes appear 8 beats before hit zone — long travel for large tiles
 
   // ── STATE ─────────────────────────────────────────────────
   let canvas, ctx, wrap;
@@ -259,9 +259,8 @@
     const approachTime = NOTE_APPROACH_BEATS * beatInterval();
     // frac: 0 = just spawned, 1 = at hit zone
     const frac = 1 - timeUntilHit / approachTime;
-    // Start from above canvas (-NOTE_HEIGHT) so tile enters fully from off-screen
-    // End at hitZoneY (where the note center should align with hit zone)
-    const startY = -NOTE_HEIGHT;
+    // Start well above canvas so tile enters fully from off-screen
+    const startY = -NOTE_HEIGHT * 2;
     return startY + frac * (hitZoneY - startY);
   }
 
