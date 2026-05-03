@@ -618,7 +618,7 @@
     const x = laneX(lane) + 3;
     const w = laneW - 6;
     const h = NOTE_HEIGHT;
-    const r = h / 2; // pill shape (fully rounded ends)
+    const r = NOTE_RADIUS; // rounded rectangle corners
     const color = LANE_COLORS[lane];
     const prox = proximity || 0;
 
@@ -657,18 +657,29 @@
     ctx.fillStyle = topGrd;
     ctx.fill();
 
-    // ── Inner neon core stripe (bright center line) ──
-    const coreH = Math.max(4, h * 0.28);
-    const coreY = y + (h - coreH) / 2;
-    const coreR = coreH / 2;
-    roundedRect(ctx, x + 4, coreY, w - 8, coreH, coreR);
-    const coreGrd = ctx.createLinearGradient(x + 4, coreY, x + w - 4, coreY);
-    coreGrd.addColorStop(0, color + '44');
-    coreGrd.addColorStop(0.3, '#ffffff' + (prox > 0.5 ? 'cc' : '88'));
-    coreGrd.addColorStop(0.7, '#ffffff' + (prox > 0.5 ? 'cc' : '88'));
-    coreGrd.addColorStop(1, color + '44');
-    ctx.fillStyle = coreGrd;
-    ctx.fill();
+    // ── Thin neon highlight lines (horizontal accents, not a separate shape) ──
+    const lineAlpha = prox > 0.5 ? '88' : '55';
+    ctx.strokeStyle = '#ffffff' + lineAlpha;
+    ctx.lineWidth = 1.5;
+    // Top accent line
+    ctx.beginPath();
+    ctx.moveTo(x + r, y + 6);
+    ctx.lineTo(x + w - r, y + 6);
+    ctx.stroke();
+    // Center accent line (brighter)
+    ctx.strokeStyle = '#ffffff' + (prox > 0.5 ? 'aa' : '66');
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y + h / 2);
+    ctx.lineTo(x + w - r, y + h / 2);
+    ctx.stroke();
+    // Bottom accent line (dimmer)
+    ctx.strokeStyle = '#ffffff33';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y + h - 6);
+    ctx.lineTo(x + w - r, y + h - 6);
+    ctx.stroke();
 
     // ── Edge highlight (1px bright border on top half) ──
     roundedRect(ctx, x, y, w, h, r);
