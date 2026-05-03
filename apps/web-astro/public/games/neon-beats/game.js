@@ -254,13 +254,15 @@
   }
 
   function noteY(hitTime) {
-    if (!audioCtx) return -100;
+    if (!audioCtx) return -200;
     const timeUntilHit = (hitTime - audioCtx.currentTime) - (latencyOffsetMs / 1000);
     const approachTime = NOTE_APPROACH_BEATS * beatInterval();
-    // When timeUntilHit === approachTime, note is at top (y=0)
-    // When timeUntilHit === 0, note is at hitZoneY
+    // frac: 0 = just spawned, 1 = at hit zone
     const frac = 1 - timeUntilHit / approachTime;
-    return frac * hitZoneY;
+    // Start from above canvas (-NOTE_HEIGHT) so tile enters fully from off-screen
+    // End at hitZoneY (where the note center should align with hit zone)
+    const startY = -NOTE_HEIGHT;
+    return startY + frac * (hitZoneY - startY);
   }
 
   // ── COMBO LOGIC ───────────────────────────────────────────
