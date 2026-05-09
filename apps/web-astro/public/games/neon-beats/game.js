@@ -31,10 +31,10 @@
   const NOTE_SPEED_BASE = 200; // px/sec at 90 BPM — scales with BPM
   const HIT_ZONE_RATIO = 0.88; // fraction of canvas height
   const HIT_ZONE_HEIGHT = 40;
-  const NOTE_HEIGHT = 132;
+  const NOTE_HEIGHT = 100;
   const NOTE_RADIUS = 12;
 
-  const NOTE_APPROACH_BEATS = 8; // notes appear 8 beats before hit zone — long travel for large tiles
+  const NOTE_APPROACH_BEATS = 10;
 
   // ── STATE ─────────────────────────────────────────────────
   let canvas, ctx, wrap;
@@ -63,6 +63,7 @@
   let particles = []; // { x, y, vx, vy, alpha, color, size }
   let lastNoteTime = 0; // AudioContext time of last scheduled note
   let scheduledBeats = []; // { lane, hitTime (AudioContext seconds) }
+  let lastLaneHitTime = [0, 0, 0, 0]; // last scheduled hitTime per lane (anti-overlap)
   let animId = null;
   let idleAnimId = null;
   let lastFrameTime = 0;
@@ -149,7 +150,7 @@
   }
 
   // ── BEAT SCHEDULING ───────────────────────────────────────
-  const LOOKAHEAD_SEC = 0.3;
+  const LOOKAHEAD_SEC = NOTE_APPROACH_BEATS * (60 / BPM_START) + 1; // schedule ahead for full top-to-bottom travel
   const SCHEDULE_INTERVAL = 100; // ms
 
   let scheduleTimer = null;
@@ -190,11 +191,26 @@
     }
   }
 
+  // Minimum time between notes in the same lane to prevent visual overlap
+  function minLaneGap() {
+    const approachTime = NOTE_APPROACH_BEATS * beatInterval();
+    const travelDist = hitZoneY + NOTE_HEIGHT; // startY(-NOTE_HEIGHT) to hitZoneY
+    const speed = travelDist / approachTime;
+    return (NOTE_HEIGHT + 8) / speed; // tile height + 8px padding
+  }
+
+  function canScheduleLane(lane, hitTime) {
+    return hitTime - lastLaneHitTime[lane] >= minLaneGap();
+  }
+
   function scheduleSubdivision(hitTime) {
-    // Subdivision: always a single note in a random lane (lighter than main beat)
-    const lane = Math.floor(Math.random() * LANES);
+    // Subdivision: single note in a random lane that isn't too close to its last note
+    const candidates = [0, 1, 2, 3].filter(l => canScheduleLane(l, hitTime));
+    if (candidates.length === 0) return;
+    const lane = candidates[Math.floor(Math.random() * candidates.length)];
     playBeat(lane, hitTime);
     scheduledBeats.push({ lane, hitTime });
+    lastLaneHitTime[lane] = hitTime;
   }
 
   function scheduleOneBeat(beatTime) {
@@ -216,13 +232,14 @@
       // Endgame: 35% doubles, 30% triples
       numNotes = roll < 0.30 ? 3 : roll < 0.65 ? 2 : 1;
     }
-    const lanePool = [0, 1, 2, 3];
-    for (let i = 0; i < numNotes; i++) {
+    const lanePool = [0, 1, 2, 3].filter(l => canScheduleLane(l, beatTime));
+    for (let i = 0; i < numNotes && lanePool.length > 0; i++) {
       const idx = Math.floor(Math.random() * lanePool.length);
       const lane = lanePool[idx];
-      lanePool.splice(idx, 1); // prevent duplicate lane selection
+      lanePool.splice(idx, 1);
       playBeat(lane, beatTime);
       scheduledBeats.push({ lane, hitTime: beatTime });
+      lastLaneHitTime[lane] = beatTime;
     }
     beatCount++;
   }
@@ -260,7 +277,7 @@
     // frac: 0 = just spawned, 1 = at hit zone
     const frac = 1 - timeUntilHit / approachTime;
     // Start well above canvas so tile enters fully from off-screen
-    const startY = -NOTE_HEIGHT * 2;
+    const startY = -NOTE_HEIGHT;
     return startY + frac * (hitZoneY - startY);
   }
 
@@ -616,8 +633,9 @@
   }
 
   function drawNote(lane, y, missed, proximity) {
-    const x = laneX(lane) + 3;
-    const w = laneW - 6;
+    const pad = Math.round(laneW * 0.1) + 3; // 10% each side + base padding
+    const x = laneX(lane) + pad;
+    const w = laneW - pad * 2;
     const h = NOTE_HEIGHT;
     const r = NOTE_RADIUS; // rounded rectangle corners
     const color = LANE_COLORS[lane];
@@ -960,7 +978,7 @@
     totalNotes = 0; hitNotes = 0; perfectCount = 0; greatCount = 0;
     goodCount = 0; missCount = 0; accuracy = 0;
     currentBpm = BPM_START; maxBpmReached = BPM_START;
-    notes = []; particles = []; scheduledBeats = [];
+    notes = []; particles = []; scheduledBeats = []; lastLaneHitTime = [0, 0, 0, 0];
     mercyUntil = 0;
     gameStartTime = audioCtx ? audioCtx.currentTime * 1000 : performance.now();
     lastBpmRampTime = gameStartTime;
