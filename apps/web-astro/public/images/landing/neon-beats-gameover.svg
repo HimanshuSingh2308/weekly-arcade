@@ -1,0 +1,68 @@
+<svg width="480" height="300" viewBox="0 0 480 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="obg" cx="50%" cy="35%">
+      <stop offset="0%" stop-color="#2a0050"/><stop offset="100%" stop-color="#0a0010"/>
+    </radialGradient>
+    <filter id="ogl" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="ogl2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="480" height="300" fill="url(#obg)"/>
+
+  <!-- Faded lane columns in background -->
+  <rect x="60"  y="0" width="90" height="300" fill="#00ffff" opacity="0.02"/>
+  <rect x="150" y="0" width="90" height="300" fill="#ff00ff" opacity="0.02"/>
+  <rect x="240" y="0" width="90" height="300" fill="#ffff00" opacity="0.02"/>
+  <rect x="330" y="0" width="90" height="300" fill="#00ff88" opacity="0.02"/>
+
+  <!-- Faded missed notes in background -->
+  <rect x="66"  y="80"  width="74" height="36" rx="18" fill="#00ffff" opacity="0.08"/>
+  <rect x="156" y="130" width="74" height="36" rx="18" fill="#ff00ff" opacity="0.08"/>
+  <rect x="246" y="60"  width="74" height="36" rx="18" fill="#ffff00" opacity="0.08"/>
+  <rect x="336" y="170" width="74" height="36" rx="18" fill="#00ff88" opacity="0.08"/>
+  <rect x="66"  y="200" width="74" height="36" rx="18" fill="#00ffff" opacity="0.06"/>
+  <rect x="246" y="190" width="74" height="36" rx="18" fill="#ffff00" opacity="0.06"/>
+
+  <!-- "Game Over" title -->
+  <text x="240" y="62" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="28" fill="#ff00ff" filter="url(#ogl2)">Game Over</text>
+
+  <!-- Accuracy ring -->
+  <circle cx="240" cy="115" r="38" fill="none" stroke="#00ffff33" stroke-width="2"/>
+  <circle cx="240" cy="115" r="38" fill="none" stroke="#00ffff" stroke-width="2.5" stroke-dasharray="200 40" filter="url(#ogl)"/>
+  <text x="240" y="122" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="26" fill="#00ffff" filter="url(#ogl)">87%</text>
+
+  <!-- Score pill -->
+  <rect x="130" y="166" width="100" height="48" rx="12" fill="#ffffff08" stroke="#ff00ff33" stroke-width="1"/>
+  <text x="180" y="192" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="22" fill="#ff00ff" filter="url(#ogl)">42,150</text>
+  <text x="180" y="206" text-anchor="middle" font-family="system-ui" font-size="9" fill="#ffffffaa" letter-spacing="1.5">SCORE</text>
+
+  <!-- Best pill -->
+  <rect x="250" y="166" width="100" height="48" rx="12" fill="#ffffff08" stroke="#ff00ff33" stroke-width="1"/>
+  <text x="300" y="192" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="22" fill="#ff00ff" filter="url(#ogl)">42,150</text>
+  <text x="300" y="206" text-anchor="middle" font-family="system-ui" font-size="9" fill="#ffffffaa" letter-spacing="1.5">BEST</text>
+
+  <!-- New High Score banner -->
+  <rect x="170" y="148" width="140" height="18" rx="9" fill="#ffd70033" stroke="#ffd70066" stroke-width="1"/>
+  <text x="240" y="160" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="10" fill="#ffd700" filter="url(#ogl)">NEW HIGH SCORE!</text>
+
+  <!-- Max combo pill -->
+  <rect x="190" y="224" width="100" height="36" rx="10" fill="#ffffff08" stroke="#ffffff1a" stroke-width="1"/>
+  <text x="240" y="246" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="18" fill="#ffffffcc">67</text>
+  <text x="240" y="256" text-anchor="middle" font-family="system-ui" font-size="8" fill="#ffffffaa" letter-spacing="1">MAX COMBO</text>
+
+  <!-- Play Again button -->
+  <rect x="170" y="270" width="140" height="24" rx="12" fill="#ff00ff" filter="url(#ogl)"/>
+  <text x="240" y="286" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="13" fill="#fff">▶ Play Again</text>
+
+  <!-- Confetti particles (celebration) -->
+  <circle cx="120" cy="40" r="3" fill="#00ffff" opacity="0.6"/><circle cx="350" cy="30" r="2.5" fill="#ff00ff" opacity="0.5"/>
+  <circle cx="160" cy="25" r="2" fill="#ffff00" opacity="0.5"/><circle cx="310" cy="45" r="3" fill="#00ff88" opacity="0.6"/>
+  <circle cx="200" cy="35" r="1.5" fill="#ffd700" opacity="0.7"/><circle cx="280" cy="28" r="2" fill="#ff00ff" opacity="0.4"/>
+  <rect x="140" y="32" width="6" height="3" rx="1.5" fill="#00ffff" opacity="0.4" transform="rotate(25,143,33)"/>
+  <rect x="330" y="38" width="6" height="3" rx="1.5" fill="#ffff00" opacity="0.4" transform="rotate(-15,333,39)"/>
+  <rect x="260" y="22" width="5" height="2.5" rx="1.25" fill="#ff00ff" opacity="0.5" transform="rotate(40,262,23)"/>
+</svg>

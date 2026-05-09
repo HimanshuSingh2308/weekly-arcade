@@ -1,0 +1,47 @@
+{
+  "id": "neon-beats",
+  "name": "Neon Beats",
+  "icon": "🎵",
+  "title": "Neon Beats | Weekly Arcade - Free Neon Rhythm Tap Game",
+  "description": "Tap to the beat in this neon-lit rhythm game. Hit falling notes with perfect timing, build combos, and chase high scores as the tempo rises.",
+  "keywords": "neon beats, rhythm game browser, free rhythm game no ads, tap to the beat game, music game online free, neon rhythm game, falling notes game, combo beat game, rhythm tap game no download, synthwave game browser",
+  "url": "/games/neon-beats/",
+  "themeColor": "#ff00ff",
+  "accentColor": "#ff00ff",
+  "genres": ["Rhythm", "Music", "Arcade"],
+  "ratingValue": "4.9",
+  "ratingCount": "320",
+  "tips": [
+    "Use D/F/J/K keys on desktop for the four lanes — muscle memory beats looking at the keys",
+    "Watch the beat indicators at the top of each lane to anticipate when notes will arrive",
+    "Keep your combo alive at all costs — the 8x multiplier at 50 combo is a massive score booster",
+    "Perfect hits add 2 health; misses drain 10 — prioritise accuracy over speed",
+    "As BPM rises past 130, focus on the lane colours rather than individual note shapes",
+    "Use the input latency offset in Settings if notes feel early or late on your device"
+  ],
+  "similarTo": ["Guitar Hero", "osu!", "Piano Tiles", "Beat Saber", "Geometry Dash"],
+  "howToPlay": "Four lanes of notes fall from the top of the screen. Tap the lane (or press D/F/J/K) exactly when a note reaches the hit zone at the bottom. Perfect hits score the most and restore health; Good hits score less; misses drain health. Build combos to multiply your score up to 8x. The BPM increases every 30 seconds — how long can you survive?",
+  "aboutGame": "Neon Beats is a free browser rhythm game with a neon synthwave aesthetic. Notes fall in four lanes, each lit in cyan, magenta, yellow, or green against a deep dark background. The beat is generated procedurally via the Web Audio API — no audio files to download. Timing windows reward precision: Perfect (±50 ms), Great (±100 ms), and Good (±150 ms). Miss too many notes and your health drops to zero. Survive longer as the BPM climbs from 90 up to 160. Chain combos to hit the 8x multiplier and watch your score rocket. High scores are saved locally and synced to the global leaderboard when signed in. Six achievements reward everything from your first Perfect note to a 50-combo streak and a 50,000-point run. Neon Beats works on any device — four-finger touch on mobile or D/F/J/K keyboard on desktop — with full Safari AudioContext unlock support and prefers-reduced-motion accessibility.",
+  "faq": [
+    {
+      "q": "Is Neon Beats free to play?",
+      "a": "Yes. Neon Beats is 100% free with no ads, no in-app purchases, and no downloads. Play instantly in your browser on any device."
+    },
+    {
+      "q": "How does the scoring work?",
+      "a": "Each note hit scores base points multiplied by your current combo multiplier (1x, 2x, 4x, or 8x at 0, 10, 25, and 50-note combos). Perfect hits score more than Great or Good hits. Missing a note resets your combo to zero and costs 10 health."
+    },
+    {
+      "q": "Does it work on mobile?",
+      "a": "Yes. Neon Beats is designed for both mobile portrait and desktop landscape. On mobile, tap each of the four colour-coded lanes. On desktop, use the D, F, J, and K keys."
+    },
+    {
+      "q": "What is the input latency offset in Settings?",
+      "a": "Different devices and browsers have different audio output delays. The latency offset (in milliseconds) shifts the hit window earlier or later so notes feel perfectly in sync on your specific setup."
+    },
+    {
+      "q": "How high does the BPM go?",
+      "a": "The BPM starts at 90 and increases by 5 every 30 seconds, capping at 160 BPM. The game ends when your health reaches zero from too many misses."
+    }
+  ]
+}
