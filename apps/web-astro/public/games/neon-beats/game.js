@@ -182,7 +182,7 @@
       scheduleOneBeat(nextBeatTime);
       // 8th-note subdivision: spawn an extra note halfway between beats
       // Probability increases with time — creates dense streams in same lane
-      const subdivProb = elapsed < 30 ? 0.15 : elapsed < 90 ? 0.35 : elapsed < 180 ? 0.50 : 0.65;
+      const subdivProb = elapsed < 20 ? 0 : elapsed < 45 ? 0.05 : elapsed < 75 ? 0.15 : elapsed < 120 ? 0.30 : elapsed < 180 ? 0.45 : 0.60;
       if (Math.random() < subdivProb) {
         const halfBeat = nextBeatTime + beatInterval() * 0.5;
         scheduleSubdivision(halfBeat);
@@ -219,13 +219,19 @@
     // Note density escalation: more multi-note beats as time progresses
     const roll = Math.random();
     let numNotes;
-    if (elapsed < 60) {
-      // Early: mostly singles, 30% doubles
-      numNotes = roll < 0.30 ? 2 : 1;
+    if (elapsed < 20) {
+      // Warm-up: singles only
+      numNotes = 1;
+    } else if (elapsed < 45) {
+      // Intro: 15% doubles
+      numNotes = roll < 0.15 ? 2 : 1;
+    } else if (elapsed < 75) {
+      // Build: 35% doubles
+      numNotes = roll < 0.35 ? 2 : 1;
     } else if (elapsed < 120) {
       // Mid: 40% doubles, 10% triples
       numNotes = roll < 0.10 ? 3 : roll < 0.50 ? 2 : 1;
-    } else if (elapsed < 240) {
+    } else if (elapsed < 180) {
       // Late: 45% doubles, 20% triples
       numNotes = roll < 0.20 ? 3 : roll < 0.65 ? 2 : 1;
     } else {
